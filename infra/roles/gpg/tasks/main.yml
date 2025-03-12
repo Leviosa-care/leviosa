@@ -1,0 +1,38 @@
+---
+- name: Install GPG
+  ansible.builtin.apt:
+    name: gnupg
+    state: present
+    update_cache: yes
+
+- name: Ensure GPG directory exists
+  ansible.builtin.file:
+    path: /home/{{ user }}/.gnupg
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0700'
+
+- name: Deploy GPG public key
+  ansible.builtin.copy:
+    src: files/public.key
+    dest: /home/{{ user }}/.gnupg/public.key
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0600'
+
+- name: Import GPG public key
+  ansible.builtin.shell: |
+    gpg --import /home/{{ user }}/.gnupg/public.key
+  args:
+    chdir: /home/{{ user }}
+    creates: /home/{{ user }}/.gnupg/pubring.kbx
+  become_user: "{{ user }}"
+
+- name: Trust the imported GPG key
+  ansible.builtin.shell: |
+    echo "trust" | gpg --command-fd 0 --edit-key "{{ gpg_key_id }}"
+  args:
+    chdir: /home/{{ user }}
+  become_user: "{{ user }}"
+  when: gpg_key_id is defined

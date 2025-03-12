@@ -1,0 +1,15 @@
+---
+- hosts: webserver
+  become: yes
+  remote_user: root
+  vars_files:
+    - group_vars/secrets.yml
+  roles:
+    - common
+    - ssh
+    - fail2ban
+    - ufw
+    - docker
+    - caddy
+    - gpg
+    - rclone

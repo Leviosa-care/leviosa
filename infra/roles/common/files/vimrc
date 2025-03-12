@@ -1,0 +1,5 @@
+let mapleader= " "
+set number
+set clipboard=unnamedplus
+inoremap jk <esc>
+nnoremap <leader>pv :Ex
