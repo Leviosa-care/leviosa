@@ -1,0 +1,37 @@
+---
+- name: Ensure Caddy is installed
+  ansible.builtin.include_role:
+    name: nvjacobo.caddy
+  vars:
+    caddy_version: "2.6.4"
+    caddy_install_method: "package"
+    caddy_config_dir: "/etc/caddy"
+    caddy_config_file: "/etc/caddy/Caddyfile"
+    caddy_user: "www-data"
+    caddy_group: "www-data"
+    caddy_services:
+      - name: caddy
+        enabled: yes
+        state: started
+
+- name: Ensure Caddy configuration directory exists
+  ansible.builtin.file:
+    path: /etc/caddy
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy Caddyfile
+  ansible.builtin.template:
+    src: files/Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Ensure Caddy service is enabled and running
+  ansible.builtin.service:
+    name: caddy
+    state: started
+    enabled: yes
