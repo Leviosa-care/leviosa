@@ -1,6 +1,6 @@
 module github.com/hengadev/leviosa
 
-go 1.22.1
+go 1.24.1
 
 require (
 	github.com/alicebob/miniredis v2.5.0+incompatible
