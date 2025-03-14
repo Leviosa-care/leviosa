@@ -32,7 +32,7 @@
 		display: grid;
 		place-content: center;
 		height: 100vh;
-		width: 65%;
+		/* width: 65%; */
 		margin-inline: auto;
 	}
 

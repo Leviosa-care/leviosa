@@ -7,3 +7,6 @@
 *.compose.yaml
 
 notes
+
+frontend/local.dockerfile
+backend/local.dockerfile

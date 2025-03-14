@@ -19,6 +19,7 @@ func AttachLogger(env mode.EnvMode, slogHandler slog.Handler) func(http.Handler)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			skipLogging := []string{
 				"/healthz",
+				"/hello",
 			}
 			if slices.Contains(skipLogging, r.URL.Path) {
 				next.ServeHTTP(w, r)

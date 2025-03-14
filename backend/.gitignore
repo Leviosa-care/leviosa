@@ -1,5 +1,6 @@
 # output
 bin
+tmp/*
 data/*
 # build
 *.makefile

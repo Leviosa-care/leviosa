@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -18,6 +19,7 @@ func (s *Server) addRoutes(h *app.App) {
 
 	// basic check health
 	router.HandleFunc("GET /healthz", healthz)
+	router.HandleFunc("GET /hello", hello)
 
 	// handlers declaration
 	healthHandler := healthHandler.New(h)
@@ -83,6 +85,16 @@ func (s *Server) addRoutes(h *app.App) {
 
 func healthz(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
+}
+
+func hello(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hit server")
+	message := struct {
+		Message string `json:"message"`
+	}{
+		Message: "Hello world",
+	}
+	json.NewEncoder(w).Encode(message)
 }
 
 func handleImage(w http.ResponseWriter, r *http.Request) {

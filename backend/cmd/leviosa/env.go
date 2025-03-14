@@ -18,7 +18,7 @@ func setupEnvVars() error {
 	}
 	opts.server.port = port_int
 
-	// setup mode or use default value "developement"
+	// setup mode or use default value "development"
 	if err = opts.mode.Set(os.Getenv("APP_ENV")); err != nil {
 		return fmt.Errorf("mode: %w", err)
 	}

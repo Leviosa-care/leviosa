@@ -13,6 +13,7 @@
 	}
 	type Content = 'Photos' | 'Videos';
 	let content: Content = $state('Photos');
+	let subcontent: Content | 'Albums';
 	$effect(() => {
 		let subcontent: Content | 'Albums' = $state(content);
 	});
