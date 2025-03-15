@@ -1,6 +1,7 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 import type { Plugin } from 'vite';
+import tailwindcss from '@tailwindcss/vite'
 import { kitRoutes } from 'vite-plugin-kit-routes';
 
 const add_browser_onmount: Plugin = {
@@ -19,7 +20,12 @@ const add_browser_onmount: Plugin = {
 };
 
 export default defineConfig({
-    plugins: [sveltekit(), add_browser_onmount, kitRoutes()],
+    plugins: [
+        sveltekit(),
+        add_browser_onmount,
+        kitRoutes(),
+        tailwindcss(),
+    ],
     test: {
         include: ['src/**/*.{test,spec}.{js,ts}', 'tests/**/*.{test,spec}.{js,ts}'],
         environment: 'jsdom',

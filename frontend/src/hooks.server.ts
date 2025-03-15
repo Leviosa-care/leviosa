@@ -7,6 +7,7 @@ import { NODE_ENV } from "$env/static/private"
 
 export const handle: Handle = async ({ event, resolve }) => {
     // enrich the fetch with the custom header with the client IP
+    console.log("running the app in mode:", NODE_ENV)
     const client_IP_header = env.CLIENT_IP_HEADER || "31.111.93.187"
     if (!client_IP_header) {
         if (NODE_ENV === 'development') {
