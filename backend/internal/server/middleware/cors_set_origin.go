@@ -8,11 +8,6 @@ import (
 
 // NOTE: find inspiration with this : https://github.com/rs/cors/blob/master/cors.go
 
-// NOTE: the headers that I need to set
-// w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-// w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-// w.Header().Set("Access-Control-Allow-Credentials", "true")
-
 func SetOrigin(next http.Handler) http.Handler {
 	allowedOrigins := map[string]bool{
 		os.Getenv("FRONTEND_ORIGIN"): true,
@@ -20,7 +15,10 @@ func SetOrigin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("origin")
 		if allowedOrigins[origin] {
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Authorization")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
 		}
 		next.ServeHTTP(w, r)
 	})
