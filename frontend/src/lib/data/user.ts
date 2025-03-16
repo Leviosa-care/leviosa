@@ -1,6 +1,6 @@
 import type { Role } from '$lib/types';
 
-export const role: Role = 'userPremium';
+export const role: Role = 'admin';
 interface User {
     firstname: string,
     lastname: string,
@@ -11,5 +11,8 @@ export const mockUser: User = {
     firstname: 'John',
     lastname: 'DOE',
     city: 'Paris',
-    role: 'userPremium',
+    // role: 'userPremium',
+    role: 'admin',
+    // role: 'user',
+    // role: 'freelance',
 };

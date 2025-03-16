@@ -4,9 +4,9 @@ export type Role = 'user' | 'userPremium' | 'helper' | 'admin' | 'freelance';
 export type NavigationBarSize = 'small' | 'large';
 
 export type NavigationBarElement = {
-	label: string;
-	href: string;
-	icon: typeof import('lucide-svelte').Icon;
+    label: string;
+    href: string;
+    icon: typeof import('lucide-svelte').Icon;
 };
 
 // NOTE: the old one that worked fine
@@ -19,22 +19,22 @@ export type NavigationBarElement = {
 export type NavigationBarIcons = Record<Role, Record<NavigationBarSize, NavigationBarElement[]>>;
 
 type EventTabType = {
-	name: EventState;
-	href: string;
+    name: EventState;
+    href: string;
 };
 
 export type EventTabs = Record<Role, EventTabType[]>;
 
 type MessageTabType = {
-	name: MessageState;
-	href: string;
+    name: MessageState;
+    href: string;
 };
 
 export type MessageTabs = Record<Role, MessageTabType[]>;
 
 type ConsultationTabType = {
-	name: ConsultationState;
-	href: string;
+    name: ConsultationState;
+    href: string;
 };
 
 export type ConsultationTabs = Record<Role, ConsultationTabType[]>;

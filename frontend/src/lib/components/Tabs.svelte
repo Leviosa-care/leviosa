@@ -4,7 +4,7 @@
 		action: () => void;
 	};
 
-	// TODO: chaneg that action to 1 by default ?
+	// TODO: change that action to 1 by default ?
 	let action = 0;
 
 	let selectIndex: number = $state(0);

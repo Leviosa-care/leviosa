@@ -1,14 +1,24 @@
 type Card = {
-	date: string;
+    date: string;
 };
 
 const cards: Card[] = [
-	{
-		date: '12/12/2024'
-	}
+    {
+        date: '12/12/2024'
+    }
 ];
 
-type PageRes = { cards: Card[]; role: import('$lib/types').Role };
+import type { Role } from '$lib/types'
+
+type PageRes = {
+    cards: Card[];
+    role: Role
+};
+
 export function load({ locals }): PageRes {
-	return { cards, role: locals.user.role };
+    const role = locals.user.role as Role
+    return {
+        role,
+        cards,
+    };
 }

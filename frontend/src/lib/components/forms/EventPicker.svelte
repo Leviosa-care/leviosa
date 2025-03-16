@@ -10,7 +10,6 @@
 
 	const leftArrowClass = 'leftArrow';
 	const rightArrowClass = 'rightArrow';
-
 	interface Props {
 		monthsData: EventPickerMonth[];
 	}
