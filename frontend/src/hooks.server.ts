@@ -7,10 +7,10 @@ import { NODE_ENV } from "$env/static/private"
 
 export const handle: Handle = async ({ event, resolve }) => {
     // enrich the fetch with the custom header with the client IP
-    console.log("running the app in mode:", NODE_ENV)
+    // console.log("running the app in mode:", NODE_ENV)
     const client_IP_header = env.CLIENT_IP_HEADER || "31.111.93.187"
     if (!client_IP_header) {
-        if (NODE_ENV === 'development') {
+        if (NODE_ENV === 'development' || NODE_ENV === 'staging') {
             console.warn("Client IP header missing for backend (ignored in development).");
         } else {
             throw new Error("Logging impossible: client IP header missing for backend.");
@@ -26,7 +26,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         // Proceed with the original fetch
         return fetch(input, init);
     };
-    if (NODE_ENV === 'development') {
+    if (NODE_ENV === 'development' || NODE_ENV === 'staging') {
         event.locals.user = mockUser
         return await resolve(event)
     }
