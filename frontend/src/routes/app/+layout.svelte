@@ -1,16 +1,18 @@
 <script lang="ts">
 	import NavigationBar from '$lib/components/navigation/NavigationBar.svelte';
 
-	// page transition
-	import { onNavigate } from '$app/navigation';
 	interface Props {
-		children?: import('svelte').Snippet;
+		children: import('svelte').Snippet;
 		data: import('./$types').PageData;
 	}
 
 	let { children, data }: Props = $props();
-	type Data = { role: import('$lib/types').Role };
-	const { role }: Data = data;
+	const { user } = data;
+	import { setUserContext } from '$lib/context/user';
+	setUserContext(user);
+
+	// page transition
+	import { onNavigate } from '$app/navigation';
 	onNavigate((navigation) => {
 		const isSameUrl = navigation?.from?.url.href === navigation?.to?.url.href;
 		const toPathname = navigation?.to?.url.pathname;
@@ -28,7 +30,7 @@
 </script>
 
 <div class="layout">
-	<NavigationBar {role} />
+	<NavigationBar />
 	<div class="content">
 		{@render children?.()}
 	</div>

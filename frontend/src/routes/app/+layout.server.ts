@@ -1,4 +1,5 @@
-type PageRes = { role: import('$lib/types').Role };
-export function load({ locals }): PageRes {
-	return { role: locals.user.role };
+import type { LayoutServerLoad } from './$types';
+
+export const load: LayoutServerLoad = ({ locals }) => {
+    return { user: locals.user };
 }

@@ -1,27 +1,22 @@
 <script lang="ts">
-	import { navstate } from '$lib/stores/navbar';
+	import { Slack, PanelLeftClose, PanelLeftOpen } from 'lucide-svelte';
 
-	import { Slack } from 'lucide-svelte';
+	import { navstate } from '$lib/stores/navbar';
 
 	import NavigationBarIcon from '$lib/components/navigation/atoms/NavigationBarIcon.svelte';
 	import { navigationBarIcons } from '$lib/constructor';
 
-	// TODO: change that to see how the UI evolve and make it so this is something that I get from some store like the page store
-	interface Props {
-		role: import('$lib/types').Role;
-	}
-	let { role }: Props = $props();
+	import { getUserContext } from '$lib/context/user';
+	const user = getUserContext();
+	const role = user?.role ?? 'user';
 
 	import type { NavigationBarElement } from '$lib/types';
 
+	// TODO: that is imported depending on screen size
 	const smallIcons: NavigationBarElement[] = navigationBarIcons[role].small;
 	const largeIcons: NavigationBarElement[] = navigationBarIcons[role].large;
 
-	import { PanelLeftClose, PanelLeftOpen } from 'lucide-svelte';
 	let hideLabel: boolean = $state(false);
-	function toggleLabel() {
-		hideLabel = !hideLabel;
-	}
 </script>
 
 {#snippet navbarIcon(icons: NavigationBarElement[], size: 'small' | 'large')}
@@ -30,7 +25,7 @@
 			<NavigationBarIcon {href} {label} {icon} active={$navstate === label} {hideLabel} />
 		{/each}
 		{#if size === 'large'}
-			<button onclick={toggleLabel} class="panel-left-close">
+			<button onclick={() => (hideLabel = !hideLabel)} class="panel-left-close">
 				{#if hideLabel}
 					<PanelLeftOpen
 						strokeWidth={1.5}
@@ -92,7 +87,7 @@
 		color: hsl(var(--clr-grey-500));
 		padding-inline: 1rem;
 	}
-	/* for the mobile screen */
+	/* for mobile screen */
 	@media only screen and (min-width: 500px) {
 		.navigation-bar {
 			min-width: 0;
