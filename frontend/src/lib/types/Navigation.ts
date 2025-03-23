@@ -1,6 +1,7 @@
 import type { EventState, MessageState, ConsultationState } from './Store';
 
-export type Role = 'user' | 'userPremium' | 'helper' | 'admin' | 'freelance';
+export type Role = 'unknown' | 'anonymous' | ' basic' | 'premium' | 'guest' | 'admin' | 'freelance';
+
 export type NavigationBarSize = 'small' | 'large';
 
 export type NavigationBarElement = {

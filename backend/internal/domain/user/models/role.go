@@ -4,15 +4,19 @@ type Role int8
 
 const (
 	UNKNOWN Role = iota
+	ANONYMOUS
 	BASIC
+	PREMIUM
 	GUEST
 	FREELANCE
 	ADMINISTRATOR
 )
 
-var roles = [5]string{
+var roles = [7]string{
 	"unknown",
+	"anonymous",
 	"basic",
+	"premium",
 	"guest",
 	"freelance",
 	"admin",
@@ -28,8 +32,12 @@ func ConvertToRole(role string) Role {
 		return ADMINISTRATOR
 	case "guest":
 		return GUEST
+	case "anonymous":
+		return ANONYMOUS
 	case "basic":
 		return BASIC
+	case "premium":
+		return PREMIUM
 	case "freelance":
 		return FREELANCE
 	default:
@@ -41,11 +49,15 @@ func ConvertToRole(role string) Role {
 func (r Role) IsSuperior(role Role) bool {
 	switch r {
 	case ADMINISTRATOR:
-		return role == ADMINISTRATOR || role == GUEST || role == BASIC
+		return role == ADMINISTRATOR || role == GUEST || role == BASIC || role == PREMIUM || role == ANONYMOUS
+	case PREMIUM:
+		return role == PREMIUM || role == BASIC || role == ANONYMOUS
 	case GUEST:
 		return role == GUEST
 	case BASIC:
 		return role == BASIC
+	case ANONYMOUS:
+		return role == BASIC || role == ANONYMOUS
 	default:
 		return false
 	}
