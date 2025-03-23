@@ -10,13 +10,6 @@ export type NavigationBarElement = {
     icon: typeof import('lucide-svelte').Icon;
 };
 
-// NOTE: the old one that worked fine
-// export type NavigationBarIcons = {
-//     [key in Role]: {
-//         [key in NavigationBarSize]: NavigationBarElement[]
-//     }
-// }
-
 export type NavigationBarIcons = Record<Role, Record<NavigationBarSize, NavigationBarElement[]>>;
 
 type EventTabType = {

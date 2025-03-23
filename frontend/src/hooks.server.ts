@@ -73,6 +73,7 @@ function getCookie(cookieName: string | undefined, event: any) {
 }
 
 async function validateSession(sessionID: string | undefined, event: any) {
+    // TODO: not the way to do things since I do not need to get the user information every time I check for the sessio to be valid
     const res = await fetch(`${env.API_URL}/user/me`, {
         headers: {
             Authorization: `Bearer ${sessionID}`

@@ -1,14 +1,14 @@
 type Photo = string;
 // type Video = string
 type Video = {
-	thumbnail: string;
-	duration: string;
+    thumbnail: string;
+    duration: string;
 };
 export type EventPhotos = {
-	date: string;
-	photos: Photo[];
+    date: string;
+    photos: Photo[];
 };
 export type EventVideos = {
-	date: string;
-	videos: Video[];
+    date: string;
+    videos: Video[];
 };

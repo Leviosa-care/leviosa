@@ -21,8 +21,8 @@
 
 {#snippet navbarIcon(icons: NavigationBarElement[], size: 'small' | 'large')}
 	<div class="icons {size}">
-		{#each icons as { href, label, icon }}
-			<NavigationBarIcon {href} {label} {icon} active={$navstate === label} {hideLabel} />
+		{#each icons as icon}
+			<NavigationBarIcon {icon} active={$navstate === icon.label} {hideLabel} />
 		{/each}
 		{#if size === 'large'}
 			<button onclick={() => (hideLabel = !hideLabel)} class="panel-left-close">

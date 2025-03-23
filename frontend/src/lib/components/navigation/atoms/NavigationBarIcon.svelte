@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Home } from 'lucide-svelte';
-
-	import type { NavState } from '$lib/types';
+	import type { NavState, NavigationBarElement } from '$lib/types';
+	import { Icon } from 'lucide-svelte';
 	import { navstate } from '$lib/stores/navbar';
+
 	function setState(event: MouseEvent) {
 		let targetElement = event.currentTarget as HTMLButtonElement;
 		let id = targetElement.id as NavState;
@@ -13,32 +13,24 @@
 	// fill={active ? "hsl(var(--clr-accent))" : "none"}
 
 	interface Props {
-		active?: boolean;
-		icon?: typeof import('lucide-svelte').Icon;
-		label?: string;
-		href: string;
-		hideLabel?: boolean;
+		active: boolean;
+		icon: NavigationBarElement;
+		hideLabel: boolean;
 	}
 
-	let {
-		active = false,
-		icon: Icon = Home,
-		label = 'home',
-		href,
-		hideLabel = false
-	}: Props = $props();
+	let { active = false, icon, hideLabel = false }: Props = $props();
 </script>
 
 <button
-	id={label}
+	id={icon.label}
 	class:activeButton={active}
-	class:hidden={label === 'ghost'}
+	class:hidden={icon.label === 'ghost'}
 	class:hideLabel
 	class="icon"
 	style:display={hideLabel ? 'grid' : 'initial'}
 	onclick={setState}
 >
-	<a class="flex-plus flex" {href}>
+	<a class="flex-plus flex" href={icon.href}>
 		<Icon
 			strokeWidth={1.5}
 			absoluteStrokeWidth={true}
@@ -49,7 +41,7 @@
 			style:display={hideLabel ? 'none' : 'initial'}
 			style:visibility={hideLabel ? 'hidden' : 'visible'}
 		>
-			{label}
+			{icon.label}
 		</p>
 	</a>
 </button>
