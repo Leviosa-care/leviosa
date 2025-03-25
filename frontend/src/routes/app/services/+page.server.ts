@@ -1,8 +1,10 @@
-import type { PageLoad } from './$types';
+import type { PageServerLoad } from './$types';
 
 import type { Offer } from '$lib/types';
 import { offers } from '$lib/data';
 
-export const load: PageLoad = (): { offers: Offer[] } => {
-	return { offers };
+type PageRes = { offers: Offer[] }
+
+export const load: PageServerLoad = (): PageRes => {
+    return { offers };
 };

@@ -1,4 +1,7 @@
-export async function load() {
+import type { PageServerLoad } from "./$types"
+
+export const load: PageServerLoad = async () => {
+
     try {
         // const res = await fetch('http://backend:3500/hello');
         // TODO: does that thing work, guess it would be better to use this ?

@@ -1,3 +1,6 @@
+import type { PageServerLoad } from "./$types"
+import type { Role } from '$lib/types'
+
 type Card = {
     date: string;
 };
@@ -8,15 +11,14 @@ const cards: Card[] = [
     }
 ];
 
-import type { Role } from '$lib/types'
 
 type PageRes = {
     cards: Card[];
     role: Role
 };
 
-export function load({ locals }): PageRes {
-    const role = locals.user.role as Role
+export const load: PageServerLoad = ({ locals }): PageRes => {
+    const role = locals.user?.role as Role
     return {
         role,
         cards,
