@@ -8,6 +8,7 @@ export const DAYS = {
     Dimanche: 'Dimanche',
 } as const;
 export type Day = typeof DAYS[keyof typeof DAYS];
+export const DAYS_ARRAY = Object.values(DAYS);
 
 export const MONTHS = {
     Janvier: 'Janvier',
@@ -24,6 +25,7 @@ export const MONTHS = {
     Decembre: 'Decembre',
 } as const;
 export type Month = typeof MONTHS[keyof typeof MONTHS];
+export const MONTHS_ARRAY = Object.values(MONTHS);
 
 // TODO: find a type for days that goes from 1 to 31
 // TODO: find a type for hours that goes from 1 to 24

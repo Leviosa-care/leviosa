@@ -10,6 +10,7 @@ export const ROLES = {
     Freelance: 'freelance',
 } as const;
 export type Role = typeof ROLES[keyof typeof ROLES];
+export const ROLES_ARRAY = Object.values(ROLES);
 
 
 export const NAVIGATION_BAR_SIZES = {
@@ -17,6 +18,7 @@ export const NAVIGATION_BAR_SIZES = {
     Large: 'large',
 } as const;
 export type NavigationBarSize = typeof NAVIGATION_BAR_SIZES[keyof typeof NAVIGATION_BAR_SIZES];
+export const NAVIGATION_BAR_SIZES_ARRAY = Object.values(NAVIGATION_BAR_SIZES);
 
 export type NavigationBarElement = {
     label: string;
