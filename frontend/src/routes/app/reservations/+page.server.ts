@@ -1,11 +1,22 @@
 import type { PageServerLoad } from "./$types"
+
 import type { Role } from '$lib/types'
 
-type Card = {
+type EventCard = {
     date: string;
 };
 
-const cards: Card[] = [
+type ConsultationCard = {
+    date: string;
+};
+
+const eventCards: EventCard[] = [
+    {
+        date: '12/12/2024'
+    }
+];
+
+const consultationCards: ConsultationCard[] = [
     {
         date: '12/12/2024'
     }
@@ -13,14 +24,20 @@ const cards: Card[] = [
 
 
 type PageRes = {
-    cards: Card[];
+    eventCards: EventCard[];
+    consultationCards: ConsultationCard[];
     role: Role
 };
 
 export const load: PageServerLoad = ({ locals }): PageRes => {
+    if (!locals.user?.role) {
+        console.error('no role set from the local user, this is embarassing')
+    }
     const role = locals.user?.role as Role
+    console.log("the role is:", role);
     return {
         role,
-        cards,
+        eventCards,
+        consultationCards,
     };
 }
