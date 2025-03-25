@@ -49,8 +49,7 @@ const PAGES = {
   "/signup/password": `/signup/password`,
   "/signup/pending": `/signup/pending`,
   "/signup/verify-email": `/signup/verify-email`,
-  "/soon": `/soon`,
-  "/verify-email": `/verify-email`
+  "/soon": `/soon`
 }
 
 /**
@@ -173,7 +172,7 @@ export function route<T extends keyof AllTypes>(key: T, ...params: any[]): strin
 * ```
 */
 export type KIT_ROUTES = {
-  PAGES: { '/': never, '/app': never, '/app/galerie': never, '/app/galerie/[eventID]': 'eventID', '/app/messages': never, '/app/messages/[id]': 'id', '/app/messages/conversations': never, '/app/profile': never, '/app/profile/about': never, '/app/profile/confidential-policy': never, '/app/profile/image-right-consent-form': never, '/app/profile/notifications': never, '/app/profile/parameters': never, '/app/profile/parameters/login-and-security': never, '/app/profile/parameters/notifications': never, '/app/profile/personal-information': never, '/app/profile/service-condition': never, '/app/profile/user-profile': never, '/app/reservations': never, '/app/reservations/consultations': never, '/app/reservations/events/[id]': 'id', '/app/reservations/events/book': never, '/app/reservations/events/galerie': never, '/app/reservations/events/galerie/[eventID]': 'eventID', '/app/services': never, '/app/users': never, '/signup': never, '/signup/address': never, '/signup/general': never, '/signup/password': never, '/signup/pending': never, '/signup/verify-email': never, '/soon': never, '/verify-email': never }
+  PAGES: { '/': never, '/app': never, '/app/galerie': never, '/app/galerie/[eventID]': 'eventID', '/app/messages': never, '/app/messages/[id]': 'id', '/app/messages/conversations': never, '/app/profile': never, '/app/profile/about': never, '/app/profile/confidential-policy': never, '/app/profile/image-right-consent-form': never, '/app/profile/notifications': never, '/app/profile/parameters': never, '/app/profile/parameters/login-and-security': never, '/app/profile/parameters/notifications': never, '/app/profile/personal-information': never, '/app/profile/service-condition': never, '/app/profile/user-profile': never, '/app/reservations': never, '/app/reservations/consultations': never, '/app/reservations/events/[id]': 'id', '/app/reservations/events/book': never, '/app/reservations/events/galerie': never, '/app/reservations/events/galerie/[eventID]': 'eventID', '/app/services': never, '/app/users': never, '/signup': never, '/signup/address': never, '/signup/general': never, '/signup/password': never, '/signup/pending': never, '/signup/verify-email': never, '/soon': never }
   SERVERS: { 'GET /oauth/google': never, 'GET /oauth/google/callback': never, 'GET /test': never }
   ACTIONS: Record<string, never>
   LINKS: Record<string, never>
