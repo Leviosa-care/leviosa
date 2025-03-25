@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { ArrowRight } from 'lucide-svelte';
 
 	import FormInput from '$lib/components/forms/FormInput.svelte';
@@ -7,11 +8,8 @@
 	import GenderRadio from './GenderRadio.svelte';
 	import Drawer from '$lib/components/Drawer.svelte';
 	import Header from '../Header.svelte';
-	let isDrawerOpen = $state(false);
-	function toggleDrawer() {
-		isDrawerOpen = !isDrawerOpen;
-	}
-	import { goto } from '$app/navigation';
+	let isOpen = $state(false);
+
 	function handleSubmit() {
 		// TODO: store that data in some store, so that I can use it whenever I want, whatever route I am...
 		goto('address');
@@ -43,14 +41,14 @@
 			</div>
 			<div class="grid" style="--gap: 1.5rem;">
 				<p class="title">Date de naissance</p>
-				<TimePickerButton onClick={() => toggleDrawer()} />
+				<TimePickerButton onClick={() => (isOpen = !isOpen)} />
 			</div>
 		</div>
 		<Button rightIcon={ArrowRight} onClick={handleSubmit}>Continue ton inscription</Button>
 	</form>
 </div>
 
-<Drawer bind:isOpen={isDrawerOpen} closeDrawer={() => (isDrawerOpen = false)}>
+<Drawer bind:isOpen>
 	<div>soem content that should be in the drawer to help me select the right date guys</div>
 	<div>soem content that should be in the drawer to help me select the right date guys</div>
 	<div>soem content that should be in the drawer to help me select the right date guys</div>

@@ -4,27 +4,27 @@
 
 	import type { Freelancer } from '$lib/types';
 
-	let isDrawerOpen = $state(false);
-	function toggleDrawer() {
-		isDrawerOpen = !isDrawerOpen;
-	}
+	let isOpen = $state(false);
+
 	const chevronSize = 12;
+
 	interface Props {
 		prestataires: Freelancer[];
 		value?: string | undefined;
 	}
 
 	let { prestataires, value = $bindable('Selectionne un(e) prestataire') }: Props = $props();
+
 	function handlePrestataireClick(e: MouseEvent) {
 		const target = e.currentTarget as HTMLButtonElement;
 		const person = prestataires.find((person) => person.id === target.id);
 		value = `Prestataire: ${person?.firstname} ${person?.lastname}`;
-		isDrawerOpen = false;
+		isOpen = false;
 	}
 	// TODO: make the value of the input change what is display on data or a copy of data that I can use after filtering data
 </script>
 
-<button type="button" class="toggler stroke" onclick={() => toggleDrawer()}>
+<button type="button" class="toggler stroke" onclick={() => (isOpen = !isOpen)}>
 	<div class="flex" style="justify-content: space-between;">
 		<div class="icon">
 			<User strokeWidth={1.25} aria-label="Icone utilisateur" />
@@ -36,7 +36,7 @@
 		</div>
 	</div>
 </button>
-<Drawer bind:isOpen={isDrawerOpen} closeDrawer={() => (isDrawerOpen = false)}>
+<Drawer bind:isOpen>
 	<div class="holder flex">
 		{#if prestataires.length > 12}
 			<div class="drawer-header grid">

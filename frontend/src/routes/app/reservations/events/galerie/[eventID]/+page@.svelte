@@ -1,19 +1,16 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import type { PageData } from './$types';
+
+	import { ChevronLeft, SlidersHorizontal } from 'lucide-svelte';
 
 	import Partenaire from './Partenaire.svelte';
 	import Slide from './Slide.svelte';
-	import { ChevronLeft, SlidersHorizontal } from 'lucide-svelte';
 	import Drawer from '$lib/components/Drawer.svelte';
-	let isDrawerOpen = $state(false);
-
-	function openDrawer() {
-		isDrawerOpen = true;
-	}
 
 	import { createVerticalSwipeHandler } from '$lib/scripts/swipe';
+
+	let isOpen = $state(false);
+
 	interface Props {
 		data: PageData;
 	}
@@ -32,10 +29,7 @@
 
 	// TODO: handle the content on the drawer when clicking on the share and download icon
 	// TODO: make that thing responsive too.
-	let { events, eventID } = $derived(data);
-	run(() => {
-		console.log('the event ID is:', eventID);
-	});
+	let { events, eventID } = data;
 </script>
 
 <div class="content">
@@ -56,12 +50,12 @@
 			use:swipeAction.action
 		>
 			{#each events as event}
-				<Slide images={event.images} {openDrawer} />
+				<Slide images={event.images} openDrawer={() => (isOpen = true)} />
 			{/each}
 		</div>
 	</div>
 </div>
-<Drawer bind:isOpen={isDrawerOpen} closeDrawer={() => (isDrawerOpen = false)}>
+<Drawer bind:isOpen>
 	<div class="flex" style="justify-content: center;">
 		<div class="swipe-down"></div>
 	</div>

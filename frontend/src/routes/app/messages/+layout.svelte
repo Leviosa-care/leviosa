@@ -1,9 +1,11 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import type { LayoutData } from './$types';
+	import { redirectTo } from '$lib/scripts/redirect';
+
 	import { NAV_STATES, MESSAGE_STATES } from '$lib/types';
 	import { navigationState, messageState } from '$lib/stores/persisted_stores.svelte';
 
-	import { redirectTo } from '$lib/scripts/redirect';
-	import { onMount } from 'svelte';
 	onMount(() => {
 		if (window.matchMedia('(max-width: 500px)').matches) {
 			console.log('need to redirect brother');
@@ -19,11 +21,14 @@
 		}
 	});
 
+	import { SquarePen } from 'lucide-svelte';
+
 	import MessageNavigationBar from '$lib/components/navigation/MessageNavigationBar.svelte';
 	import Conversations from './[id]/Conversations.svelte';
 	import NoteDeSeance from './[id]/NoteDeSeance.svelte';
+	import NewMessage from './NewMessage.svelte';
+	import Drawer from '$lib/components/Drawer.svelte';
 
-	import type { LayoutData } from './$types';
 	interface Props {
 		data: LayoutData;
 		children?: import('svelte').Snippet;
@@ -31,12 +36,7 @@
 	let { data, children }: Props = $props();
 	const { messages, notes } = data;
 
-	import { SquarePen } from 'lucide-svelte';
-
-	import NewMessage from './NewMessage.svelte';
-	import Drawer from '$lib/components/Drawer.svelte';
-
-	let isDrawerOpen: boolean = $state(false);
+	let isOpen: boolean = $state(false);
 </script>
 
 <div class="content">
@@ -49,7 +49,7 @@
 				</div>
 				{#if $messageState === MESSAGE_STATES.Conversations}
 					<div class="icons">
-						<button class="new-message" onclick={() => (isDrawerOpen = !isDrawerOpen)}>
+						<button class="new-message" onclick={() => (isOpen = !isOpen)}>
 							<SquarePen />
 						</button>
 					</div>
@@ -69,7 +69,7 @@
 		{/if}
 	</div>
 </div>
-<Drawer bind:isOpen={isDrawerOpen} closeDrawer={() => (isDrawerOpen = false)}>
+<Drawer bind:isOpen>
 	<NewMessage />
 </Drawer>
 

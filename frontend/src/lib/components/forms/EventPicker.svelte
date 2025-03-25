@@ -40,10 +40,7 @@
 		return day.slice(0, 2);
 	}
 
-	let isDrawerOpen = $state(false);
-	function toggleDrawer() {
-		isDrawerOpen = !isDrawerOpen;
-	}
+	let isOpen = $state(false);
 
 	// TODO: export that thing
 	let value: string | undefined = $state('Selectionne un creneau');
@@ -56,7 +53,7 @@
 
 		value = `${day} ${date} ${month} - ${hour}`;
 
-		isDrawerOpen = false;
+		isOpen = false;
 	}
 	// TODO: make a function that can converts the months into its index. It is for the label that gives the date under the day
 
@@ -72,8 +69,8 @@
 	const swipeCalendarAction = createHorizontalSwipeHandler(swipeCalendar);
 </script>
 
-<TimePickerButton {value} onClick={() => toggleDrawer()} />
-<Drawer bind:isOpen={isDrawerOpen} closeDrawer={() => (isDrawerOpen = false)}>
+<TimePickerButton {value} onClick={() => (isOpen = !isOpen)} />
+<Drawer bind:isOpen>
 	<div class="holder stroke">
 		{#each monthsData as month, monthIndex}
 			<div
@@ -83,7 +80,7 @@
 				<div class="grid">
 					<div class="flex">
 						<p class="drawer-title dark-primary-content">Choisis un creneau</p>
-						<button type="button" class="close flex" onclick={() => (isDrawerOpen = false)}>
+						<button type="button" class="close flex" onclick={() => (isOpen = false)}>
 							<XIcon />
 						</button>
 					</div>

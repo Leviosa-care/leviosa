@@ -11,12 +11,7 @@
 	let { freelancers }: Props = $props();
 
 	let selectedFreelancer: (typeof freelancers)[0] | undefined = $state();
-	let isDrawerOpen = $state(false);
-
-	function openDrawer(freelancer: typeof selectedFreelancer) {
-		isDrawerOpen = true;
-		selectedFreelancer = freelancer;
-	}
+	let isOpen = $state(false);
 	// TODO: changes the badges for this thing ?
 </script>
 
@@ -31,7 +26,14 @@
 	</div>
 	<div class="badges flex" style="--gap: 2rem;">
 		{#each freelancers as freelancer}
-			<button onclick={() => openDrawer(freelancer)} class="badge flex" style="--gap:0.2rem;">
+			<button
+				onclick={() => {
+					isOpen = true;
+					selectedFreelancer = freelancer;
+				}}
+				class="badge flex"
+				style="--gap:0.2rem;"
+			>
 				<img class="photo" src={freelancer.avatar} alt="" />
 				<p class="name">{freelancer.firstname}</p>
 			</button>
@@ -39,7 +41,7 @@
 	</div>
 </div>
 
-<Drawer bind:isOpen={isDrawerOpen} closeDrawer={() => (isDrawerOpen = false)}>
+<Drawer bind:isOpen>
 	<Profile freelancer={selectedFreelancer} />
 </Drawer>
 

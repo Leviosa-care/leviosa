@@ -1,31 +1,30 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import type { PageData } from './$types';
 
-	import { Contrast } from 'lucide-svelte';
+	import { Contrast, LogOut, Instagram } from 'lucide-svelte';
 	import Drawer from '$lib/components/Drawer.svelte';
-	let isDrawerOpen = $state(false);
-	function toggleDrawer() {
-		return () => (isDrawerOpen = !isDrawerOpen);
-	}
 	import Button from '$lib/components/Button.svelte';
 
 	// TODO: add the part for when a user access that part of the page without having an account
 	import ProfileCard from './ProfileCard.svelte';
 	import Field from './Field.svelte';
-	function disconnect() {
-		console.log('just delete the token that allows authentication');
-	}
-	import { goto } from '$app/navigation';
-	import { LogOut, Instagram } from 'lucide-svelte';
 	import AppearanceDrawer from './AppearanceDrawer.svelte';
 	import Socials from './Socials.svelte';
 	import Google from '../../../assets/google.svelte';
+
 	interface Props {
 		data: PageData;
 	}
 
 	let { data }: Props = $props();
-	let { perso, juridique, parameters } = $derived(data);
+	let { perso, juridique, parameters } = data;
+
+	let isOpen = $state(false);
+
+	function disconnect() {
+		console.log('just delete the token that allows authentication');
+	}
 </script>
 
 <div class="content grid" style="--gap: 2rem;">
@@ -46,7 +45,7 @@
 		<div class="grid" style="--gap: 0.75rem;">
 			<p class="title">Parametres</p>
 			<div>
-				<Field name="Apparence" icon={Contrast} action={toggleDrawer()} />
+				<Field name="Apparence" icon={Contrast} action={() => (isOpen = !isOpen)} />
 				{#each parameters as { name, icon, pathname }}
 					<Field {name} {icon} action={() => console.log('hello sir')} />
 				{/each}
@@ -66,7 +65,7 @@
 		</div>
 	</div>
 </div>
-<Drawer bind:isOpen={isDrawerOpen} closeDrawer={() => (isDrawerOpen = false)}>
+<Drawer bind:isOpen>
 	<AppearanceDrawer />
 </Drawer>
 

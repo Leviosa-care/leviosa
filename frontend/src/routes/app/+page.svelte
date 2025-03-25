@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { navstate } from '$lib/stores/navbar';
-	navstate.set('accueil'); // just to forget the value stored in localstore when reconecting and I had the page to another link.
+	import type { PageData } from './$types';
 
+	import Drawer from '$lib/components/Drawer.svelte';
 	import NoEventCard from '$lib/components/ui/NoEventCard.svelte';
 	import EventCard from '$lib/components/ui/EventCard.svelte';
 	import InstallHeader from './InstallHeader.svelte';
@@ -10,25 +10,22 @@
 	import ServiceCarousel from './ServiceCarousel.svelte';
 	import QRCode from './QRCode.svelte';
 
-	import type { PageData } from './$types';
+	import { NAV_STATES } from '$lib/types';
+	import { navigationState } from '$lib/stores/persisted_stores.svelte';
+	navigationState.set(NAV_STATES.Accueil); // just to forget the value stored in localstore when reconecting and I had the page to another link.
+
 	interface Props {
 		data: PageData;
 	}
 	let { data }: Props = $props();
 	const { name, qrcode } = data;
 
-	import Drawer from '$lib/components/Drawer.svelte';
-
-	let isDrawerOpen = $state(false);
-	function toggleDrawer() {
-		console.log('toggling the drawer');
-		return () => (isDrawerOpen = !isDrawerOpen);
-	}
+	let isOpen = $state(false);
 </script>
 
 <InstallHeader />
 <div class="content flow relative" style="--flow-space: 3rem;">
-	<Header {name} {toggleDrawer} />
+	<Header {name} toggleDrawer={() => (isOpen = !isOpen)} />
 	<Section title="decouvrez nos services" cta="Voir tout">
 		<ServiceCarousel />
 	</Section>
@@ -43,7 +40,7 @@
 		<p>Jean Dupont, ton dernier prestataire massage</p>
 	</div>
 </div>
-<Drawer bind:isOpen={isDrawerOpen} closeDrawer={() => (isDrawerOpen = false)}>
+<Drawer bind:isOpen>
 	<QRCode {qrcode} />
 </Drawer>
 

@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { run, stopPropagation, createBubbler } from 'svelte/legacy';
-
-	const bubble = createBubbler();
-	// =======================
-	// Props and Reactive Variables
-	// =======================
-	import { slide, fade } from 'svelte/transition';
+	import { run, createBubbler } from 'svelte/legacy';
 	import { onDestroy } from 'svelte';
-	import { browser } from '$app/environment'; // Check if in browser
+	import { browser } from '$app/environment';
+	import { slide, fade } from 'svelte/transition';
+
+	const bubble = function (e: MouseEvent) {
+		e.stopPropagation();
+		createBubbler()('click');
+	};
 
 	let scrollPosition: number = 0;
 
@@ -17,26 +17,24 @@
 	import { createVerticalSwipeHandler } from '$lib/scripts/swipe';
 	interface Props {
 		isOpen?: boolean;
-		closeDrawer: () => void;
 		children?: import('svelte').Snippet;
 	}
 
-	let { isOpen = $bindable(false), closeDrawer, children }: Props = $props();
+	let { children, isOpen = $bindable(false) }: Props = $props();
 
 	// =======================
 	// Helper Functions
 	// =======================
-	function onSwipe(direction: 'top' | 'bottom') {
-		if (direction === 'bottom') {
-			closeDrawer();
-		}
-	}
+	const onSwipe = (direction: 'top' | 'bottom') => {
+		if (direction === 'bottom') isOpen = false;
+	};
 
 	const closeSwipeAction = createVerticalSwipeHandler(onSwipe);
 	function handleKeydown(event: KeyboardEvent) {
+		event.stopPropagation();
 		if (event.key === 'Enter' || event.key === ' ') {
 			event.preventDefault();
-			closeDrawer();
+			isOpen = false;
 		}
 	}
 
@@ -56,7 +54,7 @@
 		}
 	}
 
-	run(() => {
+	$effect(() => {
 		toggleBodyScroll(isOpen);
 	});
 
@@ -72,8 +70,8 @@
 	<div
 		transition:fade={{ duration: 300 }}
 		class="overlay"
-		onclick={closeDrawer}
-		onkeydown={stopPropagation(handleKeydown)}
+		onclick={() => (isOpen = false)}
+		onkeydown={handleKeydown}
 		class:visible={isOpen}
 		tabindex="0"
 		role="button"
@@ -82,17 +80,14 @@
 		transition:slide={{ duration: 300 }}
 		class="drawer"
 		class:visible={isOpen}
-		onclick={stopPropagation(bubble('click'))}
-		onkeydown={stopPropagation(handleKeydown)}
+		onclick={bubble}
+		onkeydown={handleKeydown}
 		use:closeSwipeAction.action
 		tabindex="0"
 		role="button"
 	>
 		{@render children?.()}
 	</div>
-	<!-- <div class="modal"> -->
-	<!--     <slot></slot> -->
-	<!-- </div> -->
 {/if}
 
 <style>
