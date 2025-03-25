@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { MessageState } from '$lib/types';
-	import { messagestate } from '$lib/stores/messagebar';
+	import { messageState } from '$lib/stores/persisted_stores.svelte';
 	interface Props {
 		active?: boolean;
 		name?: MessageState;
@@ -12,7 +12,7 @@
 		let targetElement = event.currentTarget as HTMLButtonElement;
 		let id = targetElement.id as MessageState;
 		if (!active) active = !active;
-		messagestate.set(id);
+		messageState.set(id);
 	}
 </script>
 

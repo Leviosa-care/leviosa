@@ -1,9 +1,7 @@
-<svelte:options />
-
 <script lang="ts">
 	import ServiceNavigationBarIcon from './atoms/ServiceNavigationBarIcon.svelte';
-	import type { ServiceState } from '$lib/types';
-	import { servicestate } from '$lib/stores/servicebar';
+	import { SERVICE_STATES_ARRAY } from '$lib/types';
+	import { serviceState } from '$lib/stores/persisted_stores.svelte';
 
 	type BarType = 'light' | 'dark';
 	interface Props {
@@ -11,16 +9,11 @@
 	}
 
 	let { type = 'dark' }: Props = $props();
-
-	// TODO: there is probably a better way to do it brother
-	let names: ServiceState[] = ['A propos', 'Deroule', 'Prestataires'];
-
-	export { type };
 </script>
 
 <nav class="navigation-bar flex">
-	{#each names as name}
-		<ServiceNavigationBarIcon {name} active={$servicestate === name} {type} />
+	{#each SERVICE_STATES_ARRAY as name}
+		<ServiceNavigationBarIcon {name} active={$serviceState === name} {type} />
 	{/each}
 </nav>
 

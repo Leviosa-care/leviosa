@@ -1,4 +1,8 @@
 <script lang="ts">
+	// TODO: add a conversation suggestion when the user has no conversation like on instagram
+	import { MESSAGE_STATES } from '$lib/types';
+	import { messageState } from '$lib/stores/persisted_stores.svelte';
+
 	import Message from './Message.svelte';
 	import Note from './Note.svelte';
 	import NoMessage from './NoMessage.svelte';
@@ -13,14 +17,11 @@
 	}
 	let { data }: Props = $props();
 	const { conversations, notes } = data;
-
-	// TODO: add a conversation suggestion when the user has no conversation like on instagram
-	import { messagestate } from '$lib/stores/messagebar';
 </script>
 
 <div class="content" style="--flow-space: 3rem;">
 	<div class="underlay"></div>
-	{#if $messagestate === 'Notes de séances'}
+	{#if $messageState === MESSAGE_STATES.NotesDeSeances}
 		{#if notes.length === 0}
 			<NoNote />
 		{:else}

@@ -7,7 +7,7 @@
 	import type { ServiceState } from '$lib/types';
 
 	// Stores
-	import { servicestate } from '$lib/stores/servicebar';
+	import { serviceState } from '$lib/stores/persisted_stores.svelte';
 
 	// =======================
 	// Props and Types
@@ -31,7 +31,7 @@
 		const id = targetElement.id as ServiceState;
 
 		if (!active) active = true;
-		servicestate.set(id);
+		serviceState.set(id);
 	}
 </script>
 

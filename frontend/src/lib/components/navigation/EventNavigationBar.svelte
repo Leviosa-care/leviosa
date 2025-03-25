@@ -1,6 +1,6 @@
 <script lang="ts">
 	import EventNavigationBarIcon from './atoms/EventNavigationBarIcon.svelte';
-	import { eventstate } from '$lib/stores/eventbar';
+	import { eventState } from '$lib/stores/persisted_stores.svelte';
 
 	import type { EventTabs } from '$lib/types';
 
@@ -11,8 +11,10 @@
 
 	// NOTE: here I put all the possible links possible, I need to split that by roles
 	let tabs: EventTabs = {
-		user: [],
-		userPremium: [
+		unknown: [],
+		anonymous: [],
+		basic: [],
+		premium: [
 			{ name: 'Evenements a venir', href: '/app/reservations' },
 			{ name: 'Reserve ta place', href: '/app/reservations/events/book' },
 			{
@@ -21,7 +23,7 @@
 			}
 		],
 		freelance: [],
-		helper: [],
+		guest: [],
 		admin: []
 	};
 
@@ -39,7 +41,7 @@
 <nav class="navigation-bar snaps-inline container grid" style="--gap: 1.5rem;">
 	{#each tabs[role] as { name, href }}
 		<div>
-			<EventNavigationBarIcon {name} {href} active={$eventstate === name} />
+			<EventNavigationBarIcon {name} {href} active={$eventState === name} />
 		</div>
 	{/each}
 </nav>

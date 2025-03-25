@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { EventState } from '$lib/types';
-	import { eventstate } from '$lib/stores/eventbar';
+	import { eventState } from '$lib/stores/persisted_stores.svelte';
 	interface Props {
 		active?: boolean;
 		href: string;
@@ -13,7 +13,7 @@
 		let targetElement = event.currentTarget as HTMLButtonElement;
 		let id = targetElement.id as EventState;
 		if (!active) active = !active;
-		eventstate.set(id);
+		eventState.set(id);
 	}
 </script>
 

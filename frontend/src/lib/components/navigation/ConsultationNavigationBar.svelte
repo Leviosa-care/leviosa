@@ -1,25 +1,27 @@
 <script lang="ts">
+	import { ROLES, type ConsultationTabs } from '$lib/types';
 	import ConsultationNavigationBarIcon from './atoms/ConsultationNavigationBarIcon.svelte';
-	import { consultationstate } from '$lib/stores/consultationbar';
+	import { consultationState } from '$lib/stores/persisted_stores.svelte';
 
-	import type { ConsultationTabs } from '$lib/types';
 	interface Props {
 		role: import('$lib/types').Role;
 	}
 	let { role }: Props = $props();
 
 	let tabs: ConsultationTabs = {
-		user: [],
-		userPremium: [
+		[ROLES.Unknown]: [],
+		[ROLES.Anonymous]: [],
+		[ROLES.Basic]: [],
+		[ROLES.Premium]: [
 			{ name: 'Consultations a venir', href: '/app/reservations' },
 			{
 				name: 'Reserve ta consultation',
 				href: '/app/reservations/consultations/book'
 			}
 		],
-		freelance: [],
-		helper: [],
-		admin: []
+		[ROLES.Freelance]: [],
+		[ROLES.Guest]: [],
+		[ROLES.Admin]: []
 	};
 
 	// {
@@ -31,7 +33,7 @@
 <nav class="navigation-bar snaps-inline container grid" style="--gap: 1.5rem;">
 	{#each tabs[role] as { name, href }}
 		<div>
-			<ConsultationNavigationBarIcon {name} {href} active={$consultationstate === name} />
+			<ConsultationNavigationBarIcon {name} {href} active={$consultationState === name} />
 		</div>
 	{/each}
 </nav>

@@ -1,16 +1,20 @@
 <script lang="ts">
-	import { navstate } from '$lib/stores/navbar';
+	import { NAV_STATES, MESSAGE_STATES } from '$lib/types';
+	import { navigationState, messageState } from '$lib/stores/persisted_stores.svelte';
 
 	import { redirectTo } from '$lib/scripts/redirect';
 	import { onMount } from 'svelte';
 	onMount(() => {
 		if (window.matchMedia('(max-width: 500px)').matches) {
 			console.log('need to redirect brother');
-			navstate.set('messages'); // just to forget the value stored in localstore when reconecting and I had the page to another link.
+			navigationState.set(NAV_STATES.Messages); // just to forget the value stored in localstore when reconecting and I had the page to another link.
 			redirectTo('/app/messages');
 		} else if (window.matchMedia('(min-width: 500px)').matches) {
-			if ($navstate !== 'conversations' && $navstate !== 'notes de seances') {
-				navstate.set('conversations');
+			if (
+				$navigationState !== NAV_STATES.Conversations &&
+				$navigationState !== NAV_STATES.NotesDeSeances
+			) {
+				navigationState.set(NAV_STATES.Conversations);
 			}
 		}
 	});
@@ -27,20 +31,12 @@
 	let { data, children }: Props = $props();
 	const { messages, notes } = data;
 
-	import { messagestate } from '$lib/stores/messagebar';
-
 	import { SquarePen } from 'lucide-svelte';
 
 	import NewMessage from './NewMessage.svelte';
 	import Drawer from '$lib/components/Drawer.svelte';
 
 	let isDrawerOpen: boolean = $state(false);
-
-	function toggleDrawer() {
-		// make sur  that you have different action based on the window size
-		// on small screen I want to open the drawer, on bigger screen, I want to open a modal
-		isDrawerOpen = !isDrawerOpen;
-	}
 </script>
 
 <div class="content">
@@ -51,9 +47,9 @@
 					<h2 class="page-title">Messages</h2>
 					<p>Afin de garder le contact</p>
 				</div>
-				{#if $messagestate === 'Conversations'}
+				{#if $messageState === MESSAGE_STATES.Conversations}
 					<div class="icons">
-						<button class="new-message" onclick={toggleDrawer}>
+						<button class="new-message" onclick={() => (isDrawerOpen = !isDrawerOpen)}>
 							<SquarePen />
 						</button>
 					</div>
@@ -66,9 +62,9 @@
 		{@render children?.()}
 	</div>
 	<div class="right">
-		{#if $navstate === 'conversations' || $navstate === 'messages'}
+		{#if $navigationState === NAV_STATES.Conversations || $navigationState === NAV_STATES.Messages}
 			<Conversations {messages} />
-		{:else if $navstate === 'notes de seances'}
+		{:else if $navigationState === NAV_STATES.NotesDeSeances}
 			<NoteDeSeance {notes} />
 		{/if}
 	</div>

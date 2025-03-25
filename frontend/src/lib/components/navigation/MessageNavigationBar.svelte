@@ -1,26 +1,29 @@
 <script lang="ts">
 	import MessageNavigationBarIcon from './atoms/MessageNavigationBarIcon.svelte';
-	import { messagestate } from '$lib/stores/messagebar';
+	import { messageState } from '$lib/stores/persisted_stores.svelte';
 
 	import type { MessageTabs } from '$lib/types';
 	import { role } from '$lib/data';
+	import { ROLES } from '$lib/types';
 
 	let tabs: MessageTabs = {
-		user: [],
-		userPremium: [
+		[ROLES.Unknown]: [],
+		[ROLES.Anonymous]: [],
+		[ROLES.Basic]: [],
+		[ROLES.Premium]: [
 			{ name: 'Conversations', href: '/app/reservations' },
 			{ name: 'Notes de séances', href: '/app/reservations' }
 		],
-		freelance: [],
-		helper: [],
-		admin: []
+		[ROLES.Freelance]: [],
+		[ROLES.Guest]: [],
+		[ROLES.Admin]: []
 	};
 </script>
 
 <nav class="navigation-bar snaps-inline grid" style="--gap: 1.5rem;">
 	{#each tabs[role] as { name }}
 		<div>
-			<MessageNavigationBarIcon {name} active={$messagestate === name} />
+			<MessageNavigationBarIcon {name} active={$messageState === name} />
 		</div>
 	{/each}
 </nav>

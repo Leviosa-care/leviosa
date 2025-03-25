@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ConsultationState } from '$lib/types';
-	import { consultationstate } from '$lib/stores/consultationbar';
+	import { consultationState } from '$lib/stores/persisted_stores.svelte';
 	interface Props {
 		active?: boolean;
 		href: string;
@@ -13,7 +13,7 @@
 		let targetElement = event.currentTarget as HTMLButtonElement;
 		let id = targetElement.id as ConsultationState;
 		if (!active) active = !active;
-		consultationstate.set(id);
+		consultationState.set(id);
 	}
 </script>
 

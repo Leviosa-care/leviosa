@@ -1,12 +1,13 @@
 <script lang="ts">
 	import type { NavState, NavigationBarElement } from '$lib/types';
 	import { Icon } from 'lucide-svelte';
-	import { navstate } from '$lib/stores/navbar';
+
+	import { navigationState } from '$lib/stores/persisted_stores.svelte';
 
 	function setState(event: MouseEvent) {
 		let targetElement = event.currentTarget as HTMLButtonElement;
 		let id = targetElement.id as NavState;
-		navstate.set(id);
+		navigationState.set(id);
 	}
 
 	// TODO: if I want to fill the icons, use that in the svelte component

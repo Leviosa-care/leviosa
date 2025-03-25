@@ -1,14 +1,14 @@
 <script lang="ts">
 	// make the layout for all the profile page with the right title
 	// TODO: change the title style to make it more classy
-	// inspiration for the layout :
-	import { navstate } from '$lib/stores/navbar';
+	import { NAV_STATES } from '$lib/types';
+	import { navigationState } from '$lib/stores/persisted_stores.svelte';
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
 
 	let { children }: Props = $props();
-	navstate.set('profil'); // just to forget the value stored in localstore when reconecting and I had the page to another link.
+	navigationState.set(NAV_STATES.Profil);
 </script>
 
 <div class="content">

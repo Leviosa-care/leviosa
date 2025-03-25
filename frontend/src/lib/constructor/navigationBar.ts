@@ -201,12 +201,6 @@ export const navigationBarIcons: NavigationBarIcons = {
     freelance,
     admin
     // TODO: add as many role as needed
-    // bodyguard: {
-    //     small: [],
-    //     large: []
-    // },
-    // photograph: {
-    //     small: [],
-    //     large: []
-    // },
+    // bodyguard: {},
+    // photograph: {},
 };

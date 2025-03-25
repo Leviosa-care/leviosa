@@ -1,28 +1,24 @@
 <script lang="ts">
+	import type { Role, NavigationBarElement } from '$lib/types';
+
 	import { Slack, PanelLeftClose, PanelLeftOpen } from 'lucide-svelte';
-
-	import { navstate } from '$lib/stores/navbar';
-
 	import NavigationBarIcon from '$lib/components/navigation/atoms/NavigationBarIcon.svelte';
+
+	import { navigationState } from '$lib/stores/persisted_stores.svelte';
 	import { navigationBarIcons } from '$lib/constructor';
 
-	import { getUserContext } from '$lib/context/user';
-	const user = getUserContext();
-	const role = user?.role ?? 'user';
+	let hideLabel: boolean = $state(false);
 
-	import type { NavigationBarElement } from '$lib/types';
+	let { role }: { role: Role } = $props();
 
-	// TODO: that is imported depending on screen size
 	const smallIcons: NavigationBarElement[] = navigationBarIcons[role].small;
 	const largeIcons: NavigationBarElement[] = navigationBarIcons[role].large;
-
-	let hideLabel: boolean = $state(false);
 </script>
 
 {#snippet navbarIcon(icons: NavigationBarElement[], size: 'small' | 'large')}
 	<div class="icons {size}">
 		{#each icons as icon}
-			<NavigationBarIcon {icon} active={$navstate === icon.label} {hideLabel} />
+			<NavigationBarIcon {icon} active={$navigationState === icon.label} {hideLabel} />
 		{/each}
 		{#if size === 'large'}
 			<button onclick={() => (hideLabel = !hideLabel)} class="panel-left-close">

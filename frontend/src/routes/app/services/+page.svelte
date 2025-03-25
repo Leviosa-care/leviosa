@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { navstate } from '$lib/stores/navbar';
-	navstate.set('services'); // just to forget the value stored in localstore when reconecting and I had the page to another link.
+	import { NAV_STATES, SERVICE_STATES } from '$lib/types';
+	import { navigationState, serviceState } from '$lib/stores/persisted_stores.svelte';
+	navigationState.set(NAV_STATES.Services); // just to forget the value stored in localstore when reconecting and I had the page to another link.
 	// =======================
 	// Components Imports
 	// =======================
@@ -31,7 +32,6 @@
 	// Store and State Imports
 	// =======================
 
-	import { servicestate } from '$lib/stores/servicebar';
 	import { createHorizontalSwipeHandler } from '$lib/scripts/swipe';
 
 	// ============================
@@ -76,7 +76,7 @@
 	// Handle swipe navigation for service items
 	function swipeService(direction: 'left' | 'right'): void {
 		const totalItems = currentOffer.services.length || 0;
-		servicestate.set('A propos'); // Reset to initial state
+		serviceState.set(SERVICE_STATES.APropos); // Reset to initial state
 		if (direction === 'left') {
 			selectedServiceIndex = (selectedServiceIndex + 1) % totalItems;
 			const nextservice = currentOffer.services[selectedServiceIndex];
@@ -101,12 +101,13 @@
 	// Handle swipe navigation for content state changes
 	function swipeContent(direction: 'left' | 'right'): void {
 		if (direction === 'left') {
-			if ($servicestate === 'A propos') servicestate.set('Deroule');
-			else if ($servicestate === 'Deroule') servicestate.set('Prestataires');
+			if ($serviceState === SERVICE_STATES.APropos) serviceState.set(SERVICE_STATES.Deroule);
+			else if ($serviceState === SERVICE_STATES.Deroule)
+				serviceState.set(SERVICE_STATES.Prestataires);
 		}
 		if (direction === 'right') {
-			if ($servicestate === 'Deroule') servicestate.set('A propos');
-			else if ($servicestate === 'Prestataires') servicestate.set('Deroule');
+			if ($serviceState === SERVICE_STATES.Deroule) serviceState.set(SERVICE_STATES.APropos);
+			else if (SERVICE_STATES.Prestataires) serviceState.set(SERVICE_STATES.Deroule);
 		}
 	}
 
@@ -157,16 +158,16 @@
 			<ServiceNavigationBar type={'light'} bind:this={serviceNavBar} />
 		</div>
 		<div use:swipeContentAction.action>
-			{#if $servicestate === 'A propos'}
+			{#if $serviceState === SERVICE_STATES.APropos}
 				<APropos
 					description={currentService.description}
 					duration={currentService.duration}
 					clients_count={currentService.clients_count}
 					positive_responses={currentService.positive_responses}
 				/>
-			{:else if $servicestate === 'Deroule'}
+			{:else if $serviceState === SERVICE_STATES.Deroule}
 				<Deroule />
-			{:else if $servicestate === 'Prestataires'}
+			{:else if $serviceState === SERVICE_STATES.Prestataires}
 				<Prestataires freelancers={currentService.freelancers} />
 			{/if}
 		</div>

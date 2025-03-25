@@ -3,7 +3,7 @@ import type { EventState, MessageState, ConsultationState } from './Store';
 export const ROLES = {
     Unknown: 'unknown',
     Anonymous: 'anonymous',
-    Basic: ' basic',
+    Basic: 'basic',
     Premium: 'premium',
     Guest: 'guest',
     Admin: 'admin',
