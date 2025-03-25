@@ -11,7 +11,15 @@ import {
     Users
 } from 'lucide-svelte';
 
-const user = {
+const unknown = {
+    small: [],
+    large: [],
+}
+const anonymous = {
+    small: [],
+    large: [],
+}
+const basic = {
     small: [
         { label: 'accueil', icon: Home, href: '/app/' },
         {
@@ -48,7 +56,7 @@ const user = {
         { label: 'profil', icon: User, href: '/app/profile' }
     ]
 }
-const userPremium = {
+const premium = {
     small: [
         { label: 'accueil', icon: Home, href: '/app/' },
         {
@@ -91,7 +99,7 @@ const userPremium = {
     ]
 }
 
-const helper = {
+const guest = {
     small: [
         { label: 'accueil', icon: Home, href: '/app/' },
         {
@@ -195,9 +203,11 @@ const admin = {
     ]
 }
 export const navigationBarIcons: NavigationBarIcons = {
-    user,
-    userPremium,
-    helper,
+    unknown,
+    anonymous,
+    basic,
+    premium,
+    guest,
     freelance,
     admin
     // TODO: add as many role as needed
