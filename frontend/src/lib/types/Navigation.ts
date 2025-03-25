@@ -1,8 +1,22 @@
 import type { EventState, MessageState, ConsultationState } from './Store';
 
-export type Role = 'unknown' | 'anonymous' | ' basic' | 'premium' | 'guest' | 'admin' | 'freelance';
+export const ROLES = {
+    Unknown: 'unknown',
+    Anonymous: 'anonymous',
+    Basic: ' basic',
+    Premium: 'premium',
+    Guest: 'guest',
+    Admin: 'admin',
+    Freelance: 'freelance',
+} as const;
+export type Role = typeof ROLES[keyof typeof ROLES];
 
-export type NavigationBarSize = 'small' | 'large';
+
+export const NAVIGATION_BAR_SIZES = {
+    Small: 'small',
+    Large: 'large',
+} as const;
+export type NavigationBarSize = typeof NAVIGATION_BAR_SIZES[keyof typeof NAVIGATION_BAR_SIZES];
 
 export type NavigationBarElement = {
     label: string;

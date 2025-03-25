@@ -1,18 +1,29 @@
-export type Day = 'Lundi' | 'Mardi' | 'Mercredi' | 'Jeudi' | 'Vendredi' | 'Samedi' | 'Dimanche';
+export const DAYS = {
+    Lundi: 'Lundi',
+    Mardi: 'Mardi',
+    Mercredi: 'Mercredi',
+    Jeudi: 'Jeudi',
+    Vendredi: 'Vendredi',
+    Samedi: 'Samedi',
+    Dimanche: 'Dimanche',
+} as const;
+export type Day = typeof DAYS[keyof typeof DAYS];
 
-export type Month =
-    | 'Janvier'
-    | 'Fevrier'
-    | 'Mars'
-    | 'Avril'
-    | 'Mai'
-    | 'Juin'
-    | 'Juillet'
-    | 'Aout'
-    | 'Septembre'
-    | 'Octobre'
-    | 'Novembre'
-    | 'Decembre';
+export const MONTHS = {
+    Janvier: 'Janvier',
+    Fevrier: 'Fevrier',
+    Mars: 'Mars',
+    Avril: 'Avril',
+    Mai: 'Mai',
+    Juin: 'Juin',
+    Juillet: 'Juillet',
+    Aout: 'Aout',
+    Septembre: 'Septembre',
+    Octobre: 'Octobre',
+    Novembre: 'Novembre',
+    Decembre: 'Decembre',
+} as const;
+export type Month = typeof MONTHS[keyof typeof MONTHS];
 
 // TODO: find a type for days that goes from 1 to 31
 // TODO: find a type for hours that goes from 1 to 24
