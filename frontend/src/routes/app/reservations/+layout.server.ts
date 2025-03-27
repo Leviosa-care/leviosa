@@ -1,8 +1,6 @@
-import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
-type PageRes = { role: import('$lib/types').Role };
+import { redirect } from '@sveltejs/kit';
 
-export const load: LayoutServerLoad = ({ locals }): PageRes => {
+export const load: LayoutServerLoad = ({ locals }) => {
     if (!locals.user) throw redirect(302, '/');
-    return { role: locals.user?.role };
 }

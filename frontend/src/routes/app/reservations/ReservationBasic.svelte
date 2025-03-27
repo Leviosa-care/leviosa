@@ -1,14 +1,6 @@
 <script lang="ts">
-	let { cards } = $props();
-
-	import { eventstate } from '$lib/stores/eventbar';
-	eventstate.set('Evenements a venir');
-
 	import { Images } from 'lucide-svelte';
 	import { redirectTo } from '$lib/scripts/redirect';
-	// TODO: is this the thing to do ?
-	import { reservationstate } from '$lib/stores/reservationtab';
-	reservationstate.set('consultations');
 
 	import EventCard from '$lib/components/ui/EventCard.svelte';
 	import ConsultationCard from '$lib/components/ui/ConsultationCard.svelte';
@@ -18,16 +10,27 @@
 	import ConsultationNavigationBar from '$lib/components/navigation/ConsultationNavigationBar.svelte';
 	import Tabs from '$lib/components/Tabs.svelte';
 
+	import { EVENT_STATES, RESERVATION_STATES } from '$lib/types';
+	import { eventState, reservationState } from '$lib/stores/persisted_stores.svelte';
+
+	eventState.set(EVENT_STATES.EvenementsAVenir);
+	reservationState.set(RESERVATION_STATES.Consultations);
+
+	let { eventCards, consultationCards } = $props();
+
+	// TODO: change that function, this is stupid
 	function handleTab(): void {
-		if ($reservationstate === 'consultations') reservationstate.set('events');
-		else reservationstate.set('consultations');
+		if ($reservationState === RESERVATION_STATES.Consultations)
+			reservationState.set(RESERVATION_STATES.Events);
+		else reservationState.set(RESERVATION_STATES.Consultations);
 	}
 	const offers = [
 		{ name: 'Consultations', action: () => handleTab() },
 		{ name: 'Evenements', action: () => handleTab() }
 	];
 
-	const role = 'user';
+	import { ROLES } from '$lib/types/Navigation';
+	const role = ROLES.Basic;
 </script>
 
 <div class="event-header grid">
@@ -40,16 +43,16 @@
 	<div class="container">
 		<Tabs {offers} isSecondary={true} />
 	</div>
-	{#if $reservationstate === 'consultations'}
+	{#if $reservationState === RESERVATION_STATES.Consultations}
 		<ConsultationNavigationBar {role} />
 	{:else}
 		<EventNavigationBar {role} />
 	{/if}
 </div>
-{#if $reservationstate === 'events'}
-	<div class="content grid" style="padding-inline: 0.75rem;">
+{#if $reservationState === RESERVATION_STATES.Events}
+	<div class="content grid px-3">
 		<div class="grid" style="margin-top: 1rem;">
-			{#if cards.length > 0}
+			{#if eventCards.length > 0}
 				<EventCard />
 			{:else}
 				<NoEvent />
@@ -58,7 +61,7 @@
 	</div>
 {:else}
 	<div class="content grid" style="padding-inline: 0.75rem;">
-		{#if cards.length > 0}
+		{#if eventCards.length > 0}
 			<ConsultationCard id="" />
 		{:else}
 			<NoConsultation />

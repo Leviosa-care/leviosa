@@ -1,20 +1,25 @@
 <script lang="ts">
-	import ReservationUser from './ReservationUser.svelte';
-	import ReservationUserPremium from './ReservationUserPremium.svelte';
-	import ReservationAdmin from './ReservationAdmin.svelte';
+	import { ROLES } from '$lib/types/Navigation';
+
+	import ReservationBasic from './ReservationBasic.svelte';
+	// import ReservationPremium from './ReservationPremium.svelte';
+	// import ReservationAdmin from './ReservationAdmin.svelte';
 
 	interface Props {
 		data: import('./$types').PageData;
 	}
 
 	let { data }: Props = $props();
-	let { cards, role } = data;
+	console.log('the data received is:', data);
+	let { role, eventCards, consultationCards } = data;
+	$inspect({ role, eventCards, consultationCards });
 </script>
 
-{#if role === 'user'}
-	<ReservationUser {cards} />
-{:else if role === 'admin'}
-	<ReservationAdmin {cards} />
-{:else if role === 'userPremium'}
-	<ReservationUserPremium {cards} />
+{#if role === ROLES.Basic}
+	<ReservationBasic {eventCards} {consultationCards} />
+	<!-- TODO: add the rest of the user after that -->
+	<!-- {:else if role === ROLES.Admin} -->
+	<!-- 	<ReservationAdmin {cards} /> -->
+	<!-- {:else if role === ROLES.Premium} -->
+	<!-- 	<ReservationPremium {cards} /> -->
 {/if}

@@ -8,7 +8,8 @@ type User = {
 }
 
 // NOTE: just for the time of developping the app
-export const role: Role = 'admin';
+import { ROLES } from '$lib/types';
+export const role: Role = ROLES.Basic;
 export const mockUser: User = {
     firstname: 'John',
     lastname: 'DOE',

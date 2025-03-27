@@ -11,7 +11,7 @@
 	let { name, hasEvent = true, toggleDrawer }: Props = $props();
 </script>
 
-<div class="content container relative flex">
+<div class="content relative container flex">
 	<div class="header flex" style="--gap: 0.75rem;">
 		<img class="header-avatar" src="https://pbs.twimg.com/media/FA9tIzxUUAUy80c.jpg" alt="denzel" />
 		<div class="">

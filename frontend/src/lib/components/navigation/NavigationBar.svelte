@@ -11,6 +11,8 @@
 
 	let { role }: { role: Role } = $props();
 
+	$inspect({ role: role });
+
 	const smallIcons: NavigationBarElement[] = navigationBarIcons[role].small;
 	const largeIcons: NavigationBarElement[] = navigationBarIcons[role].large;
 </script>

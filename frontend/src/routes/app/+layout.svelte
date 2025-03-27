@@ -7,9 +7,7 @@
 	}
 
 	let { children, data }: Props = $props();
-	const { user } = data;
-	import { setUserContext } from '$lib/context/user';
-	setUserContext(user);
+	const { role } = data;
 
 	// page transition
 	import { onNavigate } from '$app/navigation';
@@ -30,7 +28,7 @@
 </script>
 
 <div class="layout">
-	<NavigationBar />
+	<NavigationBar {role} />
 	<div class="content">
 		{@render children?.()}
 	</div>

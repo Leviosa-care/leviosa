@@ -70,3 +70,22 @@ export type EventInformation = {
     mapImg: string;
     headerImg: string;
 };
+
+// 	Title            string`json:"title"`
+// 	Description      string`json:"description"`
+// 	City             string`json:"city"`
+// 	PostalCode       string`json:"postal_code"`
+// 	Address1         string`json:"address1"`
+// 	Address2         string`json:"address2"`
+// 	PlaceCount       int`json:"place_count"`
+// 	FreePlace        int`json:"free_place"`
+// 	BeginAt          time.Time`json:"begin_at"`
+// 	EncryptedBeginAt string`json:"begin_at_formatted"`
+// 	EndAt            time.Time`json:"end_at"`
+// 	EncryptedEndAt   string`json:"end_at_formatted"`
+// Products[]string`json:"products"`
+// Offers[]string`json:"offers"`
+// 	PriceID          string`json:"-"`
+// 	Day              int`json:"day"`
+// 	Month            int`json:"month"`
+// 	Year             int`json:"year"`

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { navstate } from '$lib/stores/navbar';
-	navstate.set('reservations'); // just to forget the value stored in localstore when reconecting and I had the page to another link.
+	import { NAV_STATES } from '$lib/types';
+	import { navigationState } from '$lib/stores/persisted_stores.svelte';
+	navigationState.set(NAV_STATES.Reservations);
 
 	interface Props {
 		children?: import('svelte').Snippet;
