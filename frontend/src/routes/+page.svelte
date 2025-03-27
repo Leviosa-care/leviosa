@@ -1,7 +1,7 @@
 <script lang="ts">
 	// TODO: change the button type to submit when I do the work with form handling
-	import Google from '../assets/google.svelte';
-	import Apple from '../assets/apple.svelte';
+	import Google from '@assets/google.svelte';
+	import Apple from '@assets/apple.svelte';
 	import { Mail, LogIn, Slack } from 'lucide-svelte';
 
 	import FormInput from '$lib/components/forms/FormInput.svelte';
