@@ -41,6 +41,13 @@ func run(ctx context.Context, w io.Writer) error {
 		return fmt.Errorf("load env variables: %w", err)
 	}
 
+	// set environment file (using [mode].env for specified mode)
+	if opts.mode == mode.ModeDev {
+		if err := godotenv.Load(fmt.Sprintf("%s.env", opts.mode.String())); err != nil {
+			return fmt.Errorf("loading env variables: %w", err)
+		}
+	}
+
 	// setup env variables
 	if err := setupEnvVars(); err != nil {
 		return fmt.Errorf("failed to get env variables: %w", err)
@@ -52,12 +59,6 @@ func run(ctx context.Context, w io.Writer) error {
 		return fmt.Errorf("failed to setup logger: %w", err)
 	}
 
-	// set environment file (using [mode].env for specified mode)
-	if opts.mode == mode.ModeDev {
-		if err := godotenv.Load(fmt.Sprintf("%s.env", opts.mode.String())); err != nil {
-			return fmt.Errorf("loading env variables: %w", err)
-		}
-	}
 	// config
 	conf := config.New(ctx, opts.mode.String(), "env")
 	if errs := conf.Load(ctx, opts.mode); len(errs) > 0 {
