@@ -34,23 +34,23 @@ func (s *Server) addRoutes(h *app.App) {
 	router.HandleFunc("GET /health", healthHandler.CheckHealth)
 
 	// user
-	router.HandleFunc("GET /user/me", userHandler.GetUser)
-	router.HandleFunc("PUT /user/me", userHandler.UpdateUser)
-	router.HandleFunc("DELETE /user/me", userHandler.DeleteUser)
+	router.HandleFunc("GET /users/me", userHandler.GetUser)
+	router.HandleFunc("PUT /users/me", userHandler.UpdateUser)
+	router.HandleFunc("DELETE /users/me", userHandler.DeleteUser)
 
-	router.HandleFunc("POST /user/signin", rateLimit(userHandler.Signin))
+	router.HandleFunc("POST /users/signin", rateLimit(userHandler.Signin))
 
-	router.HandleFunc("POST /user/register", rateLimit(userHandler.RegisterUserOTP))
-	router.HandleFunc("POST /user/validate-otp", rateLimit(userHandler.ValidateUserOTP))
-	router.HandleFunc("GET /user/approve-user", rateLimit(userHandler.GetUsersToApprove))
-	router.HandleFunc("POST /user/approve-user", rateLimit(userHandler.ApproveUserRegistration))
+	router.HandleFunc("POST /users/register", rateLimit(userHandler.RegisterUserOTP))
+	router.HandleFunc("POST /users/validate-otp", rateLimit(userHandler.ValidateUserOTP))
+	router.HandleFunc("GET /users/approve-user", rateLimit(userHandler.GetUsersToApprove))
+	router.HandleFunc("POST /users/approve-user", rateLimit(userHandler.ApproveUserRegistration))
 
-	router.HandleFunc("POST /user/signout", userHandler.Signout)
+	router.HandleFunc("POST /users/signout", userHandler.Signout)
 
 	router.HandleFunc("POST /oauth/{provider}", userHandler.HandleOAuth)
 
 	// vote
-	router.HandleFunc("GET /vote/{month}/{year}", voteHandler.GetVotesByUserID)
+	router.HandleFunc("GET /votes/{month}/{year}", voteHandler.GetVotesByUserID)
 
 	// register
 	// NOTE: the old way to do the reservation thing
@@ -75,7 +75,6 @@ func (s *Server) addRoutes(h *app.App) {
 	router.HandleFunc("PUT /events/{id}", eventHandler.ModifyEvent)
 	router.HandleFunc("DELETE /events/{id}", eventHandler.FindEventByID)
 	router.HandleFunc("GET /events/users", eventHandler.FindEventsForUser)
-
 	router.HandleFunc("POST /upload-image", handleImage)
 
 	s.srv.Handler = router
