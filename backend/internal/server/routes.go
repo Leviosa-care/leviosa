@@ -38,6 +38,8 @@ func (s *Server) addRoutes(h *app.App) {
 	router.HandleFunc("PUT /users/me", userHandler.UpdateUser)
 	router.HandleFunc("DELETE /users/me", userHandler.DeleteUser)
 
+	router.HandleFunc("POST /users/exists", userHandler.CheckUserExists)
+
 	router.HandleFunc("POST /users/signin", rateLimit(userHandler.Signin))
 
 	router.HandleFunc("POST /users/register", rateLimit(userHandler.RegisterUserOTP))
