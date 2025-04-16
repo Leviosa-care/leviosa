@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"net/mail"
 	"regexp"
@@ -18,6 +19,10 @@ var (
 )
 
 type Email string
+
+func (e Email) Valid(ctx context.Context) errsx.Map {
+	return ValidateEmail(e.String())
+}
 
 func ValidateEmail(email string) errsx.Map {
 	var pbms errsx.Map
