@@ -9,7 +9,7 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-const folderPath = "/internal/mail/templates/"
+const TEMPLATE_PATH = "/internal/mail/templates/"
 
 func sendMail(from, to, subject, templateFilename, password string, data any, images map[string]string) error {
 	m := gomail.NewMessage()
