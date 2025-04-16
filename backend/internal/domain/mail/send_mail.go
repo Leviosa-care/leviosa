@@ -5,29 +5,43 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"path/filepath"
 
 	"gopkg.in/gomail.v2"
 )
 
-const TEMPLATE_PATH = "/internal/mail/templates/"
-
-func sendMail(from, to, subject, templateFilename, password string, data any, images map[string]string) error {
+func (s *Service) sendMail(to, subject, templateFilename string, data any, carbonCopy, images map[string]string) error {
 	m := gomail.NewMessage()
-	m.SetHeader("From", from)
+	m.SetHeader("From", s.from)
 	m.SetHeader("To", to)
-	// m.SetAddressHeader("Cc", "dan@example.com", "Dan")
 	m.SetHeader("Subject", subject)
+	addresses := make([]string, 0, len(carbonCopy))
+	for email, name := range carbonCopy {
+		addresses = append(addresses, m.FormatAddress(email, name))
+	}
+	m.SetHeader("Cc", addresses...)
 
-	//Embed the images
+	logoPath, err := writeTempFile(logoImage, "logo.jpg")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(logoPath)
+
+	instaPath, err := writeTempFile(instagramImage, "instagram.png")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(instaPath)
+
+	m.Embed(logoPath, gomail.Rename("logo.jpg"))
+	m.Embed(instaPath, gomail.Rename("instagram.png"))
+
+	// Embed other images in mail
 	for path, rename := range images {
 		m.Embed(path, gomail.Rename(rename))
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("get working directory: %s", err)
-	}
-	t, err := template.ParseFiles(wd + templateFilename)
+	t, err := template.ParseFS(emailTemplates, fmt.Sprintf("templates/%s.html", templateFilename))
 	if err != nil {
 		return fmt.Errorf("parsing template: %s", err)
 	}
@@ -36,9 +50,10 @@ func sendMail(from, to, subject, templateFilename, password string, data any, im
 	if err := t.Execute(&tpl, data); err != nil {
 		return fmt.Errorf("execute template: %s", err)
 	}
+
 	m.SetBody("text/html", tpl.String())
 
-	d := gomail.NewDialer("smtp.gmail.com", 587, from, password)
+	d := gomail.NewDialer("smtp.gmail.com", 587, s.from, s.password)
 
 	if err := d.DialAndSend(m); err != nil {
 		return fmt.Errorf("dial and sent mail: %s", err)
@@ -46,6 +61,12 @@ func sendMail(from, to, subject, templateFilename, password string, data any, im
 	return nil
 }
 
-func getCompanyCredentials() (string, string) {
-	return os.Getenv("GMAIL_EMAIL"), os.Getenv("GMAIL_PASSWORD")
+func writeTempFile(data []byte, filename string) (string, error) {
+	tmpDir := os.TempDir()
+	tmpPath := filepath.Join(tmpDir, filename)
+
+	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
+		return "", err
+	}
+	return tmpPath, nil
 }
