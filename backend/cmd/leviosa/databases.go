@@ -32,7 +32,7 @@ func setupDatabases(
 		return nil, nil, fmt.Errorf("creating connection to redis database: %w", err)
 	}
 
-	sqliteDSN := sqliteutil.BuildDSN(sqliteConf.Filename)
+	sqliteDSN := sqliteutil.BuildDSN(env, sqliteConf.Filename)
 	sqlitedb, err := sqliteutil.Connect(ctx, sqliteDSN)
 	if err != nil {
 		return nil, nil, fmt.Errorf("creating connection to sqlite database: %w", err)
