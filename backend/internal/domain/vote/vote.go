@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/hengadev/leviosa/pkg/errsx"
+	"github.com/hengadev/errsx"
 )
 
 const VoteSeparator = "|"
@@ -35,39 +35,39 @@ func NewVote(day, month, year int) *Vote {
 // vote : month year days
 // vote_august_2024 : userID days
 
-func (v Vote) Valid(ctx context.Context) errsx.Map {
-	var pbms = make(errsx.Map)
+func (v Vote) Valid(ctx context.Context) error {
+	var errs = make(errsx.Map)
 	vf := reflect.VisibleFields(reflect.TypeOf(v))
 	now := time.Now().UTC()
 	for _, f := range vf {
 		switch f.Name {
 		case "Day":
 			if int(now.Month())%2 == 0 && int(now.Month()) != 8 && v.Day > 30 {
-				pbms.Set("not_enough_day", "this month has 30 days")
+				errs.Set("not_enough_day", "this month has 30 days")
 			}
 			if v.Day < 1 {
-				pbms.Set("day_too_small", "should be > 1")
+				errs.Set("day_too_small", "should be > 1")
 			}
 			if v.Day > 31 {
-				pbms.Set("day_too_large", "should be < 32")
+				errs.Set("day_too_large", "should be < 32")
 			}
 		case "Month":
 			if v.Month <= int(now.Month()) && v.Year == now.Year() {
-				pbms.Set("past_month", "date should not be in the past")
+				errs.Set("past_month", "date should not be in the past")
 			}
 			if v.Month < 1 {
-				pbms.Set("month_too_small", "should be > 1")
+				errs.Set("month_too_small", "should be > 1")
 			}
 			if v.Month > 12 {
-				pbms.Set("month_too_large", "should be < 13")
+				errs.Set("month_too_large", "should be < 13")
 			}
 		case "Year":
 			if v.Year < now.Year() {
-				pbms.Set("year", "should be > than current year")
+				errs.Set("year", "should be > than current year")
 			}
 		default:
 			continue
 		}
 	}
-	return pbms
+	return errs.AsError()
 }

@@ -4,11 +4,12 @@ import (
 	"context"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
-	"github.com/hengadev/leviosa/pkg/errsx"
+
+	"github.com/hengadev/errsx"
 )
 
 // Function that send an email to user after receiving payment.
-func (s *service) NewVote(ctx context.Context, user *models.User, eventTime string) errsx.Map {
+func (s *service) NewVote(ctx context.Context, user *models.User, eventTime string) error {
 	var errs errsx.Map
 
 	templData := struct {
@@ -26,5 +27,5 @@ func (s *service) NewVote(ctx context.Context, user *models.User, eventTime stri
 	); err != nil {
 		errs.Set("send mail", err)
 	}
-	return errs
+	return errs.AsError()
 }

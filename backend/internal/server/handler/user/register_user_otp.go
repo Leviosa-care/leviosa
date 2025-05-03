@@ -121,9 +121,9 @@ func (h *AppInstance) generateAndSendOTP(
 	}
 	fmt.Printf("the OTP that I need to send back: %#+v\n", otp)
 	// send email with OTP for user
-	if errs := h.Svcs.Mail.SendOTP(ctx, userEmail, firstname, otp); len(errs) > 0 {
+	if err := h.Svcs.Mail.SendOTP(ctx, userEmail, firstname, otp); err != nil {
 		logger.WarnContext(ctx, "failed to send mail with OTP to specified user")
-		http.Error(w, handler.NewInternalErr(errs), http.StatusInternalServerError)
+		http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 		return err
 	}
 	return nil

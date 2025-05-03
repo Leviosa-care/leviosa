@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/hengadev/leviosa/pkg/errsx"
+	"github.com/hengadev/errsx"
 )
 
 type UserSignIn struct {
@@ -12,22 +12,22 @@ type UserSignIn struct {
 	Password string `json:"password" validate:"required,min=6"`
 }
 
-func (u UserSignIn) Valid(ctx context.Context) errsx.Map {
-	var pbms = make(errsx.Map)
+func (u UserSignIn) Valid(ctx context.Context) error {
+	var errs = make(errsx.Map)
 	vf := reflect.VisibleFields(reflect.TypeOf(u))
 	for _, f := range vf {
 		switch f.Name {
 		case "Email":
 			if err := ValidateEmail(u.Email); err != nil {
-				pbms.Set("email", err)
+				errs.Set("email", err)
 			}
 		case "Password":
 			if err := ValidatePassword(u.Password); err != nil {
-				pbms.Set("password", err)
+				errs.Set("password", err)
 			}
 		default:
 			continue
 		}
 	}
-	return pbms
+	return errs.AsError()
 }

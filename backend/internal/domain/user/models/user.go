@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hengadev/leviosa/pkg/errsx"
+
+	"github.com/hengadev/errsx"
 )
 
 type User struct {
@@ -64,9 +65,9 @@ func NewUser(
 	}
 }
 
-func (u User) Valid(ctx context.Context) errsx.Map {
+func (u User) Valid(ctx context.Context) error {
 	var errs errsx.Map
-	return errs
+	return errs.AsError()
 }
 
 // Interface implementation

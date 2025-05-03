@@ -10,8 +10,8 @@ import (
 
 func (s *service) CreateVote(ctx context.Context, votes []*Vote) error {
 	for _, vote := range votes {
-		if pbms := vote.Valid(ctx); len(pbms) > 0 {
-			return domain.NewInvalidValueErr(pbms.Error())
+		if err := vote.Valid(ctx); err != nil {
+			return domain.NewInvalidValueErr(err.Error())
 		}
 	}
 

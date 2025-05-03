@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/hengadev/leviosa/pkg/errsx"
+	"github.com/hengadev/errsx"
 )
 
 type UserSignUp struct {
@@ -23,22 +23,22 @@ type UserSignUp struct {
 }
 
 // TODO: complete that function with all the remaining fields
-func (u UserSignUp) Valid(ctx context.Context) errsx.Map {
-	var pbms = make(errsx.Map)
+func (u UserSignUp) Valid(ctx context.Context) error {
+	var errs = make(errsx.Map)
 	vf := reflect.VisibleFields(reflect.TypeOf(u))
 	for _, f := range vf {
 		switch f.Name {
 		case "Email":
 			if err := ValidateEmail(u.Email); err != nil {
-				pbms.Set("email", err)
+				errs.Set("email", err)
 			}
 		case "Password":
 			if err := ValidatePassword(u.Password); err != nil {
-				pbms.Set("password", err)
+				errs.Set("password", err)
 			}
 		case "Telephone":
 			if err := ValidateTelephone(u.Telephone); err != nil {
-				pbms.Set("telephone", "telephne number should have at leat 10 digits")
+				errs.Set("telephone", "telephne number should have at leat 10 digits")
 			}
 		case "Birthday":
 			// parsedDate, err := time.Parse(BirthdayLayout, u.BirthDate)
@@ -48,13 +48,13 @@ func (u UserSignUp) Valid(ctx context.Context) errsx.Map {
 			// }
 		case "Gender":
 			if err := ValidateGender(u.Gender); err != nil {
-				pbms.Set("gender", err)
+				errs.Set("gender", err)
 			}
 		default:
 			continue
 		}
 	}
-	return pbms
+	return errs.AsError()
 }
 
 func (user *UserSignUp) ToUser() *User {

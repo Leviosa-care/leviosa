@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/hengadev/leviosa/internal/domain/stripe"
-	"github.com/hengadev/leviosa/pkg/errsx"
+
+	"github.com/hengadev/errsx"
 )
 
 // (standard, premium etc...)
@@ -21,7 +22,7 @@ type Offer struct {
 
 func (o Offer) AssertComparable() {}
 
-func (o Offer) Valid(ctx context.Context) errsx.Map {
+func (o Offer) Valid(ctx context.Context) error {
 	var errs errsx.Map
 	if o.Name != "" {
 		errs.Set("name", "cannot have an empty name")
@@ -36,7 +37,7 @@ func (o Offer) Valid(ctx context.Context) errsx.Map {
 	if o.Price <= 0 {
 		errs.Set("price", "price value should be >= 0")
 	}
-	return errs
+	return errs.AsError()
 }
 
 func (o Offer) GetSQLColumnMapping() map[string]string {

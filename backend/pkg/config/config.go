@@ -5,18 +5,19 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hengadev/leviosa/pkg/errsx"
 	"github.com/hengadev/leviosa/pkg/flags"
 
+	"github.com/hengadev/errsx"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	viper    *viper.Viper
-	sqlite   *sqliteCreds
-	redis    *redisCreds
-	s3       *s3Creds
-	security *SecurityConfig
+	viper     *viper.Viper
+	sqlite    *sqliteCreds
+	redis     *redisCreds
+	s3        *s3Creds
+	mailCreds *mailCreds
+	security  *SecurityConfig
 }
 
 func New(ctx context.Context, envFilename, envFileType string) *Config {
@@ -39,7 +40,7 @@ func New(ctx context.Context, envFilename, envFileType string) *Config {
 	}
 }
 
-func (c *Config) Load(ctx context.Context, mode mode.EnvMode) errsx.Map {
+func (c *Config) Load(ctx context.Context, mode mode.EnvMode) error {
 	var errs errsx.Map
 
 	envVarsToKeys := map[string]struct {
@@ -85,5 +86,5 @@ func (c *Config) Load(ctx context.Context, mode mode.EnvMode) errsx.Map {
 	if err := c.setSecurityConfig(ctx); err != nil {
 		errs.Set("user security configuration", fmt.Errorf("set user security config: %w", err))
 	}
-	return errs
+	return errs.AsError()
 }

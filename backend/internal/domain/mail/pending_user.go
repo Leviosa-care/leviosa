@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
-	"github.com/hengadev/leviosa/pkg/errsx"
+
+	"github.com/hengadev/errsx"
 )
 
-func (s *service) PendingUser(ctx context.Context, user *models.User) errsx.Map {
+func (s *service) PendingUser(ctx context.Context, user *models.User) error {
 	var errs errsx.Map
-	return errs
+	return errs.AsError()
 }

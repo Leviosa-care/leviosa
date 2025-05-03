@@ -29,9 +29,8 @@ func TestValidCredentials(t *testing.T) {
 				Email:    tt.email,
 				Password: tt.password,
 			}
-			problems := user.Valid(context.Background())
-			got := len(problems)
-			assert.Equal(t, got != 0, tt.wantErr)
+			err := user.Valid(context.Background())
+			assert.Equal(t, err != nil, tt.wantErr)
 		})
 	}
 }

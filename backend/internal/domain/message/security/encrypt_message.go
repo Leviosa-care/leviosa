@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/hengadev/leviosa/internal/domain/message/models"
-	"github.com/hengadev/leviosa/pkg/errsx"
+
+	"github.com/hengadev/errsx"
 )
 
 // EncryptMessage encrypts sensitive fields in the provided message model and clears the original plaintext values.
@@ -20,10 +21,10 @@ import (
 //     content.
 //
 // Returns:
-//   - errsx.Map: A map containing errors for any encryption failures. The map contains key-value pairs
+//   - error: An error from a map containing errors for any encryption failures. The map contains key-value pairs
 //     where the key is the name of the field (e.g., "encrypt createdAt") and the value is the corresponding error.
 //     If no errors occur, an empty map is returned.
-func (s *SecureMessageData) EncryptMessage(message *models.Message) errsx.Map {
+func (s *SecureMessageData) EncryptMessage(message *models.Message) error {
 	var errs errsx.Map
 	timeFields := []struct {
 		name           string
@@ -54,19 +55,19 @@ func (s *SecureMessageData) EncryptMessage(message *models.Message) errsx.Map {
 
 	for _, field := range fields {
 		if *field.value != "" {
-			encrypted, pbms := s.encrypt(*field.value)
-			if len(pbms) > 0 {
-				errs.Set(fmt.Sprintf("encrypt message field %s", field.name), pbms.Error())
+			encrypted, err := s.encrypt(*field.value)
+			if err != nil {
+				errs.Set(fmt.Sprintf("encrypt message field %s", field.name), err)
 			}
 			*field.value = encrypted
 		}
 	}
 
-	return nil
+	return errs.AsError()
 }
 
 // encrypt is a helper function for the EncryptMessage function
-func (s *SecureMessageData) encrypt(data string) (string, errsx.Map) {
+func (s *SecureMessageData) encrypt(data string) (string, error) {
 	var errs errsx.Map
 
 	block, err := aes.NewCipher(s.config.EncryptionKey)
@@ -85,5 +86,5 @@ func (s *SecureMessageData) encrypt(data string) (string, errsx.Map) {
 	}
 
 	ciphertext := gcm.Seal(nonce, nonce, []byte(data), nil)
-	return base64.StdEncoding.EncodeToString(ciphertext), errs
+	return base64.StdEncoding.EncodeToString(ciphertext), errs.AsError()
 }

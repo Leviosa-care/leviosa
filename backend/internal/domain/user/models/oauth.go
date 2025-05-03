@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hengadev/leviosa/pkg/errsx"
+
+	"github.com/hengadev/errsx"
 )
 
 type OAuthUser interface {
@@ -39,9 +40,9 @@ type AppleUser struct {
 	AppleID string `json:"apple_id"`
 }
 
-func (a AppleUser) Valid(ctx context.Context) (problems errsx.Map) {
+func (a AppleUser) Valid(ctx context.Context) error {
 	var errs errsx.Map
-	return errs
+	return errs.AsError()
 }
 
 func (a AppleUser) mustBeOAuthUser() {}
@@ -79,7 +80,7 @@ func (g GoogleUser) ToUserPending() *UserPending {
 	}
 }
 
-func (g GoogleUser) Valid(ctx context.Context) (problems errsx.Map) {
+func (g GoogleUser) Valid(ctx context.Context) error {
 	var errs errsx.Map
-	return errs
+	return errs.AsError()
 }

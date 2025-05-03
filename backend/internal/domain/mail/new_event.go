@@ -5,11 +5,12 @@ import (
 	"sync"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
-	"github.com/hengadev/leviosa/pkg/errsx"
+
+	"github.com/hengadev/errsx"
 )
 
 // Send an email to all users notifying new event creation.
-func (s *service) NewEvent(ctx context.Context, users []*models.User, eventTime string) errsx.Map {
+func (s *service) NewEvent(ctx context.Context, users []*models.User, eventTime string) error {
 	var errs errsx.Map
 	var wg sync.WaitGroup
 	var errMutex sync.Mutex
@@ -48,5 +49,5 @@ func (s *service) NewEvent(ctx context.Context, users []*models.User, eventTime 
 		}()
 	}
 	wg.Wait()
-	return errs
+	return errs.AsError()
 }

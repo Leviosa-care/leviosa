@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-
-	"github.com/hengadev/leviosa/pkg/errsx"
 )
 
 const SIGNINENDPOINT = "signin"
@@ -16,7 +14,7 @@ const SIGNUPENDPOINT = "signup"
 const SIGNOUTENDPOINT = "signout"
 
 type Validator interface {
-	Valid(ctx context.Context) (problems errsx.Map)
+	Valid(ctx context.Context) (problems error)
 }
 
 var ErrValidStruct = errors.New("Failed to valid the struct")
@@ -45,8 +43,8 @@ func DecodeValid[T Validator](ctx context.Context, body io.ReadCloser) (T, error
 	if err != nil {
 		return v, err
 	}
-	if pbms := v.Valid(ctx); len(pbms) > 0 {
-		return v, pbms
+	if err := v.Valid(ctx); err != nil {
+		return v, err
 	}
 	return v, nil
 }

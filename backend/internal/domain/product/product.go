@@ -3,7 +3,7 @@ package productService
 import (
 	"context"
 
-	"github.com/hengadev/leviosa/pkg/errsx"
+	"github.com/hengadev/errsx"
 )
 
 // (massage, coaching mental etc...)
@@ -13,7 +13,7 @@ type Product struct {
 	Description string
 }
 
-func (p Product) Valid(ctx context.Context) errsx.Map {
+func (p Product) Valid(ctx context.Context) error {
 	var errs errsx.Map
 	if p.Name != "" {
 		errs.Set("name", "cannot have an empty name")
@@ -21,7 +21,7 @@ func (p Product) Valid(ctx context.Context) errsx.Map {
 	if p.Description != "" {
 		errs.Set("name", "cannot have an empty description")
 	}
-	return errs
+	return errs.AsError()
 }
 
 func (p Product) AssertComparable() {}

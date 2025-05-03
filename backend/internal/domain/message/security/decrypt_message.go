@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/hengadev/leviosa/internal/domain/message/models"
-	"github.com/hengadev/leviosa/pkg/errsx"
+
+	"github.com/hengadev/errsx"
 )
 
 // DecryptMessage decrypts sensitive fields in the provided message model and populates them with their decrypted values.
@@ -17,10 +18,10 @@ import (
 //   - message: A pointer to the `models.Message` struct containing encrypted fields that need to be decrypted.
 //
 // Returns:
-//   - errsx.Map: A map containing errors for any decryption failures. The map contains key-value pairs
+//   - error: An error from a map containing errors for any decryption failures. The map contains key-value pairs
 //     where the key is the name of the field (e.g., "encrypted birthdate") and the value is the corresponding error.
 //     If no errors occur, an empty map is returned.
-func (s *SecureMessageData) DecryptMessage(message *models.Message) errsx.Map {
+func (s *SecureMessageData) DecryptMessage(message *models.Message) error {
 	var errs errsx.Map
 	timeFields := []struct {
 		name           string
@@ -62,7 +63,7 @@ func (s *SecureMessageData) DecryptMessage(message *models.Message) errsx.Map {
 		}
 	}
 
-	return errs
+	return errs.AsError()
 }
 
 // decrypt decrypts sensitive data

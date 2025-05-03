@@ -20,8 +20,8 @@ import (
 //   - error: An error if the user does not exist, the query fails, or an unexpected error occurs.
 //     Returns nil if the user exists.
 func (s *service) CheckUser(ctx context.Context, email string) error {
-	if errs := models.ValidateEmail(email); len(errs) > 0 {
-		return domain.NewInvalidValueErr(errs.Error())
+	if err := models.ValidateEmail(email); err != nil {
+		return domain.NewInvalidValueErr(err.Error())
 	}
 	emailHash := security.HashEmail(email)
 	if err := s.repo.HasUser(ctx, emailHash); err != nil {

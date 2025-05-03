@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/hengadev/leviosa/internal/domain/event/models"
-	"github.com/hengadev/leviosa/pkg/errsx"
+
+	"github.com/hengadev/errsx"
 )
 
 // EncryptEvent encrypts sensitive fields in the provided user model and clears the original plaintext values.
@@ -23,7 +24,7 @@ import (
 //   - errsx.Map: A map containing errors for any encryption failures. The map contains key-value pairs
 //     where the key is the name of the field (e.g., "encrypt event field beginAt") and the value is the corresponding error.
 //     If no errors occur, an empty map is returned.
-func (s *SecureEventData) EncryptEvent(event *models.Event) errsx.Map {
+func (s *SecureEventData) EncryptEvent(event *models.Event) error {
 	var errs errsx.Map
 	timeFields := []struct {
 		name           string
@@ -37,9 +38,9 @@ func (s *SecureEventData) EncryptEvent(event *models.Event) errsx.Map {
 	for _, field := range timeFields {
 		if field.value != nil && !field.value.IsZero() {
 			dateStr := field.value.Format(time.RFC3339)
-			encrypted, encryptedErrs := s.encrypt(dateStr)
-			if len(encryptedErrs) > 0 {
-				errs.Set(field.name, encryptedErrs.Error())
+			encrypted, err := s.encrypt(dateStr)
+			if err != nil {
+				errs.Set(field.name, err.Error())
 			}
 			*field.value = time.Time{}
 			*field.encryptedValue = encrypted
@@ -61,9 +62,9 @@ func (s *SecureEventData) EncryptEvent(event *models.Event) errsx.Map {
 
 	for _, field := range fields {
 		if *field.value != "" {
-			encrypted, pbms := s.encrypt(*field.value)
-			if len(pbms) > 0 {
-				errs.Set(fmt.Sprintf("encrypt event field %s", field.name), pbms.Error())
+			encrypted, err := s.encrypt(*field.value)
+			if err != nil {
+				errs.Set(fmt.Sprintf("encrypt event field %s", field.name), err.Error())
 			}
 			*field.value = encrypted
 		}
@@ -81,19 +82,19 @@ func (s *SecureEventData) EncryptEvent(event *models.Event) errsx.Map {
 	for _, field := range listfields {
 		for _, pid := range *field.value {
 			if pid != "" {
-				encrypted, pbms := s.encrypt(pid)
-				if len(pbms) > 0 {
-					errs.Set("encrypt product ID", pbms.Error())
+				encrypted, err := s.encrypt(pid)
+				if err != nil {
+					errs.Set("encrypt product ID", err.Error())
 				}
 				pid = encrypted
 			}
 		}
 	}
-	return nil
+	return errs.AsError()
 }
 
 // encrypt is a helper function for the EncryptEvent function
-func (s *SecureEventData) encrypt(data string) (string, errsx.Map) {
+func (s *SecureEventData) encrypt(data string) (string, error) {
 	var errs errsx.Map
 
 	block, err := aes.NewCipher(s.config.EncryptionKey)
@@ -112,5 +113,5 @@ func (s *SecureEventData) encrypt(data string) (string, errsx.Map) {
 	}
 
 	ciphertext := gcm.Seal(nonce, nonce, []byte(data), nil)
-	return base64.StdEncoding.EncodeToString(ciphertext), errs
+	return base64.StdEncoding.EncodeToString(ciphertext), errs.AsError()
 }

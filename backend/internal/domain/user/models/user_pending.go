@@ -3,7 +3,7 @@ package models
 import (
 	"context"
 
-	"github.com/hengadev/leviosa/pkg/errsx"
+	"github.com/hengadev/errsx"
 )
 
 // the user that is send to admin for validation
@@ -22,12 +22,12 @@ type UserPendingResponse struct {
 	Provider ProviderType `json:"provider"`
 }
 
-func (u UserPending) Valid(ctx context.Context) (problems errsx.Map) {
+func (u UserPending) Valid(ctx context.Context) error {
 	var errs errsx.Map
-	return errs
+	return errs.AsError()
 }
 
-func (u UserPendingResponse) Valid(ctx context.Context) (problems errsx.Map) {
+func (u UserPendingResponse) Valid(ctx context.Context) error {
 	var errs errsx.Map
-	return errs
+	return errs.AsError()
 }

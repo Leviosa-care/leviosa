@@ -23,8 +23,8 @@ import (
 //   - error: An error if the session data cannot be retrieved, the email is invalid, or an unexpected error occurs.
 //     Returns nil if the session data is successfully retrieved.
 func (s *service) GetUserSessionData(ctx context.Context, email string) (string, models.Role, error) {
-	if _, pbms := models.NewEmail(email); len(pbms) > 0 {
-		return "", models.UNKNOWN, domain.NewInvalidValueErr(fmt.Sprintf("invalid email: %q", pbms))
+	if _, err := models.NewEmail(email); err != nil {
+		return "", models.UNKNOWN, domain.NewInvalidValueErr(fmt.Sprintf("invalid email: %q", err))
 	}
 	hashedEmail := security.HashEmail(email)
 	ID, role, err := s.repo.GetUserSessionData(ctx, hashedEmail)

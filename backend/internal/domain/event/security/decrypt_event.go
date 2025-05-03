@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/hengadev/leviosa/internal/domain/event/models"
-	"github.com/hengadev/leviosa/pkg/errsx"
+
+	"github.com/hengadev/errsx"
 )
 
 // DecryptEvent decrypts sensitive fields in the provided user model and populates them with their decrypted values.
@@ -20,7 +21,7 @@ import (
 //   - errsx.Map: A map containing errors for any decryption failures. The map contains key-value pairs
 //     where the key is the name of the field (e.g., "encrypted birthdate") and the value is the corresponding error.
 //     If no errors occur, an empty map is returned.
-func (s *SecureEventData) DecryptEvent(event *models.Event) errsx.Map {
+func (s *SecureEventData) DecryptEvent(event *models.Event) error {
 	var errs errsx.Map
 	timeFields := []struct {
 		name           string
@@ -68,7 +69,7 @@ func (s *SecureEventData) DecryptEvent(event *models.Event) errsx.Map {
 			*field.value = decrypted
 		}
 	}
-	return errs
+	return errs.AsError()
 }
 
 // decrypt decrypts sensitive data

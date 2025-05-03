@@ -8,18 +8,17 @@ import (
 	"github.com/hengadev/leviosa/internal/domain"
 	otpService "github.com/hengadev/leviosa/internal/domain/otp"
 	"github.com/hengadev/leviosa/internal/domain/user/models"
-	"github.com/hengadev/leviosa/pkg/errsx"
 )
 
 type Service interface {
 	HandlePasswordForgotten(to string) error
-	NewEvent(ctx context.Context, users []*models.User, eventTime string) errsx.Map
-	NewPayment(ctx context.Context, user *models.User, eventTime string) errsx.Map
-	NewVote(ctx context.Context, user *models.User, eventTime string) errsx.Map
-	PendingUser(ctx context.Context, user *models.User) errsx.Map
-	SendRegistrationReminderEmail(ctx context.Context, user *models.User, registrationName string, daysLeft int) errsx.Map
-	SendOTP(ctx context.Context, email, firstname string, otp *otpService.OTP) errsx.Map
-	WelcomeUser(ctx context.Context, user *models.User) errsx.Map
+	NewEvent(ctx context.Context, users []*models.User, eventTime string) error
+	NewPayment(ctx context.Context, user *models.User, eventTime string) error
+	NewVote(ctx context.Context, user *models.User, eventTime string) error
+	PendingUser(ctx context.Context, user *models.User) error
+	SendRegistrationReminderEmail(ctx context.Context, user *models.User, registrationName string, daysLeft int) error
+	SendOTP(ctx context.Context, email, firstname string, otp *otpService.OTP) error
+	WelcomeUser(ctx context.Context, user *models.User) error
 }
 
 type service struct {

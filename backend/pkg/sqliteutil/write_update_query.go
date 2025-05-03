@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/hengadev/leviosa/pkg/errsx"
+	"github.com/hengadev/errsx"
 )
 
 type SQLMappable interface {
@@ -17,7 +17,7 @@ type SQLMappable interface {
 func WriteUpdateQuery[T SQLMappable](
 	object T,
 	whereMap map[string]any,
-) (string, []any, errsx.Map) {
+) (string, []any, error) {
 	var errs errsx.Map
 	var tables []string
 	var values []any
@@ -51,7 +51,7 @@ func WriteUpdateQuery[T SQLMappable](
 	if len(notUpdatedFields) > 0 {
 		errs.Set("prohibited fields", strings.Join(notUpdatedFields, ", "))
 	}
-	return query, values, errs
+	return query, values, errs.AsError()
 }
 
 func placeholder(name string) string {

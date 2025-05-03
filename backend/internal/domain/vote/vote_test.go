@@ -33,8 +33,8 @@ func TestValidVote(t *testing.T) {
 			t.Parallel()
 			ctx := context.Background()
 			vote := &vote.Vote{Day: tt.day, Month: tt.month, Year: tt.year}
-			pbms := vote.Valid(ctx)
-			assert.Equal(t, len(pbms) > 0, tt.wantErr)
+			err := vote.Valid(ctx)
+			assert.Equal(t, err != nil, tt.wantErr)
 		})
 	}
 }

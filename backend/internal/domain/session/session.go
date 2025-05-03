@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
-	"github.com/hengadev/leviosa/pkg/errsx"
 
 	"github.com/google/uuid"
+	"github.com/hengadev/errsx"
 )
 
 const SessionDuration = 30 * 24 * time.Hour
@@ -56,20 +56,20 @@ func NewSession(userID string, role models.Role) (*Session, error) {
 }
 
 func (s *Session) Valid(ctx context.Context) error {
-	var pbms = make(errsx.Map)
+	var errs = make(errsx.Map)
 	if err := uuid.Validate(s.ID); err != nil {
-		pbms.Set("id", "session ID is not of type UUID")
+		errs.Set("id", "session ID is not of type UUID")
 	}
 	if err := uuid.Validate(s.UserID); err != nil {
-		pbms.Set("userId", "User ID is not of type UUID")
+		errs.Set("userId", "User ID is not of type UUID")
 	}
 	if time.Now().Add(SessionDuration).Before(s.ExpiresAt) {
-		pbms.Set("expiredat", "session expired")
+		errs.Set("expiredat", "session expired")
 	}
 	if s.Role != models.UNKNOWN {
-		pbms.Set("role", "got UNKNOWN role, expect one of 'BASIC', 'GUEST', 'FREELANCE', 'ADMINISTRATOR'")
+		errs.Set("role", "got UNKNOWN role, expect one of 'BASIC', 'GUEST', 'FREELANCE', 'ADMINISTRATOR'")
 	}
-	return pbms
+	return errs.AsError()
 }
 
 func (s Session) AssertComparable() {}

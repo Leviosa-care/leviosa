@@ -4,11 +4,12 @@ import (
 	"context"
 
 	otpService "github.com/hengadev/leviosa/internal/domain/otp"
-	"github.com/hengadev/leviosa/pkg/errsx"
+
+	"github.com/hengadev/errsx"
 )
 
 // TODO: make the right email template for that mail domain service
-func (s *service) SendOTP(ctx context.Context, email, firstname string, otp *otpService.OTP) errsx.Map {
+func (s *service) SendOTP(ctx context.Context, email, firstname string, otp *otpService.OTP) error {
 	var errs errsx.Map
 
 	// data used in the email
@@ -29,5 +30,5 @@ func (s *service) SendOTP(ctx context.Context, email, firstname string, otp *otp
 	); err != nil {
 		errs.Set("send email:", err)
 	}
-	return errs
+	return errs.AsError()
 }
