@@ -10,7 +10,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) CreateSession(ctx context.Context, userID string, role models.Role) (string, error) {
+func (s *service) CreateSession(ctx context.Context, userID string, role models.Role) (string, error) {
 	session, err := NewSession(userID, role)
 	if err != nil {
 		return "", domain.NewInvalidValueErr("invalid user ID")

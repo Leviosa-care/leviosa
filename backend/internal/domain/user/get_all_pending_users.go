@@ -19,7 +19,7 @@ import (
 //     an empty slice is returned.
 //   - error: An error if the users cannot be retrieved, the users cannot be decrypted, or an unexpected error occurs.
 //     Returns nil if the users are successfully retrieved and decrypted.
-func (s *Service) GetAllPendingUsers(ctx context.Context) ([]*models.UserPending, error) {
+func (s *service) GetAllPendingUsers(ctx context.Context) ([]*models.UserPending, error) {
 	users, err := s.repo.GetPendingUsers(ctx)
 	var pendingUsers []*models.UserPending
 	if err != nil {

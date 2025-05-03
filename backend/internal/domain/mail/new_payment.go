@@ -7,7 +7,7 @@ import (
 	"github.com/hengadev/leviosa/pkg/errsx"
 )
 
-func (s *Service) NewPayment(ctx context.Context, user *models.User, eventTime string) errsx.Map {
+func (s *service) NewPayment(ctx context.Context, user *models.User, eventTime string) errsx.Map {
 	var errs errsx.Map
 	return errs
 }

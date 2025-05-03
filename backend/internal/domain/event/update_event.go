@@ -9,7 +9,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) ModifyEvent(ctx context.Context, event *models.Event) error {
+func (s *service) ModifyEvent(ctx context.Context, event *models.Event) error {
 	if event == nil {
 		return domain.NewInvalidValueErr("event can not be nil")
 	}

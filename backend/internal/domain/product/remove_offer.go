@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) RemoveOffer(ctx context.Context, offerID int) error {
+func (s *service) RemoveOffer(ctx context.Context, offerID int) error {
 	if err := s.repo.RemoveOffer(ctx, offerID); err != nil {
 		// TODO: do all the error handling for that thing
 		switch {

@@ -19,7 +19,7 @@ import (
 //   - string: The hashed email of the newly created unverified user.
 //   - error: An error if the user encryption fails, the user cannot be added to the unverified user table,
 //     or an unexpected error occurs. Returns nil if the user is successfully added.
-func (s *Service) CreateUnverifiedUser(ctx context.Context, userSignUp *models.UserSignUp) (string, error) {
+func (s *service) CreateUnverifiedUser(ctx context.Context, userSignUp *models.UserSignUp) (string, error) {
 	user := userSignUp.ToUser()
 	if errs := s.EncryptUser(user); len(errs) > 0 {
 		return "", domain.NewNotEncryptedErr("unverified user", errs)

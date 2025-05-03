@@ -21,7 +21,7 @@ import (
 // Returns:
 //   - error: An error if the user ID is invalid, the user data cannot be encrypted, the account cannot be updated,
 //     or an unexpected error occurs. Returns nil if the account is successfully updated.
-func (s *Service) UpdateAccount(ctx context.Context, user *models.User) error {
+func (s *service) UpdateAccount(ctx context.Context, user *models.User) error {
 	// validate UUID provided
 	if err := uuid.Validate(user.ID); err != nil {
 		return domain.NewInvalidValueErr(fmt.Sprintf("invalid user ID: %s", err.Error()))

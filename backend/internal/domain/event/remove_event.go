@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) RemoveEvent(ctx context.Context, eventID string) error {
+func (s *service) RemoveEvent(ctx context.Context, eventID string) error {
 	if err := s.repo.RemoveEvent(ctx, eventID); err != nil {
 		switch {
 		case errors.Is(err, rp.ErrContext):

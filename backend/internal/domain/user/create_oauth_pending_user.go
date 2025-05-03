@@ -19,7 +19,7 @@ import (
 // Returns:
 //   - error: An error if the user encryption fails, the user cannot be added to the pending user table,
 //     or an unexpected error occurs. Returns nil if the user is successfully added.
-func (s *Service) CreateOAuthPendingUser(ctx context.Context, user *models.User, provider models.ProviderType) error {
+func (s *service) CreateOAuthPendingUser(ctx context.Context, user *models.User, provider models.ProviderType) error {
 	// encrypt user
 	if errs := s.EncryptUser(user); len(errs) > 0 {
 		return domain.NewNotEncryptedErr("OAuth pending user", errs)

@@ -8,7 +8,7 @@ import (
 	"github.com/stripe/stripe-go/v79/product"
 )
 
-func (s *Service) RemoveProduct(ctx context.Context, productID string) (string, error) {
+func (s *service) RemoveProduct(ctx context.Context, productID string) (string, error) {
 	product_params := &stripe.ProductParams{
 		Active: stripe.Bool(false),
 		ID:     &productID,

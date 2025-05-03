@@ -8,7 +8,7 @@ import (
 )
 
 // TODO: make the right email template for that mail domain service
-func (s *Service) SendOTP(ctx context.Context, email, firstname string, otp *otpService.OTP) errsx.Map {
+func (s *service) SendOTP(ctx context.Context, email, firstname string, otp *otpService.OTP) errsx.Map {
 	var errs errsx.Map
 
 	// data used in the email

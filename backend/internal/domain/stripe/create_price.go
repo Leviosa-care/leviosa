@@ -18,7 +18,7 @@ import (
 // Returns:
 //   - string: The ID of the newly created price in the Stripe system.
 //   - error: An error if the price could not be created.
-func (s *Service) CreatePrice(ctx context.Context, productID string, priceValue int64) (string, error) {
+func (s *service) CreatePrice(ctx context.Context, productID string, priceValue int64) (string, error) {
 	price_params := &stripe.PriceParams{
 		Currency:   stripe.String(string(stripe.CurrencyEUR)),
 		Product:    stripe.String(productID),

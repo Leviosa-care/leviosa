@@ -8,7 +8,7 @@ import (
 )
 
 // Function that send an email to user after receiving payment.
-func (s *Service) NewVote(ctx context.Context, user *models.User, eventTime string) errsx.Map {
+func (s *service) NewVote(ctx context.Context, user *models.User, eventTime string) errsx.Map {
 	var errs errsx.Map
 
 	templData := struct {

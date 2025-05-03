@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) CreateOffer(ctx context.Context, offer *Offer) error {
+func (s *service) CreateOffer(ctx context.Context, offer *Offer) error {
 	if errs := offer.Valid(ctx); len(errs) > 0 {
 		return domain.NewInvalidValueErr(fmt.Sprintf("offer validation error: %s", errs.Error()))
 	}

@@ -10,7 +10,7 @@ import (
 	// rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) RegisterAttempt(ctx context.Context, email string) error {
+func (s *service) RegisterAttempt(ctx context.Context, email string) error {
 	// TODO: make better error handling for this function
 	now := time.Now()
 	infoEncoded, err := s.repo.IsLocked(ctx, email)

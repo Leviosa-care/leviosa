@@ -20,7 +20,7 @@ import (
 //   - string: The ID of the created event.
 //   - error: An error if the event creation fails, the query fails, or an unexpected error occurs.
 //     Returns nil if the event is created successfully.
-func (s *Service) CreateEvent(ctx context.Context, event *models.Event) (string, error) {
+func (s *service) CreateEvent(ctx context.Context, event *models.Event) (string, error) {
 	day, month, year, err := ParseBeginAt(event)
 	if err != nil {
 		return "", domain.NewInvalidValueErr("invalid BeginAt")

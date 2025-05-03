@@ -75,7 +75,6 @@ func makeServices(
 
 	// mail
 	mailSvc := mailService.New()
-
 	// product
 	productRepo := productRepository.New(ctx, sqlitedb)
 	productSvc := productService.New(productRepo)

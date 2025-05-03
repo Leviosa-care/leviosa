@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) DecreasePlacecount(ctx context.Context, eventID string) error {
+func (s *service) DecreasePlacecount(ctx context.Context, eventID string) error {
 	err := s.repo.DecreaseFreePlace(ctx, eventID)
 	if err != nil {
 		switch {

@@ -4,6 +4,6 @@ import (
 	"context"
 )
 
-func (s *Service) AddRegistration(ctx context.Context, registration *Registration) error {
+func (s *service) AddRegistration(ctx context.Context, registration *Registration) error {
 	return nil
 }

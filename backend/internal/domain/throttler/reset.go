@@ -10,7 +10,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) Reset(ctx context.Context, email string) error {
+func (s *service) Reset(ctx context.Context, email string) error {
 	throttlerEncoded, err := s.repo.IsLocked(ctx, email)
 	if err != nil {
 		switch {

@@ -10,7 +10,7 @@ import (
 
 // TODO: make a domain function to get the name of the folder to place the thing
 
-func (s *Service) PostFile(ctx context.Context, file multipart.File, filename, folder string) (string, error) {
+func (s *service) PostFile(ctx context.Context, file multipart.File, filename, folder string) (string, error) {
 	// NOTE: Here the best thing to do is to change the value of that thing brother
 	// key := fmt.Sprintf("%s/%s", eventID, filename)
 	key := fmt.Sprintf("events_%s/%s", folder, filename)

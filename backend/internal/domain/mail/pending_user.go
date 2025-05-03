@@ -7,7 +7,7 @@ import (
 	"github.com/hengadev/leviosa/pkg/errsx"
 )
 
-func (s *Service) PendingUser(ctx context.Context, user *models.User) errsx.Map {
+func (s *service) PendingUser(ctx context.Context, user *models.User) errsx.Map {
 	var errs errsx.Map
 	return errs
 }

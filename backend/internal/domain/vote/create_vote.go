@@ -8,7 +8,7 @@ import (
 	"github.com/hengadev/leviosa/internal/domain"
 )
 
-func (s *Service) CreateVote(ctx context.Context, votes []*Vote) error {
+func (s *service) CreateVote(ctx context.Context, votes []*Vote) error {
 	for _, vote := range votes {
 		if pbms := vote.Valid(ctx); len(pbms) > 0 {
 			return domain.NewInvalidValueErr(pbms.Error())

@@ -10,7 +10,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) GetSession(ctx context.Context, sessionID string) (*Session, error) {
+func (s *service) GetSession(ctx context.Context, sessionID string) (*Session, error) {
 	if strings.TrimSpace(sessionID) == "" {
 		return nil, domain.NewNotFoundErr(errors.New("empty session ID"))
 	}

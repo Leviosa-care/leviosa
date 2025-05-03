@@ -9,7 +9,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) SendMessage(ctx context.Context, conversationID, senderID, content string) error {
+func (s *service) SendMessage(ctx context.Context, conversationID, senderID, content string) error {
 	// I need to encrypt the message when I get it
 	message := &models.Message{}
 	s.EncryptMessage(message)

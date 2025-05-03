@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) CreateProduct(ctx context.Context, product *Product) error {
+func (s *service) CreateProduct(ctx context.Context, product *Product) error {
 	if errs := product.Valid(ctx); len(errs) > 0 {
 		return domain.NewInvalidValueErr(fmt.Sprintf("product validation error: %s", errs.Error()))
 	}

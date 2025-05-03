@@ -13,7 +13,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) CreateRegistration(ctx context.Context, userID, spotStr string, event *models.Event) error {
+func (s *service) CreateRegistration(ctx context.Context, userID, spotStr string, event *models.Event) error {
 	day, month, year := parseEventTimeForRegistration(event)
 	// NOTE: why is the spot str a string and not an int ?
 	spot, err := strconv.Atoi(spotStr)

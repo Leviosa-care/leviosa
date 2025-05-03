@@ -9,7 +9,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) GetMessages(ctx context.Context, conversationID string) ([]*models.Message, error) {
+func (s *service) GetMessages(ctx context.Context, conversationID string) ([]*models.Message, error) {
 	messages, err := s.repo.GetMessages(ctx, conversationID)
 	if err != nil {
 		switch {

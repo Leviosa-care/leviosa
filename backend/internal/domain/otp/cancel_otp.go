@@ -7,7 +7,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) CancelOTP(ctx context.Context, email string) error {
+func (s *service) CancelOTP(ctx context.Context, email string) error {
 	err := s.Repo.InvalidateOTP(ctx, email)
 	switch {
 	case errors.Is(err, rp.ErrNotFound):

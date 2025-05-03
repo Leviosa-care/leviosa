@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) ValidateOTP(ctx context.Context, emailHash string, value string) error {
+func (s *service) ValidateOTP(ctx context.Context, emailHash string, value string) error {
 	// OTPencoded, err := s.Repo.GetOTP(ctx, otp.Email)
 	err := s.Repo.ValidateOTP(ctx, emailHash, value)
 	if err != nil {

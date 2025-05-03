@@ -6,7 +6,7 @@ import (
 	"github.com/hengadev/leviosa/internal/domain"
 )
 
-func (s *Service) UpdateProductType(ctx context.Context, product *Offer) error {
+func (s *service) UpdateProductType(ctx context.Context, product *Offer) error {
 	if err := s.repo.ModifyOffer(
 		ctx,
 		product,

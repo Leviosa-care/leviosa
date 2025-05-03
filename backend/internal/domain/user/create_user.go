@@ -19,7 +19,7 @@ import (
 //   - *models.User: A pointer to the newly created user object.
 //   - error: An error if the pending user cannot be retrieved, the role is invalid, the user cannot be added to the
 //     database, or an unexpected error occurs. Returns nil if the user is successfully created.
-func (s *Service) CreateUser(ctx context.Context, userResponse *models.UserPendingResponse) (*models.User, error) {
+func (s *service) CreateUser(ctx context.Context, userResponse *models.UserPendingResponse) (*models.User, error) {
 	// get encrypted user from hashed email
 	user, err := s.repo.GetPendingUser(ctx, userResponse.Email, userResponse.Provider)
 	if err != nil {

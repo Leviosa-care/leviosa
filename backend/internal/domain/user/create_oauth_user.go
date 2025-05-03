@@ -9,7 +9,7 @@ import (
 
 // TODO: I am not sure that I no longer need that function
 
-func (s *Service) CreateOAuthAccount(
+func (s *service) CreateOAuthAccount(
 	ctx context.Context,
 	userCandidate *models.OAuthUser,
 ) (*models.User, error) {

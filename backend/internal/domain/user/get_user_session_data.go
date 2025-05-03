@@ -22,7 +22,7 @@ import (
 //   - models.Role: The user's role. If an error occurs or the user is not found, models.UNKNOWN is returned.
 //   - error: An error if the session data cannot be retrieved, the email is invalid, or an unexpected error occurs.
 //     Returns nil if the session data is successfully retrieved.
-func (s *Service) GetUserSessionData(ctx context.Context, email string) (string, models.Role, error) {
+func (s *service) GetUserSessionData(ctx context.Context, email string) (string, models.Role, error) {
 	if _, pbms := models.NewEmail(email); len(pbms) > 0 {
 		return "", models.UNKNOWN, domain.NewInvalidValueErr(fmt.Sprintf("invalid email: %q", pbms))
 	}

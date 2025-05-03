@@ -23,7 +23,7 @@ import (
 //   - NewNotFoundErr if the email is not found.
 //   - NewQueryFailedErr if there is a query failure.
 //   - NewInvalidValueErr if the password verification fails.
-func (s *Service) ValidateCredentials(ctx context.Context, user *models.UserSignIn) error {
+func (s *service) ValidateCredentials(ctx context.Context, user *models.UserSignIn) error {
 	hashedEmail := security.HashEmail(user.Email)
 	hashedPassword, err := s.repo.GetHashedPasswordByEmail(ctx, hashedEmail)
 	if err != nil {

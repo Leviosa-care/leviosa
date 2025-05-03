@@ -8,7 +8,7 @@ import (
 	"github.com/stripe/stripe-go/v79/price"
 )
 
-func (s *Service) RemovePrice(ctx context.Context, priceID string) error {
+func (s *service) RemovePrice(ctx context.Context, priceID string) error {
 	price_params := &stripe.PriceParams{
 		Active: stripe.Bool(false),
 	}

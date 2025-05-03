@@ -25,7 +25,7 @@ import (
 // Returns:
 //   - string: The URL of the newly created Stripe Checkout session.
 //   - error: An error if the checkout session could not be created.
-func (s *Service) CreateCheckoutSession(ctx context.Context, priceID string, quantity int64) (string, error) {
+func (s *service) CreateCheckoutSession(ctx context.Context, priceID string, quantity int64) (string, error) {
 	frontendServer := os.Getenv("FRONTEND_ORIGIN")
 	// NOTE: I can use metadata if I want but I do not know why I would use that, maybe with the product type
 	// metadata := map[string]string{

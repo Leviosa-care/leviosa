@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) GetProduct(ctx context.Context, productID string) (*Product, error) {
+func (s *service) GetProduct(ctx context.Context, productID string) (*Product, error) {
 	// check in here if the produdctID is ""
 	product, err := s.repo.GetProduct(ctx, productID)
 	if err != nil {

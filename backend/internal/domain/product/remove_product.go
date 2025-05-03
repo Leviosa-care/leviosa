@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) RemoveProduct(ctx context.Context, productID string) error {
+func (s *service) RemoveProduct(ctx context.Context, productID string) error {
 	if err := s.repo.RemoveProduct(ctx, productID); err != nil {
 		// TODO: do all the error handling for that thing
 		switch {

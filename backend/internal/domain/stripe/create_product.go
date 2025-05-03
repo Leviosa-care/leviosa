@@ -18,7 +18,7 @@ import (
 // Returns:
 //   - string: The ID of the newly created product in the Stripe system.
 //   - error: An error if the product could not be created.
-func (s *Service) CreateProduct(ctx context.Context, object Payment) (string, error) {
+func (s *service) CreateProduct(ctx context.Context, object Payment) (string, error) {
 	paymentInfo := object.GetPaymentInfo(ctx)
 	product_params := &stripe.ProductParams{
 		ID:          stripe.String(paymentInfo.ID),

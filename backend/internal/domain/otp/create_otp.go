@@ -11,7 +11,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) CreateOTP(ctx context.Context, emailHash string) (*OTP, error) {
+func (s *service) CreateOTP(ctx context.Context, emailHash string) (*OTP, error) {
 	// get existing OTP
 	otpEncoded, err := s.Repo.GetOTP(ctx, emailHash)
 	if err != nil {

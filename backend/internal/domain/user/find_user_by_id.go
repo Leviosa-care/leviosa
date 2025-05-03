@@ -19,7 +19,7 @@ import (
 //   - *models.User: A pointer to the user account retrieved. If the user is not found, an empty user object is returned.
 //   - error: An error if the user cannot be retrieved, the user data cannot be decrypted, or an unexpected error occurs.
 //     Returns nil if the user is successfully retrieved and decrypted.
-func (s *Service) FindUserByID(ctx context.Context, userID string) (*models.User, error) {
+func (s *service) FindUserByID(ctx context.Context, userID string) (*models.User, error) {
 	user, err := s.repo.FindAccountByID(ctx, userID)
 	if err != nil {
 		switch {

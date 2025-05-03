@@ -16,16 +16,16 @@ import (
 )
 
 type Services struct {
-	User      *userService.Service
-	Session   *sessionService.Service
-	Event     *eventService.Service
-	Vote      *vote.Service
-	Stripe    *stripeService.Service
-	Register  *registerService.Service
-	Media     *mediaService.Service
-	Throttler *throttlerService.Service
-	OTP       *otpService.Service
-	Mail      *mailService.Service
-	Product   *productService.Service
-	Message   *messageService.Service
+	User      userService.Service
+	Session   sessionService.Service
+	Event     eventService.Service
+	Vote      vote.Service
+	Stripe    stripeService.Service
+	Register  registerService.Service
+	Media     mediaService.Service
+	Throttler throttlerService.Service
+	OTP       otpService.Service
+	Mail      mailService.Service
+	Product   productService.Service
+	Message   messageService.Service
 }

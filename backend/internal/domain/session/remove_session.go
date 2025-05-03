@@ -10,7 +10,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) RemoveSession(ctx context.Context, sessionID string) error {
+func (s *service) RemoveSession(ctx context.Context, sessionID string) error {
 	if err := uuid.Validate(sessionID); err != nil {
 		return domain.NewInvalidValueErr(fmt.Sprintf("invalid sessionID: %s", err))
 	}

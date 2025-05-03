@@ -10,7 +10,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *Service) CreateConversation(ctx context.Context, userID, adminID string) (string, error) {
+func (s *service) CreateConversation(ctx context.Context, userID, adminID string) (string, error) {
 	// TODO: check if the userID sent has the right priviledge to be talked to, ie is freelance ?
 	conversation := &models.Conversation{
 		UserID:    userID,

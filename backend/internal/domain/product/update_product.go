@@ -6,7 +6,7 @@ import (
 	"github.com/hengadev/leviosa/internal/domain"
 )
 
-func (s *Service) UpdateProduct(ctx context.Context, product *Product) error {
+func (s *service) UpdateProduct(ctx context.Context, product *Product) error {
 	if err := s.repo.ModifyProduct(ctx,
 		product,
 		map[string]any{"id": product.ID},
