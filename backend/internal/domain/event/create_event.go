@@ -42,7 +42,7 @@ func (s *service) CreateEvent(ctx context.Context, event *models.Event) (string,
 
 	event.ID = uuid.NewString()
 
-	if errs := s.EncryptEvent(event); len(errs) > 0 {
+	if err := s.crypto.ProcessStruct(ctx, event); err != nil {
 		return "", domain.NewNotEncryptedErr("event", err)
 	}
 

@@ -14,6 +14,9 @@ func (s *service) ModifyEvent(ctx context.Context, event *models.Event) error {
 		return domain.NewInvalidValueErr("event can not be nil")
 	}
 	whereMap := map[string]any{"id": event.ID}
+	if err := s.crypto.ProcessStruct(ctx, event); err != nil {
+		return domain.NewNotEncryptedErr("event", err)
+	}
 	if err := s.repo.ModifyEvent(ctx,
 		event,
 		whereMap,

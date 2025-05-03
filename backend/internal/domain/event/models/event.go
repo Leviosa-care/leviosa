@@ -11,25 +11,28 @@ import (
 )
 
 type Event struct {
-	ID               string    `json:"id"`
-	Title            string    `json:"title"`
-	Description      string    `json:"description"`
-	City             string    `json:"city"`
-	PostalCode       string    `json:"postal_code"`
-	Address1         string    `json:"address1"`
-	Address2         string    `json:"address2"`
-	PlaceCount       int       `json:"place_count"`
-	FreePlace        int       `json:"free_place"`
-	BeginAt          time.Time `json:"begin_at"`
-	EncryptedBeginAt string    `json:"begin_at_formatted"`
-	EndAt            time.Time `json:"end_at"`
-	EncryptedEndAt   string    `json:"end_at_formatted"`
-	Products         []string  `json:"products"`
-	Offers           []string  `json:"offers"`
-	PriceID          string    `json:"-"`
-	Day              int       `json:"day"`
-	Month            int       `json:"month"`
-	Year             int       `json:"year"`
+	ID                  string    `json:"id"`
+	Title               string    `json:"title"`
+	Description         string    `json:"description"`
+	City                string    `json:"city" encx:"encrypt"`
+	CityEncrypted       []byte    `json:"-"`
+	PostalCode          string    `json:"postal_code" encx:"encrypt"`
+	PostalCodeEncrypted []byte    `json:"-"`
+	Address1            string    `json:"address1" encx:"encrypt"`
+	Address1Encrypted   []byte    `json:"-"`
+	Address2            string    `json:"address2" encx:"encrypt"`
+	Address2Encrypted   []byte    `json:"-"`
+	PlaceCount          int       `json:"place_count"`
+	FreePlace           int       `json:"free_place"`
+	BeginAt             time.Time `json:"begin_at"`
+	EndAt               time.Time `json:"end_at"`
+	Products            []string  `json:"products"`
+	Offers              []string  `json:"offers"`
+	PriceID             string    `json:"-" encx:"encrypt"`
+	PriceIDEncrypted    []byte    `json:"-"`
+	Day                 int       `json:"day"`
+	Month               int       `json:"month"`
+	Year                int       `json:"year"`
 }
 
 func NewEvent(
