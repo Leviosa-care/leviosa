@@ -71,7 +71,7 @@ func makeServices(
 	eventSvc := eventService.New(eventRepo, config.GetSecurity())
 	// vote
 	voteRepo := voteRepository.New(ctx, sqlitedb)
-	voteSvc := vote.NewService(voteRepo)
+	voteSvc := vote.New(voteRepo)
 	// register
 	registerRepo := registerRepository.New(ctx, sqlitedb)
 	registerSvc := registerService.NewService(registerRepo)

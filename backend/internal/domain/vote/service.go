@@ -11,6 +11,6 @@ type service struct {
 	Repo ReadWriter
 }
 
-func Newservice(repo ReadWriter) Service {
+func New(repo ReadWriter) Service {
 	return &service{Repo: repo}
 }
