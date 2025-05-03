@@ -7,7 +7,6 @@ import (
 
 	"github.com/hengadev/leviosa/pkg/flags"
 
-	"github.com/hengadev/errsx"
 	"github.com/spf13/viper"
 )
 

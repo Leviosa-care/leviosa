@@ -21,8 +21,8 @@ import (
 //     or an unexpected error occurs. Returns nil if the user is successfully added.
 func (s *service) CreateUnverifiedUser(ctx context.Context, userSignUp *models.UserSignUp) (string, error) {
 	user := userSignUp.ToUser()
-	if errs := s.EncryptUser(user); len(errs) > 0 {
-		return "", domain.NewNotEncryptedErr("unverified user", errs)
+	if err := s.crypto.ProcessStruct(ctx, user); err != nil {
+		return "", domain.NewNotEncryptedErr("unverified user", err)
 	}
 	err := s.repo.AddUnverifiedUser(ctx, user)
 	if err != nil {

@@ -6,7 +6,6 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain"
 	"github.com/hengadev/leviosa/internal/domain/user/models"
-	"github.com/hengadev/leviosa/internal/domain/user/security"
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
@@ -23,7 +22,7 @@ func (s *service) CheckUser(ctx context.Context, email string) error {
 	if err := models.ValidateEmail(email); err != nil {
 		return domain.NewInvalidValueErr(err.Error())
 	}
-	emailHash := security.HashEmail(email)
+	emailHash := s.crypto.HashBasic(ctx, []byte(email))
 	if err := s.repo.HasUser(ctx, emailHash); err != nil {
 		switch {
 		case errors.Is(err, rp.ErrNotFound):

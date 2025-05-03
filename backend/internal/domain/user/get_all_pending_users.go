@@ -35,8 +35,8 @@ func (s *service) GetAllPendingUsers(ctx context.Context) ([]*models.UserPending
 		}
 	}
 	for _, user := range users {
-		if errs := s.DecryptUser(user); len(errs) > 0 {
-			return nil, domain.NewInvalidValueErr(errs.Error())
+		if err := s.crypto.DecryptStruct(ctx, user); err != nil {
+			return nil, domain.NewInvalidValueErr(err.Error())
 		}
 		pendingUsers = append(pendingUsers, user.ToUserPending())
 	}

@@ -33,8 +33,8 @@ func (s *service) FindUserByID(ctx context.Context, userID string) (*models.User
 			return nil, domain.NewUnexpectTypeErr(err)
 		}
 	}
-	if errs := s.DecryptUser(user); len(errs) > 0 {
-		return nil, domain.NewInvalidValueErr(errs.Error())
+	if err := s.crypto.DecryptStruct(ctx, user); err != nil {
+		return nil, domain.NewInvalidValueErr(err.Error())
 	}
 	return user, nil
 }

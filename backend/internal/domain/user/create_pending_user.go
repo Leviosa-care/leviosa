@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/hengadev/leviosa/internal/domain"
 	"github.com/hengadev/leviosa/internal/domain/user/models"
-	"github.com/hengadev/leviosa/internal/domain/user/security"
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
@@ -21,7 +20,7 @@ import (
 //   - error: An error if the user cannot be retrieved, the user cannot be added to the pending user table,
 //     or an unexpected error occurs. Returns nil if the user is successfully added.
 func (s *service) CreatePendingUser(ctx context.Context, email string) error {
-	emailHash := security.HashEmail(email)
+	emailHash := s.crypto.HashBasic(ctx, []byte(email))
 	user, err := s.repo.GetUnverifiedUser(ctx, emailHash)
 	if err != nil {
 		switch {

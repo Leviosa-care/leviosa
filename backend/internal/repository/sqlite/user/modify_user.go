@@ -44,7 +44,7 @@ func (u *Repository) ModifyAccount(
 	if rowsAffected == 0 {
 		return rp.NewNotUpdatedErr(errors.New("no rows affected"), fmt.Sprintf("user with ID %q", user.ID))
 	}
-	if len(writeUpdateErr) > 0 {
+	if writeUpdateErr != nil {
 		return rp.NewValidationErr(err, "'models.User' fields for modification")
 	}
 	return nil

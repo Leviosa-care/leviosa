@@ -23,11 +23,12 @@ func (u *Repository) GetPendingUsers(ctx context.Context) ([]*models.User, error
 	query := `
         SELECT 
             email_hash,
-            encrypted_email,
-            encrypted_lastname,
-            encrypted_firstname,
-            encrypted_google_id,
-            encrypted_apple_id
+            email_encrypted,
+            lastname_encrypted,
+            firstname_encrypted,
+            google_id_encrypted,
+            apple_id_encrypted,
+            dek_encrypted
         FROM users;`
 	rows, err := u.DB.QueryContext(ctx, query)
 	if err != nil {
@@ -45,11 +46,12 @@ func (u *Repository) GetPendingUsers(ctx context.Context) ([]*models.User, error
 		var user models.User
 		if err := rows.Scan(
 			&user.EmailHash,
-			&user.Email,
-			&user.LastName,
-			&user.FirstName,
-			&user.GoogleID,
-			&user.AppleID,
+			&user.EmailEncrypted,
+			&user.LastNameEncrypted,
+			&user.FirstNameEncrypted,
+			&user.GoogleIDEncrypted,
+			&user.AppleIDEncrypted,
+			&user.DEKEncrypted,
 		); err != nil {
 			return nil, rp.NewDatabaseErr(err)
 		}

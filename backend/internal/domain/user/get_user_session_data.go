@@ -7,7 +7,6 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain"
 	"github.com/hengadev/leviosa/internal/domain/user/models"
-	"github.com/hengadev/leviosa/internal/domain/user/security"
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
@@ -26,8 +25,8 @@ func (s *service) GetUserSessionData(ctx context.Context, email string) (string,
 	if _, err := models.NewEmail(email); err != nil {
 		return "", models.UNKNOWN, domain.NewInvalidValueErr(fmt.Sprintf("invalid email: %q", err))
 	}
-	hashedEmail := security.HashEmail(email)
-	ID, role, err := s.repo.GetUserSessionData(ctx, hashedEmail)
+	emailHash := s.crypto.HashBasic(ctx, []byte(email))
+	ID, role, err := s.repo.GetUserSessionData(ctx, emailHash)
 	if err != nil {
 		switch {
 		case errors.Is(err, rp.ErrNotFound):

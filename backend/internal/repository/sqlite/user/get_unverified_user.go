@@ -25,30 +25,31 @@ func (u *Repository) GetUnverifiedUser(ctx context.Context, emailHash string) (*
 	var user models.User
 	query := `
         SELECT 
-            encrypted_email,
-            encrypted_lastname,
-            encrypted_firstname,
-            encrypted_gender,
-            encrypted_birthdate,
-            encrypted_telephone,
-            encrypted_postal_code,
-            encrypted_city,
-            encrypted_address1,
-            encrypted_address2
+            email_encrypted,
+            lastname_encrypted,
+            firstname_encrypted,
+            gender_encrypted,
+            birthdate_encrypted,
+            telephone_encrypted,
+            postal_code_encrypted,
+            city_encrypted,
+            address1_encrypted,
+            address2_encrypted,
+			dek_encrypted
         FROM unverified_users 
         WHERE email_hash = ?;`
 
 	err := u.DB.QueryRowContext(ctx, query, emailHash).Scan(
-		&user.Email,
-		&user.LastName,
-		&user.FirstName,
-		&user.Gender,
-		&user.EncryptedBirthDate,
-		&user.Telephone,
-		&user.PostalCode,
-		&user.City,
-		&user.Address1,
-		&user.Address2,
+		&user.EmailEncrypted,
+		&user.LastNameEncrypted,
+		&user.FirstNameEncrypted,
+		&user.GenderEncrypted,
+		&user.BirthDateEncrypted,
+		&user.TelephoneEncrypted,
+		&user.PostalCodeEncrypted,
+		&user.CityEncrypted,
+		&user.Address1Encrypted,
+		&user.Address2Encrypted,
 	)
 	if err != nil {
 		switch {

@@ -7,7 +7,6 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain"
 	"github.com/hengadev/leviosa/internal/domain/user/models"
-	"github.com/hengadev/leviosa/internal/domain/user/security"
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
@@ -24,8 +23,8 @@ import (
 //   - NewQueryFailedErr if there is a query failure.
 //   - NewInvalidValueErr if the password verification fails.
 func (s *service) ValidateCredentials(ctx context.Context, user *models.UserSignIn) error {
-	hashedEmail := security.HashEmail(user.Email)
-	hashedPassword, err := s.repo.GetHashedPasswordByEmail(ctx, hashedEmail)
+	emailHash := s.crypto.HashBasic(ctx, []byte(user.Email))
+	hashedPassword, err := s.repo.GetHashedPasswordByEmail(ctx, emailHash)
 	if err != nil {
 		switch {
 		case errors.Is(err, rp.ErrNotFound):
@@ -38,7 +37,8 @@ func (s *service) ValidateCredentials(ctx context.Context, user *models.UserSign
 			return domain.NewUnexpectTypeErr(err)
 		}
 	}
-	ok, err := s.VerifyPassword(user.Password, hashedPassword)
+	// ok, err := s.crypto.VerifyPassword(ctx, user.Password, hashedPassword)
+	ok, err := s.crypto.CompareSecureHashAndValue(ctx, user.Password, hashedPassword)
 	if err != nil {
 		return domain.NewInvalidValueErr(fmt.Sprintf("invalid password verification: %s", err.Error()))
 	}

@@ -21,8 +21,8 @@ import (
 //     or an unexpected error occurs. Returns nil if the user is successfully added.
 func (s *service) CreateOAuthPendingUser(ctx context.Context, user *models.User, provider models.ProviderType) error {
 	// encrypt user
-	if errs := s.EncryptUser(user); len(errs) > 0 {
-		return domain.NewNotEncryptedErr("OAuth pending user", errs)
+	if err := s.crypto.ProcessStruct(ctx, user); err != nil {
+		return domain.NewNotEncryptedErr("OAuth pending user", err)
 	}
 	// add user to pending_user table
 	if err := s.repo.AddPendingUser(ctx, user, provider); err != nil {

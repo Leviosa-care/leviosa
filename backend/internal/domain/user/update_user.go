@@ -26,10 +26,9 @@ func (s *service) UpdateAccount(ctx context.Context, user *models.User) error {
 	if err := uuid.Validate(user.ID); err != nil {
 		return domain.NewInvalidValueErr(fmt.Sprintf("invalid user ID: %s", err.Error()))
 	}
-	// encrypt the user data here
-	if errs := s.EncryptUser(user); len(errs) > 0 {
-		fmt.Println("here I have errors", errs)
-		return domain.NewInvalidValueErr(fmt.Sprintf("invalid user encryption: %s", errs.Error()))
+	// encrypt user data
+	if err := s.crypto.ProcessStruct(ctx, user); err != nil {
+		return domain.NewInvalidValueErr(fmt.Sprintf("invalid user encryption: %s", err.Error()))
 	}
 	// call modify account on the new data
 	err := s.repo.ModifyAccount(

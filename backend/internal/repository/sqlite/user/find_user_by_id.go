@@ -27,33 +27,35 @@ func (u *Repository) FindAccountByID(ctx context.Context, id string) (*models.Us
 	var user models.User
 	query := `
         SELECT 
-            encrypted_email,
-            encrypted_picture,
+            email_encrypted,
+            picture_encrypted,
             role,
-            encrypted_lastname,
-            encrypted_firstname,
-            encrypted_gender,
-            encrypted_birthdate,
-            encrypted_telephone,
-            encrypted_postal_code,
-            encrypted_city,
-            encrypted_address1,
-            encrypted_address2
+            lastname_encrypted,
+            firstname_encrypted,
+            gender_encrypted,
+            birthdate_encrypted,
+            telephone_encrypted,
+            postal_code_encrypted,
+            city_encrypted,
+            address1_encrypted,
+            encrypted_address2,
+			dek_encrypted
         FROM users
         WHERE id = ?;`
 	if err := u.DB.QueryRowContext(ctx, query, id).Scan(
-		&user.Email,
-		&user.Picture,
+		&user.EmailEncrypted,
+		&user.PictureEncrypted,
 		&user.Role,
-		&user.LastName,
-		&user.FirstName,
-		&user.Gender,
-		&user.EncryptedBirthDate,
-		&user.Telephone,
-		&user.PostalCode,
-		&user.City,
-		&user.Address1,
-		&user.Address2,
+		&user.LastNameEncrypted,
+		&user.FirstNameEncrypted,
+		&user.GenderEncrypted,
+		&user.BirthDateEncrypted,
+		&user.TelephoneEncrypted,
+		&user.PostalCodeEncrypted,
+		&user.CityEncrypted,
+		&user.Address1Encrypted,
+		&user.Address2Encrypted,
+		&user.DEKEncrypted,
 	); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

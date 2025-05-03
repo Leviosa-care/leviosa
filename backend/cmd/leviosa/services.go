@@ -36,6 +36,8 @@ import (
 	"github.com/hengadev/leviosa/pkg/config"
 
 	// external packages
+	"github.com/hengadev/encx"
+	"github.com/hengadev/encx/providers/hashicorpvault"
 	rd "github.com/redis/go-redis/v9"
 )
 
@@ -48,9 +50,19 @@ func makeServices(
 	var appSvcs app.Services
 	var appRepos app.Repos
 
+	// crypto
+	kms, err := hashicorpvault.New()
+	if err != nil {
+		return appSvcs, appRepos, fmt.Errorf("creating vault: %w", err)
+	}
+	crypto, err := encx.New(ctx, kms, "leviosa-app-key", "secret/data/pepper")
+	if err != nil {
+		return appSvcs, appRepos, fmt.Errorf("creating crypto: %w", err)
+	}
+
 	// user
 	userRepo := userRepository.New(ctx, sqlitedb)
-	userSvc := userService.New(userRepo, config.GetSecurity())
+	userSvc := userService.New(userRepo, crypto)
 	// session
 	sessionRepo := sessionRepository.New(ctx, redisdb)
 	sessionSvc := sessionService.New(sessionRepo)

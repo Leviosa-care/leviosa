@@ -11,28 +11,42 @@ import (
 
 type User struct {
 	ID                  string    `json:"-"`
-	Email               string    `json:"-"`
+	Email               string    `json:"-" encx:"encrypt,hash_basic"`
 	EmailHash           string    `json:"-"`
-	Password            string    `json:"-"`
+	EmailEncrypted      []byte    `json:"-"`
+	Password            string    `json:"-" encx:"hash_secure"`
 	PasswordHash        string    `json:"-"`
-	Picture             string    `json:"-"`
+	Picture             string    `json:"-" encx:"encrypt"`
+	PictureEncrypted    []byte    `json:"-"`
 	CreatedAt           time.Time `json:"-"`
-	EncryptedCreatedAt  string    `json:"-"`
 	LoggedInAt          time.Time `json:"-"`
-	EncryptedLoggedInAt string    `json:"-"`
 	Role                string    `json:"-"`
-	BirthDate           time.Time `json:"-"`
-	EncryptedBirthDate  string    `json:"-"`
-	LastName            string    `json:"-"`
-	FirstName           string    `json:"-"`
-	Gender              string    `json:"-"`
-	Telephone           string    `json:"-"`
-	PostalCode          string    `json:"-"`
-	City                string    `json:"-"`
-	Address1            string    `json:"-"`
-	Address2            string    `json:"-"`
-	GoogleID            string    `json:"-"`
-	AppleID             string    `json:"-"`
+	BirthDate           time.Time `json:"-" encx:"encrypt"`
+	BirthDateEncrypted  []byte    `json:"-"`
+	LastName            string    `json:"-" encx:"encrypt"`
+	LastNameEncrypted   []byte    `json:"-"`
+	FirstName           string    `json:"-" encx:"encrypt"`
+	FirstNameEncrypted  []byte    `json:"-"`
+	Gender              string    `json:"-" encx:"encrypt"`
+	GenderEncrypted     []byte    `json:"-"`
+	Telephone           string    `json:"-" encx:"encrypt,hash_basic"`
+	TelephoneHash       string    `json:"-"`
+	TelephoneEncrypted  []byte    `json:"-"`
+	PostalCode          string    `json:"-" encx:"encrypt"`
+	PostalCodeEncrypted []byte    `json:"-"`
+	City                string    `json:"-" encx:"encrypt"`
+	CityEncrypted       []byte    `json:"-"`
+	Address1            string    `json:"-" encx:"encrypt"`
+	Address1Encrypted   []byte    `json:"-"`
+	Address2            string    `json:"-" encx:"encrypt"`
+	Address2Encrypted   []byte    `json:"-"`
+	GoogleID            string    `json:"-" encx:"encrypt"`
+	GoogleIDEncrypted   []byte    `json:"-"`
+	AppleID             string    `json:"-" encx:"encrypt"`
+	AppleIDEncrypted    []byte    `json:"-"`
+	DEK                 []byte    `json:"-" encx:"encrypt"`
+	DEKEncrypted        []byte    `json:"-"`
+	KeyVersion          int       `json:"-"`
 }
 
 func (a *User) Create() {
@@ -77,33 +91,35 @@ func (u User) AssertComparable() {}
 func (u User) GetSQLColumnMapping() map[string]string {
 	return map[string]string{
 		"ID":                  "id",
-		"Email":               "encrypted_email",
+		"EmailEncrypted":      "email_encrypted",
 		"EmailHash":           "email_hash",
 		"PasswordHash":        "password_hash",
-		"Picture":             "encrypted_picture",
-		"EncryptedCreatedAt":  "encrypted_created_at",
-		"EncryptedLoggedInAt": "encrypted_logged_in_at",
+		"PictureEncrypted":    "picture_encrypted",
+		"CreatedAtEncrypted":  "created_at_encrypted",
+		"LoggedInAtEncrypted": "logged_in_at_encrypted",
 		"Role":                "role",
-		"EncryptedBirthDate":  "encrypted_birthdate",
-		"LastName":            "encrypted_lastname",
-		"FirstName":           "encrypted_firstname",
-		"Gender":              "encrypted_gender",
-		"Telephone":           "encrypted_telephone",
-		"PostalCode":          "encrypted_postal_code",
-		"City":                "encrypted_city",
-		"Address1":            "encrypted_address1",
-		"Address2":            "encrypted_address2",
-		"GoogleID":            "encrypted_google_id",
-		"AppleID":             "encrypted_apple_id",
+		"BirthDateEncrypted":  "birthdate_encrypted",
+		"LastNameEncrypted":   "lastname_encrypted",
+		"FirstNameEncrypted":  "firstname_encrypted",
+		"GenderEncrypted":     "gender_encrypted",
+		"TelephoneEncrypted":  "telephone_encrypted",
+		"TelephoneHash":       "telephone_hash",
+		"PostalCodeEncrypted": "postal_code_encrypted",
+		"CityEncrypted":       "city_encrypted",
+		"Address1Encrypted":   "address1_encrypted",
+		"Address2Encrypted":   "address2_encrypted",
+		"GoogleIDEncrypted":   "google_id_encrypted",
+		"AppleIDEncrypted":    "apple_id_encrypted",
 	}
 }
 
 func (u User) GetProhibitedFields() []string {
 	return []string{
 		"ID",
-		"Email",
-		"Password",
-		"GoogleID",
-		"AppleID",
+		"EmailEncrypted",
+		"EmailHash",
+		"PasswordHash",
+		"GoogleIDEncrypted",
+		"AppleIDEncrypted",
 	}
 }

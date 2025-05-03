@@ -28,7 +28,7 @@ func (u *Repository) linkAuthMethod(ctx context.Context, tx *sql.Tx, userID stri
 		// Add Apple authentication
 		_, err := tx.ExecContext(ctx,
 			fmt.Sprintf(`UPDATE %s SET 
-                google_id = ?
+                google_id_encrypted = ?
             WHERE id = ?`, table),
 			user.GoogleID,
 			userID,
@@ -38,7 +38,7 @@ func (u *Repository) linkAuthMethod(ctx context.Context, tx *sql.Tx, userID stri
 		// Add Apple authentication
 		_, err := tx.ExecContext(ctx,
 			fmt.Sprintf(`UPDATE %s SET 
-                apple_id = ?
+                apple_id_encrypted = ?
             WHERE id = ?`, table),
 			user.AppleID,
 			userID,

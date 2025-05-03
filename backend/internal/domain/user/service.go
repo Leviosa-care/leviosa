@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
-	"github.com/hengadev/leviosa/internal/domain/user/security"
-	"github.com/hengadev/leviosa/pkg/config"
+
+	"github.com/hengadev/encx"
 )
 
 type Service interface {
@@ -24,13 +24,14 @@ type Service interface {
 }
 
 type service struct {
-	repo ReadWriter
-	*security.SecureUserData
+	repo   ReadWriter
+	crypto *encx.Crypto
 }
 
-func New(repo ReadWriter, config *config.SecurityConfig) Service {
+// func New(repo ReadWriter, config *config.SecurityConfig) Service {
+func New(repo ReadWriter, crypto *encx.Crypto) Service {
 	return &service{
 		repo,
-		security.NewSecureUserData(config),
+		crypto,
 	}
 }

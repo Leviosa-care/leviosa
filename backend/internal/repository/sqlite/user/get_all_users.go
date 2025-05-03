@@ -25,20 +25,21 @@ func (u *Repository) GetAllUsers(ctx context.Context) ([]*models.User, error) {
 	query := `
         SELECT 
             id,
-            encrypted_email,
-            encrypted_picture,
+            email_encrypted,
+            picture_encrypted,
             role,
-            encrypted_birthdate,
-            encrypted_lastname,
-            encrypted_firstname,
-            encrypted_gender,
-            encrypted_telephone,
-            encrypted_postal_code,
-            encrypted_city,
-            encrypted_address1,
-            encrypted_address2,
-            encrypted_google_id,
-            encrypted_apple_id
+            birthdate_encrypted,
+            lastname_encrypted,
+            firstname_encrypted,
+            gender_encrypted,
+            telephone_encrypted,
+            postal_code_encrypted,
+            city_encrypted,
+            address1_encrypted,
+            address2_encrypted,
+            google_id_encrypted,
+            encrypted_apple_id,
+			dek_encrypted
         FROM users;`
 	rows, err := u.DB.QueryContext(ctx, query)
 	if err != nil {
@@ -56,20 +57,20 @@ func (u *Repository) GetAllUsers(ctx context.Context) ([]*models.User, error) {
 		var user models.User
 		err := rows.Scan(
 			&user.ID,
-			&user.Email,
-			&user.Picture,
+			&user.EmailEncrypted,
+			&user.PictureEncrypted,
 			&user.Role,
-			&user.EncryptedBirthDate,
-			&user.LastName,
-			&user.FirstName,
-			&user.Gender,
-			&user.Telephone,
-			&user.PostalCode,
-			&user.City,
-			&user.Address1,
-			&user.Address2,
-			&user.GoogleID,
-			&user.AppleID,
+			&user.BirthDateEncrypted,
+			&user.LastNameEncrypted,
+			&user.FirstNameEncrypted,
+			&user.GenderEncrypted,
+			&user.TelephoneEncrypted,
+			&user.PostalCodeEncrypted,
+			&user.CityEncrypted,
+			&user.Address1Encrypted,
+			&user.Address2Encrypted,
+			&user.GoogleIDEncrypted,
+			&user.AppleIDEncrypted,
 		)
 		if err != nil {
 			return nil, rp.NewDatabaseErr(err)

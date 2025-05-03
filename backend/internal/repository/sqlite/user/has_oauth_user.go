@@ -35,8 +35,8 @@ func (u *Repository) HasOAuthUser(ctx context.Context, emailHash string, p model
             SELECT 1 
             FROM %s 
             WHERE email_hash = ? 
-            AND %s_id IS NOT NULL
-            AND %s_id != ''
+            AND %s_id_encrypted IS NOT NULL
+            AND %s_id_encrypted != ''
         );`, table, provider, provider)
 		var exists bool
 		err = tx.QueryRowContext(ctx, query, emailHash).Scan(&exists)
