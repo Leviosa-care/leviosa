@@ -86,7 +86,10 @@ func makeServices(
 	mediaSvc := mediaService.New(mediaRepo)
 
 	// mail
-	mailSvc := mailService.New()
+	mailSvc, err := mailService.New()
+	if err != nil {
+		return appSvcs, appRepos, fmt.Errorf("create mail service: %w", err)
+	}
 	// product
 	productRepo := productRepository.New(ctx, sqlitedb)
 	productSvc := productService.New(productRepo)
