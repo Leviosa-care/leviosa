@@ -21,10 +21,15 @@ import (
 //     or an unexpected error occurs. Returns nil if the user is successfully added.
 func (s *service) CreateUnverifiedUser(ctx context.Context, userSignUp *models.UserSignUp) (string, error) {
 	user := userSignUp.ToUser()
+	dek, err := s.crypto.GenerateDEK()
+	if err != nil {
+		return "", err
+	}
+	user.DEK = dek
 	if err := s.crypto.ProcessStruct(ctx, user); err != nil {
 		return "", domain.NewNotEncryptedErr("unverified user", err)
 	}
-	err := s.repo.AddUnverifiedUser(ctx, user)
+	err = s.repo.AddUnverifiedUser(ctx, user)
 	if err != nil {
 		switch {
 		case errors.Is(err, rp.ErrDatabase):
