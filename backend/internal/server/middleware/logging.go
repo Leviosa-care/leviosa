@@ -29,16 +29,14 @@ func AttachLogger(env mode.EnvMode, slogHandler slog.Handler) func(http.Handler)
 
 			requestID := rand.Int63()
 
+			IPHeader := os.Getenv("CLIENT_IP_HEADER")
 			// I just make a fake IP for now, I know my function to work:
 			var IP string
 			switch env {
 			case mode.ModeDev:
 				IP = "127.0.0.1"
 			case mode.ModeStaging, mode.ModeProd:
-				// TODO: fix that one later with getting the right header for the IP address
-				header := r.Header
-				_ = header
-				IP = "127.0.0.1"
+				IP = r.Header.Get(IPHeader)
 			}
 
 			if IP == "" {

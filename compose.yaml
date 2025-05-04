@@ -9,6 +9,8 @@ services:
     environment:
       - API_URL=backend:${BACKEND_PORT}
       - PORT=${PORT}
+      - SESSION_COOKIE_NAME="leviosa_session"
+      - CLIENT_IP_HEADER="x-client-ip"
     restart: unless-stopped
     user: runner
     ports:
@@ -56,6 +58,8 @@ services:
       - REDIS_DB
       - REDIS_PASSWORD
       - FRONTEND_ORIGIN=frontend:${PORT}
+      - SESSION_COOKIE_NAME="leviosa_session"
+      - CLIENT_IP_HEADER="x-client-ip"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${BACKEND_PORT}/healthz"]
       interval: 30s
