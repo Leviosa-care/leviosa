@@ -2,6 +2,7 @@ package sessionService
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
@@ -11,7 +12,8 @@ import (
 )
 
 const SessionDuration = 30 * 24 * time.Hour
-const SessionName = "session_token"
+
+var SessionName = os.Getenv("SESSION_COOKIE_NAME")
 
 type Session struct {
 	ID         string      `json:"id"`
