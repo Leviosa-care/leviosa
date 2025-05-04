@@ -16,7 +16,6 @@ type Config struct {
 	redis     *redisCreds
 	s3        *s3Creds
 	mailCreds *mailCreds
-	security  *SecurityConfig
 }
 
 func New(ctx context.Context, envFilename, envFileType string) *Config {
@@ -62,8 +61,7 @@ func (c *Config) Load(ctx context.Context, mode mode.EnvMode) error {
 		"AWS_SECRET_ACCESS_KEY": {required: true, key: "aws.secret.access.key"},
 		"BUCKETNAME":            {required: true, key: "s3.bucketname"},
 
-		"USER_ENCRYPTION_KEY": {required: true, key: "user.encryption.key"},
-		"LOGGING_SALT":        {required: true, key: "logging.salt"},
+		"LOGGING_SALT": {required: true, key: "logging.salt"},
 	}
 	for envVar, requiredKey := range envVarsToKeys {
 		if os.Getenv(envVar) == "" && requiredKey.required == true {
@@ -81,9 +79,6 @@ func (c *Config) Load(ctx context.Context, mode mode.EnvMode) error {
 	}
 	if err := c.setS3(mode); err != nil {
 		errs.Set("S3 configuration", fmt.Errorf("set S3: %w", err))
-	}
-	if err := c.setSecurityConfig(ctx); err != nil {
-		errs.Set("user security configuration", fmt.Errorf("set user security config: %w", err))
 	}
 	return errs.AsError()
 }

@@ -4,18 +4,18 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hengadev/leviosa/internal/domain/message/models"
+	messageService "github.com/hengadev/leviosa/internal/domain/message"
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (m *Repository) GetMessages(ctx context.Context, conversationID string) ([]*models.Message, error) {
+func (m *Repository) GetMessages(ctx context.Context, conversationID string) ([]*messageService.Message, error) {
 	query := `
         SELECT 
             id,
             conversation_id,
             sender_id,
-            encrypted_content,
-            encrypted_created_at
+            content_encrypted,
+            created_at
         FROM messages;`
 	rows, err := m.DB.QueryContext(ctx, query)
 	if err != nil {
@@ -28,15 +28,15 @@ func (m *Repository) GetMessages(ctx context.Context, conversationID string) ([]
 	}
 	defer rows.Close()
 
-	var messages []*models.Message
+	var messages []*messageService.Message
 	for rows.Next() {
-		var message models.Message
+		var message messageService.Message
 		err := rows.Scan(
 			&message.ID,
 			&message.ConversationID,
 			&message.SenderID,
 			&message.Content,
-			&message.EncryptedCreatedAt,
+			&message.CreatedAt,
 		)
 		if err != nil {
 			return nil, rp.NewDatabaseErr(err)
@@ -47,7 +47,7 @@ func (m *Repository) GetMessages(ctx context.Context, conversationID string) ([]
 		return nil, rp.NewDatabaseErr(err)
 	}
 	if len(messages) == 0 {
-		return []*models.Message{}, nil
+		return []*messageService.Message{}, nil
 	}
 	return messages, nil
 }

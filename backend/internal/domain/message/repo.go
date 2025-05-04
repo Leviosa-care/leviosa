@@ -2,18 +2,16 @@ package messageService
 
 import (
 	"context"
-
-	"github.com/hengadev/leviosa/internal/domain/message/models"
 )
 
 type Reader interface {
-	GetMessages(ctx context.Context, conversationID string) ([]*models.Message, error)
-	ListConversations(ctx context.Context, userID string) ([]*models.Conversation, error)
+	GetMessages(ctx context.Context, conversationID string) ([]*Message, error)
+	ListConversations(ctx context.Context, userID string) ([]*Conversation, error)
 }
 
 type Writer interface {
-	CreateConversation(ctx context.Context, conversation *models.Conversation) error
-	SendMessage(ctx context.Context, message *models.Message) error
+	CreateConversation(ctx context.Context, conversation *Conversation) error
+	SendMessage(ctx context.Context, message *Message) error
 }
 
 type ReadWriter interface {

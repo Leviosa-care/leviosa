@@ -5,11 +5,10 @@ import (
 	"errors"
 
 	"github.com/hengadev/leviosa/internal/domain"
-	"github.com/hengadev/leviosa/internal/domain/message/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *service) GetMessages(ctx context.Context, conversationID string) ([]*models.Message, error) {
+func (s *service) GetMessages(ctx context.Context, conversationID string) ([]*Message, error) {
 	messages, err := s.repo.GetMessages(ctx, conversationID)
 	if err != nil {
 		switch {
@@ -22,8 +21,8 @@ func (s *service) GetMessages(ctx context.Context, conversationID string) ([]*mo
 		}
 	}
 	for _, message := range messages {
-		if errs := s.DecryptMessage(message); len(errs) > 0 {
-			return nil, domain.NewNotEncryptedErr("message content decryption", errs)
+		if err := s.crypto.DecryptStruct(ctx, message); err != nil {
+			return nil, domain.NewNotEncryptedErr("message content decryption", err)
 		}
 	}
 	return messages, nil

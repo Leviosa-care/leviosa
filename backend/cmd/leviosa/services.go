@@ -104,7 +104,7 @@ func makeServices(
 
 	// message
 	messageRepo := messageRepository.New(ctx, sqlitedb)
-	messageSvc := messageService.New(messageRepo, config.GetSecurity())
+	messageSvc := messageService.New(messageRepo, crypto)
 
 	// services
 	appSvcs = app.Services{

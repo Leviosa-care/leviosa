@@ -6,15 +6,14 @@ import (
 	"time"
 
 	"github.com/hengadev/leviosa/internal/domain"
-	"github.com/hengadev/leviosa/internal/domain/message/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
 func (s *service) CreateConversation(ctx context.Context, userID, adminID string) (string, error) {
 	// TODO: check if the userID sent has the right priviledge to be talked to, ie is freelance ?
-	conversation := &models.Conversation{
+	conversation := &Conversation{
 		UserID:    userID,
-		AdminID:   adminID,
+		PartnerID: adminID,
 		CreatedAt: time.Now(),
 	}
 

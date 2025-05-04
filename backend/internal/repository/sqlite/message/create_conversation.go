@@ -4,25 +4,25 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hengadev/leviosa/internal/domain/message/models"
+	messageService "github.com/hengadev/leviosa/internal/domain/message"
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (m *Repository) CreateConversation(ctx context.Context, conversation *models.Conversation) error {
+func (m *Repository) CreateConversation(ctx context.Context, conversation *messageService.Conversation) error {
 	query := `
         INSERT INTO conversations (
             id,
             user_id,
-            admin_id,
-            encrypted_created_at
+            partner_id,
+            created_at
         ) VALUES (?, ?, ?, ?);`
 	result, err := m.DB.ExecContext(
 		ctx,
 		query,
 		conversation.ID,
 		conversation.UserID,
-		conversation.AdminID,
-		conversation.EncryptedCreatedAt,
+		conversation.PartnerID,
+		conversation.CreatedAt,
 	)
 	if err != nil {
 		switch {

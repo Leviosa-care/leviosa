@@ -5,11 +5,10 @@ import (
 	"errors"
 
 	"github.com/hengadev/leviosa/internal/domain"
-	"github.com/hengadev/leviosa/internal/domain/message/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *service) ListConversations(ctx context.Context, userID string) ([]*models.Conversation, error) {
+func (s *service) ListConversations(ctx context.Context, userID string) ([]*Conversation, error) {
 	conversations, err := s.repo.ListConversations(ctx, userID)
 	if err != nil {
 		switch {
