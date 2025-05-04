@@ -3,23 +3,25 @@
 INSERT INTO users (
     id,
     email_hash,
-    encrypted_email,
+    email_encrypted,
     password_hash,
-    encrypted_picture,
-    encrypted_created_at,
-    encrypted_logged_in_at,
+    picture_encrypted,
+    created_at,
+    logged_in_at,
     role,
-    encrypted_birthdate,
-    encrypted_lastname,
-    encrypted_firstname,
-    encrypted_gender,
-    encrypted_telephone,
-    encrypted_postal_code,
-    encrypted_city,
-    encrypted_address1,
-    encrypted_address2,
-    encrypted_google_id,
-    encrypted_apple_id
+    birthdate_encrypted,
+    lastname_encrypted,
+    firstname_encrypted,
+    gender_encrypted,
+    telephone_hash,
+    telephone_encrypted,
+    postal_code_encrypted,
+    city_encrypted,
+    address1_encrypted,
+    address2_encrypted,
+    google_id_encrypted,
+    apple_id_encrypted,
+    dek_encrypted
 ) VALUES
     (
         "123e4567-e89b-12d3-a456-426614174001",
@@ -40,7 +42,8 @@ INSERT INTO users (
         '01 Avenue Jean DUPONT',
         '',
         'google_id1',
-        'apple_id1'
+        'apple_id1',
+        ''
     ),
     (
         "123e4567-e89b-12d3-a456-426614174002",
@@ -61,7 +64,8 @@ INSERT INTO users (
         '01 Avenue Jean DUPONT',
         '',
         'google_id2',
-        'apple_id2'
+        'apple_id2',
+        ''
     );
 -- +goose StatementEnd
 

@@ -1,26 +1,25 @@
 -- +goose Up
 -- +goose StatementBegin
--- TODO: change that migration to use the right values for the columns
 INSERT INTO users (
     id,
     email_hash,
-    encrypted_email,
-    password_hash,
-    encrypted_picture,
-    encrypted_created_at,
-    encrypted_logged_in_at,
-    role,
-    encrypted_birthdate,
-    encrypted_lastname,
-    encrypted_firstname,
-    encrypted_gender,
-    encrypted_telephone,
-    encrypted_postal_code,
-    encrypted_city,
-    encrypted_address1,
-    encrypted_address2,
-    encrypted_google_id,
-    encrypted_apple_id
+    email_encrypted,
+    picture_encrypted,
+    created_at,
+    logged_in_at,
+    birthdate_encrypted,
+    lastname_encrypted,
+    firstname_encrypted,
+    gender_encrypted,
+    telephone_hash,
+    telephone_encrypted,
+    postal_code_encrypted,
+    city_encrypted,
+    address1_encrypted,
+    address2_encrypted,
+    google_id_encrypted,
+    apple_id_encrypted,
+    dek_encrypted
 ) VALUES (
     "123e4567-e89b-12d3-a456-426614174000",
     'john.doe@example.com',
@@ -35,12 +34,14 @@ INSERT INTO users (
     'John',
     'M',
     '0123456789',
+    '0123456789',
     '75000',
     'Paris',
     '01 Avenue Jean DUPONT',
     '',
     'google_id',
-    'apple_id'
+    'apple_id',
+    ''
 );
 -- +goose StatementEnd
 

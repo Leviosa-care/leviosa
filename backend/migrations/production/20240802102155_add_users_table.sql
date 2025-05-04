@@ -3,24 +3,26 @@
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     email_hash TEXT NOT NULL UNIQUE,
-    encrypted_email TEXT NOT NULL UNIQUE,
+    email_encrypted BLOB NOT NULL UNIQUE,
     password_hash TEXT,
-	encrypted_created_at  TEXT NOT NULL,
-	encrypted_logged_in_at TEXT NOT NULL,
+    picture_encrypted BLOB,
+	created_at TEXT NOT NULL,
+	logged_in_at TEXT NOT NULL,
     role TEXT NOT NULL,
-	encrypted_birthdate  TEXT NOT NULL,
-    encrypted_lastname TEXT NOT NULL,
-    encrypted_firstname TEXT NOT NULL,
-	encrypted_gender TEXT NOT NULL,
-	encrypted_telephone TEXT NOT NULL UNIQUE,
-    encrypted_postal_code TEXT NOT NULL, 
-    encrypted_city TEXT NOT NULL, 
-    encrypted_address1 TEXT NOT NULL, 
-    encrypted_address2 TEXT,
-    encrypted_google_id TEXT,
-    encrypted_apple_id TEXT
+	birthdate_encrypted BLOB NOT NULL,
+    lastname_encrypted BLOB NOT NULL,
+    firstname_encrypted BLOB NOT NULL,
+	gender_encrypted BLOB NOT NULL,
+	telephone_hash TEXT NOT NULL UNIQUE,
+	telephone_encrypted BLOB NOT NULL UNIQUE,
+    postal_code_encrypted BLOB NOT NULL,
+    city_encrypted BLOB NOT NULL,
+    address1_encrypted BLOB NOT NULL,
+    address2_encrypted BLOB,
+    google_id_encrypted BLOB,
+    apple_id_encrypted BLOB,
+    dek_encrypted BLOB NOT NULL UNIQUE
 );
--- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
