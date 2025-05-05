@@ -21,6 +21,7 @@ type Service interface {
 	DeleteUser(ctx context.Context, userID string) error
 	UpdateAccount(ctx context.Context, user *models.User) error
 	ValidateCredentials(ctx context.Context, user *models.UserSignIn) error
+	CheckOAuthUser(ctx context.Context, email string, provider models.ProviderType) error
 }
 
 type service struct {

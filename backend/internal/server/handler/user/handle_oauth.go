@@ -11,7 +11,6 @@ import (
 	"github.com/hengadev/leviosa/internal/domain"
 	"github.com/hengadev/leviosa/internal/domain/session"
 	"github.com/hengadev/leviosa/internal/domain/user/models"
-	"github.com/hengadev/leviosa/internal/domain/user/security"
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/contextutil"
@@ -80,7 +79,7 @@ func (a *AppInstance) decodeAndValidUser(ctx context.Context, w http.ResponseWri
 }
 
 func (a *AppInstance) handleUser(ctx context.Context, w http.ResponseWriter, user *models.User, logger *slog.Logger, provider models.ProviderType) error {
-	if err := a.Repos.User.HasOAuthUser(ctx, security.HashEmail(user.Email), provider); err != nil {
+	if err := a.Svcs.User.CheckOAuthUser(ctx, user.Email, provider); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
 			if err := a.Svcs.User.CreateOAuthPendingUser(ctx, user, provider); err != nil {
@@ -100,10 +99,10 @@ func (a *AppInstance) handleUser(ctx context.Context, w http.ResponseWriter, use
 				}
 				return err
 			}
-			if errs := a.Svcs.Mail.PendingUser(ctx, user); len(errs) > 0 {
+			if err := a.Svcs.Mail.PendingUser(ctx, user); err != nil {
 				logger.WarnContext(ctx, "sending mail to welcome new oauth pending user")
 				http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
-				return errs
+				return err
 			}
 		case errors.Is(err, rp.ErrContext):
 			logger.WarnContext(ctx, "context error, deadline or timeout while checking for user existence")
@@ -111,6 +110,9 @@ func (a *AppInstance) handleUser(ctx context.Context, w http.ResponseWriter, use
 		case errors.Is(err, domain.ErrQueryFailed):
 			logger.WarnContext(ctx, "database checking for oauth user existence query failed")
 			http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
+		case errors.Is(err, domain.ErrInvalidValue):
+			logger.WarnContext(ctx, "check for invalid email for oauth user existence query failed")
+			http.Error(w, handler.NewBadRequestErr(err), http.StatusBadRequest)
 		case errors.Is(err, domain.ErrUnexpectedType):
 			logger.WarnContext(ctx, "unexpected errror checking for oauth user existence in pending_users table")
 			http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
