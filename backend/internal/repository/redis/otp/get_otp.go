@@ -10,7 +10,7 @@ import (
 )
 
 func (o *Repository) GetOTP(ctx context.Context, emailHash string) ([]byte, error) {
-	key := getOTPKey(emailHash)
+	key := formatOTPKey(emailHash)
 	otpEncoded, err := o.client.Get(ctx, key).Bytes()
 	if err != nil {
 		switch {

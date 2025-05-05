@@ -12,7 +12,7 @@ import (
 )
 
 func (o *Repository) StoreOTP(ctx context.Context, emailHash string, otpEncoded []byte) error {
-	key := getOTPKey(emailHash)
+	key := formatOTPKey(emailHash)
 
 	// Use pipelines for atomic operations
 	pipe := o.client.Pipeline()

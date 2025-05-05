@@ -13,7 +13,7 @@ import (
 // It checks if the OTP exists, ensures it is not expired, verifies it hasn't exceeded the maximum attempts (deleting it if so),
 // and removes the OTP if it is successfully validated.
 func (o *Repository) ValidateOTP(ctx context.Context, emailHash, providedOTP string) error {
-	key := getOTPKey(emailHash)
+	key := formatOTPKey(emailHash)
 	otpData, err := o.getExistingOTP(ctx, key)
 	if err != nil {
 		return err

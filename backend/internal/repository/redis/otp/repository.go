@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	otpKeyFormat = "otp:verification:%s"
+	otpKeyFormat = "otp:%s"
 )
 
 type Repository struct {
@@ -19,7 +19,7 @@ func New(ctx context.Context, client *redis.Client) *Repository {
 	return &Repository{client}
 }
 
-func getOTPKey(emailHash string) string {
+func formatOTPKey(emailHash string) string {
 	return fmt.Sprintf(otpKeyFormat, emailHash)
 }
 

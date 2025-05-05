@@ -11,7 +11,7 @@ import (
 )
 
 func (o *Repository) InvalidateOTP(ctx context.Context, email string) error {
-	key := getOTPKey(email)
+	key := formatOTPKey(email)
 	result := o.client.Del(ctx, key)
 
 	if err := result.Err(); err != nil {
