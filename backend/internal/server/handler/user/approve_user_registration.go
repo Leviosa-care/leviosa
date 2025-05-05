@@ -52,7 +52,7 @@ func (h *AppInstance) ApproveUserRegistration(w http.ResponseWriter, r *http.Req
 		}
 	}
 	// send email to user to tell them that their account have been approved
-	if errs := h.Svcs.Mail.WelcomeUser(ctx, user); len(errs) > 0 {
+	if err := h.Svcs.Mail.WelcomeUser(ctx, user); err != nil {
 		logger.WarnContext(ctx, "failed to send welcome email to new added user", "error", err)
 		http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 		return

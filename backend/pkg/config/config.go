@@ -7,6 +7,7 @@ import (
 
 	"github.com/hengadev/leviosa/pkg/flags"
 
+	"github.com/hengadev/errsx"
 	"github.com/spf13/viper"
 )
 
@@ -30,11 +31,10 @@ func New(ctx context.Context, envFilename, envFileType string) *Config {
 		}
 	}
 	return &Config{
-		viper:    config,
-		sqlite:   &sqliteCreds{},
-		redis:    &redisCreds{},
-		s3:       &s3Creds{},
-		security: &SecurityConfig{},
+		viper:  config,
+		sqlite: &sqliteCreds{},
+		redis:  &redisCreds{},
+		s3:     &s3Creds{},
 	}
 }
 

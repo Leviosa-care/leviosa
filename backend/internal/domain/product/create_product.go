@@ -12,8 +12,8 @@ import (
 )
 
 func (s *service) CreateProduct(ctx context.Context, product *Product) error {
-	if errs := product.Valid(ctx); len(errs) > 0 {
-		return domain.NewInvalidValueErr(fmt.Sprintf("product validation error: %s", errs.Error()))
+	if err := product.Valid(ctx); err != nil {
+		return domain.NewInvalidValueErr(fmt.Sprintf("product validation error: %s", err.Error()))
 	}
 	product.ID = uuid.NewString()
 	if err := s.repo.AddProduct(ctx, product); err != nil {

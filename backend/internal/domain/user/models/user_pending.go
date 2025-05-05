@@ -8,11 +8,11 @@ import (
 
 // the user that is send to admin for validation
 type UserPending struct {
-	EmailHash string `json:"email_hash"`
+	EmailHash string `json:"emailHash"`
 	LastName  string `json:"lastname"`
 	FirstName string `json:"firstname"`
-	GoogleID  string `json:"google_id"`
-	AppleID   string `json:"apple_id"`
+	GoogleID  string `json:"googleId"`
+	AppleID   string `json:"appleId"`
 }
 
 // the admin receive this when validating the user

@@ -15,7 +15,7 @@ func (s *service) CreateSession(ctx context.Context, userID string, role models.
 	if err != nil {
 		return "", domain.NewInvalidValueErr("invalid user ID")
 	}
-	if role == models.UNKNOWN {
+	if role == models.VISITOR {
 		return "", domain.NewInvalidValueErr("invalid role: role must be different than 'UNKNOWN'")
 	}
 	// sessionEncoded, err := json.Marshal(session)

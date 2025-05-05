@@ -46,8 +46,8 @@ func (e *EventRepository) GetAllEvents(ctx context.Context) ([]*models.Event, er
 			&event.Address2,
 			&event.PlaceCount,
 			&event.FreePlace,
-			&event.EncryptedBeginAt,
-			&event.EncryptedEndAt,
+			&event.BeginAt,
+			&event.EndAt,
 		); err != nil {
 			return nil, rp.NewDatabaseErr(err)
 		}

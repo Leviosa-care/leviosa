@@ -61,8 +61,8 @@ func run(ctx context.Context, w io.Writer) error {
 
 	// config
 	conf := config.New(ctx, opts.mode.String(), "env")
-	if errs := conf.Load(ctx, opts.mode); len(errs) > 0 {
-		return fmt.Errorf("loading application configuration: %s", errs.Error())
+	if err := conf.Load(ctx, opts.mode); err != nil {
+		return fmt.Errorf("loading application configuration: %s", err.Error())
 	}
 
 	sqlitedb, redisdb, err := setupDatabases(ctx, conf, opts.mode)

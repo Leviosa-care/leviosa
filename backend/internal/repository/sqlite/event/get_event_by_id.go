@@ -35,8 +35,8 @@ func (e *EventRepository) GetEventByID(ctx context.Context, id string) (*models.
 		&event.Address2,
 		&event.PlaceCount,
 		&event.FreePlace,
-		&event.EncryptedBeginAt,
-		&event.EncryptedEndAt,
+		&event.BeginAt,
+		&event.EndAt,
 	); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

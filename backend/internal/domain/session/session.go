@@ -68,7 +68,7 @@ func (s *Session) Valid(ctx context.Context) error {
 	if time.Now().Add(SessionDuration).Before(s.ExpiresAt) {
 		errs.Set("expiredat", "session expired")
 	}
-	if s.Role != models.UNKNOWN {
+	if s.Role != models.VISITOR {
 		errs.Set("role", "got UNKNOWN role, expect one of 'BASIC', 'GUEST', 'FREELANCE', 'ADMINISTRATOR'")
 	}
 	return errs.AsError()

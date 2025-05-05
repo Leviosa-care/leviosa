@@ -19,7 +19,7 @@ func (e *EventRepository) ModifyEvent(
 		return rp.NewValidationErr(errors.New("nil event"), "event")
 	}
 	query, values, errs := sqliteutil.WriteUpdateQuery(*event, whereMap)
-	if len(errs) > 0 {
+	if errs != nil {
 		return rp.NewInternalErr(errs)
 	}
 	fmt.Println("the query is:", query)

@@ -38,7 +38,7 @@ func (s *service) CreateUser(ctx context.Context, userResponse *models.UserPendi
 	}
 	// convert to Role to see if there is no problem with the role sent
 	role := models.ConvertToRole(userResponse.Role)
-	if role == models.UNKNOWN {
+	if role == models.VISITOR {
 		return nil, domain.NewInvalidValueErr("invalid role")
 	}
 	// add remaining field to user

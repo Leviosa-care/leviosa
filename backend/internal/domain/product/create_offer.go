@@ -12,8 +12,8 @@ import (
 )
 
 func (s *service) CreateOffer(ctx context.Context, offer *Offer) error {
-	if errs := offer.Valid(ctx); len(errs) > 0 {
-		return domain.NewInvalidValueErr(fmt.Sprintf("offer validation error: %s", errs.Error()))
+	if err := offer.Valid(ctx); err != nil {
+		return domain.NewInvalidValueErr(fmt.Sprintf("offer validation error: %s", err.Error()))
 	}
 	offer.ID = uuid.NewString()
 	if err := s.repo.AddOffer(ctx, offer); err != nil {

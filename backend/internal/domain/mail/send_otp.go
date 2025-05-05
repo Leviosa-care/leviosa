@@ -18,7 +18,7 @@ func (s *service) SendOTP(ctx context.Context, email, firstname string, otp *otp
 		Value     string
 	}{
 		Firstname: firstname,
-		Value:     otp.Code,
+		Value:     otp.Data.Code,
 	}
 	if err := s.sendMail(
 		email,

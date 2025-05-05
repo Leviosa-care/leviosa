@@ -19,7 +19,7 @@ func (a *AppInstance) FindEventsForUser(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := contextutil.ValidateRoleInContext(ctx, models.BASIC); err != nil {
+	if err := contextutil.ValidateRoleInContext(ctx, models.STANDARD); err != nil {
 		logger.WarnContext(ctx, "get role from request", "error", err)
 		http.Error(w, handler.NewForbiddenErr(err), http.StatusBadRequest)
 		return

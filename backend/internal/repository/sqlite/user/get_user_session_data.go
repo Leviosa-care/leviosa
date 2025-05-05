@@ -32,11 +32,11 @@ func (u *Repository) GetUserSessionData(ctx context.Context, emailHash string) (
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return "", models.UNKNOWN, rp.NewNotFoundErr(err, "user session data")
+			return "", models.VISITOR, rp.NewNotFoundErr(err, "user session data")
 		case errors.Is(err, context.DeadlineExceeded), errors.Is(err, context.Canceled):
-			return "", models.UNKNOWN, rp.NewContextErr(err)
+			return "", models.VISITOR, rp.NewContextErr(err)
 		default:
-			return "", models.UNKNOWN, rp.NewDatabaseErr(err)
+			return "", models.VISITOR, rp.NewDatabaseErr(err)
 		}
 	}
 	return id, models.ConvertToRole(role), nil

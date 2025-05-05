@@ -23,20 +23,20 @@ import (
 //     Returns nil if the session data is successfully retrieved.
 func (s *service) GetUserSessionData(ctx context.Context, email string) (string, models.Role, error) {
 	if _, err := models.NewEmail(email); err != nil {
-		return "", models.UNKNOWN, domain.NewInvalidValueErr(fmt.Sprintf("invalid email: %q", err))
+		return "", models.VISITOR, domain.NewInvalidValueErr(fmt.Sprintf("invalid email: %q", err))
 	}
 	emailHash := s.crypto.HashBasic(ctx, []byte(email))
 	ID, role, err := s.repo.GetUserSessionData(ctx, emailHash)
 	if err != nil {
 		switch {
 		case errors.Is(err, rp.ErrNotFound):
-			return "", models.UNKNOWN, domain.NewNotFoundErr(err)
+			return "", models.VISITOR, domain.NewNotFoundErr(err)
 		case errors.Is(err, rp.ErrContext):
-			return "", models.UNKNOWN, err
+			return "", models.VISITOR, err
 		case errors.Is(err, rp.ErrDatabase):
-			return "", models.UNKNOWN, domain.NewQueryFailedErr(err)
+			return "", models.VISITOR, domain.NewQueryFailedErr(err)
 		default:
-			return "", models.UNKNOWN, domain.NewUnexpectTypeErr(err)
+			return "", models.VISITOR, domain.NewUnexpectTypeErr(err)
 		}
 	}
 	return ID, role, nil

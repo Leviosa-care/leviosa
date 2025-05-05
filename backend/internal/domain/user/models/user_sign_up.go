@@ -16,7 +16,7 @@ type UserSignUp struct {
 	FirstName  string    `json:"firstname" validate:"required"`
 	Gender     string    `json:"gender" validate:"required"`
 	Telephone  string    `json:"telephone" validate:"required"`
-	PostalCode string    `json:"postal_code" validate:"required"`
+	PostalCode string    `json:"postalCode" validate:"required"`
 	City       string    `json:"city" validate:"required"`
 	Address1   string    `json:"address1" validate:"required"`
 	Address2   string    `json:"address2" validate:"required"`
