@@ -100,7 +100,7 @@ func makeServices(
 
 	// OTP
 	otpRepo := otpRepository.New(ctx, redisdb)
-	otpSvc := otpService.New(otpRepo)
+	otpSvc := otpService.New(otpRepo, crypto)
 
 	// message
 	messageRepo := messageRepository.New(ctx, sqlitedb)

@@ -12,8 +12,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func (o *Repository) setOTP(ctx context.Context, key string, otpData *otpService.OTP) error {
-	encoded, err := json.Marshal(otpData)
+func (o *Repository) setOTP(ctx context.Context, key string, data *otpService.OTP) error {
+	encoded, err := json.Marshal(data)
 	if err != nil {
 		return rp.NewDatabaseErr(fmt.Errorf("failed to encode OTP data: %w", err))
 	}

@@ -1,6 +1,10 @@
 package otpService
 
-import "context"
+import (
+	"context"
+
+	"github.com/hengadev/encx"
+)
 
 type Service interface {
 	CancelOTP(ctx context.Context, email string) error
@@ -9,11 +13,13 @@ type Service interface {
 }
 
 type service struct {
-	Repo ReadWriter
+	Repo   ReadWriter
+	crypto *encx.Crypto
 }
 
-func New(repo ReadWriter) Service {
+func New(repo ReadWriter, crypto *encx.Crypto) Service {
 	return &service{
-		Repo: repo,
+		Repo:   repo,
+		crypto: crypto,
 	}
 }

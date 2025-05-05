@@ -8,7 +8,6 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain"
 	"github.com/hengadev/leviosa/internal/domain/user/models"
-	"github.com/hengadev/leviosa/internal/domain/user/security"
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/contextutil"
@@ -37,11 +36,9 @@ func (h *AppInstance) ValidateUserOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Printf("the userOTP that I get: %#+v\n", userOTP)
-	// hash email
-	emailHash := security.HashEmail(userOTP.Email)
 
 	// validate otp
-	if err = h.Svcs.OTP.ValidateOTP(ctx, emailHash, userOTP.OTP); err != nil {
+	if err = h.Svcs.OTP.ValidateOTP(ctx, userOTP.Email, userOTP.OTP); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
 			logger.WarnContext(ctx, "OTP validation query failed due to database error")

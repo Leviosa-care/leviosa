@@ -21,11 +21,14 @@ func (s *service) CreateOTP(ctx context.Context, emailHash string) (*OTP, error)
 		case errors.Is(err, rp.ErrContext):
 			return nil, err
 		case errors.Is(err, rp.ErrNotFound):
-			newOTP, err := NewOTP(emailHash)
+			newOTP, err := s.newOTP(emailHash)
 			if err != nil {
 				return nil, domain.NewNotCreatedErr(err)
 			}
-			otpData, err := json.Marshal(newOTP)
+			if err := s.crypto.ProcessStruct(ctx, newOTP); err != nil {
+				return nil, domain.NewNotEncryptedErr("OTP", err)
+			}
+			otpData, err := json.Marshal(newOTP.Data.ToOTPEncrypted())
 			if err != nil {
 				return nil, domain.NewJSONMarshalErr(err)
 			}
@@ -46,15 +49,15 @@ func (s *service) CreateOTP(ctx context.Context, emailHash string) (*OTP, error)
 	}
 
 	// check if that otp is not expired
-	if existingOTP.Attempts != 0 && existingOTP.Attempts < MaxOTPAttempts && time.Since(existingOTP.Created) < time.Minute {
+	if existingOTP.Data.Attempts != 0 && existingOTP.Data.Attempts < MaxOTPAttempts && time.Since(existingOTP.Data.CreatedAt) < time.Minute {
 		return nil, domain.NewRateLimitErr(
 			fmt.Errorf("please wait before requesting another OTP"),
 			"otp",
 		)
 	}
 
-	existingOTP.Attempts++
-	existingOTP.Created = time.Now()
+	existingOTP.Data.Attempts++
+	existingOTP.Data.CreatedAt = time.Now()
 
 	otpData, err := json.Marshal(existingOTP)
 	if err != nil {

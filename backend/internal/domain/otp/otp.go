@@ -9,38 +9,71 @@ import (
 	"github.com/hengadev/leviosa/internal/domain"
 )
 
+type OTP struct {
+	Email        string  `json:"email" encx:"hash_basic"`
+	EmailHash    []byte  `json:"-"`
+	Data         OTPData `json:"-"`
+	DEK          []byte  `json:"-"`
+	DEKEncrypted []byte  `json:"-"`
+	KeyVersion   int     `json:"-"`
+}
+
+// How does my encrypt thing works with encapsulated structs
+type OTPData struct {
+	Code          string    `json:"code" validate:"len=6" encx:"encrypt"`
+	CodeEncrypted []byte    `json:"-"`
+	Attempts      int       `json:"attempts"`
+	ExpiresAt     time.Time `json:"expires_at"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+type OTPEncrypted struct {
+	CodeEncrypted []byte    `json:"-"`
+	Attempts      int       `json:"attempts"`
+	ExpiresAt     time.Time `json:"expires_at"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+func (o OTPData) ToOTPEncrypted() *OTPEncrypted {
+	return &OTPEncrypted{
+		CodeEncrypted: o.CodeEncrypted,
+		Attempts:      o.Attempts,
+		ExpiresAt:     o.ExpiresAt,
+		CreatedAt:     o.CreatedAt,
+	}
+}
+
 const (
 	OTPDURATION    = 15 * time.Minute
 	MaxOTPAttempts = 3
 )
 
-type OTP struct {
-	EmailHash string    `json:"email_hash"`
-	Code      string    `json:"code" validate:"len=6"`
-	Attempts  int       `json:"attempts"`
-	ExpiresAt time.Time `json:"expires_at"`
-	Created   time.Time `json:"created"`
-}
-
-func NewOTP(emailHash string) (*OTP, error) {
+func (s *service) newOTP(email string) (*OTP, error) {
 	bytes := make([]byte, 4)
 	if _, err := rand.Read(bytes); err != nil {
 		return nil, fmt.Errorf("failed to generate secure random number: %w", err)
 	}
 	num := int(binary.BigEndian.Uint32(bytes) % 100000000)
+	dek, err := s.crypto.GenerateDEK()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate DEK for OTP: %w", err)
+	}
 	return &OTP{
-		EmailHash: emailHash,
-		Code:      fmt.Sprintf("%06d", num),
-		Attempts:  1,
-		Created:   time.Now(),
-		ExpiresAt: time.Now().Add(OTPDURATION),
+		Email: email,
+		Data: OTPData{
+			Code:      fmt.Sprintf("%06d", num),
+			Attempts:  1,
+			CreatedAt: time.Now(),
+			ExpiresAt: time.Now().Add(OTPDURATION),
+		},
+		DEK: dek,
 	}, nil
 }
 
 func (o *OTP) IncreaseAttempt() error {
-	if o.Attempts+1 >= MaxOTPAttempts {
+	if o.Data.Attempts+1 >= MaxOTPAttempts {
 		return domain.NewInvalidValueErr("max attempts reached for provided OTP")
 	}
-	o.Attempts++
+	o.Data.Attempts++
 	return nil
 }

@@ -23,25 +23,25 @@ func (o *Repository) ValidateOTP(ctx context.Context, emailHash, providedOTP str
 		return rp.NewNotFoundErr(errors.New("OTP not found or expired"), "otp")
 	}
 
-	if time.Now().After(otpData.ExpiresAt) {
+	if time.Now().After(otpData.Data.ExpiresAt) {
 		return rp.NewValidationErr(errors.New("expired OTP"), "OTP")
 	}
 
 	// Check attempts
-	if otpData.Attempts >= otpService.MaxOTPAttempts {
+	if otpData.Data.Attempts >= otpService.MaxOTPAttempts {
 		// Delete expired OTP
 		o.client.Del(ctx, key)
 		return rp.NewValidationErr(errors.New("max attempts exceeded"), "OTP")
 	}
 
 	// Increment attempts
-	otpData.Attempts++
+	otpData.Data.Attempts++
 	if err := o.setOTP(ctx, key, otpData); err != nil {
 		return err
 	}
 
 	// Validate OTP
-	if providedOTP != otpData.Code {
+	if providedOTP != otpData.Data.Code {
 		return rp.NewValidationErr(errors.New("provided OTP code does not match stored OTP code"), "OTP")
 	}
 

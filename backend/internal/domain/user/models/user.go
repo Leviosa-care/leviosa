@@ -66,7 +66,7 @@ func NewUser(
 		ID:         uuid.NewString(),
 		Email:      user.Email,
 		Password:   user.Password,
-		Role:       BASIC.String(),
+		Role:       STANDARD.String(),
 		BirthDate:  user.BirthDate,
 		LastName:   user.LastName,
 		FirstName:  user.FirstName,
