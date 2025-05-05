@@ -17,3 +17,5 @@ notes
 !example.env
 
 *.Dockerfile
+
+.encx
