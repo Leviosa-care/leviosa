@@ -8,7 +8,8 @@ import (
 )
 
 func (s *service) CancelOTP(ctx context.Context, email string) error {
-	err := s.Repo.InvalidateOTP(ctx, email)
+	emailHash := s.crypto.HashBasic(ctx, []byte(email))
+	err := s.Repo.InvalidateOTP(ctx, emailHash)
 	switch {
 	case errors.Is(err, rp.ErrNotFound):
 		// TODO: change the error returned here brother
