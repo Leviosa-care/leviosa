@@ -4,7 +4,7 @@
     import { Button } from "bits-ui";
     import { Eye, EyeOff } from "@lucide/svelte";
 
-    import { capitalizeFirstWord } from "$lib/utils";
+    import { capitalizeFirstWord } from "$lib/utils/capitalize";
 
     type Props = {
         name: string;
@@ -28,7 +28,7 @@
     let visible = $state(false);
 
     let resolvedInputType = $derived.by(() => {
-        if (type === "password") visible ? "text" : "password";
+        if (type === "password") return visible ? "text" : "password";
         else return type;
     });
 </script>
