@@ -23,7 +23,7 @@ func (h *AppInstance) RegisterUserOTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	user, err := serverutil.DecodeValid[models.UserSignUp](r.Context(), r.Body)
+	user, err := serverutil.DecodeValid[models.UserSignUp](ctx, r.Body)
 	if err != nil {
 		switch {
 		case errors.Is(err, serverutil.ErrDecodeJSON):

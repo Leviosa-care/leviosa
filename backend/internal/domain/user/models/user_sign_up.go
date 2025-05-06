@@ -38,7 +38,9 @@ func (u UserSignUp) Valid(ctx context.Context) error {
 	if err := ValidateAddress(u.City, u.PostalCode, u.Address1, u.Address2); err != nil {
 		errs.Set("address", err)
 	}
-	// birthdate
+	if err := ValidateBirthDate(u.BirthDate); err != nil {
+		errs.Set("birthdate", err)
+	}
 	return errs.AsError()
 }
 
