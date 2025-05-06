@@ -3,7 +3,6 @@ package userHandler
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -35,7 +34,6 @@ func (h *AppInstance) RegisterUserOTP(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	// TODO: I need to check the sent password against a list of leaked password
 	if err := h.Svcs.User.CheckUser(ctx, user.Email); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
@@ -119,7 +117,6 @@ func (h *AppInstance) generateAndSendOTP(
 		}
 		return err
 	}
-	fmt.Printf("the OTP that I need to send back: %#+v\n", otp)
 	// send email with OTP for user
 	if err := h.Svcs.Mail.SendOTP(ctx, userEmail, firstname, otp); err != nil {
 		logger.WarnContext(ctx, "failed to send mail with OTP to specified user")
