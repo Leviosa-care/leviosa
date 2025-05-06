@@ -35,6 +35,10 @@ func (u UserSignUp) Valid(ctx context.Context) error {
 	if err := ValidateGender(u.Gender); err != nil {
 		errs.Set("gender", err)
 	}
+	if err := ValidateAddress(u.City, u.PostalCode, u.Address1, u.Address2); err != nil {
+		errs.Set("address", err)
+	}
+	// birthdate
 	return errs.AsError()
 }
 
