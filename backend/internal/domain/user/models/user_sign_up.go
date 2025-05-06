@@ -2,7 +2,6 @@ package models
 
 import (
 	"context"
-	"reflect"
 	"time"
 
 	"github.com/hengadev/errsx"
@@ -22,37 +21,19 @@ type UserSignUp struct {
 	Address2   string    `json:"address2" validate:"required"`
 }
 
-// TODO: complete that function with all the remaining fields
 func (u UserSignUp) Valid(ctx context.Context) error {
 	var errs = make(errsx.Map)
-	vf := reflect.VisibleFields(reflect.TypeOf(u))
-	for _, f := range vf {
-		switch f.Name {
-		case "Email":
-			if err := ValidateEmail(u.Email); err != nil {
-				errs.Set("email", err)
-			}
-		case "Password":
-			if err := ValidatePassword(u.Password); err != nil {
-				errs.Set("password", err)
-			}
-		case "Telephone":
-			if err := ValidateTelephone(u.Telephone); err != nil {
-				errs.Set("telephone", "telephne number should have at leat 10 digits")
-			}
-		case "Birthday":
-			// parsedDate, err := time.Parse(BirthdayLayout, u.BirthDate)
-			// nonValidDate, _ := time.Parse(BirthdayLayout, "01-01-01")
-			// if err != nil && parsedDate != nonValidDate {
-			// 	pbms.Set("birthday", err)
-			// }
-		case "Gender":
-			if err := ValidateGender(u.Gender); err != nil {
-				errs.Set("gender", err)
-			}
-		default:
-			continue
-		}
+	if err := ValidateEmail(u.Email); err != nil {
+		errs.Set("email", err)
+	}
+	if err := ValidatePassword(u.Password); err != nil {
+		errs.Set("password", err)
+	}
+	if err := ValidateTelephone(u.Telephone); err != nil {
+		errs.Set("telephone", "telephne number should have at leat 10 digits")
+	}
+	if err := ValidateGender(u.Gender); err != nil {
+		errs.Set("gender", err)
 	}
 	return errs.AsError()
 }
