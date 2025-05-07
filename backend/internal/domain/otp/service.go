@@ -14,10 +14,10 @@ type Service interface {
 
 type service struct {
 	Repo   ReadWriter
-	crypto *encx.Crypto
+	crypto encx.CryptoService
 }
 
-func New(repo ReadWriter, crypto *encx.Crypto) Service {
+func New(repo ReadWriter, crypto encx.CryptoService) Service {
 	return &service{
 		Repo:   repo,
 		crypto: crypto,

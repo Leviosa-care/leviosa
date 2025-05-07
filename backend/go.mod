@@ -58,7 +58,7 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/vault/api v1.16.0 // indirect
-	github.com/hengadev/encx v0.1.0 // indirect
+	github.com/hengadev/encx v0.3.0 // indirect
 	github.com/hengadev/errsx v1.0.0 // indirect
 	github.com/klauspost/compress v1.17.7 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect

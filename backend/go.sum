@@ -157,6 +157,8 @@ github.com/hashicorp/vault/api v1.16.0 h1:nbEYGJiAPGzT9U4oWgaaB0g+Rj8E59QuHKyA5L
 github.com/hashicorp/vault/api v1.16.0/go.mod h1:KhuUhzOD8lDSk29AtzNjgAu2kxRA9jL9NAbkFlqvkBA=
 github.com/hengadev/encx v0.1.0 h1:3NnrGr1W+1ZWQrpFjq27fNXWeXJAKvEaQZJ/KVCowbo=
 github.com/hengadev/encx v0.1.0/go.mod h1:oO8ZUAjFfSkMGCNM+6RXElFu9etJTYaTvPSfPDIpLqU=
+github.com/hengadev/encx v0.3.0 h1:WQ2WpZqwk+QgT88ZWbyERHps4RX0USPq4aEYnTRgzR8=
+github.com/hengadev/encx v0.3.0/go.mod h1:oO8ZUAjFfSkMGCNM+6RXElFu9etJTYaTvPSfPDIpLqU=
 github.com/hengadev/errsx v1.0.0 h1:lnW+8zlJVJjtMYsFGSYGkFsEtRFf3mO6NSa9Ik+o16U=
 github.com/hengadev/errsx v1.0.0/go.mod h1:pdDfbKMqwVro0kRlCfPhiASTcnXFXR7/d4WxqtuNaC8=
 github.com/hengadev/test-assert v0.0.0-20250228115801-1031b9f2da92 h1:3S6rs74TkZ1qOL5epToBhQq8igIXtIpaUuRzQB1rtiI=
