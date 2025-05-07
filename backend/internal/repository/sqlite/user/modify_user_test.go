@@ -23,7 +23,7 @@ func TestModifyAccount(t *testing.T) {
 		"Email":     "",
 		"Password":  "",
 		"FirstName": "Jane",
-		"Gender":    "F",
+		"Gender":    models.GenderInput{Gender: models.GenderWoman},
 		"GoogleID":  "",
 		"AppleID":   "",
 	}

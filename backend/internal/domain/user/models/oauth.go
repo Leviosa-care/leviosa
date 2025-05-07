@@ -55,12 +55,13 @@ func (a AppleUser) ToUser() *User {
 func (g GoogleUser) ToUser() *User {
 	birthdate, _ := time.Parse("2006-01-02", g.Birthday)
 	return &User{
-		ID:         uuid.NewString(),
-		Email:      g.Email,
-		BirthDate:  birthdate,
-		LastName:   g.FamilyName,
-		FirstName:  g.GivenName,
-		Gender:     g.Gender,
+		ID:        uuid.NewString(),
+		Email:     g.Email,
+		BirthDate: birthdate,
+		LastName:  g.FamilyName,
+		FirstName: g.GivenName,
+		// TODO: find a way to convert genders from the one got from Google
+		Gender:     GenderInput{Gender: GenderNonBinary},
 		Telephone:  g.PhoneNumber,
 		PostalCode: g.Address.PostalCode,
 		City:       g.Address.Locality,

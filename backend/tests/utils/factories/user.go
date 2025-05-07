@@ -10,26 +10,26 @@ var birthdate, _ = time.Parse("2006-01-02", "1998-07-12")
 
 func NewBasicUser(overrides map[string]interface{}) *models.User {
 	user := &models.User{
-		ID:                  "123e4567-e89b-12d3-a456-426614174000",
-		Email:               "john.doe@example.com",
-		EmailHash:           "john.doe@example.com",
-		Password:            "password",
-		PasswordHash:        "hashedpassword",
-		Picture:             "picture",
-		EncryptedCreatedAt:  "2025-02-03",
-		EncryptedLoggedInAt: "2025-02-03",
-		Role:                "basic",
-		EncryptedBirthDate:  "1998-07-12",
-		LastName:            "DOE",
-		FirstName:           "John",
-		Gender:              "M",
-		Telephone:           "0123456789",
-		PostalCode:          "75000",
-		City:                "Paris",
-		Address1:            "01 Avenue Jean DUPONT",
-		Address2:            "",
-		GoogleID:            "google_id",
-		AppleID:             "apple_id",
+		ID:                 "123e4567-e89b-12d3-a456-426614174000",
+		Email:              "john.doe@example.com",
+		EmailHash:          "john.doe@example.com",
+		Password:           "password",
+		PasswordHash:       "hashedpassword",
+		Picture:            "picture",
+		CreatedAt:          time.Now(),
+		LoggedInAt:         time.Now(),
+		Role:               "basic",
+		BirthDateEncrypted: []byte("1998-07-12"),
+		LastName:           "DOE",
+		FirstName:          "John",
+		Gender:             models.GenderInput{Gender: "male"},
+		Telephone:          "0123456789",
+		PostalCode:         "75000",
+		City:               "Paris",
+		Address1:           "01 Avenue Jean DUPONT",
+		Address2:           "",
+		GoogleID:           "google_id",
+		AppleID:            "apple_id",
 	}
 	// Apply overrides
 	for key, value := range overrides {
@@ -46,24 +46,20 @@ func NewBasicUser(overrides map[string]interface{}) *models.User {
 			user.PasswordHash = value.(string)
 		case "CreatedAt":
 			user.CreatedAt = value.(time.Time)
-		case "EncryptedCreatedAt":
-			user.EncryptedCreatedAt = value.(string)
 		case "LoggedInAt":
 			user.LoggedInAt = value.(time.Time)
-		case "EncryptedLoggedInAt":
-			user.EncryptedLoggedInAt = value.(string)
 		case "Role":
 			user.Role = value.(string)
 		case "BirthDate":
 			user.BirthDate = value.(time.Time)
 		case "EncryptedBirthDate":
-			user.EncryptedBirthDate = value.(string)
+			user.BirthDateEncrypted = value.([]byte)
 		case "LastName":
 			user.LastName = value.(string)
 		case "FirstName":
 			user.FirstName = value.(string)
 		case "Gender":
-			user.Gender = value.(string)
+			user.Gender = value.(models.GenderInput)
 		case "Telephone":
 			user.Telephone = value.(string)
 		case "PostalCode":
@@ -93,7 +89,7 @@ func NewBasicUserList() []*models.User {
 			"Picture":            "picture1",
 			"FirstName":          "Jane",
 			"Telephone":          "0123456781",
-			"Gender":             "F",
+			"Gender":             models.GenderInput{Gender: models.GenderWoman},
 			"EncryptedBirthDate": "1970-01-28",
 			"GoogleID":           "google_id1",
 			"Apple_ID":           "apple_id1",
@@ -105,7 +101,7 @@ func NewBasicUserList() []*models.User {
 			"Picture":            "picture2",
 			"FirstName":          "Jean",
 			"Telephone":          "0123456782",
-			"Gender":             "NB",
+			"Gender":             models.GenderInput{Gender: models.GenderNonBinary},
 			"EncryptedBirthDate": "2000-10-05",
 			"GoogleID":           "google_id2",
 			"Apple_ID":           "apple_id2",
@@ -141,11 +137,11 @@ var (
 		Password:   "$a9rfNhA$N$A78#m",
 		CreatedAt:  time.Now().Add(-time.Hour * 4),
 		LoggedInAt: time.Now().Add(-time.Hour * 4),
-		Role:       models.BASIC.String(),
+		Role:       models.STANDARD.String(),
 		BirthDate:  birthdate,
 		LastName:   "DOE",
 		FirstName:  "John",
-		Gender:     "M",
+		Gender:     models.GenderInput{Gender: models.GenderMan},
 		Telephone:  "0123456789",
 	}
 	Janedoe = &models.User{
@@ -154,11 +150,11 @@ var (
 		Password:   "w4w3f09QF&h)#fwe",
 		CreatedAt:  time.Now().Add(-time.Hour * 4),
 		LoggedInAt: time.Now().Add(-time.Hour * 4),
-		Role:       models.BASIC.String(),
+		Role:       models.STANDARD.String(),
 		BirthDate:  birthdate,
 		LastName:   "DOE",
 		FirstName:  "Jane",
-		Gender:     "F",
+		Gender:     models.GenderInput{Gender: models.GenderWoman},
 		Telephone:  "0123456780",
 	}
 	Jeandoe = &models.User{
@@ -167,11 +163,11 @@ var (
 		Password:   "wf0fT^9f2$$_aewa",
 		CreatedAt:  time.Now().Add(-time.Hour * 4),
 		LoggedInAt: time.Now().Add(-time.Hour * 4),
-		Role:       models.BASIC.String(),
+		Role:       models.STANDARD.String(),
 		BirthDate:  birthdate,
 		LastName:   "DOE",
 		FirstName:  "Jean",
-		Gender:     "M",
+		Gender:     models.GenderInput{Gender: models.GenderMan},
 		Telephone:  "0123456781",
 	}
 )

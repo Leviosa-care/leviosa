@@ -11,7 +11,7 @@ func NewBasicSession(overrides map[string]interface{}) *sessionService.Session {
 	session := sessionService.Session{
 		ID:        "a36bde82-55ae-4fa9-9289-cb82bde68014",
 		UserID:    "3d20640f-2df6-4e76-81fe-9f6587fd5980",
-		Role:      models.BASIC,
+		Role:      models.STANDARD,
 		ExpiresAt: time.Now().Add(15 * time.Minute),
 	}
 	for key, value := range overrides {

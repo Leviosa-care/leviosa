@@ -26,14 +26,14 @@ func TestCreateSession(t *testing.T) {
 		{
 			name:          "user ID not UUID",
 			userID:        "user123",
-			role:          models.BASIC,
+			role:          models.STANDARD,
 			mockRepo:      func() *MockRepo { return &MockRepo{} },
 			expectedError: domain.ErrInvalidValue,
 		},
 		{
 			name:          "invalid role",
 			userID:        userID,
-			role:          models.UNKNOWN,
+			role:          models.VISITOR,
 			mockRepo:      func() *MockRepo { return &MockRepo{} },
 			expectedError: domain.ErrInvalidValue,
 		},

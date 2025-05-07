@@ -2,20 +2,7 @@ package models
 
 import (
 	"fmt"
-	"strings"
 )
-
-// TODO: Be more specific on the cases where the user has gender other than male, female
-func convToGender(gender string) string {
-	var formattedGender string
-	switch gender {
-	case "male", "female":
-		formattedGender = fmt.Sprintf("%s", strings.ToUpper(gender[0:1]))
-	default:
-		return "NB"
-	}
-	return formattedGender
-}
 
 func convIntToMonth(month int) (string, error) {
 	return convIntToStr(month, 13)

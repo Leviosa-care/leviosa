@@ -49,7 +49,7 @@ func (m *MockRepo) GetUserSessionData(ctx context.Context, email string) (string
 	if m.GetUserSessionDataFunc != nil {
 		return m.GetUserSessionDataFunc(ctx, email)
 	}
-	return "", models.UNKNOWN, nil
+	return "", models.VISITOR, nil
 }
 func (m *MockRepo) AddUser(ctx context.Context, user *models.User, provider models.ProviderType) error {
 	if m.AddUserFunc != nil {
