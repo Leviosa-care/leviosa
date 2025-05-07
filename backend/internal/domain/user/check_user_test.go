@@ -84,7 +84,7 @@ func TestCheckUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			repo := tt.mockRepo()
-			service := userService.New(repo, conf)
+			service := userService.New(repo, crypto)
 			err := service.CheckUser(context.Background(), tt.email)
 			assert.EqualError(t, err, tt.expectedErr)
 		})

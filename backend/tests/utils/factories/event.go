@@ -8,21 +8,21 @@ import (
 
 func NewBasicEvent(overrides map[string]any) *models.Event {
 	event := &models.Event{
-		ID:               "ea1d74e2-1612-47ec-aee9-c6a46b65640f",
-		Title:            "First event for Leviosa",
-		Description:      "First description for Leviosa",
-		City:             "Paris",
-		PostalCode:       "postalCode",
-		Address1:         "address1",
-		Address2:         "",
-		PlaceCount:       16,
-		FreePlace:        14,
-		EncryptedBeginAt: "08:00:00",
-		EncryptedEndAt:   "20:00:00",
-		PriceID:          "179cf8f1-81ad-4ec1-b8bb-8f48abf9ef80",
-		Day:              22,
-		Month:            4,
-		Year:             2025,
+		ID:          "ea1d74e2-1612-47ec-aee9-c6a46b65640f",
+		Title:       "First event for Leviosa",
+		Description: "First description for Leviosa",
+		City:        "Paris",
+		PostalCode:  "postalCode",
+		Address1:    "address1",
+		Address2:    "",
+		PlaceCount:  16,
+		FreePlace:   14,
+		BeginAt:     time.Now(),
+		EndAt:       time.Now().Add(10 * time.Hour),
+		PriceID:     "179cf8f1-81ad-4ec1-b8bb-8f48abf9ef80",
+		Day:         22,
+		Month:       4,
+		Year:        2025,
 	}
 	for key, value := range overrides {
 		switch key {
@@ -46,12 +46,8 @@ func NewBasicEvent(overrides map[string]any) *models.Event {
 			event.FreePlace = value.(int)
 		case "BeginAt":
 			event.BeginAt = value.(time.Time)
-		case "EncryptedBeginAt":
-			event.EncryptedBeginAt = value.(string)
 		case "EndAt":
 			event.EndAt = value.(time.Time)
-		case "EncryptedEndAt":
-			event.EncryptedEndAt = value.(string)
 		case "Products":
 			event.Products = value.([]string)
 		case "Offers":
@@ -71,13 +67,13 @@ func NewBasicEvent(overrides map[string]any) *models.Event {
 
 func NewModifiableEvent() *models.Event {
 	return &models.Event{
-		Title:            "First event for Leviosa",
-		Description:      "First description for Leviosa",
-		City:             "Paris",
-		EncryptedBeginAt: "08:00:00",
-		Day:              28,
-		Month:            5,
-		Year:             2025,
+		Title:       "First event for Leviosa",
+		Description: "First description for Leviosa",
+		City:        "Paris",
+		BeginAt:     time.Now(),
+		Day:         28,
+		Month:       5,
+		Year:        2025,
 	}
 }
 

@@ -54,7 +54,7 @@ func TestCreateSession(t *testing.T) {
 		{
 			name:   "database error",
 			userID: userID,
-			role:   models.BASIC,
+			role:   models.STANDARD,
 			mockRepo: func() *MockRepo {
 				return &MockRepo{
 					CreateSessionFunc: func(ctx context.Context, sessionID string, sessionEncoded []byte) error {
@@ -67,7 +67,7 @@ func TestCreateSession(t *testing.T) {
 		{
 			name:   "context deadline exceeded error",
 			userID: userID,
-			role:   models.BASIC,
+			role:   models.STANDARD,
 			mockRepo: func() *MockRepo {
 				return &MockRepo{
 					CreateSessionFunc: func(ctx context.Context, sessionID string, sessionEncoded []byte) error {
@@ -80,7 +80,7 @@ func TestCreateSession(t *testing.T) {
 		{
 			name:   "context deadline exceeded error",
 			userID: userID,
-			role:   models.BASIC,
+			role:   models.STANDARD,
 			mockRepo: func() *MockRepo {
 				return &MockRepo{
 					CreateSessionFunc: func(ctx context.Context, sessionID string, sessionEncoded []byte) error {
@@ -93,7 +93,7 @@ func TestCreateSession(t *testing.T) {
 		{
 			name:   "succcessful case",
 			userID: userID,
-			role:   models.BASIC,
+			role:   models.STANDARD,
 			mockRepo: func() *MockRepo {
 				return &MockRepo{
 					CreateSessionFunc: func(ctx context.Context, sessionID string, sessionEncoded []byte) error {

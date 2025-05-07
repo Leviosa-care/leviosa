@@ -34,7 +34,7 @@ func TestGetUserSessionData(t *testing.T) {
 			},
 			expectedError: domain.ErrInvalidValue,
 			expectedID:    "",
-			expectedRole:  models.UNKNOWN,
+			expectedRole:  models.VISITOR,
 		},
 		{
 			name:  "database error",
@@ -42,13 +42,13 @@ func TestGetUserSessionData(t *testing.T) {
 			mockRepo: func() *MockRepo {
 				return &MockRepo{
 					GetUserSessionDataFunc: func(ctx context.Context, email string) (string, models.Role, error) {
-						return "", models.UNKNOWN, rp.ErrDatabase
+						return "", models.VISITOR, rp.ErrDatabase
 					},
 				}
 			},
 			expectedError: domain.ErrQueryFailed,
 			expectedID:    "",
-			expectedRole:  models.UNKNOWN,
+			expectedRole:  models.VISITOR,
 		},
 		{
 			name:  "context error",
@@ -56,13 +56,13 @@ func TestGetUserSessionData(t *testing.T) {
 			mockRepo: func() *MockRepo {
 				return &MockRepo{
 					GetUserSessionDataFunc: func(ctx context.Context, email string) (string, models.Role, error) {
-						return "", models.UNKNOWN, rp.ErrContext
+						return "", models.VISITOR, rp.ErrContext
 					},
 				}
 			},
 			expectedError: rp.ErrContext,
 			expectedID:    "",
-			expectedRole:  models.UNKNOWN,
+			expectedRole:  models.VISITOR,
 		},
 		{
 			name:  "unexpected error",
@@ -70,13 +70,13 @@ func TestGetUserSessionData(t *testing.T) {
 			mockRepo: func() *MockRepo {
 				return &MockRepo{
 					GetUserSessionDataFunc: func(ctx context.Context, email string) (string, models.Role, error) {
-						return "", models.UNKNOWN, errors.New("unexpected error")
+						return "", models.VISITOR, errors.New("unexpected error")
 					},
 				}
 			},
 			expectedError: domain.ErrUnexpectedType,
 			expectedID:    "",
-			expectedRole:  models.UNKNOWN,
+			expectedRole:  models.VISITOR,
 		},
 		{
 			name:  "successful case",
@@ -84,13 +84,13 @@ func TestGetUserSessionData(t *testing.T) {
 			mockRepo: func() *MockRepo {
 				return &MockRepo{
 					GetUserSessionDataFunc: func(ctx context.Context, email string) (string, models.Role, error) {
-						return userID, models.BASIC, nil
+						return userID, models.STANDARD, nil
 					},
 				}
 			},
 			expectedError: nil,
 			expectedID:    userID,
-			expectedRole:  models.BASIC,
+			expectedRole:  models.STANDARD,
 		},
 	}
 
