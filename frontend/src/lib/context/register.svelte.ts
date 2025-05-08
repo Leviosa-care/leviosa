@@ -1,6 +1,6 @@
 import { setContext, getContext } from "svelte";
 
-export type Gender = 'man' | 'woman' | 'non_binary' | 'prefer_not_to_say' | 'custom' | 'not precised';
+export type Gender = '' | 'man' | 'woman' | 'non_binary' | 'prefer_not_to_say' | 'custom' | 'not precised';
 
 type Address = {
     address1: string;
@@ -17,8 +17,22 @@ type General = {
     telephone: string;
 }
 
+type RegisterState = {
+    email: string;
+    password: string;
+    address1: string;
+    address2: string;
+    telephone: string;
+    postalCode: string;
+    city: string;
+    firstname: string;
+    lastname: string;
+    gender: Gender;
+    birthdate: string;
+};
+
 export class Register {
-    value = $state({
+    value = $state<RegisterState>({
         email: "",
         password: "",
         address1: "",
@@ -31,7 +45,28 @@ export class Register {
         gender: "prefer_not_to_say",
         birthdate: "",
     })
-    constructor() { }
+
+    constructor(initial?: Partial<RegisterState>) {
+        if (initial) {
+            Object.assign(this.value, initial);
+        }
+    }
+
+    static from(json: string | object): Register {
+        const data = typeof json === "string" ? JSON.parse(json) : json;
+        return new Register(data);
+    }
+    toJSON(): RegisterState {
+        return { ...this.value };
+    }
+    persist() {
+        sessionStorage.setItem("registration", JSON.stringify(this.toJSON()));
+    }
+    static load(): Register {
+        const json = sessionStorage.getItem("registration");
+        if (!json) return new Register();
+        return Register.from(json);
+    }
     setEmail(email: string) {
         this.value.email = email
     }
@@ -51,17 +86,36 @@ export class Register {
         this.value.birthdate = general.birthdate;
         this.value.telephone = general.telephone
     }
-    all() {
+    all(): RegisterState {
         return this.value
+    }
+    clear(): void {
+        sessionStorage.removeItem("registration");
+        Object.assign(this.value, {
+            email: "",
+            password: "",
+            address1: "",
+            address2: "",
+            telephone: "",
+            postalCode: "",
+            city: "",
+            firstname: "",
+            lastname: "",
+            gender: "prefer_not_to_say",
+            birthdate: "",
+        });
     }
 }
 
 const REGISTRATION_KEY = Symbol('registration')
 
 export function setRegistrationContext(): Register {
-    return setContext(REGISTRATION_KEY, new Register())
+    const instance = Register.load();
+    setContext(REGISTRATION_KEY, instance);
+    return instance;
 }
 
 export function getRegistrationContext() {
     return getContext<ReturnType<typeof setRegistrationContext>>(REGISTRATION_KEY)
 }
+
