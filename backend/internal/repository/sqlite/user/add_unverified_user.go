@@ -29,13 +29,14 @@ func (u *Repository) AddUnverifiedUser(ctx context.Context, user *models.User) e
             gender_encrypted,
             birthdate_encrypted,
             telephone_encrypted,
+            telephone_hash,
             created_at,
             postal_code_encrypted,
             city_encrypted,
             address1_encrypted,
             address2_encrypted,
 			dek_encrypted
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
 	result, err := u.DB.ExecContext(
 		ctx,
 		query,
@@ -47,6 +48,7 @@ func (u *Repository) AddUnverifiedUser(ctx context.Context, user *models.User) e
 		user.GenderEncrypted,
 		user.BirthDateEncrypted,
 		user.TelephoneEncrypted,
+		user.TelephoneHash,
 		user.CreatedAt,
 		user.PostalCodeEncrypted,
 		user.CityEncrypted,
