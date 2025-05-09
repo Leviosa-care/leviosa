@@ -5,12 +5,12 @@ import (
 	"regexp"
 )
 
-var invalidTelephone = regexp.MustCompile(`^0\d{9}$`)
+var frenchPhoneStrict = regexp.MustCompile(`^(0[1-5]|06|07)\d{8}$`)
 
 type Telephone string
 
 func ValidateTelephone(telephone string) error {
-	if matches := invalidTelephone.FindAllString(telephone, -1); len(matches) == 0 {
+	if !frenchPhoneStrict.MatchString(telephone) {
 		return errors.New("invalid telephone number")
 	}
 	return nil

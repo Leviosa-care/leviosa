@@ -4,49 +4,49 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
+	// "github.com/google/uuid"
 
 	"github.com/hengadev/errsx"
 )
 
 type User struct {
-	ID                  string      `json:"-"`
-	Email               string      `json:"-" encx:"encrypt,hash_basic"`
-	EmailHash           string      `json:"-"`
-	EmailEncrypted      []byte      `json:"-"`
-	Password            string      `json:"-" encx:"hash_secure"`
-	PasswordHash        string      `json:"-"`
-	Picture             string      `json:"-" encx:"encrypt"`
-	PictureEncrypted    []byte      `json:"-"`
-	CreatedAt           time.Time   `json:"-"`
-	LoggedInAt          time.Time   `json:"-"`
-	Role                string      `json:"-"`
-	BirthDate           time.Time   `json:"-" encx:"encrypt"`
-	BirthDateEncrypted  []byte      `json:"-"`
-	LastName            string      `json:"-" encx:"encrypt"`
-	LastNameEncrypted   []byte      `json:"-"`
-	FirstName           string      `json:"-" encx:"encrypt"`
-	FirstNameEncrypted  []byte      `json:"-"`
-	Gender              GenderInput `json:"gender" validate:"required,dive"`
-	GenderEncrypted     []byte      `json:"-"`
-	Telephone           string      `json:"-" encx:"encrypt,hash_basic"`
-	TelephoneHash       string      `json:"-"`
-	TelephoneEncrypted  []byte      `json:"-"`
-	PostalCode          string      `json:"-" encx:"encrypt"`
-	PostalCodeEncrypted []byte      `json:"-"`
-	City                string      `json:"-" encx:"encrypt"`
-	CityEncrypted       []byte      `json:"-"`
-	Address1            string      `json:"-" encx:"encrypt"`
-	Address1Encrypted   []byte      `json:"-"`
-	Address2            string      `json:"-" encx:"encrypt"`
-	Address2Encrypted   []byte      `json:"-"`
-	GoogleID            string      `json:"-" encx:"encrypt"`
-	GoogleIDEncrypted   []byte      `json:"-"`
-	AppleID             string      `json:"-" encx:"encrypt"`
-	AppleIDEncrypted    []byte      `json:"-"`
-	DEK                 []byte      `json:"-" encx:"encrypt"`
-	DEKEncrypted        []byte      `json:"-"`
-	KeyVersion          int         `json:"-"`
+	ID                  string    `json:"-"`
+	Email               string    `json:"-" encx:"encrypt,hash_basic"`
+	EmailHash           string    `json:"-"`
+	EmailEncrypted      []byte    `json:"-"`
+	Password            string    `json:"-" encx:"hash_secure"`
+	PasswordHash        string    `json:"-"`
+	Picture             string    `json:"-" encx:"encrypt"`
+	PictureEncrypted    []byte    `json:"-"`
+	CreatedAt           time.Time `json:"-"`
+	LoggedInAt          time.Time `json:"-"`
+	Role                string    `json:"-"`
+	BirthDate           time.Time `json:"-" encx:"encrypt"`
+	BirthDateEncrypted  []byte    `json:"-"`
+	LastName            string    `json:"-" encx:"encrypt"`
+	LastNameEncrypted   []byte    `json:"-"`
+	FirstName           string    `json:"-" encx:"encrypt"`
+	FirstNameEncrypted  []byte    `json:"-"`
+	Gender              string    `json:"gender" encx:"encrypt"`
+	GenderEncrypted     []byte    `json:"-"`
+	Telephone           string    `json:"-" encx:"encrypt,hash_basic"`
+	TelephoneHash       string    `json:"-"`
+	TelephoneEncrypted  []byte    `json:"-"`
+	PostalCode          string    `json:"-" encx:"encrypt"`
+	PostalCodeEncrypted []byte    `json:"-"`
+	City                string    `json:"-" encx:"encrypt"`
+	CityEncrypted       []byte    `json:"-"`
+	Address1            string    `json:"-" encx:"encrypt"`
+	Address1Encrypted   []byte    `json:"-"`
+	Address2            string    `json:"-" encx:"encrypt"`
+	Address2Encrypted   []byte    `json:"-"`
+	GoogleID            string    `json:"-" encx:"encrypt"`
+	GoogleIDEncrypted   []byte    `json:"-"`
+	AppleID             string    `json:"-" encx:"encrypt"`
+	AppleIDEncrypted    []byte    `json:"-"`
+	DEK                 []byte    `json:"-" encx:"encrypt"`
+	DEKEncrypted        []byte    `json:"-"`
+	KeyVersion          int       `json:"-"`
 }
 
 func (a *User) Create() {
@@ -58,26 +58,26 @@ func (a *User) Login() {
 }
 
 // I need to use the hash things in that function
-func NewUser(
-	user UserSignUp,
-	role Role,
-) *User {
-	return &User{
-		ID:         uuid.NewString(),
-		Email:      user.Email,
-		Password:   user.Password,
-		Role:       STANDARD.String(),
-		BirthDate:  user.BirthDate,
-		LastName:   user.LastName,
-		FirstName:  user.FirstName,
-		Gender:     user.Gender,
-		Telephone:  user.Telephone,
-		PostalCode: user.PostalCode,
-		City:       user.City,
-		Address1:   user.Address1,
-		Address2:   user.Address2,
-	}
-}
+// func NewUser(
+// 	user UserSignUp,
+// 	role Role,
+// ) *User {
+// 	return &User{
+// 		ID:         uuid.NewString(),
+// 		Email:      user.Email,
+// 		Password:   user.Password,
+// 		Role:       STANDARD.String(),
+// 		BirthDate:  user.BirthDate,
+// 		LastName:   user.LastName,
+// 		FirstName:  user.FirstName,
+// 		// Gender:     user.Gender,
+// 		Telephone:  user.Telephone,
+// 		PostalCode: user.PostalCode,
+// 		City:       user.City,
+// 		Address1:   user.Address1,
+// 		Address2:   user.Address2,
+// 	}
+// }
 
 func (u User) Valid(ctx context.Context) error {
 	var errs errsx.Map

@@ -28,8 +28,8 @@ func (s *SecureEventData) DecryptEvent(event *models.Event) error {
 		value          *string
 		decryptedValue *time.Time
 	}{
-		{name: "beginAt", value: &event.EncryptedBeginAt, decryptedValue: &event.BeginAt},
-		{name: "endAt", value: &event.EncryptedEndAt, decryptedValue: &event.EndAt},
+		{name: "beginAt", value: &event.BeginAt, decryptedValue: &event.BeginAt},
+		{name: "endAt", value: &event.EndAt, decryptedValue: &event.EndAt},
 	}
 
 	for _, field := range timeFields {

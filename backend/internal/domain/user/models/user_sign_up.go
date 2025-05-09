@@ -30,7 +30,8 @@ func (u UserSignUp) Valid(ctx context.Context) error {
 		errs.Set("password", err)
 	}
 	if err := ValidateTelephone(u.Telephone); err != nil {
-		errs.Set("telephone", "telephne number should have at leat 10 digits")
+		// errs.Set("telephone", "should have at leat 10 digits")
+		errs.Set("telephone", err)
 	}
 	if err := u.Gender.ValidateGender(); err != nil {
 		errs.Set("gender", err)
@@ -45,13 +46,19 @@ func (u UserSignUp) Valid(ctx context.Context) error {
 }
 
 func (user *UserSignUp) ToUser() *User {
+	var gender string
+	if user.Gender.CustomGender != "" {
+		gender = user.Gender.CustomGender
+	} else {
+		gender = user.Gender.Gender.String()
+	}
 	return &User{
 		Email:      user.Email,
 		Password:   user.Password,
 		BirthDate:  user.BirthDate,
 		LastName:   user.LastName,
 		FirstName:  user.FirstName,
-		Gender:     user.Gender,
+		Gender:     gender,
 		Telephone:  user.Telephone,
 		PostalCode: user.PostalCode,
 		City:       user.City,
