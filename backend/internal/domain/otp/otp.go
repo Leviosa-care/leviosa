@@ -11,7 +11,7 @@ import (
 
 type OTP struct {
 	Email        string  `json:"email" encx:"hash_basic"`
-	EmailHash    []byte  `json:"-"`
+	EmailHash    string  `json:"-"`
 	Data         OTPData `json:"-"`
 	DEK          []byte  `json:"-"`
 	DEKEncrypted []byte  `json:"-"`
