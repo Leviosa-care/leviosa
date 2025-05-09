@@ -53,7 +53,7 @@ func (s *service) sendMail(to, subject, templateFilename string, data any, carbo
 
 	m.SetBody("text/html", tpl.String())
 
-	d := gomail.NewDialer("smtp.gmail.com", 587, s.from, s.password)
+	d := gomail.NewDialer("smtp.gmail.com", 587, s.email, s.password)
 
 	if err := d.DialAndSend(m); err != nil {
 		return fmt.Errorf("dial and sent mail: %s", err)
