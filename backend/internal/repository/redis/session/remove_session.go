@@ -11,7 +11,8 @@ import (
 )
 
 func (s *Repository) RemoveSession(ctx context.Context, ID string) error {
-	result := s.client.Del(ctx, SESSIONPREFIX+ID)
+	key := formatSessionKey(ID)
+	result := s.client.Del(ctx, key)
 
 	if err := result.Err(); err != nil {
 		switch {

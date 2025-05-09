@@ -9,7 +9,8 @@ import (
 )
 
 func (s *Repository) FindSessionByID(ctx context.Context, sessionID string) ([]byte, error) {
-	val, err := s.client.Get(ctx, SESSIONPREFIX+sessionID).Bytes()
+	key := formatSessionKey(sessionID)
+	val, err := s.client.Get(ctx, key).Bytes()
 	if err != nil {
 		switch {
 		case errors.Is(err, redis.Nil):

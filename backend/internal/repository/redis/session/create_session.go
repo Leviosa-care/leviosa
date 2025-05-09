@@ -11,7 +11,8 @@ import (
 )
 
 func (s *Repository) CreateSession(ctx context.Context, sessionID string, sessionEncoded []byte) error {
-	result := s.client.Set(ctx, SESSIONPREFIX+sessionID, sessionEncoded, sessionService.SessionDuration)
+	key := formatSessionKey(sessionID)
+	result := s.client.Set(ctx, key, sessionEncoded, sessionService.SessionDuration)
 	if err := result.Err(); err != nil {
 		switch {
 		case errors.Is(err, redis.ErrClosed):
