@@ -37,7 +37,8 @@ func New() (Service, error) {
 		return nil, domain.NewNotFoundErr(fmt.Errorf("environment variable 'GMAIL_PASSWORD'"))
 	}
 	return &service{
-		from:     "support@leviosa.care",
+		// from:     "contact@leviosa.care",
+		from:     "gary.testmail.123@gmail.com",
 		email:    email,
 		password: password,
 	}, nil

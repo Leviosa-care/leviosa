@@ -23,7 +23,7 @@ func (s *service) SendOTP(ctx context.Context, email, firstname string, otp *otp
 	if err := s.sendMail(
 		email,
 		"[Leviosa] Confirmation d'addresse email",
-		"/internal/domain/mail/templates/otp.html",
+		"otp",
 		templData,
 		nil,
 		nil,

@@ -29,6 +29,7 @@ func SetupUser(t testing.TB, ctx context.Context, version int64) (*userService.S
 	userRepo := userRepository.New(ctx, db)
 
 	conf := test.PrepareEncryptionConfig()
+	// TODO: I need a mock here
 	userService := userService.New(userRepo, conf)
 	return userService, userRepo
 }
