@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS unverified_users (
     email_hash TEXT PRIMARY KEY,
     email_encrypted BLOB NOT NULL UNIQUE,
-    password_encrypted BLOB NOT NULL UNIQUE,
+    password_hash BLOB NOT NULL UNIQUE,
 	birthdate_encrypted  BLOB NOT NULL,
     lastname_encrypted BLOB NOT NULL,
     firstname_encrypted BLOB NOT NULL,

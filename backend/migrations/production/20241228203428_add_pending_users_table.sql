@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS pending_users (
     google_id_encrypted BLOB,
     apple_id_encrypted BLOB,
     dek_encrypted BLOB NOT NULL UNIQUE
+);
 -- +goose StatementEnd
 
 -- +goose Down

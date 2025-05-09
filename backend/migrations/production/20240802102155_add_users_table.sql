@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
     apple_id_encrypted BLOB,
     dek_encrypted BLOB NOT NULL UNIQUE
 );
+-- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
