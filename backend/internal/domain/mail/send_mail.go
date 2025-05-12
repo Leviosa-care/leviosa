@@ -2,8 +2,11 @@ package mailService
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -21,7 +24,11 @@ func (s *service) sendMail(ctx context.Context, to, subject, templateFilename st
 	}
 	m.SetHeader("Cc", addresses...)
 
-	logoPath, err := writeTempFile(logoImage, "logo.jpg")
+	logo, err := s.getLogo(ctx)
+	if err != nil {
+		return fmt.Errorf("get logo before sending email: %w", err)
+	}
+	logoPath, err := writeTempFile(logo, "logo.jpg")
 	if err != nil {
 		return err
 	}
@@ -69,4 +76,20 @@ func writeTempFile(data []byte, filename string) (string, error) {
 		return "", err
 	}
 	return tmpPath, nil
+}
+
+func (s *service) getLogo(ctx context.Context) ([]byte, error) {
+	url, err := s.repo.GetLogo(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching image: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	return io.ReadAll(resp.Body)
 }
