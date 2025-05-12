@@ -10,7 +10,7 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func (s *service) sendMail(to, subject, templateFilename string, data any, carbonCopy, images map[string]string) error {
+func (s *service) sendMail(ctx context.Context, to, subject, templateFilename string, data any, carbonCopy, images map[string]string) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", s.from)
 	m.SetHeader("To", to)

@@ -18,9 +18,10 @@ func (s *service) NewVote(ctx context.Context, user *models.User, eventTime stri
 	}{Username: user.FirstName, Heure: eventTime}
 
 	if err := s.sendMail(
+		ctx,
 		user.Email,
-		"[Leviosa] Nouveau votes disponibles",
-		"/internal/domain/mail/newRegistry.html",
+		"Nouveau votes disponibles",
+		"newRegistry",
 		templData,
 		nil,
 		nil,

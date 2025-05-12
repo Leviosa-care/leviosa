@@ -14,6 +14,7 @@ import (
 	"github.com/hengadev/leviosa/internal/domain/product"
 	"github.com/hengadev/leviosa/internal/domain/register"
 	"github.com/hengadev/leviosa/internal/domain/session"
+	settingsService "github.com/hengadev/leviosa/internal/domain/settings"
 	"github.com/hengadev/leviosa/internal/domain/stripe"
 	"github.com/hengadev/leviosa/internal/domain/throttler"
 	"github.com/hengadev/leviosa/internal/domain/user"
@@ -29,6 +30,7 @@ import (
 	"github.com/hengadev/leviosa/internal/repository/sqlite/message"
 	"github.com/hengadev/leviosa/internal/repository/sqlite/product"
 	"github.com/hengadev/leviosa/internal/repository/sqlite/register"
+	settingsRepository "github.com/hengadev/leviosa/internal/repository/sqlite/settings"
 	"github.com/hengadev/leviosa/internal/repository/sqlite/user"
 	"github.com/hengadev/leviosa/internal/repository/sqlite/vote"
 
@@ -102,6 +104,10 @@ func makeServices(
 	otpRepo := otpRepository.New(ctx, redisdb)
 	otpSvc := otpService.New(otpRepo, crypto)
 
+	// settings
+	settingsRepo := settingsRepository.New(ctx, sqlitedb)
+	settingsSvc := settingsService.New(repo)
+
 	// message
 	messageRepo := messageRepository.New(ctx, sqlitedb)
 	messageSvc := messageService.New(messageRepo, crypto)
@@ -118,6 +124,7 @@ func makeServices(
 		Mail:      mailSvc,
 		Stripe:    stripeSvc,
 		Product:   productSvc,
+		Settings:  settingsSvc,
 		OTP:       otpSvc,
 		Message:   messageSvc,
 	}
@@ -131,6 +138,7 @@ func makeServices(
 		Session:     sessionRepo,
 		Throttler:   throttlerRepo,
 		Product:     productRepo,
+		Settings:    settingsRepo,
 		OTP:         otpRepo,
 		Message:     messageRepo,
 		SQLiteDB:    sqlitedb,

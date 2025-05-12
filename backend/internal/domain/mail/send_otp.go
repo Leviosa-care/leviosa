@@ -21,6 +21,7 @@ func (s *service) SendOTP(ctx context.Context, email, firstname string, otp *otp
 		Value:     otp.Data.Code,
 	}
 	if err := s.sendMail(
+		ctx,
 		email,
 		"[Leviosa] Confirmation d'addresse email",
 		"otp",

@@ -34,8 +34,9 @@ func (s *service) NewEvent(ctx context.Context, users []*models.User, eventTime 
 			}
 			for _, email := range emails {
 				if err := s.sendMail(
+					ctx,
 					email,
-					"[Leviosa] Nouvel Évènement disponible",
+					"Nouvel Évènement disponible",
 					"event_notification",
 					templData,
 					nil,
