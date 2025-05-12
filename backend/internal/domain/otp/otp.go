@@ -47,6 +47,17 @@ func (o *OTP) Data() *Data {
 	}
 }
 
+func (d *Data) FromData() *OTP {
+	return &OTP{
+		CodeEncrypted: d.CodeEncrypted,
+		Attempts:      d.Attempts,
+		ExpiresAt:     d.ExpiresAt,
+		CreatedAt:     d.CreatedAt,
+		DEKEncrypted:  d.DEKEncrypted,
+		KeyVersion:    d.KeyVersion,
+	}
+}
+
 func (s *service) newOTP(email string) (*OTP, error) {
 	bytes := make([]byte, 4)
 	if _, err := rand.Read(bytes); err != nil {

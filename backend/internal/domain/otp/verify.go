@@ -11,11 +11,11 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (s *service) ValidateOTP(ctx context.Context, email string, value string) error {
+func (s *service) VerifyOTP(ctx context.Context, email string, value string) error {
 	// create email hash
 	emailHash := s.crypto.HashBasic(ctx, []byte(email))
 	// get otp
-	otpEncoded, err := s.Repo.GetOTP(ctx, emailHash)
+	otpEncoded, err := s.repo.GetOTP(ctx, emailHash)
 	if err != nil {
 		switch {
 		case errors.Is(err, rp.ErrDatabase):
@@ -28,7 +28,7 @@ func (s *service) ValidateOTP(ctx context.Context, email string, value string) e
 		}
 	}
 	// decode the value (deserialization)
-	var data OTPData
+	var data Data
 	if err := json.Unmarshal(otpEncoded, &data); err != nil {
 		return rp.NewDatabaseErr(fmt.Errorf("failed to parse existing OTP data: %w", err))
 	}
@@ -38,7 +38,7 @@ func (s *service) ValidateOTP(ctx context.Context, email string, value string) e
 	}
 	if data.Attempts >= MaxOTPAttempts {
 		// delete expired OTP
-		if err := s.Repo.InvalidateOTP(ctx, emailHash); err != nil {
+		if err := s.repo.InvalidateOTP(ctx, emailHash); err != nil {
 			switch {
 			// TODO: add all other possible cases
 			default:
@@ -46,23 +46,27 @@ func (s *service) ValidateOTP(ctx context.Context, email string, value string) e
 			}
 		}
 	}
+	otp := data.FromData()
+	if err := s.crypto.DecryptStruct(ctx, otp); err != nil {
+		return domain.NewNotDecryptedErr("OTP", err)
+	}
 
 	// Validate OTP
-	if value != data.Code {
+	if value != otp.Code {
 		// Increment attempts
 		data.Attempts++
 		dataBytes, err := json.Marshal(data)
 		if err != nil {
 			return domain.NewJSONMarshalErr(err)
 		}
-		if err := s.Repo.SaveOTP(ctx, emailHash, dataBytes); err != nil {
+		if err := s.repo.SaveOTP(ctx, emailHash, dataBytes); err != nil {
 			return err
 		}
 		return rp.NewValidationErr(errors.New("provided OTP code does not match stored OTP code"), "OTP")
 	}
 
 	// invalidate OTP if successful
-	if err := s.Repo.InvalidateOTP(ctx, emailHash); err != nil {
+	if err := s.repo.InvalidateOTP(ctx, emailHash); err != nil {
 		switch {
 		// TODO: add all other possible cases
 		default:
