@@ -55,7 +55,7 @@ func (s *service) ValidateOTP(ctx context.Context, email string, value string) e
 		if err != nil {
 			return domain.NewJSONMarshalErr(err)
 		}
-		if err := s.Repo.StoreOTP(ctx, emailHash, dataBytes); err != nil {
+		if err := s.Repo.SaveOTP(ctx, emailHash, dataBytes); err != nil {
 			return err
 		}
 		return rp.NewValidationErr(errors.New("provided OTP code does not match stored OTP code"), "OTP")
