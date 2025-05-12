@@ -2,34 +2,50 @@ package mailService
 
 import (
 	"context"
+	"time"
 
 	otpService "github.com/hengadev/leviosa/internal/domain/otp"
-
-	"github.com/hengadev/errsx"
 )
 
-// TODO: make the right email template for that mail domain service
-func (s *service) SendOTP(ctx context.Context, email, firstname string, otp *otpService.OTP) error {
-	var errs errsx.Map
+// these things are in all mails
+type CompanyInfo struct {
+	LegalAddress  string
+	InstagramPath string
+}
 
-	// data used in the email
-	templData := struct {
-		Firstname string
-		Value     string
-	}{
-		Firstname: firstname,
-		Value:     otp.Data.Code,
+func (s *service) SendOTP(ctx context.Context, email string, otp *otpService.OTP) error {
+	legalAddress, err := s.repo.GetCompanyLegalAddress(ctx)
+	if err != nil {
+
 	}
+	companyInstagram, err := s.repo.GetCompanyInstagram(ctx)
+	if err != nil {
+
+	}
+	data := struct {
+		OTP           string
+		Year          int
+		Address       string
+		InstagramPath string
+	}{
+		OTP:           otp.Code,
+		Year:          time.Now().Year(),
+		Address:       legalAddress,
+		InstagramPath: companyInstagram,
+	}
+	// TODO: just make a get request to the public api to get the logo right ?
+	// Move that part to the send mail function, this is where it belongs
+	// TODO: use the helper function for that in the sendMail thing
 	if err := s.sendMail(
 		ctx,
 		email,
-		"[Leviosa] Confirmation d'addresse email",
+		"Votre code de vérification Leviosa",
 		"otp",
-		templData,
+		data,
 		nil,
 		nil,
 	); err != nil {
-		errs.Set("send email:", err)
+		return err
 	}
-	return errs.AsError()
+	return nil
 }
