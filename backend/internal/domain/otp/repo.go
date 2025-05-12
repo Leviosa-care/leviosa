@@ -10,6 +10,7 @@ type Reader interface {
 type Writer interface {
 	SaveOTP(ctx context.Context, emailHash string, otpEncoded []byte) error
 	InvalidateOTP(ctx context.Context, emailHash string) error
+	TouchOTP(ctx context.Context, emailHash string) error
 }
 
 type ReadWriter interface {
