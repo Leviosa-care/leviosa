@@ -10,6 +10,7 @@ import (
 type UserSignUp struct {
 	Email      string      `json:"email" validate:"require"` // Stored hash for searching
 	Password   string      `json:"password" validate:"required,min=6"`
+	CreatedAt  time.Time   `json:"-"`
 	BirthDate  time.Time   `json:"birthdate" validate:"require"`
 	LastName   string      `json:"lastname" validate:"required"`
 	FirstName  string      `json:"firstname" validate:"required"`
@@ -55,6 +56,7 @@ func (user *UserSignUp) ToUser() *User {
 	return &User{
 		Email:      user.Email,
 		Password:   user.Password,
+		CreatedAt:  user.CreatedAt,
 		BirthDate:  user.BirthDate,
 		LastName:   user.LastName,
 		FirstName:  user.FirstName,
