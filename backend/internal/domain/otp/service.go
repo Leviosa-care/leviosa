@@ -7,19 +7,19 @@ import (
 )
 
 type Service interface {
+	RequestOTP(ctx context.Context, email string) (string, error)
+	VerifyOTP(ctx context.Context, email string, code string) error
 	CancelOTP(ctx context.Context, email string) error
-	CreateOTP(ctx context.Context, emailHash string) (*OTP, error)
-	ValidateOTP(ctx context.Context, emailHash string, value string) error
+	ResendOTP(ctx context.Context, email string) (*OTP, error)
 }
 
 type service struct {
-	Repo   ReadWriter
+	repo   ReadWriter
 	crypto encx.CryptoService
 }
 
 func New(repo ReadWriter, crypto encx.CryptoService) Service {
-	return &service{
-		Repo:   repo,
+	return &service{repo: repo,
 		crypto: crypto,
 	}
 }
