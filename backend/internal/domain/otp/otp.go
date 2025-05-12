@@ -9,6 +9,7 @@ import (
 	"github.com/hengadev/leviosa/internal/domain"
 )
 
+// TODO: place that in settings
 const (
 	OTPDURATION    = 15 * time.Minute
 	MaxOTPAttempts = 3
@@ -79,7 +80,7 @@ func (s *service) newOTP(email string) (*OTP, error) {
 }
 
 func (o *OTP) increaseAttempt() error {
-	if o.Attempts+1 >= MaxOTPAttempts {
+	if o.Attempts+1 > MaxOTPAttempts {
 		return domain.NewInvalidValueErr("max attempts reached for provided OTP")
 	}
 	o.Attempts++
