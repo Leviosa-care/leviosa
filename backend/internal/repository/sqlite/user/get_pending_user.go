@@ -27,7 +27,7 @@ import (
 func (u *Repository) GetPendingUser(ctx context.Context, emailHash string, provider models.ProviderType) (*models.User, error) {
 	var user models.User
 	var query string
-	var args []interface{}
+	var args []any
 	switch provider {
 	case models.Google:
 		query = `
@@ -47,7 +47,7 @@ func (u *Repository) GetPendingUser(ctx context.Context, emailHash string, provi
                 dek_encrypted
             FROM pending_users 
             WHERE email_hash = ?;`
-		args = []interface{}{
+		args = []any{
 			&user.ID,
 			&user.EmailEncrypted,
 			&user.LastNameEncrypted,
@@ -80,7 +80,7 @@ func (u *Repository) GetPendingUser(ctx context.Context, emailHash string, provi
                 dek_encrypted
             FROM pending_users 
             WHERE email_hash = ?;`
-		args = []interface{}{
+		args = []any{
 			&user.ID,
 			&user.EmailEncrypted,
 			&user.LastNameEncrypted,
@@ -112,7 +112,7 @@ func (u *Repository) GetPendingUser(ctx context.Context, emailHash string, provi
                 dek_encrypted
             FROM pending_users 
             WHERE email_hash = ?;`
-		args = []interface{}{
+		args = []any{
 			&user.ID,
 			&user.EmailEncrypted,
 			&user.LastNameEncrypted,

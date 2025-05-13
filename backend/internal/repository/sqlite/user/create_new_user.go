@@ -27,7 +27,7 @@ import (
 //   - If the insert operation does not affect any rows, an error indicating no creation is returned.
 func (u *Repository) createNewUser(ctx context.Context, tx *sql.Tx, user *models.User, provider models.ProviderType, table string) error {
 	var query string
-	var args []interface{}
+	var args []any
 
 	// TODO: I can add NULL to some field but what is the point of doing so ?
 	switch provider {
@@ -53,7 +53,7 @@ func (u *Repository) createNewUser(ctx context.Context, tx *sql.Tx, user *models
                 google_id_encrypted,
                 dek_encrypted
             ) VALUES (?, ?, ?, ?, ?, ?, ? ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, table)
-		args = []interface{}{
+		args = []any{
 			user.ID,
 			user.EmailHash,
 			user.EmailEncrypted,
@@ -95,7 +95,7 @@ func (u *Repository) createNewUser(ctx context.Context, tx *sql.Tx, user *models
                 apple_id_encrypted,
                 dek_encrypted
             ) VALUES (?, ?, ?, ?, ?, ?, ? ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, table)
-		args = []interface{}{
+		args = []any{
 			user.ID,
 			user.EmailHash,
 			user.EmailEncrypted,
@@ -138,7 +138,7 @@ func (u *Repository) createNewUser(ctx context.Context, tx *sql.Tx, user *models
                 encrypted_apple_id,
 				dek_encrypted
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?)`, table)
-		args = []interface{}{
+		args = []any{
 			user.ID,
 			user.EmailHash,
 			user.EmailEncrypted,
