@@ -1,12 +1,13 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/hengadev/leviosa/pkg/flags"
+
+	"github.com/hengadev/errsx"
 )
 
 type sqliteCreds struct {
@@ -18,16 +19,17 @@ func (c *Config) GetSQLITE() *sqliteCreds {
 }
 
 func (c *Config) setSQLITE(env mode.EnvMode) error {
+	var errs errsx.Map
 	databaseFilename := c.viper.GetString("sqlite.filename")
 	if databaseFilename == "" {
-		return errors.New("'DATABASE_FILENAME' environment variable not set; please define it to specify SQLite file name")
+		errs.Set("DATABASE_FILENAME", "'DATABASE_FILENAME' environment variable not set; please define it to specify SQLite file name")
 	}
 	var prefix string
 	switch env {
 	case mode.ModeStaging, mode.ModeDev, mode.ModeProd:
 		prefix = env.String()
 	default:
-		return fmt.Errorf("mode value can only be 'development', 'production' or 'staging', got : %q", env)
+		errs.Set("mode value", fmt.Errorf("mode value can only be 'development', 'production' or 'staging', got : %q"))
 	}
 	sqliteFile := fmt.Sprintf("%s_%s", prefix, databaseFilename)
 	wd, err := os.Getwd()

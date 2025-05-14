@@ -1,12 +1,12 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/hengadev/leviosa/pkg/flags"
 
 	"github.com/go-redis/redis"
+	"github.com/hengadev/errsx"
 )
 
 type redisCreds struct {
@@ -20,6 +20,7 @@ func (c *Config) GetRedis() *redisCreds {
 func (c *Config) setRedis(env mode.EnvMode) error {
 	var addr, password string
 	var db int
+	var errs errsx.Map
 	switch env {
 	case mode.ModeDev:
 		addr = "127.0.0.1:6379"
@@ -30,16 +31,16 @@ func (c *Config) setRedis(env mode.EnvMode) error {
 		password = c.viper.GetString("redis.password")
 		db = c.viper.GetInt("redis.db")
 	default:
-		return fmt.Errorf("mode value can only be 'development', 'production' or 'staging', got : %q", env)
+		errs.Set("wrong env value", fmt.Errorf("mode value can only be 'development', 'production' or 'staging', got : %q", env))
 	}
 	if addr == "" {
-		return errors.New("'REDIS_ADDR' environment variable not set; please define it to specify Redis address")
+		errs.Set("REDIS_ADDR", "'REDIS_ADDR' environment variable not set; please define it to specify Redis address")
 	}
 	if password == "" {
-		return errors.New("'REDIS_PASSWORD' environment variable not set; please define it to specify Redis password")
+		errs.Set("REDIS_PASSWORD", "'REDIS_PASSWORD' environment variable not set; please define it to specify Redis password")
 	}
 	if db >= 16 || db < 0 {
-		return errors.New("'REDIS_DB' environment variable not set; please define it to specify Redis database")
+		errs.Set("REDIS_DB", "'REDIS_DB' environment variable not set; please define it to specify Redis database")
 	}
 	c.redis = &redisCreds{
 		&redis.Options{
@@ -48,5 +49,5 @@ func (c *Config) setRedis(env mode.EnvMode) error {
 			DB:       db,
 		},
 	}
-	return nil
+	return errs.AsError()
 }
