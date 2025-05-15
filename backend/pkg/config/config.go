@@ -17,6 +17,7 @@ type Config struct {
 	redis     *redisCreds
 	s3        *s3Creds
 	mailCreds *mailCreds
+	rabbitmq  *rabbitmqCreds
 }
 
 func New(ctx context.Context, envFilename, envFileType string) *Config {
@@ -62,6 +63,11 @@ func (c *Config) Load(ctx context.Context, mode mode.EnvMode) error {
 		"BUCKETNAME":            {required: true, key: "s3.bucketname"},
 
 		"LOGGING_SALT": {required: true, key: "logging.salt"},
+
+		"RABBITMQ_HOST":     {required: true, key: "rabbitmq.host"},
+		"RABBITMQ_PORT":     {required: true, key: "rabbitmq.port"},
+		"RABBITMQ_USER":     {required: true, key: "rabbitmq.user"},
+		"RABBITMQ_PASSWORD": {required: true, key: "rabbitmq.password"},
 	}
 	for envVar, requiredKey := range envVarsToKeys {
 		if os.Getenv(envVar) == "" && requiredKey.required == true {
@@ -79,6 +85,9 @@ func (c *Config) Load(ctx context.Context, mode mode.EnvMode) error {
 	}
 	if err := c.setS3(mode); err != nil {
 		errs.Set("S3 configuration", fmt.Errorf("set S3: %w", err))
+	}
+	if err := c.setRabbitMQ(mode); err != nil {
+		errs.Set("Rabbit MQ configuration", fmt.Errorf("set S3: %w", err))
 	}
 	return errs.AsError()
 }

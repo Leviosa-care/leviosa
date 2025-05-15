@@ -43,6 +43,8 @@ import (
 	rd "github.com/redis/go-redis/v9"
 )
 
+const KEKAlias = "leviosa-app-key"
+
 func makeServices(
 	ctx context.Context,
 	sqlitedb *sql.DB,
@@ -57,7 +59,7 @@ func makeServices(
 	if err != nil {
 		return appSvcs, appRepos, fmt.Errorf("creating vault: %w", err)
 	}
-	crypto, err := encx.New(ctx, kms, "leviosa-app-key", "secret/data/pepper")
+	crypto, err := encx.New(ctx, kms, KEKAlias, "secret/data/pepper")
 	if err != nil {
 		return appSvcs, appRepos, fmt.Errorf("creating crypto: %w", err)
 	}
