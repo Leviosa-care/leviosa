@@ -9,6 +9,7 @@ import (
 	"github.com/hengadev/leviosa/internal/server/handler/event"
 	"github.com/hengadev/leviosa/internal/server/handler/health"
 	"github.com/hengadev/leviosa/internal/server/handler/product"
+	"github.com/hengadev/leviosa/internal/server/handler/settings"
 	"github.com/hengadev/leviosa/internal/server/handler/user"
 	"github.com/hengadev/leviosa/internal/server/handler/vote"
 	mw "github.com/hengadev/leviosa/internal/server/middleware"
@@ -27,6 +28,7 @@ func (s *Server) addRoutes(h *app.App) {
 	voteHandler := vote.NewHandler(h)
 	eventHandler := eventHandler.New(h)
 	productHandler := productHandler.New(h)
+	settingsHandler := settingsHandler.New(h)
 
 	// middlewares declaration
 	rateLimit := mw.PerIPRateLimit(1, 1)
@@ -52,6 +54,9 @@ func (s *Server) addRoutes(h *app.App) {
 
 	// vote
 	router.HandleFunc("GET /votes/{month}/{year}", voteHandler.GetVotesByUserID)
+
+	// settings
+	router.HandleFunc("POST /settings/logo", settingsHandler.AddLogo)
 
 	// register
 	// NOTE: the old way to do the reservation thing
