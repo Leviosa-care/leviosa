@@ -18,13 +18,16 @@ type Service interface {
 	SendRegistrationReminderEmail(ctx context.Context, user *models.User, registrationName string, daysLeft int) error
 	SendOTP(ctx context.Context, email string, otp *otpService.OTP) error
 	WelcomeUser(ctx context.Context, email string, user *models.User, legalAddress, companyInstagram string) error
+	// cache
+	SetCompanyEmail(email string)
+	SetLogo(logo []byte)
 }
 
 type service struct {
 	from     string
 	email    string
 	password string
-	repo     Reader
+	cache    *cache
 }
 
 func New(ctx context.Context, repo Reader) (Service, error) {
