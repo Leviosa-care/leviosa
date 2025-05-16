@@ -71,6 +71,9 @@ func run(ctx context.Context, w io.Writer) error {
 	}
 
 	appSvcs, appRepos, err := makeServices(ctx, sqlitedb, redisdb, conf)
+	rabbitConn, err := setBroker(ctx, conf)
+	defer rabbitConn.Close()
+
 	if err != nil {
 		return fmt.Errorf("create services: %w", err)
 	}
