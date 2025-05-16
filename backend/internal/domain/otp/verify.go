@@ -23,7 +23,6 @@ func (s *service) VerifyOTP(ctx context.Context, email string, value string) err
 		case errors.Is(err, rp.ErrContext):
 			return err
 		case errors.Is(err, rp.ErrNotFound):
-			// TODO: return some error because the OTP is not found for the email
 			return domain.NewNotFoundErr(err)
 		}
 	}
@@ -60,17 +59,26 @@ func (s *service) VerifyOTP(ctx context.Context, email string, value string) err
 			return domain.NewJSONMarshalErr(err)
 		}
 		if err := s.repo.SaveOTP(ctx, emailHash, dataBytes); err != nil {
-			return err
+			switch {
+			case errors.Is(err, rp.ErrNotCreated):
+				return domain.NewNotCreatedErr(err)
+			case errors.Is(err, rp.ErrDatabase):
+				return domain.NewQueryFailedErr(err)
+			case errors.Is(err, rp.ErrContext):
+				return err
+			}
 		}
 		return rp.NewValidationErr(errors.New("provided OTP code does not match stored OTP code"), "OTP")
 	}
-
 	// invalidate OTP if successful
 	if err := s.repo.InvalidateOTP(ctx, emailHash); err != nil {
 		switch {
-		// TODO: add all other possible cases
-		default:
-			return rp.NewValidationErr(errors.New("max attempts exceeded"), "OTP")
+		case errors.Is(err, rp.ErrNotDeleted):
+			return domain.NewNotDeletedErr(err)
+		case errors.Is(err, rp.ErrDatabase):
+			return domain.NewQueryFailedErr(err)
+		case errors.Is(err, rp.ErrContext):
+			return err
 		}
 	}
 	return nil

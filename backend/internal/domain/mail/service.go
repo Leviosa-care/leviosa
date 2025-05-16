@@ -11,6 +11,7 @@ import (
 )
 
 type Service interface {
+	// main
 	HandlePasswordForgotten(ctx context.Context, to string) error
 	NewEvent(ctx context.Context, users []*models.User, eventTime string) error
 	NewPayment(ctx context.Context, user *models.User, eventTime string) error
