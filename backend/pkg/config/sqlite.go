@@ -11,7 +11,7 @@ import (
 )
 
 type sqliteCreds struct {
-	Filename string `json:"filename"`
+	Filename string
 }
 
 func (c *Config) GetSQLITE() *sqliteCreds {

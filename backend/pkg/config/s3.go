@@ -1,14 +1,15 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 
 	mode "github.com/hengadev/leviosa/pkg/flags"
 )
 
+const BaseBucketName = "leviosa-assets"
+
 type s3Creds struct {
-	BucketName string `json:"bucketname"`
+	BucketName string
 }
 
 func (c *Config) GetS3() *s3Creds {
@@ -16,15 +17,11 @@ func (c *Config) GetS3() *s3Creds {
 }
 
 func (c *Config) setS3(env mode.EnvMode) error {
-	bucketName := c.viper.GetString("s3.bucketname")
-	if bucketName == "" {
-		return errors.New("'BUCKETNAME' environment variable not set; please define it to specify S3 bucket name")
-	}
 	switch env {
-	case mode.ModeDev:
-		c.s3.BucketName = fmt.Sprintf("staging-%s", bucketName)
-	case mode.ModeProd, mode.ModeStaging:
-		c.s3.BucketName = fmt.Sprintf("%s-%s", env.String(), bucketName)
+	case mode.ModeDev, mode.ModeStaging:
+		c.s3.BucketName = fmt.Sprintf("staging-%s", BaseBucketName)
+	case mode.ModeProd:
+		c.s3.BucketName = fmt.Sprintf("production-%s", env.String(), BaseBucketName)
 	default:
 		return fmt.Errorf("mode value can only be 'development', 'production' or 'staging', got : %q", env)
 	}

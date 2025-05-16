@@ -60,7 +60,6 @@ func (c *Config) Load(ctx context.Context, mode mode.EnvMode) error {
 		"AWS_REGION":            {required: true, key: "aws.region"},
 		"AWS_ACCESS_KEY_ID":     {required: true, key: "aws.access.key.id"},
 		"AWS_SECRET_ACCESS_KEY": {required: true, key: "aws.secret.access.key"},
-		"BUCKETNAME":            {required: true, key: "s3.bucketname"},
 
 		"LOGGING_SALT": {required: true, key: "logging.salt"},
 
