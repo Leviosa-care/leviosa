@@ -10,10 +10,11 @@ import (
 	"github.com/hengadev/leviosa/internal/domain/product"
 	"github.com/hengadev/leviosa/internal/domain/register"
 	"github.com/hengadev/leviosa/internal/domain/session"
-	settingsService "github.com/hengadev/leviosa/internal/domain/settings"
+	"github.com/hengadev/leviosa/internal/domain/settings"
 	"github.com/hengadev/leviosa/internal/domain/throttler"
 	"github.com/hengadev/leviosa/internal/domain/user"
 	"github.com/hengadev/leviosa/internal/domain/vote"
+
 	"github.com/redis/go-redis/v9"
 )
 
@@ -28,7 +29,7 @@ type Repos struct {
 	Product     productService.Reader
 	OTP         otpService.Reader
 	Message     messageService.Reader
-	Settings    settingsService.Reader
+	Settings    settings.Reader
 	SQLiteDB    *sql.DB
 	RedisClient *redis.Client
 }

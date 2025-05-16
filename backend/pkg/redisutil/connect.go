@@ -16,8 +16,7 @@ func Connect(ctx context.Context, opts ...RedisOption) (*redis.Client, error) {
 		opt(r)
 	}
 	client := redis.NewClient(r)
-	_, err := client.Ping(ctx).Result()
-	if err != nil {
+	if _, err := client.Ping(ctx).Result(); err != nil {
 		return nil, err
 	}
 	return client, nil
