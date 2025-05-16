@@ -6,5 +6,10 @@ INSERT INTO votes ( user_id, days, month, year)
 
 -- +goose Down
 -- +goose StatementBegin
-DELETE FROM votes WHERE rowid = (SELECT MAX(rowid) FROM votes);
+DELETE FROM votes
+WHERE
+  rowid = (SELECT
+  MAX(rowid)
+FROM
+  votes);
 -- +goose StatementEnd
