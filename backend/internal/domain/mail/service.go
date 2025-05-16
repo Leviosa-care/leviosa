@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/hengadev/leviosa/internal/broker/rabbitmq"
 	"github.com/hengadev/leviosa/internal/domain"
 	otpService "github.com/hengadev/leviosa/internal/domain/otp"
+	"github.com/hengadev/leviosa/internal/domain/settings"
 	"github.com/hengadev/leviosa/internal/domain/user/models"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Service interface {
@@ -25,13 +29,18 @@ type Service interface {
 }
 
 type service struct {
-	from     string
 	email    string
 	password string
 	cache    *cache
 }
 
-func New(ctx context.Context, repo Reader) (Service, error) {
+func New(
+	ctx context.Context,
+	repo settings.Reader,
+	media settings.MediaReader,
+	rabbitConn *amqp.Connection,
+	// ch *amqp.Channel,
+) (Service, error) {
 	email := os.Getenv("GMAIL_EMAIL")
 	if email == "" {
 		return nil, domain.NewNotFoundErr(fmt.Errorf("environment variable 'GMAIL_EMAIL'"))
@@ -40,14 +49,26 @@ func New(ctx context.Context, repo Reader) (Service, error) {
 	if password == "" {
 		return nil, domain.NewNotFoundErr(fmt.Errorf("environment variable 'GMAIL_PASSWORD'"))
 	}
-	from, err := repo.GetCompanyEmail(ctx)
+	fromSetting, err := repo.GetString(ctx, settings.CompanyEmailKey)
 	if err != nil {
-		return nil, domain.NewNotFoundErr(fmt.Errorf("environment variable 'GMAIL_PASSWORD'"))
+		return nil, domain.NewNotFoundErr(fmt.Errorf("company email used as 'from' header"))
 	}
-	return &service{
-		// from:     "contact@leviosa.care",
-		from:     from,
+	from := fromSetting.Value
+
+	logo, err := media.GetLogo(ctx)
+	if err != nil {
+		return nil, domain.NewNotFoundErr(fmt.Errorf("company logo used in email templates"))
+	}
+	cache := newCache(from, logo)
+	service := &service{
 		email:    email,
 		password: password,
-	}, nil
+		cache:    cache,
+	}
+	ch, err := rabbitmq.NewChannel(rabbitConn)
+	if err != nil {
+		return nil, domain.NewNotCreatedErr(fmt.Errorf("consumer channel for mail service"))
+	}
+	service.StartMailSettingConsumer(ctx, ch)
+	return service, nil
 }

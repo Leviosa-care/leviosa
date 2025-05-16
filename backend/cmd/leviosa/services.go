@@ -40,6 +40,7 @@ import (
 	// external packages
 	"github.com/hengadev/encx"
 	"github.com/hengadev/encx/providers/hashicorpvault"
+	amqp "github.com/rabbitmq/amqp091-go"
 	rd "github.com/redis/go-redis/v9"
 )
 
@@ -50,6 +51,7 @@ func makeServices(
 	sqlitedb *sql.DB,
 	redisdb *rd.Client,
 	config *config.Config,
+	rabbitConn *amqp.Connection,
 ) (app.Services, app.Repos, error) {
 	var appSvcs app.Services
 	var appRepos app.Repos
@@ -89,11 +91,6 @@ func makeServices(
 	}
 	mediaSvc := mediaService.New(mediaRepo)
 
-	// mail
-	mailSvc, err := mailService.New()
-	if err != nil {
-		return appSvcs, appRepos, fmt.Errorf("create mail service: %w", err)
-	}
 	// product
 	productRepo := productRepository.New(ctx, sqlitedb)
 	productSvc := productService.New(productRepo)
@@ -102,13 +99,19 @@ func makeServices(
 	throttlerRepo := throttlerRepository.New(ctx, redisdb)
 	throttlerSvc := throttlerService.New(throttlerRepo)
 
-	// OTP
-	otpRepo := otpRepository.New(ctx, redisdb)
-	otpSvc := otpService.New(otpRepo, crypto)
-
 	// settings
 	settingsRepo := settingsRepository.New(ctx, sqlitedb)
-	settingsSvc := settingsService.New(repo)
+	settingsSvc := settingsService.New(settingsRepo, mediaRepo, crypto, rabbitConn)
+
+	// OTP
+	otpRepo := otpRepository.New(ctx, redisdb)
+	otpSvc, err := otpService.New(ctx, crypto, otpRepo, settingsRepo, rabbitConn)
+
+	// mail
+	mailSvc, err := mailService.New(ctx, settingsRepo, mediaRepo, rabbitConn)
+	if err != nil {
+		return appSvcs, appRepos, fmt.Errorf("create mail service: %w", err)
+	}
 
 	// message
 	messageRepo := messageRepository.New(ctx, sqlitedb)
