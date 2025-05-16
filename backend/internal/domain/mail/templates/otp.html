@@ -1,38 +1,147 @@
-<!DOCTYPE html
-    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Votre code de vérification Leviosa</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #eaeaea;">
+    <div style="max-width: 600px; margin: 0 auto;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #eaeaea; padding: 20px;">
+        <tr>
+          <td align="center">
+            <table
+              width="100%"
+              cellpadding="0"
+              cellspacing="0"
+              style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);"
+            >
+              <!-- Header -->
+              <tr>
+                <td align="center" style="background-color: #1e1e1e; padding: 30px 20px;">
+                  <img
+                    src="/placeholder.svg?height=60&width=200"
+                    alt="Leviosa Logo"
+                    style="max-width: 200px; height: auto;"
+                  />
+                </td>
+              </tr>
 
-<head>
-    <meta http-equiv="Content-Type" content="text/html" charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[Leviosa] Verifions ton email</title>
-</head>
+              <!-- Content -->
+              <tr>
+                <td style="padding: 40px 30px;">
+                  <h1
+                    style="color: #1e1e1e; font-size: 24px; font-weight: normal; margin: 0 0 20px; text-align: center;"
+                  >
+                    Vérifiez Votre Email
+                  </h1>
+                  <p style="color: #444444; font-size: 16px; line-height: 1.5; margin: 0 0 20px;">
+                    Merci de vous être inscrit chez Leviosa. Pour compléter votre inscription et accéder à nos
+                    services, veuillez vérifier votre adresse email en saisissant le code de
+                    vérification ci-dessous :
+                  </p>
 
-<body style="padding:2rem; background-color:#F2F2F2; font-size:1.2rem;">
-    <div align="center">
-        <div style="width:600px; box-shadow: rgba(60, 60, 67, 0.78) 0px 1px 3px 0px, rgba(60, 60, 67, 0.78) 0px 0px 0px 1px; padding:1rem 3rem; border-radius:0.5rem; background-color:white;" align="center">
-		
-            <img src="cid:logo.jpg" alt="company logo" style="max-width:100%; height:auto;" />
-            <h2 style="margin-bottom:3rem;">Confirmation de ton email</h2>
-            <div style="margin-bottom:1rem;" >Bienvenue {{ .Firstname }}</div>
-            <div style="margin-bottom:1rem;" >Pour proceder a ton inscription nous avons besoin de verifier ton addresse email. Nous te prions d'entrer le code suivant dans les 10 prochaines minutes. </div>
-            <hr style="margin-bottom:1rem;">
-            <center>
-                <p
-                    style="margin-bottom:1rem; border:none; padding:0.8rem 2.4rem; padding:1rem 3rem; font-size:1.2rem; background:none; border:1px solid #89888e; border-radius:0.5rem; background-color:#89888e; color:white; font-weight:600; margin-inline:auto;"
-                    >{{ .Value }}
-                </p>
-            </center>
+                  <!-- OTP Code Box -->
+                  <div
+                    style="
+                      background-color: #f4f4f4;
+                      border: 1px solid #cccccc;
+                      border-radius: 6px;
+                      padding: 20px;
+                      margin: 30px 0;
+                      text-align: center;
+                    "
+                  >
+                    <p style="margin: 0 0 10px; color: #555555;">Votre code de vérification :</p>
+                    <div
+                      style="
+                        font-family: monospace;
+                        font-size: 32px;
+                        font-weight: bold;
+                        color: #1e1e1e;
+                        letter-spacing: 5px;
+                      "
+                    >
+                                            {{ .OTP }}
+                    </div>
+                    <p style="font-size: 12px; color: #888888; margin-top: 10px;">
+                      Ce code expirera dans 15 minutes
+                    </p>
+                  </div>
 
-            <a href="https://www.instagram.com/leviosa_care/">Lien vers le instagram avec la balise <a></a>
-            <div style="margin-bottom:1rem;" >
-                blablablablablablablablablablablablablablablablablabla</div>
-            <a href="https://www.instagram.com/leviosa_care/">
-                <img src="cid:instagram.png" alt="instagram logo" style="max-width:40px; height:auto;"/>
-            </a>
-        </div>
+                  <p style="color: #444444; font-size: 16px; line-height: 1.5; margin: 0 0 20px;">
+                    Si vous n'avez pas demandé cette vérification, veuillez ignorer cet email ou contacter notre équipe
+                    d'assistance si vous avez des préoccupations.
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Image -->
+              <tr>
+                <td>
+                  <img
+                    src="/placeholder.svg?height=200&width=600"
+                    alt="Relaxing massage scene"
+                    style="width: 100%; height: auto; display: block;"
+                  />
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td
+                  style="background-color: #f4f4f4; padding: 20px; text-align: center; color: #666666; font-size: 14px;"
+                >
+                                    <p style="margin: 0 0 10px;">&copy; {{ .Year }} Leviosa. Tous droits réservés.</p>
+                                    <p style="margin: 0;">{{ .Address }}</p>
+                  <div style="margin: 10px 0;">
+                    <a
+                                            href="{{ .InstagramPath }}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style="
+                        display: inline-flex;
+                        align-items: center;
+                        color: #333333;
+                        text-decoration: none;
+                        font-size: 14px;
+                      "
+                    >
+                      <span
+                        style="
+                          display: inline-flex;
+                          justify-content: center;
+                          align-items: center;
+                          width: 24px;
+                          height: 24px;
+                          margin-right: 8px;
+                          background: #333333;
+                          border-radius: 6px;
+                          padding: 0;
+                        "
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="white"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                        </svg>
+                      </span>
+                      Suivez-nous sur Instagram
+                    </a>
+                  </div>                
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
     </div>
-</body>
-
+  </body>
 </html>
