@@ -26,7 +26,7 @@ func (o *Repository) InvalidateOTP(ctx context.Context, email string) error {
 	}
 
 	if result.Val() == 0 {
-		return rp.NewNotFoundErr(fmt.Errorf("key does not exist"), "OTP")
+		return rp.NewNotDeletedErr(fmt.Errorf("key does not exist"), "OTP")
 	}
 	return nil
 }

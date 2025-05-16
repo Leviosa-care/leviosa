@@ -88,6 +88,7 @@ func (s *service) getLogo(ctx context.Context) ([]byte, error) {
 		return nil, fmt.Errorf("error fetching image: %w", err)
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
