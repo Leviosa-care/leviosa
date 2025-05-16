@@ -11,6 +11,7 @@ import (
 
 type Repository struct {
 	Uploader   *manager.Uploader
+	Downloader *manager.Downloader
 	Client     *s3.Client
 	BucketName string
 }
@@ -22,8 +23,10 @@ func New(ctx context.Context, bucketName string) (*Repository, error) {
 	}
 	client := s3.NewFromConfig(cfg)
 	uploader := manager.NewUploader(client)
+	downloader := manager.NewDownloader(client)
 	return &Repository{
 		Uploader:   uploader,
+		Downloader: downloader,
 		Client:     client,
 		BucketName: bucketName,
 	}, nil
