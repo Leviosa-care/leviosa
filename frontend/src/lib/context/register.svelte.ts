@@ -1,6 +1,11 @@
 import { setContext, getContext } from "svelte";
 
 export type Gender = '' | 'man' | 'woman' | 'non_binary' | 'prefer_not_to_say' | 'custom' | 'not precised';
+// TODO: here is the final implementation of the gender thing
+// export type Gender = {
+//     Gender: '' | 'man' | 'woman' | 'non_binary' | 'prefer_not_to_say' | 'custom' | 'not precised';
+//     CustomGender: string;
+// }
 
 type Address = {
     address1: string;
@@ -31,6 +36,8 @@ type RegisterState = {
     birthdate: string;
 };
 
+const isBrowser = typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
+
 export class Register {
     value = $state<RegisterState>({
         email: "",
@@ -60,12 +67,19 @@ export class Register {
         return { ...this.value };
     }
     persist() {
-        sessionStorage.setItem("registration", JSON.stringify(this.toJSON()));
+        if (isBrowser) {
+            sessionStorage.setItem("registration", JSON.stringify(this.toJSON()));
+        }
     }
     static load(): Register {
-        const json = sessionStorage.getItem("registration");
-        if (!json) return new Register();
-        return Register.from(json);
+
+        if (isBrowser) {
+            const json = sessionStorage.getItem("registration");
+            if (!json) return new Register();
+            return Register.from(json);
+        }
+
+        return new Register()
     }
     setEmail(email: string) {
         this.value.email = email
@@ -90,7 +104,9 @@ export class Register {
         return this.value
     }
     clear(): void {
-        sessionStorage.removeItem("registration");
+        if (isBrowser) {
+            sessionStorage.removeItem("registration");
+        }
         Object.assign(this.value, {
             email: "",
             password: "",
