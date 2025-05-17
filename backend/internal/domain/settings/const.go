@@ -7,7 +7,6 @@ const (
 	CompanyPhoneKey        = "telephone"
 	CompanyLegalAddressKey = "headquarters"
 	CompanyInstagramKey    = "instagram_path"
-	CompanyLogoKey         = "logo_path"
 	OTPDurationKey         = "otp_duration"
 	OTPLengthKey           = "otp_length"
 	OTPMaxAttemptsKey      = "otp_max_attempts"
