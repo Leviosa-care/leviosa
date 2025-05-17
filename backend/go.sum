@@ -168,6 +168,8 @@ github.com/hengadev/errsx v1.0.0/go.mod h1:pdDfbKMqwVro0kRlCfPhiASTcnXFXR7/d4Wxq
 github.com/hengadev/test-assert v0.0.0-20250228115801-1031b9f2da92 h1:3S6rs74TkZ1qOL5epToBhQq8igIXtIpaUuRzQB1rtiI=
 github.com/hengadev/test-assert v0.0.0-20250228115801-1031b9f2da92/go.mod h1:P3A0Yx+yzK8Vvpv5tRtI/g96Yej+CSvV/n5zHJqFNII=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
+github.com/jackc/pgx v3.6.2+incompatible h1:2zP5OD7kiyR3xzRYMhOcXVvkDZsImVXfj+yIyTQf3/o=
+github.com/jackc/pgx v3.6.2+incompatible/go.mod h1:0ZGrqGqkRlliWnWB4zKnWtjbSWbGkVEFm4TeybAXq+I=
 github.com/jmespath/go-jmespath v0.4.0 h1:BEgLn5cpjn8UN1mAw4NjwDrS35OdebyEtFe+9YPoQUg=
 github.com/jmespath/go-jmespath v0.4.0/go.mod h1:T8mJZnbsbmF+m6zOOFylbeCJqk5+pHWvzYPziyZiYoo=
 github.com/jmespath/go-jmespath/internal/testify v1.5.1 h1:shLQSRRSCCPj3f2gpwzGwWFoC7ycTf1rcQZHOlsJ6N8=
