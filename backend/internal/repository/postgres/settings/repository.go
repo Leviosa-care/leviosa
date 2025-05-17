@@ -21,8 +21,6 @@ func (r *repository) GetDB() *sql.DB {
 	return r.DB
 }
 
-// TODO: how to create the migration using goose here
-
 func New(ctx context.Context, db *sql.DB) (*repository, error) {
 	goose.SetBaseFS(embedMigrations)
 	if err := goose.SetDialect("postgres"); err != nil {
