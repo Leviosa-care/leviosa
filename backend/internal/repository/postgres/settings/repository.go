@@ -23,7 +23,7 @@ func (r *repository) GetDB() *sql.DB {
 
 func New(ctx context.Context, db *sql.DB) (*repository, error) {
 	goose.SetBaseFS(embedMigrations)
-	if err := goose.SetDialect("postgres"); err != nil {
+	if err := goose.SetDialect("pgx"); err != nil {
 		return nil, fmt.Errorf("setting dialect for settings repository: %w", err)
 	}
 	if err := goose.UpContext(ctx, db, "migrations"); err != nil {
