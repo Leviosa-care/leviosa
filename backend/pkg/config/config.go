@@ -12,12 +12,12 @@ import (
 )
 
 type Config struct {
-	viper     *viper.Viper
-	sqlite    *sqliteCreds
-	redis     *redisCreds
-	s3        *s3Creds
-	mailCreds *mailCreds
-	rabbitmq  *rabbitmqCreds
+	viper    *viper.Viper
+	sqlite   *sqliteCreds
+	postgres *postgresCreds
+	redis    *redisCreds
+	s3       *s3Creds
+	rabbitmq *rabbitmqCreds
 }
 
 func New(ctx context.Context, envFilename, envFileType string) *Config {
@@ -78,6 +78,9 @@ func (c *Config) Load(ctx context.Context, mode mode.EnvMode) error {
 	}
 	if err := c.setSQLITE(mode); err != nil {
 		errs.Set("sqlite configuration", fmt.Errorf("set SQLITE: %w", err))
+	}
+	if err := c.setPostgres(mode); err != nil {
+		errs.Set("postgres configuration", fmt.Errorf("set PostgreSQL: %w", err))
 	}
 	if err := c.setRedis(mode); err != nil {
 		errs.Set("redis configuration", fmt.Errorf("set Redis: %w", err))
