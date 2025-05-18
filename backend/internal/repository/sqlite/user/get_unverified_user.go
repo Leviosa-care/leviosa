@@ -21,7 +21,7 @@ import (
 //   - Returns a "not found" error if no user matches the provided email hash.
 //   - Returns a context error if the operation is canceled or the deadline is exceeded.
 //   - Returns a database error for any other query-related issues.
-func (u *Repository) GetUnverifiedUser(ctx context.Context, emailHash string) (*models.User, error) {
+func (u *repository) GetUnverifiedUser(ctx context.Context, emailHash string) (*models.User, error) {
 	var user models.User
 	query := `
         SELECT 

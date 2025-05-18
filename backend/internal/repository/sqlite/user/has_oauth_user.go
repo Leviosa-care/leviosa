@@ -20,7 +20,7 @@ import (
 //
 // Returns:
 //   - error: Returns an error if any database issues occur or the user is not found.
-func (u *Repository) HasOAuthUser(ctx context.Context, emailHash string, p models.ProviderType) error {
+func (u *repository) HasOAuthUser(ctx context.Context, emailHash string, p models.ProviderType) error {
 	tx, err := u.DB.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return rp.NewDatabaseErr(fmt.Errorf("failed to start transaction: %w", err))

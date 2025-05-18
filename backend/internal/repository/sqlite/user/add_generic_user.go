@@ -20,7 +20,7 @@ import (
 //
 // Returns:
 //   - error: An error if the transaction fails, the user creation or linking process fails, or any database-related errors occur. Returns nil if successful.
-func (u *Repository) addGenericUser(ctx context.Context, user *models.User, provider models.ProviderType, table string) error {
+func (u *repository) addGenericUser(ctx context.Context, user *models.User, provider models.ProviderType, table string) error {
 	tx, err := u.DB.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return rp.NewDatabaseErr(fmt.Errorf("failed to start transaction: %w", err))

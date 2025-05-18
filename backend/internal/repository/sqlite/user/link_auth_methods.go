@@ -22,7 +22,7 @@ import (
 //
 // Returns:
 //   - error: Returns an error if any database issues occur or if the provider type is unsupported.
-func (u *Repository) linkAuthMethod(ctx context.Context, tx *sql.Tx, userID string, user *models.User, provider models.ProviderType, table string) error {
+func (u *repository) linkAuthMethod(ctx context.Context, tx *sql.Tx, userID string, user *models.User, provider models.ProviderType, table string) error {
 	switch provider {
 	case models.Google:
 		// Add Apple authentication

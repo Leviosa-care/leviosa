@@ -19,7 +19,7 @@ import (
 //   - error: An error if the user creation or linking fails, including database-related errors. Returns nil if successful.
 //   - If the provider is invalid, a validation error is returned.
 //   - If the user already exists, the authentication method is linked to the existing user.
-func (u *Repository) AddUser(ctx context.Context, user *models.User, provider models.ProviderType) error {
+func (u *repository) AddUser(ctx context.Context, user *models.User, provider models.ProviderType) error {
 	if err := u.addGenericUser(ctx, user, provider, "users"); err != nil {
 		return err
 	}

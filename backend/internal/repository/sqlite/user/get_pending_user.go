@@ -24,7 +24,7 @@ import (
 //   - Returns a "not found" error if no user exists with the given email hash.
 //   - Returns a context error if the operation is canceled or the deadline is exceeded.
 //   - Returns a database error for any other query-related issues.
-func (u *Repository) GetPendingUser(ctx context.Context, emailHash string, provider models.ProviderType) (*models.User, error) {
+func (u *repository) GetPendingUser(ctx context.Context, emailHash string, provider models.ProviderType) (*models.User, error) {
 	var user models.User
 	var query string
 	var args []any

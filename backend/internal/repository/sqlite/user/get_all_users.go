@@ -21,7 +21,7 @@ import (
 //   - If the operation is canceled or the deadline is exceeded, a context error is returned.
 //   - For query failures or result processing issues, a database error is returned.
 //   - Returns an empty slice with no error if no users are found.
-func (u *Repository) GetAllUsers(ctx context.Context) ([]*models.User, error) {
+func (u *repository) GetAllUsers(ctx context.Context) ([]*models.User, error) {
 	query := `
         SELECT 
             id,

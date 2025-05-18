@@ -22,7 +22,7 @@ import (
 //     a context error is returned.
 //   - If no rows were affected, a "not deleted" error is returned.
 //   - If the deletion fails for any other reason, a database error is returned.
-func (u *Repository) DeleteUser(ctx context.Context, userID string) error {
+func (u *repository) DeleteUser(ctx context.Context, userID string) error {
 	result, err := u.DB.ExecContext(ctx, "DELETE FROM users WHERE id = ?;", userID)
 	if err != nil {
 		switch {

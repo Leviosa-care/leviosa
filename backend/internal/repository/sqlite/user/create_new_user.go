@@ -25,7 +25,7 @@ import (
 //   - error: An error if the user insertion fails, including database-related errors.
 //   - If the provider type is unsupported, a validation error is returned.
 //   - If the insert operation does not affect any rows, an error indicating no creation is returned.
-func (u *Repository) createNewUser(ctx context.Context, tx *sql.Tx, user *models.User, provider models.ProviderType, table string) error {
+func (u *repository) createNewUser(ctx context.Context, tx *sql.Tx, user *models.User, provider models.ProviderType, table string) error {
 	var query string
 	var args []any
 

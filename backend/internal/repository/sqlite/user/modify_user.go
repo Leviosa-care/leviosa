@@ -21,7 +21,7 @@ import (
 //
 // Returns:
 //   - error: Returns an error if the query fails, the user record cannot be updated, or if any issues arise during execution.
-func (u *Repository) ModifyAccount(
+func (u *repository) ModifyAccount(
 	ctx context.Context,
 	user *models.User,
 	whereMap map[string]any,

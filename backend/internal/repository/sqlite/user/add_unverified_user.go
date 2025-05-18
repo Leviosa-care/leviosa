@@ -18,7 +18,7 @@ import (
 // Returns:
 //   - error: An error if the insertion fails, including database or context-related errors. Returns nil if successful.
 //   - If no rows are affected by the insertion, a "not created" error is returned.
-func (u *Repository) AddUnverifiedUser(ctx context.Context, user *models.User) error {
+func (u *repository) AddUnverifiedUser(ctx context.Context, user *models.User) error {
 	query := `
         INSERT INTO unverified_users (
             email_hash,

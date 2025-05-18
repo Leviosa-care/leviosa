@@ -19,7 +19,7 @@ import (
 //   - Returns a "not found" error if the result set is empty.
 //   - Returns a context error if the operation is canceled or the deadline is exceeded.
 //   - Returns a database error for any other query-related issues.
-func (u *Repository) GetPendingUsers(ctx context.Context) ([]*models.User, error) {
+func (u *repository) GetPendingUsers(ctx context.Context) ([]*models.User, error) {
 	query := `
         SELECT 
             email_hash,

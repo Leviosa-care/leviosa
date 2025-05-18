@@ -22,7 +22,7 @@ import (
 //   - Returns a "not found" error if the user does not exist in the database.
 //   - Returns a context error if the operation is canceled or the deadline is exceeded.
 //   - Returns a database error for any other query-related issues.
-func (u *Repository) GetUserSessionData(ctx context.Context, emailHash string) (string, models.Role, error) {
+func (u *repository) GetUserSessionData(ctx context.Context, emailHash string) (string, models.Role, error) {
 	var id, role string
 	query := "SELECT id, role from users where email_hash = ?;"
 	err := u.DB.QueryRowContext(ctx, query, emailHash).Scan(

@@ -23,7 +23,7 @@ import (
 //   - If the query returns no rows, a "not found" error is returned.
 //   - If context-related errors occur (e.g., deadline exceeded, canceled), a context error is returned.
 //   - For any other query failures, a database error is returned.
-func (u *Repository) FindAccountByID(ctx context.Context, id string) (*models.User, error) {
+func (u *repository) FindAccountByID(ctx context.Context, id string) (*models.User, error) {
 	var user models.User
 	query := `
         SELECT 

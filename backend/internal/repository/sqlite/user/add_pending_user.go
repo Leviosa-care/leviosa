@@ -15,7 +15,7 @@ import (
 //
 // Returns:
 //   - error: An error if the user addition fails, as returned by the addGenericUser function. Returns nil if successful.
-func (u *Repository) AddPendingUser(ctx context.Context, user *models.User, provider models.ProviderType) error {
+func (u *repository) AddPendingUser(ctx context.Context, user *models.User, provider models.ProviderType) error {
 	if err := u.addGenericUser(ctx, user, provider, "pending_users"); err != nil {
 		return err
 	}

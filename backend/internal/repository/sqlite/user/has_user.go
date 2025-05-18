@@ -15,7 +15,7 @@ import (
 //
 // Returns:
 //   - error: Returns an error if any database issues occur or if the user is not found.
-func (u *Repository) HasUser(ctx context.Context, emailHash string) error {
+func (u *repository) HasUser(ctx context.Context, emailHash string) error {
 	query := `
         SELECT EXISTS (
             SELECT 1 
