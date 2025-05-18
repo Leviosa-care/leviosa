@@ -9,7 +9,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (e *EventRepository) InsertEvent(
+func (e *repository) InsertEvent(
 	ctx context.Context,
 	tx *sql.Tx,
 	event *models.Event,

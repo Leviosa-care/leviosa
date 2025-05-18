@@ -9,7 +9,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (p *Repository) GetProduct(ctx context.Context, productID string) (*productService.Product, error) {
+func (p *repository) GetProduct(ctx context.Context, productID string) (*productService.Product, error) {
 	var product productService.Product
 	query := `
         SELECT 

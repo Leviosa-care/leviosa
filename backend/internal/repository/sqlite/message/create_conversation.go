@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (m *Repository) CreateConversation(ctx context.Context, conversation *messageService.Conversation) error {
+func (m *repository) CreateConversation(ctx context.Context, conversation *messageService.Conversation) error {
 	query := `
         INSERT INTO conversations (
             id,

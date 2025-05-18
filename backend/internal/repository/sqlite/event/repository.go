@@ -3,18 +3,32 @@ package eventRepository
 import (
 	"context"
 	"database/sql"
+	"embed"
+	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/pressly/goose/v3"
 )
 
-type EventRepository struct {
+//go:embed migrations/*.sql
+var migrations embed.FS
+
+type repository struct {
 	DB *sql.DB
 }
 
-func (e *EventRepository) GetDB() *sql.DB {
+func (e *repository) GetDB() *sql.DB {
 	return e.DB
 }
 
-func New(ctx context.Context, db *sql.DB) *EventRepository {
-	return &EventRepository{db}
+func New(ctx context.Context, db *sql.DB) (*repository, error) {
+
+	goose.SetBaseFS(migrations)
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		return nil, fmt.Errorf("setting dialect for user repository: %w", err)
+	}
+	if err := goose.UpContext(ctx, db, "migrations"); err != nil {
+		return nil, fmt.Errorf("running all migrations for user repository: %w", err)
+	}
+	return &repository{db}, nil
 }

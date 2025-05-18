@@ -4,6 +4,6 @@ import (
 	"context"
 )
 
-func (r *Repository) CreatePlan(ctx context.Context, registrationID string, content string) error {
+func (r *repository) CreatePlan(ctx context.Context, registrationID string, content string) error {
 	return nil
 }

@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (p *Repository) AddProduct(ctx context.Context, product *productService.Product) error {
+func (p *repository) AddProduct(ctx context.Context, product *productService.Product) error {
 	query := `
             INSERT INTO products (
                 id,

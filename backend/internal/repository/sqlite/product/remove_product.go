@@ -7,7 +7,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (p *Repository) RemoveProduct(ctx context.Context, productID string) error {
+func (p *repository) RemoveProduct(ctx context.Context, productID string) error {
 	result, err := p.DB.ExecContext(ctx, "DELETE FROM users WHERE id = ?;", productID)
 	if err != nil {
 		switch {

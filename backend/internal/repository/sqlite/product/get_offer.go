@@ -9,7 +9,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (p *Repository) GetOffer(ctx context.Context, offerID string) (*productService.Offer, error) {
+func (p *repository) GetOffer(ctx context.Context, offerID string) (*productService.Offer, error) {
 	var offer productService.Offer
 	query := `
         SELECT

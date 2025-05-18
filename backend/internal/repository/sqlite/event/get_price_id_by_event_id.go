@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (e *EventRepository) GetPriceID(ctx context.Context, eventID string) (string, error) {
+func (e *repository) GetPriceID(ctx context.Context, eventID string) (string, error) {
 	var priceID string
 	query := `
         SELECT 

@@ -11,7 +11,7 @@ import (
 
 // EventHasAvailablePlaces checks if an event with the given eventID exists in the database
 // and has a place count greater than 0.
-func (e *EventRepository) EventHasAvailablePlaces(ctx context.Context, eventID string) (bool, error) {
+func (e *repository) EventHasAvailablePlaces(ctx context.Context, eventID string) (bool, error) {
 	var placecount int
 	query := `
         SELECT

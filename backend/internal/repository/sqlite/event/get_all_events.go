@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (e *EventRepository) GetAllEvents(ctx context.Context) ([]*models.Event, error) {
+func (e *repository) GetAllEvents(ctx context.Context) ([]*models.Event, error) {
 	query := `
         SELECT 
             id,

@@ -67,19 +67,31 @@ func makeServices(
 	}
 
 	// user
-	userRepo := userRepository.New(ctx, sqlitedb)
+	userRepo, err := userRepository.New(ctx, sqlitedb)
+	if err != nil {
+		return appSvcs, appRepos, fmt.Errorf("create user repository: %w", err)
+	}
 	userSvc := userService.New(userRepo, crypto)
 	// session
 	sessionRepo := sessionRepository.New(ctx, redisdb)
 	sessionSvc := sessionService.New(sessionRepo)
 	// event
-	eventRepo := eventRepository.New(ctx, sqlitedb)
+	eventRepo, err := eventRepository.New(ctx, sqlitedb)
+	if err != nil {
+		return appSvcs, appRepos, fmt.Errorf("create event repository: %w", err)
+	}
 	eventSvc := eventService.New(eventRepo, crypto)
 	// vote
-	voteRepo := voteRepository.New(ctx, sqlitedb)
+	voteRepo, err := voteRepository.New(ctx, sqlitedb)
+	if err != nil {
+		return appSvcs, appRepos, fmt.Errorf("create vote repository: %w", err)
+	}
 	voteSvc := vote.New(voteRepo)
 	// register
-	registerRepo := registerRepository.New(ctx, sqlitedb)
+	registerRepo, err := registerRepository.New(ctx, sqlitedb)
+	if err != nil {
+		return appSvcs, appRepos, fmt.Errorf("create register repository: %w", err)
+	}
 	registerSvc := registerService.NewService(registerRepo)
 	// stripe
 	stripeSvc := stripeService.New()
@@ -92,7 +104,10 @@ func makeServices(
 	mediaSvc := mediaService.New(mediaRepo)
 
 	// product
-	productRepo := productRepository.New(ctx, sqlitedb)
+	productRepo, err := productRepository.New(ctx, sqlitedb)
+	if err != nil {
+		return appSvcs, appRepos, fmt.Errorf("create product repository: %w", err)
+	}
 	productSvc := productService.New(productRepo)
 
 	// throttle
@@ -100,7 +115,10 @@ func makeServices(
 	throttlerSvc := throttlerService.New(throttlerRepo)
 
 	// settings
-	settingsRepo := settingsRepository.New(ctx, sqlitedb)
+	settingsRepo, err := settingsRepository.New(ctx, sqlitedb)
+	if err != nil {
+		return appSvcs, appRepos, fmt.Errorf("create settings repository: %w", err)
+	}
 	settingsSvc := settingsService.New(settingsRepo, mediaRepo, crypto, rabbitConn)
 
 	// OTP
@@ -114,7 +132,10 @@ func makeServices(
 	}
 
 	// message
-	messageRepo := messageRepository.New(ctx, sqlitedb)
+	messageRepo, err := messageRepository.New(ctx, sqlitedb)
+	if err != nil {
+		return appSvcs, appRepos, fmt.Errorf("create message repository: %w", err)
+	}
 	messageSvc := messageService.New(messageRepo, crypto)
 
 	// services

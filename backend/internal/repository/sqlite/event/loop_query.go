@@ -9,7 +9,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (e *EventRepository) LoopQuery(
+func (e *repository) LoopQuery(
 	ctx context.Context,
 	tx *sql.Tx,
 	name string,

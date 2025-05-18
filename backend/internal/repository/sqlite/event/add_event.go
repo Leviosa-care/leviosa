@@ -9,7 +9,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (e *EventRepository) AddEvent(ctx context.Context, event *models.Event) (string, error) {
+func (e *repository) AddEvent(ctx context.Context, event *models.Event) (string, error) {
 	tx, err := e.DB.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return "", rp.NewDatabaseErr(fmt.Errorf("failed to start transaction: %w", err))

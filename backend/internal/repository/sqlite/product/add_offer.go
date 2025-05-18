@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (p *Repository) AddOffer(ctx context.Context, offer *productService.Offer) error {
+func (p *repository) AddOffer(ctx context.Context, offer *productService.Offer) error {
 	query := `
         INSERT INTO offers (
 			id,

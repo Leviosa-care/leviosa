@@ -1,4 +1,4 @@
-package productRepository
+package voteRepository
 
 import (
 	"context"
@@ -17,17 +17,17 @@ type repository struct {
 	DB *sql.DB
 }
 
-func (u *repository) GetDB() *sql.DB {
-	return u.DB
+func (v *repository) GetDB() *sql.DB {
+	return v.DB
 }
 
 func New(ctx context.Context, db *sql.DB) (*repository, error) {
 	goose.SetBaseFS(migrations)
 	if err := goose.SetDialect("sqlite3"); err != nil {
-		return nil, fmt.Errorf("setting dialect for user repository: %w", err)
+		return nil, fmt.Errorf("setting dialect for vote repository: %w", err)
 	}
 	if err := goose.UpContext(ctx, db, "migrations"); err != nil {
-		return nil, fmt.Errorf("running all migrations for user repository: %w", err)
+		return nil, fmt.Errorf("running all migrations for vote repository: %w", err)
 	}
 	return &repository{db}, nil
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/hengadev/leviosa/pkg/sqliteutil"
 )
 
-func (p *Repository) ModifyOffer(
+func (p *repository) ModifyOffer(
 	ctx context.Context,
 	productType *productService.Offer,
 	whereMap map[string]any,

@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (m *Repository) GetMessages(ctx context.Context, conversationID string) ([]*messageService.Message, error) {
+func (m *repository) GetMessages(ctx context.Context, conversationID string) ([]*messageService.Message, error) {
 	query := `
         SELECT 
             id,

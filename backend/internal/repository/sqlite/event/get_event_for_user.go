@@ -15,7 +15,7 @@ import (
 // - move that function to registrationRepository
 // - move part of this function to the service that uses that function
 
-func (e *EventRepository) GetEventForUser(ctx context.Context, userID string) (*models.EventUser, error) {
+func (e *repository) GetEventForUser(ctx context.Context, userID string) (*models.EventUser, error) {
 	tx, err := e.DB.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return nil, rp.NewDatabaseErr(fmt.Errorf("failed to start transaction: %w", err))

@@ -9,7 +9,7 @@ import (
 )
 
 // DecreaseFreePlace decrements the freeplace count for an event with the given eventID.
-func (e *EventRepository) DecreaseFreePlace(ctx context.Context, eventID string) error {
+func (e *repository) DecreaseFreePlace(ctx context.Context, eventID string) error {
 	query := `
         UPDATE events
         SET freeplace = freeplace - 1 

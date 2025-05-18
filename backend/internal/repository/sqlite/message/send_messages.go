@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (m *Repository) SendMessage(ctx context.Context, message *messageService.Message) error {
+func (m *repository) SendMessage(ctx context.Context, message *messageService.Message) error {
 	query := `
         INSERT INTO messages (
             id,

@@ -11,7 +11,7 @@ import (
 // It takes a context for cancellation/timeout, a productID to identify the product,
 // and a priceID to be set. Returns an error if the update fails, the product
 // doesn't exist, or if there are any database connectivity issues.
-func (p *Repository) AddPriceID(ctx context.Context, productID, priceID string) error {
+func (p *repository) AddPriceID(ctx context.Context, productID, priceID string) error {
 	query := `
         UPDATE products
         SET price_id = ?

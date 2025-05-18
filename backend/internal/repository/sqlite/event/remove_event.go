@@ -8,7 +8,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 )
 
-func (e *EventRepository) RemoveEvent(ctx context.Context, eventID string) error {
+func (e *repository) RemoveEvent(ctx context.Context, eventID string) error {
 	query := "DELETE FROM events WHERE id=?"
 	result, err := e.DB.ExecContext(ctx, query, eventID)
 	if err != nil {

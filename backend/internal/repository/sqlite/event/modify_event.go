@@ -10,7 +10,7 @@ import (
 	"github.com/hengadev/leviosa/pkg/sqliteutil"
 )
 
-func (e *EventRepository) ModifyEvent(
+func (e *repository) ModifyEvent(
 	ctx context.Context,
 	event *models.Event,
 	whereMap map[string]any,
