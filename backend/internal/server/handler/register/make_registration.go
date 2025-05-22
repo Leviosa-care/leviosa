@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/hengadev/leviosa/internal/server/handler"
-	"github.com/hengadev/leviosa/pkg/contextutil"
+	"github.com/hengadev/leviosa/pkg/ctxutil"
 
 	"github.com/stripe/stripe-go/v79"
 	"github.com/stripe/stripe-go/webhook"
@@ -16,7 +16,7 @@ import (
 func (app *AppInstance) MakeRegistration() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger, err := contextutil.GetLoggerFromContext(ctx)
+		logger, err := ctxutil.GetLoggerFromContext(ctx)
 		if err != nil {
 			slog.ErrorContext(ctx, "logger not found in context", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)

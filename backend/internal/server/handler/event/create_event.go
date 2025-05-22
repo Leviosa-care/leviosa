@@ -10,20 +10,20 @@ import (
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
-	"github.com/hengadev/leviosa/pkg/contextutil"
+	"github.com/hengadev/leviosa/pkg/ctxutil"
 	"github.com/hengadev/leviosa/pkg/serverutil"
 )
 
 // TODO: add the fact that creating an event, should also create a vote and a table with the style votes_month_year.
 func (a *AppInstance) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger, err := contextutil.GetLoggerFromContext(ctx)
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
 	if err != nil {
 		slog.ErrorContext(ctx, "logger not found in context", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := contextutil.ValidateRoleInContext(ctx, models.ADMINISTRATOR); err != nil {
+	if err := ctxutil.ValidateRoleInContext(ctx, models.ADMINISTRATOR); err != nil {
 		logger.WarnContext(ctx, "get role from request", "error", err)
 		http.Error(w, handler.NewForbiddenErr(err), http.StatusBadRequest)
 		return

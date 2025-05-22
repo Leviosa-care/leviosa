@@ -13,7 +13,7 @@ package userHandler_test
 // 	miniredis "github.com/hengadev/leviosa/internal/repository/redis"
 // 	"github.com/hengadev/leviosa/internal/server/app"
 // 	userHandler "github.com/hengadev/leviosa/internal/server/handler/user"
-// 	"github.com/hengadev/leviosa/pkg/contextutil"
+// 	"github.com/hengadev/leviosa/pkg/ctxutil"
 // 	test "github.com/hengadev/leviosa/tests/utils"
 // 	"github.com/hengadev/leviosa/tests/utils/factories"
 // 	assert "github.com/hengadev/test-assert"
@@ -73,8 +73,8 @@ package userHandler_test
 // 			r.AddCookie(factories.NewBasicCookie(nil))
 //
 // 			// pass userID to context
-// 			ctx := context.WithValue(context.Background(), contextutil.UserIDKey, tt.userID)
-// 			ctx = context.WithValue(ctx, contextutil.LoggerKey, &slog.Logger{})
+// 			ctx := context.WithValue(context.Background(), ctxutil.UserIDKey, tt.userID)
+// 			ctx = context.WithValue(ctx, ctxutil.LoggerKey, &slog.Logger{})
 // 			r = r.WithContext(ctx)
 //
 // 			userSvc, userRepo := factories.SetupUser(t, ctx, tt.version)

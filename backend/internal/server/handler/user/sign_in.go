@@ -13,13 +13,13 @@ import (
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
-	"github.com/hengadev/leviosa/pkg/contextutil"
+	"github.com/hengadev/leviosa/pkg/ctxutil"
 	"github.com/hengadev/leviosa/pkg/serverutil"
 )
 
 func (a *AppInstance) Signin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger, err := contextutil.GetLoggerFromContext(ctx)
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

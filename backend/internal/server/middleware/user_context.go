@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/hengadev/leviosa/pkg/contextutil"
+	"github.com/hengadev/leviosa/pkg/ctxutil"
 )
 
 // get the role for the user in question
@@ -29,7 +29,7 @@ func SetUserContext(sessionGetter sessionGetterFunc) func(http.Handler) http.Han
 				return
 			}
 
-			logger, ok := ctx.Value(contextutil.LoggerKey).(*slog.Logger)
+			logger, ok := ctx.Value(ctxutil.LoggerKey).(*slog.Logger)
 			if !ok {
 				slog.ErrorContext(ctx, "logger not found in context")
 				http.Error(w, "logger not found in context", http.StatusInternalServerError)
@@ -60,8 +60,8 @@ func SetUserContext(sessionGetter sessionGetterFunc) func(http.Handler) http.Han
 			}
 
 			// set the role in the context using the session
-			ctx = context.WithValue(r.Context(), contextutil.RoleKey, session.Role.String())
-			ctx = context.WithValue(r.Context(), contextutil.UserIDKey, session.UserID)
+			ctx = context.WithValue(r.Context(), ctxutil.RoleKey, session.Role.String())
+			ctx = context.WithValue(r.Context(), ctxutil.UserIDKey, session.UserID)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

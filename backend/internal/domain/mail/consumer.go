@@ -8,14 +8,14 @@ import (
 
 	"github.com/hengadev/leviosa/internal/broker/rabbitmq"
 	"github.com/hengadev/leviosa/internal/domain/settings"
-	"github.com/hengadev/leviosa/pkg/contextutil"
+	"github.com/hengadev/leviosa/pkg/ctxutil"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // StartConsumer starts consuming messages from the mail settings queue.
 func (s *service) StartMailSettingConsumer(ctx context.Context, ch *amqp.Channel) error {
-	logger, err := contextutil.GetLoggerFromContext(ctx)
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
 	if err != nil {
 		return fmt.Errorf("retrieve logger in StartMailSettingConsumer: %w", err)
 	}

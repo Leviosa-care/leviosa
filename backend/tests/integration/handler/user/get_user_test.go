@@ -11,7 +11,7 @@ package userHandler_test
 // 	"github.com/hengadev/leviosa/internal/domain/user/models"
 // 	"github.com/hengadev/leviosa/internal/server/app"
 // 	userHandler "github.com/hengadev/leviosa/internal/server/handler/user"
-// 	"github.com/hengadev/leviosa/pkg/contextutil"
+// 	"github.com/hengadev/leviosa/pkg/ctxutil"
 // 	test "github.com/hengadev/leviosa/tests/utils"
 // 	"github.com/hengadev/leviosa/tests/utils/factories"
 // 	"github.com/google/uuid"
@@ -41,7 +41,7 @@ package userHandler_test
 // 		// 	name:    "userID missing in context",
 // 		// 	version: 20240819182030,
 // 		// 	setupContext: func() context.Context {
-// 		// 		return context.WithValue(context.Background(), contextutil.LoggerKey, *slog.Default())
+// 		// 		return context.WithValue(context.Background(), ctxutil.LoggerKey, *slog.Default())
 // 		// 	},
 // 		// 	userID:             userID,
 // 		// 	expectedStatusCode: 500,
@@ -51,7 +51,7 @@ package userHandler_test
 // 		// 	name:    "logger missing in context",
 // 		// 	version: 20240819182030,
 // 		// 	setupContext: func() context.Context {
-// 		// 		return context.WithValue(context.Background(), contextutil.UserIDKey, userID)
+// 		// 		return context.WithValue(context.Background(), ctxutil.UserIDKey, userID)
 // 		// 	},
 // 		// 	userID:             userID,
 // 		// 	expectedStatusCode: 500,
@@ -62,8 +62,8 @@ package userHandler_test
 // 		// 	version: 20240811085134,
 // 		// 	// NOTE: no logger in the database
 // 		// 	setupContext: func() context.Context {
-// 		// 		ctx := context.WithValue(context.Background(), contextutil.LoggerKey, slog.Default())
-// 		// 		return context.WithValue(ctx, contextutil.UserIDKey, userID)
+// 		// 		ctx := context.WithValue(context.Background(), ctxutil.LoggerKey, slog.Default())
+// 		// 		return context.WithValue(ctx, ctxutil.UserIDKey, userID)
 // 		// 	},
 // 		// 	userID:             userID,
 // 		// 	expectedStatusCode: 404,
@@ -73,8 +73,8 @@ package userHandler_test
 // 			name:    "ID not in database",
 // 			version: 20240819182030,
 // 			setupContext: func() context.Context {
-// 				ctx := context.WithValue(context.Background(), contextutil.LoggerKey, slog.Default())
-// 				return context.WithValue(ctx, contextutil.UserIDKey, userID)
+// 				ctx := context.WithValue(context.Background(), ctxutil.LoggerKey, slog.Default())
+// 				return context.WithValue(ctx, ctxutil.UserIDKey, userID)
 // 			},
 // 			userID:             uuid.NewString(),
 // 			expectedStatusCode: 404,
@@ -84,8 +84,8 @@ package userHandler_test
 // 		// 	name:    "nominal case",
 // 		// 	version: 20240811140841,
 // 		// 	setupContext: func() context.Context {
-// 		// 		ctx := context.WithValue(context.Background(), contextutil.LoggerKey, slog.Default())
-// 		// 		return context.WithValue(ctx, contextutil.UserIDKey, userID)
+// 		// 		ctx := context.WithValue(context.Background(), ctxutil.LoggerKey, slog.Default())
+// 		// 		return context.WithValue(ctx, ctxutil.UserIDKey, userID)
 // 		// 	},
 // 		// 	userID:             userID,
 // 		// 	expectedStatusCode: 200,

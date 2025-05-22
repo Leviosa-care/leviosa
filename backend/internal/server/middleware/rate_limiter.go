@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/hengadev/leviosa/pkg/contextutil"
+	"github.com/hengadev/leviosa/pkg/ctxutil"
 	"github.com/hengadev/leviosa/pkg/domainutil"
 	"github.com/hengadev/leviosa/pkg/serverutil"
 
@@ -22,7 +22,7 @@ func PerIPRateLimit(lim, burst int) Middleware {
 		return func(w http.ResponseWriter, r *http.Request) {
 			// TODO: need a system to remove keys after a certain time
 			ctx := r.Context()
-			logger, err := contextutil.GetLoggerFromContext(ctx)
+			logger, err := ctxutil.GetLoggerFromContext(ctx)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return

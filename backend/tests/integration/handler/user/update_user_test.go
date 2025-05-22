@@ -10,7 +10,7 @@ package userHandler_test
 // 	"github.com/hengadev/leviosa/internal/domain/user/models"
 // 	"github.com/hengadev/leviosa/internal/server/app"
 // 	userHandler "github.com/hengadev/leviosa/internal/server/handler/user"
-// 	"github.com/hengadev/leviosa/pkg/contextutil"
+// 	"github.com/hengadev/leviosa/pkg/ctxutil"
 // 	test "github.com/hengadev/leviosa/tests/utils"
 // 	"github.com/hengadev/leviosa/tests/utils/factories"
 //
@@ -54,7 +54,7 @@ package userHandler_test
 // 			w := httptest.NewRecorder()
 //
 // 			ctx := r.Context()
-// 			ctx = context.WithValue(ctx, contextutil.UserIDKey, userID)
+// 			ctx = context.WithValue(ctx, ctxutil.UserIDKey, userID)
 // 			r = r.WithContext(ctx)
 //
 // 			// setup session service and repo

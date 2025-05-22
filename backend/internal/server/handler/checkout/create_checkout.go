@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/hengadev/leviosa/internal/server/handler"
-	"github.com/hengadev/leviosa/pkg/contextutil"
+	"github.com/hengadev/leviosa/pkg/ctxutil"
 	"github.com/hengadev/leviosa/pkg/serverutil"
 	"github.com/stripe/stripe-go/v79"
 )
@@ -17,14 +17,14 @@ func (a *AppInstance) CreateCheckoutSession() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		logger, err := contextutil.GetLoggerFromContext(ctx)
+		logger, err := ctxutil.GetLoggerFromContext(ctx)
 		if err != nil {
 			slog.ErrorContext(ctx, "logger not found in context", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		userID, ok := ctx.Value(contextutil.UserIDKey).(string)
+		userID, ok := ctx.Value(ctxutil.UserIDKey).(string)
 		_ = userID
 		if !ok {
 			logger.ErrorContext(ctx, "user ID not found in context")

@@ -9,12 +9,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// TODO: find a value for the expiration of the value set
-func Init(ctx context.Context, client *redis.Client, queries map[string]interface{}) error {
+func Init(ctx context.Context, client *redis.Client, queries map[string]any) error {
 	for k, v := range queries {
 		err := client.Set(ctx, k, v, sessionService.SessionDuration).Err()
 		if err != nil {
-			return rp.NewNotCreatedErr(err, "query")
+			return rp.NewNotCreatedErr(err, "initial query")
 		}
 	}
 	return nil

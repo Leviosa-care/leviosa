@@ -7,7 +7,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain/vote"
 	"github.com/hengadev/leviosa/internal/server/handler"
-	"github.com/hengadev/leviosa/pkg/contextutil"
+	"github.com/hengadev/leviosa/pkg/ctxutil"
 	"github.com/hengadev/leviosa/pkg/serverutil"
 )
 
@@ -16,14 +16,14 @@ func (a *AppInstance) MakeVote() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		logger, err := contextutil.GetLoggerFromContext(ctx)
+		logger, err := ctxutil.GetLoggerFromContext(ctx)
 		if err != nil {
 			slog.ErrorContext(ctx, "logger not found in context", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		userID, ok := ctx.Value(contextutil.UserIDKey).(string)
+		userID, ok := ctx.Value(ctxutil.UserIDKey).(string)
 		if !ok {
 			logger.ErrorContext(ctx, "user ID not found in context")
 			http.Error(w, errors.New("failed to get user ID from context").Error(), http.StatusInternalServerError)

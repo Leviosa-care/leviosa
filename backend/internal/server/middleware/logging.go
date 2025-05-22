@@ -9,7 +9,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/hengadev/leviosa/pkg/contextutil"
+	"github.com/hengadev/leviosa/pkg/ctxutil"
 	"github.com/hengadev/leviosa/pkg/domainutil"
 	"github.com/hengadev/leviosa/pkg/envmode"
 )
@@ -63,7 +63,7 @@ func AttachLogger(env envmode.Mode, slogHandler slog.Handler) func(http.Handler)
 				"requestID", requestID,
 			)
 
-			ctx = context.WithValue(r.Context(), contextutil.LoggerKey, logger)
+			ctx = context.WithValue(r.Context(), ctxutil.LoggerKey, logger)
 
 			logger.InfoContext(ctx, "Request started")
 			start := time.Now()
