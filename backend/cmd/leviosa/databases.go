@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/hengadev/leviosa/internal/config"
-	"github.com/hengadev/leviosa/pkg/flags"
+	"github.com/hengadev/leviosa/pkg/envmode"
 	"github.com/hengadev/leviosa/pkg/redisutil"
 	"github.com/hengadev/leviosa/pkg/sqliteutil"
 
@@ -16,7 +16,7 @@ import (
 func setupDatabases(
 	ctx context.Context,
 	conf *config.Config,
-	env mode.EnvMode,
+	env envmode.Mode,
 ) (*sql.DB, *redis.Client, error) {
 	sqliteConf := conf.GetSQLITE()
 	redisConf := conf.GetRedis()

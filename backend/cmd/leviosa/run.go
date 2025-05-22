@@ -13,13 +13,13 @@ import (
 	"github.com/hengadev/leviosa/internal/server"
 	"github.com/hengadev/leviosa/internal/server/app"
 	// "github.com/hengadev/leviosa/internal/server/cron"
-	"github.com/hengadev/leviosa/pkg/flags"
+	"github.com/hengadev/leviosa/pkg/envmode"
 
 	"github.com/joho/godotenv"
 )
 
 var opts struct {
-	mode   mode.EnvMode
+	mode   envmode.Mode
 	server struct {
 		port int
 	}
@@ -39,7 +39,7 @@ func run(ctx context.Context, w io.Writer) error {
 	}
 
 	// set environment file (using [mode].env for specified mode)
-	if opts.mode == mode.ModeDev {
+	if opts.mode == envmode.Dev {
 		if err := godotenv.Load(fmt.Sprintf("%s.env", opts.mode.String())); err != nil {
 			return fmt.Errorf("loading env variables: %w", err)
 		}

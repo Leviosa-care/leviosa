@@ -11,10 +11,10 @@ import (
 
 	"github.com/hengadev/leviosa/pkg/contextutil"
 	"github.com/hengadev/leviosa/pkg/domainutil"
-	mode "github.com/hengadev/leviosa/pkg/flags"
+	"github.com/hengadev/leviosa/pkg/envmode"
 )
 
-func AttachLogger(env mode.EnvMode, slogHandler slog.Handler) func(http.Handler) http.Handler {
+func AttachLogger(env envmode.Mode, slogHandler slog.Handler) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			skipLogging := []string{
@@ -33,9 +33,9 @@ func AttachLogger(env mode.EnvMode, slogHandler slog.Handler) func(http.Handler)
 			// I just make a fake IP for now, I know my function to work:
 			var IP string
 			switch env {
-			case mode.ModeDev:
+			case envmode.Dev:
 				IP = "127.0.0.1"
-			case mode.ModeStaging, mode.ModeProd:
+			case envmode.Staging, envmode.Prod:
 				IP = r.Header.Get(IPHeader)
 			}
 

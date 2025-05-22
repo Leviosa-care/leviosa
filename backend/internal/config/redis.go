@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/hengadev/leviosa/pkg/flags"
+	"github.com/hengadev/leviosa/pkg/envmode"
 
 	"github.com/go-redis/redis"
 	"github.com/hengadev/errsx"
@@ -17,16 +17,16 @@ func (c *Config) GetRedis() *redisCreds {
 	return c.redis
 }
 
-func (c *Config) setRedis(env mode.EnvMode) error {
+func (c *Config) setRedis(env envmode.Mode) error {
 	var addr, password string
 	var db int
 	var errs errsx.Map
 	switch env {
-	case mode.ModeDev:
+	case envmode.Dev:
 		addr = "127.0.0.1:6379"
 		password = "secret"
 		db = 0
-	case mode.ModeStaging, mode.ModeProd:
+	case envmode.Staging, envmode.Prod:
 		addr = c.viper.GetString("redis.addr")
 		password = c.viper.GetString("redis.password")
 		db = c.viper.GetInt("redis.db")

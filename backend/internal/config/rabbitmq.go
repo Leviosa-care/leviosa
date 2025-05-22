@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/hengadev/leviosa/pkg/flags"
+	"github.com/hengadev/leviosa/pkg/envmode"
 
 	"github.com/hengadev/errsx"
 )
@@ -27,13 +27,13 @@ func RabbitMQDefault() *rabbitmqCreds {
 	}
 }
 
-func (c *Config) setRabbitMQ(env mode.EnvMode) error {
+func (c *Config) setRabbitMQ(env envmode.Mode) error {
 	var host, port, user, password string
 	var errs errsx.Map
 	switch env {
-	case mode.ModeDev:
+	case envmode.Dev:
 		c.rabbitmq = RabbitMQDefault()
-	case mode.ModeProd, mode.ModeStaging:
+	case envmode.Prod, envmode.Staging:
 
 		host = c.viper.GetString("rabbitmq.host")
 		port = c.viper.GetString("rabbitmq.port")

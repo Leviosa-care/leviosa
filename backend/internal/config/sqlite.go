@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hengadev/leviosa/pkg/flags"
+	"github.com/hengadev/leviosa/pkg/envmode"
 
 	"github.com/hengadev/errsx"
 )
@@ -18,7 +18,7 @@ func (c *Config) GetSQLITE() *sqliteCreds {
 	return c.sqlite
 }
 
-func (c *Config) setSQLITE(env mode.EnvMode) error {
+func (c *Config) setSQLITE(env envmode.Mode) error {
 	var errs errsx.Map
 	databaseFilename := c.viper.GetString("sqlite.filename")
 	if databaseFilename == "" {
@@ -26,7 +26,7 @@ func (c *Config) setSQLITE(env mode.EnvMode) error {
 	}
 	var prefix string
 	switch env {
-	case mode.ModeStaging, mode.ModeDev, mode.ModeProd:
+	case envmode.Staging, envmode.Dev, envmode.Prod:
 		prefix = env.String()
 	default:
 		errs.Set("mode value", fmt.Errorf("mode value can only be 'development', 'production' or 'staging', got : %q"))

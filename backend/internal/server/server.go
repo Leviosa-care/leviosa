@@ -8,7 +8,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/server/app"
 	mw "github.com/hengadev/leviosa/internal/server/middleware"
-	mode "github.com/hengadev/leviosa/pkg/flags"
+	"github.com/hengadev/leviosa/pkg/envmode"
 )
 
 type Server struct {
@@ -17,7 +17,7 @@ type Server struct {
 
 func New(
 	appCtx *app.App,
-	env mode.EnvMode,
+	env envmode.Mode,
 	slogHandler slog.Handler,
 	opts ...ServerOption,
 ) *Server {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hengadev/leviosa/pkg/flags"
+	"github.com/hengadev/leviosa/pkg/envmode"
 
 	"github.com/hengadev/errsx"
 	"github.com/spf13/viper"
@@ -41,7 +41,7 @@ func New(ctx context.Context, envFilename, envFileType string) *Config {
 	}
 }
 
-func (c *Config) Load(ctx context.Context, mode mode.EnvMode) error {
+func (c *Config) Load(ctx context.Context, mode envmode.Mode) error {
 	var errs errsx.Map
 
 	envVarsToKeys := map[string]struct {

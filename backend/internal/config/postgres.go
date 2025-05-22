@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/hengadev/leviosa/pkg/flags"
+	"github.com/hengadev/leviosa/pkg/envmode"
 
 	"github.com/hengadev/errsx"
 )
@@ -17,7 +17,7 @@ func (c *Config) GetPostgres() *postgresCreds {
 	return c.postgres
 }
 
-func (c *Config) setPostgres(env mode.EnvMode) error {
+func (c *Config) setPostgres(env envmode.Mode) error {
 	var errs errsx.Map
 	return errs.AsError()
 }
