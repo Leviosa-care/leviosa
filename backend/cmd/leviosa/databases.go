@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/hengadev/leviosa/pkg/config"
+	"github.com/hengadev/leviosa/internal/config"
 	"github.com/hengadev/leviosa/pkg/flags"
 	"github.com/hengadev/leviosa/pkg/redisutil"
 	"github.com/hengadev/leviosa/pkg/sqliteutil"
@@ -37,16 +37,5 @@ func setupDatabases(
 	if err != nil {
 		return nil, nil, fmt.Errorf("creating connection to sqlite database: %w", err)
 	}
-
-	// make new migration configuration
-	migrationCfg, err := sqliteutil.NewMigrationConfig(sqlitedb, env)
-	if err != nil {
-		return nil, nil, fmt.Errorf("creating migration configuration: %w", err)
-	}
-	// run migration for database.
-	if err := sqliteutil.SetMigrations(ctx, migrationCfg); err != nil {
-		return nil, nil, fmt.Errorf("setting migration for SQLite database: %w", err)
-	}
-
 	return sqlitedb, redisdb, nil
 }
