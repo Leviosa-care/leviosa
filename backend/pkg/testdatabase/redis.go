@@ -1,4 +1,4 @@
-package testredis
+package testdatabase
 
 import (
 	"context"
