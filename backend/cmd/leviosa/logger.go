@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/hengadev/leviosa/pkg/serverutil/logger"
+	"github.com/hengadev/leviosa/pkg/logger"
 )
 
 // func setLogger() (*slog.Logger, error) {
