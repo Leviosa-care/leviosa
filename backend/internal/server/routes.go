@@ -44,6 +44,8 @@ func (s *Server) addRoutes(h *app.App) {
 
 	router.HandleFunc("POST /auth/signin", rateLimit(userHandler.Signin))
 
+	// register
+	router.HandleFunc("POST /auth/email", rateLimit(userHandler.VerifyEmail))
 	router.HandleFunc("POST /auth/register", rateLimit(userHandler.RegisterUserOTP))
 	router.HandleFunc("POST /auth/validate-otp", rateLimit(userHandler.ValidateUserOTP))
 	router.HandleFunc("GET /auth/approve-user", rateLimit(userHandler.GetUsersToApprove))
