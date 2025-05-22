@@ -8,6 +8,7 @@ import (
 	"github.com/hengadev/leviosa/pkg/envmode"
 
 	"github.com/hengadev/errsx"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 )
 
@@ -15,9 +16,8 @@ import (
 
 type Config struct {
 	viper    *viper.Viper
-	sqlite   *sqliteCreds
 	postgres *postgresCreds
-	redis    *redisCreds
+	redis    *redis.Options
 	s3       *s3Creds
 	rabbitmq *rabbitmqCreds
 }
@@ -34,10 +34,9 @@ func New(ctx context.Context, envFilename, envFileType string) *Config {
 		}
 	}
 	return &Config{
-		viper:  config,
-		sqlite: &sqliteCreds{},
-		redis:  &redisCreds{},
-		s3:     &s3Creds{},
+		viper: config,
+		redis: &redis.Options{},
+		s3:    &s3Creds{},
 	}
 }
 
@@ -48,8 +47,6 @@ func (c *Config) Load(ctx context.Context, mode envmode.Mode) error {
 		required bool
 		key      string
 	}{
-		"DATABASE_FILENAME": {required: true, key: "sqlite.filename"},
-
 		"REDIS_ADDR":     {required: true, key: "redis.addr"},
 		"REDIS_DB":       {required: true, key: "redis.db"},
 		"REDIS_PASSWORD": {required: true, key: "redis.password"},
@@ -77,9 +74,6 @@ func (c *Config) Load(ctx context.Context, mode envmode.Mode) error {
 		if err := c.viper.BindEnv(requiredKey.key, envVar); err != nil {
 			errs.Set("bind environment variable", fmt.Errorf("bind env: %w", err))
 		}
-	}
-	if err := c.setSQLITE(mode); err != nil {
-		errs.Set("sqlite configuration", fmt.Errorf("set SQLITE: %w", err))
 	}
 	if err := c.setPostgres(mode); err != nil {
 		errs.Set("postgres configuration", fmt.Errorf("set PostgreSQL: %w", err))
