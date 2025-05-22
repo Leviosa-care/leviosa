@@ -8,13 +8,12 @@ import (
 	// domain
 	"github.com/hengadev/leviosa/internal/domain/event"
 	"github.com/hengadev/leviosa/internal/domain/mail"
-	"github.com/hengadev/leviosa/internal/domain/media"
 	"github.com/hengadev/leviosa/internal/domain/message"
 	"github.com/hengadev/leviosa/internal/domain/otp"
 	"github.com/hengadev/leviosa/internal/domain/product"
 	"github.com/hengadev/leviosa/internal/domain/register"
 	"github.com/hengadev/leviosa/internal/domain/session"
-	settingsService "github.com/hengadev/leviosa/internal/domain/settings"
+	"github.com/hengadev/leviosa/internal/domain/settings"
 	"github.com/hengadev/leviosa/internal/domain/stripe"
 	"github.com/hengadev/leviosa/internal/domain/throttler"
 	"github.com/hengadev/leviosa/internal/domain/user"
@@ -25,12 +24,12 @@ import (
 	"github.com/hengadev/leviosa/internal/repository/redis/otp"
 	"github.com/hengadev/leviosa/internal/repository/redis/session"
 	"github.com/hengadev/leviosa/internal/repository/redis/throttler"
-	"github.com/hengadev/leviosa/internal/repository/s3"
+	"github.com/hengadev/leviosa/internal/repository/s3/settings"
 	"github.com/hengadev/leviosa/internal/repository/sqlite/event"
 	"github.com/hengadev/leviosa/internal/repository/sqlite/message"
 	"github.com/hengadev/leviosa/internal/repository/sqlite/product"
 	"github.com/hengadev/leviosa/internal/repository/sqlite/register"
-	settingsRepository "github.com/hengadev/leviosa/internal/repository/sqlite/settings"
+	"github.com/hengadev/leviosa/internal/repository/sqlite/settings"
 	"github.com/hengadev/leviosa/internal/repository/sqlite/user"
 	"github.com/hengadev/leviosa/internal/repository/sqlite/vote"
 
@@ -38,6 +37,7 @@ import (
 	"github.com/hengadev/leviosa/pkg/config"
 
 	// external packages
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/hengadev/encx"
 	"github.com/hengadev/encx/providers/hashicorpvault"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -50,6 +50,7 @@ func makeServices(
 	ctx context.Context,
 	sqlitedb *sql.DB,
 	redisdb *rd.Client,
+	s3Client *s3.Client,
 	config *config.Config,
 	rabbitConn *amqp.Connection,
 ) (app.Services, app.Repos, error) {
@@ -95,14 +96,6 @@ func makeServices(
 	registerSvc := registerService.NewService(registerRepo)
 	// stripe
 	stripeSvc := stripeService.New()
-	// media
-	bucketName := config.GetS3().BucketName
-	mediaRepo, err := mediaRepository.New(ctx, bucketName)
-	if err != nil {
-		return appSvcs, appRepos, fmt.Errorf("create photo repository: %w", err)
-	}
-	mediaSvc := mediaService.New(mediaRepo)
-
 	// product
 	productRepo, err := productRepository.New(ctx, sqlitedb)
 	if err != nil {
@@ -119,14 +112,15 @@ func makeServices(
 	if err != nil {
 		return appSvcs, appRepos, fmt.Errorf("create settings repository: %w", err)
 	}
-	settingsSvc := settingsService.New(settingsRepo, mediaRepo, crypto, rabbitConn)
+	settingsS3, err := settingsMedia.New(ctx, s3Client, config.GetS3().BucketName)
+	settingsSvc := settings.New(settingsRepo, settingsS3, crypto, rabbitConn)
 
 	// OTP
 	otpRepo := otpRepository.New(ctx, redisdb)
 	otpSvc, err := otpService.New(ctx, crypto, otpRepo, settingsRepo, rabbitConn)
 
 	// mail
-	mailSvc, err := mailService.New(ctx, settingsRepo, mediaRepo, rabbitConn)
+	mailSvc, err := mailService.New(ctx, settingsRepo, settingsS3, rabbitConn)
 	if err != nil {
 		return appSvcs, appRepos, fmt.Errorf("create mail service: %w", err)
 	}
@@ -144,7 +138,6 @@ func makeServices(
 		Event:     eventSvc,
 		Vote:      voteSvc,
 		Register:  registerSvc,
-		Media:     mediaSvc,
 		Session:   sessionSvc,
 		Throttler: throttlerSvc,
 		Mail:      mailSvc,
@@ -160,7 +153,6 @@ func makeServices(
 		Event:       eventRepo,
 		Vote:        voteRepo,
 		Register:    registerRepo,
-		Media:       mediaRepo,
 		Session:     sessionRepo,
 		Throttler:   throttlerRepo,
 		Product:     productRepo,

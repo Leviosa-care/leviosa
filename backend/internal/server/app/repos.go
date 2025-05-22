@@ -4,7 +4,6 @@ import (
 	"database/sql"
 
 	"github.com/hengadev/leviosa/internal/domain/event"
-	"github.com/hengadev/leviosa/internal/domain/media"
 	"github.com/hengadev/leviosa/internal/domain/message"
 	"github.com/hengadev/leviosa/internal/domain/otp"
 	"github.com/hengadev/leviosa/internal/domain/product"
@@ -24,7 +23,6 @@ type Repos struct {
 	Event       eventService.Reader
 	Vote        vote.Reader
 	Register    registerService.Reader
-	Media       mediaService.Reader
 	Throttler   throttlerService.Reader
 	Product     productService.Reader
 	OTP         otpService.Reader
