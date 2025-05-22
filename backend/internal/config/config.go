@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+// TODO: merge the New and Load function since there is no point having the New without the Load so make them both in the same time
+
 type Config struct {
 	viper    *viper.Viper
 	sqlite   *sqliteCreds

@@ -9,15 +9,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	// api
+	"github.com/hengadev/leviosa/internal/config"
 	"github.com/hengadev/leviosa/internal/server"
 	"github.com/hengadev/leviosa/internal/server/app"
-
 	// "github.com/hengadev/leviosa/internal/server/cron"
-	"github.com/hengadev/leviosa/pkg/config"
 	"github.com/hengadev/leviosa/pkg/flags"
 
-	// external packages
 	"github.com/joho/godotenv"
 )
 
