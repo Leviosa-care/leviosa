@@ -8,7 +8,7 @@ import (
 	"github.com/hengadev/leviosa/internal/domain/vote"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 // Function that create or update vote
@@ -31,7 +31,7 @@ func (a *AppInstance) MakeVote() http.Handler {
 		}
 
 		// get votes from request
-		votes, err := serverutil.Decode[[]*vote.Vote](r.Body)
+		votes, err := jsonio.Decode[[]*vote.Vote](r.Body)
 		if err != nil {
 			logger.ErrorContext(ctx, "failed to decode vote", "error", err)
 			http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)

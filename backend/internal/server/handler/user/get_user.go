@@ -9,7 +9,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (a *AppInstance) GetUser(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +44,7 @@ func (a *AppInstance) GetUser(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	if err := serverutil.Encode(w, http.StatusOK, user); err != nil {
+	if err := jsonio.Encode(w, http.StatusOK, user); err != nil {
 		logger.WarnContext(ctx, "get found user:", "error", err)
 		http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 		return

@@ -14,7 +14,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (a *AppInstance) Signin(w http.ResponseWriter, r *http.Request) {
@@ -46,10 +46,10 @@ func (a *AppInstance) Signin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *AppInstance) decodeAndValidateUserSignIn(ctx context.Context, w http.ResponseWriter, r *http.Request, logger *slog.Logger) (*models.UserSignIn, error) {
-	input, err := serverutil.DecodeValid[models.UserSignIn](ctx, r.Body)
+	input, err := jsonio.DecodeValid[models.UserSignIn](ctx, r.Body)
 	if err != nil {
 		switch {
-		case errors.Is(err, serverutil.ErrDecodeJSON):
+		case errors.Is(err, jsonio.ErrDecodeJSON):
 			logger.WarnContext(ctx, err.Error())
 			http.Error(w, handler.NewBadRequestErr(err), http.StatusBadRequest)
 			return nil, err

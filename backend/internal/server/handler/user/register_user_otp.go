@@ -11,7 +11,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (h *AppInstance) RegisterUserOTP(w http.ResponseWriter, r *http.Request) {
@@ -22,10 +22,10 @@ func (h *AppInstance) RegisterUserOTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	user, err := serverutil.DecodeValid[models.UserSignUp](ctx, r.Body)
+	user, err := jsonio.DecodeValid[models.UserSignUp](ctx, r.Body)
 	if err != nil {
 		switch {
-		case errors.Is(err, serverutil.ErrDecodeJSON):
+		case errors.Is(err, jsonio.ErrDecodeJSON):
 			logger.WarnContext(ctx, "decode user", "error", err)
 			http.Error(w, handler.NewInternalErr(err), http.StatusBadRequest)
 		default:

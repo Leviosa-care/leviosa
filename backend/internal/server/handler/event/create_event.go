@@ -11,7 +11,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 // TODO: add the fact that creating an event, should also create a vote and a table with the style votes_month_year.
@@ -28,7 +28,7 @@ func (a *AppInstance) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, handler.NewForbiddenErr(err), http.StatusBadRequest)
 		return
 	}
-	event, err := serverutil.Decode[eventModels.Event](r.Body)
+	event, err := jsonio.Decode[eventModels.Event](r.Body)
 	if err != nil {
 		logger.WarnContext(ctx, "failed to decode event in create event handler", "error", err)
 		http.Error(w, handler.NewBadRequestErr(err), http.StatusBadRequest)
@@ -55,7 +55,7 @@ func (a *AppInstance) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	if err := serverutil.Encode(w, http.StatusCreated, eventID); err != nil {
+	if err := jsonio.Encode(w, http.StatusCreated, eventID); err != nil {
 		logger.WarnContext(ctx, "failed to send the event", "error", err)
 		http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 		return

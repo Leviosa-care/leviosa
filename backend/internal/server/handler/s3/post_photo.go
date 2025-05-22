@@ -6,7 +6,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 // func PostPhoto(ph *photo.Service) http.Handler {
@@ -53,8 +53,8 @@ func (a *AppInstance) PostPhoto() http.Handler {
 		// type Response struct {
 		// 	URL string `json:"url"`
 		// }
-		// if err := serverutil.Encode(w, http.StatusSeeOther, Response{URL: url}); err != nil {
-		if err := serverutil.Encode(w, http.StatusSeeOther, url); err != nil {
+		// if err := jsonio.Encode(w, http.StatusSeeOther, Response{URL: url}); err != nil {
+		if err := jsonio.Encode(w, http.StatusSeeOther, url); err != nil {
 			logger.ErrorContext(ctx, "failed to send url back to client", "error", err)
 			http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 			return

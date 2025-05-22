@@ -8,7 +8,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 // Function that get all the votes for a user.
@@ -45,7 +45,7 @@ func (a *AppInstance) GetVotesByUserID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// encode result to user
-	if err := serverutil.Encode(w, http.StatusOK, votes); err != nil {
+	if err := jsonio.Encode(w, http.StatusOK, votes); err != nil {
 		logger.ErrorContext(ctx, "failed to encode votes found for user with provided ID", "error", err)
 		http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 		return

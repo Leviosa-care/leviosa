@@ -11,7 +11,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (a *AppInstance) ModifyEvent(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +27,7 @@ func (a *AppInstance) ModifyEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, handler.NewForbiddenErr(err), http.StatusBadRequest)
 		return
 	}
-	event, err := serverutil.Decode[eventModels.Event](r.Body)
+	event, err := jsonio.Decode[eventModels.Event](r.Body)
 	if err != nil {
 		logger.WarnContext(ctx, "failed to decode the event", "error", err)
 		http.Error(w, handler.NewBadRequestErr(err), http.StatusBadRequest)
@@ -54,7 +54,7 @@ func (a *AppInstance) ModifyEvent(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	if err = serverutil.Encode(w, http.StatusInternalServerError, event.ID); err != nil {
+	if err = jsonio.Encode(w, http.StatusInternalServerError, event.ID); err != nil {
 		logger.WarnContext(ctx, "failed to send event ID", "error", err)
 		http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 		return

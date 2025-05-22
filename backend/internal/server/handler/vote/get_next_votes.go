@@ -7,7 +7,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (a *AppInstance) GetNextVotes() http.Handler {
@@ -32,7 +32,7 @@ func (a *AppInstance) GetNextVotes() http.Handler {
 			}
 			return
 		}
-		if err := serverutil.Encode(w, int(http.StatusOK), votes); err != nil {
+		if err := jsonio.Encode(w, int(http.StatusOK), votes); err != nil {
 			logger.WarnContext(ctx, "failed to encode the votes", "error", err)
 			http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 			return

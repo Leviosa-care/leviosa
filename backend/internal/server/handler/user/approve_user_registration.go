@@ -8,7 +8,7 @@ import (
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (h *AppInstance) ApproveUserRegistration(w http.ResponseWriter, r *http.Request) {
@@ -26,12 +26,12 @@ func (h *AppInstance) ApproveUserRegistration(w http.ResponseWriter, r *http.Req
 	}
 	// TODO:
 	// get the email_hash and the role for the user
-	input, err := serverutil.DecodeValid[models.UserPendingResponse](ctx, r.Body)
+	input, err := jsonio.DecodeValid[models.UserPendingResponse](ctx, r.Body)
 
 	// TODO: make the error right here for the client and for the logs
 	if err != nil {
 		switch {
-		case errors.Is(err, serverutil.ErrDecodeJSON):
+		case errors.Is(err, jsonio.ErrDecodeJSON):
 			logger.WarnContext(ctx, "failed to decode user", "error", err)
 			http.Error(w, handler.NewBadRequestErr(err), http.StatusBadRequest)
 			return

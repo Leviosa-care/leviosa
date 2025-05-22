@@ -10,7 +10,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 // handler
@@ -43,7 +43,7 @@ func (a *AppInstance) FindEventByID(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	if err := serverutil.Encode(w, int(http.StatusOK), event); err != nil {
+	if err := jsonio.Encode(w, int(http.StatusOK), event); err != nil {
 		logger.WarnContext(ctx, "failed to encode event ID for user")
 		http.Error(w, fmt.Sprintf("Unable to encode event with ID of %q", eventID), http.StatusInternalServerError)
 		return

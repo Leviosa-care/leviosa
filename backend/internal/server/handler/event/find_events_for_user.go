@@ -8,7 +8,7 @@ import (
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (a *AppInstance) FindEventsForUser(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +40,7 @@ func (a *AppInstance) FindEventsForUser(w http.ResponseWriter, r *http.Request) 
 		}
 		return
 	}
-	if err := serverutil.Encode(w, http.StatusOK, userEvents); err != nil {
+	if err := jsonio.Encode(w, http.StatusOK, userEvents); err != nil {
 		logger.ErrorContext(ctx, "failed to send the user", "error", err)
 		http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 		return

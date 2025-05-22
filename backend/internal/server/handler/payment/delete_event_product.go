@@ -8,7 +8,7 @@ import (
 	"github.com/hengadev/leviosa/internal/server/handler"
 	mw "github.com/hengadev/leviosa/internal/server/middleware"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 
 	"github.com/stripe/stripe-go/v79"
 )
@@ -38,7 +38,7 @@ func (a *AppInstance) DeleteEventProduct() http.Handler {
 		type Response struct {
 			EventID string `json:"eventid"`
 		}
-		if err = serverutil.Encode(w, http.StatusCreated, Response{eventID}); err != nil {
+		if err = jsonio.Encode(w, http.StatusCreated, Response{eventID}); err != nil {
 			logger.ErrorContext(ctx, "failed to encode eventID for product registered", "error", err)
 			http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 			return

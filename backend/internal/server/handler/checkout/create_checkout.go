@@ -8,7 +8,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 	"github.com/stripe/stripe-go/v79"
 )
 
@@ -58,11 +58,11 @@ func (a *AppInstance) CreateCheckoutSession() http.Handler {
 		// }{
 		// 	Url: sessionURL,
 		// }
-		// if err = serverutil.Encode(w, http.StatusInternalServerError, message); err != nil {
+		// if err = jsonio.Encode(w, http.StatusInternalServerError, message); err != nil {
 		type Response struct {
 			URL string `json:"url"`
 		}
-		if err = serverutil.Encode(w, http.StatusInternalServerError, Response{URL: sessionURL}); err != nil {
+		if err = jsonio.Encode(w, http.StatusInternalServerError, Response{URL: sessionURL}); err != nil {
 			logger.ErrorContext(ctx, "failed to encode checkout session URL", "error", err)
 			http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 			return

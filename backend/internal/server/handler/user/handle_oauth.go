@@ -14,7 +14,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (a *AppInstance) HandleOAuth(w http.ResponseWriter, r *http.Request) {
@@ -55,18 +55,18 @@ func (a *AppInstance) decodeAndValidUser(ctx context.Context, w http.ResponseWri
 	var err error
 	switch provider {
 	case models.Google:
-		oauthUser, err = serverutil.DecodeValid[models.GoogleUser](ctx, body)
+		oauthUser, err = jsonio.DecodeValid[models.GoogleUser](ctx, body)
 		user = oauthUser.ToUser()
 	case models.Apple:
-		oauthUser, err = serverutil.DecodeValid[models.AppleUser](ctx, body)
+		oauthUser, err = jsonio.DecodeValid[models.AppleUser](ctx, body)
 		user = oauthUser.ToUser()
 	}
 	if err != nil {
 		switch {
-		case errors.Is(err, serverutil.ErrDecodeJSON):
+		case errors.Is(err, jsonio.ErrDecodeJSON):
 			logger.WarnContext(ctx, err.Error())
 			http.Error(w, handler.NewBadRequestErr(err), http.StatusBadRequest)
-		case errors.Is(err, serverutil.ErrValidStruct):
+		case errors.Is(err, jsonio.ErrValidStruct):
 			logger.WarnContext(ctx, "invalid struct")
 			http.Error(w, handler.NewBadRequestErr(err), http.StatusBadRequest)
 		default:

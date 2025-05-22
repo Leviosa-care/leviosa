@@ -10,7 +10,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (a *AppInstance) CheckUserExists(w http.ResponseWriter, r *http.Request) {
@@ -22,10 +22,10 @@ func (a *AppInstance) CheckUserExists(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	email, err := serverutil.Decode[models.Email](r.Body)
+	email, err := jsonio.Decode[models.Email](r.Body)
 	if err != nil {
 		switch {
-		case errors.Is(err, serverutil.ErrDecodeJSON):
+		case errors.Is(err, jsonio.ErrDecodeJSON):
 			logger.WarnContext(ctx, err.Error())
 			http.Error(w, handler.NewBadRequestErr(err), http.StatusBadRequest)
 		default:
@@ -42,7 +42,7 @@ func (a *AppInstance) CheckUserExists(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
-			if err := serverutil.Encode(w, http.StatusOK, Response{Exists: false}); err != nil {
+			if err := jsonio.Encode(w, http.StatusOK, Response{Exists: false}); err != nil {
 				logger.ErrorContext(ctx, "failed to encode pendings users list", "error", err)
 				http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 			}
@@ -57,7 +57,7 @@ func (a *AppInstance) CheckUserExists(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 		}
 	}
-	if err := serverutil.Encode(w, http.StatusOK, Response{Exists: true}); err != nil {
+	if err := jsonio.Encode(w, http.StatusOK, Response{Exists: true}); err != nil {
 		logger.ErrorContext(ctx, "failed to encode pendings users list", "error", err)
 		http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 	}

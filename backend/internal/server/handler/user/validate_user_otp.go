@@ -11,7 +11,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (h *AppInstance) ValidateUserOTP(w http.ResponseWriter, r *http.Request) {
@@ -23,10 +23,10 @@ func (h *AppInstance) ValidateUserOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println("get otp and email from payload")
-	userOTP, err := serverutil.DecodeValid[models.UserOTP](r.Context(), r.Body)
+	userOTP, err := jsonio.DecodeValid[models.UserOTP](r.Context(), r.Body)
 	if err != nil {
 		switch {
-		case errors.Is(err, serverutil.ErrDecodeJSON):
+		case errors.Is(err, jsonio.ErrDecodeJSON):
 			logger.WarnContext(ctx, "decode user", "error", err)
 			http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 		default:

@@ -12,7 +12,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (a *AppInstance) UpdateProductType(w http.ResponseWriter, r *http.Request) {
@@ -30,10 +30,10 @@ func (a *AppInstance) UpdateProductType(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	productType, err := serverutil.DecodeValid[productService.Offer](ctx, r.Body)
+	productType, err := jsonio.DecodeValid[productService.Offer](ctx, r.Body)
 	if err != nil {
 		switch {
-		case errors.Is(err, serverutil.ErrDecodeJSON):
+		case errors.Is(err, jsonio.ErrDecodeJSON):
 			logger.WarnContext(ctx, "decode product  type", "error", err)
 			http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 		default:

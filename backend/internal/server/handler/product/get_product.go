@@ -10,7 +10,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (a *AppInstance) GetProduct(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +44,7 @@ func (a *AppInstance) GetProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := serverutil.Encode(w, int(http.StatusOK), *product); err != nil {
+	if err := jsonio.Encode(w, int(http.StatusOK), *product); err != nil {
 		logger.ErrorContext(ctx, "failed to encode product with provided ID", "error", err)
 		http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 	}

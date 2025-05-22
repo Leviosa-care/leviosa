@@ -7,7 +7,7 @@ import (
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (a *AppInstance) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -23,12 +23,12 @@ func (a *AppInstance) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// userID, ok := ctx.Value(ctxutil.UserIDKey).(string)
 	// if !ok {
 	// 	logger.ErrorContext(ctx, "user ID not found in context")
-	// 	serverutil.WriteResponse(w, errors.New("failed to get user ID from context").Error(), http.StatusInternalServerError)
+	// 	jsonio.WriteResponse(w, errors.New("failed to get user ID from context").Error(), http.StatusInternalServerError)
 	// 	return
 	// }
 
 	// use a custom valid for the updtate thing
-	user, err := serverutil.Decode[models.User](r.Body)
+	user, err := jsonio.Decode[models.User](r.Body)
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to decode user", "error", err)
 		http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)

@@ -10,7 +10,7 @@ import (
 	"github.com/hengadev/leviosa/internal/server/handler"
 	mw "github.com/hengadev/leviosa/internal/server/middleware"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 
 	"github.com/stripe/stripe-go/v79"
 )
@@ -28,7 +28,7 @@ func (a *AppInstance) CreateEventProduct() http.Handler {
 		}
 
 		w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", stripe.Key))
-		event, err := serverutil.Decode[models.Event](r.Body)
+		event, err := jsonio.Decode[models.Event](r.Body)
 		if err != nil {
 			logger.ErrorContext(ctx, "failed to decode event", "error", err)
 			http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
@@ -51,7 +51,7 @@ func (a *AppInstance) CreateEventProduct() http.Handler {
 			return
 		}
 		// send status created to client
-		if err = serverutil.Encode(w, http.StatusCreated, struct {
+		if err = jsonio.Encode(w, http.StatusCreated, struct {
 			EventID string `json:"eventid"`
 		}{
 			EventID: event.ID,

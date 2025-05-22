@@ -10,7 +10,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (h *AppInstance) GetUsersToApprove(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +42,7 @@ func (h *AppInstance) GetUsersToApprove(w http.ResponseWriter, r *http.Request) 
 		}
 		return
 	}
-	if err := serverutil.Encode(w, int(http.StatusOK), users); err != nil {
+	if err := jsonio.Encode(w, int(http.StatusOK), users); err != nil {
 		logger.ErrorContext(ctx, "failed to encode pendings users list", "error", err)
 		http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 	}

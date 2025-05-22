@@ -11,7 +11,7 @@ import (
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/hengadev/leviosa/internal/server/handler"
 	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
 func (a *AppInstance) DeleteEvent(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +46,7 @@ func (a *AppInstance) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	if err = serverutil.Encode(w, int(http.StatusNoContent), eventID); err != nil {
+	if err = jsonio.Encode(w, int(http.StatusNoContent), eventID); err != nil {
 		logger.WarnContext(ctx, "failed to send event ID to user after deletion")
 		http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 		return

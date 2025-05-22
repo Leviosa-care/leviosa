@@ -2,13 +2,12 @@ package middleware
 
 import (
 	"fmt"
-	// "net"
 	"net/http"
 	"os"
 
 	"github.com/hengadev/leviosa/pkg/ctxutil"
 	"github.com/hengadev/leviosa/pkg/domainutil"
-	"github.com/hengadev/leviosa/pkg/serverutil"
+	"github.com/hengadev/leviosa/pkg/jsonio"
 
 	"golang.org/x/time/rate"
 )
@@ -54,7 +53,7 @@ func PerIPRateLimit(lim, burst int) Middleware {
 					Status: "Request failed",
 					Body:   "The API is at capacity, try again later",
 				}
-				if err := serverutil.Encode(w, http.StatusTooManyRequests, message); err != nil {
+				if err := jsonio.Encode(w, http.StatusTooManyRequests, message); err != nil {
 					rateLimitSalt := os.Getenv("RATE_LIMIT_SALT")
 					logger.WarnContext(ctx, fmt.Sprintf("Rate limited %q for %s to %s", domainutil.HashWithSalt(IP, rateLimitSalt), r.Method, r.URL.String()))
 					http.Error(w, err.Error(), http.StatusInternalServerError)

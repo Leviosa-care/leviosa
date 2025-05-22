@@ -25,10 +25,10 @@ func NewHandler(appCtx *app.App) *AppInstance {
 // 		// TODO: change that type brother
 // 		// get the votes from the request body
 // 		reqBody := []*types.VoteSent{}
-// 		votes, err := serverutil.Decode[*types.VoteSent](r)
+// 		votes, err := jsonio.Decode[*types.VoteSent](r)
 // 		if err != nil {
 // 			slog.ErrorContext(ctx, "failed to decode the votes from request body", "error", err)
-// 			serverutil.WriteResponse(w, handler.NewInternalErr(err), http.StatusBadRequest)
+// 			jsonio.WriteResponse(w, handler.NewInternalErr(err), http.StatusBadRequest)
 // 			return
 // 		}
 //
