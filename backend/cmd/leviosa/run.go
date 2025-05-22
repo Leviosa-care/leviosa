@@ -62,7 +62,7 @@ func run(ctx context.Context, w io.Writer) error {
 		return fmt.Errorf("loading application configuration: %s", err.Error())
 	}
 
-	sqlitedb, redisdb, err := setupDatabases(ctx, conf.GetRedis(), opts.mode)
+	sqlitedb, redisdb, s3Client, err := setupDatabases(ctx, conf, opts.mode)
 	if err != nil {
 		return fmt.Errorf("setting up databases: %w", err)
 	}
@@ -70,7 +70,7 @@ func run(ctx context.Context, w io.Writer) error {
 	rabbitConn, err := setBroker(ctx, conf)
 	defer rabbitConn.Close()
 
-	appSvcs, appRepos, err := makeServices(ctx, sqlitedb, redisdb, conf, rabbitConn)
+	appSvcs, appRepos, err := makeServices(ctx, sqlitedb, redisdb, s3Client, conf, rabbitConn)
 	if err != nil {
 		return fmt.Errorf("create services: %w", err)
 	}

@@ -62,6 +62,8 @@ func (c *Config) Load(ctx context.Context, mode envmode.Mode) error {
 
 		"LOGGING_SALT": {required: true, key: "logging.salt"},
 
+		"BUCKETNAME": {required: true, key: "s3.bucketname"},
+
 		"RABBITMQ_HOST":     {required: true, key: "rabbitmq.host"},
 		"RABBITMQ_PORT":     {required: true, key: "rabbitmq.port"},
 		"RABBITMQ_USER":     {required: true, key: "rabbitmq.user"},
