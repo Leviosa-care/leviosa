@@ -17,7 +17,6 @@ RUN apk add --no-cache sqlite
 WORKDIR /app
 
 COPY --from=builder /app/leviosa .
-COPY --from=builder /app/migrations/production ./migrations/production/
 COPY --from=builder /app/*.env ./
 
 RUN adduser -D runner
