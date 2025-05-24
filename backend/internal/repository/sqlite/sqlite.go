@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	testdb "github.com/hengadev/leviosa/pkg/sqliteutil/testdatabase"
+	testdb "github.com/hengadev/leviosa/pkg/testdatabase"
 )
 
 type sqliteRepository interface {
@@ -26,13 +26,13 @@ type teardownFunc func()
 func SetupRepository[T sqliteRepository](t testing.TB, ctx context.Context, version int64, constructor repoConstructor[T]) (T, teardownFunc) {
 	t.Helper()
 	var repo T
-	db, err := testdb.NewDatabase(ctx)
+	db, err := testdb.NewSQLite(ctx)
 	if err != nil {
 		t.Errorf("database connection: %s", err)
 	}
 	// NOTE: I think it is better to do it that way instead
 	// if err := testdb.Setup(ctx, repo.GetDB(), version); err != nil {
-	if err := testdb.Setup(ctx, db, version); err != nil {
+	if err := testdb.MigrateSQLite(ctx, db, version); err != nil {
 		t.Errorf("database setup: %s", err)
 	}
 	repo = constructor(ctx, db)
