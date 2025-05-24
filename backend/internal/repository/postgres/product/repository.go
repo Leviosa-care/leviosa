@@ -1,4 +1,4 @@
-package userRepository
+package productRepository
 
 import (
 	"context"
@@ -23,11 +23,11 @@ func (u *repository) GetDB() *sql.DB {
 
 func New(ctx context.Context, db *sql.DB) (*repository, error) {
 	goose.SetBaseFS(migrations)
-	if err := goose.SetDialect("pgx"); err != nil {
-		return nil, fmt.Errorf("setting dialect for user repository: %w", err)
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		return nil, fmt.Errorf("setting dialect for product repository: %w", err)
 	}
 	if err := goose.UpContext(ctx, db, "migrations"); err != nil {
-		return nil, fmt.Errorf("running all migrations for user repository: %w", err)
+		return nil, fmt.Errorf("running all migrations for product repository: %w", err)
 	}
 	return &repository{db}, nil
 }

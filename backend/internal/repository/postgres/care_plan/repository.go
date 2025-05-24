@@ -1,4 +1,4 @@
-package userRepository
+package carePlanRepository
 
 import (
 	"context"
@@ -17,17 +17,18 @@ type repository struct {
 	DB *sql.DB
 }
 
-func (u *repository) GetDB() *sql.DB {
-	return u.DB
+func (r *repository) GetDB() *sql.DB {
+	return r.DB
 }
 
 func New(ctx context.Context, db *sql.DB) (*repository, error) {
 	goose.SetBaseFS(migrations)
 	if err := goose.SetDialect("pgx"); err != nil {
-		return nil, fmt.Errorf("setting dialect for user repository: %w", err)
+		return nil, fmt.Errorf("setting dialect for care plan repository: %w", err)
 	}
 	if err := goose.UpContext(ctx, db, "migrations"); err != nil {
-		return nil, fmt.Errorf("running all migrations for user repository: %w", err)
+		return nil, fmt.Errorf("running all migrations for care plan repository: %w", err)
 	}
+
 	return &repository{db}, nil
 }
