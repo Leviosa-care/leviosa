@@ -14,7 +14,6 @@ import (
 )
 
 // constants
-const DefaultDB = "leviosa.db"
 const JournalMode = "WAL"
 const BusyTimeOut = 5000
 const ForeignKeys = "ON"
@@ -78,11 +77,6 @@ func WriteSQLiteInsertQuery[S any](s S) (string, []any) {
 	query += strings.Join(tables, ", ")
 	query += " WHERE id=?;"
 	return query, values
-}
-
-type SQLMappable interface {
-	GetSQLColumnMapping() map[string]string
-	GetProhibitedFields() []string
 }
 
 // Return the necessary elements to write a query update to target the non zero value.

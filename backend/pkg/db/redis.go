@@ -5,6 +5,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain/session"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/pkg/config"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -37,8 +38,12 @@ func DefaultRedis() *redis.Options {
 	}
 }
 
-func Redis(ctx context.Context, options *redis.Options) (*redis.Client, error) {
-	client := redis.NewClient(options)
+func Redis(ctx context.Context, options *config.RedisSecrets) (*redis.Client, error) {
+	client := redis.NewClient(&redis.Options{
+		Addr:     options.Addr,
+		Password: options.Password,
+		DB:       options.DB,
+	})
 	if _, err := client.Ping(ctx).Result(); err != nil {
 		return nil, err
 	}
