@@ -8,7 +8,7 @@ export class UserState {
         firstname: "",
         lastname: "",
         picture: "",
-        role: "",
+        role: "visitor",
         birthdate: "",
         gender: "",
         telephone: "",
