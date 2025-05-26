@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	cfg "github.com/hengadev/leviosa/internal/config"
+	cfg "github.com/hengadev/leviosa/pkg/config"
 	"github.com/hengadev/leviosa/pkg/db"
 	"github.com/hengadev/leviosa/pkg/envmode"
 
@@ -16,22 +16,23 @@ import (
 
 func setupDatabases(
 	ctx context.Context,
-	conf *cfg.Config,
+	redisConf *cfg.RedisSecrets,
+	postgresConf *cfg.PostgresSecrets,
 	env envmode.Mode,
 ) (
 	*sql.DB,
 	*redis.Client,
 	*s3.Client,
+
 	error,
 ) {
-	redisConfig := conf.GetRedis()
-	redisClient, err := db.Redis(ctx, redisConfig)
+	redisClient, err := db.Redis(ctx, redisConf)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("creating connection to redis database: %w", err)
 	}
-	db, err := db.SQLite(ctx, env)
+	db, err := db.Postgres(ctx, env, postgresConf)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("creating connection to sqlite database: %w", err)
+		return nil, nil, nil, fmt.Errorf("creating connection to postgres database: %w", err)
 	}
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {

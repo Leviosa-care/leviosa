@@ -11,13 +11,11 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func setBroker(ctx context.Context, conf *config.Config) (*amqp.Connection, error) {
-	rabbitMQConf := conf.GetRabbitMQ()
-
+func setBroker(ctx context.Context, conf *config.RabbitSecrets) (*amqp.Connection, error) {
 	amqpURL := url.URL{
 		Scheme: "amqp",
-		User:   url.UserPassword(rabbitMQConf.User, rabbitMQConf.Password),
-		Host:   fmt.Sprintf("%s:%s", rabbitMQConf.Host, rabbitMQConf.Port),
+		User:   url.UserPassword(conf.User, conf.Password),
+		Host:   fmt.Sprintf("%s:%s", conf.Host, conf.Port),
 		Path:   "/",
 	}
 	rabbitConn, err := amqp.Dial(amqpURL.String())

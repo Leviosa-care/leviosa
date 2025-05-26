@@ -56,21 +56,28 @@ func run(ctx context.Context, w io.Writer) error {
 		return fmt.Errorf("failed to setup logger: %w", err)
 	}
 
-	// config
-	conf := config.New(ctx, opts.mode.String(), "env")
-	if err := conf.Load(ctx, opts.mode); err != nil {
-		return fmt.Errorf("loading application configuration: %s", err.Error())
+	// NOTE: with the new implementation of the config
+	// configuration and secret handling
+	// redisConf, postgresConf, rabbitConf, err := loadSecrets(ctx)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to load secrets: %w", err)
+	// }
+	// NOTE: old version
+	cfg, err := config.Load(ctx, opts.mode)
+	if err != nil {
+		return fmt.Errorf("failed to load secrets: %w", err)
 	}
+	redisConf, postgresConf, rabbitConf := cfg.GetRedis(), cfg.GetPostgres(), cfg.GetRabbitMQ()
 
-	sqlitedb, redisdb, s3Client, err := setupDatabases(ctx, conf, opts.mode)
+	postgresdb, redisdb, s3Client, err := setupDatabases(ctx, redisConf, postgresConf, opts.mode)
 	if err != nil {
 		return fmt.Errorf("setting up databases: %w", err)
 	}
 
-	rabbitConn, err := setBroker(ctx, conf)
+	rabbitConn, err := setBroker(ctx, rabbitConf)
 	defer rabbitConn.Close()
 
-	appSvcs, appRepos, err := makeServices(ctx, sqlitedb, redisdb, s3Client, conf, rabbitConn)
+	appSvcs, appRepos, err := makeServices(ctx, postgresdb, redisdb, s3Client, rabbitConn)
 	if err != nil {
 		return fmt.Errorf("create services: %w", err)
 	}

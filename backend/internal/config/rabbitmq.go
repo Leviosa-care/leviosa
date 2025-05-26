@@ -1,25 +1,19 @@
 package config
 
 import (
+	cfg "github.com/hengadev/leviosa/pkg/config"
 	"github.com/hengadev/leviosa/pkg/envmode"
 
 	"github.com/hengadev/errsx"
 )
 
-type rabbitmqCreds struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-}
-
-func (c *Config) GetRabbitMQ() *rabbitmqCreds {
+func (c *Config) GetRabbitMQ() *cfg.RabbitSecrets {
 	return c.rabbitmq
 }
 
 // RabbitMQDefault returns a default configuration for RabbitMQ.
-func RabbitMQDefault() *rabbitmqCreds {
-	return &rabbitmqCreds{
+func RabbitMQDefault() *cfg.RabbitSecrets {
+	return &cfg.RabbitSecrets{
 		Host:     "localhost", // Change if your RabbitMQ is running elsewhere
 		Port:     "5672",      // Default RabbitMQ port
 		User:     "guest",     // Default user (change in production)

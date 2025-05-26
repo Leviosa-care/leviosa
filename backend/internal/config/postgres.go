@@ -1,6 +1,7 @@
 package config
 
 import (
+	cfg "github.com/hengadev/leviosa/pkg/config"
 	"github.com/hengadev/leviosa/pkg/envmode"
 
 	"github.com/hengadev/errsx"
@@ -13,7 +14,7 @@ type postgresCreds struct {
 	port     int
 }
 
-func (c *Config) GetPostgres() *postgresCreds {
+func (c *Config) GetPostgres() *cfg.PostgresSecrets {
 	return c.postgres
 }
 

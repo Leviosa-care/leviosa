@@ -21,20 +21,20 @@ import (
 	"github.com/hengadev/leviosa/internal/server/app"
 
 	// repositories
+	"github.com/hengadev/leviosa/internal/repository/postgres/event"
+	"github.com/hengadev/leviosa/internal/repository/postgres/message"
+	"github.com/hengadev/leviosa/internal/repository/postgres/product"
+	"github.com/hengadev/leviosa/internal/repository/postgres/register"
+	"github.com/hengadev/leviosa/internal/repository/postgres/settings"
+	"github.com/hengadev/leviosa/internal/repository/postgres/user"
+	"github.com/hengadev/leviosa/internal/repository/postgres/vote"
 	"github.com/hengadev/leviosa/internal/repository/redis/otp"
 	"github.com/hengadev/leviosa/internal/repository/redis/session"
 	"github.com/hengadev/leviosa/internal/repository/redis/throttler"
 	"github.com/hengadev/leviosa/internal/repository/s3/settings"
-	"github.com/hengadev/leviosa/internal/repository/sqlite/event"
-	"github.com/hengadev/leviosa/internal/repository/sqlite/message"
-	"github.com/hengadev/leviosa/internal/repository/sqlite/product"
-	"github.com/hengadev/leviosa/internal/repository/sqlite/register"
-	"github.com/hengadev/leviosa/internal/repository/sqlite/settings"
-	"github.com/hengadev/leviosa/internal/repository/sqlite/user"
-	"github.com/hengadev/leviosa/internal/repository/sqlite/vote"
 
 	// config
-	"github.com/hengadev/leviosa/pkg/config"
+	"github.com/hengadev/leviosa/internal/config"
 
 	// external packages
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -48,10 +48,9 @@ const KEKAlias = "leviosa-app-key"
 
 func makeServices(
 	ctx context.Context,
-	sqlitedb *sql.DB,
+	postgresdb *sql.DB,
 	redisdb *rd.Client,
 	s3Client *s3.Client,
-	config *config.Config,
 	rabbitConn *amqp.Connection,
 ) (app.Services, app.Repos, error) {
 	var appSvcs app.Services
@@ -68,7 +67,7 @@ func makeServices(
 	}
 
 	// user
-	userRepo, err := userRepository.New(ctx, sqlitedb)
+	userRepo, err := userRepository.New(ctx, postgresdb)
 	if err != nil {
 		return appSvcs, appRepos, fmt.Errorf("create user repository: %w", err)
 	}
@@ -77,19 +76,19 @@ func makeServices(
 	sessionRepo := sessionRepository.New(ctx, redisdb)
 	sessionSvc := sessionService.New(sessionRepo)
 	// event
-	eventRepo, err := eventRepository.New(ctx, sqlitedb)
+	eventRepo, err := eventRepository.New(ctx, postgresdb)
 	if err != nil {
 		return appSvcs, appRepos, fmt.Errorf("create event repository: %w", err)
 	}
 	eventSvc := eventService.New(eventRepo, crypto)
 	// vote
-	voteRepo, err := voteRepository.New(ctx, sqlitedb)
+	voteRepo, err := voteRepository.New(ctx, postgresdb)
 	if err != nil {
 		return appSvcs, appRepos, fmt.Errorf("create vote repository: %w", err)
 	}
 	voteSvc := vote.New(voteRepo)
 	// register
-	registerRepo, err := registerRepository.New(ctx, sqlitedb)
+	registerRepo, err := registerRepository.New(ctx, postgresdb)
 	if err != nil {
 		return appSvcs, appRepos, fmt.Errorf("create register repository: %w", err)
 	}
@@ -97,7 +96,7 @@ func makeServices(
 	// stripe
 	stripeSvc := stripeService.New()
 	// product
-	productRepo, err := productRepository.New(ctx, sqlitedb)
+	productRepo, err := productRepository.New(ctx, postgresdb)
 	if err != nil {
 		return appSvcs, appRepos, fmt.Errorf("create product repository: %w", err)
 	}
@@ -108,7 +107,7 @@ func makeServices(
 	throttlerSvc := throttlerService.New(throttlerRepo)
 
 	// settings
-	settingsRepo, err := settingsRepository.New(ctx, sqlitedb)
+	settingsRepo, err := settingsRepository.New(ctx, postgresdb)
 	if err != nil {
 		return appSvcs, appRepos, fmt.Errorf("create settings repository: %w", err)
 	}
@@ -126,7 +125,7 @@ func makeServices(
 	}
 
 	// message
-	messageRepo, err := messageRepository.New(ctx, sqlitedb)
+	messageRepo, err := messageRepository.New(ctx, postgresdb)
 	if err != nil {
 		return appSvcs, appRepos, fmt.Errorf("create message repository: %w", err)
 	}
@@ -159,7 +158,7 @@ func makeServices(
 		Settings:    settingsRepo,
 		OTP:         otpRepo,
 		Message:     messageRepo,
-		SQLiteDB:    sqlitedb,
+		SQLiteDB:    postgresdb,
 		RedisClient: redisdb,
 	}
 	return appSvcs, appRepos, nil

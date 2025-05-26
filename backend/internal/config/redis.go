@@ -3,17 +3,13 @@ package config
 import (
 	"fmt"
 
+	cfg "github.com/hengadev/leviosa/pkg/config"
 	"github.com/hengadev/leviosa/pkg/envmode"
 
 	"github.com/hengadev/errsx"
-	"github.com/redis/go-redis/v9"
 )
 
-type redisCreds struct {
-	*redis.Options
-}
-
-func (c *Config) GetRedis() *redis.Options {
+func (c *Config) GetRedis() *cfg.RedisSecrets {
 	return c.redis
 }
 
@@ -42,7 +38,7 @@ func (c *Config) setRedis(env envmode.Mode) error {
 	if db >= 16 || db < 0 {
 		errs.Set("REDIS_DB", "'REDIS_DB' environment variable not set; please define it to specify Redis database")
 	}
-	c.redis = &redis.Options{
+	c.redis = &cfg.RedisSecrets{
 		Addr:     addr,
 		Password: password,
 		DB:       db,

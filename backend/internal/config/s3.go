@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 
+	cfg "github.com/hengadev/leviosa/pkg/config"
 	"github.com/hengadev/leviosa/pkg/envmode"
 )
 
@@ -10,7 +11,7 @@ type s3Creds struct {
 	BucketName string
 }
 
-func (c *Config) GetS3() *s3Creds {
+func (c *Config) GetS3() *cfg.S3Secrets {
 	return c.s3
 }
 

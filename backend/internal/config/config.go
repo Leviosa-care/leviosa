@@ -5,44 +5,34 @@ import (
 	"fmt"
 	"os"
 
+	cfg "github.com/hengadev/leviosa/pkg/config"
 	"github.com/hengadev/leviosa/pkg/envmode"
 
 	"github.com/hengadev/errsx"
-	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 )
 
-// TODO: merge the New and Load function since there is no point having the New without the Load so make them both in the same time
-
 type Config struct {
 	viper    *viper.Viper
-	postgres *postgresCreds
-	redis    *redis.Options
-	s3       *s3Creds
-	rabbitmq *rabbitmqCreds
+	postgres *cfg.PostgresSecrets
+	redis    *cfg.RedisSecrets
+	s3       *cfg.S3Secrets
+	rabbitmq *cfg.RabbitSecrets
 }
 
-func New(ctx context.Context, envFilename, envFileType string) *Config {
-	config := viper.New()
-	appEnv := os.Getenv("APP_ENV")
-	if appEnv == "development" {
-		config.AddConfigPath(".")
-		config.SetConfigName(envFilename)
-		config.SetConfigType(envFileType)
-		if err := config.ReadInConfig(); err != nil {
-			fmt.Println("viper reading :", err)
+func Load(ctx context.Context, mode envmode.Mode) (*Config, error) {
+	v := viper.New()
+	if mode == envmode.Dev {
+		v.AddConfigPath(".")
+		v.SetConfigName(mode.String())
+		v.SetConfigType("env")
+		if err := v.ReadInConfig(); err != nil {
+			return nil, fmt.Errorf("viper reading :", err)
 		}
 	}
-	return &Config{
-		viper: config,
-		redis: &redis.Options{},
-		s3:    &s3Creds{},
+	c := &Config{
+		viper: v,
 	}
-}
-
-func (c *Config) Load(ctx context.Context, mode envmode.Mode) error {
-	var errs errsx.Map
-
 	envVarsToKeys := map[string]struct {
 		required bool
 		key      string
@@ -69,6 +59,7 @@ func (c *Config) Load(ctx context.Context, mode envmode.Mode) error {
 		"RABBITMQ_USER":     {required: true, key: "rabbitmq.user"},
 		"RABBITMQ_PASSWORD": {required: true, key: "rabbitmq.password"},
 	}
+	var errs errsx.Map
 	for envVar, requiredKey := range envVarsToKeys {
 		if os.Getenv(envVar) == "" && requiredKey.required == true {
 			errs.Set("get environment variable", fmt.Errorf("missing required env variables: %s", envVar))
@@ -89,5 +80,5 @@ func (c *Config) Load(ctx context.Context, mode envmode.Mode) error {
 	if err := c.setRabbitMQ(mode); err != nil {
 		errs.Set("Rabbit MQ configuration", fmt.Errorf("set S3: %w", err))
 	}
-	return errs.AsError()
+	return c, errs.AsError()
 }
