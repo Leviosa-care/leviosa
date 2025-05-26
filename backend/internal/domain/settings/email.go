@@ -29,5 +29,5 @@ func (s *service) SetCompanyEmail(ctx context.Context, email string) error {
 	if err := s.repo.SetString(ctx, setting); err != nil {
 		return err
 	}
-	return s.PublishSettingUpdate(ctx, CompanyLogoKey, email)
+	return s.PublishSettingUpdate(ctx, CompanyEmailKey, email)
 }
