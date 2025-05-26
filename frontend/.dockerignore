@@ -13,8 +13,8 @@ Thumbs.db
 .prettierrc*
 .prettierignore
 .svelte-check*
-tsconfig.json
-tsconfig.*.json
 
 Dockerfile
 .dockerignore
+
+.env
