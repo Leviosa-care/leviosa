@@ -33,9 +33,6 @@ import (
 	"github.com/hengadev/leviosa/internal/repository/redis/throttler"
 	"github.com/hengadev/leviosa/internal/repository/s3/settings"
 
-	// config
-	"github.com/hengadev/leviosa/internal/config"
-
 	// external packages
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/hengadev/encx"
@@ -52,6 +49,7 @@ func makeServices(
 	redisdb *rd.Client,
 	s3Client *s3.Client,
 	rabbitConn *amqp.Connection,
+	bucketname string,
 ) (app.Services, app.Repos, error) {
 	var appSvcs app.Services
 	var appRepos app.Repos
@@ -111,7 +109,7 @@ func makeServices(
 	if err != nil {
 		return appSvcs, appRepos, fmt.Errorf("create settings repository: %w", err)
 	}
-	settingsS3, err := settingsMedia.New(ctx, s3Client, config.GetS3().BucketName)
+	settingsS3, err := settingsMedia.New(ctx, s3Client, bucketname)
 	settingsSvc := settings.New(settingsRepo, settingsS3, crypto, rabbitConn)
 
 	// OTP

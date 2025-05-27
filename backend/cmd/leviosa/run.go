@@ -67,7 +67,7 @@ func run(ctx context.Context, w io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("failed to load secrets: %w", err)
 	}
-	redisConf, postgresConf, rabbitConf := cfg.GetRedis(), cfg.GetPostgres(), cfg.GetRabbitMQ()
+	redisConf, postgresConf, rabbitConf, bucketname := cfg.GetRedis(), cfg.GetPostgres(), cfg.GetRabbitMQ(), cfg.GetS3().BucketName
 
 	postgresdb, redisdb, s3Client, err := setupDatabases(ctx, redisConf, postgresConf, opts.mode)
 	if err != nil {
@@ -77,7 +77,7 @@ func run(ctx context.Context, w io.Writer) error {
 	rabbitConn, err := setBroker(ctx, rabbitConf)
 	defer rabbitConn.Close()
 
-	appSvcs, appRepos, err := makeServices(ctx, postgresdb, redisdb, s3Client, rabbitConn)
+	appSvcs, appRepos, err := makeServices(ctx, postgresdb, redisdb, s3Client, rabbitConn, bucketname)
 	if err != nil {
 		return fmt.Errorf("create services: %w", err)
 	}

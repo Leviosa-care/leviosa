@@ -3,32 +3,19 @@ package registerRepository
 import (
 	"context"
 	"database/sql"
-	"embed"
-	"fmt"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/pressly/goose/v3"
 )
 
 type repository struct {
 	DB *sql.DB
 }
 
-//go:embed migrations/*.sql
-var migrations embed.FS
-
 func (r *repository) GetDB() *sql.DB {
 	return r.DB
 }
 
 func New(ctx context.Context, db *sql.DB) (*repository, error) {
-	goose.SetBaseFS(migrations)
-	if err := goose.SetDialect("sqlite3"); err != nil {
-		return nil, fmt.Errorf("setting dialect for register repository: %w", err)
-	}
-	if err := goose.UpContext(ctx, db, "migrations"); err != nil {
-		return nil, fmt.Errorf("running all migrations for register repository: %w", err)
-	}
 	return &repository{db}, nil
 }
 

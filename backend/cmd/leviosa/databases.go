@@ -5,12 +5,15 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/hengadev/leviosa/internal/migrations"
 	cfg "github.com/hengadev/leviosa/pkg/config"
 	"github.com/hengadev/leviosa/pkg/db"
 	"github.com/hengadev/leviosa/pkg/envmode"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	_ "github.com/jackc/pgx"
+	"github.com/pressly/goose/v3"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -19,13 +22,7 @@ func setupDatabases(
 	redisConf *cfg.RedisSecrets,
 	postgresConf *cfg.PostgresSecrets,
 	env envmode.Mode,
-) (
-	*sql.DB,
-	*redis.Client,
-	*s3.Client,
-
-	error,
-) {
+) (*sql.DB, *redis.Client, *s3.Client, error) {
 	redisClient, err := db.Redis(ctx, redisConf)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("creating connection to redis database: %w", err)
@@ -33,6 +30,13 @@ func setupDatabases(
 	db, err := db.Postgres(ctx, env, postgresConf)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("creating connection to postgres database: %w", err)
+	}
+	goose.SetBaseFS(migrations.FS)
+	if err := goose.SetDialect("pgx"); err != nil {
+		return nil, nil, nil, fmt.Errorf("setting dialect for user repository: %w", err)
+	}
+	if err := goose.UpContext(ctx, db, "."); err != nil {
+		return nil, nil, nil, fmt.Errorf("running all migrations: %w", err)
 	}
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
