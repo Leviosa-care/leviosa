@@ -8,5 +8,5 @@
 
 notes
 
-frontend/local.dockerfile
-backend/local.dockerfile
+frontend/local.Dockerfile
+backend/local.Dockerfile
