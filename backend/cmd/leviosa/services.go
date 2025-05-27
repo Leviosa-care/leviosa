@@ -115,6 +115,9 @@ func makeServices(
 	// OTP
 	otpRepo := otpRepository.New(ctx, redisdb)
 	otpSvc, err := otpService.New(ctx, crypto, otpRepo, settingsRepo, rabbitConn)
+	if err != nil {
+		return appSvcs, appRepos, fmt.Errorf("create OTP service: %w", err)
+	}
 
 	// mail
 	mailSvc, err := mailService.New(ctx, settingsRepo, settingsS3, rabbitConn)
