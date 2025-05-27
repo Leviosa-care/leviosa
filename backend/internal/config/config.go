@@ -31,8 +31,13 @@ func Load(ctx context.Context, mode envmode.Mode) (*Config, error) {
 		}
 	}
 	c := &Config{
-		viper: v,
+		viper:    v,
+		postgres: &cfg.PostgresSecrets{},
+		redis:    &cfg.RedisSecrets{},
+		s3:       &cfg.S3Secrets{},
+		rabbitmq: &cfg.RabbitSecrets{},
 	}
+
 	envVarsToKeys := map[string]struct {
 		required bool
 		key      string
@@ -58,6 +63,12 @@ func Load(ctx context.Context, mode envmode.Mode) (*Config, error) {
 		"RABBITMQ_PORT":     {required: true, key: "rabbitmq.port"},
 		"RABBITMQ_USER":     {required: true, key: "rabbitmq.user"},
 		"RABBITMQ_PASSWORD": {required: true, key: "rabbitmq.password"},
+
+		"POSTGRES_HOST":     {required: true, key: "postgres.host"},
+		"POSTGRES_PORT":     {required: true, key: "postgres.port"},
+		"POSTGRES_USER":     {required: true, key: "postgres.user"},
+		"POSTGRES_DB":       {required: true, key: "postgres.db"},
+		"POSTGRES_PASSWORD": {required: true, key: "postgres.password"},
 	}
 	var errs errsx.Map
 	for envVar, requiredKey := range envVarsToKeys {
@@ -78,7 +89,7 @@ func Load(ctx context.Context, mode envmode.Mode) (*Config, error) {
 		errs.Set("S3 configuration", fmt.Errorf("set S3: %w", err))
 	}
 	if err := c.setRabbitMQ(mode); err != nil {
-		errs.Set("Rabbit MQ configuration", fmt.Errorf("set S3: %w", err))
+		errs.Set("Rabbit MQ configuration", fmt.Errorf("set RabbitMQ: %w", err))
 	}
 	return c, errs.AsError()
 }

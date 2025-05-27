@@ -7,10 +7,6 @@ import (
 	"github.com/hengadev/leviosa/pkg/envmode"
 )
 
-type s3Creds struct {
-	BucketName string
-}
-
 func (c *Config) GetS3() *cfg.S3Secrets {
 	return c.s3
 }

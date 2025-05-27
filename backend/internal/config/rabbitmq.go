@@ -26,9 +26,12 @@ func (c *Config) setRabbitMQ(env envmode.Mode) error {
 	var errs errsx.Map
 	switch env {
 	case envmode.Dev:
-		c.rabbitmq = RabbitMQDefault()
+		value := RabbitMQDefault()
+		host = value.Host
+		port = value.Port
+		user = value.User
+		password = value.Password
 	case envmode.Prod, envmode.Staging:
-
 		host = c.viper.GetString("rabbitmq.host")
 		port = c.viper.GetString("rabbitmq.port")
 		user = c.viper.GetString("rabbitmq.user")
