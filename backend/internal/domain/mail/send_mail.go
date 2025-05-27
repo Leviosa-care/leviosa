@@ -5,8 +5,6 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 
@@ -15,7 +13,7 @@ import (
 
 func (s *service) sendMail(ctx context.Context, to, subject, templateFilename string, data any, carbonCopy, images map[string]string) error {
 	m := gomail.NewMessage()
-	m.SetHeader("From", s.from)
+	m.SetHeader("From", s.cache.companyEmail)
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", subject)
 	addresses := make([]string, 0, len(carbonCopy))
@@ -79,18 +77,5 @@ func writeTempFile(data []byte, filename string) (string, error) {
 }
 
 func (s *service) getLogo(ctx context.Context) ([]byte, error) {
-	url, err := s.repo.GetLogo(ctx)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching image: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-	return io.ReadAll(resp.Body)
+	return s.cache.getLogo(), nil
 }

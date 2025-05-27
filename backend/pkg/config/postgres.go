@@ -5,7 +5,7 @@ import (
 )
 
 type PostgresSecrets struct {
-	Name     string `json:"name"`
+	Host     string `json:"host"`
 	User     string `json:"user"`
 	Password string `json:"password"`
 	Port     int    `json:"port"`
@@ -13,8 +13,8 @@ type PostgresSecrets struct {
 
 func (p PostgresSecrets) Validate() error {
 	var errs errsx.Map
-	if p.Name == "" {
-		errs.Set("postgres name", "postgres name cannot be empty")
+	if p.Host == "" {
+		errs.Set("postgres host", "postgres host cannot be empty")
 	}
 	if p.User == "" {
 		errs.Set("postgres user", "postgres user cannot be empty")
