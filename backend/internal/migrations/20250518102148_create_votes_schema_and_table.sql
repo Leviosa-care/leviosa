@@ -1,7 +1,5 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE SCHEMA IF NOT EXISTS votes;
-
 CREATE TABLE IF NOT EXISTS votes.votes (
     id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -17,5 +15,4 @@ CREATE TABLE IF NOT EXISTS votes.votes (
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS votes.votes;
-DROP SCHEMA IF EXISTS votes;
 -- +goose StatementEnd

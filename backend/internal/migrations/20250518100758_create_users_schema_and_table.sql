@@ -1,7 +1,5 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE SCHEMA IF NOT EXISTS users;
-
 CREATE TABLE IF NOT EXISTS users.users (
     id TEXT PRIMARY KEY,
     email_hash TEXT NOT NULL UNIQUE,
@@ -69,5 +67,4 @@ CREATE TABLE IF NOT EXISTS users.pending_users (
 DROP TABLE IF EXISTS users.pending_users;
 DROP TABLE IF EXISTS users.unverified_users;
 DROP TABLE IF EXISTS users.users;
-DROP SCHEMA IF EXISTS users;
 -- +goose StatementEnd

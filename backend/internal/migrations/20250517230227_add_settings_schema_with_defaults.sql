@@ -1,7 +1,5 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE SCHEMA IF NOT EXISTS settings;
-
 CREATE TABLE settings.settings (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     key TEXT NOT NULL UNIQUE,
@@ -36,6 +34,4 @@ VALUES
 -- +goose StatementBegin
 DROP TABLE IF EXISTS settings.settings_encrypted;
 DROP TABLE IF EXISTS settings.settings;
-
-DROP SCHEMA IF EXISTS settings;
 -- +goose StatementEnd
