@@ -98,7 +98,7 @@ func (h *AppInstance) generateAndSendOTP(
 	firstname string,
 ) error {
 	// generate OTP
-	otp, err := h.Svcs.OTP.CreateOTP(ctx, emailHash)
+	otp, err := h.Svcs.OTP.RequestOTP(ctx, emailHash)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrQueryFailed):

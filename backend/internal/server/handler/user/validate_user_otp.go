@@ -38,7 +38,7 @@ func (h *AppInstance) ValidateUserOTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("the userOTP that I get: %#+v\n", userOTP)
 
 	// validate otp
-	if err = h.Svcs.OTP.ValidateOTP(ctx, userOTP.Email, userOTP.OTP); err != nil {
+	if err = h.Svcs.OTP.VerifyOTP(ctx, userOTP.Email, userOTP.OTP); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
 			logger.WarnContext(ctx, "OTP validation query failed due to database error")

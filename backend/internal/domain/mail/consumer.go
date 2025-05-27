@@ -50,13 +50,13 @@ func (s *service) StartMailSettingConsumer(ctx context.Context, ch *amqp.Channel
 				} else {
 					logger.InfoContext(ctx, fmt.Sprintf("invalid type for %s: %T", settings.CompanyEmailKey, payload.Value))
 				}
-			case settings.CompanyLogoKey:
-				if logo, ok := payload.Value.([]byte); ok {
-					s.SetLogo(logo)
-					logger.InfoContext(ctx, fmt.Sprintf("Mail service cache updated: %s = %s", settings.CompanyLogoKey, logo))
-				} else {
-					logger.WarnContext(ctx, fmt.Sprintf("invalid type for %s: %T", settings.CompanyLogoKey, payload.Value))
-				}
+			// case settings.CompanyLogoKey:
+			// 	if logo, ok := payload.Value.([]byte); ok {
+			// 		s.SetLogo(logo)
+			// 		logger.InfoContext(ctx, fmt.Sprintf("Mail service cache updated: %s = %s", settings.CompanyLogoKey, logo))
+			// 	} else {
+			// 		logger.WarnContext(ctx, fmt.Sprintf("invalid type for %s: %T", settings.CompanyLogoKey, payload.Value))
+			// 	}
 			default:
 				log.Printf("received unknown settings update: %v", payload)
 			}

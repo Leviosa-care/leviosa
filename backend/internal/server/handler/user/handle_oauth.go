@@ -99,11 +99,12 @@ func (a *AppInstance) handleUser(ctx context.Context, w http.ResponseWriter, use
 				}
 				return err
 			}
-			if err := a.Svcs.Mail.PendingUser(ctx, user); err != nil {
-				logger.WarnContext(ctx, "sending mail to welcome new oauth pending user")
-				http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
-				return err
-			}
+			// TODO: handle that part
+			// if err := a.Svcs.Mail.SendOTP(ctx, user); err != nil {
+			// 	logger.WarnContext(ctx, "sending mail to welcome new oauth pending user")
+			// 	http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
+			// 	return err
+			// }
 		case errors.Is(err, rp.ErrContext):
 			logger.WarnContext(ctx, "context error, deadline or timeout while checking for user existence")
 			http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)

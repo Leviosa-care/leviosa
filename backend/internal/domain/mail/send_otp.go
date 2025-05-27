@@ -3,32 +3,18 @@ package mailService
 import (
 	"context"
 	"time"
-
-	otpService "github.com/hengadev/leviosa/internal/domain/otp"
 )
 
-// these things are in all mails
-type CompanyInfo struct {
-	LegalAddress  string
-	InstagramPath string
-}
-
-func (s *service) SendOTP(ctx context.Context, email string, otp *otpService.OTP) error {
-	legalAddress, err := s.repo.GetCompanyLegalAddress(ctx)
-	if err != nil {
-
-	}
-	companyInstagram, err := s.repo.GetCompanyInstagram(ctx)
-	if err != nil {
-
-	}
+func (s *service) SendOTP(ctx context.Context, email string, otp string) error {
+	legalAddress := s.cache.getCompanyLegalAddress()
+	companyInstagram := s.cache.getCompanyInstagram()
 	data := struct {
 		OTP           string
 		Year          int
 		Address       string
 		InstagramPath string
 	}{
-		OTP:           otp.Code,
+		OTP:           otp,
 		Year:          time.Now().Year(),
 		Address:       legalAddress,
 		InstagramPath: companyInstagram,

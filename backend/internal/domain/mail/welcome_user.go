@@ -3,12 +3,9 @@ package mailService
 import (
 	"context"
 	"time"
-
-	// TODO: import the product thing because that is the thing that is the main part
-	"github.com/hengadev/leviosa/internal/domain/user/models"
 )
 
-func (s *service) WelcomeUser(ctx context.Context, email string, user *models.User, legalAddress, companyInstagram string) error {
+func (s *service) WelcomeUser(ctx context.Context, email string) error {
 	// where to get that thing
 	type WelcomeMailService struct {
 		Title       string

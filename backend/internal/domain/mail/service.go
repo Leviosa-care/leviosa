@@ -7,7 +7,6 @@ import (
 
 	"github.com/hengadev/leviosa/internal/broker/rabbitmq"
 	"github.com/hengadev/leviosa/internal/domain"
-	otpService "github.com/hengadev/leviosa/internal/domain/otp"
 	"github.com/hengadev/leviosa/internal/domain/settings"
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 
@@ -21,8 +20,8 @@ type Service interface {
 	NewPayment(ctx context.Context, user *models.User, eventTime string) error
 	NewVote(ctx context.Context, user *models.User, eventTime string) error
 	SendRegistrationReminderEmail(ctx context.Context, user *models.User, registrationName string, daysLeft int) error
-	SendOTP(ctx context.Context, email string, otp *otpService.OTP) error
-	WelcomeUser(ctx context.Context, email string, user *models.User, legalAddress, companyInstagram string) error
+	SendOTP(ctx context.Context, email string, otp string) error
+	WelcomeUser(ctx context.Context, email string) error
 	// cache
 	SetCompanyEmail(email string)
 	SetLogo(logo []byte)
