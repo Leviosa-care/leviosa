@@ -29,17 +29,17 @@ type service struct {
 func New(ctx context.Context, crypto encx.CryptoService, repo ReadWriter, settingsRepo settings.Reader, rabbitConn *amqp.Connection) (Service, error) {
 	durationSetting, err := settingsRepo.GetInt(ctx, settings.OTPDurationKey)
 	if err != nil {
-
+		return nil, fmt.Errorf("get OTP duration: %w", err)
 	}
 	duration := durationSetting.Value
 	lengthSetting, err := settingsRepo.GetInt(ctx, settings.OTPLengthKey)
 	if err != nil {
-
+		return nil, fmt.Errorf("get OTP length: %w", err)
 	}
 	length := lengthSetting.Value
 	maxAttemptsSetting, err := settingsRepo.GetInt(ctx, settings.OTPMaxAttemptsKey)
 	if err != nil {
-
+		return nil, fmt.Errorf("get OTP max attempts count: %w", err)
 	}
 	maxAttempts := maxAttemptsSetting.Value
 
