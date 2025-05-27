@@ -3,20 +3,22 @@ package messageRepository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/message"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (m *repository) GetMessages(ctx context.Context, conversationID string) ([]*messageService.Message, error) {
-	query := `
+	query := fmt.Sprintf(`
         SELECT 
             id,
             conversation_id,
             sender_id,
             content_encrypted,
             created_at
-        FROM messages;`
+        FROM %s;`, pg.QualifiedTable(m.schema, "messages"))
 	rows, err := m.DB.QueryContext(ctx, query)
 	if err != nil {
 		switch {

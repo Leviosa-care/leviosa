@@ -3,8 +3,10 @@ package voteRepository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // CreateVote inserts a new vote record into the 'votes' table for a specific user and date.
@@ -21,8 +23,7 @@ import (
 //   - If there is a database execution error, a database-specific error is returned.
 //   - If no rows are affected, a not-created error is returned, indicating the vote was not inserted.
 func (v *repository) CreateVote(ctx context.Context, userID string, days string, month, year int) error {
-
-	query := "INSERT INTO votes (user_id, days, month, year) VALUES ($1, $2, $3, $4);"
+	query := fmt.Sprintf("INSERT INTO %s (user_id, days, month, year) VALUES ($1, $2, $3, $4);", pg.QualifiedTable(v.schema, "votes"))
 	result, err := v.DB.ExecContext(ctx, query, userID, days, month, year)
 	if err != nil {
 		switch {

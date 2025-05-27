@@ -15,6 +15,7 @@ func (e *repository) ModifyEvent(
 	event *models.Event,
 	whereMap map[string]any,
 ) error {
+	// TODO: use QualifyTable function to modify the  table name in corresponding domain function
 	if event == nil {
 		return rp.NewValidationErr(errors.New("nil event"), "event")
 	}

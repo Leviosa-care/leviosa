@@ -6,11 +6,12 @@ import (
 	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (r *repository) RemoveRegistration(ctx context.Context, day, year int, month string) error {
 	tablename := getTablename(day, year, month)
-	query := fmt.Sprintf("DELETE FROM %s WHERE user_id=?", tablename)
+	query := fmt.Sprintf("DELETE FROM %s WHERE user_id=?", pg.QualifiedTable(r.schema, tablename))
 	result, err := r.DB.ExecContext(ctx, query)
 	if err != nil {
 		switch {

@@ -3,18 +3,20 @@ package productRepository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/product"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (p *repository) AddProduct(ctx context.Context, product *productService.Product) error {
-	query := `
-            INSERT INTO products (
+	query := fmt.Sprintf(`
+            INSERT INTO %s (
                 id,
                 name,
                 description
-            ) VALUES ($1, $2, $3)`
+            ) VALUES ($1, $2, $3)`, pg.QualifiedTable(p.schema, "products"))
 
 	result, err := p.DB.ExecContext(ctx, query,
 		product.ID,

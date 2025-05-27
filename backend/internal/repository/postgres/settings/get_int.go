@@ -9,19 +9,20 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain/settings"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (r *repository) GetInt(ctx context.Context, key string) (*settings.Setting[int], error) {
 	var res settings.Setting[int]
 	var valueStr string
-	query := `
+	query := fmt.Sprintf(`
         SELECT
 			id,
             value,
             created_at,
             updated_at
-        FROM settings
-        WHERE key = $1;`
+        FROM %s
+        WHERE key = $1;`, pg.QualifiedTable(r.schema, "settings"))
 	err := r.DB.QueryRowContext(ctx, query, key).Scan(
 		&res.ID,
 		&valueStr,

@@ -3,9 +3,11 @@ package userRepository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // GetPendingUsers retrieves all pending users from the database.
@@ -20,7 +22,7 @@ import (
 //   - Returns a context error if the operation is canceled or the deadline is exceeded.
 //   - Returns a database error for any other query-related issues.
 func (u *repository) GetPendingUsers(ctx context.Context) ([]*models.User, error) {
-	query := `
+	query := fmt.Sprintf(`
         SELECT 
             email_hash,
             email_encrypted,
@@ -29,7 +31,7 @@ func (u *repository) GetPendingUsers(ctx context.Context) ([]*models.User, error
             google_id_encrypted,
             apple_id_encrypted,
             dek_encrypted
-        FROM users;`
+        FROM %s;`, pg.QualifiedTable(u.schema, "users"))
 	rows, err := u.DB.QueryContext(ctx, query)
 	if err != nil {
 		switch {

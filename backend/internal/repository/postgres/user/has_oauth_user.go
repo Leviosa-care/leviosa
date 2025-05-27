@@ -8,6 +8,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // HasOAuthUser checks whether a user with the specified email hash has an OAuth account (Google, Apple, etc.)
@@ -37,7 +38,7 @@ func (u *repository) HasOAuthUser(ctx context.Context, emailHash string, p model
             WHERE email_hash = $1
             AND %s_id_encrypted IS NOT NULL
             AND %s_id_encrypted != ''
-        );`, table, provider, provider)
+        );`, pg.QualifiedTable(u.schema, table), provider, provider)
 		var exists bool
 		err = tx.QueryRowContext(ctx, query, emailHash).Scan(&exists)
 		if err != nil {

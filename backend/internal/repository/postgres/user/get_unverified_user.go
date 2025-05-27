@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // GetUnverifiedUser retrieves an unverified user's details by their email hash from the database.
@@ -23,8 +25,8 @@ import (
 //   - Returns a database error for any other query-related issues.
 func (u *repository) GetUnverifiedUser(ctx context.Context, emailHash string) (*models.User, error) {
 	var user models.User
-	query := `
-        SELECT 
+	query := fmt.Sprintf(`
+        SELECT
             email_encrypted,
             lastname_encrypted,
             firstname_encrypted,
@@ -36,8 +38,8 @@ func (u *repository) GetUnverifiedUser(ctx context.Context, emailHash string) (*
             address1_encrypted,
             address2_encrypted,
 			dek_encrypted
-        FROM unverified_users 
-        WHERE email_hash = $1;`
+        FROM %s
+        WHERE email_hash = ?;`, pg.QualifiedTable(u.schema, "unverified_users"))
 
 	err := u.DB.QueryRowContext(ctx, query, emailHash).Scan(
 		&user.EmailEncrypted,

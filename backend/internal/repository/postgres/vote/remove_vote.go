@@ -6,10 +6,11 @@ import (
 	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (v *repository) RemoveVote(ctx context.Context, userID string, month, year int) error {
-	query := "DELETE FROM votes WHERE user_id=$1 AND month=$2 AND year=$3;"
+	query := fmt.Sprintf("DELETE FROM votes WHERE user_id=$1 AND month=$2 AND year=$3;", pg.QualifiedTable(v.schema, "votes"))
 	res, err := v.DB.ExecContext(ctx, query, userID, month, year)
 	if err != nil {
 		switch {

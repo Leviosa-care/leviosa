@@ -8,6 +8,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // addGenericUser checks if a user exists in the specified database table and either creates a new user or links an authentication method to an existing user, all within a transaction.
@@ -34,7 +35,7 @@ func (u *repository) addGenericUser(ctx context.Context, user *models.User, prov
 	// Check if user exists
 	var userID string
 	err = tx.QueryRowContext(ctx,
-		fmt.Sprintf("SELECT id FROM %s WHERE email_hash = $1", table),
+		fmt.Sprintf("SELECT id FROM %s WHERE email_hash = $1", pg.QualifiedTable(u.schema, "users")),
 		user.EmailHash,
 	).Scan(&userID)
 

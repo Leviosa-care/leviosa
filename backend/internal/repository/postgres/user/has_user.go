@@ -3,8 +3,10 @@ package userRepository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // HasUser checks whether a user exists in the "users" table based on their email hash.
@@ -16,12 +18,12 @@ import (
 // Returns:
 //   - error: Returns an error if any database issues occur or if the user is not found.
 func (u *repository) HasUser(ctx context.Context, emailHash string) error {
-	query := `
+	query := fmt.Sprintf(`
         SELECT EXISTS (
             SELECT 1 
-            FROM users 
+            FROM users.users 
             WHERE email_hash = $1
-        );`
+        );`, pg.QualifiedTable(u.schema, "users"))
 	var exists bool
 	err := u.DB.QueryRowContext(ctx, query, emailHash).Scan(&exists)
 	if err != nil {

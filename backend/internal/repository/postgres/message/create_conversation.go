@@ -4,18 +4,21 @@ import (
 	"context"
 	"errors"
 
+	"fmt"
+
 	"github.com/hengadev/leviosa/internal/domain/message"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (m *repository) CreateConversation(ctx context.Context, conversation *messageService.Conversation) error {
-	query := `
-        INSERT INTO conversations (
+	query := fmt.Sprintf(`
+        INSERT INTO %s (
             id,
             user_id,
             partner_id,
             created_at
-        ) VALUES ($1, $2, $3, $4);`
+        ) VALUES ($1, $2, $3, $4);`, pg.QualifiedTable(m.schema, "conversations"))
 	result, err := m.DB.ExecContext(
 		ctx,
 		query,

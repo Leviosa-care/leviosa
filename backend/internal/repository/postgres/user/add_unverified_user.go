@@ -3,9 +3,11 @@ package userRepository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // AddUnverifiedUser inserts a new unverified user into the 'unverified_users' table.
@@ -19,8 +21,8 @@ import (
 //   - error: An error if the insertion fails, including database or context-related errors. Returns nil if successful.
 //   - If no rows are affected by the insertion, a "not created" error is returned.
 func (u *repository) AddUnverifiedUser(ctx context.Context, user *models.User) error {
-	query := `
-        INSERT INTO unverified_users (
+	query := fmt.Sprintf(`
+        INSERT INTO %s (
             email_hash,
             email_encrypted,
             password_hash,
@@ -36,7 +38,7 @@ func (u *repository) AddUnverifiedUser(ctx context.Context, user *models.User) e
             address1_encrypted,
             address2_encrypted,
 			dek_encrypted
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);`
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);`, pg.QualifiedTable(u.schema, "users"))
 	result, err := u.DB.ExecContext(
 		ctx,
 		query,

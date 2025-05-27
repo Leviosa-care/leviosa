@@ -7,11 +7,12 @@ import (
 	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (v *repository) FindVotesByUserID(ctx context.Context, month string, year int, userID string) (string, error) {
 	var votes string
-	tableName := fmt.Sprintf("votes_%s_%d", month, year)
+	tableName := fmt.Sprintf("%s_%s_%d", pg.QualifiedTable(v.schema, "votes"), month, year)
 	query := fmt.Sprintf("SELECT * FROM %s WHERE userid=$1;", tableName)
 	if err := v.DB.QueryRowContext(ctx, query).Scan(&votes); err != nil {
 		switch {

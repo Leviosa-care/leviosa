@@ -6,14 +6,15 @@ import (
 	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // DecreaseFreePlace decrements the freeplace count for an event with the given eventID.
 func (e *repository) DecreaseFreePlace(ctx context.Context, eventID string) error {
-	query := `
-        UPDATE events
+	query := fmt.Sprintf(`
+        UPDATE %s
         SET freeplace = freeplace - 1 
-        WHERE id = $1 AND freeplace > 0;`
+        WHERE id = $1 AND freeplace > 0;`, pg.QualifiedTable(e.schema, "events"))
 	res, err := e.DB.ExecContext(ctx, query, eventID)
 	if err != nil {
 		switch {

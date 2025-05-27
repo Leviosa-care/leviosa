@@ -15,6 +15,7 @@ func (p *repository) ModifyOffer(
 	productType *productService.Offer,
 	whereMap map[string]any,
 ) error {
+	// TODO: use QualifiedTable function to create table name in domain
 	query, values, err := sqliteutil.WriteUpdateQuery(*productType, whereMap)
 	if err != nil {
 		return rp.NewInternalErr(err)

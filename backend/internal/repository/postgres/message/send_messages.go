@@ -3,20 +3,22 @@ package messageRepository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/message"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (m *repository) SendMessage(ctx context.Context, message *messageService.Message) error {
-	query := `
-        INSERT INTO messages (
+	query := fmt.Sprintf(`
+        INSERT INTO %s (
             id,
             conversation_id,
             sender_id,
             content_encrypted,
             created_at
-        ) VALUES ($1, $2, $3, $4, $5);`
+        ) VALUES ($1, $2, $3, $4, $5);`, pg.QualifiedTable(m.schema, "messages"))
 	result, err := m.DB.ExecContext(
 		ctx,
 		query,

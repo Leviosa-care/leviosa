@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (e *repository) LoopQuery(
@@ -21,7 +22,7 @@ func (e *repository) LoopQuery(
 	query := fmt.Sprintf(`INSERT INTO %s (
                 event_id,
                 %s
-            ) VALUES ($1, $2);`, table, name)
+            ) VALUES ($1, $2);`, pg.QualifiedTable(e.schema, table), name)
 	for _, value := range values {
 		result, err := tx.ExecContext(ctx, query, table, name, value, eventID)
 		// result, err := tx.ExecContext(ctx, query, eventID, value)

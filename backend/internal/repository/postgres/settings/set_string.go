@@ -7,12 +7,13 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain/settings"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (r *repository) SetString(ctx context.Context, setting *settings.Setting[string]) error {
-	query := `
-		INSERT INTO settings (id, key, value, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)
-	`
+	query := fmt.Sprintf(`
+		INSERT INTO %s (id, key, value, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)
+	`, pg.QualifiedTable(r.schema, "settings"))
 	result, err := r.DB.ExecContext(
 		ctx,
 		query,

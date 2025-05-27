@@ -4,14 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/product"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (p *repository) GetOffer(ctx context.Context, offerID string) (*productService.Offer, error) {
 	var offer productService.Offer
-	query := `
+	query := fmt.Sprintf(`
         SELECT
 			product_id,
             name,
@@ -21,7 +23,7 @@ func (p *repository) GetOffer(ctx context.Context, offerID string) (*productServ
             price,
             encrypted_price_id
         FROM offers
-        WHERE id = $1;`
+        WHERE id = $1;`, pg.QualifiedTable(p.schema, "offers"))
 	err := p.DB.QueryRowContext(ctx, query, offerID).Scan(
 		&offer.ProductID,
 		&offer.Name,

@@ -9,6 +9,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain/event/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // TODO:
@@ -35,7 +36,7 @@ func (e *repository) GetEventForUser(ctx context.Context, userID string) (*model
 
 	var res models.EventUser
 	for _, statement := range statements {
-		query := fmt.Sprintf("SELECT * FROM events WHERE %s;", statement.condition)
+		query := fmt.Sprintf("SELECT * FROM %s WHERE %s;", pg.QualifiedTable(e.schema, "events"), statement.condition)
 		rows, err := tx.QueryContext(ctx, query, userID)
 		if err != nil {
 			switch {
@@ -66,7 +67,7 @@ func (e *repository) GetEventForUser(ctx context.Context, userID string) (*model
 				return &res, fmt.Errorf("%s: %w", "error parsing time", err)
 			}
 			var usedCount int
-			query := fmt.Sprintf("SELECT COUNT(userid) from event_%s;", event.ID)
+			query := fmt.Sprintf("SELECT COUNT(userid) FROM %s_%s;", pg.QualifiedTable(e.schema, "event"), event.ID)
 			if err := tx.QueryRowContext(ctx, query).Scan(&usedCount); err != nil {
 				switch {
 				case errors.Is(err, sql.ErrNoRows):

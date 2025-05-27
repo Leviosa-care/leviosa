@@ -7,17 +7,18 @@ import (
 	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	pg "github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // EventHasAvailablePlaces checks if an event with the given eventID exists in the database
 // and has a place count greater than 0.
 func (e *repository) EventHasAvailablePlaces(ctx context.Context, eventID string) (bool, error) {
 	var placecount int
-	query := `
+	query := fmt.Sprintf(`
         SELECT
             placecount
-        FROM events 
-        WHERE id = $1;`
+        FROM %s
+        WHERE id = $1;`, pg.QualifiedTable(e.schema, "events"))
 
 	if err := e.DB.QueryRowContext(ctx, query, eventID).Scan(&placecount); err != nil {
 		switch {

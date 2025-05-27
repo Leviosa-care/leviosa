@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // GetHashedPasswordByEmail retrieves the hashed password of a user by their email address from the 'users' table.
@@ -22,7 +24,7 @@ import (
 //   - Returns a database error for any other query-related issues.
 func (u *repository) GetHashedPasswordByEmail(ctx context.Context, email string) (string, error) {
 	var hashedPassword string
-	query := "SELECT password_hash from users where email_hash = $1;"
+	query := fmt.Sprintf("SELECT password_hash FROM %s WHERE email_hash = $1;", pg.QualifiedTable(u.schema, "users"))
 	err := u.DB.QueryRowContext(ctx, query, email).Scan(&hashedPassword)
 	if err != nil {
 		switch {

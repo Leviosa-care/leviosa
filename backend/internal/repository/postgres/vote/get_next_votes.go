@@ -9,15 +9,16 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain/vote"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (v *repository) GetNextVotes(ctx context.Context, month, year int) ([]*vote.AvailableVote, error) {
 	var votes []*vote.AvailableVote
-	query := `SELECT days, month, year 
-              FROM available_votes 
-              WHERE (year = $1 AND month > $2) OR year = $3 
-              ORDER BY year, month 
-              LIMIT 3;`
+	query := fmt.Sprintf(`SELECT days, month, year 
+              FROM %s
+              WHERE (year = $1 AND month > $2) OR year = $3
+              ORDER BY year, month
+              LIMIT 3;`, pg.QualifiedTable(v.schema, "votes"))
 	rows, err := v.DB.QueryContext(ctx, query, year, month, year+1)
 	if err != nil {
 		switch {
@@ -60,8 +61,7 @@ func (v *repository) GetNextVotes(ctx context.Context, month, year int) ([]*vote
 
 func parseDays(days string) ([]int, error) {
 	var res []int
-	daysStr := strings.Split(days, vote.VoteSeparator)
-	for _, dayStr := range daysStr {
+	for dayStr := range strings.SplitSeq(days, vote.VoteSeparator) {
 		day, err := strconv.Atoi(dayStr)
 		if err != nil {
 			return nil, fmt.Errorf("conversion days string to int")

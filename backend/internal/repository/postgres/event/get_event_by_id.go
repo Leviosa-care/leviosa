@@ -4,27 +4,29 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/event/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (e *repository) GetEventByID(ctx context.Context, id string) (*models.Event, error) {
 	event := &models.Event{}
-	query := `
-        SELECT 
-            encrypted_title,
-            encrypted_description,
-            encrypted_city,
-            encrypted_postal_code,
-            encrypted_address1,
-            encrypted_address2,
+	query := fmt.Sprintf(`
+        SELECT
+            title_encrypted,
+            description_encrypted,
+            city_encrypted,
+            postal_code_encrypted,
+            address1_encrypted,
+            address2_encrypted,
             placecount,
             freeplace,
-            encrypted_begin_at,
-            encrypted_end_at
-        FROM events 
-        WHERE id = $1;`
+            begin_at_encrypted,
+            end_at_encrypted
+        FROM %s
+        WHERE id = $1;`, pg.QualifiedTable(e.schema, "events"))
 
 	if err := e.DB.QueryRowContext(ctx, query, id).Scan(
 		&event.Title,

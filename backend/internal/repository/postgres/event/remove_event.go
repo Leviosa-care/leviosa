@@ -6,10 +6,11 @@ import (
 	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (e *repository) RemoveEvent(ctx context.Context, eventID string) error {
-	query := "DELETE FROM events WHERE id=$1"
+	query := fmt.Sprintf("DELETE FROM %s WHERE id=$1", pg.QualifiedTable(e.schema, "events"))
 	result, err := e.DB.ExecContext(ctx, query, eventID)
 	if err != nil {
 		switch {

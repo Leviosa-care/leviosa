@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // GetUserByEmail retrieves a user's details from the database using their email hash.
@@ -23,8 +25,8 @@ import (
 //   - Returns a database error for other query-related issues.
 func (u *repository) GetUserByEmail(ctx context.Context, emailHash string) (*models.User, error) {
 	var user models.User
-	query := `
-        SELECT 
+	query := fmt.Sprintf(`
+        SELECT
             email_encrypted,
             picture_encrypted,
             created_at,
@@ -42,8 +44,8 @@ func (u *repository) GetUserByEmail(ctx context.Context, emailHash string) (*mod
             google_id_encrypted,
             apple_id_encrypted,
 			dek_encrypted
-        FROM users 
-        WHERE email_hash = $1;`
+        FROM %s
+        WHERE email_hash = $1;`, pg.QualifiedTable(u.schema, "users"))
 
 	err := u.DB.QueryRowContext(ctx, query, emailHash).Scan(
 		&user.EmailEncrypted,

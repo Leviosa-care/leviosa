@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // FindAccountByID retrieves a user's account details from the 'users' table based on the provided user ID.
@@ -25,8 +27,8 @@ import (
 //   - For any other query failures, a database error is returned.
 func (u *repository) FindAccountByID(ctx context.Context, id string) (*models.User, error) {
 	var user models.User
-	query := `
-        SELECT 
+	query := fmt.Sprintf(`
+        SELECT
             email_encrypted,
             picture_encrypted,
             role,
@@ -40,8 +42,8 @@ func (u *repository) FindAccountByID(ctx context.Context, id string) (*models.Us
             address1_encrypted,
             encrypted_address2,
 			dek_encrypted
-        FROM users
-        WHERE id = $1;`
+        FROM %s
+        WHERE id = $1;`, pg.QualifiedTable(u.schema, "users"))
 	if err := u.DB.QueryRowContext(ctx, query, id).Scan(
 		&user.EmailEncrypted,
 		&user.PictureEncrypted,

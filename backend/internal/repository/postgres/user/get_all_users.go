@@ -3,9 +3,11 @@ package userRepository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // GetAllUsers retrieves all user accounts from the 'users' table.
@@ -22,7 +24,7 @@ import (
 //   - For query failures or result processing issues, a database error is returned.
 //   - Returns an empty slice with no error if no users are found.
 func (u *repository) GetAllUsers(ctx context.Context) ([]*models.User, error) {
-	query := `
+	query := fmt.Sprintf(`
         SELECT 
             id,
             email_encrypted,
@@ -40,7 +42,7 @@ func (u *repository) GetAllUsers(ctx context.Context) ([]*models.User, error) {
             google_id_encrypted,
             encrypted_apple_id,
 			dek_encrypted
-        FROM users;`
+        FROM %s;`, pg.QualifiedTable(u.schema, "users"))
 	rows, err := u.DB.QueryContext(ctx, query)
 	if err != nil {
 		switch {

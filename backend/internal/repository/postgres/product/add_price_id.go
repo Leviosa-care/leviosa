@@ -3,8 +3,10 @@ package productRepository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // AddPriceID updates the price_id field for a specific product in the database.
@@ -12,11 +14,11 @@ import (
 // and a priceID to be set. Returns an error if the update fails, the product
 // doesn't exist, or if there are any database connectivity issues.
 func (p *repository) AddPriceID(ctx context.Context, productID, priceID string) error {
-	query := `
-        UPDATE products
+	query := fmt.Sprintf(`
+        UPDATE %s
         SET price_id = $1
         WHERE id = $2;
-    `
+    `, pg.QualifiedTable(p.schema, "products"))
 	result, err := p.DB.ExecContext(ctx, query,
 		priceID,
 		productID,

@@ -3,8 +3,10 @@ package userRepository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // DeleteUser removes a user from the 'users' table in the database based on the provided user ID.
@@ -23,7 +25,8 @@ import (
 //   - If no rows were affected, a "not deleted" error is returned.
 //   - If the deletion fails for any other reason, a database error is returned.
 func (u *repository) DeleteUser(ctx context.Context, userID string) error {
-	result, err := u.DB.ExecContext(ctx, "DELETE FROM users WHERE id = $1;", userID)
+	query := fmt.Sprintf("DELETE FROM %s WHERE id = $1;", pg.QualifiedTable(u.schema, "users"))
+	result, err := u.DB.ExecContext(ctx, query, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, context.DeadlineExceeded), errors.Is(err, context.Canceled):

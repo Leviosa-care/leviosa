@@ -8,19 +8,20 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain/settings"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (r *repository) GetPhone(ctx context.Context) (*settings.SettingEncrypted[string], error) {
 	var res settings.SettingEncrypted[string]
-	query := `
+	query := fmt.Sprintf(`
         SELECT
 			id,
             value_encrypted,
             created_at,
             updated_at
             dek_encrypted
-        FROM settings_encrypted
-        WHERE key = $1;`
+        FROM %s
+        WHERE key = $1;`, pg.QualifiedTable(r.schema, "settings_encrypted"))
 	err := r.DB.QueryRowContext(ctx, query, settings.CompanyPhoneKey).Scan(
 		&res.ID,
 		&res.ValueEncrypted,
@@ -42,10 +43,10 @@ func (r *repository) GetPhone(ctx context.Context) (*settings.SettingEncrypted[s
 }
 
 func (r *repository) SetPhone(ctx context.Context, setting *settings.SettingEncrypted[string]) error {
-	query := `
-		INSERT INTO settings (id, key, value_encrypted, created_at, updated_at, dek_encrypted)
+	query := fmt.Sprintf(`
+		INSERT INTO %s (id, key, value_encrypted, created_at, updated_at, dek_encrypted)
 		VALUES (?, ?, ?, ?, ?, ?)
-	`
+	`, pg.QualifiedTable(r.schema, "settings"))
 	result, err := r.DB.ExecContext(
 		ctx,
 		query,

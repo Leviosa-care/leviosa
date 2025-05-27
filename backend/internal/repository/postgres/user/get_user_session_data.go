@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // GetUserSessionData retrieves the user's session-related data (ID and role) by their email.
@@ -24,7 +26,7 @@ import (
 //   - Returns a database error for any other query-related issues.
 func (u *repository) GetUserSessionData(ctx context.Context, emailHash string) (string, models.Role, error) {
 	var id, role string
-	query := "SELECT id, role from users where email_hash = $1;"
+	query := fmt.Sprintf("SELECT id, role FROM %s WHERE email_hash = $1;", pg.QualifiedTable(u.schema, "users"))
 	err := u.DB.QueryRowContext(ctx, query, emailHash).Scan(
 		&id,
 		&role,

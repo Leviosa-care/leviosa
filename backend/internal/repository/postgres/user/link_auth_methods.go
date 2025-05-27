@@ -7,6 +7,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // linkAuthMethod links an authentication method (Google, Apple, or email) to a user's account.
@@ -29,7 +30,7 @@ func (u *repository) linkAuthMethod(ctx context.Context, tx *sql.Tx, userID stri
 		_, err := tx.ExecContext(ctx,
 			fmt.Sprintf(`UPDATE %s SET 
                 google_id_encrypted = $1
-            WHERE id = $2`, table),
+            WHERE id = $2`, pg.QualifiedTable(u.schema, table)),
 			user.GoogleID,
 			userID,
 		)
@@ -39,7 +40,7 @@ func (u *repository) linkAuthMethod(ctx context.Context, tx *sql.Tx, userID stri
 		_, err := tx.ExecContext(ctx,
 			fmt.Sprintf(`UPDATE %s SET 
                 apple_id_encrypted = $1
-            WHERE id = $2`, table),
+            WHERE id = $2`, pg.QualifiedTable(u.schema, table)),
 			user.AppleID,
 			userID,
 		)
@@ -49,7 +50,7 @@ func (u *repository) linkAuthMethod(ctx context.Context, tx *sql.Tx, userID stri
 		_, err := tx.ExecContext(ctx,
 			fmt.Sprintf(`UPDATE %s SET 
                 password_hash = $1
-            WHERE id = $2`, table),
+            WHERE id = $2`, pg.QualifiedTable(u.schema, table)),
 			user.PasswordHash,
 			userID,
 		)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // createNewUser inserts a new user into the specified table ('pending_users', 'users', etc.)
@@ -52,7 +53,7 @@ func (u *repository) createNewUser(ctx context.Context, tx *sql.Tx, user *models
 				address2_encrypted,
                 google_id_encrypted,
                 dek_encrypted
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`, table)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`, pg.QualifiedTable(u.schema, table))
 		args = []any{
 			user.ID,
 			user.EmailHash,
@@ -94,7 +95,7 @@ func (u *repository) createNewUser(ctx context.Context, tx *sql.Tx, user *models
 				address2_encrypted,
                 apple_id_encrypted,
                 dek_encrypted
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`, table)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`, pg.QualifiedTable(u.schema, table))
 		args = []any{
 			user.ID,
 			user.EmailHash,
@@ -137,7 +138,7 @@ func (u *repository) createNewUser(ctx context.Context, tx *sql.Tx, user *models
                 google_id_encrypted,
                 encrypted_apple_id,
 				dek_encrypted
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NULL, NULL, $16)`, table)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NULL, NULL, $16)`, pg.QualifiedTable(u.schema, table))
 		args = []any{
 			user.ID,
 			user.EmailHash,

@@ -4,19 +4,21 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/product"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (p *repository) GetProduct(ctx context.Context, productID string) (*productService.Product, error) {
 	var product productService.Product
-	query := `
+	query := fmt.Sprintf(`
         SELECT 
             name,
             description
-        FROM products
-        WHERE id = $1;`
+        FROM %s
+        WHERE id = $1;`, pg.QualifiedTable(p.schema, "products"))
 	err := p.DB.QueryRowContext(ctx, query, productID).Scan(
 		&product.Name,
 		&product.Description,

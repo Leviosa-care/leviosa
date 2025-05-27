@@ -8,6 +8,7 @@ import (
 
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 // GetPendingUser retrieves a pending user by their email hash and provider type from the 'pending_users' table.
@@ -30,7 +31,7 @@ func (u *repository) GetPendingUser(ctx context.Context, emailHash string, provi
 	var args []any
 	switch provider {
 	case models.Google:
-		query = `
+		query = fmt.Sprintf(`
             SELECT 
                 id,
                 email_encrypted,
@@ -45,8 +46,8 @@ func (u *repository) GetPendingUser(ctx context.Context, emailHash string, provi
                 address2_encrypted,
                 encrypted_google_id,
                 dek_encrypted
-            FROM pending_users 
-            WHERE email_hash = $1;`
+            FROM %s
+            WHERE email_hash = $1;`, pg.QualifiedTable(u.schema, "pending_users"))
 		args = []any{
 			&user.ID,
 			&user.EmailEncrypted,
@@ -63,7 +64,7 @@ func (u *repository) GetPendingUser(ctx context.Context, emailHash string, provi
 			&user.DEKEncrypted,
 		}
 	case models.Apple:
-		query = `
+		query = fmt.Sprintf(`
             SELECT 
                 id,
                 email_encrypted,
@@ -78,8 +79,8 @@ func (u *repository) GetPendingUser(ctx context.Context, emailHash string, provi
                 address2_encrypted,
                 apple_id_encrypted,
                 dek_encrypted
-            FROM pending_users 
-            WHERE email_hash = $1;`
+            FROM %s
+            WHERE email_hash = $1;`, pg.QualifiedTable(u.schema, "pending_users"))
 		args = []any{
 			&user.ID,
 			&user.EmailEncrypted,
@@ -96,7 +97,7 @@ func (u *repository) GetPendingUser(ctx context.Context, emailHash string, provi
 			&user.DEKEncrypted,
 		}
 	case models.Mail:
-		query = `
+		query = fmt.Sprintf(`
             SELECT 
                 id,
                 email_encrypted,
@@ -110,8 +111,8 @@ func (u *repository) GetPendingUser(ctx context.Context, emailHash string, provi
                 address1_encrypted,
                 address2_encrypted,
                 dek_encrypted
-            FROM pending_users 
-            WHERE email_hash = $1;`
+            FROM %s
+            WHERE email_hash = $1;`, pg.QualifiedTable(u.schema, "pending_users"))
 		args = []any{
 			&user.ID,
 			&user.EmailEncrypted,

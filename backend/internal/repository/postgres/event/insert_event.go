@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/hengadev/leviosa/internal/domain/event/models"
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (e *repository) InsertEvent(
@@ -14,7 +16,7 @@ func (e *repository) InsertEvent(
 	tx *sql.Tx,
 	event *models.Event,
 ) error {
-	query := `INSERT INTO events (
+	query := fmt.Sprintf(`INSERT INTO %s (
                 id,
                 encrypted_title,
                 encrypted_description,
@@ -30,7 +32,7 @@ func (e *repository) InsertEvent(
                 day,
                 month,
                 year
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`, pg.QualifiedTable(e.schema, "events"))
 
 	result, err := tx.ExecContext(ctx, query,
 		event.ID,

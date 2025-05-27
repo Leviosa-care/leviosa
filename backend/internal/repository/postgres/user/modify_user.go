@@ -26,6 +26,7 @@ func (u *repository) ModifyAccount(
 	user *models.User,
 	whereMap map[string]any,
 ) error {
+	// TODO: in the domain, change the table to use the QualifiedTable function
 	query, values, writeUpdateErr := sqliteutil.WriteUpdateQuery(*user, whereMap)
 	fmt.Println("the query is:", query)
 	result, err := u.DB.ExecContext(ctx, query, values...)

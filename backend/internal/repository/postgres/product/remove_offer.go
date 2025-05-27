@@ -3,12 +3,15 @@ package productRepository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	rp "github.com/hengadev/leviosa/internal/repository"
+	"github.com/hengadev/leviosa/internal/repository/postgres"
 )
 
 func (p *repository) RemoveOffer(ctx context.Context, productID int) error {
-	result, err := p.DB.ExecContext(ctx, "DELETE FROM product_types WHERE id = $1;", productID)
+	query := fmt.Sprintf("DELETE FROM %s WHERE id = $1;", pg.QualifiedTable(p.schema, "product_types"))
+	result, err := p.DB.ExecContext(ctx, query, productID)
 	if err != nil {
 		switch {
 		case errors.Is(err, context.DeadlineExceeded), errors.Is(err, context.Canceled):
