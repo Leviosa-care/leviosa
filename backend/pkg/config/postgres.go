@@ -5,10 +5,11 @@ import (
 )
 
 type PostgresSecrets struct {
-	Host     string `json:"host"`
-	User     string `json:"user"`
-	Password string `json:"password"`
-	Port     int    `json:"port"`
+	Host     string `json:"postgres_host"`
+	User     string `json:"postgres_user"`
+	Password string `json:"postgres_password"`
+	Port     int    `json:"postgres_port"`
+	DB       string `json:"postgres_db"`
 }
 
 func (p PostgresSecrets) Validate() error {
@@ -18,6 +19,9 @@ func (p PostgresSecrets) Validate() error {
 	}
 	if p.User == "" {
 		errs.Set("postgres user", "postgres user cannot be empty")
+	}
+	if p.DB == "" {
+		errs.Set("postgres DB", "postgres DB cannot be empty")
 	}
 	if p.Port <= 0 || p.Port > 65535 {
 		errs.Set("postgres port", "postgres port must be between 1 and 65535")

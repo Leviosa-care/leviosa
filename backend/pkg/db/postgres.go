@@ -16,12 +16,12 @@ import (
 func Postgres(ctx context.Context, env envmode.Mode, conf *config.PostgresSecrets) (*sql.DB, error) {
 	var dsn string
 	dsn = fmt.Sprintf(
-		"postgres://%s:%s@localhost:%d/%s_%s?sslmode=disable",
+		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
 		conf.User,
 		conf.Password,
+		conf.Host,
 		conf.Port,
-		env.String(),
-		DefaultDB,
+		conf.DB,
 	)
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
