@@ -8,7 +8,8 @@ import (
 )
 
 type repository struct {
-	DB *sql.DB
+	DB     *sql.DB
+	schema string
 }
 
 func (u *repository) GetDB() *sql.DB {
@@ -16,5 +17,5 @@ func (u *repository) GetDB() *sql.DB {
 }
 
 func New(ctx context.Context, db *sql.DB) (*repository, error) {
-	return &repository{db}, nil
+	return &repository{DB: db, schema: "products"}, nil
 }
