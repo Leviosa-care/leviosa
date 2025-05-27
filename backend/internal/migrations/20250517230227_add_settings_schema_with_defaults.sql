@@ -20,13 +20,13 @@ CREATE TABLE settings.settings_encrypted (
 
 INSERT INTO settings.settings (key, value)
 VALUES 
-    ('company_name', '"leviosa"'),
-    ('support_email', '"contact@leviosa.care"'),
-    ('headquarters', '"27 rue du Faubourg-Montmartre, 75009 Paris"'),
-    ('instagram_path', '"https://www.instagram.com/leviosa_care"'),
-    ('otp_duration', '"15"'),
-    ('otp_length', '"6"'),
-    ('otp_max_attempts', '"3"');
+    ('company_name', 'leviosa'),
+    ('support_email', 'contact@leviosa.care'),
+    ('headquarters', '27 rue du Faubourg-Montmartre, 75009 Paris'),
+    ('instagram_path', 'https://www.instagram.com/leviosa_care'),
+    ('otp_duration', '15'),
+    ('otp_length', '6'),
+    ('otp_max_attempts', '3');
 -- +goose StatementEnd
 
 
