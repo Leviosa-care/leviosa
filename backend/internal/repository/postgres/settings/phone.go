@@ -39,6 +39,7 @@ func (r *repository) GetPhone(ctx context.Context) (*settings.SettingEncrypted[s
 			return nil, rp.NewDatabaseErr(err)
 		}
 	}
+	res.Key = settings.CompanyPhoneKey
 	return &res, nil
 }
 

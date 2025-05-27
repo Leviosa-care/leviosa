@@ -43,6 +43,7 @@ func (r *repository) GetInt(ctx context.Context, key string) (*settings.Setting[
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert retrieved string value into int")
 	}
+	res.Key = key
 	res.Value = value
 	return &res, nil
 }

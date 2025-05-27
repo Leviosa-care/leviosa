@@ -37,5 +37,6 @@ func (r *repository) GetString(ctx context.Context, key string) (*settings.Setti
 			return nil, rp.NewDatabaseErr(err)
 		}
 	}
+	res.Key = key
 	return &res, nil
 }
