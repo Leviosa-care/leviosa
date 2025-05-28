@@ -37,7 +37,7 @@ func (s *service) StartMailSettingConsumer(ctx context.Context, ch *amqp.Channel
 			log.Printf("Received message: %s", d.Body)
 			var payload rabbitmq.SettingsUpdatePayload
 			if err := json.Unmarshal(d.Body, &payload); err != nil {
-				logger.WarnContext(ctx, "failed to unmarshal message: %v", err)
+				logger.WarnContext(ctx, fmt.Sprintf("failed to unmarshal message: %s", err))
 				d.Nack(false, false) // Reject and don't requeue (for now, handle errors)
 				continue
 			}

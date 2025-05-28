@@ -53,12 +53,23 @@ func New(
 		return nil, domain.NewNotFoundErr(fmt.Errorf("company email used as 'from' header"))
 	}
 	from := fromSetting.Value
+	addressSetting, err := repo.GetString(ctx, settings.CompanyLegalAddressKey)
+	if err != nil {
+		return nil, domain.NewNotFoundErr(fmt.Errorf("company email used as 'address' header"))
+	}
+	address := addressSetting.Value
+
+	instaSetting, err := repo.GetString(ctx, settings.CompanyEmailKey)
+	if err != nil {
+		return nil, domain.NewNotFoundErr(fmt.Errorf("company email used as 'insta' header"))
+	}
+	insta := instaSetting.Value
 
 	logo, err := media.GetLogo(ctx)
 	if err != nil {
 		return nil, domain.NewNotFoundErr(fmt.Errorf("company logo used in email templates"))
 	}
-	cache := newCache(from, logo)
+	cache := newCache(from, insta, address, logo)
 	service := &service{
 		email:    email,
 		password: password,

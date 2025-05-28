@@ -7,14 +7,16 @@ type cache struct {
 	companyEmail        string
 	companyInstagram    string
 	companyLegalAddress string
-	logo                []byte
+	companyLogo         []byte
 }
 
 // Constructor
-func newCache(email string, logo []byte) *cache {
+func newCache(email, insta, address string, logo []byte) *cache {
 	return &cache{
-		companyEmail: email,
-		logo:         logo,
+		companyEmail:        email,
+		companyInstagram:    insta,
+		companyLegalAddress: address,
+		companyLogo:         logo,
 	}
 }
 
@@ -55,37 +57,37 @@ func (c *cache) setCompanyLegalAddress(addr string) {
 	c.companyLegalAddress = addr
 }
 
-// GetCompanyEmail retrieves the cached email
+// GetCompanyLegalAddress retrieves the cached email
 func (c *cache) getCompanyLegalAddress() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.companyLegalAddress
 }
 
-// SetCompanyEmail updates the cached email
+// setCompanyEmail updates the cached email
 func (c *cache) setCompanyEmail(email string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.companyEmail = email
 }
 
-// GetCompanyEmail retrieves the cached email
+// getCompanyEmail retrieves the cached email
 func (c *cache) getCompanyEmail() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.companyEmail
 }
 
-// SetLogo updates the cached logo
+// setLogo updates the cached logo
 func (c *cache) setLogo(logo []byte) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.logo = logo
+	c.companyLogo = logo
 }
 
-// GetLogo retrieves the cached logo
+// getLogo retrieves the cached logo
 func (c *cache) getLogo() []byte {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return c.logo
+	return c.companyLogo
 }
