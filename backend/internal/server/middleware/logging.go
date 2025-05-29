@@ -42,6 +42,7 @@ func AttachLogger(env envmode.Mode, slogHandler slog.Handler) func(http.Handler)
 			if IP == "" {
 				slog.ErrorContext(ctx, "client IP not found with required header")
 				http.Error(w, "Cannot determine Client IP", http.StatusBadRequest)
+				next.ServeHTTP(w, r)
 				return
 			}
 
@@ -49,6 +50,7 @@ func AttachLogger(env envmode.Mode, slogHandler slog.Handler) func(http.Handler)
 			if loggingSalt == "" {
 				slog.ErrorContext(ctx, "LOGGING_SALT not found in environment variables")
 				http.Error(w, "Missing environment variable: LOGGING_SALT", http.StatusInternalServerError)
+				next.ServeHTTP(w, r)
 				return
 			}
 

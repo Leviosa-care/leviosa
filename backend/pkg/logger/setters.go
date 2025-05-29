@@ -38,7 +38,7 @@ func SetOptions(env envmode.Mode, level, style *string) error {
 	var defaultLevel string
 	switch env {
 	case envmode.Prod:
-		defaultLevel = Error
+		defaultLevel = string(Error)
 	case envmode.Staging:
 		defaultLevel = string(Info)
 	case envmode.Dev:
