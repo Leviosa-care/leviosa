@@ -65,10 +65,11 @@ func New(
 	}
 	insta := instaSetting.Value
 
-	logo, err := media.GetLogo(ctx)
-	if err != nil {
-		return nil, domain.NewNotFoundErr(fmt.Errorf("company logo used in email templates"))
-	}
+	// logo, err := media.GetLogo(ctx)
+	// if err != nil {
+	// 	return nil, domain.NewNotFoundErr(fmt.Errorf("company logo used in email templates"))
+	// }
+	logo := []byte{}
 	cache := newCache(from, insta, address, logo)
 	service := &service{
 		email:    email,
