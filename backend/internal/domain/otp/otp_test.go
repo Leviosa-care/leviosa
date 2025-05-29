@@ -10,6 +10,7 @@ import (
 
 func TestIncreaseAttempt(t *testing.T) {
 	now := time.Now()
+	MaxOTPAttempts := 3
 	tests := []struct {
 		name             string
 		initialAttempts  int
@@ -43,15 +44,16 @@ func TestIncreaseAttempt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			duration := time.Duration(15 * time.Minute)
 			otp := &OTP{
 				Email:     "test@example.com",
 				Code:      "123456",
 				Attempts:  tt.initialAttempts,
-				ExpiresAt: now.Add(OTPDURATION),
+				ExpiresAt: now.Add(duration),
 				CreatedAt: now,
 			}
 
-			err := otp.increaseAttempt()
+			err := otp.increaseAttempt(3)
 
 			if tt.expectedError {
 				assert.Error(t, err, "Expected an error")

@@ -9,12 +9,6 @@ import (
 	"github.com/hengadev/leviosa/internal/domain"
 )
 
-// TODO: place that in settings
-const (
-	OTPDURATION    = 15 * time.Minute
-	MaxOTPAttempts = 3
-)
-
 type OTP struct {
 	Email         string    `json:"email" encx:"hash_basic"`
 	EmailHash     string    `json:"-"`
@@ -79,8 +73,8 @@ func (s *service) newOTP(email string) (*OTP, error) {
 	}, nil
 }
 
-func (o *OTP) increaseAttempt() error {
-	if o.Attempts+1 > MaxOTPAttempts {
+func (o *OTP) increaseAttempt(max int) error {
+	if o.Attempts+1 > max {
 		return domain.NewInvalidValueErr("max attempts reached for provided OTP")
 	}
 	o.Attempts++

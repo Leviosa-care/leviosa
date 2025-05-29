@@ -35,7 +35,7 @@ func (s *service) VerifyOTP(ctx context.Context, email string, value string) err
 	if time.Now().After(data.ExpiresAt) {
 		return domain.NewInvalidValueErr("expired OTP")
 	}
-	if data.Attempts >= MaxOTPAttempts {
+	if data.Attempts >= s.GetOTPMaxAttempts() {
 		// delete expired OTP
 		if err := s.repo.InvalidateOTP(ctx, emailHash); err != nil {
 			switch {

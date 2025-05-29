@@ -5,17 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"time"
 
-	"github.com/hengadev/leviosa/internal/domain/otp"
 	rp "github.com/hengadev/leviosa/internal/repository"
 
 	"github.com/redis/go-redis/v9"
 )
 
-func (o *Repository) SaveOTP(ctx context.Context, emailHash string, otpEncoded []byte) error {
+func (o *Repository) SaveOTP(ctx context.Context, emailHash string, otpEncoded []byte, duration time.Duration) error {
 	key := formatOTPKey(emailHash)
 
-	result := o.client.Set(ctx, key, otpEncoded, otpService.OTPDURATION)
+	result := o.client.Set(ctx, key, otpEncoded, duration)
 	if err := result.Err(); err != nil {
 		switch {
 		case errors.Is(err, redis.ErrClosed), errors.Is(err, &net.OpError{}):

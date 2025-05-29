@@ -6,13 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/hengadev/leviosa/internal/domain/otp"
 	rp "github.com/hengadev/leviosa/internal/repository"
 	"github.com/redis/go-redis/v9"
 )
 
-func (o *Repository) setOTP(ctx context.Context, key string, data *otpService.OTP) error {
+func (o *Repository) SetOTP(ctx context.Context, key string, data *otpService.OTP, duration time.Duration) error {
 	encoded, err := json.Marshal(data)
 	if err != nil {
 		return rp.NewDatabaseErr(fmt.Errorf("failed to encode OTP data: %w", err))
@@ -20,7 +21,7 @@ func (o *Repository) setOTP(ctx context.Context, key string, data *otpService.OT
 
 	// Use pipelines for atomic operations
 	pipe := o.client.Pipeline()
-	pipe.Set(ctx, key, encoded, otpService.OTPDURATION)
+	pipe.Set(ctx, key, encoded, duration)
 
 	// Execute pipeline
 	if _, err := pipe.Exec(ctx); err != nil {

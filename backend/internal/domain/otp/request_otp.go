@@ -34,7 +34,7 @@ func (s *service) RequestOTP(ctx context.Context, email string) (string, error) 
 		if err := s.crypto.DecryptStruct(ctx, otp); err != nil {
 			return "", domain.NewNotDecryptedErr("OTP", err)
 		}
-		if !isOTPExpired(otp) && encrypted.Attempts < MaxOTPAttempts {
+		if !s.isOTPExpired(otp) && encrypted.Attempts < s.GetOTPMaxAttempts() {
 			return "", domain.NewRateLimitErr(fmt.Errorf("OTP recently requested"), "otp")
 		}
 	}
@@ -50,7 +50,7 @@ func (s *service) RequestOTP(ctx context.Context, email string) (string, error) 
 	if err != nil {
 		return "", domain.NewJSONMarshalErr(err)
 	}
-	if err := s.repo.SaveOTP(ctx, otp.EmailHash, encoded); err != nil {
+	if err := s.repo.SaveOTP(ctx, otp.EmailHash, encoded, time.Duration(s.GetOTPDuration())); err != nil {
 		switch {
 		case errors.Is(err, rp.ErrNotCreated):
 			return "", domain.NewQueryFailedErr(err)
@@ -62,6 +62,6 @@ func (s *service) RequestOTP(ctx context.Context, email string) (string, error) 
 	return otp.Code, nil
 }
 
-func isOTPExpired(otp *OTP) bool {
-	return time.Since(otp.CreatedAt) > OTPDURATION
+func (s *service) isOTPExpired(otp *OTP) bool {
+	return time.Since(otp.CreatedAt) > time.Duration(s.GetOTPDuration())
 }

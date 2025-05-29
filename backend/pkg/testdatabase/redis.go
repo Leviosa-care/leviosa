@@ -12,24 +12,24 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-type TestDatabase struct {
+type Redis struct {
 	container testcontainers.Container
 	DB        *redis.Client
 }
 
-func NewTestDatabase(ctx context.Context) (*TestDatabase, error) {
+func NewRedis(ctx context.Context) (*Redis, error) {
 	// setup db container
 	container, dbConn, err := createContainer(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("createContainer: %w", err)
 	}
-	return &TestDatabase{
+	return &Redis{
 		container: container,
 		DB:        dbConn,
 	}, nil
 }
 
-func (tdb *TestDatabase) TearDown() {
+func (tdb *Redis) TearDown() {
 	tdb.DB.Close()
 	// remove test container
 	_ = tdb.container.Terminate(context.Background())
