@@ -30,6 +30,16 @@ func (c *cache) setOTPDuration(duration int) {
 	c.otpDuration = duration
 }
 
+func (s *service) GetOTPDuration() int {
+	return s.cache.getOTPDuration()
+}
+
+func (c *cache) getOTPDuration() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.otpDuration
+}
+
 func (s *service) SetOTPLength(length int) {
 	s.cache.setOTPLength(length)
 }
@@ -40,6 +50,16 @@ func (c *cache) setOTPLength(length int) {
 	c.otpLength = length
 }
 
+func (s *service) GetOTPLength() int {
+	return s.cache.getOTPLength()
+}
+
+func (c *cache) getOTPLength() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.otpLength
+}
+
 func (s *service) SetOTPMaxAttempts(maxAttempts int) {
 	s.cache.setOTPMaxAttempts(maxAttempts)
 }
@@ -48,4 +68,14 @@ func (c *cache) setOTPMaxAttempts(maxAttempts int) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.otpMaxAttempts = maxAttempts
+}
+
+func (s *service) GetOTPMaxAttempts() int {
+	return s.cache.getOTPMaxAttempts()
+}
+
+func (c *cache) getOTPMaxAttempts() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.otpMaxAttempts
 }

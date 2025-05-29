@@ -74,7 +74,7 @@ func (s *service) newOTP(email string) (*OTP, error) {
 		Code:      fmt.Sprintf("%06d", num),
 		Attempts:  1,
 		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(OTPDURATION),
+		ExpiresAt: time.Now().Add(time.Duration(s.GetOTPDuration())),
 		DEK:       dek,
 	}, nil
 }

@@ -58,7 +58,7 @@ func (s *service) VerifyOTP(ctx context.Context, email string, value string) err
 		if err != nil {
 			return domain.NewJSONMarshalErr(err)
 		}
-		if err := s.repo.SaveOTP(ctx, emailHash, dataBytes); err != nil {
+		if err := s.repo.SaveOTP(ctx, emailHash, dataBytes, time.Duration(s.GetOTPDuration())); err != nil {
 			switch {
 			case errors.Is(err, rp.ErrNotCreated):
 				return domain.NewNotCreatedErr(err)
