@@ -1,6 +1,7 @@
 package userHandler
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -13,6 +14,14 @@ import (
 	"github.com/hengadev/leviosa/pkg/jsonio"
 )
 
+type EmailRequest struct {
+	Email models.Email `json:"email"`
+}
+
+func (e EmailRequest) Valid(ctx context.Context) error {
+	return e.Email.Valid(ctx)
+}
+
 func (h *AppInstance) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger, err := ctxutil.GetLoggerFromContext(ctx)
@@ -21,7 +30,7 @@ func (h *AppInstance) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	data, err := jsonio.DecodeValid[models.Email](ctx, r.Body)
+	data, err := jsonio.DecodeValid[EmailRequest](ctx, r.Body)
 	if err != nil {
 		switch {
 		case errors.Is(err, jsonio.ErrDecodeJSON):
@@ -33,7 +42,7 @@ func (h *AppInstance) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	email := data.String()
+	email := data.Email.String()
 	if err := h.Svcs.User.CheckUser(ctx, email); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
