@@ -18,6 +18,7 @@ func SetUserContext(sessionGetter sessionGetterFunc) func(http.Handler) http.Han
 			exceptPath := []string{
 				"/healthz",
 				"/hello",
+				"/auth/email",
 				"/auth/register",
 				"/auth/validate-otp",
 				"/auth/approve-user",
