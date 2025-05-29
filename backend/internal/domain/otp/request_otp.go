@@ -50,7 +50,12 @@ func (s *service) RequestOTP(ctx context.Context, email string) (string, error) 
 	if err != nil {
 		return "", domain.NewJSONMarshalErr(err)
 	}
-	if err := s.repo.SaveOTP(ctx, otp.EmailHash, encoded, time.Duration(s.GetOTPDuration())); err != nil {
+	if err := s.repo.SaveOTP(
+		ctx,
+		otp.EmailHash,
+		encoded,
+		time.Duration(s.GetOTPDuration()*int(time.Minute)),
+	); err != nil {
 		switch {
 		case errors.Is(err, rp.ErrNotCreated):
 			return "", domain.NewQueryFailedErr(err)
@@ -58,7 +63,6 @@ func (s *service) RequestOTP(ctx context.Context, email string) (string, error) 
 			return "", domain.NewNotCreatedErr(err)
 		}
 	}
-
 	return otp.Code, nil
 }
 
