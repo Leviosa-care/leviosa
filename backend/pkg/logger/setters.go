@@ -38,10 +38,11 @@ func SetOptions(env envmode.Mode, level, style *string) error {
 	var defaultLevel string
 	switch env {
 	case envmode.Prod:
-		defaultLevel = string(Error)
-	case envmode.Staging:
 		defaultLevel = string(Info)
+	case envmode.Staging:
+		defaultLevel = string(Debug)
 	case envmode.Dev:
+		defaultLevel = string(Debug)
 	default:
 		return fmt.Errorf("APP_ENV does not exist")
 	}

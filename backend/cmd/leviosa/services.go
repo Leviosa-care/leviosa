@@ -57,11 +57,11 @@ func makeServices(
 	// crypto
 	kms, err := hashicorpvault.New()
 	if err != nil {
-		return appSvcs, appRepos, fmt.Errorf("creating vault: %w", err)
+		return appSvcs, appRepos, fmt.Errorf("create vault: %w", err)
 	}
 	crypto, err := encx.New(ctx, kms, KEKAlias, "secret/data/pepper")
 	if err != nil {
-		return appSvcs, appRepos, fmt.Errorf("creating crypto: %w", err)
+		return appSvcs, appRepos, fmt.Errorf("create crypto: %w", err)
 	}
 
 	// user

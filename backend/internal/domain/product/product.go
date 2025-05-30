@@ -19,7 +19,7 @@ func (p Product) Valid(ctx context.Context) error {
 		errs.Set("name", "cannot have an empty name")
 	}
 	if p.Description != "" {
-		errs.Set("name", "cannot have an empty description")
+		errs.Set("description", "cannot have an empty description")
 	}
 	return errs.AsError()
 }
