@@ -10,3 +10,7 @@ notes
 
 frontend/local.Dockerfile
 backend/local.Dockerfile
+
+.terraform/
+terraform.tfstate*
+terraform.tfvars
