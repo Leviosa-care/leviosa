@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"log/slog"
-	"math/rand"
 	"net/http"
 	"os"
 	"slices"
@@ -12,14 +11,16 @@ import (
 	"github.com/hengadev/leviosa/pkg/ctxutil"
 	"github.com/hengadev/leviosa/pkg/domainutil"
 	"github.com/hengadev/leviosa/pkg/envmode"
+
+	"github.com/google/uuid"
 )
 
-func AttachLogger(env envmode.Mode, slogHandler slog.Handler) func(http.Handler) http.Handler {
+func AttachLogger(env envmode.Mode, logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			skipLogging := []string{
 				"/healthz",
-				"/hello",
+				// "/hello",
 			}
 			if slices.Contains(skipLogging, r.URL.Path) {
 				next.ServeHTTP(w, r)
@@ -27,7 +28,7 @@ func AttachLogger(env envmode.Mode, slogHandler slog.Handler) func(http.Handler)
 			}
 			ctx := r.Context()
 
-			requestID := rand.Int63()
+			requestID := uuid.NewString()
 
 			IPHeader := os.Getenv("CLIENT_IP_HEADER")
 			// I just make a fake IP for now, I know my function to work:
@@ -40,38 +41,34 @@ func AttachLogger(env envmode.Mode, slogHandler slog.Handler) func(http.Handler)
 			}
 
 			if IP == "" {
-				slog.ErrorContext(ctx, "client IP not found with required header")
+				logger.ErrorContext(ctx, "client IP not found with required header")
 				http.Error(w, "Cannot determine Client IP", http.StatusBadRequest)
-				next.ServeHTTP(w, r)
 				return
 			}
 
 			loggingSalt := os.Getenv("LOGGING_SALT")
 			if loggingSalt == "" {
-				slog.ErrorContext(ctx, "LOGGING_SALT not found in environment variables")
+				logger.ErrorContext(ctx, "LOGGING_SALT not found in environment variables")
 				http.Error(w, "Missing environment variable: LOGGING_SALT", http.StatusInternalServerError)
-				next.ServeHTTP(w, r)
 				return
 			}
 
 			hashedIP := domainutil.HashWithSalt(IP, loggingSalt)
 
-			logger := slog.New(slogHandler)
-
-			logger = logger.With(
+			requestLogger := logger.With(
 				"method", r.Method,
 				"URL", r.URL.String(),
 				"IP", hashedIP,
 				"requestID", requestID,
 			)
 
-			ctx = context.WithValue(r.Context(), ctxutil.LoggerKey, logger)
+			ctx = context.WithValue(r.Context(), ctxutil.LoggerKey, requestLogger)
 
-			logger.InfoContext(ctx, "Request started")
+			requestLogger.InfoContext(ctx, "Request started")
 			start := time.Now()
 			next.ServeHTTP(w, r.WithContext(ctx))
 			duration := time.Since(start)
-			logger.InfoContext(ctx, "Request completed", "duration", duration)
+			requestLogger.InfoContext(ctx, "Request completed", "duration", duration)
 		})
 	}
 }
