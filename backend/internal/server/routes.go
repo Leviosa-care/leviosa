@@ -68,10 +68,10 @@ func (s *Server) addRoutes(h *app.App) {
 	// mux.Handle("POST /register/consultation", registerHandler.MakeRegistration())
 
 	// products
-	router.HandleFunc("POST /products", productHandler.CreateProduct)
+	router.HandleFunc("POST /admin/products", productHandler.CreateProduct)
 	router.HandleFunc("GET /products/{id}", productHandler.GetProduct)
-	router.HandleFunc("DELETE /products/{id}", productHandler.DeleteProduct)
-	router.HandleFunc("PUT /products/{id}", productHandler.UpdateProduct)
+	router.HandleFunc("DELETE /admin/products/{id}", productHandler.DeleteProduct)
+	router.HandleFunc("PUT /admin/products/{id}", productHandler.UpdateProduct)
 
 	// product types
 	router.HandleFunc("POST /product-types", productHandler.CreateOffer)
