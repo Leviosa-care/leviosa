@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/hengadev/leviosa/internal/domain/register"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -16,7 +17,7 @@ func (r *repository) GetDB() *sql.DB {
 	return r.DB
 }
 
-func New(ctx context.Context, db *sql.DB) (*repository, error) {
+func New(ctx context.Context, db *sql.DB) (registerService.ReadWriter, error) {
 	return &repository{DB: db, schema: "register"}, nil
 }
 

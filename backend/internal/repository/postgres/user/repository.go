@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/hengadev/leviosa/internal/domain/user"
+
 	_ "github.com/jackc/pgx"
 )
 
@@ -16,6 +18,6 @@ func (u *repository) GetDB() *sql.DB {
 	return u.DB
 }
 
-func New(ctx context.Context, db *sql.DB) (*repository, error) {
+func New(ctx context.Context, db *sql.DB) (userService.ReadWriter, error) {
 	return &repository{DB: db, schema: "users"}, nil
 }

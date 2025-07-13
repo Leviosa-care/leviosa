@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/hengadev/leviosa/internal/domain/event"
+
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -16,7 +18,7 @@ func (e *repository) GetDB() *sql.DB {
 	return e.DB
 }
 
-func New(ctx context.Context, db *sql.DB) (*repository, error) {
+func New(ctx context.Context, db *sql.DB) (eventService.ReadWriter, error) {
 
 	return &repository{DB: db, schema: "events"}, nil
 }

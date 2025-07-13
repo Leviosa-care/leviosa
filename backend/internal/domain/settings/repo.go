@@ -32,7 +32,7 @@ type mediaReadWriter interface {
 	mediaWriter
 }
 
-type readWriter interface {
+type ReadWriter interface {
 	Reader
 	writer
 	encryptedReadWriter
