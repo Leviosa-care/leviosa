@@ -9,15 +9,14 @@ type loggerStyle string
 
 const (
 	Info  loggerLevel = "info"
-	Debug             = "debug"
-	Error             = "error"
-	Warn              = "warn"
+	Debug loggerLevel = "debug"
+	Error loggerLevel = "error"
+	Warn  loggerLevel = "warn"
 )
-
 const (
 	JSON loggerStyle = "json"
-	Text             = "text"
-	Dev              = "dev"
+	Text loggerStyle = "text"
+	Dev  loggerStyle = "dev"
 )
 
 var loggerLevels = map[loggerLevel]slog.Level{
