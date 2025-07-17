@@ -1,4 +1,4 @@
-package mailService
+package notification
 
 import "sync"
 
@@ -20,19 +20,19 @@ func newCache(email, insta, address string, logo []byte) *cache {
 	}
 }
 
-func (s *service) SetCompanyEmail(email string) {
+func (s *mailService) SetCompanyEmail(email string) {
 	s.cache.setCompanyEmail(email)
 }
 
-func (s *service) SetLogo(logo []byte) {
+func (s *mailService) SetLogo(logo []byte) {
 	s.cache.setLogo(logo)
 }
 
-func (s *service) GetCompanyLegalAddress(addr string) {
+func (s *mailService) GetCompanyLegalAddress(addr string) {
 	s.cache.setCompanyLegalAddress(addr)
 }
 
-func (s *service) GetCompanyInstagram(insta string) {
+func (s *mailService) GetCompanyInstagram(insta string) {
 	s.cache.setCompanyInstagram(insta)
 }
 

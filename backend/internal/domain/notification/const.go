@@ -1,4 +1,4 @@
-package mailService
+package notification
 
 import (
 	"embed"

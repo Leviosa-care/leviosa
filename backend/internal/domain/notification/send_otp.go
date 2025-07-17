@@ -1,11 +1,11 @@
-package mailService
+package notification
 
 import (
 	"context"
 	"time"
 )
 
-func (s *service) SendOTP(ctx context.Context, email string, otp string) error {
+func (s *mailService) SendOTP(ctx context.Context, email string, otp string) error {
 	legalAddress := s.cache.getCompanyLegalAddress()
 	companyInstagram := s.cache.getCompanyInstagram()
 	data := struct {

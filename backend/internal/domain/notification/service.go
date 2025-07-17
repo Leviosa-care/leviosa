@@ -1,4 +1,4 @@
-package mailService
+package notification
 
 import (
 	"context"
@@ -11,9 +11,26 @@ import (
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/twilio/twilio-go"
+	openapi "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
 type Service interface {
+	MailService
+	SMSClient
+}
+
+type SMSClient interface {
+	SendSMS(ctx context.Context, phone, message string) error
+}
+
+type smsClient struct {
+	*openapi.ApiService
+	sender     string
+	accountSid string
+}
+
+type MailService interface {
 	// main
 	HandlePasswordForgotten(ctx context.Context, to string) error
 	NewEvent(ctx context.Context, users []*models.User, eventTime string) error
@@ -27,17 +44,28 @@ type Service interface {
 	SetLogo(logo []byte)
 }
 
-type service struct {
+type mailService struct {
 	email    string
 	password string
 	cache    *cache
 }
 
-func New(
+type service struct {
+	*mailService
+	*smsClient
+}
+
+// type service struct {
+// 	mailService
+// 	smsClient
+// }
+
+func New2(
 	ctx context.Context,
 	repo settings.Reader,
 	media settings.MediaReader,
 	rabbitConn *amqp.Connection,
+	accountSid, authToken string,
 	// ch *amqp.Channel,
 ) (Service, error) {
 	email := os.Getenv("GMAIL_EMAIL")
@@ -71,7 +99,7 @@ func New(
 	// }
 	logo := []byte{}
 	cache := newCache(from, insta, address, logo)
-	service := &service{
+	mailSvc := mailService{
 		email:    email,
 		password: password,
 		cache:    cache,
@@ -80,6 +108,24 @@ func New(
 	if err != nil {
 		return nil, domain.NewNotCreatedErr(fmt.Errorf("consumer channel for mail service"))
 	}
-	service.StartMailSettingConsumer(ctx, ch)
-	return service, nil
+	mailSvc.StartMailSettingConsumer(ctx, ch)
+
+	// sms service
+	c := twilio.NewRestClientWithParams(twilio.ClientParams{
+		Username: accountSid,
+		Password: authToken,
+	})
+	sender := os.Getenv("TWILIO_PHONE_NUMBER")
+	if sender == "" {
+		return nil, domain.NewNotFoundErr(fmt.Errorf("environment variable 'TWILIO_PHONE_NUMBER'"))
+	}
+
+	return service{
+		mailService: &mailSvc,
+		smsClient: &smsClient{
+			ApiService: c.Api,
+			sender:     sender,
+			accountSid: accountSid,
+		},
+	}, nil
 }

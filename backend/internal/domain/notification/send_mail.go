@@ -1,4 +1,4 @@
-package mailService
+package notification
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func (s *service) sendMail(ctx context.Context, to, subject, templateFilename string, data any, carbonCopy, images map[string]string) error {
+func (s *mailService) sendMail(ctx context.Context, to, subject, templateFilename string, data any, carbonCopy, images map[string]string) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", s.cache.companyEmail)
 	m.SetHeader("To", to)

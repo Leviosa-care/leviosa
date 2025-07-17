@@ -1,4 +1,4 @@
-package mailService
+package notification
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 )
 
 // Function that send an email to user after receiving payment.
-func (s *service) NewVote(ctx context.Context, user *models.User, eventTime string) error {
+func (s *mailService) NewVote(ctx context.Context, user *models.User, eventTime string) error {
 	var errs errsx.Map
 
 	templData := struct {

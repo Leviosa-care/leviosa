@@ -1,4 +1,4 @@
-package mailService
+package notification
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 // Send an email to all users notifying new event creation.
-func (s *service) NewEvent(ctx context.Context, users []*models.User, eventTime string) error {
+func (s *mailService) NewEvent(ctx context.Context, users []*models.User, eventTime string) error {
 	var errs errsx.Map
 	var wg sync.WaitGroup
 	var errMutex sync.Mutex

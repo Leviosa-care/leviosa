@@ -1,4 +1,4 @@
-package mailService
+package notification
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 )
 
 // Function that send an email to user to remind them of an event incoming.
-func (s *service) SendRegistrationReminderEmail(ctx context.Context, user *models.User, registrationName string, daysLeft int) error {
+func (s *mailService) SendRegistrationReminderEmail(ctx context.Context, user *models.User, registrationName string, daysLeft int) error {
 	// TODO: Add the call to a certain function to handle using that value
 	var errs errsx.Map
 	switch daysLeft {

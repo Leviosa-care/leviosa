@@ -1,4 +1,4 @@
-package mailService
+package notification
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/hengadev/errsx"
 )
 
-func (s *service) NewPayment(ctx context.Context, user *models.User, eventTime string) error {
+func (s *mailService) NewPayment(ctx context.Context, user *models.User, eventTime string) error {
 	var errs errsx.Map
 	return errs.AsError()
 }

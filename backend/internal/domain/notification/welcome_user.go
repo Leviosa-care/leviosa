@@ -1,12 +1,11 @@
-package mailService
+package notification
 
 import (
 	"context"
 	"time"
 )
 
-func (s *service) WelcomeUser(ctx context.Context, email string) error {
-	// where to get that thing
+func (s *mailService) WelcomeUser(ctx context.Context, email string) error {
 	type WelcomeMailService struct {
 		Title       string
 		Description string
