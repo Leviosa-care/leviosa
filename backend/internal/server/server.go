@@ -23,6 +23,8 @@ func New(
 ) *Server {
 
 	// build server with default options.
+	logger := slog.New(slogHandler)
+	slog.SetDefault(logger)
 	server := &Server{
 		srv: &http.Server{
 			// might need to change the values of the timeouts
@@ -44,7 +46,7 @@ func New(
 	// add middlewares common to all routes. [Order important]
 	server.Use(
 		mw.SetUserContext(appCtx.Svcs.Session.GetSession),
-		mw.AttachLogger(env, slogHandler),
+		mw.AttachLogger(env, logger),
 		mw.SetOrigin,
 	)
 	return server

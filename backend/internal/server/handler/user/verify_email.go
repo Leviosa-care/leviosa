@@ -30,6 +30,8 @@ func (h *AppInstance) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	logger.Info("here is some Info message")
+	logger.Debug("here is some Debug message")
 	data, err := jsonio.DecodeValid[EmailRequest](ctx, r.Body)
 	if err != nil {
 		switch {
@@ -46,8 +48,10 @@ func (h *AppInstance) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	if err := h.Svcs.User.CheckUser(ctx, email); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
+			print("email not found\n")
 			otp, err := h.Svcs.OTP.RequestOTP(ctx, email)
 			if err != nil {
+				print("error request OTP:", err.Error(), "\n")
 				switch {
 				case errors.Is(err, domain.ErrQueryFailed):
 					logger.WarnContext(ctx, "context error, deadline or timeout while checking for user existence", "error", err)
@@ -73,10 +77,12 @@ func (h *AppInstance) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 				}
 				return
 			}
+			print("otp found:", otp, "\n")
 			if err := h.Svcs.Mail.SendOTP(ctx, email, otp); err != nil {
 				logger.WarnContext(ctx, "failed to send mail with OTP to specified user", "error", err)
 				http.Error(w, handler.NewInternalErr(err), http.StatusInternalServerError)
 			}
+			print("otp sent to mail \n")
 			logger.InfoContext(ctx, "OTP generated and send for unverified user")
 			w.WriteHeader(http.StatusOK)
 			return

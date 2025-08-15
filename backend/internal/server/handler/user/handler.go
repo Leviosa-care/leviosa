@@ -1,4 +1,4 @@
-package healthHandler
+package userHandler
 
 import (
 	"github.com/hengadev/leviosa/internal/server/app"

@@ -9,7 +9,7 @@ import (
 	"github.com/hengadev/leviosa/pkg/ctxutil"
 )
 
-func (h *AppInstance) CheckHealth(w http.ResponseWriter, r *http.Request) {
+func (h *handler) CheckHealth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger, err := ctxutil.GetLoggerFromContext(ctx)
 	if err != nil {

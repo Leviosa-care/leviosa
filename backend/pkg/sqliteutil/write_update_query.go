@@ -35,7 +35,7 @@ func WriteUpdateQuery[T SQLMappable](
 				continue
 			}
 			column := object.GetSQLColumnMapping()[f.Name]
-			tables = append(tables, placeholder(column))
+			tables = append(tables, slqitePlaceholder(column))
 			values = append(values, value.Interface())
 		}
 	}
@@ -44,7 +44,7 @@ func WriteUpdateQuery[T SQLMappable](
 	var wherePlaceholder []string
 	for key, value := range whereMap {
 		minKey := strings.ToLower(key)
-		wherePlaceholder = append(wherePlaceholder, placeholder(minKey))
+		wherePlaceholder = append(wherePlaceholder, slqitePlaceholder(minKey))
 		values = append(values, value)
 	}
 	query += strings.Join(wherePlaceholder, " AND ") + ";"
@@ -54,8 +54,12 @@ func WriteUpdateQuery[T SQLMappable](
 	return query, values, errs.AsError()
 }
 
-func placeholder(name string) string {
+func slqitePlaceholder(name string) string {
 	return fmt.Sprintf("%s=?", name)
+}
+
+func postgresPlaceholder(index int) string {
+	return fmt.Sprintf("$%d", index)
 }
 
 // Helper function to check if a struct field belongs to a list of strings provided.

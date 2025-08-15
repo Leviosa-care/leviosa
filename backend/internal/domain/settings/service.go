@@ -30,13 +30,13 @@ type Service interface { // getters
 }
 
 type service struct {
-	repo         readWriter
+	repo         ReadWriter
 	media        mediaReadWriter
 	crypto       encx.CryptoService
 	rabbitMQConn *amqp.Connection
 }
 
-func New(repo readWriter, media mediaReadWriter, crypto encx.CryptoService, rabbitMQConn *amqp.Connection) Service {
+func New(repo ReadWriter, media mediaReadWriter, crypto encx.CryptoService, rabbitMQConn *amqp.Connection) Service {
 	return &service{
 		repo:         repo,
 		media:        media,

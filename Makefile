@@ -30,4 +30,9 @@ test-unit:## Run unit test for application
 
 test-integration:## Run integration test for application
 
+up:
+	docker compose -f local.compose.yaml up
+
+down:
+	docker compose -f local.compose.yaml down
 

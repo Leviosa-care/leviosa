@@ -27,7 +27,9 @@ func NewValidStructErr(structName string) error {
 func Decode[T any](body io.ReadCloser) (T, error) {
 	var res T
 	defer body.Close()
-	if err := json.NewDecoder(body).Decode(&res); err != nil {
+	decoder := json.NewDecoder(body)
+	decoder.DisallowUnknownFields() // Prevent clients from sending unexpected fields
+	if err := decoder.Decode(&res); err != nil {
 		return res, NewDecodeJSONErr(err)
 	}
 	return res, nil

@@ -21,7 +21,7 @@ func (u *repository) HasUser(ctx context.Context, emailHash string) error {
 	query := fmt.Sprintf(`
         SELECT EXISTS (
             SELECT 1 
-            FROM users.users 
+            FROM %s
             WHERE email_hash = $1
         );`, pg.QualifiedTable(u.schema, "users"))
 	var exists bool
