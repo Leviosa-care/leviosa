@@ -1,0 +1,299 @@
+package testdata
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"testing"
+	"time"
+
+	"github.com/Leviosa-care/core/contracts/settings"
+	td "github.com/Leviosa-care/settings/test/testdata"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestBulkSettingsHandler(t *testing.T) {
+	ctx := context.Background()
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	t.Run("should return 400 when keys parameter is missing", func(t *testing.T) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/settings/bulk", nil)
+		require.NoError(t, err)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("should return 400 when keys parameter is empty", func(t *testing.T) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/settings/bulk?keys=", nil)
+		require.NoError(t, err)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("should successfully retrieve single setting", func(t *testing.T) {
+		td.ClearAllTestData(t, ctx, testPool)
+
+		// Setup: Insert company name
+		td.InsertCompanyName(t, ctx, "Test Company", testPool)
+
+		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, []string{settings.CompanyName})
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var response []settings.SettingDTO
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		require.Len(t, response, 1)
+		assert.Equal(t, settings.CompanyName, response[0].Key)
+		assert.Equal(t, "Test Company", response[0].Value)
+	})
+
+	t.Run("should successfully retrieve multiple settings", func(t *testing.T) {
+		td.ClearAllTestData(t, ctx, testPool)
+
+		// Setup: Insert multiple settings
+		td.InsertCompanyName(t, ctx, "Bulk Test Company", testPool)
+		td.InsertCompanyEmail(t, ctx, "bulk@test.com", testPool)
+		td.InsertCompanyAddress(t, ctx, "123 Bulk Test St", testPool)
+		td.InsertOTPDuration(t, ctx, 10, testPool)
+		td.InsertOTPLength(t, ctx, 8, testPool)
+		td.InsertOTPMaxAttempts(t, ctx, 5, testPool)
+
+		keys := []string{
+			settings.CompanyName,
+			settings.CompanyEmail,
+			settings.CompanyLegalAddress,
+			settings.OTPDuration,
+			settings.OTPLength,
+			settings.OTPMaxAttempts,
+		}
+
+		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var response []settings.SettingDTO
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		require.Len(t, response, 6)
+
+		// Create a map for easier verification
+		responseMap := make(map[string]string)
+		for _, setting := range response {
+			responseMap[setting.Key] = setting.Value
+		}
+
+		assert.Equal(t, "Bulk Test Company", responseMap[settings.CompanyName])
+		assert.Equal(t, "bulk@test.com", responseMap[settings.CompanyEmail])
+		assert.Equal(t, "123 Bulk Test St", responseMap[settings.CompanyLegalAddress])
+		assert.Equal(t, "10", responseMap[settings.OTPDuration])
+		assert.Equal(t, "8", responseMap[settings.OTPLength])
+		assert.Equal(t, "5", responseMap[settings.OTPMaxAttempts])
+	})
+
+	t.Run("should handle partial success with some invalid keys", func(t *testing.T) {
+		td.ClearAllTestData(t, ctx, testPool)
+
+		// Setup: Insert only some settings
+		td.InsertCompanyName(t, ctx, "Partial Test Company", testPool)
+		td.InsertOTPLength(t, ctx, 6, testPool)
+
+		keys := []string{
+			settings.CompanyName,    // exists
+			"invalid_key",          // invalid
+			settings.OTPLength,     // exists
+			settings.CompanyEmail,  // doesn't exist (not set)
+		}
+
+		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusMultiStatus, resp.StatusCode)
+
+		var response struct {
+			Data   []settings.SettingDTO `json:"data"`
+			Errors map[string]any        `json:"errors"`
+		}
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		// Should have 2 successful settings
+		require.Len(t, response.Data, 2)
+		
+		// Create a map for easier verification
+		dataMap := make(map[string]string)
+		for _, setting := range response.Data {
+			dataMap[setting.Key] = setting.Value
+		}
+		
+		assert.Equal(t, "Partial Test Company", dataMap[settings.CompanyName])
+		assert.Equal(t, "6", dataMap[settings.OTPLength])
+
+		// Should have 2 errors
+		require.Len(t, response.Errors, 2)
+		assert.Contains(t, response.Errors, "invalid_key")
+		assert.Contains(t, response.Errors, settings.CompanyEmail)
+	})
+
+	t.Run("should handle all invalid keys", func(t *testing.T) {
+		keys := []string{"invalid_key1", "invalid_key2"}
+
+		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusMultiStatus, resp.StatusCode)
+
+		var response struct {
+			Data   []settings.SettingDTO `json:"data"`
+			Errors map[string]any        `json:"errors"`
+		}
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		// Should have no successful settings
+		assert.Len(t, response.Data, 0)
+
+		// Should have 2 errors
+		require.Len(t, response.Errors, 2)
+		assert.Contains(t, response.Errors, "invalid_key1")
+		assert.Contains(t, response.Errors, "invalid_key2")
+	})
+
+	t.Run("should handle missing settings with not found errors", func(t *testing.T) {
+		td.ClearAllTestData(t, ctx, testPool)
+
+		keys := []string{
+			settings.CompanyName,
+			settings.CompanyEmail,
+			settings.OTPDuration,
+		}
+
+		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusMultiStatus, resp.StatusCode)
+
+		var response struct {
+			Data   []settings.SettingDTO `json:"data"`
+			Errors map[string]any        `json:"errors"`
+		}
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		// Should have no successful settings
+		assert.Len(t, response.Data, 0)
+
+		// Should have 3 not found errors
+		require.Len(t, response.Errors, 3)
+		assert.Contains(t, response.Errors, settings.CompanyName)
+		assert.Contains(t, response.Errors, settings.CompanyEmail)
+		assert.Contains(t, response.Errors, settings.OTPDuration)
+	})
+
+	t.Run("should handle duplicate keys in request", func(t *testing.T) {
+		td.ClearAllTestData(t, ctx, testPool)
+
+		// Setup: Insert company name
+		td.InsertCompanyName(t, ctx, "Duplicate Test Company", testPool)
+
+		keys := []string{
+			settings.CompanyName,
+			settings.CompanyName, // duplicate
+			settings.CompanyName, // another duplicate
+		}
+
+		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var response []settings.SettingDTO
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		// Should return the setting multiple times (once for each key in the request)
+		require.Len(t, response, 3)
+		for _, setting := range response {
+			assert.Equal(t, settings.CompanyName, setting.Key)
+			assert.Equal(t, "Duplicate Test Company", setting.Value)
+		}
+	})
+
+	t.Run("should handle all supported setting types", func(t *testing.T) {
+		td.ClearAllTestData(t, ctx, testPool)
+
+		// Setup: Insert all types of settings
+		td.InsertCompanyName(t, ctx, "All Types Company", testPool)
+		td.InsertCompanyEmail(t, ctx, "all@types.com", testPool)
+		td.InsertCompanyAddress(t, ctx, "456 All Types Ave", testPool)
+		td.InsertCompanyInstagram(t, ctx, "https://instagram.com/alltypes", testPool)
+		td.InsertOTPDuration(t, ctx, 20, testPool)
+		td.InsertOTPLength(t, ctx, 4, testPool)
+		td.InsertOTPMaxAttempts(t, ctx, 7, testPool)
+
+		// Note: CompanyPhone and CompanyLogo are not included as they require special setup
+
+		keys := []string{
+			settings.CompanyName,
+			settings.CompanyEmail,
+			settings.CompanyLegalAddress,
+			settings.CompanyInstagram,
+			settings.OTPDuration,
+			settings.OTPLength,
+			settings.OTPMaxAttempts,
+		}
+
+		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var response []settings.SettingDTO
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		require.Len(t, response, 7)
+
+		// Create a map for easier verification
+		responseMap := make(map[string]string)
+		for _, setting := range response {
+			responseMap[setting.Key] = setting.Value
+		}
+
+		assert.Equal(t, "All Types Company", responseMap[settings.CompanyName])
+		assert.Equal(t, "all@types.com", responseMap[settings.CompanyEmail])
+		assert.Equal(t, "456 All Types Ave", responseMap[settings.CompanyLegalAddress])
+		assert.Equal(t, "https://instagram.com/alltypes", responseMap[settings.CompanyInstagram])
+		assert.Equal(t, "20", responseMap[settings.OTPDuration])
+		assert.Equal(t, "4", responseMap[settings.OTPLength])
+		assert.Equal(t, "7", responseMap[settings.OTPMaxAttempts])
+	})
+}
