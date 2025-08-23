@@ -117,7 +117,7 @@ export const admin: IconsByRole = {
 
 export const navigationBarIcons: NavigationBarIcons = {
     visitor,
-    basic,
+    standard,
     premium,
     guest,
     partners,
