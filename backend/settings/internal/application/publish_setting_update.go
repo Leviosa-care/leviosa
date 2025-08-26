@@ -18,7 +18,7 @@ func (s *SettingsService) PublishSettingUpdate(ctx context.Context, key string, 
 	}
 	defer ch.Close()
 
-	payload := rabbitmq.SettingsUpdatePayload{
+	payload := rabbitmq.UpdatePayload{
 		Key:   key,
 		Value: value,
 	}

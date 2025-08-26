@@ -42,3 +42,4 @@ func ClassifyPgError(operation string, err error) error {
 	// (e.g., a context error or a network issue).
 	return fmt.Errorf("%s: %w: %w", operation, ErrDBQuery, err)
 }
+

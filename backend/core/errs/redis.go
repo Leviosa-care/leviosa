@@ -77,4 +77,3 @@ func containsAny(s string, substrings []string) bool {
 	}
 	return false
 }
-
