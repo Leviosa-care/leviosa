@@ -9,23 +9,9 @@ import (
 )
 
 func Setup(ctx context.Context, ch *amqp.Channel) error {
-	if err := setupSettingsExchange(ch); err != nil {
-		return err
-	}
-	if err := setupSettingsQueues(ch); err != nil {
-		return err
-	}
-	return nil
-}
-
-func setupSettingsExchange(ch *amqp.Channel) error {
 	if err := rabbitmq.DeclareExchange(ch, mq.SettingsExchangeName, "direct"); err != nil {
 		return err
 	}
-	return nil
-}
-
-func setupSettingsQueues(ch *amqp.Channel) error {
 	// Declare the queue for mail service settings updates
 	if err := rabbitmq.DeclareQueue(ch, mq.NotificationSettingsQueueName); err != nil {
 		return err
