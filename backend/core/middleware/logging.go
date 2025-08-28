@@ -12,9 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hengadev/leviosa/pkg/ctxutil"
-	"github.com/hengadev/leviosa/pkg/domainutil"
-	"github.com/hengadev/leviosa/pkg/envmode"
+	"crypto/sha256"
+	"encoding/hex"
+
+	"github.com/Leviosa-care/core/ctxutil"
+	"github.com/Leviosa-care/core/envmode"
 
 	"github.com/google/uuid"
 )
@@ -95,7 +97,7 @@ func evictOldestFromCache() {
 // extractClientIP extracts client IP from request headers with fallbacks and security validation
 func extractClientIP(r *http.Request, env envmode.Mode, headers []string) string {
 	// In development, always use remote address
-	if env == envmode.Development {
+	if env == envmode.Dev {
 		host, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
 			return sanitizeIP(r.RemoteAddr)
@@ -139,9 +141,10 @@ func getHashedIP(ip, salt string) string {
 	}
 	cacheMutex.RUnlock()
 
-	// Hash IP with salt for privacy compliance
-	hasher := domainutil.NewHasher(salt)
-	hashed := hasher.Hash(ip)
+	// Hash IP with salt for privacy compliance using SHA-256
+	data := fmt.Sprintf("%s:%s", ip, salt)
+	hash := sha256.Sum256([]byte(data))
+	hashed := hex.EncodeToString(hash[:])
 
 	// Cache the result with size management
 	cacheMutex.Lock()
@@ -238,11 +241,11 @@ func AttachLoggerWithConfig(env envmode.Mode, logger *slog.Logger, config *Loggi
 
 			// Validate salt security requirements
 			if loggingSalt != "" && !isValidSalt(loggingSalt) {
-				if env != envmode.Development {
+				if env != envmode.Dev {
 					logger.WarnContext(ctx, "LOGGING_SALT too short for security requirements - IP addresses will be masked instead of hashed")
 				}
 				loggingSalt = "" // Clear invalid salt to force masking
-			} else if loggingSalt == "" && env != envmode.Development {
+			} else if loggingSalt == "" && env != envmode.Dev {
 				logger.WarnContext(ctx, "LOGGING_SALT not configured - IP addresses will be masked instead of hashed")
 			}
 
