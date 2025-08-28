@@ -22,6 +22,15 @@ var (
 	ErrNotNullViolation    = errors.New("not null constraint violation")
 	ErrUniqueViolation     = errors.New("unique constraint violation")
 	ErrCheckViolation      = errors.New("check constraint violation")
+	
+	// Connection and infrastructure errors
+	ErrConnectionFailure   = errors.New("database connection failure")
+	ErrTooManyConnections  = errors.New("too many database connections")
+	ErrQueryCancelled      = errors.New("query was cancelled")
+	ErrTransactionFailure  = errors.New("transaction failure")
+	ErrDeadlock            = errors.New("database deadlock detected")
+	ErrPermissionDenied    = errors.New("insufficient database permissions")
+	ErrResourceExhausted   = errors.New("database resources exhausted")
 
 	// Wrapper for query execution problems
 	ErrDBQuery = errors.New("database query execution error")
