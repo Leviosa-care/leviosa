@@ -16,9 +16,9 @@ type User struct {
 	PasswordHash        string    `json:"-"`
 	Picture             string    `json:"picture" encx:"encrypt"`
 	PictureEncrypted    []byte    `json:"-"`
-	CreatedAt           time.Time `json:"created_at"`
+	CreatedAt           time.Time `json:"created_at" encx:"encrypt"`
 	CreatedAtEncrypted  []byte    `json:"-"`
-	LoggedInAt          time.Time `json:"logged_in_at"`
+	LoggedInAt          time.Time `json:"logged_in_at" encx:"encrypt"`
 	LoggedInAtEncrypted []byte    `json:"-"`
 	Role                string    `json:"-" encx:"encrypt"`
 	RoleEncrypted       []byte    `json:"-"`
