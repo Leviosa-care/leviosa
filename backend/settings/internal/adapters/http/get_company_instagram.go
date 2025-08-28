@@ -2,15 +2,22 @@ package http
 
 import (
 	"errors"
-	"log"
+	"fmt"
 	"net/http"
 
+	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/httpx"
 )
 
 func (h *handler) GetCompanyInstagram(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
 
 	response, err := h.svc.GetCompanyInstagram(ctx)
 	if err != nil {
@@ -20,10 +27,10 @@ func (h *handler) GetCompanyInstagram(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, errs.ErrDomainNotFound):
 			httpx.RespondWithError(w, err, http.StatusNotFound)
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during company instagram retrieval: %v", err)
+			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Internal server error during company instagram retrieval: %v", err))
 			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 		default:
-			log.Printf("Handler: Unhandled error from service during company instagram retrieval: %v", err)
+			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Unhandled error from service during company instagram retrieval: %v", err))
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
@@ -31,3 +38,4 @@ func (h *handler) GetCompanyInstagram(w http.ResponseWriter, r *http.Request) {
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }
+

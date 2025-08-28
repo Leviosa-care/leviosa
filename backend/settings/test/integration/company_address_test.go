@@ -65,11 +65,11 @@ func TestSetCompanyAddress(t *testing.T) {
 
 	t.Run("should successfully set company address", func(t *testing.T) {
 		td.ClearSettingsTable(t, ctx, testPool)
-		
+
 		// Create a test channel for RabbitMQ verification
 		testCh := td.GetRabbitMQChannel(t, testMQConn)
 		defer testCh.Close()
-		
+
 		// Purge queues to ensure clean state
 		td.PurgeSettingsQueues(t, testCh)
 

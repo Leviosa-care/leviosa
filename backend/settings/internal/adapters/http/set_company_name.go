@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/Leviosa-care/settings/internal/domain"
 
+	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/httpx"
 )
@@ -21,11 +21,17 @@ func (h *handler) SetCompanyName(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
 	var request domain.SetCompanyNameRequest
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&request); err != nil {
-		log.Printf("Handler: Error decoding JSON body: %v", err)
+		logger.ErrorContext(ctx, fmt.Sprintf("Handler: Error decoding JSON body: %v", err))
 		httpx.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("invalid request body: %v", err)), http.StatusBadRequest)
 		return
 	}
@@ -36,10 +42,10 @@ func (h *handler) SetCompanyName(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, errs.ErrInvalidValue):
 			httpx.RespondWithError(w, err, http.StatusBadRequest)
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during company name update: %v", err)
+			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Internal server error during company name update: %v", err))
 			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 		default:
-			log.Printf("Handler: Unhandled error from service during company name update: %v", err)
+			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Unhandled error from service during company name update: %v", err))
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
@@ -47,3 +53,4 @@ func (h *handler) SetCompanyName(w http.ResponseWriter, r *http.Request) {
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }
+

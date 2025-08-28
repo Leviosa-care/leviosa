@@ -3,9 +3,9 @@ package http
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
+	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/httpx"
 )
@@ -13,10 +13,16 @@ import (
 func (h *handler) SetCompanyLogo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	const maxFormMemory = 32 << 20             // 32 MB
-	err := r.ParseMultipartForm(maxFormMemory) // 32 MB max memory buffer
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
 	if err != nil {
-		log.Printf("Handler: Error parsing multipart form: %v", err)
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	const maxFormMemory = 32 << 20            // 32 MB
+	err = r.ParseMultipartForm(maxFormMemory) // 32 MB max memory buffer
+	if err != nil {
+		logger.DebugContext(ctx, fmt.Sprintf("Handler: Error parsing multipart form: %v", err))
 		httpx.RespondWithError(w, errors.New("failed to parse form data, request too large or invalid"), http.StatusBadRequest)
 		return
 	}
@@ -27,7 +33,7 @@ func (h *handler) SetCompanyLogo(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, http.ErrMissingFile) {
 			httpx.RespondWithError(w, errors.New("required form file 'image' is missing"), http.StatusBadRequest)
 		} else {
-			log.Printf("Handler: Error retrieving form file: %v", err)
+			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Error retrieving form file: %v", err))
 			httpx.RespondWithError(w, errors.New("failed to retrieve form file"), http.StatusBadRequest)
 		}
 		return
@@ -45,15 +51,15 @@ func (h *handler) SetCompanyLogo(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, errs.ErrExternalService):
 			httpx.RespondWithError(w, fmt.Errorf("failed to upload image due to an external service error: %w", err), http.StatusServiceUnavailable)
 		case errors.Is(err, errs.ErrUnexpectedError), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during image upload: %v", err)
+			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Internal server error during image upload: %v", err))
 			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 		default:
-			log.Printf("Handler: Unhandled error from service during image upload: %v", err)
+			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Unhandled error from service during image upload: %v", err))
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	log.Printf("Handler: Image created successfully.")
+	logger.InfoContext(ctx, fmt.Sprintf("Handler: Image created successfully."))
 }
