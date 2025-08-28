@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"strings"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -14,20 +16,46 @@ func ClassifyRedisError(operation string, err error) error {
 		return nil
 	}
 
+	// Handle context errors first
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return fmt.Errorf("%s: %w", operation, ErrContext)
+	}
+
 	var repoErr error
 	switch {
 	case errors.Is(err, redis.Nil):
-		// Key not found
+		// Key not found - this is normal for cache misses
 		repoErr = fmt.Errorf("%w: %w", ErrRepositoryNotFound, err)
+
 	case errors.Is(err, redis.TxFailedErr):
-		// Transaction failed
-		repoErr = fmt.Errorf("%w: %w", ErrDatabase, err)
-	case isRedisConnectionError(err):
-		// Connection issues, timeouts, pool exhaustion
-		repoErr = fmt.Errorf("%w: %w", ErrDBQuery, err)
-	case isRedisContextError(err):
-		// Context cancellation or timeout
-		repoErr = fmt.Errorf("%w: %w", ErrContext, err)
+		// Redis transaction failed (MULTI/EXEC)
+		repoErr = fmt.Errorf("%w: %w", ErrTransactionFailure, err)
+
+	case errors.Is(err, redis.ErrClosed):
+		// Redis client/connection is closed
+		repoErr = fmt.Errorf("%w: %w", ErrConnectionFailure, err)
+
+	// Network and connection errors
+	case isNetworkError(err):
+		// Network-level connection failures
+		repoErr = fmt.Errorf("%w: %w", ErrConnectionFailure, err)
+
+	case isRedisPoolError(err):
+		// Connection pool exhaustion
+		repoErr = fmt.Errorf("%w: %w", ErrTooManyConnections, err)
+
+	case isRedisTimeoutError(err):
+		// Redis operation timeout
+		repoErr = fmt.Errorf("%w: %w", ErrQueryCancelled, err)
+
+	case isRedisAuthError(err):
+		// Redis authentication failure
+		repoErr = fmt.Errorf("%w: %w", ErrPermissionDenied, err)
+
+	case isRedisMemoryError(err):
+		// Redis out of memory
+		repoErr = fmt.Errorf("%w: %w", ErrResourceExhausted, err)
+
 	default:
 		// For any other Redis error, wrap it with a general database error
 		repoErr = fmt.Errorf("%w: %w", ErrDatabase, err)
@@ -37,43 +65,52 @@ func ClassifyRedisError(operation string, err error) error {
 	return fmt.Errorf("%s: %w", operation, repoErr)
 }
 
-// isRedisConnectionError checks if the error is related to connection issues
-func isRedisConnectionError(err error) bool {
-	errStr := err.Error()
-	return errors.Is(err, redis.ErrClosed) ||
-		containsAny(errStr, []string{
-			"connection refused",
-			"timeout",
-			"pool exhausted",
-			"broken pipe",
-			"connection reset",
-			"no route to host",
-		})
-}
-
-// isRedisContextError checks if the error is context-related
-func isRedisContextError(err error) bool {
-	return errors.Is(err, context.DeadlineExceeded) ||
-		errors.Is(err, context.Canceled)
-}
-
-// containsAny checks if the string contains any of the substrings
-func containsAny(s string, substrings []string) bool {
-	for _, sub := range substrings {
-		if len(s) >= len(sub) {
-			for i := 0; i <= len(s)-len(sub); i++ {
-				match := true
-				for j := 0; j < len(sub); j++ {
-					if s[i+j] != sub[j] {
-						match = false
-						break
-					}
-				}
-				if match {
-					return true
-				}
-			}
-		}
+// isNetworkError checks if the error is a network-level connection failure
+func isNetworkError(err error) bool {
+	var netErr *net.OpError
+	if errors.As(err, &netErr) {
+		return true
 	}
-	return false
+
+	// Check for common network error strings as fallback
+	errStr := err.Error()
+	return strings.Contains(errStr, "connection refused") ||
+		strings.Contains(errStr, "broken pipe") ||
+		strings.Contains(errStr, "connection reset") ||
+		strings.Contains(errStr, "no route to host") ||
+		strings.Contains(errStr, "network is unreachable")
+}
+
+// isRedisPoolError checks if the error is related to connection pool exhaustion
+func isRedisPoolError(err error) bool {
+	errStr := err.Error()
+	return strings.Contains(errStr, "pool exhausted") ||
+		strings.Contains(errStr, "pool timeout") ||
+		strings.Contains(errStr, "connection pool timeout")
+}
+
+// isRedisTimeoutError checks if the error is a Redis operation timeout
+func isRedisTimeoutError(err error) bool {
+	errStr := err.Error()
+	return strings.Contains(errStr, "i/o timeout") ||
+		strings.Contains(errStr, "read timeout") ||
+		strings.Contains(errStr, "write timeout") ||
+		strings.Contains(errStr, "dial timeout")
+}
+
+// isRedisAuthError checks if the error is Redis authentication related
+func isRedisAuthError(err error) bool {
+	errStr := err.Error()
+	return strings.Contains(errStr, "NOAUTH") ||
+		strings.Contains(errStr, "invalid password") ||
+		strings.Contains(errStr, "authentication failed") ||
+		strings.Contains(errStr, "WRONGPASS")
+}
+
+// isRedisMemoryError checks if the error is Redis memory related
+func isRedisMemoryError(err error) bool {
+	errStr := err.Error()
+	return strings.Contains(errStr, "OOM") ||
+		strings.Contains(errStr, "out of memory") ||
+		strings.Contains(errStr, "maxmemory")
 }
