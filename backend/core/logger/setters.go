@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"slices"
 
 	"github.com/Leviosa-care/core/envmode"
 )
@@ -30,26 +31,52 @@ func SetHandler(level, style string) (slog.Handler, error) {
 }
 
 func SetOptions(env envmode.Mode, level, style *string) error {
-	if env == envmode.Dev {
-		*level = string(Debug)
-		*style = string(Dev)
-		return nil
-	}
-	var defaultLevel string
+	// Set defaults based on environment
+	var defaultLevel, defaultStyle string
 	switch env {
-	case envmode.Prod:
-		defaultLevel = string(Info)
-	case envmode.Staging:
-		defaultLevel = string(Debug)
 	case envmode.Dev:
 		defaultLevel = string(Debug)
+		defaultStyle = string(Dev)
+	case envmode.Staging:
+		defaultLevel = string(Debug)
+		defaultStyle = string(JSON)
+	case envmode.Prod:
+		defaultLevel = string(Info)
+		defaultStyle = string(JSON)
 	default:
-		return fmt.Errorf("APP_ENV does not exist")
+		return fmt.Errorf("invalid environment: %v", env)
 	}
 
-	flag.StringVar(level, "logger-level", defaultLevel, "Set logger level")
-	flag.StringVar(style, "logger-style", string(JSON), "Set logger style")
-	flag.Parse()
+	// Only set up flags if not already parsed (avoid conflicts)
+	if !flag.Parsed() {
+		flag.StringVar(level, "logger-level", defaultLevel, "Set logger level (info, debug, error, warn)")
+		flag.StringVar(style, "logger-style", defaultStyle, "Set logger style (json, text, dev)")
+	} else {
+		// Use defaults if flags already parsed
+		if *level == "" {
+			*level = defaultLevel
+		}
+		if *style == "" {
+			*style = defaultStyle
+		}
+	}
+
+	// Validate level and style combination
+	return validateLoggerConfig(*level, *style)
+}
+
+// validateLoggerConfig validates logger configuration
+func validateLoggerConfig(level, style string) error {
+	// Validate level
+	if _, ok := loggerLevels[loggerLevel(level)]; !ok {
+		return fmt.Errorf("invalid log level: %q (valid: info, debug, error, warn)", level)
+	}
+
+	// Validate style
+	validStyles := []string{string(JSON), string(Text), string(Dev)}
+	if !slices.Contains(validStyles, style) {
+		return fmt.Errorf("invalid log style: %q (valid: json, text, dev)", style)
+	}
 
 	return nil
 }
