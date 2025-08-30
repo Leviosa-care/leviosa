@@ -23,6 +23,7 @@ var (
 	ErrAccountLocked       = errors.New("account is locked")
 	ErrExpiredToken        = errors.New("token has expired")
 	ErrRateLimit           = errors.New("rate limit exceeded")
+	ErrAlreadyConsumed     = errors.New("resource already consumed")
 	ErrCategoryHasProducts = errors.New("category has associated products")
 	ErrUnauthorized        = errors.New("unauthorized action") // This might be a global domain error
 
@@ -88,6 +89,10 @@ func NewValueMismatchErr(storedValue, providedValue any) error {
 
 func NewExpiredTokenErr(name string, err error) error {
 	return fmt.Errorf("%w: %s token: %w", ErrExpiredToken, name, err)
+}
+
+func NewAlreadyConsumedErr(resourceName string) error {
+	return fmt.Errorf("%w: %s", ErrAlreadyConsumed, resourceName)
 }
 
 func NewNotFoundErr(err error, resourceName string) error {
