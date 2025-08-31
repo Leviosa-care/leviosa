@@ -2,9 +2,11 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/identity"
+	"github.com/Leviosa-care/core/errs"
 
 	"github.com/google/uuid"
 	"github.com/hengadev/errsx"
@@ -45,4 +47,14 @@ type Session struct {
 func (s *Session) Valid(ctx context.Context) error {
 	var errs errsx.Map
 	return errs.AsError()
+}
+
+// DecodeSession unmarshals JSON bytes back to a session
+func DecodeSession(data []byte) (*Session, error) {
+	var session Session
+	err := json.Unmarshal(data, &session)
+	if err != nil {
+		return nil, errs.NewJSONUnmarshalErr(err)
+	}
+	return &session, nil
 }
