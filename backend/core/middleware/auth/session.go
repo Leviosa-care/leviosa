@@ -58,3 +58,4 @@ func DecodeSession(data []byte) (*Session, error) {
 	}
 	return &session, nil
 }
+

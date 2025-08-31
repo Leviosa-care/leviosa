@@ -15,3 +15,4 @@ type SessionRepository interface {
 	RemoveSessionByID(ctx context.Context, sessionID string) error
 	RemoveSessionByToken(ctx context.Context, sessionID string) error
 }
+
