@@ -45,6 +45,8 @@ func (m *SessionAuthMiddleware) RequireSession(next http.Handler) http.Handler {
 			return
 		}
 
+		// TODO: use the encx package to hash the token
+
 		// Find session by token hash
 		sessionData, err := m.sessionRepo.FindSessionByTokenHash(r.Context(), token)
 		if err != nil {

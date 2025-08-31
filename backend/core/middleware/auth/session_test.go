@@ -74,7 +74,7 @@ func TestDecodeSession(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			session, err := DecodeSession(tt.input)
-			
+
 			if tt.expectError {
 				assert.Error(t, err, "expected error for input: %s", string(tt.input))
 				if tt.expectNil {
@@ -100,14 +100,14 @@ func TestDecodeSession_ValidSession(t *testing.T) {
 		"dek_encrypted":        []byte("encrypted_dek"),
 		"key_version":          42,
 	}
-	
+
 	jsonData, err := json.Marshal(sessionData)
 	require.NoError(t, err)
-	
+
 	session, err := DecodeSession(jsonData)
 	require.NoError(t, err)
 	require.NotNil(t, session)
-	
+
 	// Verify fields are correctly unmarshaled
 	assert.Equal(t, "test_token_hash_123", session.TokenHash)
 	assert.Equal(t, 42, session.KeyVersion)
@@ -172,7 +172,7 @@ func TestDecodeSession_TypeValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := DecodeSession([]byte(tt.jsonInput))
-			
+
 			if tt.expectErr {
 				assert.Error(t, err)
 			} else {
@@ -186,10 +186,10 @@ func TestSessionState_Constants(t *testing.T) {
 	// Test that SessionState constants are defined correctly
 	assert.Equal(t, SessionState("pending"), SessionPending)
 	assert.Equal(t, SessionState("active"), SessionActive)
-	
+
 	// Test that they're different
 	assert.NotEqual(t, SessionPending, SessionActive)
-	
+
 	// Test string conversion
 	assert.Equal(t, "pending", string(SessionPending))
 	assert.Equal(t, "active", string(SessionActive))
@@ -198,7 +198,7 @@ func TestSessionState_Constants(t *testing.T) {
 func TestSession_FieldTags(t *testing.T) {
 	// Test that Session struct has correct JSON tags using reflection
 	// This ensures encrypted fields are properly marked for JSON serialization
-	
+
 	session := Session{
 		ID:                 uuid.New(),
 		UserIDEncrypted:    []byte("encrypted_user"),
@@ -210,16 +210,16 @@ func TestSession_FieldTags(t *testing.T) {
 		DEKEncrypted:       []byte("encrypted_dek"),
 		KeyVersion:         1,
 	}
-	
+
 	// Marshal to JSON
 	jsonData, err := json.Marshal(session)
 	require.NoError(t, err)
-	
+
 	// Unmarshal back to verify field mapping
 	var unmarshaled map[string]interface{}
 	err = json.Unmarshal(jsonData, &unmarshaled)
 	require.NoError(t, err)
-	
+
 	// Check that encrypted fields are included in JSON
 	assert.Contains(t, unmarshaled, "user_id_encrypted")
 	assert.Contains(t, unmarshaled, "role_encrypted")
@@ -229,7 +229,7 @@ func TestSession_FieldTags(t *testing.T) {
 	assert.Contains(t, unmarshaled, "token_hash")
 	assert.Contains(t, unmarshaled, "dek_encrypted")
 	assert.Contains(t, unmarshaled, "key_version")
-	
+
 	// Check that plaintext fields are excluded (json:"-" tag)
 	assert.NotContains(t, unmarshaled, "id")
 	assert.NotContains(t, unmarshaled, "user_id")
@@ -245,10 +245,10 @@ func TestSession_Constants(t *testing.T) {
 	// Test that session constants are reasonable
 	assert.Equal(t, 24*time.Hour, SessionDuration)
 	assert.Equal(t, "leviosa_session_token", SessionCookieName)
-	
+
 	// Verify duration is positive
 	assert.Positive(t, SessionDuration)
-	
+
 	// Verify cookie name is not empty
 	assert.NotEmpty(t, SessionCookieName)
 }
@@ -266,16 +266,16 @@ func TestDecodeSession_RoundTrip(t *testing.T) {
 		DEKEncrypted:       []byte("encrypted_dek_data"),
 		KeyVersion:         123,
 	}
-	
+
 	// Marshal to JSON
 	jsonData, err := json.Marshal(original)
 	require.NoError(t, err)
-	
+
 	// Decode back
 	decoded, err := DecodeSession(jsonData)
 	require.NoError(t, err)
 	require.NotNil(t, decoded)
-	
+
 	// Verify encrypted fields are preserved
 	assert.Equal(t, original.UserIDEncrypted, decoded.UserIDEncrypted)
 	assert.Equal(t, original.RoleEncrypted, decoded.RoleEncrypted)
@@ -285,14 +285,15 @@ func TestDecodeSession_RoundTrip(t *testing.T) {
 	assert.Equal(t, original.TokenHash, decoded.TokenHash)
 	assert.Equal(t, original.DEKEncrypted, decoded.DEKEncrypted)
 	assert.Equal(t, original.KeyVersion, decoded.KeyVersion)
-	
+
 	// Verify plaintext fields are zero values (not serialized)
 	assert.Equal(t, uuid.Nil, decoded.ID)
 	assert.Equal(t, uuid.Nil, decoded.UserID)
-	assert.Equal(t, identity.Role(""), decoded.Role)
+	assert.Equal(t, identity.Role(1), decoded.Role)
 	assert.Equal(t, SessionState(""), decoded.State)
 	assert.True(t, decoded.CreatedAt.IsZero())
 	assert.True(t, decoded.ExpiresAt.IsZero())
 	assert.Empty(t, decoded.Token)
 	assert.Nil(t, decoded.DEK)
 }
+

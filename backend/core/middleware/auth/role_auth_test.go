@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,7 +23,7 @@ func TestSessionAuthMiddleware_RequireMinimumRole(t *testing.T) {
 		{
 			name:           "visitor cannot access staff endpoint",
 			userRole:       identity.Visitor,
-			requiredRole:   identity.Staff,
+			requiredRole:   identity.Partner,
 			expectedStatus: http.StatusForbidden,
 			shouldCallNext: false,
 		},
@@ -37,21 +36,21 @@ func TestSessionAuthMiddleware_RequireMinimumRole(t *testing.T) {
 		},
 		{
 			name:           "staff can access visitor endpoint",
-			userRole:       identity.Staff,
+			userRole:       identity.Partner,
 			requiredRole:   identity.Visitor,
 			expectedStatus: http.StatusOK,
 			shouldCallNext: true,
 		},
 		{
 			name:           "staff can access staff endpoint",
-			userRole:       identity.Staff,
-			requiredRole:   identity.Staff,
+			userRole:       identity.Partner,
+			requiredRole:   identity.Partner,
 			expectedStatus: http.StatusOK,
 			shouldCallNext: true,
 		},
 		{
 			name:           "staff cannot access admin endpoint",
-			userRole:       identity.Staff,
+			userRole:       identity.Partner,
 			requiredRole:   identity.Administrator,
 			expectedStatus: http.StatusForbidden,
 			shouldCallNext: false,
@@ -59,7 +58,7 @@ func TestSessionAuthMiddleware_RequireMinimumRole(t *testing.T) {
 		{
 			name:           "admin can access any endpoint",
 			userRole:       identity.Administrator,
-			requiredRole:   identity.Staff,
+			requiredRole:   identity.Partner,
 			expectedStatus: http.StatusOK,
 			shouldCallNext: true,
 		},
@@ -76,7 +75,7 @@ func TestSessionAuthMiddleware_RequireMinimumRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock repository
 			mockRepo := &MockSessionRepository{}
-			
+
 			// Create valid session data with the test role
 			session := &Session{
 				ID:        uuid.New(),
@@ -88,33 +87,33 @@ func TestSessionAuthMiddleware_RequireMinimumRole(t *testing.T) {
 				TokenHash: "test_hash",
 			}
 			sessionData := createValidSessionJSON(t, session)
-			
+
 			// Mock the repository call
 			mockRepo.On("FindSessionByTokenHash", mock.Anything, "valid_token").Return(sessionData, nil)
-			
+
 			middleware := NewSessionAuthMiddleware(mockRepo)
-			
+
 			// Track if next handler was called
 			nextCalled := false
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				nextCalled = true
 				w.WriteHeader(http.StatusOK)
 			})
-			
+
 			// Apply role-based middleware
 			handler := middleware.RequireMinimumRole(tt.requiredRole)(testHandler)
-			
+
 			// Create request with valid auth header
 			req := httptest.NewRequest("GET", "/test", nil)
 			req.Header.Set("Authorization", "Bearer valid_token")
-			
+
 			w := httptest.NewRecorder()
 			handler.ServeHTTP(w, req)
-			
+
 			// Assertions
 			assert.Equal(t, tt.expectedStatus, w.Code, "unexpected status code")
 			assert.Equal(t, tt.shouldCallNext, nextCalled, "unexpected next handler call behavior")
-			
+
 			mockRepo.AssertExpectations(t)
 		})
 	}
@@ -138,28 +137,28 @@ func TestSessionAuthMiddleware_RequireAnyRole(t *testing.T) {
 		{
 			name:           "visitor matches in multiple roles",
 			userRole:       identity.Visitor,
-			allowedRoles:   []identity.Role{identity.Staff, identity.Visitor},
+			allowedRoles:   []identity.Role{identity.Partner, identity.Visitor},
 			expectedStatus: http.StatusOK,
 			shouldCallNext: true,
 		},
 		{
 			name:           "staff matches staff in multiple roles",
-			userRole:       identity.Staff,
-			allowedRoles:   []identity.Role{identity.Staff, identity.Administrator},
+			userRole:       identity.Partner,
+			allowedRoles:   []identity.Role{identity.Partner, identity.Administrator},
 			expectedStatus: http.StatusOK,
 			shouldCallNext: true,
 		},
 		{
 			name:           "visitor denied for staff-only endpoint",
 			userRole:       identity.Visitor,
-			allowedRoles:   []identity.Role{identity.Staff},
+			allowedRoles:   []identity.Role{identity.Partner},
 			expectedStatus: http.StatusForbidden,
 			shouldCallNext: false,
 		},
 		{
 			name:           "visitor denied for staff or admin endpoint",
 			userRole:       identity.Visitor,
-			allowedRoles:   []identity.Role{identity.Staff, identity.Administrator},
+			allowedRoles:   []identity.Role{identity.Partner, identity.Administrator},
 			expectedStatus: http.StatusForbidden,
 			shouldCallNext: false,
 		},
@@ -183,7 +182,7 @@ func TestSessionAuthMiddleware_RequireAnyRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock repository
 			mockRepo := &MockSessionRepository{}
-			
+
 			// Create valid session data with the test role
 			session := &Session{
 				ID:        uuid.New(),
@@ -195,33 +194,33 @@ func TestSessionAuthMiddleware_RequireAnyRole(t *testing.T) {
 				TokenHash: "test_hash",
 			}
 			sessionData := createValidSessionJSON(t, session)
-			
+
 			// Mock the repository call
 			mockRepo.On("FindSessionByTokenHash", mock.Anything, "valid_token").Return(sessionData, nil)
-			
+
 			middleware := NewSessionAuthMiddleware(mockRepo)
-			
+
 			// Track if next handler was called
 			nextCalled := false
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				nextCalled = true
 				w.WriteHeader(http.StatusOK)
 			})
-			
+
 			// Apply role-based middleware
 			handler := middleware.RequireAnyRole(tt.allowedRoles...)(testHandler)
-			
+
 			// Create request with valid auth header
 			req := httptest.NewRequest("GET", "/test", nil)
 			req.Header.Set("Authorization", "Bearer valid_token")
-			
+
 			w := httptest.NewRecorder()
 			handler.ServeHTTP(w, req)
-			
+
 			// Assertions
 			assert.Equal(t, tt.expectedStatus, w.Code, "unexpected status code")
 			assert.Equal(t, tt.shouldCallNext, nextCalled, "unexpected next handler call behavior")
-			
+
 			mockRepo.AssertExpectations(t)
 		})
 	}
@@ -242,7 +241,7 @@ func TestSessionAuthMiddleware_RequireAdmin(t *testing.T) {
 		},
 		{
 			name:           "staff denied admin access",
-			userRole:       identity.Staff,
+			userRole:       identity.Partner,
 			expectedStatus: http.StatusForbidden,
 			shouldCallNext: false,
 		},
@@ -258,7 +257,7 @@ func TestSessionAuthMiddleware_RequireAdmin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock repository
 			mockRepo := &MockSessionRepository{}
-			
+
 			// Create valid session data with the test role
 			session := &Session{
 				ID:        uuid.New(),
@@ -270,33 +269,33 @@ func TestSessionAuthMiddleware_RequireAdmin(t *testing.T) {
 				TokenHash: "test_hash",
 			}
 			sessionData := createValidSessionJSON(t, session)
-			
+
 			// Mock the repository call
 			mockRepo.On("FindSessionByTokenHash", mock.Anything, "valid_token").Return(sessionData, nil)
-			
+
 			middleware := NewSessionAuthMiddleware(mockRepo)
-			
+
 			// Track if next handler was called
 			nextCalled := false
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				nextCalled = true
 				w.WriteHeader(http.StatusOK)
 			})
-			
+
 			// Apply admin middleware (uses RequireMinimumRole internally)
 			handler := middleware.RequireAdmin(testHandler)
-			
+
 			// Create request with valid auth header
 			req := httptest.NewRequest("GET", "/test", nil)
 			req.Header.Set("Authorization", "Bearer valid_token")
-			
+
 			w := httptest.NewRecorder()
 			handler.ServeHTTP(w, req)
-			
+
 			// Assertions
 			assert.Equal(t, tt.expectedStatus, w.Code, "unexpected status code")
 			assert.Equal(t, tt.shouldCallNext, nextCalled, "unexpected next handler call behavior")
-			
+
 			mockRepo.AssertExpectations(t)
 		})
 	}
@@ -305,9 +304,9 @@ func TestSessionAuthMiddleware_RequireAdmin(t *testing.T) {
 func TestRoleAuthMiddleware_NoSessionInContext(t *testing.T) {
 	// Test behavior when session authentication fails but role middleware is still called
 	// This shouldn't happen in normal flow, but tests edge case handling
-	
+
 	tests := []struct {
-		name        string
+		name         string
 		middlewareFn func(AuthMiddleware) func(http.Handler) http.Handler
 	}{
 		{
@@ -319,7 +318,7 @@ func TestRoleAuthMiddleware_NoSessionInContext(t *testing.T) {
 		{
 			name: "RequireAnyRole with no session",
 			middlewareFn: func(m AuthMiddleware) func(http.Handler) http.Handler {
-				return m.RequireAnyRole(identity.Visitor, identity.Staff)
+				return m.RequireAnyRole(identity.Visitor, identity.Partner)
 			},
 		},
 	}
@@ -328,23 +327,23 @@ func TestRoleAuthMiddleware_NoSessionInContext(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockSessionRepository{}
 			middleware := NewSessionAuthMiddleware(mockRepo)
-			
+
 			// Create a handler that manually adds broken context (no session)
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			})
-			
+
 			// Create handler that simulates missing session in context
 			brokenSessionHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				// Don't add session to context, simulate RequireSession failure
 				tt.middlewareFn(middleware)(testHandler).ServeHTTP(w, r)
 			})
-			
+
 			req := httptest.NewRequest("GET", "/test", nil)
 			w := httptest.NewRecorder()
-			
+
 			brokenSessionHandler.ServeHTTP(w, req)
-			
+
 			// Should return 401 when no session in context
 			assert.Equal(t, http.StatusUnauthorized, w.Code)
 		})
@@ -354,12 +353,12 @@ func TestRoleAuthMiddleware_NoSessionInContext(t *testing.T) {
 func TestRoleAuthMiddleware_Integration(t *testing.T) {
 	// Test the full flow: RequireSession -> RequireMinimumRole
 	mockRepo := &MockSessionRepository{}
-	
+
 	// Create session data for staff user
 	session := &Session{
 		ID:        uuid.New(),
 		UserID:    uuid.New(),
-		Role:      identity.Staff,
+		Role:      identity.Partner,
 		State:     SessionActive,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(time.Hour),
@@ -367,31 +366,32 @@ func TestRoleAuthMiddleware_Integration(t *testing.T) {
 	}
 	sessionData := createValidSessionJSON(t, session)
 	mockRepo.On("FindSessionByTokenHash", mock.Anything, "valid_token").Return(sessionData, nil)
-	
+
 	middleware := NewSessionAuthMiddleware(mockRepo)
-	
+
 	// Create endpoint that requires staff role
 	nextCalled := false
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Verify session is available in context
 		session, ok := SessionFromContext(r.Context())
 		assert.True(t, ok, "session should be in context")
-		assert.Equal(t, identity.Staff, session.Role, "session should have staff role")
-		
+		assert.Equal(t, identity.Partner, session.Role, "session should have staff role")
+
 		nextCalled = true
 		w.WriteHeader(http.StatusOK)
 	})
-	
+
 	// Chain middlewares: RequireSession is called by RequireMinimumRole
-	handler := middleware.RequireMinimumRole(identity.Staff)(testHandler)
-	
+	handler := middleware.RequireMinimumRole(identity.Partner)(testHandler)
+
 	req := httptest.NewRequest("GET", "/staff-endpoint", nil)
 	req.Header.Set("Authorization", "Bearer valid_token")
-	
+
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
-	
+
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.True(t, nextCalled, "next handler should be called")
 	mockRepo.AssertExpectations(t)
 }
+

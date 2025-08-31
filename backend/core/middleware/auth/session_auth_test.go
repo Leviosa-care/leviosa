@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -17,41 +16,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// MockSessionRepository implements SessionRepository for testing
-type MockSessionRepository struct {
-	mock.Mock
-}
-
-func (m *MockSessionRepository) FindSessionByTokenHash(ctx context.Context, tokenHash string) ([]byte, error) {
-	args := m.Called(ctx, tokenHash)
-	return args.Get(0).([]byte), args.Error(1)
-}
-
-func (m *MockSessionRepository) CreateSession(ctx context.Context, sessionID uuid.UUID, tokenHash string, sessionData []byte, ttl time.Duration) error {
-	args := m.Called(ctx, sessionID, tokenHash, sessionData, ttl)
-	return args.Error(0)
-}
-
-func (m *MockSessionRepository) RemoveSessionByID(ctx context.Context, sessionID string) error {
-	args := m.Called(ctx, sessionID)
-	return args.Error(0)
-}
-
-func (m *MockSessionRepository) RemoveSessionByTokenHash(ctx context.Context, tokenHash string) error {
-	args := m.Called(ctx, tokenHash)
-	return args.Error(0)
-}
-
-func (m *MockSessionRepository) FindSessionByID(ctx context.Context, sessionID string) ([]byte, error) {
-	args := m.Called(ctx, sessionID)
-	return args.Get(0).([]byte), args.Error(1)
-}
-
 func TestNewSessionAuthMiddleware(t *testing.T) {
 	mockRepo := &MockSessionRepository{}
-	
+
 	middleware := NewSessionAuthMiddleware(mockRepo)
-	
+
 	assert.NotNil(t, middleware)
 	assert.IsType(t, &SessionAuthMiddleware{}, middleware)
 }
@@ -186,7 +155,7 @@ func TestSessionAuthMiddleware_RequireSession(t *testing.T) {
 			tt.setupMock(mockRepo, "valid_token")
 
 			middleware := NewSessionAuthMiddleware(mockRepo)
-			
+
 			// Create a test handler that checks for session in context
 			var contextHasSession bool
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -203,19 +172,19 @@ func TestSessionAuthMiddleware_RequireSession(t *testing.T) {
 			if tt.authHeader != "" {
 				req.Header.Set("Authorization", tt.authHeader)
 			}
-			
+
 			// Record response
 			w := httptest.NewRecorder()
-			
+
 			// Execute
 			handler.ServeHTTP(w, req)
-			
+
 			// Assert status code
 			assert.Equal(t, tt.expectedStatus, w.Code, "unexpected status code")
-			
+
 			// Assert context session presence
 			assert.Equal(t, tt.expectedInCtx, contextHasSession, "unexpected session presence in context")
-			
+
 			// Verify mock expectations
 			mockRepo.AssertExpectations(t)
 		})
@@ -270,7 +239,7 @@ func TestSessionAuthMiddleware_RequireSession_TokenExtraction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockSessionRepository{}
-			
+
 			if tt.expectedOk {
 				// Mock successful session retrieval for valid tokens
 				sessionData := createValidSessionJSON(t, &Session{
@@ -286,7 +255,7 @@ func TestSessionAuthMiddleware_RequireSession_TokenExtraction(t *testing.T) {
 			}
 
 			middleware := NewSessionAuthMiddleware(mockRepo)
-			
+
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			})
@@ -294,10 +263,10 @@ func TestSessionAuthMiddleware_RequireSession_TokenExtraction(t *testing.T) {
 			handler := middleware.RequireSession(testHandler)
 			req := httptest.NewRequest("GET", "/test", nil)
 			req.Header.Set("Authorization", tt.authHeader)
-			
+
 			w := httptest.NewRecorder()
 			handler.ServeHTTP(w, req)
-			
+
 			if tt.expectedOk {
 				assert.Equal(t, http.StatusOK, w.Code, tt.description)
 			} else {
@@ -310,13 +279,13 @@ func TestSessionAuthMiddleware_RequireSession_TokenExtraction(t *testing.T) {
 // Helper function to create valid JSON session data for testing
 func createValidSessionJSON(t *testing.T, session *Session) []byte {
 	t.Helper()
-	
+
 	// Create a session with the required encrypted fields populated
 	// In tests, we populate both plaintext and encrypted fields for DecodeSession to work
 	testSession := &Session{
 		ID:                 session.ID,
 		UserIDEncrypted:    []byte("encrypted_user_id"),
-		RoleEncrypted:      []byte("encrypted_role"), 
+		RoleEncrypted:      []byte("encrypted_role"),
 		StateEncrypted:     []byte("encrypted_state"),
 		CreatedAtEncrypted: []byte("encrypted_created_at"),
 		ExpiresAtEncrypted: []byte("encrypted_expires_at"),
@@ -330,10 +299,10 @@ func createValidSessionJSON(t *testing.T, session *Session) []byte {
 		CreatedAt: session.CreatedAt,
 		ExpiresAt: session.ExpiresAt,
 	}
-	
+
 	// Marshal the session to JSON using the actual struct
 	jsonData, err := json.Marshal(testSession)
 	require.NoError(t, err)
-	
+
 	return jsonData
 }

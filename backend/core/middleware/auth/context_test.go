@@ -23,7 +23,7 @@ func TestSessionFromContext(t *testing.T) {
 				session := &Session{
 					ID:        uuid.New(),
 					UserID:    uuid.New(),
-					Role:      identity.Staff,
+					Role:      identity.Partner,
 					State:     SessionActive,
 					CreatedAt: time.Now(),
 					ExpiresAt: time.Now().Add(time.Hour),
@@ -82,11 +82,11 @@ func TestSessionFromContext(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := tt.contextSetup()
-			
+
 			session, exists := SessionFromContext(ctx)
-			
+
 			assert.Equal(t, tt.expectedExists, exists, "unexpected existence result")
-			
+
 			if tt.expectedNil {
 				assert.Nil(t, session, "session should be nil")
 			} else {
@@ -107,17 +107,17 @@ func TestSessionFromContext_ValidSession(t *testing.T) {
 		ExpiresAt: time.Now().Add(24 * time.Hour),
 		TokenHash: "specific_test_hash",
 	}
-	
+
 	ctx := context.WithValue(context.Background(), sessionContextKey{}, originalSession)
-	
+
 	retrievedSession, exists := SessionFromContext(ctx)
-	
+
 	assert.True(t, exists, "session should exist in context")
 	assert.NotNil(t, retrievedSession, "retrieved session should not be nil")
-	
+
 	// Verify it's the exact same session object
 	assert.Same(t, originalSession, retrievedSession, "should return the exact same session object")
-	
+
 	// Verify session contents
 	assert.Equal(t, originalSession.ID, retrievedSession.ID)
 	assert.Equal(t, originalSession.UserID, retrievedSession.UserID)
@@ -131,31 +131,31 @@ func TestSessionContextKey_Uniqueness(t *testing.T) {
 	session := &Session{
 		ID:        uuid.New(),
 		UserID:    uuid.New(),
-		Role:      identity.Staff,
+		Role:      identity.Partner,
 		State:     SessionActive,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(time.Hour),
 		TokenHash: "test_hash",
 	}
-	
+
 	// Create context with multiple values using different key types
 	type otherKey struct{}
-	
+
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, sessionContextKey{}, session)
 	ctx = context.WithValue(ctx, otherKey{}, "other value")
 	ctx = context.WithValue(ctx, "string_key", "string value")
-	
+
 	// SessionFromContext should only retrieve the session, not other values
 	retrievedSession, exists := SessionFromContext(ctx)
-	
+
 	assert.True(t, exists, "session should exist")
 	assert.Same(t, session, retrievedSession, "should retrieve correct session")
-	
+
 	// Verify other values are still there but don't interfere
 	otherValue := ctx.Value(otherKey{})
 	assert.Equal(t, "other value", otherValue)
-	
+
 	stringValue := ctx.Value("string_key")
 	assert.Equal(t, "string value", stringValue)
 }
@@ -164,10 +164,10 @@ func TestSessionContextKey_ZeroValue(t *testing.T) {
 	// Test that zero value of sessionContextKey works correctly
 	key1 := sessionContextKey{}
 	key2 := sessionContextKey{}
-	
+
 	// Both should be equal (same zero value)
 	assert.Equal(t, key1, key2, "sessionContextKey zero values should be equal")
-	
+
 	session := &Session{
 		ID:        uuid.New(),
 		UserID:    uuid.New(),
@@ -177,14 +177,14 @@ func TestSessionContextKey_ZeroValue(t *testing.T) {
 		ExpiresAt: time.Now().Add(time.Hour),
 		TokenHash: "test_hash",
 	}
-	
+
 	// Should work with both key instances
 	ctx1 := context.WithValue(context.Background(), key1, session)
 	ctx2 := context.WithValue(context.Background(), key2, session)
-	
+
 	session1, exists1 := SessionFromContext(ctx1)
 	session2, exists2 := SessionFromContext(ctx2)
-	
+
 	assert.True(t, exists1, "session should exist in ctx1")
 	assert.True(t, exists2, "session should exist in ctx2")
 	assert.Same(t, session, session1, "should retrieve correct session from ctx1")
@@ -202,22 +202,23 @@ func TestSessionFromContext_ConcurrentAccess(t *testing.T) {
 		ExpiresAt: time.Now().Add(time.Hour),
 		TokenHash: "concurrent_test_hash",
 	}
-	
+
 	ctx := context.WithValue(context.Background(), sessionContextKey{}, session)
-	
+
 	// Run multiple goroutines accessing the same context
 	results := make(chan bool, 10)
-	
+
 	for i := 0; i < 10; i++ {
 		go func() {
 			retrievedSession, exists := SessionFromContext(ctx)
 			results <- exists && retrievedSession != nil && retrievedSession.TokenHash == "concurrent_test_hash"
 		}()
 	}
-	
+
 	// Verify all goroutines got the correct result
 	for i := 0; i < 10; i++ {
 		result := <-results
 		assert.True(t, result, "concurrent access should work correctly")
 	}
 }
+
