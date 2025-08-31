@@ -66,11 +66,11 @@ func TestSetOTPDuration(t *testing.T) {
 
 	t.Run("should successfully set OTP duration", func(t *testing.T) {
 		td.ClearSettingsTable(t, ctx, testPool)
-		
+
 		// Create a test channel for RabbitMQ verification
 		testCh := td.GetRabbitMQChannel(t, testMQConn)
 		defer testCh.Close()
-		
+
 		// Purge queues to ensure clean state
 		td.PurgeSettingsQueues(t, testCh)
 
@@ -215,7 +215,7 @@ func TestSetOTPDuration(t *testing.T) {
 	t.Run("should return 400 for unknown JSON fields", func(t *testing.T) {
 		td.ClearSettingsTable(t, ctx, testPool)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/otp/duration", 
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/otp/duration",
 			strings.NewReader(`{"duration": 300, "unknown_field": "value"}`))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
@@ -259,3 +259,4 @@ func TestSetOTPDuration(t *testing.T) {
 		assert.Equal(t, 900, duration)
 	})
 }
+

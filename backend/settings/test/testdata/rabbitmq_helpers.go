@@ -114,4 +114,3 @@ func GetRabbitMQChannel(t *testing.T, conn *amqp.Connection) *amqp.Channel {
 
 	return ch
 }
-

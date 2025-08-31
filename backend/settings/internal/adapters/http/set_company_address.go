@@ -10,12 +10,12 @@ import (
 
 	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/httpx"
+	"github.com/Leviosa-care/core/middleware"
 )
 
 func (h *handler) SetCompanyAddress(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" {
-		httpx.RespondWithError(w, errors.New("unsupported media type: please send 'application/json'"), http.StatusUnsupportedMediaType)
+		middleware.RespondWithError(w, errors.New("unsupported media type: please send 'application/json'"), http.StatusUnsupportedMediaType)
 		return
 	}
 
@@ -23,7 +23,7 @@ func (h *handler) SetCompanyAddress(w http.ResponseWriter, r *http.Request) {
 
 	logger, err := ctxutil.GetLoggerFromContext(ctx)
 	if err != nil {
-		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		middleware.RespondWithError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -32,7 +32,7 @@ func (h *handler) SetCompanyAddress(w http.ResponseWriter, r *http.Request) {
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&request); err != nil {
 		logger.DebugContext(ctx, fmt.Sprintf("Handler: Error decoding JSON body: %v", err))
-		httpx.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("invalid request body: %v", err)), http.StatusBadRequest)
+		middleware.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("invalid request body: %v", err)), http.StatusBadRequest)
 		return
 	}
 
@@ -40,17 +40,17 @@ func (h *handler) SetCompanyAddress(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrInvalidValue):
-			httpx.RespondWithError(w, err, http.StatusBadRequest)
+			middleware.RespondWithError(w, err, http.StatusBadRequest)
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
 			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Internal server error during company address update: %v", err))
-			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
+			middleware.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 		default:
 			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Unhandled error from service during company address update: %v", err))
-			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
+			middleware.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
 
-	httpx.RespondWithJSON(w, response, http.StatusOK)
+	middleware.RespondWithJSON(w, response, http.StatusOK)
 }
 
