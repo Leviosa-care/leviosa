@@ -31,6 +31,12 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /admin/settings/otp/max-attempts", mw.EnableCORS(h.GetOTPMaxAttempts))
 	router.HandleFunc("POST /admin/settings/otp/max-attempts", mw.EnableCORS(h.SetOTPMaxAttempts))
 
+	// Admin-only token duration settings (all access)
+	router.HandleFunc("GET /admin/settings/tokens/access-duration", mw.EnableCORS(h.GetAccessTokenDuration))
+	router.HandleFunc("POST /admin/settings/tokens/access-duration", mw.EnableCORS(h.SetAccessTokenDuration))
+	router.HandleFunc("GET /admin/settings/tokens/refresh-duration", mw.EnableCORS(h.GetRefreshTokenDuration))
+	router.HandleFunc("POST /admin/settings/tokens/refresh-duration", mw.EnableCORS(h.SetRefreshTokenDuration))
+
 	// Bulk settings endpoint
 	router.HandleFunc("GET /settings/bulk", mw.EnableCORS(h.BulkSettingsHandler))
 }

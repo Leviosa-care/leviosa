@@ -128,6 +128,32 @@ type GetOTPMaxAttemptsResponse struct {
 	MaxAttempts int `json:"max_attempts"`
 }
 
+type SetAccessTokenDurationRequest struct {
+	Duration int `json:"duration" validate:"required,min=1,max=240"`
+}
+
+type SetAccessTokenDurationResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+}
+
+type GetAccessTokenDurationResponse struct {
+	Duration int `json:"duration"`
+}
+
+type SetRefreshTokenDurationRequest struct {
+	Duration int `json:"duration" validate:"required,min=1,max=720"`
+}
+
+type SetRefreshTokenDurationResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+}
+
+type GetRefreshTokenDurationResponse struct {
+	Duration int `json:"duration"`
+}
+
 type ErrorResponse struct {
 	Error   string            `json:"error"`
 	Details map[string]string `json:"details,omitempty"`
@@ -251,6 +277,28 @@ func (d SetOTPMaxAttemptsRequest) Valid(ctx context.Context) error {
 	}
 	if d.MaxAttempts > 10 {
 		errs.Set("max_attempts_max", "OTP max attempts cannot exceed 10")
+	}
+	return errs.AsError()
+}
+
+func (d SetAccessTokenDurationRequest) Valid(ctx context.Context) error {
+	var errs errsx.Map
+	if d.Duration < 1 {
+		errs.Set("duration_min", "access token duration must be at least 1 minute")
+	}
+	if d.Duration > 240 {
+		errs.Set("duration_max", "access token duration cannot exceed 240 minutes (4 hours)")
+	}
+	return errs.AsError()
+}
+
+func (d SetRefreshTokenDurationRequest) Valid(ctx context.Context) error {
+	var errs errsx.Map
+	if d.Duration < 1 {
+		errs.Set("duration_min", "refresh token duration must be at least 1 hour")
+	}
+	if d.Duration > 720 {
+		errs.Set("duration_max", "refresh token duration cannot exceed 720 hours (30 days)")
 	}
 	return errs.AsError()
 }
