@@ -10,12 +10,12 @@ import (
 
 	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/middleware"
+	"github.com/Leviosa-care/core/httpx"
 )
 
 func (h *handler) SetCompanyInstagram(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" {
-		middleware.RespondWithError(w, errors.New("unsupported media type: please send 'application/json'"), http.StatusUnsupportedMediaType)
+		httpx.RespondWithError(w, errors.New("unsupported media type: please send 'application/json'"), http.StatusUnsupportedMediaType)
 		return
 	}
 
@@ -23,7 +23,7 @@ func (h *handler) SetCompanyInstagram(w http.ResponseWriter, r *http.Request) {
 
 	logger, err := ctxutil.GetLoggerFromContext(ctx)
 	if err != nil {
-		middleware.RespondWithError(w, err, http.StatusInternalServerError)
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -32,7 +32,7 @@ func (h *handler) SetCompanyInstagram(w http.ResponseWriter, r *http.Request) {
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&request); err != nil {
 		logger.ErrorContext(ctx, fmt.Sprintf("Handler: Error decoding JSON body: %v", err))
-		middleware.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("invalid request body: %v", err)), http.StatusBadRequest)
+		httpx.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("invalid request body: %v", err)), http.StatusBadRequest)
 		return
 	}
 
@@ -40,17 +40,16 @@ func (h *handler) SetCompanyInstagram(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrInvalidValue):
-			middleware.RespondWithError(w, err, http.StatusBadRequest)
+			httpx.RespondWithError(w, err, http.StatusBadRequest)
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
 			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Internal server error during company instagram update: %v", err))
-			middleware.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
+			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 		default:
 			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Unhandled error from service during company instagram update: %v", err))
-			middleware.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
+			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
 
-	middleware.RespondWithJSON(w, response, http.StatusOK)
+	httpx.RespondWithJSON(w, response, http.StatusOK)
 }
-

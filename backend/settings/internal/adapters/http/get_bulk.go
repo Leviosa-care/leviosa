@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Leviosa-care/core/contracts/settings"
-	"github.com/Leviosa-care/core/middleware"
+	"github.com/Leviosa-care/core/httpx"
 	"github.com/hengadev/errsx"
 )
 
@@ -134,12 +134,12 @@ func (h *handler) BulkSettingsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !errs.IsEmpty() {
-		middleware.RespondWithJSON(w, map[string]any{
+		httpx.RespondWithJSON(w, map[string]any{
 			"data":   response,
 			"errors": errs,
 		}, http.StatusMultiStatus)
 		return
 	}
 
-	middleware.RespondWithJSON(w, response, http.StatusOK)
+	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

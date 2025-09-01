@@ -7,7 +7,7 @@ import (
 
 	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/middleware"
+	"github.com/Leviosa-care/core/httpx"
 )
 
 func (h *handler) SetCompanyLogo(w http.ResponseWriter, r *http.Request) {
@@ -15,7 +15,7 @@ func (h *handler) SetCompanyLogo(w http.ResponseWriter, r *http.Request) {
 
 	logger, err := ctxutil.GetLoggerFromContext(ctx)
 	if err != nil {
-		middleware.RespondWithError(w, err, http.StatusInternalServerError)
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -23,7 +23,7 @@ func (h *handler) SetCompanyLogo(w http.ResponseWriter, r *http.Request) {
 	err = r.ParseMultipartForm(maxFormMemory) // 32 MB max memory buffer
 	if err != nil {
 		logger.DebugContext(ctx, fmt.Sprintf("Handler: Error parsing multipart form: %v", err))
-		middleware.RespondWithError(w, errors.New("failed to parse form data, request too large or invalid"), http.StatusBadRequest)
+		httpx.RespondWithError(w, errors.New("failed to parse form data, request too large or invalid"), http.StatusBadRequest)
 		return
 	}
 	defer r.MultipartForm.RemoveAll()
@@ -31,10 +31,10 @@ func (h *handler) SetCompanyLogo(w http.ResponseWriter, r *http.Request) {
 	file, header, err := r.FormFile("image")
 	if err != nil {
 		if errors.Is(err, http.ErrMissingFile) {
-			middleware.RespondWithError(w, errors.New("required form file 'image' is missing"), http.StatusBadRequest)
+			httpx.RespondWithError(w, errors.New("required form file 'image' is missing"), http.StatusBadRequest)
 		} else {
 			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Error retrieving form file: %v", err))
-			middleware.RespondWithError(w, errors.New("failed to retrieve form file"), http.StatusBadRequest)
+			httpx.RespondWithError(w, errors.New("failed to retrieve form file"), http.StatusBadRequest)
 		}
 		return
 	}
@@ -47,15 +47,15 @@ func (h *handler) SetCompanyLogo(w http.ResponseWriter, r *http.Request) {
 	if _, err := h.svc.SetCompanyLogo(ctx, file, fileSize, contentType); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrInvalidValue):
-			middleware.RespondWithError(w, err, http.StatusBadRequest)
+			httpx.RespondWithError(w, err, http.StatusBadRequest)
 		case errors.Is(err, errs.ErrExternalService):
-			middleware.RespondWithError(w, fmt.Errorf("failed to upload image due to an external service error: %w", err), http.StatusServiceUnavailable)
+			httpx.RespondWithError(w, fmt.Errorf("failed to upload image due to an external service error: %w", err), http.StatusServiceUnavailable)
 		case errors.Is(err, errs.ErrUnexpectedError), errors.Is(err, errs.ErrUnexpectedError):
 			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Internal server error during image upload: %v", err))
-			middleware.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
+			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 		default:
 			logger.ErrorContext(ctx, fmt.Sprintf("Handler: Unhandled error from service during image upload: %v", err))
-			middleware.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
+			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
