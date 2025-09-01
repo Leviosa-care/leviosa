@@ -1,4 +1,4 @@
-package testdata
+package helpers
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/settings/internal/domain"
-	td "github.com/Leviosa-care/settings/test/testdata"
+	th "github.com/Leviosa-care/settings/test/helpers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,9 +22,9 @@ func TestGetOTPDuration(t *testing.T) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	t.Run("should return 404 when OTP duration not set", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
-		req := td.NewGetOTPDurationRequest(t, ctx, testServerURL)
+		req := th.NewGetOTPDurationRequest(t, ctx, testServerURL)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -40,13 +40,13 @@ func TestGetOTPDuration(t *testing.T) {
 	})
 
 	t.Run("should successfully retrieve OTP duration (admin endpoint)", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		// Setup: Insert OTP duration directly into database
-		td.InsertOTPDuration(t, ctx, 300, testPool) // 5 minutes
+		th.InsertOTPDuration(t, ctx, 300, testPool) // 5 minutes
 
 		// Test: Get the OTP duration via HTTP
-		req := td.NewGetOTPDurationRequest(t, ctx, testServerURL)
+		req := th.NewGetOTPDurationRequest(t, ctx, testServerURL)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -65,17 +65,17 @@ func TestSetOTPDuration(t *testing.T) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	t.Run("should successfully set OTP duration", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		// Create a test channel for RabbitMQ verification
-		testCh := td.GetRabbitMQChannel(t, testMQConn)
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
 		defer testCh.Close()
 
 		// Purge queues to ensure clean state
-		td.PurgeSettingsQueues(t, testCh)
+		th.PurgeSettingsQueues(t, testCh)
 
 		request := domain.SetOTPDurationRequest{Duration: 600} // 10 minutes
-		req := td.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
+		req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -89,23 +89,23 @@ func TestSetOTPDuration(t *testing.T) {
 		assert.True(t, respBody.Success)
 
 		// Verify data was persisted directly in database
-		duration, err := td.GetOTPDurationFromDB(t, ctx, testPool)
+		duration, err := th.GetOTPDurationFromDB(t, ctx, testPool)
 		require.NoError(t, err)
 		assert.Equal(t, 600, duration)
 
 		// Verify RabbitMQ message was published
-		td.VerifySettingsUpdateMessage(t, testCh, settings.OTPDuration, 600)
+		th.VerifySettingsUpdateMessage(t, testCh, settings.OTPDuration, 600)
 	})
 
 	t.Run("should return 400 for duration less than 60 seconds", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		invalidDurations := []int{0, -1, 30, 59}
 
 		for _, duration := range invalidDurations {
 			t.Run(fmt.Sprintf("invalid duration: %d", duration), func(t *testing.T) {
 				request := domain.SetOTPDurationRequest{Duration: duration}
-				req := td.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
+				req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -124,14 +124,14 @@ func TestSetOTPDuration(t *testing.T) {
 	})
 
 	t.Run("should return 400 for duration greater than 3600 seconds", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		invalidDurations := []int{3601, 7200, 10000}
 
 		for _, duration := range invalidDurations {
 			t.Run(fmt.Sprintf("invalid duration: %d", duration), func(t *testing.T) {
 				request := domain.SetOTPDurationRequest{Duration: duration}
-				req := td.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
+				req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -150,7 +150,7 @@ func TestSetOTPDuration(t *testing.T) {
 	})
 
 	t.Run("should successfully accept valid duration ranges", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		validDurations := []struct {
 			duration int
@@ -167,10 +167,10 @@ func TestSetOTPDuration(t *testing.T) {
 
 		for _, test := range validDurations {
 			t.Run(test.name, func(t *testing.T) {
-				td.ClearSettingsTable(t, ctx, testPool)
+				th.ClearSettingsTable(t, ctx, testPool)
 
 				request := domain.SetOTPDurationRequest{Duration: test.duration}
-				req := td.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
+				req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -184,7 +184,7 @@ func TestSetOTPDuration(t *testing.T) {
 				assert.True(t, respBody.Success)
 
 				// Verify the duration was stored correctly directly in database
-				duration, err := td.GetOTPDurationFromDB(t, ctx, testPool)
+				duration, err := th.GetOTPDurationFromDB(t, ctx, testPool)
 				require.NoError(t, err)
 				assert.Equal(t, test.duration, duration)
 			})
@@ -192,10 +192,10 @@ func TestSetOTPDuration(t *testing.T) {
 	})
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		request := domain.SetOTPDurationRequest{Duration: 300}
-		req := td.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
+		req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
 		req.Header.Set("Content-Type", "text/plain")
 
 		resp, err := client.Do(req)
@@ -213,7 +213,7 @@ func TestSetOTPDuration(t *testing.T) {
 	})
 
 	t.Run("should return 400 for unknown JSON fields", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/otp/duration",
 			strings.NewReader(`{"duration": 300, "unknown_field": "value"}`))
@@ -235,11 +235,11 @@ func TestSetOTPDuration(t *testing.T) {
 	})
 
 	t.Run("should successfully update existing OTP duration", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		// Set initial duration
 		request1 := domain.SetOTPDurationRequest{Duration: 300}
-		req1 := td.NewSetOTPDurationRequest(t, ctx, testServerURL, request1)
+		req1 := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request1)
 		resp1, err := client.Do(req1)
 		require.NoError(t, err)
 		defer resp1.Body.Close()
@@ -247,16 +247,15 @@ func TestSetOTPDuration(t *testing.T) {
 
 		// Update to new duration
 		request2 := domain.SetOTPDurationRequest{Duration: 900}
-		req2 := td.NewSetOTPDurationRequest(t, ctx, testServerURL, request2)
+		req2 := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		require.Equal(t, http.StatusOK, resp2.StatusCode)
 
 		// Verify updated duration directly in database
-		duration, err := td.GetOTPDurationFromDB(t, ctx, testPool)
+		duration, err := th.GetOTPDurationFromDB(t, ctx, testPool)
 		require.NoError(t, err)
 		assert.Equal(t, 900, duration)
 	})
 }
-

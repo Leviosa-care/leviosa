@@ -1,4 +1,4 @@
-package testdata
+package helpers
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/settings/internal/domain"
-	td "github.com/Leviosa-care/settings/test/testdata"
+	th "github.com/Leviosa-care/settings/test/helpers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,9 +22,9 @@ func TestGetOTPLength(t *testing.T) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	t.Run("should return 404 when OTP length not set", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
-		req := td.NewGetOTPLengthRequest(t, ctx, testServerURL)
+		req := th.NewGetOTPLengthRequest(t, ctx, testServerURL)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -40,13 +40,13 @@ func TestGetOTPLength(t *testing.T) {
 	})
 
 	t.Run("should successfully retrieve OTP length (admin endpoint)", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Setup: Insert OTP length directly into database
-		td.InsertOTPLength(t, ctx, 6, testPool)
+		th.InsertOTPLength(t, ctx, 6, testPool)
 
 		// Test: Get the OTP length
-		req := td.NewGetOTPLengthRequest(t, ctx, testServerURL)
+		req := th.NewGetOTPLengthRequest(t, ctx, testServerURL)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -65,17 +65,17 @@ func TestSetOTPLength(t *testing.T) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	t.Run("should successfully set OTP length", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
-		
+		th.ClearAllTestData(t, ctx, testPool)
+
 		// Create a test channel for RabbitMQ verification
-		testCh := td.GetRabbitMQChannel(t, testMQConn)
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
 		defer testCh.Close()
-		
+
 		// Purge queues to ensure clean state
-		td.PurgeSettingsQueues(t, testCh)
+		th.PurgeSettingsQueues(t, testCh)
 
 		request := domain.SetOTPLengthRequest{Length: 8}
-		req := td.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
+		req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -89,23 +89,23 @@ func TestSetOTPLength(t *testing.T) {
 		assert.True(t, respBody.Success)
 
 		// Verify data was persisted directly in database
-		length, err := td.GetOTPLengthFromDB(t, ctx, testPool)
+		length, err := th.GetOTPLengthFromDB(t, ctx, testPool)
 		require.NoError(t, err)
 		assert.Equal(t, 8, length)
 
 		// Verify RabbitMQ message was published
-		td.VerifySettingsUpdateMessage(t, testCh, settings.OTPLength, 8)
+		th.VerifySettingsUpdateMessage(t, testCh, settings.OTPLength, 8)
 	})
 
 	t.Run("should return 400 for length less than 4 digits", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		invalidLengths := []int{0, -1, 1, 2, 3}
 
 		for _, length := range invalidLengths {
 			t.Run(fmt.Sprintf("invalid length: %d", length), func(t *testing.T) {
 				request := domain.SetOTPLengthRequest{Length: length}
-				req := td.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
+				req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -124,14 +124,14 @@ func TestSetOTPLength(t *testing.T) {
 	})
 
 	t.Run("should return 400 for length greater than 10 digits", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		invalidLengths := []int{11, 12, 15, 20}
 
 		for _, length := range invalidLengths {
 			t.Run(fmt.Sprintf("invalid length: %d", length), func(t *testing.T) {
 				request := domain.SetOTPLengthRequest{Length: length}
-				req := td.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
+				req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -150,7 +150,7 @@ func TestSetOTPLength(t *testing.T) {
 	})
 
 	t.Run("should successfully accept valid length ranges", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		validLengths := []struct {
 			length int
@@ -167,10 +167,10 @@ func TestSetOTPLength(t *testing.T) {
 
 		for _, test := range validLengths {
 			t.Run(test.name, func(t *testing.T) {
-				td.ClearAllTestData(t, ctx, testPool)
+				th.ClearAllTestData(t, ctx, testPool)
 
 				request := domain.SetOTPLengthRequest{Length: test.length}
-				req := td.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
+				req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -184,7 +184,7 @@ func TestSetOTPLength(t *testing.T) {
 				assert.True(t, respBody.Success)
 
 				// Verify the length was stored correctly directly in database
-				length, err := td.GetOTPLengthFromDB(t, ctx, testPool)
+				length, err := th.GetOTPLengthFromDB(t, ctx, testPool)
 				require.NoError(t, err)
 				assert.Equal(t, test.length, length)
 			})
@@ -192,10 +192,10 @@ func TestSetOTPLength(t *testing.T) {
 	})
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		request := domain.SetOTPLengthRequest{Length: 6}
-		req := td.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
+		req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
 		req.Header.Set("Content-Type", "text/plain")
 
 		resp, err := client.Do(req)
@@ -213,9 +213,9 @@ func TestSetOTPLength(t *testing.T) {
 	})
 
 	t.Run("should return 400 for unknown JSON fields", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/otp/length", 
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/otp/length",
 			strings.NewReader(`{"length": 6, "unknown_field": "value"}`))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
@@ -235,11 +235,11 @@ func TestSetOTPLength(t *testing.T) {
 	})
 
 	t.Run("should successfully update existing OTP length", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Set initial length
 		request1 := domain.SetOTPLengthRequest{Length: 4}
-		req1 := td.NewSetOTPLengthRequest(t, ctx, testServerURL, request1)
+		req1 := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request1)
 		resp1, err := client.Do(req1)
 		require.NoError(t, err)
 		defer resp1.Body.Close()
@@ -247,15 +247,16 @@ func TestSetOTPLength(t *testing.T) {
 
 		// Update to new length
 		request2 := domain.SetOTPLengthRequest{Length: 8}
-		req2 := td.NewSetOTPLengthRequest(t, ctx, testServerURL, request2)
+		req2 := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		require.Equal(t, http.StatusOK, resp2.StatusCode)
 
 		// Verify updated length directly in database
-		length, err := td.GetOTPLengthFromDB(t, ctx, testPool)
+		length, err := th.GetOTPLengthFromDB(t, ctx, testPool)
 		require.NoError(t, err)
 		assert.Equal(t, 8, length)
 	})
 }
+

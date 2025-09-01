@@ -1,4 +1,4 @@
-package testdata
+package helpers
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/validation"
 	"github.com/Leviosa-care/settings/internal/domain"
-	td "github.com/Leviosa-care/settings/test/testdata"
+	th "github.com/Leviosa-care/settings/test/helpers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,9 +23,9 @@ func TestGetCompanyEmail(t *testing.T) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	t.Run("should return 404 when company email not set", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
-		req := td.NewGetCompanyEmailRequest(t, ctx, testServerURL)
+		req := th.NewGetCompanyEmailRequest(t, ctx, testServerURL)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -41,13 +41,13 @@ func TestGetCompanyEmail(t *testing.T) {
 	})
 
 	t.Run("should successfully retrieve company email", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		// Setup: Insert company email directly into database
-		td.InsertCompanyEmail(t, ctx, "support@testcompany.com", testPool)
+		th.InsertCompanyEmail(t, ctx, "support@testcompany.com", testPool)
 
 		// Test: Get the company email via HTTP
-		req := td.NewGetCompanyEmailRequest(t, ctx, testServerURL)
+		req := th.NewGetCompanyEmailRequest(t, ctx, testServerURL)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -66,17 +66,17 @@ func TestSetCompanyEmail(t *testing.T) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	t.Run("should successfully set company email", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		// Create a test channel for RabbitMQ verification
-		testCh := td.GetRabbitMQChannel(t, testMQConn)
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
 		defer testCh.Close()
 
 		// Purge queues to ensure clean state
-		td.PurgeSettingsQueues(t, testCh)
+		th.PurgeSettingsQueues(t, testCh)
 
 		request := domain.SetCompanyEmailRequest{Email: "contact@newcompany.com"}
-		req := td.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -90,19 +90,19 @@ func TestSetCompanyEmail(t *testing.T) {
 		assert.True(t, respBody.Success)
 
 		// Verify data was persisted directly in database
-		email, err := td.GetCompanyEmailFromDB(t, ctx, testPool)
+		email, err := th.GetCompanyEmailFromDB(t, ctx, testPool)
 		require.NoError(t, err)
 		assert.Equal(t, "contact@newcompany.com", email)
 
 		// Verify RabbitMQ message was published
-		td.VerifySettingsUpdateMessage(t, testCh, settings.CompanyEmail, "contact@newcompany.com")
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyEmail, "contact@newcompany.com")
 	})
 
 	t.Run("should return 400 for empty email", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		request := domain.SetCompanyEmailRequest{Email: ""}
-		req := td.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -119,7 +119,7 @@ func TestSetCompanyEmail(t *testing.T) {
 	})
 
 	t.Run("should return 400 for invalid email format", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		invalidEmails := []string{
 			"notanemail",
@@ -133,7 +133,7 @@ func TestSetCompanyEmail(t *testing.T) {
 		for _, email := range invalidEmails {
 			t.Run("invalid email: "+email, func(t *testing.T) {
 				request := domain.SetCompanyEmailRequest{Email: email}
-				req := td.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+				req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -152,14 +152,14 @@ func TestSetCompanyEmail(t *testing.T) {
 	})
 
 	t.Run("should return 400 for email exceeding 255 characters", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		// Create a long email address
 		longLocalPart := strings.Repeat("a", validation.EmailMaxLength)
 		longEmail := longLocalPart + "@domain.com" // Total > 255 chars
 
 		request := domain.SetCompanyEmailRequest{Email: longEmail}
-		req := td.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -176,7 +176,7 @@ func TestSetCompanyEmail(t *testing.T) {
 	})
 
 	t.Run("should successfully accept valid email formats", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		validEmails := []string{
 			"simple@domain.com",
@@ -189,10 +189,10 @@ func TestSetCompanyEmail(t *testing.T) {
 
 		for _, email := range validEmails {
 			t.Run("valid email: "+email, func(t *testing.T) {
-				td.ClearSettingsTable(t, ctx, testPool)
+				th.ClearSettingsTable(t, ctx, testPool)
 
 				request := domain.SetCompanyEmailRequest{Email: email}
-				req := td.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+				req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -209,10 +209,10 @@ func TestSetCompanyEmail(t *testing.T) {
 	})
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		request := domain.SetCompanyEmailRequest{Email: "test@company.com"}
-		req := td.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
 		req.Header.Set("Content-Type", "text/plain")
 
 		resp, err := client.Do(req)
@@ -230,7 +230,7 @@ func TestSetCompanyEmail(t *testing.T) {
 	})
 
 	t.Run("should return 400 for unknown JSON fields", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/email",
 			strings.NewReader(`{"email": "test@company.com", "unknown_field": "value"}`))
@@ -252,11 +252,11 @@ func TestSetCompanyEmail(t *testing.T) {
 	})
 
 	t.Run("should successfully update existing company email", func(t *testing.T) {
-		td.ClearSettingsTable(t, ctx, testPool)
+		th.ClearSettingsTable(t, ctx, testPool)
 
 		// Set initial email
 		request1 := domain.SetCompanyEmailRequest{Email: "old@company.com"}
-		req1 := td.NewSetCompanyEmailRequest(t, ctx, testServerURL, request1)
+		req1 := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request1)
 		resp1, err := client.Do(req1)
 		require.NoError(t, err)
 		defer resp1.Body.Close()
@@ -264,14 +264,14 @@ func TestSetCompanyEmail(t *testing.T) {
 
 		// Update to new email
 		request2 := domain.SetCompanyEmailRequest{Email: "new@company.com"}
-		req2 := td.NewSetCompanyEmailRequest(t, ctx, testServerURL, request2)
+		req2 := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		require.Equal(t, http.StatusOK, resp2.StatusCode)
 
 		// Verify updated email directly in database
-		email, err := td.GetCompanyEmailFromDB(t, ctx, testPool)
+		email, err := th.GetCompanyEmailFromDB(t, ctx, testPool)
 		require.NoError(t, err)
 		assert.Equal(t, "new@company.com", email)
 	})

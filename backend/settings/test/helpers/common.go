@@ -1,4 +1,4 @@
-package testdata
+package helpers
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 // ClearSettingsTable truncates all settings tables after each test
 func ClearSettingsTable(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
 	t.Helper()
-	
+
 	_, err := pool.Exec(ctx, `
 		TRUNCATE TABLE settings.plain, settings.encrypted 
 		RESTART IDENTITY CASCADE;
@@ -32,3 +32,4 @@ func ClearAllTestData(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
 	ClearSettingsTable(t, ctx, pool)
 	ClearS3Bucket(t, ctx)
 }
+

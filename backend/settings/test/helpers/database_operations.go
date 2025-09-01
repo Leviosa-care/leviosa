@@ -1,4 +1,4 @@
-package testdata
+package helpers
 
 import (
 	"context"
@@ -254,7 +254,7 @@ func InsertCompanyPhoneEncrypted(t *testing.T, ctx context.Context, phone string
 	dummyEncrypted := []byte("encrypted_" + phone)
 	dummyDEK := []byte("dummy_dek")
 	keyVersion := 1
-	
+
 	query := `
 		INSERT INTO settings.encrypted (key, value_encrypted, dek_encrypted, key_version)
 		VALUES ($1, $2, $3, $4)

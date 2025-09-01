@@ -1,4 +1,4 @@
-package testdata
+package helpers
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	"github.com/Leviosa-care/settings/internal/adapters/s3"
 	settings "github.com/Leviosa-care/settings/internal/application"
 	"github.com/Leviosa-care/settings/internal/ports"
-	td "github.com/Leviosa-care/settings/test/testdata"
+	th "github.com/Leviosa-care/settings/test/helpers"
 
 	"github.com/Leviosa-care/core/migrations"
 	tu "github.com/Leviosa-care/core/testutils"
@@ -133,7 +133,7 @@ func TestMain(m *testing.M) {
 	})
 	// Create a test bucket in Localstack S3
 	_, err = s3Client.CreateBucket(ctx, &s3.CreateBucketInput{
-		Bucket: aws.String(td.BUCKETNAME), // Use your test bucket name
+		Bucket: aws.String(th.BUCKETNAME), // Use your test bucket name
 	})
 	if err != nil {
 		log.Fatalf("Failed to create test S3 bucket: %v", err)
@@ -193,7 +193,7 @@ func TestMain(m *testing.M) {
 	rabbitmq.Setup(ctx, ch)
 
 	repo = postgres.New(ctx, testPool)
-	mediaRepo = media.New(ctx, s3Client, td.BUCKETNAME)
+	mediaRepo = media.New(ctx, s3Client, th.BUCKETNAME)
 
 	service := settings.New(repo, mediaRepo, crypto, conn)
 	handler = settingsHandler.New(service)

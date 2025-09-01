@@ -1,4 +1,4 @@
-package testdata
+package helpers
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/settings"
-	td "github.com/Leviosa-care/settings/test/testdata"
+	th "github.com/Leviosa-care/settings/test/helpers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,12 +41,12 @@ func TestBulkSettingsHandler(t *testing.T) {
 	})
 
 	t.Run("should successfully retrieve single setting", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Setup: Insert company name
-		td.InsertCompanyName(t, ctx, "Test Company", testPool)
+		th.InsertCompanyName(t, ctx, "Test Company", testPool)
 
-		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, []string{settings.CompanyName})
+		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, []string{settings.CompanyName})
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -63,15 +63,15 @@ func TestBulkSettingsHandler(t *testing.T) {
 	})
 
 	t.Run("should successfully retrieve multiple settings", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Setup: Insert multiple settings
-		td.InsertCompanyName(t, ctx, "Bulk Test Company", testPool)
-		td.InsertCompanyEmail(t, ctx, "bulk@test.com", testPool)
-		td.InsertCompanyAddress(t, ctx, "123 Bulk Test St", testPool)
-		td.InsertOTPDuration(t, ctx, 10, testPool)
-		td.InsertOTPLength(t, ctx, 8, testPool)
-		td.InsertOTPMaxAttempts(t, ctx, 5, testPool)
+		th.InsertCompanyName(t, ctx, "Bulk Test Company", testPool)
+		th.InsertCompanyEmail(t, ctx, "bulk@test.com", testPool)
+		th.InsertCompanyAddress(t, ctx, "123 Bulk Test St", testPool)
+		th.InsertOTPDuration(t, ctx, 10, testPool)
+		th.InsertOTPLength(t, ctx, 8, testPool)
+		th.InsertOTPMaxAttempts(t, ctx, 5, testPool)
 
 		keys := []string{
 			settings.CompanyName,
@@ -82,7 +82,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 			settings.OTPMaxAttempts,
 		}
 
-		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -110,20 +110,20 @@ func TestBulkSettingsHandler(t *testing.T) {
 	})
 
 	t.Run("should handle partial success with some invalid keys", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Setup: Insert only some settings
-		td.InsertCompanyName(t, ctx, "Partial Test Company", testPool)
-		td.InsertOTPLength(t, ctx, 6, testPool)
+		th.InsertCompanyName(t, ctx, "Partial Test Company", testPool)
+		th.InsertOTPLength(t, ctx, 6, testPool)
 
 		keys := []string{
-			settings.CompanyName,    // exists
-			"invalid_key",          // invalid
-			settings.OTPLength,     // exists
-			settings.CompanyEmail,  // doesn't exist (not set)
+			settings.CompanyName,  // exists
+			"invalid_key",         // invalid
+			settings.OTPLength,    // exists
+			settings.CompanyEmail, // doesn't exist (not set)
 		}
 
-		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -139,13 +139,13 @@ func TestBulkSettingsHandler(t *testing.T) {
 
 		// Should have 2 successful settings
 		require.Len(t, response.Data, 2)
-		
+
 		// Create a map for easier verification
 		dataMap := make(map[string]string)
 		for _, setting := range response.Data {
 			dataMap[setting.Key] = setting.Value
 		}
-		
+
 		assert.Equal(t, "Partial Test Company", dataMap[settings.CompanyName])
 		assert.Equal(t, "6", dataMap[settings.OTPLength])
 
@@ -158,7 +158,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 	t.Run("should handle all invalid keys", func(t *testing.T) {
 		keys := []string{"invalid_key1", "invalid_key2"}
 
-		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -182,7 +182,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 	})
 
 	t.Run("should handle missing settings with not found errors", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		keys := []string{
 			settings.CompanyName,
@@ -190,7 +190,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 			settings.OTPDuration,
 		}
 
-		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -215,10 +215,10 @@ func TestBulkSettingsHandler(t *testing.T) {
 	})
 
 	t.Run("should handle duplicate keys in request", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Setup: Insert company name
-		td.InsertCompanyName(t, ctx, "Duplicate Test Company", testPool)
+		th.InsertCompanyName(t, ctx, "Duplicate Test Company", testPool)
 
 		keys := []string{
 			settings.CompanyName,
@@ -226,7 +226,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 			settings.CompanyName, // another duplicate
 		}
 
-		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -246,16 +246,16 @@ func TestBulkSettingsHandler(t *testing.T) {
 	})
 
 	t.Run("should handle all supported setting types", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Setup: Insert all types of settings
-		td.InsertCompanyName(t, ctx, "All Types Company", testPool)
-		td.InsertCompanyEmail(t, ctx, "all@types.com", testPool)
-		td.InsertCompanyAddress(t, ctx, "456 All Types Ave", testPool)
-		td.InsertCompanyInstagram(t, ctx, "https://instagram.com/alltypes", testPool)
-		td.InsertOTPDuration(t, ctx, 20, testPool)
-		td.InsertOTPLength(t, ctx, 4, testPool)
-		td.InsertOTPMaxAttempts(t, ctx, 7, testPool)
+		th.InsertCompanyName(t, ctx, "All Types Company", testPool)
+		th.InsertCompanyEmail(t, ctx, "all@types.com", testPool)
+		th.InsertCompanyAddress(t, ctx, "456 All Types Ave", testPool)
+		th.InsertCompanyInstagram(t, ctx, "https://instagram.com/alltypes", testPool)
+		th.InsertOTPDuration(t, ctx, 20, testPool)
+		th.InsertOTPLength(t, ctx, 4, testPool)
+		th.InsertOTPMaxAttempts(t, ctx, 7, testPool)
 
 		// Note: CompanyPhone and CompanyLogo are not included as they require special setup
 
@@ -269,7 +269,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 			settings.OTPMaxAttempts,
 		}
 
-		req := td.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()

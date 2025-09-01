@@ -1,4 +1,4 @@
-package testdata
+package helpers
 
 import (
 	"bytes"
@@ -23,7 +23,7 @@ func NewGetCompanyNameRequest(t *testing.T, ctx context.Context, serverURL strin
 func NewSetCompanyNameRequest(t *testing.T, ctx context.Context, serverURL string, request domain.SetCompanyNameRequest) *http.Request {
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
-	
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/name", bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
@@ -39,7 +39,7 @@ func NewGetCompanyEmailRequest(t *testing.T, ctx context.Context, serverURL stri
 func NewSetCompanyEmailRequest(t *testing.T, ctx context.Context, serverURL string, request domain.SetCompanyEmailRequest) *http.Request {
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
-	
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/email", bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
@@ -55,7 +55,7 @@ func NewGetCompanyPhoneRequest(t *testing.T, ctx context.Context, serverURL stri
 func NewSetCompanyPhoneRequest(t *testing.T, ctx context.Context, serverURL string, request domain.SetCompanyTelephoneRequest) *http.Request {
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
-	
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/phone", bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
@@ -71,7 +71,7 @@ func NewGetCompanyAddressRequest(t *testing.T, ctx context.Context, serverURL st
 func NewSetCompanyAddressRequest(t *testing.T, ctx context.Context, serverURL string, request domain.SetCompanyLegalAddressRequest) *http.Request {
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
-	
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/address", bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
@@ -87,7 +87,7 @@ func NewGetCompanyInstagramRequest(t *testing.T, ctx context.Context, serverURL 
 func NewSetCompanyInstagramRequest(t *testing.T, ctx context.Context, serverURL string, request domain.SetCompanyInstagramRequest) *http.Request {
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
-	
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/instagram", bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
@@ -111,7 +111,7 @@ func NewGetOTPDurationRequest(t *testing.T, ctx context.Context, serverURL strin
 func NewSetOTPDurationRequest(t *testing.T, ctx context.Context, serverURL string, request domain.SetOTPDurationRequest) *http.Request {
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
-	
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/otp/duration", bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
@@ -127,7 +127,7 @@ func NewGetOTPLengthRequest(t *testing.T, ctx context.Context, serverURL string)
 func NewSetOTPLengthRequest(t *testing.T, ctx context.Context, serverURL string, request domain.SetOTPLengthRequest) *http.Request {
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
-	
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/otp/length", bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
@@ -143,7 +143,7 @@ func NewGetOTPMaxAttemptsRequest(t *testing.T, ctx context.Context, serverURL st
 func NewSetOTPMaxAttemptsRequest(t *testing.T, ctx context.Context, serverURL string, request domain.SetOTPMaxAttemptsRequest) *http.Request {
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
-	
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/otp/max-attempts", bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")

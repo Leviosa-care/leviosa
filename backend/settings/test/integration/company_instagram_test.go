@@ -1,4 +1,4 @@
-package testdata
+package helpers
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/settings/internal/domain"
-	td "github.com/Leviosa-care/settings/test/testdata"
+	th "github.com/Leviosa-care/settings/test/helpers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,9 +21,9 @@ func TestGetCompanyInstagram(t *testing.T) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	t.Run("should return 404 when company instagram not set", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
-		req := td.NewGetCompanyInstagramRequest(t, ctx, testServerURL)
+		req := th.NewGetCompanyInstagramRequest(t, ctx, testServerURL)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -39,13 +39,13 @@ func TestGetCompanyInstagram(t *testing.T) {
 	})
 
 	t.Run("should successfully retrieve company instagram", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Setup: Insert company instagram directly into database
-		td.InsertCompanyInstagram(t, ctx, "https://instagram.com/testcompany", testPool)
+		th.InsertCompanyInstagram(t, ctx, "https://instagram.com/testcompany", testPool)
 
 		// Test: Get the company instagram
-		req := td.NewGetCompanyInstagramRequest(t, ctx, testServerURL)
+		req := th.NewGetCompanyInstagramRequest(t, ctx, testServerURL)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -64,17 +64,17 @@ func TestSetCompanyInstagram(t *testing.T) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	t.Run("should successfully set company instagram", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Create a test channel for RabbitMQ verification
-		testCh := td.GetRabbitMQChannel(t, testMQConn)
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
 		defer testCh.Close()
 
 		// Purge queues to ensure clean state
-		td.PurgeSettingsQueues(t, testCh)
+		th.PurgeSettingsQueues(t, testCh)
 
 		request := domain.SetCompanyInstagramRequest{Instagram: "https://instagram.com/mycompany"}
-		req := td.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -88,19 +88,19 @@ func TestSetCompanyInstagram(t *testing.T) {
 		assert.True(t, respBody.Success)
 
 		// Verify data was persisted directly in database
-		instagram, err := td.GetCompanyInstagramFromDB(t, ctx, testPool)
+		instagram, err := th.GetCompanyInstagramFromDB(t, ctx, testPool)
 		require.NoError(t, err)
 		assert.Equal(t, "https://instagram.com/mycompany", instagram)
 
 		// Verify RabbitMQ message was published
-		td.VerifySettingsUpdateMessage(t, testCh, settings.CompanyInstagram, "https://instagram.com/mycompany")
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyInstagram, "https://instagram.com/mycompany")
 	})
 
 	t.Run("should return 400 for empty instagram link", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		request := domain.SetCompanyInstagramRequest{Instagram: ""}
-		req := td.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -117,7 +117,7 @@ func TestSetCompanyInstagram(t *testing.T) {
 	})
 
 	t.Run("should return 400 for invalid URL format", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		invalidUrls := []string{
 			"not-a-url",
@@ -131,7 +131,7 @@ func TestSetCompanyInstagram(t *testing.T) {
 		for _, url := range invalidUrls {
 			t.Run("invalid URL: "+url, func(t *testing.T) {
 				request := domain.SetCompanyInstagramRequest{Instagram: url}
-				req := td.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+				req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -150,14 +150,14 @@ func TestSetCompanyInstagram(t *testing.T) {
 	})
 
 	t.Run("should return 400 for instagram link exceeding 255 characters", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Create a long URL
 		longPath := strings.Repeat("a", 240)
 		longUrl := "https://instagram.com/" + longPath // Total > 255 chars
 
 		request := domain.SetCompanyInstagramRequest{Instagram: longUrl}
-		req := td.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -174,7 +174,7 @@ func TestSetCompanyInstagram(t *testing.T) {
 	})
 
 	t.Run("should successfully accept various valid URL formats", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		validUrls := []string{
 			"https://instagram.com/company",
@@ -191,10 +191,10 @@ func TestSetCompanyInstagram(t *testing.T) {
 
 		for _, url := range validUrls {
 			t.Run("valid URL: "+url, func(t *testing.T) {
-				td.ClearAllTestData(t, ctx, testPool)
+				th.ClearAllTestData(t, ctx, testPool)
 
 				request := domain.SetCompanyInstagramRequest{Instagram: url}
-				req := td.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+				req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -211,7 +211,7 @@ func TestSetCompanyInstagram(t *testing.T) {
 	})
 
 	t.Run("should accept non-Instagram URLs (business requirement)", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Test that the field accepts any valid URL, not just Instagram
 		nonInstagramUrls := []string{
@@ -223,10 +223,10 @@ func TestSetCompanyInstagram(t *testing.T) {
 
 		for _, url := range nonInstagramUrls {
 			t.Run("non-Instagram URL: "+url, func(t *testing.T) {
-				td.ClearAllTestData(t, ctx, testPool)
+				th.ClearAllTestData(t, ctx, testPool)
 
 				request := domain.SetCompanyInstagramRequest{Instagram: url}
-				req := td.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+				req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -243,10 +243,10 @@ func TestSetCompanyInstagram(t *testing.T) {
 	})
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		request := domain.SetCompanyInstagramRequest{Instagram: "https://instagram.com/test"}
-		req := td.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
 		req.Header.Set("Content-Type", "text/plain")
 
 		resp, err := client.Do(req)
@@ -264,7 +264,7 @@ func TestSetCompanyInstagram(t *testing.T) {
 	})
 
 	t.Run("should return 400 for unknown JSON fields", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/instagram",
 			strings.NewReader(`{"instagram": "https://instagram.com/test", "unknown_field": "value"}`))
@@ -286,11 +286,11 @@ func TestSetCompanyInstagram(t *testing.T) {
 	})
 
 	t.Run("should successfully update existing company instagram", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Set initial instagram
 		request1 := domain.SetCompanyInstagramRequest{Instagram: "https://instagram.com/oldcompany"}
-		req1 := td.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request1)
+		req1 := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request1)
 		resp1, err := client.Do(req1)
 		require.NoError(t, err)
 		defer resp1.Body.Close()
@@ -298,14 +298,14 @@ func TestSetCompanyInstagram(t *testing.T) {
 
 		// Update to new instagram
 		request2 := domain.SetCompanyInstagramRequest{Instagram: "https://instagram.com/newcompany"}
-		req2 := td.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request2)
+		req2 := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		require.Equal(t, http.StatusOK, resp2.StatusCode)
 
 		// Verify updated instagram directly in database
-		instagram, err := td.GetCompanyInstagramFromDB(t, ctx, testPool)
+		instagram, err := th.GetCompanyInstagramFromDB(t, ctx, testPool)
 		require.NoError(t, err)
 		assert.Equal(t, "https://instagram.com/newcompany", instagram)
 	})

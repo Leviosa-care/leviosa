@@ -1,4 +1,4 @@
-package testdata
+package helpers
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/settings/internal/domain"
-	td "github.com/Leviosa-care/settings/test/testdata"
+	th "github.com/Leviosa-care/settings/test/helpers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -80,17 +80,17 @@ func TestSetCompanyPhone(t *testing.T) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	t.Run("should successfully set company phone", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Create a test channel for RabbitMQ verification
-		testCh := td.GetRabbitMQChannel(t, testMQConn)
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
 		defer testCh.Close()
 
 		// Purge queues to ensure clean state
-		td.PurgeSettingsQueues(t, testCh)
+		th.PurgeSettingsQueues(t, testCh)
 
 		request := domain.SetCompanyTelephoneRequest{Telephone: "0145678910"}
-		req := td.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -104,19 +104,19 @@ func TestSetCompanyPhone(t *testing.T) {
 		assert.True(t, respBody.Success)
 
 		// Verify data was persisted directly in database
-		phone, err := td.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+		phone, err := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, td.EncryptedDataExists, phone)
+		assert.Equal(t, th.EncryptedDataExists, phone)
 
 		// Verify RabbitMQ message was published
-		td.VerifySettingsUpdateMessage(t, testCh, settings.CompanyPhone, "0145678910")
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyPhone, "0145678910")
 	})
 
 	t.Run("should return 400 for empty telephone", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		request := domain.SetCompanyTelephoneRequest{Telephone: ""}
-		req := td.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -133,7 +133,7 @@ func TestSetCompanyPhone(t *testing.T) {
 	})
 
 	t.Run("should return 400 for telephone shorter than 10 characters", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		shortPhones := []string{
 			"123",
@@ -144,7 +144,7 @@ func TestSetCompanyPhone(t *testing.T) {
 		for _, phone := range shortPhones {
 			t.Run("short phone: "+phone, func(t *testing.T) {
 				request := domain.SetCompanyTelephoneRequest{Telephone: phone}
-				req := td.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+				req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -163,11 +163,11 @@ func TestSetCompanyPhone(t *testing.T) {
 	})
 
 	t.Run("should return 400 for telephone longer than 20 characters", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		longPhone := "01234567890123456789012345" // 25 characters
 		request := domain.SetCompanyTelephoneRequest{Telephone: longPhone}
-		req := td.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -184,7 +184,7 @@ func TestSetCompanyPhone(t *testing.T) {
 	})
 
 	t.Run("should successfully accept various valid phone formats", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		validPhones := []string{
 			"0123456789", // French mobile format
@@ -198,10 +198,10 @@ func TestSetCompanyPhone(t *testing.T) {
 
 		for _, phone := range validPhones {
 			t.Run("valid phone: "+phone, func(t *testing.T) {
-				td.ClearAllTestData(t, ctx, testPool)
+				th.ClearAllTestData(t, ctx, testPool)
 
 				request := domain.SetCompanyTelephoneRequest{Telephone: phone}
-				req := td.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+				req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -215,19 +215,19 @@ func TestSetCompanyPhone(t *testing.T) {
 				assert.True(t, respBody.Success)
 
 				// Verify the phone was stored directly in database
-				phoneFromDB, err := td.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+				phoneFromDB, err := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
 				require.NoError(t, err)
-				assert.Equal(t, td.EncryptedDataExists, phoneFromDB)
+				assert.Equal(t, th.EncryptedDataExists, phoneFromDB)
 			})
 		}
 	})
 
 	t.Run("should handle whitespace trimming correctly", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Phone with leading/trailing whitespace
 		request := domain.SetCompanyTelephoneRequest{Telephone: "  0123456789  "}
-		req := td.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -236,17 +236,17 @@ func TestSetCompanyPhone(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify the phone was trimmed and stored correctly directly in database
-		phoneFromDB, err := td.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+		phoneFromDB, err := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
 		require.NoError(t, err)
 		// Should store the encrypted value
-		assert.Equal(t, td.EncryptedDataExists, phoneFromDB)
+		assert.Equal(t, th.EncryptedDataExists, phoneFromDB)
 	})
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		request := domain.SetCompanyTelephoneRequest{Telephone: "0123456789"}
-		req := td.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
 		req.Header.Set("Content-Type", "text/plain")
 
 		resp, err := client.Do(req)
@@ -264,7 +264,7 @@ func TestSetCompanyPhone(t *testing.T) {
 	})
 
 	t.Run("should return 400 for unknown JSON fields", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/phone",
 			strings.NewReader(`{"telephone": "0123456789", "unknown_field": "value"}`))
@@ -286,11 +286,11 @@ func TestSetCompanyPhone(t *testing.T) {
 	})
 
 	t.Run("should successfully update existing company phone", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
 		// Set initial phone
 		request1 := domain.SetCompanyTelephoneRequest{Telephone: "0111111111"}
-		req1 := td.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request1)
+		req1 := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request1)
 		resp1, err := client.Do(req1)
 		require.NoError(t, err)
 		defer resp1.Body.Close()
@@ -298,16 +298,16 @@ func TestSetCompanyPhone(t *testing.T) {
 
 		// Update to new phone
 		request2 := domain.SetCompanyTelephoneRequest{Telephone: "0222222222"}
-		req2 := td.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request2)
+		req2 := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		require.Equal(t, http.StatusOK, resp2.StatusCode)
 
 		// Verify updated phone directly in database
-		phoneFromDB, err := td.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+		phoneFromDB, err := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, td.EncryptedDataExists, phoneFromDB)
+		assert.Equal(t, th.EncryptedDataExists, phoneFromDB)
 	})
 
 	// TODO: Add test for encryption verification once crypto service is properly configured

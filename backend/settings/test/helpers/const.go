@@ -1,4 +1,4 @@
-package testdata
+package helpers
 
 const (
 	BUCKETNAME = "leviosa"
