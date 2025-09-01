@@ -8,6 +8,8 @@ type sessionContextKey struct{}
 // SessionFromContext extracts session from request context
 func SessionFromContext(ctx context.Context) (*Session, bool) {
 	session, ok := ctx.Value(sessionContextKey{}).(*Session)
-	return session, ok
+	if !ok || session == nil {
+		return nil, false
+	}
+	return session, true
 }
-

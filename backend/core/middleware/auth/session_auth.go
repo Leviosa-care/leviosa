@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/httpx"
@@ -22,33 +21,24 @@ func NewSessionAuthMiddleware(sessionRepo SessionRepository) AuthMiddleware {
 	}
 }
 
-// RequireSession validates session token and makes session available in context
-func (m *SessionAuthMiddleware) RequireSession(next http.Handler) http.Handler {
+// RequireAccessToken validates access token from cookies and makes session available in context
+func (m *SessionAuthMiddleware) RequireAccessToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Extract token from Authorization header
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
+		// Extract access token from cookies
+		cookie, err := r.Cookie(AccessTokenCookieName)
+		if err != nil {
 			httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
 			return
 		}
 
-		// Expected format: "Bearer <token>"
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			httpx.RespondWithError(w, errs.ErrInvalidValue, http.StatusUnauthorized)
+		accessToken := cookie.Value
+		if accessToken == "" {
+			httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
 			return
 		}
 
-		token := parts[1]
-		if token == "" {
-			httpx.RespondWithError(w, errs.ErrInvalidValue, http.StatusUnauthorized)
-			return
-		}
-
-		// TODO: use the encx package to hash the token
-
-		// Find session by token hash
-		sessionData, err := m.sessionRepo.FindSessionByTokenHash(r.Context(), token)
+		// Find session by access token using two-step lookup
+		sessionData, err := m.sessionRepo.FindSessionByAccessToken(r.Context(), accessToken)
 		if err != nil {
 			if errors.Is(err, errs.ErrRepositoryNotFound) {
 				httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
@@ -65,8 +55,63 @@ func (m *SessionAuthMiddleware) RequireSession(next http.Handler) http.Handler {
 			return
 		}
 
-		// Check session state
-		if session.State != SessionActive {
+		// Check session state - access tokens work for both pending and active sessions
+		if session.State != SessionActive && session.State != SessionPending {
+			httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
+			return
+		}
+
+		// Add session to context
+		ctx := context.WithValue(r.Context(), sessionContextKey{}, session)
+		r = r.WithContext(ctx)
+
+		// Continue to next handler
+		next.ServeHTTP(w, r)
+	})
+}
+
+// RequireRefreshToken validates refresh token from cookies for token refresh operations only
+func (m *SessionAuthMiddleware) RequireRefreshToken(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Security: Only allow refresh tokens on /auth/refresh endpoint
+		if r.URL.Path != "/auth/refresh" {
+			httpx.RespondWithError(w, errs.ErrForbidden, http.StatusForbidden)
+			return
+		}
+
+		// Extract refresh token from cookies
+		cookie, err := r.Cookie(RefreshTokenCookieName)
+		if err != nil {
+			httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
+			return
+		}
+
+		refreshToken := cookie.Value
+		if refreshToken == "" {
+			httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
+			return
+		}
+
+		// Find session by refresh token using two-step lookup
+		sessionData, err := m.sessionRepo.FindSessionByRefreshToken(r.Context(), refreshToken)
+		if err != nil {
+			if errors.Is(err, errs.ErrRepositoryNotFound) {
+				httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
+				return
+			}
+			httpx.RespondWithError(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		// Decode session
+		session, err := DecodeSession(sessionData)
+		if err != nil {
+			httpx.RespondWithError(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		// Check session state - refresh tokens work for both pending and active sessions
+		if session.State != SessionActive && session.State != SessionPending {
 			httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
 			return
 		}

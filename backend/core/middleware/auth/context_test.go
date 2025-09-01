@@ -208,7 +208,7 @@ func TestSessionFromContext_ConcurrentAccess(t *testing.T) {
 	// Run multiple goroutines accessing the same context
 	results := make(chan bool, 10)
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		go func() {
 			retrievedSession, exists := SessionFromContext(ctx)
 			results <- exists && retrievedSession != nil && retrievedSession.TokenHash == "concurrent_test_hash"
@@ -216,9 +216,8 @@ func TestSessionFromContext_ConcurrentAccess(t *testing.T) {
 	}
 
 	// Verify all goroutines got the correct result
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		result := <-results
 		assert.True(t, result, "concurrent access should work correctly")
 	}
 }
-

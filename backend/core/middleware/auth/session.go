@@ -12,10 +12,8 @@ import (
 	"github.com/hengadev/errsx"
 )
 
-// TODO: find the right value for this
 const (
-	SessionDuration   = 24 * time.Hour
-	SessionCookieName = "leviosa_session_token"
+	SessionDuration = 24 * time.Hour
 )
 
 type SessionState string
@@ -49,13 +47,60 @@ func (s *Session) Valid(ctx context.Context) error {
 	return errs.AsError()
 }
 
+// TokenPair represents access and refresh tokens with their hashed values
+type TokenPair struct {
+	AccessToken      string `json:"-" encx:"hash_basic"`
+	AccessTokenHash  string `json:"access_token_hash"`
+	RefreshToken     string `json:"-" encx:"hash_basic"`
+	RefreshTokenHash string `json:"refresh_token_hash"`
+	DEK              []byte `json:"-" encx:"encrypt"`
+	DEKEncrypted     []byte `json:"dek_encrypted"`
+	KeyVersion       int    `json:"key_version"`
+}
+
 // DecodeSession unmarshals JSON bytes back to a session
+// The JSON data should contain plaintext fields for validation
 func DecodeSession(data []byte) (*Session, error) {
-	var session Session
-	err := json.Unmarshal(data, &session)
+	// Temporary struct for unmarshaling with correct JSON tags
+	var temp struct {
+		ID                 uuid.UUID     `json:"id"`
+		UserID             uuid.UUID     `json:"user_id"`
+		UserIDEncrypted    []byte        `json:"user_id_encrypted"`
+		Role               identity.Role `json:"role"`
+		RoleEncrypted      []byte        `json:"role_encrypted"`
+		State              SessionState  `json:"state"`
+		StateEncrypted     []byte        `json:"state_encrypted"`
+		CreatedAt          time.Time     `json:"created_at"`
+		CreatedAtEncrypted []byte        `json:"created_at_encrypted"`
+		ExpiresAt          time.Time     `json:"expires_at"`
+		ExpiresAtEncrypted []byte        `json:"expires_at_encrypted"`
+		TokenHash          string        `json:"token_hash"`
+		DEKEncrypted       []byte        `json:"dek_encrypted"`
+		KeyVersion         int           `json:"key_version"`
+	}
+	
+	err := json.Unmarshal(data, &temp)
 	if err != nil {
 		return nil, errs.NewJSONUnmarshalErr(err)
 	}
-	return &session, nil
-}
 
+	// Convert to Session struct
+	session := &Session{
+		ID:                 temp.ID,
+		UserID:             temp.UserID,
+		UserIDEncrypted:    temp.UserIDEncrypted,
+		Role:               temp.Role,
+		RoleEncrypted:      temp.RoleEncrypted,
+		State:              temp.State,
+		StateEncrypted:     temp.StateEncrypted,
+		CreatedAt:          temp.CreatedAt,
+		CreatedAtEncrypted: temp.CreatedAtEncrypted,
+		ExpiresAt:          temp.ExpiresAt,
+		ExpiresAtEncrypted: temp.ExpiresAtEncrypted,
+		TokenHash:          temp.TokenHash,
+		DEKEncrypted:       temp.DEKEncrypted,
+		KeyVersion:         temp.KeyVersion,
+	}
+	
+	return session, nil
+}

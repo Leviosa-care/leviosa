@@ -139,7 +139,7 @@ func TestDecodeSession_TypeValidation(t *testing.T) {
 				"token_hash": "test",
 				"key_version": 1.5
 			}`,
-			expectErr: false, // JSON unmarshaling converts float to int
+			expectErr: true, // JSON unmarshaling does NOT convert float to int
 		},
 		{
 			name: "token_hash as number",
@@ -244,13 +244,9 @@ func TestSession_FieldTags(t *testing.T) {
 func TestSession_Constants(t *testing.T) {
 	// Test that session constants are reasonable
 	assert.Equal(t, 24*time.Hour, SessionDuration)
-	assert.Equal(t, "leviosa_session_token", SessionCookieName)
 
 	// Verify duration is positive
 	assert.Positive(t, SessionDuration)
-
-	// Verify cookie name is not empty
-	assert.NotEmpty(t, SessionCookieName)
 }
 
 func TestDecodeSession_RoundTrip(t *testing.T) {
@@ -289,11 +285,10 @@ func TestDecodeSession_RoundTrip(t *testing.T) {
 	// Verify plaintext fields are zero values (not serialized)
 	assert.Equal(t, uuid.Nil, decoded.ID)
 	assert.Equal(t, uuid.Nil, decoded.UserID)
-	assert.Equal(t, identity.Role(1), decoded.Role)
+	assert.Equal(t, identity.Role(0), decoded.Role) // Zero value is 0, not 1
 	assert.Equal(t, SessionState(""), decoded.State)
 	assert.True(t, decoded.CreatedAt.IsZero())
 	assert.True(t, decoded.ExpiresAt.IsZero())
 	assert.Empty(t, decoded.Token)
 	assert.Nil(t, decoded.DEK)
 }
-

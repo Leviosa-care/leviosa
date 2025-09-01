@@ -9,15 +9,15 @@ var (
 	// Generic errors that can be wrapped by more specific ones
 	ErrQueryFailed      = errors.New("database query execution failed")
 	ErrUnexpectedError  = errors.New("unexpected error occurred")
-	ErrDomainNotFound   = errors.New("resssource not found")
-	ErrDomainNotUpdated = errors.New("resssource not updated")
-	ErrDomainNotCreated = errors.New("resssource not created")
-	ErrDomainNotDeleted = errors.New("resssource not deleted")
+	ErrDomainNotFound   = errors.New("resource not found")
+	ErrDomainNotUpdated = errors.New("resource not updated")
+	ErrDomainNotCreated = errors.New("resource not created")
+	ErrDomainNotDeleted = errors.New("resource not deleted")
 	ErrExternalService  = errors.New("external service failure")
 	ErrConflict         = errors.New("conflict with existing data") // General conflict
 
 	// Specific business/validation errors
-	ErrAlreadyExists       = errors.New("ressource already exists")
+	ErrAlreadyExists       = errors.New("resource already exists")
 	ErrInvalidValue        = errors.New("invalid value")
 	ErrValueMismatch       = errors.New("value mismatch")
 	ErrAccountLocked       = errors.New("account is locked")
@@ -25,7 +25,8 @@ var (
 	ErrRateLimit           = errors.New("rate limit exceeded")
 	ErrAlreadyConsumed     = errors.New("resource already consumed")
 	ErrCategoryHasProducts = errors.New("category has associated products")
-	ErrUnauthorized        = errors.New("unauthorized action") // This might be a global domain error
+	ErrUnauthorized        = errors.New("unauthorized action") // Authentication required/failed (401)
+	ErrForbidden           = errors.New("forbidden action")    // Access denied despite valid authentication (403)
 
 	// Data serialization/deserialization errors (less common to originate here, more in handler/repo)
 	ErrMarshalJSON   = errors.New("json marshalling")
@@ -125,4 +126,16 @@ func NewQueryFailedErr(err error) error {
 
 func NewUnexpectedError(err error) error {
 	return fmt.Errorf("%w: %w", ErrUnexpectedError, err)
+}
+
+func NewUnauthorizedErr(message string) error {
+	return fmt.Errorf("%w: %s", ErrUnauthorized, message)
+}
+
+func NewPermissionErr(message string) error {
+	return fmt.Errorf("%w: %s", ErrUnauthorized, message)
+}
+
+func NewForbiddenErr(message string) error {
+	return fmt.Errorf("%w: %s", ErrForbidden, message)
 }

@@ -89,7 +89,7 @@ func TestSessionAuthMiddleware_RequireMinimumRole(t *testing.T) {
 			sessionData := createValidSessionJSON(t, session)
 
 			// Mock the repository call
-			mockRepo.On("FindSessionByTokenHash", mock.Anything, "valid_token").Return(sessionData, nil)
+			mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(sessionData, nil)
 
 			middleware := NewSessionAuthMiddleware(mockRepo)
 
@@ -103,9 +103,12 @@ func TestSessionAuthMiddleware_RequireMinimumRole(t *testing.T) {
 			// Apply role-based middleware
 			handler := middleware.RequireMinimumRole(tt.requiredRole)(testHandler)
 
-			// Create request with valid auth header
+			// Create request with access token cookie
 			req := httptest.NewRequest("GET", "/test", nil)
-			req.Header.Set("Authorization", "Bearer valid_token")
+			req.AddCookie(&http.Cookie{
+				Name:  AccessTokenCookieName,
+				Value: "valid_token",
+			})
 
 			w := httptest.NewRecorder()
 			handler.ServeHTTP(w, req)
@@ -196,7 +199,7 @@ func TestSessionAuthMiddleware_RequireAnyRole(t *testing.T) {
 			sessionData := createValidSessionJSON(t, session)
 
 			// Mock the repository call
-			mockRepo.On("FindSessionByTokenHash", mock.Anything, "valid_token").Return(sessionData, nil)
+			mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(sessionData, nil)
 
 			middleware := NewSessionAuthMiddleware(mockRepo)
 
@@ -210,9 +213,12 @@ func TestSessionAuthMiddleware_RequireAnyRole(t *testing.T) {
 			// Apply role-based middleware
 			handler := middleware.RequireAnyRole(tt.allowedRoles...)(testHandler)
 
-			// Create request with valid auth header
+			// Create request with access token cookie
 			req := httptest.NewRequest("GET", "/test", nil)
-			req.Header.Set("Authorization", "Bearer valid_token")
+			req.AddCookie(&http.Cookie{
+				Name:  AccessTokenCookieName,
+				Value: "valid_token",
+			})
 
 			w := httptest.NewRecorder()
 			handler.ServeHTTP(w, req)
@@ -271,7 +277,7 @@ func TestSessionAuthMiddleware_RequireAdmin(t *testing.T) {
 			sessionData := createValidSessionJSON(t, session)
 
 			// Mock the repository call
-			mockRepo.On("FindSessionByTokenHash", mock.Anything, "valid_token").Return(sessionData, nil)
+			mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(sessionData, nil)
 
 			middleware := NewSessionAuthMiddleware(mockRepo)
 
@@ -285,9 +291,12 @@ func TestSessionAuthMiddleware_RequireAdmin(t *testing.T) {
 			// Apply admin middleware (uses RequireMinimumRole internally)
 			handler := middleware.RequireAdmin(testHandler)
 
-			// Create request with valid auth header
+			// Create request with access token cookie
 			req := httptest.NewRequest("GET", "/test", nil)
-			req.Header.Set("Authorization", "Bearer valid_token")
+			req.AddCookie(&http.Cookie{
+				Name:  AccessTokenCookieName,
+				Value: "valid_token",
+			})
 
 			w := httptest.NewRecorder()
 			handler.ServeHTTP(w, req)
@@ -365,7 +374,7 @@ func TestRoleAuthMiddleware_Integration(t *testing.T) {
 		TokenHash: "test_hash",
 	}
 	sessionData := createValidSessionJSON(t, session)
-	mockRepo.On("FindSessionByTokenHash", mock.Anything, "valid_token").Return(sessionData, nil)
+	mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(sessionData, nil)
 
 	middleware := NewSessionAuthMiddleware(mockRepo)
 
@@ -385,7 +394,10 @@ func TestRoleAuthMiddleware_Integration(t *testing.T) {
 	handler := middleware.RequireMinimumRole(identity.Partner)(testHandler)
 
 	req := httptest.NewRequest("GET", "/staff-endpoint", nil)
-	req.Header.Set("Authorization", "Bearer valid_token")
+	req.AddCookie(&http.Cookie{
+		Name:  AccessTokenCookieName,
+		Value: "valid_token",
+	})
 
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
@@ -394,4 +406,3 @@ func TestRoleAuthMiddleware_Integration(t *testing.T) {
 	assert.True(t, nextCalled, "next handler should be called")
 	mockRepo.AssertExpectations(t)
 }
-
