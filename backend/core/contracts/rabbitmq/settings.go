@@ -8,4 +8,5 @@ const (
 	// queue
 	NotificationSettingsQueueName = "notification.settings.queue"
 	OTPSettingsQueueName          = "otp.settings.queue"
+	AuthUserSettingsQueueName     = "authuser.settings.queue"
 )
