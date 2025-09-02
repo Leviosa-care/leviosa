@@ -8,6 +8,7 @@ import (
 const (
 	AccessTokenCookieName  = "leviosa_access_token"
 	RefreshTokenCookieName = "leviosa_refresh_token"
+	RefreshEndpoint        = "/auth/refresh"
 )
 
 // SetTokenCookies sets both access and refresh token cookies with appropriate security settings
@@ -27,7 +28,7 @@ func SetTokenCookies(w http.ResponseWriter, accessToken, refreshToken string, ac
 	http.SetCookie(w, &http.Cookie{
 		Name:     RefreshTokenCookieName,
 		Value:    refreshToken,
-		Path:     "/auth/refresh", // Restrict to refresh endpoint only
+		Path:     RefreshEndpoint, // Restrict to refresh endpoint only
 		HttpOnly: true,
 		Secure:   true, // Only sent over HTTPS
 		SameSite: http.SameSiteStrictMode,
@@ -52,7 +53,7 @@ func ClearTokenCookies(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     RefreshTokenCookieName,
 		Value:    "",
-		Path:     "/auth/refresh",
+		Path:     RefreshEndpoint,
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
@@ -78,7 +79,7 @@ func SetRefreshTokenCookie(w http.ResponseWriter, refreshToken string, expiry ti
 	http.SetCookie(w, &http.Cookie{
 		Name:     RefreshTokenCookieName,
 		Value:    refreshToken,
-		Path:     "/auth/refresh",
+		Path:     RefreshEndpoint,
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode,

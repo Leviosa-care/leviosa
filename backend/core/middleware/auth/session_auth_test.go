@@ -219,14 +219,14 @@ func TestRequireRefreshToken(t *testing.T) {
 		},
 		{
 			name:           "refresh endpoint - missing refresh token cookie",
-			path:           "/auth/refresh",
+			path:           RefreshEndpoint,
 			setupCookie:    func(req *http.Request) {},
 			expectedStatus: http.StatusUnauthorized,
 			expectedInCtx:  false,
 		},
 		{
 			name: "refresh endpoint - empty refresh token cookie",
-			path: "/auth/refresh",
+			path: RefreshEndpoint,
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
 					Name:  RefreshTokenCookieName,
@@ -238,7 +238,7 @@ func TestRequireRefreshToken(t *testing.T) {
 		},
 		{
 			name: "refresh endpoint - valid refresh token - session not found",
-			path: "/auth/refresh",
+			path: RefreshEndpoint,
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
 					Name:  RefreshTokenCookieName,
@@ -251,7 +251,7 @@ func TestRequireRefreshToken(t *testing.T) {
 		},
 		{
 			name: "refresh endpoint - valid refresh token - database error",
-			path: "/auth/refresh",
+			path: RefreshEndpoint,
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
 					Name:  RefreshTokenCookieName,
@@ -264,7 +264,7 @@ func TestRequireRefreshToken(t *testing.T) {
 		},
 		{
 			name: "refresh endpoint - valid refresh token - active session",
-			path: "/auth/refresh",
+			path: RefreshEndpoint,
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
 					Name:  RefreshTokenCookieName,
@@ -285,7 +285,7 @@ func TestRequireRefreshToken(t *testing.T) {
 		},
 		{
 			name: "refresh endpoint - valid refresh token - pending session",
-			path: "/auth/refresh",
+			path: RefreshEndpoint,
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
 					Name:  RefreshTokenCookieName,

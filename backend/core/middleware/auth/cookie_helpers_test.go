@@ -47,7 +47,7 @@ func TestSetTokenCookies(t *testing.T) {
 	// Verify refresh token cookie
 	require.NotNil(t, refreshCookie, "Refresh token cookie should be set")
 	assert.Equal(t, refreshToken, refreshCookie.Value)
-	assert.Equal(t, "/auth/refresh", refreshCookie.Path)
+	assert.Equal(t, RefreshEndpoint, refreshCookie.Path)
 	assert.True(t, refreshCookie.HttpOnly)
 	assert.True(t, refreshCookie.Secure)
 	assert.Equal(t, http.SameSiteStrictMode, refreshCookie.SameSite)
@@ -87,7 +87,7 @@ func TestClearTokenCookies(t *testing.T) {
 	// Verify refresh token cookie is cleared
 	require.NotNil(t, refreshCookie, "Refresh token cookie should be set for clearing")
 	assert.Equal(t, "", refreshCookie.Value)
-	assert.Equal(t, "/auth/refresh", refreshCookie.Path)
+	assert.Equal(t, RefreshEndpoint, refreshCookie.Path)
 	assert.True(t, refreshCookie.HttpOnly)
 	assert.True(t, refreshCookie.Secure)
 	assert.Equal(t, http.SameSiteStrictMode, refreshCookie.SameSite)
@@ -133,7 +133,7 @@ func TestSetRefreshTokenCookie(t *testing.T) {
 	cookie := cookies[0]
 	assert.Equal(t, RefreshTokenCookieName, cookie.Name)
 	assert.Equal(t, refreshToken, cookie.Value)
-	assert.Equal(t, "/auth/refresh", cookie.Path)
+	assert.Equal(t, RefreshEndpoint, cookie.Path)
 	assert.True(t, cookie.HttpOnly)
 	assert.True(t, cookie.Secure)
 	assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
@@ -290,3 +290,4 @@ func TestCookieConstants(t *testing.T) {
 	// Verify they're different
 	assert.NotEqual(t, AccessTokenCookieName, RefreshTokenCookieName)
 }
+

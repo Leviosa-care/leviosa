@@ -74,7 +74,7 @@ func (m *SessionAuthMiddleware) RequireAccessToken(next http.Handler) http.Handl
 func (m *SessionAuthMiddleware) RequireRefreshToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Security: Only allow refresh tokens on /auth/refresh endpoint
-		if r.URL.Path != "/auth/refresh" {
+		if r.URL.Path != RefreshEndpoint {
 			httpx.RespondWithError(w, errs.ErrForbidden, http.StatusForbidden)
 			return
 		}

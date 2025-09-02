@@ -17,4 +17,3 @@ type AuthMiddleware interface {
 	RequireAnyRole(roles ...identity.Role) func(http.Handler) http.Handler
 	RequireAdmin(next http.Handler) http.Handler
 }
-
