@@ -61,16 +61,16 @@ func InsertUser(t *testing.T, ctx context.Context, user *domain.User, pool *pgxp
 			first_name_encrypted, last_name_encrypted, telephone_hash, telephone_encrypted,
 			picture_encrypted, birth_date_encrypted, gender_encrypted,
 			address1_encrypted, address2_encrypted, city_encrypted, postal_code_encrypted,
-			role_encrypted, created_at_encrypted, logged_in_at_encrypted, google_id_encrypted, apple_id_encrypted,
-			dek_encrypted, key_version
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+			role_encrypted, created_at_encrypted, logged_in_at_encrypted, stripe_customer_id_encrypted,
+			google_id_encrypted, apple_id_encrypted, dek_encrypted, key_version
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
 	`
 	_, err := pool.Exec(ctx, query,
 		user.ID, user.State, user.EmailHash, user.EmailEncrypted, user.PasswordHash,
 		user.FirstNameEncrypted, user.LastNameEncrypted, user.TelephoneHash, user.TelephoneEncrypted,
 		user.PictureEncrypted, user.BirthDateEncrypted, user.GenderEncrypted,
 		user.Address1Encrypted, user.Address2Encrypted, user.CityEncrypted, user.PostalCodeEncrypted,
-		user.RoleEncrypted, user.CreatedAtEncrypted, user.LoggedInAtEncrypted,
+		user.RoleEncrypted, user.CreatedAtEncrypted, user.LoggedInAtEncrypted, user.StripeCustomerIDEncrypted,
 		user.GoogleIDEncrypted, user.AppleIDEncrypted, user.DEKEncrypted, user.KeyVersion)
 	require.NoError(t, err)
 }

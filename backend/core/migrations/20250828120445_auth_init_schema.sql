@@ -39,6 +39,7 @@ CREATE TABLE auth.users (
     -- External auth IDs (encrypted)
     google_id_encrypted BYTEA,
     apple_id_encrypted BYTEA,
+    stripe_customer_id_encrypted BYTEA,
     
     -- Timestamps (encrypted for activity pattern protection)
     created_at_encrypted BYTEA NOT NULL,
