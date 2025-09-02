@@ -21,7 +21,7 @@ import (
 type OTPService struct {
 	repo   ports.OTPRepository
 	crypto encx.CryptoService
-	cache  *domain.OTPCache
+	cache  ports.OTPCache
 	mq     *amqp.Connection
 }
 
