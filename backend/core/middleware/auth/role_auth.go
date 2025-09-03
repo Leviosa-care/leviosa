@@ -13,13 +13,13 @@ import (
 func (m *SessionAuthMiddleware) RequireMinimumRole(minRole identity.Role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return m.RequireAccessToken(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			session, ok := SessionFromContext(r.Context())
+			sessionInfo, ok := SessionInfoFromContext(r.Context())
 			if !ok {
 				httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
 				return
 			}
 
-			if !session.Role.IsAtLeast(minRole) {
+			if !sessionInfo.Role.IsAtLeast(minRole) {
 				httpx.RespondWithError(w, errs.ErrForbidden, http.StatusForbidden)
 				return
 			}
@@ -33,13 +33,13 @@ func (m *SessionAuthMiddleware) RequireMinimumRole(minRole identity.Role) func(h
 func (m *SessionAuthMiddleware) RequireAnyRole(roles ...identity.Role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return m.RequireAccessToken(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			session, ok := SessionFromContext(r.Context())
+			sessionInfo, ok := SessionInfoFromContext(r.Context())
 			if !ok {
 				httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
 				return
 			}
 
-			if !slices.Contains(roles, session.Role) {
+			if !slices.Contains(roles, sessionInfo.Role) {
 				httpx.RespondWithError(w, errs.ErrForbidden, http.StatusForbidden)
 				return
 			}
@@ -53,4 +53,3 @@ func (m *SessionAuthMiddleware) RequireAnyRole(roles ...identity.Role) func(http
 func (m *SessionAuthMiddleware) RequireAdmin(next http.Handler) http.Handler {
 	return m.RequireMinimumRole(identity.Administrator)(next)
 }
-

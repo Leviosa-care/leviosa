@@ -21,13 +21,14 @@ func TestSessionFromContext(t *testing.T) {
 			name: "valid session in context",
 			contextSetup: func() context.Context {
 				session := &Session{
-					ID:        uuid.New(),
-					UserID:    uuid.New(),
-					Role:      identity.Partner,
-					State:     SessionActive,
-					CreatedAt: time.Now(),
-					ExpiresAt: time.Now().Add(time.Hour),
-					TokenHash: "test_hash",
+					ID:               uuid.New(),
+					UserID:           uuid.New(),
+					Role:             identity.Partner,
+					State:            SessionActive,
+					CreatedAt:        time.Now(),
+					ExpiresAt:        time.Now().Add(time.Hour),
+					AccessTokenHash:  "test_access_hash",
+					RefreshTokenHash: "test_refresh_hash",
 				}
 				return context.WithValue(context.Background(), sessionContextKey{}, session)
 			},
@@ -62,13 +63,14 @@ func TestSessionFromContext(t *testing.T) {
 			name: "different context key",
 			contextSetup: func() context.Context {
 				session := &Session{
-					ID:        uuid.New(),
-					UserID:    uuid.New(),
-					Role:      identity.Visitor,
-					State:     SessionActive,
-					CreatedAt: time.Now(),
-					ExpiresAt: time.Now().Add(time.Hour),
-					TokenHash: "test_hash",
+					ID:               uuid.New(),
+					UserID:           uuid.New(),
+					Role:             identity.Visitor,
+					State:            SessionActive,
+					CreatedAt:        time.Now(),
+					ExpiresAt:        time.Now().Add(time.Hour),
+					AccessTokenHash:  "test_access_hash",
+					RefreshTokenHash: "test_refresh_hash",
 				}
 				// Use wrong key type
 				type wrongKey struct{}
@@ -99,13 +101,14 @@ func TestSessionFromContext(t *testing.T) {
 func TestSessionFromContext_ValidSession(t *testing.T) {
 	// Test that we get back the exact same session we put in
 	originalSession := &Session{
-		ID:        uuid.New(),
-		UserID:    uuid.New(),
-		Role:      identity.Administrator,
-		State:     SessionActive,
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(24 * time.Hour),
-		TokenHash: "specific_test_hash",
+		ID:               uuid.New(),
+		UserID:           uuid.New(),
+		Role:             identity.Administrator,
+		State:            SessionActive,
+		CreatedAt:        time.Now(),
+		ExpiresAt:        time.Now().Add(24 * time.Hour),
+		AccessTokenHash:  "specific_access_hash",
+		RefreshTokenHash: "specific_refresh_hash",
 	}
 
 	ctx := context.WithValue(context.Background(), sessionContextKey{}, originalSession)
@@ -123,19 +126,49 @@ func TestSessionFromContext_ValidSession(t *testing.T) {
 	assert.Equal(t, originalSession.UserID, retrievedSession.UserID)
 	assert.Equal(t, originalSession.Role, retrievedSession.Role)
 	assert.Equal(t, originalSession.State, retrievedSession.State)
-	assert.Equal(t, originalSession.TokenHash, retrievedSession.TokenHash)
+	assert.Equal(t, originalSession.AccessTokenHash, retrievedSession.AccessTokenHash)
+	assert.Equal(t, originalSession.RefreshTokenHash, retrievedSession.RefreshTokenHash)
+}
+
+func TestSessionInfoFromContext(t *testing.T) {
+	// Test that SessionInfoFromContext works correctly
+	sessionInfo := &SessionInfo{
+		ID:     uuid.New(),
+		UserID: uuid.New(),
+		Role:   identity.Partner,
+		State:  SessionActive,
+	}
+
+	ctx := context.WithValue(context.Background(), sessionContextKey{}, sessionInfo)
+
+	// Test SessionInfoFromContext
+	retrievedInfo, ok := SessionInfoFromContext(ctx)
+	assert.True(t, ok)
+	assert.Equal(t, sessionInfo.ID, retrievedInfo.ID)
+	assert.Equal(t, sessionInfo.UserID, retrievedInfo.UserID)
+	assert.Equal(t, sessionInfo.Role, retrievedInfo.Role)
+	assert.Equal(t, sessionInfo.State, retrievedInfo.State)
+
+	// Test backward compatibility with SessionFromContext
+	retrievedSession, ok := SessionFromContext(ctx)
+	assert.True(t, ok)
+	assert.Equal(t, sessionInfo.ID, retrievedSession.ID)
+	assert.Equal(t, sessionInfo.UserID, retrievedSession.UserID)
+	assert.Equal(t, sessionInfo.Role, retrievedSession.Role)
+	assert.Equal(t, sessionInfo.State, retrievedSession.State)
 }
 
 func TestSessionContextKey_Uniqueness(t *testing.T) {
 	// Test that sessionContextKey is unique and doesn't conflict with other keys
 	session := &Session{
-		ID:        uuid.New(),
-		UserID:    uuid.New(),
-		Role:      identity.Partner,
-		State:     SessionActive,
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(time.Hour),
-		TokenHash: "test_hash",
+		ID:               uuid.New(),
+		UserID:           uuid.New(),
+		Role:             identity.Partner,
+		State:            SessionActive,
+		CreatedAt:        time.Now(),
+		ExpiresAt:        time.Now().Add(time.Hour),
+		AccessTokenHash:  "test_access_hash",
+		RefreshTokenHash: "test_refresh_hash",
 	}
 
 	// Create context with multiple values using different key types
@@ -169,13 +202,14 @@ func TestSessionContextKey_ZeroValue(t *testing.T) {
 	assert.Equal(t, key1, key2, "sessionContextKey zero values should be equal")
 
 	session := &Session{
-		ID:        uuid.New(),
-		UserID:    uuid.New(),
-		Role:      identity.Visitor,
-		State:     SessionActive,
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(time.Hour),
-		TokenHash: "test_hash",
+		ID:               uuid.New(),
+		UserID:           uuid.New(),
+		Role:             identity.Visitor,
+		State:            SessionActive,
+		CreatedAt:        time.Now(),
+		ExpiresAt:        time.Now().Add(time.Hour),
+		AccessTokenHash:  "test_access_hash",
+		RefreshTokenHash: "test_refresh_hash",
 	}
 
 	// Should work with both key instances
@@ -194,13 +228,14 @@ func TestSessionContextKey_ZeroValue(t *testing.T) {
 func TestSessionFromContext_ConcurrentAccess(t *testing.T) {
 	// Test that SessionFromContext is safe for concurrent access
 	session := &Session{
-		ID:        uuid.New(),
-		UserID:    uuid.New(),
-		Role:      identity.Administrator,
-		State:     SessionActive,
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(time.Hour),
-		TokenHash: "concurrent_test_hash",
+		ID:               uuid.New(),
+		UserID:           uuid.New(),
+		Role:             identity.Administrator,
+		State:            SessionActive,
+		CreatedAt:        time.Now(),
+		ExpiresAt:        time.Now().Add(time.Hour),
+		AccessTokenHash:  "concurrent_access_hash",
+		RefreshTokenHash: "concurrent_refresh_hash",
 	}
 
 	ctx := context.WithValue(context.Background(), sessionContextKey{}, session)
@@ -211,7 +246,7 @@ func TestSessionFromContext_ConcurrentAccess(t *testing.T) {
 	for range 10 {
 		go func() {
 			retrievedSession, exists := SessionFromContext(ctx)
-			results <- exists && retrievedSession != nil && retrievedSession.TokenHash == "concurrent_test_hash"
+			results <- exists && retrievedSession != nil && retrievedSession.AccessTokenHash == "concurrent_access_hash"
 		}()
 	}
 

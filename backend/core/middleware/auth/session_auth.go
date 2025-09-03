@@ -62,14 +62,22 @@ func (m *SessionAuthMiddleware) RequireAccessToken(next http.Handler) http.Handl
 			return
 		}
 
-		session.ID, err = uuid.Parse(sessionID)
+		parsedSessionID, err := uuid.Parse(sessionID)
 		if err != nil {
 			httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid session ID format"), http.StatusInternalServerError)
 			return
 		}
 
-		// Add session to context
-		ctx := context.WithValue(r.Context(), sessionContextKey{}, session)
+		// Create lightweight SessionInfo for context
+		sessionInfo := &SessionInfo{
+			ID:     parsedSessionID,
+			UserID: session.UserID,
+			Role:   session.Role,
+			State:  session.State,
+		}
+
+		// Add session info to context
+		ctx := context.WithValue(r.Context(), sessionContextKey{}, sessionInfo)
 		r = r.WithContext(ctx)
 
 		// Continue to next handler
@@ -123,14 +131,22 @@ func (m *SessionAuthMiddleware) RequireRefreshToken(next http.Handler) http.Hand
 			return
 		}
 
-		session.ID, err = uuid.Parse(sessionID)
+		parsedSessionID, err := uuid.Parse(sessionID)
 		if err != nil {
 			httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid session ID format"), http.StatusInternalServerError)
 			return
 		}
 
-		// Add session to context
-		ctx := context.WithValue(r.Context(), sessionContextKey{}, session)
+		// Create lightweight SessionInfo for context
+		sessionInfo := &SessionInfo{
+			ID:     parsedSessionID,
+			UserID: session.UserID,
+			Role:   session.Role,
+			State:  session.State,
+		}
+
+		// Add session info to context
+		ctx := context.WithValue(r.Context(), sessionContextKey{}, sessionInfo)
 		r = r.WithContext(ctx)
 
 		// Continue to next handler
