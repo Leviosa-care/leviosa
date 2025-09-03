@@ -20,4 +20,3 @@ func EnableCORS(next Handler) Handler {
 		next(w, r)
 	}
 }
-

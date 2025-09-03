@@ -84,12 +84,13 @@ func TestSessionAuthMiddleware_RequireMinimumRole(t *testing.T) {
 				State:     SessionActive,
 				CreatedAt: time.Now(),
 				ExpiresAt: time.Now().Add(time.Hour),
-				TokenHash: "test_hash",
+				AccessTokenHash:  "test_access_hash",
+				RefreshTokenHash: "test_refresh_hash",
 			}
 			sessionData := createValidSessionJSON(t, session)
 
 			// Mock the repository call
-			mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(sessionData, nil)
+			mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(session.ID.String(), sessionData, nil)
 
 			middleware := NewSessionAuthMiddleware(mockRepo)
 
@@ -194,12 +195,13 @@ func TestSessionAuthMiddleware_RequireAnyRole(t *testing.T) {
 				State:     SessionActive,
 				CreatedAt: time.Now(),
 				ExpiresAt: time.Now().Add(time.Hour),
-				TokenHash: "test_hash",
+				AccessTokenHash:  "test_access_hash",
+				RefreshTokenHash: "test_refresh_hash",
 			}
 			sessionData := createValidSessionJSON(t, session)
 
 			// Mock the repository call
-			mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(sessionData, nil)
+			mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(session.ID.String(), sessionData, nil)
 
 			middleware := NewSessionAuthMiddleware(mockRepo)
 
@@ -272,12 +274,13 @@ func TestSessionAuthMiddleware_RequireAdmin(t *testing.T) {
 				State:     SessionActive,
 				CreatedAt: time.Now(),
 				ExpiresAt: time.Now().Add(time.Hour),
-				TokenHash: "test_hash",
+				AccessTokenHash:  "test_access_hash",
+				RefreshTokenHash: "test_refresh_hash",
 			}
 			sessionData := createValidSessionJSON(t, session)
 
 			// Mock the repository call
-			mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(sessionData, nil)
+			mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(session.ID.String(), sessionData, nil)
 
 			middleware := NewSessionAuthMiddleware(mockRepo)
 
@@ -371,10 +374,11 @@ func TestRoleAuthMiddleware_Integration(t *testing.T) {
 		State:     SessionActive,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(time.Hour),
-		TokenHash: "test_hash",
+		AccessTokenHash:  "test_access_hash",
+		RefreshTokenHash: "test_refresh_hash",
 	}
 	sessionData := createValidSessionJSON(t, session)
-	mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(sessionData, nil)
+	mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(session.ID.String(), sessionData, nil)
 
 	middleware := NewSessionAuthMiddleware(mockRepo)
 

@@ -26,7 +26,7 @@ func TestDecodeSession(t *testing.T) {
 				"state_encrypted": "c3RhdGU=",
 				"created_at_encrypted": "Y3JlYXRlZF9hdA==",
 				"expires_at_encrypted": "ZXhwaXJlc19hdA==",
-				"token_hash": "test_token_hash",
+				"access_token_hash": "test_access_token_hash",
 				"dek_encrypted": "ZGVr",
 				"key_version": 1
 			}`),
@@ -59,13 +59,13 @@ func TestDecodeSession(t *testing.T) {
 		},
 		{
 			name:        "malformed JSON - missing quotes",
-			input:       []byte(`{token_hash: test}`),
+			input:       []byte(`{access_token_hash: test}`),
 			expectError: true,
 			expectNil:   true,
 		},
 		{
 			name:        "malformed JSON - trailing comma",
-			input:       []byte(`{"token_hash": "test",}`),
+			input:       []byte(`{"access_token_hash": "test",}`),
 			expectError: true,
 			expectNil:   true,
 		},
@@ -91,14 +91,15 @@ func TestDecodeSession(t *testing.T) {
 func TestDecodeSession_ValidSession(t *testing.T) {
 	// Test with a complete, valid session
 	sessionData := map[string]interface{}{
-		"user_id_encrypted":    []byte("encrypted_user_id"),
-		"role_encrypted":       []byte("encrypted_role"),
-		"state_encrypted":      []byte("encrypted_state"),
-		"created_at_encrypted": []byte("encrypted_created_at"),
-		"expires_at_encrypted": []byte("encrypted_expires_at"),
-		"token_hash":           "test_token_hash_123",
-		"dek_encrypted":        []byte("encrypted_dek"),
-		"key_version":          42,
+		"user_id_encrypted":     []byte("encrypted_user_id"),
+		"role_encrypted":        []byte("encrypted_role"),
+		"state_encrypted":       []byte("encrypted_state"),
+		"created_at_encrypted":  []byte("encrypted_created_at"),
+		"expires_at_encrypted":  []byte("encrypted_expires_at"),
+		"access_access_token_hash":     "test_access_access_token_hash_123",
+		"refresh_access_token_hash":    "test_refresh_access_token_hash_123",
+		"dek_encrypted":         []byte("encrypted_dek"),
+		"key_version":           42,
 	}
 
 	jsonData, err := json.Marshal(sessionData)
@@ -109,7 +110,8 @@ func TestDecodeSession_ValidSession(t *testing.T) {
 	require.NotNil(t, session)
 
 	// Verify fields are correctly unmarshaled
-	assert.Equal(t, "test_token_hash_123", session.TokenHash)
+	assert.Equal(t, "test_access_access_token_hash_123", session.AccessTokenHash)
+	assert.Equal(t, "test_refresh_access_token_hash_123", session.RefreshTokenHash)
 	assert.Equal(t, 42, session.KeyVersion)
 	assert.Equal(t, []byte("encrypted_user_id"), session.UserIDEncrypted)
 	assert.Equal(t, []byte("encrypted_role"), session.RoleEncrypted)
@@ -128,7 +130,7 @@ func TestDecodeSession_TypeValidation(t *testing.T) {
 		{
 			name: "key_version as string",
 			jsonInput: `{
-				"token_hash": "test",
+				"access_token_hash": "test",
 				"key_version": "not_a_number"
 			}`,
 			expectErr: true,
@@ -136,15 +138,15 @@ func TestDecodeSession_TypeValidation(t *testing.T) {
 		{
 			name: "key_version as float",
 			jsonInput: `{
-				"token_hash": "test",
+				"access_token_hash": "test",
 				"key_version": 1.5
 			}`,
 			expectErr: true, // JSON unmarshaling does NOT convert float to int
 		},
 		{
-			name: "token_hash as number",
+			name: "access_token_hash as number",
 			jsonInput: `{
-				"token_hash": 123,
+				"access_token_hash": 123,
 				"key_version": 1
 			}`,
 			expectErr: true,
@@ -153,7 +155,7 @@ func TestDecodeSession_TypeValidation(t *testing.T) {
 			name: "encrypted fields as strings",
 			jsonInput: `{
 				"user_id_encrypted": "should_be_bytes",
-				"token_hash": "test",
+				"access_token_hash": "test",
 				"key_version": 1
 			}`,
 			expectErr: true,
@@ -162,7 +164,7 @@ func TestDecodeSession_TypeValidation(t *testing.T) {
 			name: "encrypted fields as base64 strings",
 			jsonInput: `{
 				"user_id_encrypted": "dGVzdA==",
-				"token_hash": "test",
+				"access_token_hash": "test",
 				"key_version": 1
 			}`,
 			expectErr: false,
@@ -206,7 +208,8 @@ func TestSession_FieldTags(t *testing.T) {
 		StateEncrypted:     []byte("encrypted_state"),
 		CreatedAtEncrypted: []byte("encrypted_created"),
 		ExpiresAtEncrypted: []byte("encrypted_expires"),
-		TokenHash:          "token_hash_value",
+		AccessTokenHash:          "access_access_token_hash_value",
+		RefreshTokenHash:         "refresh_access_token_hash_value",
 		DEKEncrypted:       []byte("encrypted_dek"),
 		KeyVersion:         1,
 	}
@@ -226,7 +229,8 @@ func TestSession_FieldTags(t *testing.T) {
 	assert.Contains(t, unmarshaled, "state_encrypted")
 	assert.Contains(t, unmarshaled, "created_at_encrypted")
 	assert.Contains(t, unmarshaled, "expires_at_encrypted")
-	assert.Contains(t, unmarshaled, "token_hash")
+	assert.Contains(t, unmarshaled, "access_token_hash")
+	assert.Contains(t, unmarshaled, "refresh_token_hash")
 	assert.Contains(t, unmarshaled, "dek_encrypted")
 	assert.Contains(t, unmarshaled, "key_version")
 
@@ -258,7 +262,8 @@ func TestDecodeSession_RoundTrip(t *testing.T) {
 		StateEncrypted:     []byte("encrypted_state_data"),
 		CreatedAtEncrypted: []byte("encrypted_created_at_data"),
 		ExpiresAtEncrypted: []byte("encrypted_expires_at_data"),
-		TokenHash:          "original_token_hash",
+		AccessTokenHash:          "original_access_access_token_hash",
+		RefreshTokenHash:         "original_refresh_access_token_hash",
 		DEKEncrypted:       []byte("encrypted_dek_data"),
 		KeyVersion:         123,
 	}
@@ -278,7 +283,7 @@ func TestDecodeSession_RoundTrip(t *testing.T) {
 	assert.Equal(t, original.StateEncrypted, decoded.StateEncrypted)
 	assert.Equal(t, original.CreatedAtEncrypted, decoded.CreatedAtEncrypted)
 	assert.Equal(t, original.ExpiresAtEncrypted, decoded.ExpiresAtEncrypted)
-	assert.Equal(t, original.TokenHash, decoded.TokenHash)
+	assert.Equal(t, original.AccessTokenHash, decoded.AccessTokenHash)
 	assert.Equal(t, original.DEKEncrypted, decoded.DEKEncrypted)
 	assert.Equal(t, original.KeyVersion, decoded.KeyVersion)
 
@@ -289,6 +294,7 @@ func TestDecodeSession_RoundTrip(t *testing.T) {
 	assert.Equal(t, SessionState(""), decoded.State)
 	assert.True(t, decoded.CreatedAt.IsZero())
 	assert.True(t, decoded.ExpiresAt.IsZero())
-	assert.Empty(t, decoded.Token)
+	assert.Empty(t, decoded.AccessToken)
+	assert.Empty(t, decoded.RefreshToken)
 	assert.Nil(t, decoded.DEK)
 }
