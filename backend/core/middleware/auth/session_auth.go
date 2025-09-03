@@ -7,6 +7,7 @@ import (
 
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/httpx"
+	"github.com/google/uuid"
 )
 
 // SessionAuthMiddleware implements AuthMiddleware using session repository
@@ -38,7 +39,7 @@ func (m *SessionAuthMiddleware) RequireAccessToken(next http.Handler) http.Handl
 		}
 
 		// Find session by access token using two-step lookup
-		sessionData, err := m.sessionRepo.FindSessionByAccessToken(r.Context(), accessToken)
+		sessionID, sessionData, err := m.sessionRepo.FindSessionByAccessToken(r.Context(), accessToken)
 		if err != nil {
 			if errors.Is(err, errs.ErrRepositoryNotFound) {
 				httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
@@ -58,6 +59,12 @@ func (m *SessionAuthMiddleware) RequireAccessToken(next http.Handler) http.Handl
 		// Check session state - access tokens work for both pending and active sessions
 		if session.State != SessionActive && session.State != SessionPending {
 			httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
+			return
+		}
+
+		session.ID, err = uuid.Parse(sessionID)
+		if err != nil {
+			httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid session ID format"), http.StatusInternalServerError)
 			return
 		}
 
@@ -93,7 +100,7 @@ func (m *SessionAuthMiddleware) RequireRefreshToken(next http.Handler) http.Hand
 		}
 
 		// Find session by refresh token using two-step lookup
-		sessionData, err := m.sessionRepo.FindSessionByRefreshToken(r.Context(), refreshToken)
+		sessionID, sessionData, err := m.sessionRepo.FindSessionByRefreshToken(r.Context(), refreshToken)
 		if err != nil {
 			if errors.Is(err, errs.ErrRepositoryNotFound) {
 				httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
@@ -116,6 +123,12 @@ func (m *SessionAuthMiddleware) RequireRefreshToken(next http.Handler) http.Hand
 			return
 		}
 
+		session.ID, err = uuid.Parse(sessionID)
+		if err != nil {
+			httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid session ID format"), http.StatusInternalServerError)
+			return
+		}
+
 		// Add session to context
 		ctx := context.WithValue(r.Context(), sessionContextKey{}, session)
 		r = r.WithContext(ctx)
@@ -124,4 +137,3 @@ func (m *SessionAuthMiddleware) RequireRefreshToken(next http.Handler) http.Hand
 		next.ServeHTTP(w, r)
 	})
 }
-

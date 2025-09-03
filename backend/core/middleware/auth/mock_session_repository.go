@@ -16,11 +16,11 @@ func (m *MockSessionRepository) FindSessionByTokenHash(ctx context.Context, toke
 	return args.Get(0).([]byte), args.Error(1)
 }
 
-func (m *MockSessionRepository) FindSessionByAccessToken(ctx context.Context, accessTokenHash string) ([]byte, error) {
+func (m *MockSessionRepository) FindSessionByAccessToken(ctx context.Context, accessTokenHash string) (string, []byte, error) {
 	args := m.Called(ctx, accessTokenHash)
-	return args.Get(0).([]byte), args.Error(1)
+	return args.String(0), args.Get(1).([]byte), args.Error(2)
 }
-func (m *MockSessionRepository) FindSessionByRefreshToken(ctx context.Context, refreshTokenHash string) ([]byte, error) {
+func (m *MockSessionRepository) FindSessionByRefreshToken(ctx context.Context, refreshTokenHash string) (string, []byte, error) {
 	args := m.Called(ctx, refreshTokenHash)
-	return args.Get(0).([]byte), args.Error(1)
+	return args.String(0), args.Get(1).([]byte), args.Error(2)
 }
