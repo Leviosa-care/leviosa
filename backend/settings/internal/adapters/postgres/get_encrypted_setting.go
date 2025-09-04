@@ -2,8 +2,7 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
-	"errors"
+	"fmt"
 
 	"github.com/Leviosa-care/settings/internal/domain"
 
@@ -30,10 +29,7 @@ func (r *repository) GetEncryptedSetting(ctx context.Context, key string) (*doma
 		&res.DEKEncrypted,
 	)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errs.NewNotFoundErr(err, "encrypted setting")
-		}
-		return nil, errs.ClassifyPgError("get encrypted setting", err)
+		return nil, errs.ClassifyPgError(fmt.Sprintf("get encrypted setting for key '%s'", key), err)
 	}
 
 	res.Key = key
