@@ -1,4 +1,4 @@
-package auth
+package auth_test
 
 import (
 	"context"
@@ -17,12 +17,12 @@ import (
 	authRabbitMQ "github.com/Leviosa-care/authuser/internal/adapters/rabbitmq"
 	otpRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/otp"
 	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
+	authPayment "github.com/Leviosa-care/authuser/internal/adapters/stripe"
 	"github.com/Leviosa-care/authuser/internal/application/aggregator"
 	"github.com/Leviosa-care/authuser/internal/application/otp"
 	"github.com/Leviosa-care/authuser/internal/application/session"
 	"github.com/Leviosa-care/authuser/internal/application/user"
 	"github.com/Leviosa-care/authuser/internal/ports"
-	"github.com/Leviosa-care/core/middleware/auth"
 
 	mq "github.com/Leviosa-care/core/contracts/rabbitmq"
 	"github.com/Leviosa-care/core/ctxutil"
@@ -30,6 +30,7 @@ import (
 	"github.com/Leviosa-care/core/logger"
 	"github.com/Leviosa-care/core/messaging/rabbitmq"
 	"github.com/Leviosa-care/core/middleware"
+	"github.com/Leviosa-care/core/middleware/auth"
 	"github.com/Leviosa-care/core/migrations"
 	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/hengadev/encx"
@@ -46,10 +47,10 @@ var (
 	redisContainer *tu.RedisContainer
 	testClient     *redis.Client
 	crypto         encx.CryptoService
-	userRepo       auth.UserRepository
-	otpRepo        auth.OTPRepository
+	userRepo       ports.UserRepository
+	otpRepo        ports.OTPRepository
 	sessionRepo    ports.SessionRepository
-	service        auth.AuthAggregatorService
+	service        ports.AuthAggregatorService
 	handler        authHandler.Handler
 	testServerURL  string           // Global variable to hold the URL of the running test server
 	testServer     *http.Server     // To allow graceful shutdown
@@ -157,6 +158,13 @@ func TestMain(m *testing.M) {
 	// Store connection for test verification
 	testMQConn = conn
 
+	// stripe container
+	stripeContainer, err := tu.SetupStripeMock(ctx, nil)
+	if err != nil {
+		log.Fatalf("Failed to setup stripe container: %v", err)
+	}
+	defer tu.TeardownStripeMock(ctx, nil, stripeContainer)
+
 	// Setup Vault testcontainer
 	log.Println("Setting up Vault testcontainer...")
 	vaultContainer, err := tu.SetupVault(ctx, nil)
@@ -177,8 +185,7 @@ func TestMain(m *testing.M) {
 	}
 
 	crypto, err = encx.New(
-		ctx,
-		kms,
+		ctx, kms,
 		tu.EncryptionKey,
 		"secret/data/pepper",
 	)
@@ -190,6 +197,8 @@ func TestMain(m *testing.M) {
 	}
 	log.Println("Crypto service created successfully")
 
+	payment := authPayment.NewService("sk_test_123456789012345678901234", stripeContainer.URL)
+
 	ctx = context.WithValue(ctx, ctxutil.LoggerKey, testLogger)
 
 	// Setup RabbitMQ exchanges and queues needed for settings and OTP notifications
@@ -199,7 +208,7 @@ func TestMain(m *testing.M) {
 
 	// Initialize application layers
 	userRepo = userRepository.New(ctx, testPool)
-	userService := user.New(userRepo, crypto)
+	userService := user.New(userRepo, crypto, payment)
 
 	otpRepo = otpRepository.New(testClient)
 	otpService, err := otp.New(ctx, otpRepo, crypto, testMQConn)
@@ -212,7 +221,9 @@ func TestMain(m *testing.M) {
 
 	service = aggregator.New(otpService, userService, sessionService)
 
-	handler = authHandler.New(service)
+	authmw := auth.NewSessionAuthMiddleware(sessionRepo)
+
+	handler = authHandler.New(service, authmw)
 
 	// Set required environment variables for logger middleware
 	os.Setenv("CLIENT_IP_HEADER", "X-Forwarded-For")

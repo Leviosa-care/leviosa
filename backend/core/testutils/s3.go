@@ -35,7 +35,6 @@ func SetupLocalstack(ctx context.Context, t *testing.T) (*LocalstackContainer, e
 	}
 
 	req := testcontainers.ContainerRequest{
-		// Image:        "localstack/localstack:3.0", // Use a specific stable version instead of latest
 		Image:        "localstack/localstack:4.6", // Use a specific stable version instead of latest
 		ExposedPorts: []string{"4566/tcp"},
 		Env: map[string]string{

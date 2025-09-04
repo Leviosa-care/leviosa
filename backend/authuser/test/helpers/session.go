@@ -8,7 +8,6 @@ import (
 	"time"
 
 	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
-	"github.com/Leviosa-care/authuser/internal/domain"
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/Leviosa-care/core/middleware/auth"
 
