@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TEST=TestGetCompanyAddress make test-integration-test
+
 func TestGetCompanyAddress(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -42,7 +44,8 @@ func TestGetCompanyAddress(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
 
 		// Setup: Insert company address directly into database
-		th.InsertCompanyAddress(t, ctx, "123 Main St, New York, NY 10001", testPool)
+		address := "123 Main St, New York, NY 10001"
+		th.InsertCompanyAddress(t, ctx, address, testPool)
 
 		// Test: Get the company address
 		req := th.NewGetCompanyAddressRequest(t, ctx, testServerURL)
@@ -55,9 +58,11 @@ func TestGetCompanyAddress(t *testing.T) {
 		var respBody domain.GetCompanyLegalAddressResponse
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Equal(t, "123 Main St, New York, NY 10001", respBody.Address)
+		assert.Equal(t, address, respBody.Address)
 	})
 }
+
+// TEST=TestSetCompanyAddress make test-integration-test
 
 func TestSetCompanyAddress(t *testing.T) {
 	ctx := context.Background()
@@ -73,7 +78,8 @@ func TestSetCompanyAddress(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
-		request := domain.SetCompanyLegalAddressRequest{Address: "456 Business Ave, San Francisco, CA 94105"}
+		addressValue := "456 Business Ave, San Francisco, CA 94105"
+		request := domain.SetCompanyLegalAddressRequest{Address: addressValue}
 		req := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
@@ -88,12 +94,12 @@ func TestSetCompanyAddress(t *testing.T) {
 		assert.True(t, respBody.Success)
 
 		// Verify data was persisted directly in database
-		address, err := th.GetCompanyAddressFromDB(t, ctx, testPool)
+		retrievedAddress, err := th.GetCompanyAddressFromDB(t, ctx, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, "456 Business Ave, San Francisco, CA 94105", address)
+		assert.Equal(t, addressValue, retrievedAddress)
 
 		// Verify RabbitMQ message was published
-		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyLegalAddress, "456 Business Ave, San Francisco, CA 94105")
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyLegalAddress, addressValue)
 	})
 
 	t.Run("should return 400 for empty address", func(t *testing.T) {
@@ -160,6 +166,13 @@ func TestSetCompanyAddress(t *testing.T) {
 	t.Run("should successfully accept multiline addresses", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
 
+		// Create a test channel for RabbitMQ verification
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
+		defer testCh.Close()
+
+		// Purge queues to ensure clean state
+		th.PurgeSettingsQueues(t, testCh)
+
 		multilineAddress := `Company Headquarters
 123 Main Street
 Suite 456
@@ -185,6 +198,9 @@ United States`
 		require.NoError(t, err)
 		assert.Equal(t, multilineAddress, address)
 		assert.Contains(t, address, "\n")
+
+		// Verify RabbitMQ message was published
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyLegalAddress, multilineAddress)
 	})
 
 	t.Run("should successfully accept international addresses", func(t *testing.T) {
@@ -201,6 +217,13 @@ United States`
 			t.Run("international address", func(t *testing.T) {
 				th.ClearSettingsTable(t, ctx, testPool)
 
+				// Create a test channel for RabbitMQ verification
+				testCh := th.GetRabbitMQChannel(t, testMQConn)
+				defer testCh.Close()
+
+				// Purge queues to ensure clean state
+				th.PurgeSettingsQueues(t, testCh)
+
 				request := domain.SetCompanyLegalAddressRequest{Address: address}
 				req := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request)
 
@@ -214,8 +237,12 @@ United States`
 				err = json.NewDecoder(resp.Body).Decode(&respBody)
 				require.NoError(t, err)
 				assert.True(t, respBody.Success)
+
+				// Verify RabbitMQ message was published
+				th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyLegalAddress, address)
 			})
 		}
+
 	})
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
@@ -242,16 +269,20 @@ United States`
 	t.Run("should successfully update existing company address", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
 
+		// Create a test channel for RabbitMQ verification
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
+		defer testCh.Close()
+
+		// Purge queues to ensure clean state
+		th.PurgeSettingsQueues(t, testCh)
+
 		// Set initial address
-		request1 := domain.SetCompanyLegalAddressRequest{Address: "Old Address, Old City, OC 12345"}
-		req1 := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request1)
-		resp1, err := client.Do(req1)
-		require.NoError(t, err)
-		defer resp1.Body.Close()
-		require.Equal(t, http.StatusOK, resp1.StatusCode)
+		oldAddress := "Old Address, Old City, OC 12345"
+		th.InsertCompanyAddress(t, ctx, oldAddress, testPool)
 
 		// Update to new address
-		request2 := domain.SetCompanyLegalAddressRequest{Address: "New Address, New City, NC 67890"}
+		newAddress := "New Address, New City, NC 67890"
+		request2 := domain.SetCompanyLegalAddressRequest{Address: newAddress}
 		req2 := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
@@ -261,6 +292,9 @@ United States`
 		// Verify updated address directly in database
 		address, err := th.GetCompanyAddressFromDB(t, ctx, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, "New Address, New City, NC 67890", address)
+		assert.Equal(t, newAddress, address)
+
+		// Verify RabbitMQ message was published
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyLegalAddress, newAddress)
 	})
 }

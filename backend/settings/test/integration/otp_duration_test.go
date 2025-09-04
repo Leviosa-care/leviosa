@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TEST=TestGetOTPDuration make test-integration-test
+
 func TestGetOTPDuration(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -43,7 +45,8 @@ func TestGetOTPDuration(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
 
 		// Setup: Insert OTP duration directly into database
-		th.InsertOTPDuration(t, ctx, 300, testPool) // 5 minutes
+		duration := 300
+		th.InsertOTPDuration(t, ctx, duration, testPool) // 5 minutes
 
 		// Test: Get the OTP duration via HTTP
 		req := th.NewGetOTPDurationRequest(t, ctx, testServerURL)
@@ -56,9 +59,11 @@ func TestGetOTPDuration(t *testing.T) {
 		var respBody domain.GetOTPDurationResponse
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Equal(t, 300, respBody.Duration)
+		assert.Equal(t, duration, respBody.Duration)
 	})
 }
+
+// TEST=TestSetOTPDuration make test-integration-test
 
 func TestSetOTPDuration(t *testing.T) {
 	ctx := context.Background()
@@ -74,7 +79,8 @@ func TestSetOTPDuration(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
-		request := domain.SetOTPDurationRequest{Duration: 600} // 10 minutes
+		duration := 600
+		request := domain.SetOTPDurationRequest{Duration: duration} // 10 minutes
 		req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
@@ -89,12 +95,12 @@ func TestSetOTPDuration(t *testing.T) {
 		assert.True(t, respBody.Success)
 
 		// Verify data was persisted directly in database
-		duration, err := th.GetOTPDurationFromDB(t, ctx, testPool)
+		retrievedDuration, err := th.GetOTPDurationFromDB(t, ctx, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, 600, duration)
+		assert.Equal(t, duration, retrievedDuration)
 
 		// Verify RabbitMQ message was published
-		th.VerifySettingsUpdateMessage(t, testCh, settings.OTPDuration, 600)
+		th.VerifySettingsUpdateMessage(t, testCh, settings.OTPDuration, duration)
 	})
 
 	t.Run("should return 400 for duration less than 60 seconds", func(t *testing.T) {
@@ -169,6 +175,13 @@ func TestSetOTPDuration(t *testing.T) {
 			t.Run(test.name, func(t *testing.T) {
 				th.ClearSettingsTable(t, ctx, testPool)
 
+				// Create a test channel for RabbitMQ verification
+				testCh := th.GetRabbitMQChannel(t, testMQConn)
+				defer testCh.Close()
+
+				// Purge queues to ensure clean state
+				th.PurgeSettingsQueues(t, testCh)
+
 				request := domain.SetOTPDurationRequest{Duration: test.duration}
 				req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
 
@@ -184,9 +197,12 @@ func TestSetOTPDuration(t *testing.T) {
 				assert.True(t, respBody.Success)
 
 				// Verify the duration was stored correctly directly in database
-				duration, err := th.GetOTPDurationFromDB(t, ctx, testPool)
+				retrievedDuration, err := th.GetOTPDurationFromDB(t, ctx, testPool)
 				require.NoError(t, err)
-				assert.Equal(t, test.duration, duration)
+				assert.Equal(t, test.duration, retrievedDuration)
+
+				// Verify RabbitMQ message was published
+				th.VerifySettingsUpdateMessage(t, testCh, settings.OTPDuration, test.duration)
 			})
 		}
 	})
@@ -246,7 +262,8 @@ func TestSetOTPDuration(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp1.StatusCode)
 
 		// Update to new duration
-		request2 := domain.SetOTPDurationRequest{Duration: 900}
+		newDuration := 900
+		request2 := domain.SetOTPDurationRequest{Duration: newDuration}
 		req2 := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
@@ -254,8 +271,8 @@ func TestSetOTPDuration(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp2.StatusCode)
 
 		// Verify updated duration directly in database
-		duration, err := th.GetOTPDurationFromDB(t, ctx, testPool)
+		retrievedDuration, err := th.GetOTPDurationFromDB(t, ctx, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, 900, duration)
+		assert.Equal(t, newDuration, retrievedDuration)
 	})
 }

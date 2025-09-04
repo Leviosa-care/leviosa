@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TEST=TestGetOTPLength make test-integration-test
+
 func TestGetOTPLength(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -43,7 +45,8 @@ func TestGetOTPLength(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
 
 		// Setup: Insert OTP length directly into database
-		th.InsertOTPLength(t, ctx, 6, testPool)
+		length := 6
+		th.InsertOTPLength(t, ctx, length, testPool)
 
 		// Test: Get the OTP length
 		req := th.NewGetOTPLengthRequest(t, ctx, testServerURL)
@@ -56,9 +59,11 @@ func TestGetOTPLength(t *testing.T) {
 		var respBody domain.GetOTPLengthResponse
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Equal(t, 6, respBody.Length)
+		assert.Equal(t, length, respBody.Length)
 	})
 }
+
+// TEST=TestSetOTPLength make test-integration-test
 
 func TestSetOTPLength(t *testing.T) {
 	ctx := context.Background()
@@ -74,7 +79,8 @@ func TestSetOTPLength(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
-		request := domain.SetOTPLengthRequest{Length: 8}
+		length := 8
+		request := domain.SetOTPLengthRequest{Length: length}
 		req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
@@ -89,9 +95,9 @@ func TestSetOTPLength(t *testing.T) {
 		assert.True(t, respBody.Success)
 
 		// Verify data was persisted directly in database
-		length, err := th.GetOTPLengthFromDB(t, ctx, testPool)
+		retrievedLength, err := th.GetOTPLengthFromDB(t, ctx, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, 8, length)
+		assert.Equal(t, length, retrievedLength)
 
 		// Verify RabbitMQ message was published
 		th.VerifySettingsUpdateMessage(t, testCh, settings.OTPLength, 8)
@@ -169,6 +175,13 @@ func TestSetOTPLength(t *testing.T) {
 			t.Run(test.name, func(t *testing.T) {
 				th.ClearAllTestData(t, ctx, testPool)
 
+				// Create a test channel for RabbitMQ verification
+				testCh := th.GetRabbitMQChannel(t, testMQConn)
+				defer testCh.Close()
+
+				// Purge queues to ensure clean state
+				th.PurgeSettingsQueues(t, testCh)
+
 				request := domain.SetOTPLengthRequest{Length: test.length}
 				req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
 
@@ -187,6 +200,9 @@ func TestSetOTPLength(t *testing.T) {
 				length, err := th.GetOTPLengthFromDB(t, ctx, testPool)
 				require.NoError(t, err)
 				assert.Equal(t, test.length, length)
+
+				// Verify RabbitMQ message was published
+				th.VerifySettingsUpdateMessage(t, testCh, settings.OTPLength, length)
 			})
 		}
 	})
@@ -237,16 +253,20 @@ func TestSetOTPLength(t *testing.T) {
 	t.Run("should successfully update existing OTP length", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
 
+		// Create a test channel for RabbitMQ verification
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
+		defer testCh.Close()
+
+		// Purge queues to ensure clean state
+		th.PurgeSettingsQueues(t, testCh)
+
 		// Set initial length
-		request1 := domain.SetOTPLengthRequest{Length: 4}
-		req1 := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request1)
-		resp1, err := client.Do(req1)
-		require.NoError(t, err)
-		defer resp1.Body.Close()
-		require.Equal(t, http.StatusOK, resp1.StatusCode)
+		oldLength := 4
+		th.InsertOTPLength(t, ctx, oldLength, testPool)
 
 		// Update to new length
-		request2 := domain.SetOTPLengthRequest{Length: 8}
+		newLength := 8
+		request2 := domain.SetOTPLengthRequest{Length: newLength}
 		req2 := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
@@ -254,9 +274,11 @@ func TestSetOTPLength(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp2.StatusCode)
 
 		// Verify updated length directly in database
-		length, err := th.GetOTPLengthFromDB(t, ctx, testPool)
+		retrievedLength, err := th.GetOTPLengthFromDB(t, ctx, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, 8, length)
+		assert.Equal(t, newLength, retrievedLength)
+
+		// Verify RabbitMQ message was published
+		th.VerifySettingsUpdateMessage(t, testCh, settings.OTPLength, newLength)
 	})
 }
-

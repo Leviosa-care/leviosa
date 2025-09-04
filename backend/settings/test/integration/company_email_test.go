@@ -18,6 +18,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TEST=TestGetCompanyEmail make test-integration-test
+
 func TestGetCompanyEmail(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -44,7 +46,8 @@ func TestGetCompanyEmail(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
 
 		// Setup: Insert company email directly into database
-		th.InsertCompanyEmail(t, ctx, "support@testcompany.com", testPool)
+		email := "support@testcompany.com"
+		th.InsertCompanyEmail(t, ctx, email, testPool)
 
 		// Test: Get the company email via HTTP
 		req := th.NewGetCompanyEmailRequest(t, ctx, testServerURL)
@@ -57,9 +60,11 @@ func TestGetCompanyEmail(t *testing.T) {
 		var respBody domain.GetCompanyEmailResponse
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Equal(t, "support@testcompany.com", respBody.Email)
+		assert.Equal(t, email, respBody.Email)
 	})
 }
+
+// TEST=TestSetCompanyEmail make test-integration-test
 
 func TestSetCompanyEmail(t *testing.T) {
 	ctx := context.Background()
@@ -191,6 +196,13 @@ func TestSetCompanyEmail(t *testing.T) {
 			t.Run("valid email: "+email, func(t *testing.T) {
 				th.ClearSettingsTable(t, ctx, testPool)
 
+				// Create a test channel for RabbitMQ verification
+				testCh := th.GetRabbitMQChannel(t, testMQConn)
+				defer testCh.Close()
+
+				// Purge queues to ensure clean state
+				th.PurgeSettingsQueues(t, testCh)
+
 				request := domain.SetCompanyEmailRequest{Email: email}
 				req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
 
@@ -204,6 +216,9 @@ func TestSetCompanyEmail(t *testing.T) {
 				err = json.NewDecoder(resp.Body).Decode(&respBody)
 				require.NoError(t, err)
 				assert.True(t, respBody.Success)
+
+				// Verify RabbitMQ message was published
+				th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyEmail, email)
 			})
 		}
 	})
@@ -254,16 +269,20 @@ func TestSetCompanyEmail(t *testing.T) {
 	t.Run("should successfully update existing company email", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
 
+		// Create a test channel for RabbitMQ verification
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
+		defer testCh.Close()
+
+		// Purge queues to ensure clean state
+		th.PurgeSettingsQueues(t, testCh)
+
 		// Set initial email
-		request1 := domain.SetCompanyEmailRequest{Email: "old@company.com"}
-		req1 := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request1)
-		resp1, err := client.Do(req1)
-		require.NoError(t, err)
-		defer resp1.Body.Close()
-		require.Equal(t, http.StatusOK, resp1.StatusCode)
+		oldEmail := "old@company.com"
+		th.InsertCompanyEmail(t, ctx, oldEmail, testPool)
 
 		// Update to new email
-		request2 := domain.SetCompanyEmailRequest{Email: "new@company.com"}
+		newEmail := "new@company.com"
+		request2 := domain.SetCompanyEmailRequest{Email: newEmail}
 		req2 := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
@@ -274,5 +293,8 @@ func TestSetCompanyEmail(t *testing.T) {
 		email, err := th.GetCompanyEmailFromDB(t, ctx, testPool)
 		require.NoError(t, err)
 		assert.Equal(t, "new@company.com", email)
+
+		// Verify RabbitMQ message was published
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyEmail, newEmail)
 	})
 }

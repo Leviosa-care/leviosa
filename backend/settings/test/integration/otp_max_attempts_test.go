@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TEST=TestGetOTPMaxAttempts make test-integration-test
+
 func TestGetOTPMaxAttempts(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -43,7 +45,8 @@ func TestGetOTPMaxAttempts(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
 
 		// Setup: Insert OTP max attempts directly into database
-		th.InsertOTPMaxAttempts(t, ctx, 5, testPool)
+		attempts := 5
+		th.InsertOTPMaxAttempts(t, ctx, attempts, testPool)
 
 		// Test: Get the OTP max attempts
 		req := th.NewGetOTPMaxAttemptsRequest(t, ctx, testServerURL)
@@ -56,9 +59,11 @@ func TestGetOTPMaxAttempts(t *testing.T) {
 		var respBody domain.GetOTPMaxAttemptsResponse
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Equal(t, 5, respBody.MaxAttempts)
+		assert.Equal(t, attempts, respBody.MaxAttempts)
 	})
 }
+
+// TEST=TestSetOTPMaxAttempts make test-integration-test
 
 func TestSetOTPMaxAttempts(t *testing.T) {
 	ctx := context.Background()
@@ -74,7 +79,8 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
-		request := domain.SetOTPMaxAttemptsRequest{MaxAttempts: 3}
+		attempts := 3
+		request := domain.SetOTPMaxAttemptsRequest{MaxAttempts: attempts}
 		req := th.NewSetOTPMaxAttemptsRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
@@ -91,10 +97,10 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 		// Verify data was persisted directly in database
 		maxAttempts, err := th.GetOTPMaxAttemptsFromDB(t, ctx, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, 3, maxAttempts)
+		assert.Equal(t, attempts, maxAttempts)
 
 		// Verify RabbitMQ message was published (note: integer values are published as integers)
-		th.VerifySettingsUpdateMessage(t, testCh, settings.OTPMaxAttempts, 3)
+		th.VerifySettingsUpdateMessage(t, testCh, settings.OTPMaxAttempts, attempts)
 	})
 
 	t.Run("should return 400 for max attempts less than 1", func(t *testing.T) {
@@ -172,6 +178,13 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 			t.Run(test.name, func(t *testing.T) {
 				th.ClearAllTestData(t, ctx, testPool)
 
+				// Create a test channel for RabbitMQ verification
+				testCh := th.GetRabbitMQChannel(t, testMQConn)
+				defer testCh.Close()
+
+				// Purge queues to ensure clean state
+				th.PurgeSettingsQueues(t, testCh)
+
 				request := domain.SetOTPMaxAttemptsRequest{MaxAttempts: test.attempts}
 				req := th.NewSetOTPMaxAttemptsRequest(t, ctx, testServerURL, request)
 
@@ -190,6 +203,9 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 				maxAttempts, err := th.GetOTPMaxAttemptsFromDB(t, ctx, testPool)
 				require.NoError(t, err)
 				assert.Equal(t, test.attempts, maxAttempts)
+
+				// Verify RabbitMQ message was published (note: integer values are published as integers)
+				th.VerifySettingsUpdateMessage(t, testCh, settings.OTPMaxAttempts, test.attempts)
 			})
 		}
 	})
@@ -240,16 +256,19 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 	t.Run("should successfully update existing OTP max attempts", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
 
+		// Create a test channel for RabbitMQ verification
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
+		defer testCh.Close()
+
+		// Purge queues to ensure clean state
+		th.PurgeSettingsQueues(t, testCh)
+
 		// Set initial max attempts
-		request1 := domain.SetOTPMaxAttemptsRequest{MaxAttempts: 3}
-		req1 := th.NewSetOTPMaxAttemptsRequest(t, ctx, testServerURL, request1)
-		resp1, err := client.Do(req1)
-		require.NoError(t, err)
-		defer resp1.Body.Close()
-		require.Equal(t, http.StatusOK, resp1.StatusCode)
+		th.InsertOTPMaxAttempts(t, ctx, 3, testPool)
 
 		// Update to new max attempts
-		request2 := domain.SetOTPMaxAttemptsRequest{MaxAttempts: 7}
+		newAttempts := 7
+		request2 := domain.SetOTPMaxAttemptsRequest{MaxAttempts: newAttempts}
 		req2 := th.NewSetOTPMaxAttemptsRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
@@ -260,6 +279,9 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 		maxAttempts, err := th.GetOTPMaxAttemptsFromDB(t, ctx, testPool)
 		require.NoError(t, err)
 		assert.Equal(t, 7, maxAttempts)
+
+		// Verify RabbitMQ message was published (note: integer values are published as integers)
+		th.VerifySettingsUpdateMessage(t, testCh, settings.OTPMaxAttempts, newAttempts)
 	})
 
 	t.Run("should handle security considerations properly", func(t *testing.T) {
@@ -296,4 +318,3 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 		}
 	})
 }
-

@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TEST=TestGetCompanyName make test-integration-test
+
 func TestGetCompanyName(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -42,7 +44,8 @@ func TestGetCompanyName(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
 
 		// Setup: Insert company name directly into database
-		th.InsertCompanyName(t, ctx, "Test Company Inc", testPool)
+		name := "Test Company Inc"
+		th.InsertCompanyName(t, ctx, name, testPool)
 
 		// Test: Get the company name via HTTP
 		req := th.NewGetCompanyNameRequest(t, ctx, testServerURL)
@@ -55,9 +58,11 @@ func TestGetCompanyName(t *testing.T) {
 		var respBody domain.GetCompanyNameResponse
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Equal(t, "Test Company Inc", respBody.Name)
+		assert.Equal(t, name, respBody.Name)
 	})
 }
+
+// TEST=TestSetCompanyName make test-integration-test
 
 func TestSetCompanyName(t *testing.T) {
 	ctx := context.Background()
@@ -73,7 +78,8 @@ func TestSetCompanyName(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
-		request := domain.SetCompanyNameRequest{Name: "New Company Name"}
+		name := "New Company Name"
+		request := domain.SetCompanyNameRequest{Name: name}
 		req := th.NewSetCompanyNameRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
@@ -88,12 +94,12 @@ func TestSetCompanyName(t *testing.T) {
 		assert.True(t, respBody.Success)
 
 		// Verify data was persisted directly in database
-		name, err := th.GetCompanyNameFromDB(t, ctx, testPool)
+		retrievedName, err := th.GetCompanyNameFromDB(t, ctx, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, "New Company Name", name)
+		assert.Equal(t, name, retrievedName)
 
 		// Verify RabbitMQ message was published
-		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyName, "New Company Name")
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyName, name)
 	})
 
 	t.Run("should return 400 for empty company name", func(t *testing.T) {
@@ -207,16 +213,20 @@ func TestSetCompanyName(t *testing.T) {
 	t.Run("should successfully update existing company name", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
 
+		// Create a test channel for RabbitMQ verification
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
+		defer testCh.Close()
+
+		// Purge queues to ensure clean state
+		th.PurgeSettingsQueues(t, testCh)
+
 		// Set initial name
-		request1 := domain.SetCompanyNameRequest{Name: "Initial Company"}
-		req1 := th.NewSetCompanyNameRequest(t, ctx, testServerURL, request1)
-		resp1, err := client.Do(req1)
-		require.NoError(t, err)
-		defer resp1.Body.Close()
-		require.Equal(t, http.StatusOK, resp1.StatusCode)
+		oldName := "Initial Company"
+		th.InsertCompanyName(t, ctx, oldName, testPool)
 
 		// Update to new name
-		request2 := domain.SetCompanyNameRequest{Name: "Updated Company"}
+		newName := "Updated Company"
+		request2 := domain.SetCompanyNameRequest{Name: newName}
 		req2 := th.NewSetCompanyNameRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
@@ -226,6 +236,9 @@ func TestSetCompanyName(t *testing.T) {
 		// Verify updated name directly in database
 		name, err := th.GetCompanyNameFromDB(t, ctx, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, "Updated Company", name)
+		assert.Equal(t, newName, name)
+
+		// Verify RabbitMQ message was published
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyName, newName)
 	})
 }

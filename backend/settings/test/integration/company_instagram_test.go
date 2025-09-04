@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TEST=TestGetCompanyInstagram make test-integration-test
+
 func TestGetCompanyInstagram(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -42,7 +44,8 @@ func TestGetCompanyInstagram(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
 
 		// Setup: Insert company instagram directly into database
-		th.InsertCompanyInstagram(t, ctx, "https://instagram.com/testcompany", testPool)
+		insta := "https://instagram.com/testcompany"
+		th.InsertCompanyInstagram(t, ctx, insta, testPool)
 
 		// Test: Get the company instagram
 		req := th.NewGetCompanyInstagramRequest(t, ctx, testServerURL)
@@ -55,9 +58,11 @@ func TestGetCompanyInstagram(t *testing.T) {
 		var respBody domain.GetCompanyInstagramResponse
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Equal(t, "https://instagram.com/testcompany", respBody.Instagram)
+		assert.Equal(t, insta, respBody.Instagram)
 	})
 }
+
+// TEST=TestSetCompanyInstagram make test-integration-test
 
 func TestSetCompanyInstagram(t *testing.T) {
 	ctx := context.Background()
@@ -73,7 +78,8 @@ func TestSetCompanyInstagram(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
-		request := domain.SetCompanyInstagramRequest{Instagram: "https://instagram.com/mycompany"}
+		insta := "https://instagram.com/mycompany"
+		request := domain.SetCompanyInstagramRequest{Instagram: insta}
 		req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
@@ -90,10 +96,10 @@ func TestSetCompanyInstagram(t *testing.T) {
 		// Verify data was persisted directly in database
 		instagram, err := th.GetCompanyInstagramFromDB(t, ctx, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, "https://instagram.com/mycompany", instagram)
+		assert.Equal(t, insta, instagram)
 
 		// Verify RabbitMQ message was published
-		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyInstagram, "https://instagram.com/mycompany")
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyInstagram, insta)
 	})
 
 	t.Run("should return 400 for empty instagram link", func(t *testing.T) {
@@ -193,6 +199,13 @@ func TestSetCompanyInstagram(t *testing.T) {
 			t.Run("valid URL: "+url, func(t *testing.T) {
 				th.ClearAllTestData(t, ctx, testPool)
 
+				// Create a test channel for RabbitMQ verification
+				testCh := th.GetRabbitMQChannel(t, testMQConn)
+				defer testCh.Close()
+
+				// Purge queues to ensure clean state
+				th.PurgeSettingsQueues(t, testCh)
+
 				request := domain.SetCompanyInstagramRequest{Instagram: url}
 				req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
 
@@ -206,6 +219,9 @@ func TestSetCompanyInstagram(t *testing.T) {
 				err = json.NewDecoder(resp.Body).Decode(&respBody)
 				require.NoError(t, err)
 				assert.True(t, respBody.Success)
+
+				// Verify RabbitMQ message was published
+				th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyInstagram, url)
 			})
 		}
 	})
@@ -225,6 +241,13 @@ func TestSetCompanyInstagram(t *testing.T) {
 			t.Run("non-Instagram URL: "+url, func(t *testing.T) {
 				th.ClearAllTestData(t, ctx, testPool)
 
+				// Create a test channel for RabbitMQ verification
+				testCh := th.GetRabbitMQChannel(t, testMQConn)
+				defer testCh.Close()
+
+				// Purge queues to ensure clean state
+				th.PurgeSettingsQueues(t, testCh)
+
 				request := domain.SetCompanyInstagramRequest{Instagram: url}
 				req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
 
@@ -238,6 +261,9 @@ func TestSetCompanyInstagram(t *testing.T) {
 				err = json.NewDecoder(resp.Body).Decode(&respBody)
 				require.NoError(t, err)
 				assert.True(t, respBody.Success)
+
+				// Verify RabbitMQ message was published
+				th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyInstagram, url)
 			})
 		}
 	})
@@ -288,16 +314,21 @@ func TestSetCompanyInstagram(t *testing.T) {
 	t.Run("should successfully update existing company instagram", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
 
+		// Create a test channel for RabbitMQ verification
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
+		defer testCh.Close()
+
+		// Purge queues to ensure clean state
+		th.PurgeSettingsQueues(t, testCh)
+
 		// Set initial instagram
-		request1 := domain.SetCompanyInstagramRequest{Instagram: "https://instagram.com/oldcompany"}
-		req1 := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request1)
-		resp1, err := client.Do(req1)
-		require.NoError(t, err)
-		defer resp1.Body.Close()
-		require.Equal(t, http.StatusOK, resp1.StatusCode)
+
+		oldInsta := "https://instagram.com/oldcompany"
+		th.InsertCompanyInstagram(t, ctx, oldInsta, testPool)
 
 		// Update to new instagram
-		request2 := domain.SetCompanyInstagramRequest{Instagram: "https://instagram.com/newcompany"}
+		newInsta := "https://instagram.com/newcompany"
+		request2 := domain.SetCompanyInstagramRequest{Instagram: newInsta}
 		req2 := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
@@ -307,6 +338,9 @@ func TestSetCompanyInstagram(t *testing.T) {
 		// Verify updated instagram directly in database
 		instagram, err := th.GetCompanyInstagramFromDB(t, ctx, testPool)
 		require.NoError(t, err)
-		assert.Equal(t, "https://instagram.com/newcompany", instagram)
+		assert.Equal(t, newInsta, instagram)
+
+		// Verify RabbitMQ message was published
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyInstagram, newInsta)
 	})
 }

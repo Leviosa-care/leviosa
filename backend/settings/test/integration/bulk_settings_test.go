@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TEST=TestBulkSettingsHandler make test-integration-test
+
 func TestBulkSettingsHandler(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
