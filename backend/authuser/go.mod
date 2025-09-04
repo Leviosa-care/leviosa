@@ -6,7 +6,7 @@ require (
 	github.com/Leviosa-care/core v0.0.0
 	github.com/google/uuid v1.6.0
 	github.com/hengadev/encx v0.3.0
-	github.com/hengadev/errsx v1.0.1
+	github.com/hengadev/errsx v1.2.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/pressly/goose/v3 v3.25.0
 	github.com/rabbitmq/amqp091-go v1.10.0
@@ -89,6 +89,8 @@ require (
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/shirou/gopsutil/v4 v4.25.5 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/stripe/stripe-go/v82 v82.5.0 // indirect
 	github.com/testcontainers/testcontainers-go v0.38.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect

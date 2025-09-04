@@ -74,7 +74,7 @@ func (s *service) newOTP(email string) (*OTP, error) {
 }
 
 func (o *OTP) increaseAttempt(max int) error {
-	if o.Attempts+1 > max {
+	if o.Attempts+1 > MaxOTPAttempts {
 		return domain.NewInvalidValueErr("max attempts reached for provided OTP")
 	}
 	o.Attempts++

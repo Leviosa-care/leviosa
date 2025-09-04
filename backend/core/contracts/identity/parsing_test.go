@@ -45,9 +45,9 @@ func TestParseRole(t *testing.T) {
 			{"guest", Guest},
 			{"partner", Partner},
 			{"administrator", Administrator},
-			{"VISITOR", Visitor},        // Case insensitive
-			{"Standard", Standard},      // Mixed case
-			{"  guest  ", Guest},        // With whitespace
+			{"VISITOR", Visitor},   // Case insensitive
+			{"Standard", Standard}, // Mixed case
+			{"  guest  ", Guest},   // With whitespace
 		}
 
 		for _, test := range tests {
@@ -79,3 +79,4 @@ func TestParseRole(t *testing.T) {
 		}
 	})
 }
+

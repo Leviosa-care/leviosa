@@ -1,4 +1,4 @@
-package settingsHandler
+package http
 
 import (
 	"context"
@@ -124,3 +124,4 @@ func (h *handler) SetRefreshTokenDuration(w http.ResponseWriter, r *http.Request
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }
+

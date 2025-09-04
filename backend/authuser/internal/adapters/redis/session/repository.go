@@ -7,13 +7,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// NOTE: what do I store :
-// session ID -> JSON
-// token hash -> session ID
-
 const (
-	SessionKeyPrefix = "authuser:session:"
-	TokenKeyPrefix   = "authuser:token:"
+	SessionKeyPrefix      = "authuser:session:"
+	TokenKeyPrefix        = "authuser:token:"
+	AccessTokenKeyPrefix  = "authuser:access:"
+	RefreshTokenKeyPrefix = "authuser:refresh:"
 )
 
 type SessionRepository struct {
@@ -32,4 +30,12 @@ func FormatSessionKey(sessionID string) string {
 
 func FormatTokenKey(tokenHash string) string {
 	return fmt.Sprintf("%s%s", TokenKeyPrefix, tokenHash)
+}
+
+func FormatAccessTokenKey(accessTokenHash string) string {
+	return fmt.Sprintf("%s%s", AccessTokenKeyPrefix, accessTokenHash)
+}
+
+func FormatRefreshTokenKey(refreshTokenHash string) string {
+	return fmt.Sprintf("%s%s", RefreshTokenKeyPrefix, refreshTokenHash)
 }

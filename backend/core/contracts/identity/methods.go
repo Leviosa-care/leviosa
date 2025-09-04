@@ -18,3 +18,4 @@ func (r Role) IsValid() bool {
 func (r Role) IsAdmin() bool {
 	return r == Administrator
 }
+

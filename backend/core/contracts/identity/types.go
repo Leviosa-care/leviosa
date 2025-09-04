@@ -52,4 +52,3 @@ var roleLevels = map[Role]int{
 	Partner:       4,
 	Administrator: 5,
 }
-

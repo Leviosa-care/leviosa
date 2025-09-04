@@ -67,4 +67,3 @@ func (r *Role) Scan(value interface{}) error {
 		return errs.NewInvalidValueErr(fmt.Sprintf("cannot scan %T into Role", value))
 	}
 }
-

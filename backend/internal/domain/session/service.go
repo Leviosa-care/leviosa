@@ -6,7 +6,8 @@ import (
 	"github.com/hengadev/leviosa/internal/domain/user/models"
 )
 
-type Service interface {
+// type Service interface {
+type SessionService interface {
 	CreateSession(ctx context.Context, userID string, role models.Role) (string, error)
 	GetSession(ctx context.Context, sessionID string) (*Session, error)
 	RemoveSession(ctx context.Context, sessionID string) error

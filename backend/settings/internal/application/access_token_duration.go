@@ -41,3 +41,4 @@ func (s *SettingsService) SetAccessTokenDuration(ctx context.Context, request *d
 
 	return &domain.SetAccessTokenDurationResponse{Success: true}, nil
 }
+

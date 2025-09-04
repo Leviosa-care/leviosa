@@ -20,3 +20,4 @@ type OTPCache interface {
 	// SetOTPMaxAttempts updates the cached OTP max attempts setting
 	SetOTPMaxAttempts(maxAttempts int)
 }
+

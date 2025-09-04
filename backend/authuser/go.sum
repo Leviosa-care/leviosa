@@ -123,8 +123,8 @@ github.com/hashicorp/vault/api v1.16.0 h1:nbEYGJiAPGzT9U4oWgaaB0g+Rj8E59QuHKyA5L
 github.com/hashicorp/vault/api v1.16.0/go.mod h1:KhuUhzOD8lDSk29AtzNjgAu2kxRA9jL9NAbkFlqvkBA=
 github.com/hengadev/encx v0.3.0 h1:WQ2WpZqwk+QgT88ZWbyERHps4RX0USPq4aEYnTRgzR8=
 github.com/hengadev/encx v0.3.0/go.mod h1:oO8ZUAjFfSkMGCNM+6RXElFu9etJTYaTvPSfPDIpLqU=
-github.com/hengadev/errsx v1.0.1 h1:7SScdUv6N2X62xxlJecxH0daiZOcJSwfgMB/1jkS1cU=
-github.com/hengadev/errsx v1.0.1/go.mod h1:pdDfbKMqwVro0kRlCfPhiASTcnXFXR7/d4WxqtuNaC8=
+github.com/hengadev/errsx v1.2.0 h1:skAFeZ1K2p4XRm/QPxDPYWhwhcfQs24WJRo7u3JfSdw=
+github.com/hengadev/errsx v1.2.0/go.mod h1:pdDfbKMqwVro0kRlCfPhiASTcnXFXR7/d4WxqtuNaC8=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
@@ -219,6 +219,8 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.11.0 h1:ib4sjIrwZKxE5u/Japgo/7SJV3PvgjGiRNAvTVGqQl8=
 github.com/stretchr/testify v1.11.0/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
+github.com/stripe/stripe-go/v82 v82.5.0 h1:Kcf4EmxnkRhUBmZEc1u2nHtlGkoe1yzd8gdtCWYhQqQ=
+github.com/stripe/stripe-go/v82 v82.5.0/go.mod h1:majCQX6AfObAvJiHraPi/5udwHi4ojRvJnnxckvHrX8=
 github.com/testcontainers/testcontainers-go v0.38.0 h1:d7uEapLcv2P8AvH8ahLqDMMxda2W9gQN1nRbHS28HBw=
 github.com/testcontainers/testcontainers-go v0.38.0/go.mod h1:C52c9MoHpWO+C4aqmgSU+hxlR5jlEayWtgYrb8Pzz1w=
 github.com/tklauser/go-sysconf v0.3.12 h1:0QaGUFOdQaIVdPgfITYzaTegZvdCjmYO52cSFAEVmqU=

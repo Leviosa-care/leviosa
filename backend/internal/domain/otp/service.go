@@ -39,7 +39,7 @@ func New(ctx context.Context, crypto encx.CryptoService, repo ReadWriter, settin
 	length := lengthSetting.Value
 	maxAttemptsSetting, err := settingsRepo.GetInt(ctx, settings.OTPMaxAttemptsKey)
 	if err != nil {
-		return nil, fmt.Errorf("get OTP max attempts count: %w", err)
+		return nil, fmt.Errorf("get OTP length: %w", err)
 	}
 	maxAttempts := maxAttemptsSetting.Value
 

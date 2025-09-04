@@ -81,6 +81,7 @@ func New2(
 		return nil, domain.NewNotFoundErr(fmt.Errorf("company email used as 'from' header"))
 	}
 	from := fromSetting.Value
+
 	addressSetting, err := repo.GetString(ctx, settings.CompanyLegalAddressKey)
 	if err != nil {
 		return nil, domain.NewNotFoundErr(fmt.Errorf("company email used as 'address' header"))

@@ -16,4 +16,5 @@ import (
 
 type AuthAggregatorService interface {
 	CheckEmailSendOTP(ctx context.Context, request *domain.CheckEmailAvailabilityRequest) error
+	ValidateOTPCreatePendingUser(ctx context.Context, request *domain.ValidateOTPRequest) (*domain.CreateSessionResponse, error)
 }
