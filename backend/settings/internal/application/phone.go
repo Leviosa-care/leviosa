@@ -9,6 +9,7 @@ import (
 
 	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/core/validation"
 )
 
 func (s *SettingsService) GetCompanyTelephone(ctx context.Context) (*domain.GetCompanyTelephoneResponse, error) {
@@ -37,7 +38,7 @@ func (s *SettingsService) SetCompanyTelephone(ctx context.Context, request *doma
 	// Trim whitespace before processing
 	trimmedPhone := strings.TrimSpace(request.Telephone)
 
-	if err := domain.ValidateTelephone(trimmedPhone); err != nil {
+	if err := validation.ValidatePhone(trimmedPhone); err != nil {
 		return nil, errs.NewInvalidValueErr(err.Error())
 	}
 
