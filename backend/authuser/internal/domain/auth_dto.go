@@ -38,3 +38,27 @@ func (r ValidateOTPRequest) Valid(ctx context.Context, expectedLength int) error
 
 	return errs.AsError()
 }
+
+type SignInRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (r *SignInRequest) Valid(ctx context.Context) error {
+	var errs errsx.Map
+	if err := validation.ValidateEmail(r.Email); err != nil {
+		errs.Set("email", err)
+	}
+	if err := ValidatePassword(r.Password); err != nil {
+		errs.Set("password", err)
+	}
+	return errs.AsError()
+}
+
+type SignOutRequest struct {
+	Token string `json:"token"`
+}
+
+func (r *SignOutRequest) Valid(ctx context.Context) error {
+	return auth.ValidateToken(r.Token)
+}
