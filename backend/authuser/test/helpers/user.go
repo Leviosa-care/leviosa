@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Leviosa-care/authuser/internal/domain"
+	"github.com/Leviosa-care/core/contracts/identity"
 )
 
 // ClearUsersTable truncates the users table for clean test state
@@ -29,12 +30,12 @@ func NewTestUser(email, firstName, lastName string) *domain.User {
 		Email:      email,
 		FirstName:  firstName,
 		LastName:   lastName,
-		Password:   "testpassword123",
-		Telephone:  "0123456789",
-		Role:       "user",
+		Password:   "qPDAR0.4Z8{vpCO]",
+		Telephone:  "0612345678",
+		Role:       identity.Standard.String(),
 		CreatedAt:  time.Now(),
 		LoggedInAt: time.Now(),
-		KeyVersion: 1,
+		// KeyVersion: 1,
 	}
 }
 
@@ -83,12 +84,53 @@ func InsertTestUser(t *testing.T, ctx context.Context, email, firstName, lastNam
 	InsertUser(t, ctx, user, pool)
 }
 
+// GetUserByID retrieves a user by user ID for test verification
+func GetUserByID(t *testing.T, ctx context.Context, userID string, pool *pgxpool.Pool, crypto encx.CryptoService) (*domain.User, error) {
+	t.Helper()
+	var user domain.User
+	query := `
+		SELECT 
+			id, state, email_hash, email_encrypted, password_hash,
+			picture_encrypted, first_name_encrypted, last_name_encrypted, 
+			birth_date_encrypted, gender_encrypted, role_encrypted,
+			telephone_hash, telephone_encrypted, postal_code_encrypted,
+			city_encrypted, address1_encrypted, address2_encrypted, stripe_customer_id_encrypted,
+			google_id_encrypted, apple_id_encrypted, created_at_encrypted,
+			logged_in_at_encrypted, dek_encrypted, key_version
+		FROM auth.users 
+		WHERE id = $1
+	`
+
+	err := pool.QueryRow(ctx, query, userID).Scan(
+		&user.ID, &user.State, &user.EmailHash, &user.EmailEncrypted,
+		&user.PasswordHash, &user.PictureEncrypted, &user.FirstNameEncrypted,
+		&user.LastNameEncrypted, &user.BirthDateEncrypted, &user.GenderEncrypted,
+		&user.RoleEncrypted, &user.TelephoneHash, &user.TelephoneEncrypted,
+		&user.PostalCodeEncrypted, &user.CityEncrypted, &user.Address1Encrypted,
+		&user.Address2Encrypted, &user.StripeCustomerIDEncrypted, &user.GoogleIDEncrypted, &user.AppleIDEncrypted,
+		&user.CreatedAtEncrypted, &user.LoggedInAtEncrypted, &user.DEKEncrypted,
+		&user.KeyVersion,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Use crypto service to decrypt the struct fields
+	err = crypto.DecryptStruct(ctx, &user)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt user struct: %w", err)
+	}
+
+	return &user, nil
+}
+
 // GetUserByEmailHash retrieves a user by email hash for test verification
 func GetUserByEmailHash(t *testing.T, ctx context.Context, emailHash string, pool *pgxpool.Pool, crypto encx.CryptoService) (*domain.User, error) {
 	t.Helper()
 	var user domain.User
 	query := `
-		SELECT id, state, email_hash, email_encrypted, password_hash,
+		SELECT id, state, email_encrypted, password_hash,
 		       first_name_encrypted, last_name_encrypted, telephone_hash, telephone_encrypted,
 		       picture_encrypted, birth_date_encrypted, gender_encrypted,
 		       address1_encrypted, city_encrypted, postal_code_encrypted,
@@ -97,7 +139,7 @@ func GetUserByEmailHash(t *testing.T, ctx context.Context, emailHash string, poo
 		FROM auth.users WHERE email_hash = $1
 	`
 	err := pool.QueryRow(ctx, query, emailHash).Scan(
-		&user.ID, &user.State, &user.EmailHash, &user.EmailEncrypted, &user.PasswordHash,
+		&user.ID, &user.State, &user.EmailEncrypted, &user.PasswordHash,
 		&user.FirstNameEncrypted, &user.LastNameEncrypted, &user.TelephoneHash, &user.TelephoneEncrypted,
 		&user.PictureEncrypted, &user.BirthDateEncrypted, &user.GenderEncrypted,
 		&user.Address1Encrypted, &user.CityEncrypted, &user.PostalCodeEncrypted,
@@ -147,4 +189,25 @@ func CheckUserExistsByID(t *testing.T, ctx context.Context, pool *pgxpool.Pool, 
 		return false, err
 	}
 	return exists, nil
+}
+
+// InsertUserWithEncryption convenience function that creates, encrypts and inserts a user
+func InsertUserWithEncryption(t *testing.T, ctx context.Context, user *domain.User, pool *pgxpool.Pool, crypto encx.CryptoService) {
+	t.Helper()
+
+	// Process encryption on the user
+	err := crypto.ProcessStruct(ctx, user)
+	require.NoError(t, err, "Failed to encrypt user")
+
+	InsertUser(t, ctx, user, pool)
+}
+
+// GetUserByIDFromDB retrieves a user by UUID for test verification
+func GetUserByIDFromDB(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pgxpool.Pool, crypto encx.CryptoService) *domain.User {
+	t.Helper()
+	
+	user, err := GetUserByID(t, ctx, userID.String(), pool, crypto)
+	require.NoError(t, err, "Failed to get user by ID from database")
+	
+	return user
 }

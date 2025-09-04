@@ -122,7 +122,7 @@ func ParseValidateOTPCreatePendingUserResponse(t *testing.T, resp *http.Response
 }
 
 // NewCompleteUserRequest creates an HTTP request for completing user registration
-func NewCompleteUserRequest(t *testing.T, ctx context.Context, baseURL string, request domain.CompleteUserRequest, sessionToken string) *http.Request {
+func NewCompleteUserRequest(t *testing.T, ctx context.Context, baseURL string, request domain.CompleteUserRequest, accessToken string) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -139,10 +139,10 @@ func NewCompleteUserRequest(t *testing.T, ctx context.Context, baseURL string, r
 	req.Header.Set("Content-Type", "application/json")
 
 	// Add session cookie if provided
-	if sessionToken != "" {
+	if accessToken != "" {
 		cookie := &http.Cookie{
 			Name:  auth.AccessTokenCookieName,
-			Value: sessionToken,
+			Value: accessToken,
 		}
 		req.AddCookie(cookie)
 	}
@@ -233,4 +233,53 @@ func ParseGetAllUsersResponse(t *testing.T, resp *http.Response) []*domain.UserR
 	require.NoError(t, err, "Failed to decode get all users response")
 
 	return users
+}
+
+// NewApproveUserRequest creates an HTTP request for approving a user
+func NewApproveUserRequest(t *testing.T, ctx context.Context, baseURL string, request domain.ApproveUserRequest) *http.Request {
+	t.Helper()
+
+	jsonData, err := json.Marshal(request)
+	require.NoError(t, err, "Failed to marshal request")
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPatch,
+		fmt.Sprintf("%s/admin/users/approve", baseURL),
+		bytes.NewBuffer(jsonData),
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+// NewMalformedApproveUserRequest creates an HTTP request with malformed JSON
+func NewMalformedApproveUserRequest(t *testing.T, ctx context.Context, baseURL string) *http.Request {
+	t.Helper()
+
+	malformedJSON := `{"user_id": "not-a-uuid", "role": }`
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPatch,
+		fmt.Sprintf("%s/admin/users/approve", baseURL),
+		bytes.NewBuffer([]byte(malformedJSON)),
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+// ParseApproveUserResponse parses the HTTP response for approve user request
+func ParseApproveUserResponse(t *testing.T, resp *http.Response) map[string]string {
+	t.Helper()
+
+	var response map[string]string
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(&response)
+	require.NoError(t, err, "Failed to decode approve user response")
+
+	return response
 }
