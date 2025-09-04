@@ -2,12 +2,10 @@ package domain
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Setting[T any] struct {
-	ID        uuid.UUID `json:"-"`
+	ID        string    `json:"-"`
 	Key       string    `json:"-"`
 	Value     T         `json:"value"`
 	CreatedAt time.Time `json:"-"`
@@ -15,7 +13,7 @@ type Setting[T any] struct {
 }
 
 type SettingEncrypted[T any] struct {
-	ID             uuid.UUID `json:"-"`
+	ID             string    `json:"-"`
 	Key            string    `json:"-"`
 	Value          T         `json:"value" encx:"encrypt"`
 	ValueEncrypted []byte    `json:"-"`

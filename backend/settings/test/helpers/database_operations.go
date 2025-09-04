@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/settings/internal/domain"
@@ -246,15 +247,21 @@ func GetCompanyAddressFromDB(t *testing.T, ctx context.Context, pool *pgxpool.Po
 	return address, err
 }
 
-// Company Phone specific helpers
-func InsertCompanyPhoneEncrypted(t *testing.T, ctx context.Context, phone string, pool *pgxpool.Pool) {
-	t.Helper()
-	// For testing purposes, we'll insert dummy encrypted data
-	// This simulates what would happen after encryption
-	dummyEncrypted := []byte("encrypted_" + phone)
-	dummyDEK := []byte("dummy_dek")
-	keyVersion := 1
+func NewCompanyPhone(t *testing.T, ctx context.Context) *domain.SettingEncrypted[string] {
+	now := time.Now()
+	return &domain.SettingEncrypted[string]{
+		// ID:        "1",
+		Key:       settings.CompanyPhone,
+		Value:     "0612345678",
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+}
 
+// Company Phone specific helpers
+// func InsertCompanyPhoneEncrypted(t *testing.T, ctx context.Context, phone string, pool *pgxpool.Pool) {
+func InsertCompanyPhoneEncrypted(t *testing.T, ctx context.Context, setting *domain.SettingEncrypted[string], pool *pgxpool.Pool) {
+	t.Helper()
 	query := `
 		INSERT INTO settings.encrypted (key, value_encrypted, dek_encrypted, key_version)
 		VALUES ($1, $2, $3, $4)
@@ -264,7 +271,8 @@ func InsertCompanyPhoneEncrypted(t *testing.T, ctx context.Context, phone string
 			key_version = EXCLUDED.key_version,
 			updated_at = NOW()
 	`
-	_, err := pool.Exec(ctx, query, settings.CompanyPhone, dummyEncrypted, dummyDEK, keyVersion)
+
+	_, err := pool.Exec(ctx, query, settings.CompanyPhone, setting.ValueEncrypted, setting.DEKEncrypted, setting.KeyVersion)
 	require.NoError(t, err)
 }
 
@@ -283,17 +291,32 @@ func InsertEncryptedSetting(t *testing.T, ctx context.Context, key string, value
 	require.NoError(t, err)
 }
 
-func GetEncryptedSettingFromDB(t *testing.T, ctx context.Context, key string, pool *pgxpool.Pool) (string, error) {
+func GetEncryptedSettingFromDB(t *testing.T, ctx context.Context, key string, pool *pgxpool.Pool) *domain.SettingEncrypted[string] {
 	t.Helper()
-	var valueEncrypted []byte
-	query := `SELECT value_encrypted FROM settings.encrypted WHERE key = $1`
-	err := pool.QueryRow(ctx, query, key).Scan(&valueEncrypted)
-	if err != nil {
-		return "", err
-	}
-	// For testing purposes, we verify that the encrypted data exists
-	// The actual decryption would happen in the service layer
-	return EncryptedDataExists, nil
+
+	var setting domain.SettingEncrypted[string]
+
+	query := `
+	SELECT
+	id,
+	value_encrypted,
+	created_at,
+	updated_at,
+	dek_encrypted,
+	key_version
+	FROM settings.encrypted
+	WHERE key = $1;`
+
+	err := pool.QueryRow(ctx, query, key).Scan(
+		&setting.ID,
+		&setting.ValueEncrypted,
+		&setting.CreatedAt,
+		&setting.UpdatedAt,
+		&setting.DEKEncrypted,
+		&setting.KeyVersion,
+	)
+	require.NoError(t, err)
+	return &setting
 }
 
 // Company Instagram specific helpers

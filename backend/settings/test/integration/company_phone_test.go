@@ -17,26 +17,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO: Phone GET endpoint tests are commented out due to crypto service testing limitations.
-// The encx package does not provide mocking capabilities, making it impossible to write
-// proper integration tests that involve encryption/decryption of phone numbers.
-//
-// We need either:
-// 1. Mock interface from encx package for testing
-// 2. Test utilities from encx package to create predictable encrypted data
-// 3. Dependency injection pattern to allow test doubles
-//
-// Until then, these tests cannot reliably pass in integration testing environments.
+// TEST=TestGetCompanyPhone make test-integration-test
 
-/*
 func TestGetCompanyPhone(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	t.Run("should return 404 when company phone not set", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
-		req := td.NewGetCompanyPhoneRequest(t, ctx, testServerURL)
+		req := th.NewGetCompanyPhoneRequest(t, ctx, testServerURL)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -52,13 +42,16 @@ func TestGetCompanyPhone(t *testing.T) {
 	})
 
 	t.Run("should successfully retrieve company phone (admin endpoint)", func(t *testing.T) {
-		td.ClearAllTestData(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
 
-		// Setup: Insert company phone directly into database
-		td.InsertCompanyPhoneEncrypted(t, ctx, "0123456789", testPool)
+		// Setup: Insert company phoneSetting directly into database
+		phoneSetting := th.NewCompanyPhone(t, ctx)
+		err := crypto.ProcessStruct(ctx, phoneSetting)
+		require.NoError(t, err)
+		th.InsertCompanyPhoneEncrypted(t, ctx, phoneSetting, testPool)
 
 		// Test: Get the company phone (admin endpoint)
-		req := td.NewGetCompanyPhoneRequest(t, ctx, testServerURL)
+		req := th.NewGetCompanyPhoneRequest(t, ctx, testServerURL)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -68,12 +61,11 @@ func TestGetCompanyPhone(t *testing.T) {
 		var respBody domain.GetCompanyTelephoneResponse
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Equal(t, "0123456789", respBody.Telephone)
+		assert.Equal(t, phoneSetting.Value, respBody.Telephone)
 	})
-
-	// Note: Phone is admin-only for GET, so no public endpoint test
 }
-*/
+
+// TEST=TestSetCompanyPhone make test-integration-test
 
 func TestSetCompanyPhone(t *testing.T) {
 	ctx := context.Background()
@@ -89,7 +81,8 @@ func TestSetCompanyPhone(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
-		request := domain.SetCompanyTelephoneRequest{Telephone: "0145678910"}
+		phoneValue := "0145678910"
+		request := domain.SetCompanyTelephoneRequest{Telephone: phoneValue}
 		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
@@ -104,9 +97,10 @@ func TestSetCompanyPhone(t *testing.T) {
 		assert.True(t, respBody.Success)
 
 		// Verify data was persisted directly in database
-		phone, err := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+		phoneSetting := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+		err = crypto.DecryptStruct(ctx, phoneSetting)
 		require.NoError(t, err)
-		assert.Equal(t, th.EncryptedDataExists, phone)
+		assert.Equal(t, phoneValue, phoneSetting.Value)
 
 		// Verify RabbitMQ message was published
 		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyPhone, "0145678910")
@@ -215,9 +209,10 @@ func TestSetCompanyPhone(t *testing.T) {
 				assert.True(t, respBody.Success)
 
 				// Verify the phone was stored directly in database
-				phoneFromDB, err := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+				phoneSetting := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+				err = crypto.DecryptStruct(ctx, phoneSetting)
 				require.NoError(t, err)
-				assert.Equal(t, th.EncryptedDataExists, phoneFromDB)
+				assert.Equal(t, phone, phoneSetting.Value)
 			})
 		}
 	})
@@ -225,8 +220,17 @@ func TestSetCompanyPhone(t *testing.T) {
 	t.Run("should handle whitespace trimming correctly", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
 
+		// Create a test channel for RabbitMQ verification
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
+		defer testCh.Close()
+
+		// Purge queues to ensure clean state
+		th.PurgeSettingsQueues(t, testCh)
+
 		// Phone with leading/trailing whitespace
-		request := domain.SetCompanyTelephoneRequest{Telephone: "  0123456789  "}
+		phoneValue := "0123456789"
+		phoneValueWithSpaces := "  " + phoneValue + "  "
+		request := domain.SetCompanyTelephoneRequest{Telephone: phoneValueWithSpaces}
 		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
 
 		resp, err := client.Do(req)
@@ -236,10 +240,13 @@ func TestSetCompanyPhone(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify the phone was trimmed and stored correctly directly in database
-		phoneFromDB, err := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+		phoneSetting := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+		err = crypto.DecryptStruct(ctx, phoneSetting)
 		require.NoError(t, err)
-		// Should store the encrypted value
-		assert.Equal(t, th.EncryptedDataExists, phoneFromDB)
+		// Should be able to retrieve the original value
+		assert.Equal(t, phoneValue, phoneSetting.Value)
+
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyPhone, phoneValue)
 	})
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
@@ -288,26 +295,35 @@ func TestSetCompanyPhone(t *testing.T) {
 	t.Run("should successfully update existing company phone", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
 
+		// Create a test channel for RabbitMQ verification
+		testCh := th.GetRabbitMQChannel(t, testMQConn)
+		defer testCh.Close()
+
+		// Purge queues to ensure clean state
+		th.PurgeSettingsQueues(t, testCh)
+
 		// Set initial phone
-		request1 := domain.SetCompanyTelephoneRequest{Telephone: "0111111111"}
-		req1 := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request1)
-		resp1, err := client.Do(req1)
+		initialPhoneSetting := th.NewCompanyPhone(t, ctx)
+		err := crypto.ProcessStruct(ctx, initialPhoneSetting)
 		require.NoError(t, err)
-		defer resp1.Body.Close()
-		require.Equal(t, http.StatusOK, resp1.StatusCode)
+		th.InsertCompanyPhoneEncrypted(t, ctx, initialPhoneSetting, testPool)
 
 		// Update to new phone
-		request2 := domain.SetCompanyTelephoneRequest{Telephone: "0222222222"}
+		newPhoneValue := "0222222222"
+		request2 := domain.SetCompanyTelephoneRequest{Telephone: newPhoneValue}
 		req2 := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request2)
 		resp2, err := client.Do(req2)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		require.Equal(t, http.StatusOK, resp2.StatusCode)
 
-		// Verify updated phone directly in database
-		phoneFromDB, err := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+		phoneSetting := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+		err = crypto.DecryptStruct(ctx, phoneSetting)
 		require.NoError(t, err)
-		assert.Equal(t, th.EncryptedDataExists, phoneFromDB)
+		assert.Equal(t, newPhoneValue, phoneSetting.Value)
+
+		// Verify RabbitMQ message was published
+		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyPhone, newPhoneValue)
 	})
 
 	// TODO: Add test for encryption verification once crypto service is properly configured
