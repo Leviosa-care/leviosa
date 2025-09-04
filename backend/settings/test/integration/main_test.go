@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -14,11 +15,15 @@ import (
 	settingsHandler "github.com/Leviosa-care/settings/internal/adapters/http"
 	"github.com/Leviosa-care/settings/internal/adapters/postgres"
 	"github.com/Leviosa-care/settings/internal/adapters/rabbitmq"
-	"github.com/Leviosa-care/settings/internal/adapters/s3"
+	media "github.com/Leviosa-care/settings/internal/adapters/s3"
 	settings "github.com/Leviosa-care/settings/internal/application"
 	"github.com/Leviosa-care/settings/internal/ports"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
+	"github.com/Leviosa-care/core/ctxutil"
+	"github.com/Leviosa-care/core/envmode"
+	"github.com/Leviosa-care/core/logger"
+	"github.com/Leviosa-care/core/middleware"
 	"github.com/Leviosa-care/core/migrations"
 	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -36,6 +41,7 @@ var (
 	pgContainer   *tu.PostgresContainer
 	testPool      *pgxpool.Pool
 	s3Client      *s3.Client
+	crypto        encx.CryptoService
 	repo          ports.SettingsRepository
 	mediaRepo     ports.SettingsMedia
 	handler       settingsHandler.Handler
@@ -49,6 +55,16 @@ func TestMain(m *testing.M) {
 	defer cancel()
 
 	var err error
+
+	// Create and configure logger for tests
+	loggerHandler, err := logger.SetHandler("debug", "dev")
+	if err != nil {
+		log.Fatalf("Failed to create logger handler: %v", err)
+	}
+	testLogger := slog.New(loggerHandler)
+	slog.SetDefault(testLogger) // Set as default for the application
+
+	ctx = context.WithValue(ctx, ctxutil.LoggerKey, testLogger)
 
 	// postgres container
 	pgContainer, err = tu.SetupPostgres(ctx, nil)
@@ -175,7 +191,7 @@ func TestMain(m *testing.M) {
 		fmt.Println("creating vault:", err)
 		return
 	}
-	crypto, err := encx.New(
+	crypto, err = encx.New(
 		ctx,
 		kms,
 		tu.EncryptionKey,
@@ -201,12 +217,15 @@ func TestMain(m *testing.M) {
 	router := http.NewServeMux()
 	handler.RegisterRoutes(router)
 
+	// Use the enhanced AttachLogger middleware from core package
+	loggerMiddleware := middleware.AttachLogger(envmode.Dev, testLogger)
+
 	listener, err := net.Listen("tcp", ":0") // ":0" tells OS to pick a random available port
 	if err != nil {
 		log.Fatalf("Failed to listen for test server: %v", err)
 	}
 	testServerURL = "http://" + listener.Addr().String()
-	testServer = &http.Server{Handler: router} // Store the server for graceful shutdown
+	testServer = &http.Server{Handler: loggerMiddleware(router)}
 
 	// Run the server in a goroutine
 	go func() {
