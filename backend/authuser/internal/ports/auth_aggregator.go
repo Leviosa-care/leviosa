@@ -17,4 +17,10 @@ import (
 type AuthAggregatorService interface {
 	CheckEmailSendOTP(ctx context.Context, request *domain.CheckEmailAvailabilityRequest) error
 	ValidateOTPCreatePendingUser(ctx context.Context, request *domain.ValidateOTPRequest) (*domain.CreateSessionResponse, error)
+	CompleteUser(ctx context.Context, sessionToken string, request *domain.CompleteUserRequest) error
+	RefreshSession(ctx context.Context, request *domain.RefreshSessionRequest) (*domain.RefreshSessionResponse, error)
+	// SignIn(ctx context.Context, request *domain.SignInRequest) (string, error)
+	// SignOut(ctx context.Context, request *domain.SignOutRequest) error
+	// TODO: not sure about that one
+	// ValidateSession(ctx context.Context) error
 }

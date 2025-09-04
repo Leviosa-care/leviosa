@@ -9,5 +9,7 @@ import (
 
 type UserRepository interface {
 	GetUserByEmailHash(ctx context.Context, emailHash string) (*domain.User, error)
+	GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.User, error)
 	CreateUser(ctx context.Context, user *domain.User) error
+	UpdateUser(ctx context.Context, user *domain.User) error
 }
