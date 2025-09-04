@@ -17,7 +17,8 @@ func (r *repository) GetEncryptedSetting(ctx context.Context, key string) (*doma
 	value_encrypted,
 	created_at,
 	updated_at,
-	dek_encrypted
+	dek_encrypted,
+	key_version
 	FROM settings.encrypted
 	WHERE key = $1;`
 
@@ -27,6 +28,7 @@ func (r *repository) GetEncryptedSetting(ctx context.Context, key string) (*doma
 		&res.CreatedAt,
 		&res.UpdatedAt,
 		&res.DEKEncrypted,
+		&res.KeyVersion,
 	)
 	if err != nil {
 		return nil, errs.ClassifyPgError(fmt.Sprintf("get encrypted setting for key '%s'", key), err)
