@@ -6,8 +6,8 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
-// FindSessionByAccessToken implements two-step security: access token -> session ID -> session data
-func (r *SessionRepository) FindSessionByAccessToken(ctx context.Context, accessTokenHash string) (string, []byte, error) {
+// FindSessionByAccessTokenHash implements two-step security: access token -> session ID -> session data
+func (r *SessionRepository) FindSessionByAccessTokenHash(ctx context.Context, accessTokenHash string) (string, []byte, error) {
 	// Step 1: Get session ID from access token hash
 	accessTokenKey := FormatAccessTokenKey(accessTokenHash)
 	sessionID, err := r.client.Get(ctx, accessTokenKey).Result()

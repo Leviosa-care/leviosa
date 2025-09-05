@@ -6,8 +6,8 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
-// FindSessionByRefreshToken implements two-step security: refresh token -> session ID -> session data
-func (r *SessionRepository) FindSessionByRefreshToken(ctx context.Context, refreshTokenHash string) (string, []byte, error) {
+// FindSessionByRefreshTokenHash implements two-step security: refresh token -> session ID -> session data
+func (r *SessionRepository) FindSessionByRefreshTokenHash(ctx context.Context, refreshTokenHash string) (string, []byte, error) {
 	// Step 1: Get session ID from refresh token hash
 	refreshTokenKey := FormatRefreshTokenKey(refreshTokenHash)
 	sessionID, err := r.client.Get(ctx, refreshTokenKey).Result()
@@ -24,4 +24,3 @@ func (r *SessionRepository) FindSessionByRefreshToken(ctx context.Context, refre
 
 	return sessionID, []byte(sessionData), nil
 }
-

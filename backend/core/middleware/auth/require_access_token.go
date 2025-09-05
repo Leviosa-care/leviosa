@@ -45,7 +45,7 @@ func (m *SessionAuthMiddleware) RequireAccessToken(next mw.Handler) mw.Handler {
 		}
 
 		// Find session by access token using two-step lookup
-		sessionID, sessionData, err := m.sessionRepo.FindSessionByAccessToken(ctx, accessToken)
+		sessionID, sessionData, err := m.sessionRepo.FindSessionByAccessTokenHash(ctx, accessToken)
 		if err != nil {
 			if errors.Is(err, errs.ErrRepositoryNotFound) {
 				logger.WarnContext(ctx, "Auth middleware: Session not found for access token",

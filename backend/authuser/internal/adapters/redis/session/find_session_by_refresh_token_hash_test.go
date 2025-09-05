@@ -5,17 +5,17 @@ import (
 	"testing"
 	"time"
 
-	td "github.com/Leviosa-care/authuser/test/helpers"
 	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
+	td "github.com/Leviosa-care/authuser/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestFindSessionByRefreshToken make test-unit-session-test
+// TEST=TestFindSessionByRefreshTokenHash make test-unit-session-test
 
-func TestFindSessionByRefreshToken(t *testing.T) {
+func TestFindSessionByRefreshTokenHash(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should successfully find session by refresh token", func(t *testing.T) {
@@ -35,7 +35,7 @@ func TestFindSessionByRefreshToken(t *testing.T) {
 		require.NoError(t, err)
 
 		// Find session by refresh token
-		sessionData, err := repo.FindSessionByRefreshToken(ctx, refreshTokenHash)
+		_, sessionData, err := repo.FindSessionByRefreshTokenHash(ctx, refreshTokenHash)
 		require.NoError(t, err)
 		require.NotNil(t, sessionData)
 
@@ -44,7 +44,7 @@ func TestFindSessionByRefreshToken(t *testing.T) {
 		assert.Equal(t, session.UserID, retrievedSession.UserID)
 		assert.Equal(t, session.Role, retrievedSession.Role)
 		assert.Equal(t, session.State, retrievedSession.State)
-		assert.Equal(t, session.TokenHash, retrievedSession.TokenHash)
+		assert.Equal(t, session.AccessTokenHash, retrievedSession.AccessTokenHash)
 	})
 
 	t.Run("should return error for non-existent refresh token", func(t *testing.T) {
@@ -54,7 +54,7 @@ func TestFindSessionByRefreshToken(t *testing.T) {
 		nonExistentRefreshToken := "non_existent_refresh_token_hash"
 
 		// Try to find session with non-existent refresh token
-		sessionData, err := repo.FindSessionByRefreshToken(ctx, nonExistentRefreshToken)
+		_, sessionData, err := repo.FindSessionByRefreshTokenHash(ctx, nonExistentRefreshToken)
 		assert.Error(t, err)
 		assert.Nil(t, sessionData)
 	})
@@ -73,7 +73,7 @@ func TestFindSessionByRefreshToken(t *testing.T) {
 		require.NoError(t, err)
 
 		// Try to find session (should fail because session data doesn't exist)
-		sessionData, err := repo.FindSessionByRefreshToken(ctx, refreshTokenHash)
+		_, sessionData, err := repo.FindSessionByRefreshTokenHash(ctx, refreshTokenHash)
 		assert.Error(t, err)
 		assert.Nil(t, sessionData)
 	})
@@ -98,7 +98,7 @@ func TestFindSessionByRefreshToken(t *testing.T) {
 		time.Sleep(20 * time.Millisecond)
 
 		// Try to find session with expired refresh token
-		sessionData, err := repo.FindSessionByRefreshToken(ctx, refreshTokenHash)
+		_, sessionData, err := repo.FindSessionByRefreshTokenHash(ctx, refreshTokenHash)
 		assert.Error(t, err)
 		assert.Nil(t, sessionData)
 	})
@@ -123,11 +123,11 @@ func TestFindSessionByRefreshToken(t *testing.T) {
 		time.Sleep(60 * time.Millisecond)
 
 		// Access token should be expired
-		_, err = repo.FindSessionByAccessToken(ctx, accessTokenHash)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, accessTokenHash)
 		assert.Error(t, err, "Access token should be expired")
 
 		// But refresh token should still work
-		sessionData, err := repo.FindSessionByRefreshToken(ctx, refreshTokenHash)
+		_, sessionData, err := repo.FindSessionByRefreshTokenHash(ctx, refreshTokenHash)
 		require.NoError(t, err)
 		require.NotNil(t, sessionData)
 
@@ -153,7 +153,7 @@ func TestFindSessionByRefreshToken(t *testing.T) {
 		require.NoError(t, err)
 
 		// Find session by refresh token with special characters
-		sessionData, err := repo.FindSessionByRefreshToken(ctx, refreshTokenHash)
+		_, sessionData, err := repo.FindSessionByRefreshTokenHash(ctx, refreshTokenHash)
 		require.NoError(t, err)
 		require.NotNil(t, sessionData)
 
@@ -172,7 +172,7 @@ func TestFindSessionByRefreshToken(t *testing.T) {
 		refreshTokenHash := "test_refresh_token_hash"
 
 		// Try to find session with closed Redis connection
-		sessionData, err := repo.FindSessionByRefreshToken(ctx, refreshTokenHash)
+		_, sessionData, err := repo.FindSessionByRefreshTokenHash(ctx, refreshTokenHash)
 		assert.Error(t, err)
 		assert.Nil(t, sessionData)
 

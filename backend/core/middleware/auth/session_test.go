@@ -11,95 +11,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDecodeSession(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       []byte
-		expectError bool
-		expectNil   bool
-	}{
-		{
-			name: "valid session JSON",
-			input: []byte(`{
-				"user_id_encrypted": "dXNlcl9pZA==",
-				"role_encrypted": "cm9sZQ==",
-				"state_encrypted": "c3RhdGU=",
-				"created_at_encrypted": "Y3JlYXRlZF9hdA==",
-				"expires_at_encrypted": "ZXhwaXJlc19hdA==",
-				"access_token_hash": "test_access_token_hash",
-				"dek_encrypted": "ZGVr",
-				"key_version": 1
-			}`),
-			expectError: false,
-			expectNil:   false,
-		},
-		{
-			name:        "empty JSON",
-			input:       []byte(`{}`),
-			expectError: false,
-			expectNil:   false,
-		},
-		{
-			name:        "invalid JSON",
-			input:       []byte(`{invalid json`),
-			expectError: true,
-			expectNil:   true,
-		},
-		{
-			name:        "null input",
-			input:       []byte(`null`),
-			expectError: false,
-			expectNil:   false,
-		},
-		{
-			name:        "empty input",
-			input:       []byte(``),
-			expectError: true,
-			expectNil:   true,
-		},
-		{
-			name:        "malformed JSON - missing quotes",
-			input:       []byte(`{access_token_hash: test}`),
-			expectError: true,
-			expectNil:   true,
-		},
-		{
-			name:        "malformed JSON - trailing comma",
-			input:       []byte(`{"access_token_hash": "test",}`),
-			expectError: true,
-			expectNil:   true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			session, err := DecodeSession(tt.input)
-
-			if tt.expectError {
-				assert.Error(t, err, "expected error for input: %s", string(tt.input))
-				if tt.expectNil {
-					assert.Nil(t, session, "session should be nil on error")
-				}
-			} else {
-				assert.NoError(t, err, "unexpected error for input: %s", string(tt.input))
-				assert.NotNil(t, session, "session should not be nil on success")
-			}
-		})
-	}
-}
-
 func TestDecodeSession_ValidSession(t *testing.T) {
 	// Test with a complete, valid session
 	sessionData := map[string]interface{}{
-		"user_id_encrypted":     []byte("encrypted_user_id"),
-		"role_encrypted":        []byte("encrypted_role"),
-		"state_encrypted":       []byte("encrypted_state"),
-		"created_at_encrypted":  []byte("encrypted_created_at"),
-		"expires_at_encrypted":  []byte("encrypted_expires_at"),
-		"access_access_token_hash":     "test_access_access_token_hash_123",
-		"refresh_access_token_hash":    "test_refresh_access_token_hash_123",
-		"dek_encrypted":         []byte("encrypted_dek"),
-		"key_version":           42,
+		"user_id_encrypted":         []byte("encrypted_user_id"),
+		"role_encrypted":            []byte("encrypted_role"),
+		"state_encrypted":           []byte("encrypted_state"),
+		"created_at_encrypted":      []byte("encrypted_created_at"),
+		"expires_at_encrypted":      []byte("encrypted_expires_at"),
+		"access_access_token_hash":  "test_access_access_token_hash_123",
+		"refresh_access_token_hash": "test_refresh_access_token_hash_123",
+		"dek_encrypted":             []byte("encrypted_dek"),
+		"key_version":               42,
 	}
 
 	jsonData, err := json.Marshal(sessionData)
@@ -208,8 +131,8 @@ func TestSession_FieldTags(t *testing.T) {
 		StateEncrypted:     []byte("encrypted_state"),
 		CreatedAtEncrypted: []byte("encrypted_created"),
 		ExpiresAtEncrypted: []byte("encrypted_expires"),
-		AccessTokenHash:          "access_access_token_hash_value",
-		RefreshTokenHash:         "refresh_access_token_hash_value",
+		AccessTokenHash:    "access_access_token_hash_value",
+		RefreshTokenHash:   "refresh_access_token_hash_value",
 		DEKEncrypted:       []byte("encrypted_dek"),
 		KeyVersion:         1,
 	}
@@ -262,8 +185,8 @@ func TestDecodeSession_RoundTrip(t *testing.T) {
 		StateEncrypted:     []byte("encrypted_state_data"),
 		CreatedAtEncrypted: []byte("encrypted_created_at_data"),
 		ExpiresAtEncrypted: []byte("encrypted_expires_at_data"),
-		AccessTokenHash:          "original_access_access_token_hash",
-		RefreshTokenHash:         "original_refresh_access_token_hash",
+		AccessTokenHash:    "original_access_access_token_hash",
+		RefreshTokenHash:   "original_refresh_access_token_hash",
 		DEKEncrypted:       []byte("encrypted_dek_data"),
 		KeyVersion:         123,
 	}

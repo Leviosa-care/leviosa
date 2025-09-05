@@ -22,8 +22,8 @@ type SessionRepository interface {
 	RemoveSessionByToken(ctx context.Context, sessionID string) error
 
 	// New dual-token operations
-	FindSessionByAccessToken(ctx context.Context, accessTokenHash string) (string, []byte, error)
-	FindSessionByRefreshToken(ctx context.Context, refreshTokenHash string) (string, []byte, error)
+	FindSessionByAccessTokenHash(ctx context.Context, accessTokenHash string) (string, []byte, error)
+	FindSessionByRefreshTokenHash(ctx context.Context, refreshTokenHash string) (string, []byte, error)
 	CreateTokenPair(ctx context.Context, sessionID uuid.UUID, accessTokenHash, refreshTokenHash string, sessionEncoded []byte, accessTTL, refreshTTL time.Duration) error
 	RefreshTokenPair(ctx context.Context, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash string, sessionID uuid.UUID, accessTTL, refreshTTL time.Duration) error
 	InvalidateTokenPair(ctx context.Context, accessTokenHash, refreshTokenHash string, sessionID uuid.UUID) error

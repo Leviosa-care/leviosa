@@ -11,6 +11,7 @@ import (
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/Leviosa-care/core/errs"
 	"github.com/google/uuid"
+	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -18,8 +19,9 @@ import (
 
 func TestNewSessionAuthMiddleware(t *testing.T) {
 	mockRepo := &MockSessionRepository{}
+	mockCrypto := encx.NewCryptoServiceMock()
 
-	middleware := NewSessionAuthMiddleware(mockRepo)
+	middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
 
 	assert.NotNil(t, middleware)
 	assert.IsType(t, &SessionAuthMiddleware{}, middleware)
@@ -166,10 +168,11 @@ func TestRequireAccessToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			mockRepo := &MockSessionRepository{}
-			middleware := NewSessionAuthMiddleware(mockRepo)
+			mockCrypto := encx.NewCryptoServiceMock()
+			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
 
 			if tt.repoResponse != nil || tt.repoError != nil {
-				mockRepo.On("FindSessionByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return("test-session-id", tt.repoResponse, tt.repoError)
+				mockRepo.On("FindSessionByAccessTokenHash", mock.Anything, mock.AnythingOfType("string")).Return("test-session-id", tt.repoResponse, tt.repoError)
 			}
 
 			// Create test handler
@@ -311,10 +314,11 @@ func TestRequireRefreshToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			mockRepo := &MockSessionRepository{}
-			middleware := NewSessionAuthMiddleware(mockRepo)
+			mockCrypto := encx.NewCryptoServiceMock()
+			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
 
 			if tt.repoResponse != nil || tt.repoError != nil {
-				mockRepo.On("FindSessionByRefreshToken", mock.Anything, mock.AnythingOfType("string")).Return("test-session-id", tt.repoResponse, tt.repoError)
+				mockRepo.On("FindSessionByRefreshTokenHash", mock.Anything, mock.AnythingOfType("string")).Return("test-session-id", tt.repoResponse, tt.repoError)
 			}
 
 			// Create test handler

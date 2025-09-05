@@ -9,6 +9,6 @@ type SessionRepository interface {
 	FindSessionByTokenHash(ctx context.Context, tokenHash string) ([]byte, error)
 
 	// New dual-token authentication
-	FindSessionByAccessToken(ctx context.Context, accessTokenHash string) (string, []byte, error)
-	FindSessionByRefreshToken(ctx context.Context, refreshTokenHash string) (string, []byte, error)
+	FindSessionByAccessTokenHash(ctx context.Context, accessTokenHash string) (string, []byte, error)
+	FindSessionByRefreshTokenHash(ctx context.Context, refreshTokenHash string) (string, []byte, error)
 }

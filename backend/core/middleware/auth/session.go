@@ -70,4 +70,3 @@ type TokenPair struct {
 	DEKEncrypted     []byte `json:"dek_encrypted"`
 	KeyVersion       int    `json:"key_version"`
 }
-

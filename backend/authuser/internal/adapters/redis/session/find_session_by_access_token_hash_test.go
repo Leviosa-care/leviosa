@@ -5,17 +5,17 @@ import (
 	"testing"
 	"time"
 
-	td "github.com/Leviosa-care/authuser/test/helpers"
 	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
+	td "github.com/Leviosa-care/authuser/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestFindSessionByAccessToken make test-unit-session-test
+// TEST=TestFindSessionByAccessTokenHash make test-unit-session-test
 
-func TestFindSessionByAccessToken(t *testing.T) {
+func TestFindSessionByAccessTokenHash(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should successfully find session by access token", func(t *testing.T) {
@@ -30,12 +30,12 @@ func TestFindSessionByAccessToken(t *testing.T) {
 		refreshTTL := 24 * time.Hour
 
 		// Create token pair in Redis (which creates all necessary mappings)
-		err := repo.CreateTokenPair(ctx, session.ID, accessTokenHash, refreshTokenHash, 
+		err := repo.CreateTokenPair(ctx, session.ID, accessTokenHash, refreshTokenHash,
 			td.EncodeSession(t, session), accessTTL, refreshTTL)
 		require.NoError(t, err)
 
 		// Find session by access token
-		sessionData, err := repo.FindSessionByAccessToken(ctx, accessTokenHash)
+		_, sessionData, err := repo.FindSessionByAccessTokenHash(ctx, accessTokenHash)
 		require.NoError(t, err)
 		require.NotNil(t, sessionData)
 
@@ -44,7 +44,7 @@ func TestFindSessionByAccessToken(t *testing.T) {
 		assert.Equal(t, session.UserID, retrievedSession.UserID)
 		assert.Equal(t, session.Role, retrievedSession.Role)
 		assert.Equal(t, session.State, retrievedSession.State)
-		assert.Equal(t, session.TokenHash, retrievedSession.TokenHash)
+		assert.Equal(t, session.AccessTokenHash, retrievedSession.AccessTokenHash)
 	})
 
 	t.Run("should return error for non-existent access token", func(t *testing.T) {
@@ -54,7 +54,7 @@ func TestFindSessionByAccessToken(t *testing.T) {
 		nonExistentAccessToken := "non_existent_access_token_hash"
 
 		// Try to find session with non-existent access token
-		sessionData, err := repo.FindSessionByAccessToken(ctx, nonExistentAccessToken)
+		_, sessionData, err := repo.FindSessionByAccessTokenHash(ctx, nonExistentAccessToken)
 		assert.Error(t, err)
 		assert.Nil(t, sessionData)
 	})
@@ -73,7 +73,7 @@ func TestFindSessionByAccessToken(t *testing.T) {
 		require.NoError(t, err)
 
 		// Try to find session (should fail because session data doesn't exist)
-		sessionData, err := repo.FindSessionByAccessToken(ctx, accessTokenHash)
+		_, sessionData, err := repo.FindSessionByAccessTokenHash(ctx, accessTokenHash)
 		assert.Error(t, err)
 		assert.Nil(t, sessionData)
 	})
@@ -98,7 +98,7 @@ func TestFindSessionByAccessToken(t *testing.T) {
 		time.Sleep(20 * time.Millisecond)
 
 		// Try to find session with expired access token
-		sessionData, err := repo.FindSessionByAccessToken(ctx, accessTokenHash)
+		_, sessionData, err := repo.FindSessionByAccessTokenHash(ctx, accessTokenHash)
 		assert.Error(t, err)
 		assert.Nil(t, sessionData)
 	})
@@ -120,7 +120,7 @@ func TestFindSessionByAccessToken(t *testing.T) {
 		require.NoError(t, err)
 
 		// Find session by access token with special characters
-		sessionData, err := repo.FindSessionByAccessToken(ctx, accessTokenHash)
+		_, sessionData, err := repo.FindSessionByAccessTokenHash(ctx, accessTokenHash)
 		require.NoError(t, err)
 		require.NotNil(t, sessionData)
 
@@ -139,7 +139,7 @@ func TestFindSessionByAccessToken(t *testing.T) {
 		accessTokenHash := "test_access_token_hash"
 
 		// Try to find session with closed Redis connection
-		sessionData, err := repo.FindSessionByAccessToken(ctx, accessTokenHash)
+		_, sessionData, err := repo.FindSessionByAccessTokenHash(ctx, accessTokenHash)
 		assert.Error(t, err)
 		assert.Nil(t, sessionData)
 
