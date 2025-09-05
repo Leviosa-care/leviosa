@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/core/middleware/auth"
 )
 
 func (r *SessionRepository) RemoveSessionByID(ctx context.Context, sessionID string) error {
-	key := FormatSessionKey(sessionID)
+	key := auth.FormatSessionKey(sessionID)
 
 	err := r.client.Del(ctx, key).Err()
 	if err != nil {

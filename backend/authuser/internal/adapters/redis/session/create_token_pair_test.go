@@ -7,6 +7,7 @@ import (
 
 	td "github.com/Leviosa-care/authuser/test/helpers"
 	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
+	"github.com/Leviosa-care/core/middleware/auth"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,7 +35,7 @@ func TestCreateTokenPair(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify session data is stored
-		sessionKey := sessionRepository.FormatSessionKey(session.ID.String())
+		sessionKey := auth.FormatSessionKey(session.ID.String())
 		storedSessionData, err := testClient.Get(ctx, sessionKey).Result()
 		require.NoError(t, err)
 		assert.Equal(t, string(sessionData), storedSessionData)
@@ -44,7 +45,7 @@ func TestCreateTokenPair(t *testing.T) {
 		assert.True(t, sessionTTL > 23*time.Hour && sessionTTL <= refreshTTL, "Session TTL should be close to refresh TTL")
 
 		// Verify access token mapping
-		accessTokenKey := sessionRepository.FormatAccessTokenKey(accessTokenHash)
+		accessTokenKey := auth.FormatAccessTokenKey(accessTokenHash)
 		storedSessionID, err := testClient.Get(ctx, accessTokenKey).Result()
 		require.NoError(t, err)
 		assert.Equal(t, session.ID.String(), storedSessionID)
@@ -54,7 +55,7 @@ func TestCreateTokenPair(t *testing.T) {
 		assert.True(t, accessTTLStored > 50*time.Minute && accessTTLStored <= accessTTL, "Access token TTL should be close to specified TTL")
 
 		// Verify refresh token mapping
-		refreshTokenKey := sessionRepository.FormatRefreshTokenKey(refreshTokenHash)
+		refreshTokenKey := auth.FormatRefreshTokenKey(refreshTokenHash)
 		storedSessionIDFromRefresh, err := testClient.Get(ctx, refreshTokenKey).Result()
 		require.NoError(t, err)
 		assert.Equal(t, session.ID.String(), storedSessionIDFromRefresh)
@@ -152,7 +153,7 @@ func TestCreateTokenPair(t *testing.T) {
 		assert.Equal(t, sessionData, sessionDataFound)
 
 		// Check that keys exist without expiration (TTL = -1 means no expiration)
-		accessTokenKey := sessionRepository.FormatAccessTokenKey(accessTokenHash)
+		accessTokenKey := auth.FormatAccessTokenKey(accessTokenHash)
 		accessTTL := testClient.TTL(ctx, accessTokenKey).Val()
 		assert.Equal(t, time.Duration(-1), accessTTL, "Zero TTL should result in no expiration")
 	})

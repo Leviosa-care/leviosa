@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/core/middleware/auth"
 	"github.com/google/uuid"
 	"github.com/hengadev/errsx"
 )
@@ -13,9 +14,9 @@ import (
 // This method cleans up ALL existing tokens for the session to ensure security
 func (r *SessionRepository) RefreshTokenPair(ctx context.Context, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash string, sessionID uuid.UUID, accessTTL, refreshTTL time.Duration) error {
 	sessionIDStr := sessionID.String()
-	oldRefreshTokenKey := FormatRefreshTokenKey(oldRefreshTokenHash)
-	newAccessTokenKey := FormatAccessTokenKey(newAccessTokenHash)
-	newRefreshTokenKey := FormatRefreshTokenKey(newRefreshTokenHash)
+	oldRefreshTokenKey := auth.FormatRefreshTokenKey(oldRefreshTokenHash)
+	newAccessTokenKey := auth.FormatAccessTokenKey(newAccessTokenHash)
+	newRefreshTokenKey := auth.FormatRefreshTokenKey(newRefreshTokenHash)
 
 	var refreshErrs errsx.Map
 
@@ -43,7 +44,7 @@ func (r *SessionRepository) RefreshTokenPair(ctx context.Context, oldRefreshToke
 
 	// Clean up any stale access tokens for this session by scanning and removing them
 	// This ensures security by invalidating all old access tokens
-	pattern := FormatAccessTokenKey("*")
+	pattern := auth.FormatAccessTokenKey("*")
 	iter := r.client.Scan(ctx, 0, pattern, 0).Iterator()
 	for iter.Next(ctx) {
 		key := iter.Val()
@@ -82,9 +83,9 @@ func (r *SessionRepository) RefreshTokenPair(ctx context.Context, oldRefreshToke
 
 // InvalidateTokenPair removes both access and refresh tokens
 func (r *SessionRepository) InvalidateTokenPair(ctx context.Context, accessTokenHash, refreshTokenHash string, sessionID uuid.UUID) error {
-	accessTokenKey := FormatAccessTokenKey(accessTokenHash)
-	refreshTokenKey := FormatRefreshTokenKey(refreshTokenHash)
-	sessionKey := FormatSessionKey(sessionID.String())
+	accessTokenKey := auth.FormatAccessTokenKey(accessTokenHash)
+	refreshTokenKey := auth.FormatRefreshTokenKey(refreshTokenHash)
+	sessionKey := auth.FormatSessionKey(sessionID.String())
 
 	// Remove all keys - don't fail if some don't exist
 	keys := []string{accessTokenKey, refreshTokenKey, sessionKey}

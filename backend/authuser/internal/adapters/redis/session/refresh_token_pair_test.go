@@ -7,6 +7,7 @@ import (
 
 	td "github.com/Leviosa-care/authuser/test/helpers"
 	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
+	"github.com/Leviosa-care/core/middleware/auth"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -77,7 +78,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		require.NoError(t, err)
 
 		// Manually create additional access token for same session
-		accessTokenKey2 := sessionRepository.FormatAccessTokenKey(oldAccessTokenHash2)
+		accessTokenKey2 := auth.FormatAccessTokenKey(oldAccessTokenHash2)
 		err = testClient.Set(ctx, accessTokenKey2, session.ID.String(), accessTTL).Err()
 		require.NoError(t, err)
 
@@ -174,7 +175,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify new access token has longer TTL
-		newAccessTokenKey := sessionRepository.FormatAccessTokenKey(newAccessTokenHash)
+		newAccessTokenKey := auth.FormatAccessTokenKey(newAccessTokenHash)
 		actualTTL := testClient.TTL(ctx, newAccessTokenKey).Val()
 		assert.True(t, actualTTL > 1*time.Hour, "New access token should have longer TTL")
 	})
@@ -259,7 +260,7 @@ func TestInvalidateTokenPair(t *testing.T) {
 		assert.Error(t, err, "Refresh token should be invalidated")
 
 		// Session data should also be removed
-		sessionKey := sessionRepository.FormatSessionKey(session.ID.String())
+		sessionKey := auth.FormatSessionKey(session.ID.String())
 		_, err = testClient.Get(ctx, sessionKey).Result()
 		assert.Error(t, err, "Session data should be invalidated")
 	})
@@ -289,8 +290,8 @@ func TestInvalidateTokenPair(t *testing.T) {
 		refreshTokenHash := "partial_state_refresh_token"
 
 		// Manually create partial state
-		sessionKey := sessionRepository.FormatSessionKey(session.ID.String())
-		accessTokenKey := sessionRepository.FormatAccessTokenKey(accessTokenHash)
+		sessionKey := auth.FormatSessionKey(session.ID.String())
+		accessTokenKey := auth.FormatAccessTokenKey(accessTokenHash)
 		
 		err := testClient.Set(ctx, sessionKey, sessionData, time.Hour).Err()
 		require.NoError(t, err)

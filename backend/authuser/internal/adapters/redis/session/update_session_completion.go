@@ -5,11 +5,12 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/core/middleware/auth"
 	"github.com/google/uuid"
 )
 
 func (r *SessionRepository) UpdateSessionCompletion(ctx context.Context, sessionID uuid.UUID, sessionEncoded []byte) error {
-	sessionKey := FormatSessionKey(sessionID.String())
+	sessionKey := auth.FormatSessionKey(sessionID.String())
 	
 	// Get the current TTL to preserve it
 	ttl, err := r.client.TTL(ctx, sessionKey).Result()

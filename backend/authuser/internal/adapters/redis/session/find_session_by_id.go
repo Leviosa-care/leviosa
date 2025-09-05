@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/core/middleware/auth"
 )
 
 func (r *SessionRepository) FindSessionByID(ctx context.Context, sessionID string) ([]byte, error) {
-	key := FormatSessionKey(sessionID)
+	key := auth.FormatSessionKey(sessionID)
 
 	result, err := r.client.Get(ctx, key).Bytes()
 	if err != nil {
