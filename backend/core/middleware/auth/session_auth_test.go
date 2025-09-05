@@ -191,7 +191,8 @@ func TestRequireAccessToken(t *testing.T) {
 
 			// Execute
 			handler := middleware.RequireAccessToken(testHandler)
-			handler.ServeHTTP(rr, req)
+			// handler.ServeHTTP(rr, req)
+			handler(rr, req)
 
 			// Verify
 			assert.Equal(t, tt.expectedStatus, rr.Code)
@@ -335,7 +336,8 @@ func TestRequireRefreshToken(t *testing.T) {
 
 			// Execute
 			handler := middleware.RequireRefreshToken(testHandler)
-			handler.ServeHTTP(rr, req)
+			// handler.ServeHTTP(rr, req)
+			handler(rr, req)
 
 			// Verify
 			assert.Equal(t, tt.expectedStatus, rr.Code)
@@ -392,4 +394,3 @@ func createValidSessionJSON(t *testing.T, session *Session) []byte {
 
 	return data
 }
-

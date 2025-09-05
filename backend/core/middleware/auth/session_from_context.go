@@ -2,18 +2,6 @@ package auth
 
 import "context"
 
-// sessionContextKey is used to store session data in request context
-type sessionContextKey struct{}
-
-// SessionInfoFromContext extracts session info from request context
-func SessionInfoFromContext(ctx context.Context) (*SessionInfo, bool) {
-	sessionInfo, ok := ctx.Value(sessionContextKey{}).(*SessionInfo)
-	if !ok || sessionInfo == nil {
-		return nil, false
-	}
-	return sessionInfo, true
-}
-
 // SessionFromContext extracts session from request context
 // Deprecated: Use SessionInfoFromContext instead
 func SessionFromContext(ctx context.Context) (*Session, bool) {
