@@ -55,8 +55,10 @@ func (m *SessionAuthMiddleware) RequireRefreshToken(next mw.Handler) mw.Handler 
 			return
 		}
 
+		refreshTokenHash := m.crypto.HashBasic(ctx, []byte(refreshToken))
+
 		// Find session by refresh token using two-step lookup
-		sessionID, sessionData, err := m.sessionRepo.FindSessionByRefreshTokenHash(ctx, refreshToken)
+		sessionID, sessionData, err := m.sessionRepo.FindSessionByRefreshTokenHash(ctx, refreshTokenHash)
 		if err != nil {
 			if errors.Is(err, errs.ErrRepositoryNotFound) {
 				logger.WarnContext(ctx, "Auth middleware: Session not found for refresh token",
