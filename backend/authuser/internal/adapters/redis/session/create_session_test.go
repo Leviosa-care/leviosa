@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestCreateTokenPair make test-unit-session-test
+// TEST=TestCreateSession make test-unit-session-test
 
-func TestCreateTokenPair(t *testing.T) {
+func TestCreateSession(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should successfully create token pair with all mappings", func(t *testing.T) {
@@ -28,8 +28,8 @@ func TestCreateTokenPair(t *testing.T) {
 		accessTTL := 1 * time.Hour
 		refreshTTL := 24 * time.Hour
 
-		// Create token pair
-		err := repo.CreateTokenPair(ctx, session.ID, accessTokenHash, refreshTokenHash, sessionData, accessTTL, refreshTTL)
+		// Create session
+		err := repo.CreateSession(ctx, session.ID, accessTokenHash, refreshTokenHash, session.UserIDHash, sessionData, accessTTL, refreshTTL)
 		require.NoError(t, err)
 
 		// Verify session data is stored
@@ -73,7 +73,7 @@ func TestCreateTokenPair(t *testing.T) {
 
 		firstAccessToken := "first_access_token"
 		firstRefreshToken := "first_refresh_token"
-		err := repo.CreateTokenPair(ctx, session.ID, firstAccessToken, firstRefreshToken, sessionData, time.Hour, 24*time.Hour)
+		err := repo.CreateSession(ctx, session.ID, firstAccessToken, firstRefreshToken, session.UserIDHash, sessionData, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Try to create another token pair with the same session ID but different tokens
@@ -82,7 +82,7 @@ func TestCreateTokenPair(t *testing.T) {
 		secondAccessToken := "second_access_token"
 		secondRefreshToken := "second_refresh_token"
 
-		err = repo.CreateTokenPair(ctx, session.ID, secondAccessToken, secondRefreshToken, newSessionData, time.Hour, 24*time.Hour)
+		err = repo.CreateSession(ctx, session.ID, secondAccessToken, secondRefreshToken, session.UserIDHash, newSessionData, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Both token pairs should work
@@ -107,7 +107,7 @@ func TestCreateTokenPair(t *testing.T) {
 		refreshTokenHash := "refresh_token_rollback_test"
 
 		// First, create the token pair successfully
-		err := repo.CreateTokenPair(ctx, session.ID, accessTokenHash, refreshTokenHash, sessionData, time.Hour, 24*time.Hour)
+		err := repo.CreateSession(ctx, session.ID, accessTokenHash, refreshTokenHash, session.UserIDHash, sessionData, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Close Redis to simulate failure during refresh token creation
@@ -116,7 +116,7 @@ func TestCreateTokenPair(t *testing.T) {
 		// Try to create another token pair - this should fail
 		newAccessToken := "new_access_token"
 		newRefreshToken := "new_refresh_token"
-		err = repo.CreateTokenPair(ctx, session.ID, newAccessToken, newRefreshToken, sessionData, time.Hour, 24*time.Hour)
+		err = repo.CreateSession(ctx, session.ID, newAccessToken, newRefreshToken, session.UserIDHash, sessionData, time.Hour, 24*time.Hour)
 		assert.Error(t, err)
 
 		// Reconnect and verify no partial state exists for the failed operation
@@ -144,7 +144,7 @@ func TestCreateTokenPair(t *testing.T) {
 		refreshTokenHash := "zero_ttl_refresh_token"
 
 		// Create token pair with zero TTL (should use Redis default behavior)
-		err := repo.CreateTokenPair(ctx, session.ID, accessTokenHash, refreshTokenHash, sessionData, 0, 0)
+		err := repo.CreateSession(ctx, session.ID, accessTokenHash, refreshTokenHash, session.UserIDHash, sessionData, 0, 0)
 		require.NoError(t, err)
 
 		// Tokens should exist and work
@@ -169,7 +169,7 @@ func TestCreateTokenPair(t *testing.T) {
 		shortTTL := 50 * time.Millisecond
 
 		// Create token pair with very short TTL
-		err := repo.CreateTokenPair(ctx, session.ID, accessTokenHash, refreshTokenHash, sessionData, shortTTL, shortTTL)
+		err := repo.CreateSession(ctx, session.ID, accessTokenHash, refreshTokenHash, session.UserIDHash, sessionData, shortTTL, shortTTL)
 		require.NoError(t, err)
 
 		// Tokens should initially work
@@ -198,7 +198,7 @@ func TestCreateTokenPair(t *testing.T) {
 		refreshTokenHash := "refresh-token_hash.with:special@chars+789/012="
 
 		// Create token pair with special characters
-		err := repo.CreateTokenPair(ctx, session.ID, accessTokenHash, refreshTokenHash, sessionData, time.Hour, 24*time.Hour)
+		err := repo.CreateSession(ctx, session.ID, accessTokenHash, refreshTokenHash, session.UserIDHash, sessionData, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Verify both tokens work
@@ -230,7 +230,7 @@ func TestCreateTokenPair(t *testing.T) {
 		refreshTokenHash := "large_data_refresh_token"
 
 		// Create token pair with large session data
-		err := repo.CreateTokenPair(ctx, session.ID, accessTokenHash, refreshTokenHash, largeSessionData, time.Hour, 24*time.Hour)
+		err := repo.CreateSession(ctx, session.ID, accessTokenHash, refreshTokenHash, session.UserIDHash, largeSessionData, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Verify data integrity
@@ -252,11 +252,10 @@ func TestCreateTokenPair(t *testing.T) {
 		refreshTokenHash := "connection_error_refresh_token"
 
 		// Try to create token pair with closed connection
-		err := repo.CreateTokenPair(ctx, session.ID, accessTokenHash, refreshTokenHash, sessionData, time.Hour, 24*time.Hour)
+		err := repo.CreateSession(ctx, session.ID, accessTokenHash, refreshTokenHash, session.UserIDHash, sessionData, time.Hour, 24*time.Hour)
 		assert.Error(t, err)
 
 		// Reconnect for subsequent tests
 		reconnectRedis()
 	})
 }
-

@@ -30,7 +30,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		accessTTL := 1 * time.Hour
 		refreshTTL := 24 * time.Hour
 
-		err := repo.CreateTokenPair(ctx, session.ID, oldAccessTokenHash, refreshTokenHash, sessionData, accessTTL, refreshTTL)
+		err := repo.CreateSession(ctx, session.ID, oldAccessTokenHash, refreshTokenHash, session.UserIDHash, sessionData, accessTTL, refreshTTL)
 		require.NoError(t, err)
 
 		// Refresh with new access and refresh tokens
@@ -72,7 +72,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		refreshTTL := 24 * time.Hour
 
 		// Create multiple access tokens for the same session (simulating multiple devices)
-		err := repo.CreateTokenPair(ctx, session.ID, oldAccessTokenHash1, oldRefreshTokenHash, sessionData, accessTTL, refreshTTL)
+		err := repo.CreateSession(ctx, session.ID, oldAccessTokenHash1, oldRefreshTokenHash, session.UserIDHash, sessionData, accessTTL, refreshTTL)
 		require.NoError(t, err)
 
 		// Manually create additional access token for same session
@@ -122,7 +122,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		oldAccessTokenHash := "rollback_test_old_access"
 		oldRefreshTokenHash := "rollback_test_old_refresh"
 
-		err := repo.CreateTokenPair(ctx, session.ID, oldAccessTokenHash, oldRefreshTokenHash, sessionData, time.Hour, 24*time.Hour)
+		err := repo.CreateSession(ctx, session.ID, oldAccessTokenHash, oldRefreshTokenHash, session.UserIDHash, sessionData, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Verify initial tokens work
@@ -162,7 +162,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		shortTTL := 1 * time.Second
 		longTTL := 1 * time.Hour
 
-		err := repo.CreateTokenPair(ctx, session.ID, oldAccessTokenHash, refreshTokenHash, sessionData, shortTTL, longTTL)
+		err := repo.CreateSession(ctx, session.ID, oldAccessTokenHash, refreshTokenHash, session.UserIDHash, sessionData, shortTTL, longTTL)
 		require.NoError(t, err)
 
 		// Refresh with longer TTL
@@ -188,7 +188,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		oldAccessTokenHash := "old-access_token.with:special@chars+123/456="
 		oldRefreshTokenHash := "old-refresh_token.with:special@chars+789/012="
 
-		err := repo.CreateTokenPair(ctx, session.ID, oldAccessTokenHash, oldRefreshTokenHash, sessionData, time.Hour, 24*time.Hour)
+		err := repo.CreateSession(ctx, session.ID, oldAccessTokenHash, oldRefreshTokenHash, session.UserIDHash, sessionData, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Refresh with new tokens also having special characters
@@ -238,7 +238,7 @@ func TestInvalidateTokenPair(t *testing.T) {
 		accessTokenHash := "invalidate_test_access_token"
 		refreshTokenHash := "invalidate_test_refresh_token"
 
-		err := repo.CreateTokenPair(ctx, session.ID, accessTokenHash, refreshTokenHash, sessionData, time.Hour, 24*time.Hour)
+		err := repo.CreateSession(ctx, session.ID, accessTokenHash, refreshTokenHash, session.UserIDHash, sessionData, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Verify tokens work initially
@@ -322,7 +322,7 @@ func TestInvalidateTokenPair(t *testing.T) {
 		accessTokenHash := "special-access_token.with:chars@123+456/789="
 		refreshTokenHash := "special-refresh_token.with:chars@987+654/321="
 
-		err := repo.CreateTokenPair(ctx, session.ID, accessTokenHash, refreshTokenHash, sessionData, time.Hour, 24*time.Hour)
+		err := repo.CreateSession(ctx, session.ID, accessTokenHash, refreshTokenHash, session.UserIDHash, sessionData, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Invalidate tokens with special characters
@@ -349,11 +349,11 @@ func TestInvalidateTokenPair(t *testing.T) {
 		sessionData2 := td.EncodeSession(t, session2)
 
 		// First token pair
-		err := repo.CreateTokenPair(ctx, session1.ID, "access_1", "refresh_1", sessionData1, time.Hour, 24*time.Hour)
+		err := repo.CreateSession(ctx, session1.ID, "access_1", "refresh_1", session1.UserIDHash, sessionData1, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Second token pair
-		err = repo.CreateTokenPair(ctx, session2.ID, "access_2", "refresh_2", sessionData2, time.Hour, 24*time.Hour)
+		err = repo.CreateSession(ctx, session2.ID, "access_2", "refresh_2", session2.UserIDHash, sessionData2, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Invalidate only first token pair

@@ -65,7 +65,7 @@ func (s *SessionService) CreateSession(ctx context.Context, request *domain.Crea
 	accessExpiry := now.Add(accessDuration)
 	refreshExpiry := now.Add(refreshDuration)
 
-	if err := s.repo.CreateTokenPair(ctx, session.ID, session.AccessTokenHash, session.RefreshTokenHash, sessionEncoded, accessDuration, refreshDuration); err != nil {
+	if err := s.repo.CreateSession(ctx, session.ID, session.AccessTokenHash, session.RefreshTokenHash, session.UserIDHash, sessionEncoded, accessDuration, refreshDuration); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
 			return nil, errs.NewNotFoundErr(fmt.Errorf("session not found during session creation: %w", err), "session")

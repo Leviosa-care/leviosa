@@ -10,12 +10,13 @@ import (
 	"github.com/hengadev/errsx"
 )
 
-// CreateTokenPair creates session data with both access and refresh tokens
+// CreateSession creates session data with both access and refresh tokens
 // Implements secure two-step lookup: token -> session ID -> session data
-func (r *SessionRepository) CreateTokenPair(ctx context.Context, sessionID uuid.UUID, accessTokenHash, refreshTokenHash string, sessionEncoded []byte, accessTTL, refreshTTL time.Duration) error {
+func (r *SessionRepository) CreateSession(ctx context.Context, sessionID uuid.UUID, accessTokenHash, refreshTokenHash, userIDHash string, sessionEncoded []byte, accessTTL, refreshTTL time.Duration) error {
 	sessionKey := session.FormatSessionKey(sessionID.String())
 	accessTokenKey := session.FormatAccessTokenKey(accessTokenHash)
 	refreshTokenKey := session.FormatRefreshTokenKey(refreshTokenHash)
+	userSessionIndexKey := session.FormatUserSessionIndexKey(userIDHash)
 	sessionIDStr := sessionID.String()
 
 	var creationErrs errsx.Map
@@ -46,6 +47,22 @@ func (r *SessionRepository) CreateTokenPair(ctx context.Context, sessionID uuid.
 			creationErrs.Set("rollback_access_token", delErr.Error())
 		}
 		creationErrs.Set("refresh_token", errs.ClassifyRedisError("save refresh token mapping", err).Error())
+		return creationErrs.AsError()
+	}
+
+	// Add session ID to user session index
+	if err := r.client.SAdd(ctx, userSessionIndexKey, sessionIDStr).Err(); err != nil {
+		// Rollback all previous operations
+		if delErr := r.client.Del(ctx, sessionKey).Err(); delErr != nil {
+			creationErrs.Set("rollback_session", delErr.Error())
+		}
+		if delErr := r.client.Del(ctx, accessTokenKey).Err(); delErr != nil {
+			creationErrs.Set("rollback_access_token", delErr.Error())
+		}
+		if delErr := r.client.Del(ctx, refreshTokenKey).Err(); delErr != nil {
+			creationErrs.Set("rollback_refresh_token", delErr.Error())
+		}
+		creationErrs.Set("user_session_index", errs.ClassifyRedisError("add to user session index", err).Error())
 		return creationErrs.AsError()
 	}
 
