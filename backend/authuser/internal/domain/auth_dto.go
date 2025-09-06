@@ -3,7 +3,7 @@ package domain
 import (
 	"context"
 
-	"github.com/Leviosa-care/core/middleware/auth"
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/validation"
 	"github.com/hengadev/errsx"
 )
@@ -60,5 +60,5 @@ type SignOutRequest struct {
 }
 
 func (r *SignOutRequest) Valid(ctx context.Context) error {
-	return auth.ValidateToken(r.Token)
+	return session.ValidateToken(r.Token)
 }

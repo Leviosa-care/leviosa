@@ -65,3 +65,4 @@ func TestHasPermission(t *testing.T) {
 		assert.True(t, Partner.HasPermission(Partner))
 	})
 }
+

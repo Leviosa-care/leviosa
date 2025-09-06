@@ -1,8 +1,9 @@
-package auth
+package session_test
 
 import (
 	"testing"
 
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -68,16 +69,16 @@ func TestDecodeSession(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			session, err := DecodeSession(tt.input)
+			sessionStruct, err := session.DecodeSession(tt.input)
 
 			if tt.expectError {
 				assert.Error(t, err, "expected error for input: %s", string(tt.input))
 				if tt.expectNil {
-					assert.Nil(t, session, "session should be nil on error")
+					assert.Nil(t, sessionStruct, "session should be nil on error")
 				}
 			} else {
 				assert.NoError(t, err, "unexpected error for input: %s", string(tt.input))
-				assert.NotNil(t, session, "session should not be nil on success")
+				assert.NotNil(t, sessionStruct, "session should not be nil on success")
 			}
 		})
 	}

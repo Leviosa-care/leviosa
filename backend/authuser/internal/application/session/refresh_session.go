@@ -7,18 +7,15 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/authuser/internal/domain"
+
+	authsession "github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/middleware/auth"
 	"github.com/google/uuid"
 )
 
-func (s *SessionService) RefreshSession(ctx context.Context, request *domain.RefreshSessionRequest) (*domain.RefreshSessionResponse, error) {
-	if err := request.Valid(ctx); err != nil {
-		return nil, errs.NewInvalidValueErr(err.Error())
-	}
-
+func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID) (*domain.RefreshSessionResponse, error) {
 	// Find session by refresh token
-	sessionID, sessionData, err := s.repo.FindSessionByRefreshToken(ctx, request.RefreshToken)
+	sessionData, err := s.repo.FindSessionByID(ctx, sessionID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
@@ -35,28 +32,23 @@ func (s *SessionService) RefreshSession(ctx context.Context, request *domain.Ref
 	}
 
 	// Decode session
-	session, err := auth.DecodeSession(sessionData)
+	session, err := authsession.DecodeSession(sessionData)
 	if err != nil {
 		return nil, errs.NewUnexpectedError(fmt.Errorf("failed to decode session during refresh: %w", err))
 	}
 
 	// Verify session state - both pending and active sessions can be refreshed
-	if session.State != auth.SessionActive && session.State != auth.SessionPending {
+	if session.State != authsession.SessionActive && session.State != authsession.SessionPending {
 		return nil, errs.NewUnauthorizedErr("invalid session state for refresh")
 	}
 
-	session.ID, err = uuid.Parse(sessionID)
-	if err != nil {
-		return nil, errs.NewInvalidValueErr("invalid session ID format")
-	}
-
 	// Generate new token pair
-	newAccessToken, err := auth.GenerateToken()
+	newAccessToken, err := authsession.GenerateToken()
 	if err != nil {
 		return nil, errs.NewUnexpectedError(err)
 	}
 
-	newRefreshToken, err := auth.GenerateToken()
+	newRefreshToken, err := authsession.GenerateToken()
 	if err != nil {
 		return nil, errs.NewUnexpectedError(err)
 	}
@@ -66,7 +58,7 @@ func (s *SessionService) RefreshSession(ctx context.Context, request *domain.Ref
 	refreshDuration := s.cache.GetRefreshTokenDuration()
 
 	// Create new token pair
-	newTokenPair := &auth.TokenPair{
+	newTokenPair := &authsession.TokenPair{
 		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshToken,
 	}
@@ -81,7 +73,7 @@ func (s *SessionService) RefreshSession(ctx context.Context, request *domain.Ref
 	// Perform token rotation - replace old tokens with new ones
 	if err := s.repo.RefreshTokenPair(
 		ctx,
-		request.RefreshToken,          // oldRefreshTokenHash
+		session.RefreshToken,          // oldRefreshTokenHash
 		newTokenPair.AccessTokenHash,  // newAccessTokenHash
 		newTokenPair.RefreshTokenHash, // newRefreshTokenHash
 		session.ID,                    // sessionID (uuid.UUID)

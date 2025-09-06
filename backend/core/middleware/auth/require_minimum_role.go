@@ -3,6 +3,7 @@ package auth
 import (
 	"net/http"
 
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
@@ -21,7 +22,7 @@ func (m *SessionAuthMiddleware) RequireMinimumRole(minRole identity.Role) func(m
 				return
 			}
 
-			sessionInfo, ok := SessionInfoFromContext(ctx)
+			sessionInfo, ok := session.SessionInfoFromContext(ctx)
 			if !ok {
 				logger.ErrorContext(ctx, "Auth middleware: Session info not found in context",
 					"operation", "require_minimum_role",
@@ -56,4 +57,3 @@ func (m *SessionAuthMiddleware) RequireMinimumRole(minRole identity.Role) func(m
 		})
 	}
 }
-

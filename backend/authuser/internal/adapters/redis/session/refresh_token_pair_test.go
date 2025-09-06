@@ -6,7 +6,6 @@ import (
 	"time"
 
 	td "github.com/Leviosa-care/authuser/test/helpers"
-	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
 	"github.com/Leviosa-care/core/middleware/auth"
 
 	"github.com/google/uuid"
@@ -15,7 +14,6 @@ import (
 )
 
 // TEST=TestRefreshTokenPair make test-unit-session-test
-// TEST=TestInvalidateTokenPair make test-unit-session-test
 
 func TestRefreshTokenPair(t *testing.T) {
 	ctx := context.Background()
@@ -42,20 +40,20 @@ func TestRefreshTokenPair(t *testing.T) {
 		require.NoError(t, err)
 
 		// Old access token should be removed
-		_, err = repo.FindSessionByAccessToken(ctx, oldAccessTokenHash)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, oldAccessTokenHash)
 		assert.Error(t, err, "Old access token should be removed")
 
 		// New access token should work
-		sessionDataFound, err := repo.FindSessionByAccessToken(ctx, newAccessTokenHash)
+		_, sessionDataFound, err := repo.FindSessionByAccessTokenHash(ctx, newAccessTokenHash)
 		require.NoError(t, err)
 		assert.Equal(t, sessionData, sessionDataFound)
 
 		// Old refresh token should be removed
-		_, err = repo.FindSessionByRefreshToken(ctx, refreshTokenHash)
+		_, _, err = repo.FindSessionByRefreshTokenHash(ctx, refreshTokenHash)
 		assert.Error(t, err, "Old refresh token should be removed")
 
 		// New refresh token should work
-		sessionDataFromNewRefresh, err := repo.FindSessionByRefreshToken(ctx, newRefreshTokenHash)
+		_, sessionDataFromNewRefresh, err := repo.FindSessionByRefreshTokenHash(ctx, newRefreshTokenHash)
 		require.NoError(t, err)
 		assert.Equal(t, sessionData, sessionDataFromNewRefresh)
 	})
@@ -83,9 +81,9 @@ func TestRefreshTokenPair(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify both old access tokens work initially
-		_, err = repo.FindSessionByAccessToken(ctx, oldAccessTokenHash1)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, oldAccessTokenHash1)
 		require.NoError(t, err)
-		_, err = repo.FindSessionByAccessToken(ctx, oldAccessTokenHash2)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, oldAccessTokenHash2)
 		require.NoError(t, err)
 
 		// Refresh tokens
@@ -95,21 +93,21 @@ func TestRefreshTokenPair(t *testing.T) {
 		require.NoError(t, err)
 
 		// All old access tokens should be cleaned up
-		_, err = repo.FindSessionByAccessToken(ctx, oldAccessTokenHash1)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, oldAccessTokenHash1)
 		assert.Error(t, err, "Old access token 1 should be removed")
-		_, err = repo.FindSessionByAccessToken(ctx, oldAccessTokenHash2)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, oldAccessTokenHash2)
 		assert.Error(t, err, "Old access token 2 should be removed")
 
 		// Old refresh token should be removed
-		_, err = repo.FindSessionByRefreshToken(ctx, oldRefreshTokenHash)
+		_, _, err = repo.FindSessionByRefreshTokenHash(ctx, oldRefreshTokenHash)
 		assert.Error(t, err, "Old refresh token should be removed")
 
 		// New tokens should work
-		sessionDataFromNewAccess, err := repo.FindSessionByAccessToken(ctx, newAccessTokenHash)
+		_, sessionDataFromNewAccess, err := repo.FindSessionByAccessTokenHash(ctx, newAccessTokenHash)
 		require.NoError(t, err)
 		assert.Equal(t, sessionData, sessionDataFromNewAccess)
 
-		sessionDataFromNewRefresh, err := repo.FindSessionByRefreshToken(ctx, newRefreshTokenHash)
+		_, sessionDataFromNewRefresh, err := repo.FindSessionByRefreshTokenHash(ctx, newRefreshTokenHash)
 		require.NoError(t, err)
 		assert.Equal(t, sessionData, sessionDataFromNewRefresh)
 	})
@@ -128,7 +126,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify initial tokens work
-		_, err = repo.FindSessionByAccessToken(ctx, oldAccessTokenHash)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, oldAccessTokenHash)
 		require.NoError(t, err)
 
 		// Close Redis to simulate failure
@@ -144,11 +142,11 @@ func TestRefreshTokenPair(t *testing.T) {
 		reconnectRedis()
 
 		// Old tokens should still work (no partial updates)
-		_, err = repo.FindSessionByAccessToken(ctx, oldAccessTokenHash)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, oldAccessTokenHash)
 		require.NoError(t, err, "Old access token should still work after failed refresh")
 
 		// New tokens should not exist
-		_, err = repo.FindSessionByAccessToken(ctx, newAccessTokenHash)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, newAccessTokenHash)
 		assert.Error(t, err, "New access token should not exist after failed refresh")
 	})
 
@@ -189,22 +187,22 @@ func TestRefreshTokenPair(t *testing.T) {
 		sessionData := td.EncodeSession(t, session)
 		oldAccessTokenHash := "old-access_token.with:special@chars+123/456="
 		oldRefreshTokenHash := "old-refresh_token.with:special@chars+789/012="
-		
+
 		err := repo.CreateTokenPair(ctx, session.ID, oldAccessTokenHash, oldRefreshTokenHash, sessionData, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Refresh with new tokens also having special characters
 		newAccessTokenHash := "new-access_token.with:special@chars+999/888="
 		newRefreshTokenHash := "new-refresh_token.with:special@chars+777/666="
-		
+
 		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, session.ID, time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Verify new tokens work
-		_, err = repo.FindSessionByAccessToken(ctx, newAccessTokenHash)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, newAccessTokenHash)
 		require.NoError(t, err)
 
-		_, err = repo.FindSessionByRefreshToken(ctx, newRefreshTokenHash)
+		_, _, err = repo.FindSessionByRefreshTokenHash(ctx, newRefreshTokenHash)
 		require.NoError(t, err)
 	})
 
@@ -225,6 +223,8 @@ func TestRefreshTokenPair(t *testing.T) {
 	})
 }
 
+// TEST=TestInvalidateTokenPair make test-unit-session-test
+
 func TestInvalidateTokenPair(t *testing.T) {
 	ctx := context.Background()
 
@@ -242,10 +242,10 @@ func TestInvalidateTokenPair(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify tokens work initially
-		_, err = repo.FindSessionByAccessToken(ctx, accessTokenHash)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, accessTokenHash)
 		require.NoError(t, err)
 
-		_, err = repo.FindSessionByRefreshToken(ctx, refreshTokenHash)
+		_, _, err = repo.FindSessionByRefreshTokenHash(ctx, refreshTokenHash)
 		require.NoError(t, err)
 
 		// Invalidate token pair
@@ -253,10 +253,10 @@ func TestInvalidateTokenPair(t *testing.T) {
 		require.NoError(t, err)
 
 		// All keys should be removed
-		_, err = repo.FindSessionByAccessToken(ctx, accessTokenHash)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, accessTokenHash)
 		assert.Error(t, err, "Access token should be invalidated")
 
-		_, err = repo.FindSessionByRefreshToken(ctx, refreshTokenHash)
+		_, _, err = repo.FindSessionByRefreshTokenHash(ctx, refreshTokenHash)
 		assert.Error(t, err, "Refresh token should be invalidated")
 
 		// Session data should also be removed
@@ -292,10 +292,10 @@ func TestInvalidateTokenPair(t *testing.T) {
 		// Manually create partial state
 		sessionKey := auth.FormatSessionKey(session.ID.String())
 		accessTokenKey := auth.FormatAccessTokenKey(accessTokenHash)
-		
+
 		err := testClient.Set(ctx, sessionKey, sessionData, time.Hour).Err()
 		require.NoError(t, err)
-		
+
 		err = testClient.Set(ctx, accessTokenKey, session.ID.String(), time.Hour).Err()
 		require.NoError(t, err)
 		// Note: not creating refresh token mapping
@@ -330,10 +330,10 @@ func TestInvalidateTokenPair(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify all keys are removed
-		_, err = repo.FindSessionByAccessToken(ctx, accessTokenHash)
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, accessTokenHash)
 		assert.Error(t, err, "Access token with special chars should be invalidated")
 
-		_, err = repo.FindSessionByRefreshToken(ctx, refreshTokenHash)
+		_, _, err = repo.FindSessionByRefreshTokenHash(ctx, refreshTokenHash)
 		assert.Error(t, err, "Refresh token with special chars should be invalidated")
 	})
 
@@ -344,7 +344,7 @@ func TestInvalidateTokenPair(t *testing.T) {
 		// Create two separate token pairs
 		session1 := td.CreateTestSessionWithCrypto(t, crypto)
 		session2 := td.CreateTestSessionWithCrypto(t, crypto)
-		
+
 		sessionData1 := td.EncodeSession(t, session1)
 		sessionData2 := td.EncodeSession(t, session2)
 
@@ -361,14 +361,14 @@ func TestInvalidateTokenPair(t *testing.T) {
 		require.NoError(t, err)
 
 		// First session should be invalidated
-		_, err = repo.FindSessionByAccessToken(ctx, "access_1")
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, "access_1")
 		assert.Error(t, err)
 
 		// Second session should still work
-		_, err = repo.FindSessionByAccessToken(ctx, "access_2")
+		_, _, err = repo.FindSessionByAccessTokenHash(ctx, "access_2")
 		require.NoError(t, err)
 
-		_, err = repo.FindSessionByRefreshToken(ctx, "refresh_2")
+		_, _, err = repo.FindSessionByRefreshTokenHash(ctx, "refresh_2")
 		require.NoError(t, err)
 	})
 
@@ -388,3 +388,4 @@ func TestInvalidateTokenPair(t *testing.T) {
 		reconnectRedis()
 	})
 }
+

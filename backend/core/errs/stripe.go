@@ -39,4 +39,3 @@ func ClassifyStripeError(operation string, err error) error {
 	// Default to internal error
 	return NewInternalErr(fmt.Errorf("%s failed: %w", operation, err))
 }
-

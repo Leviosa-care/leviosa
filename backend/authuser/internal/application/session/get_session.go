@@ -20,7 +20,7 @@ func (s *SessionService) GetSession(ctx context.Context, request *domain.GetSess
 
 	tokenHash := s.crypto.HashBasic(ctx, []byte(request.Token))
 
-	sessionID, sessionBytes, err := s.repo.FindSessionByAccessToken(ctx, tokenHash)
+	sessionID, sessionBytes, err := s.repo.FindSessionByAccessTokenHash(ctx, tokenHash)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return nil, errs.NewNotFoundErr(err, "session")

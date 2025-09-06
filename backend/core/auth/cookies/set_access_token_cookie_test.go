@@ -1,6 +1,7 @@
-package auth
+package cookies_test
 
 import (
+	"github.com/Leviosa-care/core/auth/cookies"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,14 +18,14 @@ func TestSetAccessTokenCookie(t *testing.T) {
 	expiry := time.Now().Add(time.Hour)
 
 	// Execute
-	SetAccessTokenCookie(w, accessToken, expiry)
+	cookies.SetAccessTokenCookie(w, accessToken, expiry)
 
 	// Verify
-	cookies := w.Result().Cookies()
-	require.Len(t, cookies, 1, "Should set exactly 1 cookie")
+	responseCookies := w.Result().Cookies()
+	require.Len(t, responseCookies, 1, "Should set exactly 1 cookie")
 
-	cookie := cookies[0]
-	assert.Equal(t, AccessTokenCookieName, cookie.Name)
+	cookie := responseCookies[0]
+	assert.Equal(t, cookies.AccessTokenCookieName, cookie.Name)
 	assert.Equal(t, accessToken, cookie.Value)
 	assert.Equal(t, "/", cookie.Path)
 	assert.True(t, cookie.HttpOnly)

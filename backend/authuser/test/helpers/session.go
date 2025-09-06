@@ -7,9 +7,8 @@ import (
 	"testing"
 	"time"
 
-	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
-	"github.com/Leviosa-care/core/middleware/auth"
 
 	"github.com/google/uuid"
 	"github.com/hengadev/encx"
@@ -22,8 +21,7 @@ func ClearSessionsRedis(t *testing.T, ctx context.Context, client *redis.Client)
 	t.Helper()
 
 	// Clear all session keys
-	// sessionKeys, err := client.Keys(ctx, "authuser:session:*").Result()
-	sessionKeys, err := client.Keys(ctx, fmt.Sprintf("%s*", sessionRepository.SessionKeyPrefix)).Result()
+	sessionKeys, err := client.Keys(ctx, fmt.Sprintf("%s*", session.SessionKeyPrefix)).Result()
 	if err != nil {
 		require.NoError(t, err, "Failed to get session keys")
 	}
@@ -33,8 +31,7 @@ func ClearSessionsRedis(t *testing.T, ctx context.Context, client *redis.Client)
 	}
 
 	// Clear all access token keys (new dual-token system)
-	// accessTokenKeys, err := client.Keys(ctx, "authuser:access:*").Result()
-	accessTokenKeys, err := client.Keys(ctx, fmt.Sprintf("%s*", sessionRepository.AccessTokenKeyPrefix)).Result()
+	accessTokenKeys, err := client.Keys(ctx, fmt.Sprintf("%s*", session.AccessTokenKeyPrefix)).Result()
 	if err != nil {
 		require.NoError(t, err, "Failed to get access token keys")
 	}
@@ -45,7 +42,7 @@ func ClearSessionsRedis(t *testing.T, ctx context.Context, client *redis.Client)
 
 	// Clear all refresh token keys (new dual-token system)
 	// refreshTokenKeys, err := client.Keys(ctx, "authuser:refresh:*").Result()
-	refreshTokenKeys, err := client.Keys(ctx, fmt.Sprintf("%s*", sessionRepository.RefreshTokenKeyPrefix)).Result()
+	refreshTokenKeys, err := client.Keys(ctx, fmt.Sprintf("%s*", session.RefreshTokenKeyPrefix)).Result()
 	if err != nil {
 		require.NoError(t, err, "Failed to get refresh token keys")
 	}
@@ -56,27 +53,27 @@ func ClearSessionsRedis(t *testing.T, ctx context.Context, client *redis.Client)
 }
 
 // NewTestSession creates a test session with reasonable defaults using real encryption
-func NewTestSession(crypto encx.CryptoService) (*auth.Session, error) {
+func NewTestSession(crypto encx.CryptoService) (*session.Session, error) {
 	now := time.Now()
 	userID := uuid.New()
 	sessionID := uuid.New()
 
 	// Generate valid base64 tokens for testing
-	accessToken, err := auth.GenerateToken()
+	accessToken, err := session.GenerateToken()
 	if err != nil {
 		return nil, fmt.Errorf("generate access token: %w", err)
 	}
 
-	refreshToken, err := auth.GenerateToken()
+	refreshToken, err := session.GenerateToken()
 	if err != nil {
 		return nil, fmt.Errorf("generate refresh token: %w", err)
 	}
 
-	session := &auth.Session{
+	session := &session.Session{
 		ID:           sessionID,
 		UserID:       userID,
 		Role:         identity.Visitor,
-		State:        auth.SessionActive,
+		State:        session.SessionActive,
 		CreatedAt:    now,
 		ExpiresAt:    now.Add(24 * time.Hour),
 		AccessToken:  accessToken,
@@ -93,43 +90,43 @@ func NewTestSession(crypto encx.CryptoService) (*auth.Session, error) {
 }
 
 // NewTestPendingSession creates a test session with pending state
-func NewTestPendingSession(crypto encx.CryptoService) (*auth.Session, error) {
-	session, err := NewTestSession(crypto)
+func NewTestPendingSession(crypto encx.CryptoService) (*session.Session, error) {
+	s, err := NewTestSession(crypto)
 	if err != nil {
 		return nil, err
 	}
-	session.State = auth.SessionPending
+	s.State = session.SessionPending
 
 	// Re-process the struct to update encrypted state
-	err = crypto.ProcessStruct(context.Background(), session)
+	err = crypto.ProcessStruct(context.Background(), s)
 	if err != nil {
 		return nil, fmt.Errorf("re-process session struct for state update: %w", err)
 	}
 
-	return session, nil
+	return s, nil
 }
 
 // NewTestSessionWithUserID creates a test session for a specific user ID
-func NewTestSessionWithUserID(userID uuid.UUID, crypto encx.CryptoService) (*auth.Session, error) {
+func NewTestSessionWithUserID(userID uuid.UUID, crypto encx.CryptoService) (*session.Session, error) {
 	now := time.Now()
 	sessionID := uuid.New()
 
 	// Generate valid base64 tokens for testing
-	accessToken, err := auth.GenerateToken()
+	accessToken, err := session.GenerateToken()
 	if err != nil {
 		return nil, fmt.Errorf("generate access token: %w", err)
 	}
 
-	refreshToken, err := auth.GenerateToken()
+	refreshToken, err := session.GenerateToken()
 	if err != nil {
 		return nil, fmt.Errorf("generate refresh token: %w", err)
 	}
 
-	session := &auth.Session{
+	session := &session.Session{
 		ID:           sessionID,
 		UserID:       userID,
 		Role:         identity.Visitor,
-		State:        auth.SessionPending,
+		State:        session.SessionPending,
 		CreatedAt:    now,
 		ExpiresAt:    now.Add(24 * time.Hour),
 		AccessToken:  accessToken,
@@ -146,7 +143,7 @@ func NewTestSessionWithUserID(userID uuid.UUID, crypto encx.CryptoService) (*aut
 }
 
 // EncodeSession marshals a session to JSON bytes for Redis storage
-func EncodeSession(t *testing.T, session *auth.Session) []byte {
+func EncodeSession(t *testing.T, session *session.Session) []byte {
 	t.Helper()
 	data, err := json.Marshal(session)
 	require.NoError(t, err, "Failed to marshal session")
@@ -154,18 +151,18 @@ func EncodeSession(t *testing.T, session *auth.Session) []byte {
 }
 
 // DecodeSession unmarshals JSON bytes back to a session
-func DecodeSession(t *testing.T, data []byte) *auth.Session {
+func DecodeSession(t *testing.T, data []byte) *session.Session {
 	t.Helper()
-	var session auth.Session
+	var session session.Session
 	err := json.Unmarshal(data, &session)
 	require.NoError(t, err, "Failed to unmarshal session")
 	return &session
 }
 
 // DecodeSessionWithDecryption unmarshals JSON bytes back to a session and decrypts it
-func DecodeSessionWithDecryption(t *testing.T, data []byte, crypto encx.CryptoService) *auth.Session {
+func DecodeSessionWithDecryption(t *testing.T, data []byte, crypto encx.CryptoService) *session.Session {
 	t.Helper()
-	var session auth.Session
+	var session session.Session
 	err := json.Unmarshal(data, &session)
 	require.NoError(t, err, "Failed to unmarshal session")
 
@@ -177,24 +174,24 @@ func DecodeSessionWithDecryption(t *testing.T, data []byte, crypto encx.CryptoSe
 }
 
 // InsertSessionDirectly inserts a session directly into Redis (bypasses repository)
-func InsertSessionDirectly(t *testing.T, ctx context.Context, client *redis.Client, session *auth.Session, ttl time.Duration) {
+func InsertSessionDirectly(t *testing.T, ctx context.Context, client *redis.Client, sess *session.Session, ttl time.Duration) {
 	t.Helper()
 
-	sessionKey := sessionRepository.FormatSessionKey(session.ID.String())
-	accessTokenKey := sessionRepository.FormatAccessTokenKey(session.AccessTokenHash)
-	refreshTokenKey := sessionRepository.FormatRefreshTokenKey(session.RefreshTokenHash)
+	sessionKey := session.FormatSessionKey(sess.ID.String())
+	accessTokenKey := session.FormatAccessTokenKey(sess.AccessTokenHash)
+	refreshTokenKey := session.FormatRefreshTokenKey(sess.RefreshTokenHash)
 
 	// Store session data
-	sessionData := EncodeSession(t, session)
+	sessionData := EncodeSession(t, sess)
 	err := client.Set(ctx, sessionKey, sessionData, ttl).Err()
 	require.NoError(t, err, "Failed to insert session directly")
 
 	// Store access token mapping
-	err = client.Set(ctx, accessTokenKey, session.ID.String(), ttl).Err()
+	err = client.Set(ctx, accessTokenKey, sess.ID.String(), ttl).Err()
 	require.NoError(t, err, "Failed to insert access token mapping directly")
 
 	// Store refresh token mapping
-	err = client.Set(ctx, refreshTokenKey, session.ID.String(), ttl).Err()
+	err = client.Set(ctx, refreshTokenKey, sess.ID.String(), ttl).Err()
 	require.NoError(t, err, "Failed to insert refresh token mapping directly")
 }
 
@@ -221,7 +218,7 @@ func CheckTokenMappingExistsInRedis(t *testing.T, ctx context.Context, client *r
 }
 
 // GetSessionFromRedis retrieves and decodes a session from Redis by session ID
-func GetSessionFromRedis(t *testing.T, ctx context.Context, client *redis.Client, sessionID uuid.UUID) *auth.Session {
+func GetSessionFromRedis(t *testing.T, ctx context.Context, client *redis.Client, sessionID uuid.UUID) *session.Session {
 	t.Helper()
 	sessionKey := fmt.Sprintf("authuser:session:%s", sessionID.String())
 	data, err := client.Get(ctx, sessionKey).Bytes()
@@ -264,12 +261,12 @@ func CountTokenKeys(t *testing.T, ctx context.Context, client *redis.Client) int
 type SessionTestData struct {
 	SessionID   uuid.UUID
 	TokenHash   string
-	Session     *auth.Session
+	Session     *session.Session
 	SessionData []byte
 }
 
 // CreateTestSessionWithCrypto is a convenience function that creates and returns a session
-func CreateTestSessionWithCrypto(t *testing.T, crypto encx.CryptoService) *auth.Session {
+func CreateTestSessionWithCrypto(t *testing.T, crypto encx.CryptoService) *session.Session {
 	t.Helper()
 	session, err := NewTestSession(crypto)
 	require.NoError(t, err, "Failed to create test session with encryption")
@@ -277,7 +274,7 @@ func CreateTestSessionWithCrypto(t *testing.T, crypto encx.CryptoService) *auth.
 }
 
 // CreateTestPendingSessionWithCrypto is a convenience function that creates and returns a pending session
-func CreateTestPendingSessionWithCrypto(t *testing.T, crypto encx.CryptoService) *auth.Session {
+func CreateTestPendingSessionWithCrypto(t *testing.T, crypto encx.CryptoService) *session.Session {
 	t.Helper()
 	session, err := NewTestPendingSession(crypto)
 	require.NoError(t, err, "Failed to create test pending session with encryption")
@@ -285,7 +282,7 @@ func CreateTestPendingSessionWithCrypto(t *testing.T, crypto encx.CryptoService)
 }
 
 // CreateTestSessionWithUserIDAndCrypto is a convenience function that creates and returns a session with specific user ID
-func CreateTestSessionWithUserIDAndCrypto(t *testing.T, userID uuid.UUID, crypto encx.CryptoService) *auth.Session {
+func CreateTestSessionWithUserIDAndCrypto(t *testing.T, userID uuid.UUID, crypto encx.CryptoService) *session.Session {
 	t.Helper()
 	session, err := NewTestSessionWithUserID(userID, crypto)
 	require.NoError(t, err, "Failed to create test session with user ID and encryption")
@@ -293,23 +290,23 @@ func CreateTestSessionWithUserIDAndCrypto(t *testing.T, userID uuid.UUID, crypto
 }
 
 // CreateTestPendingSessionWithUserIDAndCrypto is a convenience function that creates and returns a pending session with specific user ID
-func CreateTestPendingSessionWithUserIDAndCrypto(t *testing.T, userID uuid.UUID, crypto encx.CryptoService) *auth.Session {
+func CreateTestPendingSessionWithUserIDAndCrypto(t *testing.T, userID uuid.UUID, crypto encx.CryptoService) *session.Session {
 	now := time.Now()
 	sessionID := uuid.New()
 
 	// Generate valid base64 tokens for testing
-	accessToken, err := auth.GenerateToken()
+	accessToken, err := session.GenerateToken()
 	require.NoError(t, err)
 
 	// print("THE ACCESS TOKEN BEFORE ENCRYPTION IS :", accessToken)
-	refreshToken, err := auth.GenerateToken()
+	refreshToken, err := session.GenerateToken()
 	require.NoError(t, err)
 
-	session := &auth.Session{
+	session := &session.Session{
 		ID:           sessionID,
 		UserID:       userID,
 		Role:         identity.Visitor,
-		State:        auth.SessionPending,
+		State:        session.SessionPending,
 		CreatedAt:    now,
 		ExpiresAt:    now.Add(24 * time.Hour),
 		AccessToken:  accessToken,

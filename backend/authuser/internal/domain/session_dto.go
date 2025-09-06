@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
-	"github.com/Leviosa-care/core/middleware/auth"
 
 	"github.com/google/uuid"
 	"github.com/hengadev/errsx"
@@ -14,7 +14,7 @@ import (
 type CreateSessionRequest struct {
 	UserID string        `json:"user_id"`
 	Role   identity.Role `json:"role"`
-	State  auth.SessionState
+	State  session.SessionState
 }
 
 func (r *CreateSessionRequest) Valid(ctx context.Context) error {
@@ -25,11 +25,11 @@ func (r *CreateSessionRequest) Valid(ctx context.Context) error {
 	if !r.Role.IsValid() {
 		errs.Set("role", "invalid role, role must be 'visitor', 'standard', 'premium', 'guest', 'partner', 'administrator'.")
 	}
-	if r.State == auth.SessionPending && r.Role != identity.Visitor {
+	if r.State == session.SessionPending && r.Role != identity.Visitor {
 		errs.Set("incompatible state and role", "pending user can only be 'visitor'.")
 	}
 
-	if r.State == auth.SessionActive && r.Role == identity.Visitor {
+	if r.State == session.SessionActive && r.Role == identity.Visitor {
 		errs.Set("incompatible state and role", "active user must have a role different that 'visitor'.")
 	}
 	return errs.AsError()
@@ -48,7 +48,7 @@ type GetSessionRequest struct {
 }
 
 func (r *GetSessionRequest) Valid(ctx context.Context) error {
-	return auth.ValidateToken(r.Token)
+	return session.ValidateToken(r.Token)
 }
 
 type ValidateSessionRequest struct {
@@ -56,7 +56,7 @@ type ValidateSessionRequest struct {
 }
 
 func (r *ValidateSessionRequest) Valid(ctx context.Context) error {
-	return auth.ValidateToken(r.Token)
+	return session.ValidateToken(r.Token)
 }
 
 type RemoveSessionRequest struct {
@@ -64,7 +64,7 @@ type RemoveSessionRequest struct {
 }
 
 func (r *RemoveSessionRequest) Valid(ctx context.Context) error {
-	return auth.ValidateToken(r.Token)
+	return session.ValidateToken(r.Token)
 }
 
 type RefreshSessionRequest struct {
@@ -72,7 +72,7 @@ type RefreshSessionRequest struct {
 }
 
 func (r *RefreshSessionRequest) Valid(ctx context.Context) error {
-	return auth.ValidateToken(r.RefreshToken)
+	return session.ValidateToken(r.RefreshToken)
 }
 
 type RefreshSessionResponse struct {

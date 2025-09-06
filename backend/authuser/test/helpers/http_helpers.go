@@ -10,7 +10,8 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 
-	"github.com/Leviosa-care/core/middleware/auth"
+	ck "github.com/Leviosa-care/core/auth/cookies"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -141,7 +142,7 @@ func NewCompleteUserRequest(t *testing.T, ctx context.Context, baseURL string, r
 	// Add session cookie if provided
 	if accessToken != "" {
 		cookie := &http.Cookie{
-			Name:  auth.AccessTokenCookieName,
+			Name:  ck.AccessTokenCookieName,
 			Value: accessToken,
 		}
 		req.AddCookie(cookie)
@@ -233,6 +234,73 @@ func ParseGetAllUsersResponse(t *testing.T, resp *http.Response) []*domain.UserR
 	require.NoError(t, err, "Failed to decode get all users response")
 
 	return users
+}
+
+// NewGetUserRequest creates an HTTP request for getting the current user's profile
+func NewGetUserRequest(t *testing.T, ctx context.Context, baseURL string) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		fmt.Sprintf("%s/users/me", baseURL),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	return req
+}
+
+// NewGetUserRequestWithAuth creates an HTTP request for getting user profile with authentication cookie
+func NewGetUserRequestWithAuth(t *testing.T, ctx context.Context, baseURL string, accessToken string) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		fmt.Sprintf("%s/users/me", baseURL),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Add authentication cookie
+	cookie := &http.Cookie{
+		Name:  ck.AccessTokenCookieName,
+		Value: accessToken,
+	}
+	req.AddCookie(cookie)
+
+	return req
+}
+
+// NewGetUserRequestWithMockAuth creates an HTTP request for getting user profile with mock auth data
+// Note: This is for testing purposes when auth middleware is not present in the test setup
+func NewGetUserRequestWithMockAuth(t *testing.T, ctx context.Context, baseURL string, userID uuid.UUID) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		fmt.Sprintf("%s/users/me", baseURL),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Note: In a real scenario with auth middleware, we would add the session cookie here
+	// For now, this documents the intended behavior
+	return req
+}
+
+// ParseGetUserResponse parses the HTTP response for get user request
+func ParseGetUserResponse(t *testing.T, resp *http.Response) *domain.UserResponse {
+	t.Helper()
+
+	var user *domain.UserResponse
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(&user)
+	require.NoError(t, err, "Failed to decode get user response")
+
+	return user
 }
 
 // NewApproveUserRequest creates an HTTP request for approving a user

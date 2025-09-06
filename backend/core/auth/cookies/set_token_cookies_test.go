@@ -1,4 +1,4 @@
-package auth
+package cookies_test
 
 import (
 	"net/http"
@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Leviosa-care/core/auth/cookies"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,18 +20,18 @@ func TestSetTokenCookies(t *testing.T) {
 	refreshExpiry := time.Now().Add(24 * time.Hour)
 
 	// Execute
-	SetTokenCookies(w, accessToken, refreshToken, accessExpiry, refreshExpiry)
+	cookies.SetTokenCookies(w, accessToken, refreshToken, accessExpiry, refreshExpiry)
 
 	// Verify
-	cookies := w.Result().Cookies()
-	require.Len(t, cookies, 2, "Should set exactly 2 cookies")
+	responseCookies := w.Result().Cookies()
+	require.Len(t, responseCookies, 2, "Should set exactly 2 cookies")
 
 	// Find and verify access token cookie
 	var accessCookie, refreshCookie *http.Cookie
-	for _, cookie := range cookies {
-		if cookie.Name == AccessTokenCookieName {
+	for _, cookie := range responseCookies {
+		if cookie.Name == cookies.AccessTokenCookieName {
 			accessCookie = cookie
-		} else if cookie.Name == RefreshTokenCookieName {
+		} else if cookie.Name == cookies.RefreshTokenCookieName {
 			refreshCookie = cookie
 		}
 	}
@@ -47,9 +48,10 @@ func TestSetTokenCookies(t *testing.T) {
 	// Verify refresh token cookie
 	require.NotNil(t, refreshCookie, "Refresh token cookie should be set")
 	assert.Equal(t, refreshToken, refreshCookie.Value)
-	assert.Equal(t, RefreshEndpoint, refreshCookie.Path)
+	assert.Equal(t, cookies.RefreshEndpoint, refreshCookie.Path)
 	assert.True(t, refreshCookie.HttpOnly)
 	assert.True(t, refreshCookie.Secure)
 	assert.Equal(t, http.SameSiteStrictMode, refreshCookie.SameSite)
 	assert.WithinDuration(t, refreshExpiry, refreshCookie.Expires, time.Second)
 }
+

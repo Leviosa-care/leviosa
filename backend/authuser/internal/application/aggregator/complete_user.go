@@ -7,36 +7,18 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/middleware/auth"
 )
 
-func (s *AuthAggregatorService) CompleteUser(ctx context.Context, sessionToken string, request *domain.CompleteUserRequest) error {
-	// Get the current session using the token
-	getSessionRequest := &domain.GetSessionRequest{Token: sessionToken}
-	session, err := s.session.GetSession(ctx, getSessionRequest)
-	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			return err // Pass through validation errors
-		case errors.Is(err, errs.ErrDomainNotFound):
-			return err // Pass through not found errors (session doesn't exist)
-		case errors.Is(err, errs.ErrExpiredToken):
-			return err // Pass through expired token errors
-		case errors.Is(err, errs.ErrExternalService):
-			return err // Pass through external service errors (database issues)
-		default:
-			return errs.NewInternalErr(err) // Wrap unexpected errors
-		}
-	}
-
+func (s *AuthAggregatorService) CompleteUser(ctx context.Context, sessionInfo *session.SessionInfo, request *domain.CompleteUserRequest) error {
 	// Verify session is in pending state
-	if session.State != auth.SessionPending {
+	if sessionInfo.State != session.SessionPending {
 		return errs.NewConflictErr(errors.New("session is not in pending state"))
 	}
 
 	// Complete the user information
-	if err := s.user.CompleteUser(ctx, session.UserID, request); err != nil {
+	if err := s.user.CompleteUser(ctx, sessionInfo.UserID, request); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrInvalidValue):
 			return err // Pass through validation errors
@@ -53,7 +35,7 @@ func (s *AuthAggregatorService) CompleteUser(ctx context.Context, sessionToken s
 
 	// User completed successfully - mark completion timestamp in session
 	completedAt := time.Now()
-	if err := s.session.UpdateSessionCompletion(ctx, session.ID.String(), &completedAt); err != nil {
+	if err := s.session.UpdateSessionCompletion(ctx, sessionInfo.ID, &completedAt); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrInvalidValue):
 			return err // Pass through validation errors
@@ -66,9 +48,8 @@ func (s *AuthAggregatorService) CompleteUser(ctx context.Context, sessionToken s
 		}
 	}
 
-	// Remove session to force re-authentication after admin approval
-	removeSessionRequest := &domain.RemoveSessionRequest{Token: sessionToken}
-	if err := s.session.RemoveSession(ctx, removeSessionRequest); err != nil {
+	// Remove sessions to force re-authentication after admin approval
+	if err := s.session.RevokeAllUserSessions(ctx, sessionInfo.UserID); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrDomainNotFound):
 			// Session already removed - this is acceptable

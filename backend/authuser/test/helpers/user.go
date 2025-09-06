@@ -205,9 +205,9 @@ func InsertUserWithEncryption(t *testing.T, ctx context.Context, user *domain.Us
 // GetUserByIDFromDB retrieves a user by UUID for test verification
 func GetUserByIDFromDB(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pgxpool.Pool, crypto encx.CryptoService) *domain.User {
 	t.Helper()
-	
+
 	user, err := GetUserByID(t, ctx, userID.String(), pool, crypto)
 	require.NoError(t, err, "Failed to get user by ID from database")
-	
+
 	return user
 }

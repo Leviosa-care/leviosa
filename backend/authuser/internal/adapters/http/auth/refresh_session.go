@@ -5,11 +5,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/Leviosa-care/authuser/internal/domain"
+	"github.com/Leviosa-care/core/auth/cookies"
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/httpx"
-	"github.com/Leviosa-care/core/middleware/auth"
 )
 
 func (h *handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
@@ -21,20 +21,13 @@ func (h *handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract refresh token from cookies
-	refreshToken, err := auth.GetRefreshTokenFromCookies(r)
-	if err != nil {
-		logger.WarnContext(ctx, "Handler: Missing refresh token cookie",
-			"error", err,
+	sessionInfo, ok := session.SessionInfoFromContext(ctx)
+	if !ok {
+		logger.ErrorContext(ctx, "Handler: No session info in context",
 			"operation", "refresh_session",
 			"method", r.Method,
 			"path", r.URL.Path)
-		httpx.RespondWithError(w, errs.NewUnauthorizedErr("missing refresh token"), http.StatusUnauthorized)
-		return
-	}
-
-	request := &domain.RefreshSessionRequest{
-		RefreshToken: refreshToken,
+		httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusBadRequest)
 	}
 
 	logger.InfoContext(ctx, "Handler: Processing session refresh request",
@@ -43,7 +36,7 @@ func (h *handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 		"path", r.URL.Path,
 		"user_agent", r.Header.Get("User-Agent"))
 
-	response, err := h.svc.RefreshSession(ctx, request)
+	response, err := h.svc.RefreshSession(ctx, sessionInfo.ID.String())
 	if err != nil {
 		// Log with specific error context based on error type
 		var logLevel string
@@ -136,7 +129,7 @@ func (h *handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 		"status_code", http.StatusOK)
 
 	// Set new token cookies
-	auth.SetTokenCookies(w, response.AccessToken, response.RefreshToken,
+	cookies.SetTokenCookies(w, response.AccessToken, response.RefreshToken,
 		response.AccessTokenExpiry, response.RefreshTokenExpiry)
 
 	httpx.RespondWithJSON(w, struct {
@@ -147,4 +140,3 @@ func (h *handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 		Status:  "success",
 	}, http.StatusOK)
 }
-

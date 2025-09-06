@@ -4,8 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
-	"github.com/Leviosa-care/core/middleware/auth"
+	"github.com/Leviosa-care/core/auth/session"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +17,7 @@ func TestFormatSessionKey(t *testing.T) {
 		sessionID := uuid.New().String()
 		expected := "authuser:session:" + sessionID
 
-		result := auth.FormatSessionKey(sessionID)
+		result := session.FormatSessionKey(sessionID)
 
 		assert.Equal(t, expected, result)
 		assert.Contains(t, result, "authuser:session:")
@@ -29,7 +28,7 @@ func TestFormatSessionKey(t *testing.T) {
 		sessionID := "custom-session-id-123"
 		expected := "authuser:session:custom-session-id-123"
 
-		result := auth.FormatSessionKey(sessionID)
+		result := session.FormatSessionKey(sessionID)
 
 		assert.Equal(t, expected, result)
 	})
@@ -38,7 +37,7 @@ func TestFormatSessionKey(t *testing.T) {
 		sessionID := ""
 		expected := "authuser:session:"
 
-		result := auth.FormatSessionKey(sessionID)
+		result := session.FormatSessionKey(sessionID)
 
 		assert.Equal(t, expected, result)
 	})
@@ -47,7 +46,7 @@ func TestFormatSessionKey(t *testing.T) {
 		sessionID := "session-id_with.special@chars+123/456="
 		expected := "authuser:session:session-id_with.special@chars+123/456="
 
-		result := auth.FormatSessionKey(sessionID)
+		result := session.FormatSessionKey(sessionID)
 
 		assert.Equal(t, expected, result)
 	})
@@ -58,7 +57,7 @@ func TestFormatTokenKey(t *testing.T) {
 		tokenHash := "abc123def456ghi789"
 		expected := "authuser:token:abc123def456ghi789"
 
-		result := auth.FormatTokenKey(tokenHash)
+		result := session.FormatAccessTokenKey(tokenHash)
 
 		assert.Equal(t, expected, result)
 		assert.Contains(t, result, "authuser:token:")
@@ -69,7 +68,7 @@ func TestFormatTokenKey(t *testing.T) {
 		tokenHash := "token-hash_with.special@chars+123/456="
 		expected := "authuser:token:token-hash_with.special@chars+123/456="
 
-		result := auth.FormatTokenKey(tokenHash)
+		result := session.FormatAccessTokenKey(tokenHash)
 
 		assert.Equal(t, expected, result)
 	})
@@ -78,7 +77,7 @@ func TestFormatTokenKey(t *testing.T) {
 		tokenHash := ""
 		expected := "authuser:token:"
 
-		result := auth.FormatTokenKey(tokenHash)
+		result := session.FormatAccessTokenKey(tokenHash)
 
 		assert.Equal(t, expected, result)
 	})
@@ -89,7 +88,7 @@ func TestFormatAccessTokenKey(t *testing.T) {
 		accessTokenHash := "access-token-hash-123"
 		expected := "authuser:access:access-token-hash-123"
 
-		result := auth.FormatAccessTokenKey(accessTokenHash)
+		result := session.FormatAccessTokenKey(accessTokenHash)
 
 		assert.Equal(t, expected, result)
 		assert.Contains(t, result, "authuser:access:")
@@ -100,7 +99,7 @@ func TestFormatAccessTokenKey(t *testing.T) {
 		accessTokenHash := "dGVzdC1hY2Nlc3MtdG9rZW4="
 		expected := "authuser:access:dGVzdC1hY2Nlc3MtdG9rZW4="
 
-		result := auth.FormatAccessTokenKey(accessTokenHash)
+		result := session.FormatAccessTokenKey(accessTokenHash)
 
 		assert.Equal(t, expected, result)
 	})
@@ -109,7 +108,7 @@ func TestFormatAccessTokenKey(t *testing.T) {
 		accessTokenHash := "access-token_hash.with:special@chars+123/456="
 		expected := "authuser:access:access-token_hash.with:special@chars+123/456="
 
-		result := auth.FormatAccessTokenKey(accessTokenHash)
+		result := session.FormatAccessTokenKey(accessTokenHash)
 
 		assert.Equal(t, expected, result)
 	})
@@ -118,7 +117,7 @@ func TestFormatAccessTokenKey(t *testing.T) {
 		accessTokenHash := ""
 		expected := "authuser:access:"
 
-		result := auth.FormatAccessTokenKey(accessTokenHash)
+		result := session.FormatAccessTokenKey(accessTokenHash)
 
 		assert.Equal(t, expected, result)
 	})
@@ -128,7 +127,7 @@ func TestFormatAccessTokenKey(t *testing.T) {
 		accessTokenHash := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 		expected := "authuser:access:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
-		result := auth.FormatAccessTokenKey(accessTokenHash)
+		result := session.FormatAccessTokenKey(accessTokenHash)
 
 		assert.Equal(t, expected, result)
 	})
@@ -139,7 +138,7 @@ func TestFormatRefreshTokenKey(t *testing.T) {
 		refreshTokenHash := "refresh-token-hash-456"
 		expected := "authuser:refresh:refresh-token-hash-456"
 
-		result := auth.FormatRefreshTokenKey(refreshTokenHash)
+		result := session.FormatRefreshTokenKey(refreshTokenHash)
 
 		assert.Equal(t, expected, result)
 		assert.Contains(t, result, "authuser:refresh:")
@@ -150,7 +149,7 @@ func TestFormatRefreshTokenKey(t *testing.T) {
 		refreshTokenHash := "dGVzdC1yZWZyZXNoLXRva2Vu"
 		expected := "authuser:refresh:dGVzdC1yZWZyZXNoLXRva2Vu"
 
-		result := auth.FormatRefreshTokenKey(refreshTokenHash)
+		result := session.FormatRefreshTokenKey(refreshTokenHash)
 
 		assert.Equal(t, expected, result)
 	})
@@ -159,7 +158,7 @@ func TestFormatRefreshTokenKey(t *testing.T) {
 		refreshTokenHash := "refresh-token_hash.with:special@chars+789/012="
 		expected := "authuser:refresh:refresh-token_hash.with:special@chars+789/012="
 
-		result := auth.FormatRefreshTokenKey(refreshTokenHash)
+		result := session.FormatRefreshTokenKey(refreshTokenHash)
 
 		assert.Equal(t, expected, result)
 	})
@@ -168,7 +167,7 @@ func TestFormatRefreshTokenKey(t *testing.T) {
 		refreshTokenHash := ""
 		expected := "authuser:refresh:"
 
-		result := auth.FormatRefreshTokenKey(refreshTokenHash)
+		result := session.FormatRefreshTokenKey(refreshTokenHash)
 
 		assert.Equal(t, expected, result)
 	})
@@ -178,7 +177,7 @@ func TestFormatRefreshTokenKey(t *testing.T) {
 		refreshTokenHash := "very-long-refresh-token-hash-with-many-characters-that-could-be-used-in-production-environments-to-ensure-uniqueness-and-security-abc123def456ghi789"
 		expected := "authuser:refresh:very-long-refresh-token-hash-with-many-characters-that-could-be-used-in-production-environments-to-ensure-uniqueness-and-security-abc123def456ghi789"
 
-		result := auth.FormatRefreshTokenKey(refreshTokenHash)
+		result := session.FormatRefreshTokenKey(refreshTokenHash)
 
 		assert.Equal(t, expected, result)
 	})
@@ -188,10 +187,10 @@ func TestKeyFormatConsistency(t *testing.T) {
 	t.Run("should have different prefixes for different key types", func(t *testing.T) {
 		testValue := "test-value-123"
 
-		sessionKey := sessionRepository.FormatSessionKey(testValue)
-		tokenKey := sessionRepository.FormatTokenKey(testValue)
-		accessTokenKey := sessionRepository.FormatAccessTokenKey(testValue)
-		refreshTokenKey := sessionRepository.FormatRefreshTokenKey(testValue)
+		sessionKey := session.FormatSessionKey(testValue)
+		tokenKey := session.FormatAccessTokenKey(testValue)
+		accessTokenKey := session.FormatAccessTokenKey(testValue)
+		refreshTokenKey := session.FormatRefreshTokenKey(testValue)
 
 		// All should contain the test value
 		assert.Contains(t, sessionKey, testValue)
@@ -224,17 +223,16 @@ func TestKeyFormatConsistency(t *testing.T) {
 
 	t.Run("should maintain prefix constants", func(t *testing.T) {
 		// These tests ensure that if prefixes change, we catch it in tests
-		sessionKey := sessionRepository.FormatSessionKey("test")
+		sessionKey := session.FormatSessionKey("test")
 		assert.Equal(t, "authuser:session:test", sessionKey)
 
-		tokenKey := sessionRepository.FormatTokenKey("test")
+		tokenKey := session.FormatAccessTokenKey("test")
 		assert.Equal(t, "authuser:token:test", tokenKey)
 
-		accessTokenKey := sessionRepository.FormatAccessTokenKey("test")
+		accessTokenKey := session.FormatAccessTokenKey("test")
 		assert.Equal(t, "authuser:access:test", accessTokenKey)
 
-		refreshTokenKey := sessionRepository.FormatRefreshTokenKey("test")
+		refreshTokenKey := session.FormatRefreshTokenKey("test")
 		assert.Equal(t, "authuser:refresh:test", refreshTokenKey)
 	})
 }
-

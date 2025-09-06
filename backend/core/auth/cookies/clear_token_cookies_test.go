@@ -1,6 +1,7 @@
-package auth
+package cookies_test
 
 import (
+	"github.com/Leviosa-care/core/auth/cookies"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,18 +15,18 @@ func TestClearTokenCookies(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	// Execute
-	ClearTokenCookies(w)
+	cookies.ClearTokenCookies(w)
 
 	// Verify
-	cookies := w.Result().Cookies()
-	require.Len(t, cookies, 2, "Should clear exactly 2 cookies")
+	responseCookies := w.Result().Cookies()
+	require.Len(t, responseCookies, 2, "Should clear exactly 2 cookies")
 
 	// Find and verify cookies
 	var accessCookie, refreshCookie *http.Cookie
-	for _, cookie := range cookies {
-		if cookie.Name == AccessTokenCookieName {
+	for _, cookie := range responseCookies {
+		if cookie.Name == cookies.AccessTokenCookieName {
 			accessCookie = cookie
-		} else if cookie.Name == RefreshTokenCookieName {
+		} else if cookie.Name == cookies.RefreshTokenCookieName {
 			refreshCookie = cookie
 		}
 	}
@@ -42,9 +43,10 @@ func TestClearTokenCookies(t *testing.T) {
 	// Verify refresh token cookie is cleared
 	require.NotNil(t, refreshCookie, "Refresh token cookie should be set for clearing")
 	assert.Equal(t, "", refreshCookie.Value)
-	assert.Equal(t, RefreshEndpoint, refreshCookie.Path)
+	assert.Equal(t, cookies.RefreshEndpoint, refreshCookie.Path)
 	assert.True(t, refreshCookie.HttpOnly)
 	assert.True(t, refreshCookie.Secure)
 	assert.Equal(t, http.SameSiteStrictMode, refreshCookie.SameSite)
 	assert.Equal(t, -1, refreshCookie.MaxAge)
 }
+

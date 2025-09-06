@@ -3,12 +3,13 @@ package sessionRepository
 import (
 	"context"
 
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/middleware/auth"
+	"github.com/google/uuid"
 )
 
-func (r *SessionRepository) FindSessionByID(ctx context.Context, sessionID string) ([]byte, error) {
-	key := auth.FormatSessionKey(sessionID)
+func (r *SessionRepository) FindSessionByID(ctx context.Context, sessionID uuid.UUID) ([]byte, error) {
+	key := session.FormatSessionKey(sessionID.String())
 
 	result, err := r.client.Get(ctx, key).Bytes()
 	if err != nil {

@@ -6,9 +6,9 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/middleware/auth"
 )
 
 func (s *AuthAggregatorService) ValidateOTPCreatePendingUser(ctx context.Context, request *domain.ValidateOTPRequest) (*domain.CreateSessionResponse, error) {
@@ -55,7 +55,7 @@ func (s *AuthAggregatorService) ValidateOTPCreatePendingUser(ctx context.Context
 	response, err := s.session.CreateSession(ctx, &domain.CreateSessionRequest{
 		UserID: userID.String(),
 		Role:   identity.Visitor,
-		State:  auth.SessionPending,
+		State:  session.SessionPending,
 	})
 	if err != nil {
 		switch {

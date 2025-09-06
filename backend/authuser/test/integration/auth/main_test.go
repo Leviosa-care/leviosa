@@ -24,6 +24,7 @@ import (
 	"github.com/Leviosa-care/authuser/internal/application/user"
 	"github.com/Leviosa-care/authuser/internal/ports"
 
+	authsession "github.com/Leviosa-care/core/auth/session"
 	mq "github.com/Leviosa-care/core/contracts/rabbitmq"
 	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/envmode"
@@ -42,19 +43,20 @@ import (
 )
 
 var (
-	pgContainer    *tu.PostgresContainer
-	testPool       *pgxpool.Pool
-	redisContainer *tu.RedisContainer
-	testClient     *redis.Client
-	crypto         encx.CryptoService
-	userRepo       ports.UserRepository
-	otpRepo        ports.OTPRepository
-	sessionRepo    ports.SessionRepository
-	service        ports.AuthAggregatorService
-	handler        authHandler.Handler
-	testServerURL  string           // Global variable to hold the URL of the running test server
-	testServer     *http.Server     // To allow graceful shutdown
-	testMQConn     *amqp.Connection // RabbitMQ connection for test verification
+	pgContainer     *tu.PostgresContainer
+	testPool        *pgxpool.Pool
+	redisContainer  *tu.RedisContainer
+	testClient      *redis.Client
+	crypto          encx.CryptoService
+	userRepo        ports.UserRepository
+	otpRepo         ports.OTPRepository
+	sessionRepo     ports.SessionRepository
+	authSessionRepo authsession.SessionRepository
+	service         ports.AuthAggregatorService
+	handler         authHandler.Handler
+	testServerURL   string           // Global variable to hold the URL of the running test server
+	testServer      *http.Server     // To allow graceful shutdown
+	testMQConn      *amqp.Connection // RabbitMQ connection for test verification
 )
 
 func TestMain(m *testing.M) {
@@ -221,7 +223,8 @@ func TestMain(m *testing.M) {
 
 	service = aggregator.New(otpService, userService, sessionService)
 
-	authmw := auth.NewSessionAuthMiddleware(sessionRepo)
+	authSessionRepo = authsession.NewRedisSessionRepository(testClient)
+	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto)
 
 	handler = authHandler.New(service, authmw)
 

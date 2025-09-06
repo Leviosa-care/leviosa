@@ -1,4 +1,4 @@
-package auth
+package cookies
 
 import (
 	"net/http"
@@ -29,3 +29,4 @@ func SetTokenCookies(w http.ResponseWriter, accessToken, refreshToken string, ac
 		Expires:  refreshExpiry,
 	})
 }
+

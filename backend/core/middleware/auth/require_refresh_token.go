@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/Leviosa-care/core/auth/cookies"
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/httpx"
@@ -23,18 +25,18 @@ func (m *SessionAuthMiddleware) RequireRefreshToken(next mw.Handler) mw.Handler 
 		}
 
 		// Security: Only allow refresh tokens on /auth/refresh endpoint
-		if r.URL.Path != RefreshEndpoint {
+		if r.URL.Path != cookies.RefreshEndpoint {
 			logger.WarnContext(ctx, "Auth middleware: Refresh token attempted on wrong endpoint",
 				"operation", "require_refresh_token",
 				"method", r.Method,
 				"path", r.URL.Path,
-				"expected_path", RefreshEndpoint)
+				"expected_path", cookies.RefreshEndpoint)
 			httpx.RespondWithError(w, errs.ErrForbidden, http.StatusForbidden)
 			return
 		}
 
 		// Extract refresh token from cookies
-		cookie, err := r.Cookie(RefreshTokenCookieName)
+		cookie, err := r.Cookie(cookies.RefreshTokenCookieName)
 		if err != nil {
 			logger.WarnContext(ctx, "Auth middleware: Missing refresh token cookie",
 				"operation", "require_refresh_token",
@@ -78,7 +80,7 @@ func (m *SessionAuthMiddleware) RequireRefreshToken(next mw.Handler) mw.Handler 
 		}
 
 		// Decode session
-		session, err := DecodeSession(sessionData)
+		sessionStruct, err := session.DecodeSession(sessionData)
 		if err != nil {
 			logger.ErrorContext(ctx, "Auth middleware: Failed to decode session",
 				"operation", "require_refresh_token",
@@ -90,7 +92,7 @@ func (m *SessionAuthMiddleware) RequireRefreshToken(next mw.Handler) mw.Handler 
 			return
 		}
 
-		err = m.crypto.DecryptStruct(ctx, session)
+		err = m.crypto.DecryptStruct(ctx, sessionStruct)
 		if err != nil {
 			logger.ErrorContext(ctx, "Auth middleware: Failed to decrypt session",
 				"operation", "require_refresh_token",
@@ -107,20 +109,20 @@ func (m *SessionAuthMiddleware) RequireRefreshToken(next mw.Handler) mw.Handler 
 			"method", r.Method,
 			"path", r.URL.Path,
 			"session_id", sessionID,
-			"user_id", session.UserID,
-			"session_state", session.State,
-			"user_role", session.Role)
+			"user_id", sessionStruct.UserID,
+			"session_state", sessionStruct.State,
+			"user_role", sessionStruct.Role)
 
 		// Check session state - refresh tokens work for both pending and active sessions
-		if session.State != SessionActive && session.State != SessionPending {
+		if sessionStruct.State != session.SessionActive && sessionStruct.State != session.SessionPending {
 			logger.WarnContext(ctx, "Auth middleware: Invalid session state for refresh token",
 				"operation", "require_refresh_token",
 				"method", r.Method,
 				"path", r.URL.Path,
 				"session_id", sessionID,
-				"user_id", session.UserID,
-				"session_state", session.State,
-				"expected_states", []string{string(SessionActive), string(SessionPending)})
+				"user_id", sessionStruct.UserID,
+				"session_state", sessionStruct.State,
+				"expected_states", []string{string(session.SessionActive), string(session.SessionPending)})
 			httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
 			return
 		}
@@ -138,15 +140,15 @@ func (m *SessionAuthMiddleware) RequireRefreshToken(next mw.Handler) mw.Handler 
 		}
 
 		// Create lightweight SessionInfo for context
-		sessionInfo := &SessionInfo{
+		sessionInfo := &session.SessionInfo{
 			ID:     parsedSessionID,
-			UserID: session.UserID,
-			Role:   session.Role,
-			State:  session.State,
+			UserID: sessionStruct.UserID,
+			Role:   sessionStruct.Role,
+			State:  sessionStruct.State,
 		}
 
 		// Add session info to context
-		ctx = context.WithValue(ctx, sessionContextKey{}, sessionInfo)
+		ctx = context.WithValue(ctx, session.GetSessionContextKey(), sessionInfo)
 		r = r.WithContext(ctx)
 
 		logger.InfoContext(ctx, "Auth middleware: Refresh token validation successful",
@@ -154,8 +156,8 @@ func (m *SessionAuthMiddleware) RequireRefreshToken(next mw.Handler) mw.Handler 
 			"method", r.Method,
 			"path", r.URL.Path,
 			"session_id", sessionID,
-			"user_id", session.UserID,
-			"user_role", session.Role)
+			"user_id", sessionStruct.UserID,
+			"user_role", sessionStruct.Role)
 
 		// Continue to next handler
 		next(w, r)

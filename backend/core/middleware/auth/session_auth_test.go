@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Leviosa-care/core/auth/cookies"
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/Leviosa-care/core/errs"
 	"github.com/google/uuid"
@@ -18,8 +20,8 @@ import (
 )
 
 func TestNewSessionAuthMiddleware(t *testing.T) {
-	mockRepo := &MockSessionRepository{}
-	mockCrypto := encx.NewCryptoServiceMock()
+	mockRepo := &session.MockSessionRepository{}
+	mockCrypto := &encx.CryptoServiceMock{}
 
 	middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
 
@@ -31,11 +33,11 @@ func TestCookieExtraction(t *testing.T) {
 	// Simple test to verify cookie extraction works
 	req := httptest.NewRequest("GET", "/test", nil)
 	req.AddCookie(&http.Cookie{
-		Name:  AccessTokenCookieName,
+		Name:  cookies.AccessTokenCookieName,
 		Value: "test_token",
 	})
 
-	cookie, err := req.Cookie(AccessTokenCookieName)
+	cookie, err := req.Cookie(cookies.AccessTokenCookieName)
 	require.NoError(t, err)
 	assert.Equal(t, "test_token", cookie.Value)
 }
@@ -59,7 +61,7 @@ func TestRequireAccessToken(t *testing.T) {
 			name: "empty access token cookie",
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  AccessTokenCookieName,
+					Name:  cookies.AccessTokenCookieName,
 					Value: "",
 				})
 			},
@@ -70,7 +72,7 @@ func TestRequireAccessToken(t *testing.T) {
 			name: "valid access token - session not found",
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  AccessTokenCookieName,
+					Name:  cookies.AccessTokenCookieName,
 					Value: "valid_token",
 				})
 			},
@@ -82,7 +84,7 @@ func TestRequireAccessToken(t *testing.T) {
 			name: "valid access token - database error",
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  AccessTokenCookieName,
+					Name:  cookies.AccessTokenCookieName,
 					Value: "valid_token",
 				})
 			},
@@ -94,7 +96,7 @@ func TestRequireAccessToken(t *testing.T) {
 			name: "valid access token - invalid session JSON",
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  AccessTokenCookieName,
+					Name:  cookies.AccessTokenCookieName,
 					Value: "valid_token",
 				})
 			},
@@ -106,16 +108,16 @@ func TestRequireAccessToken(t *testing.T) {
 			name: "valid access token - pending session (should work)",
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  AccessTokenCookieName,
+					Name:  cookies.AccessTokenCookieName,
 					Value: "valid_token",
 				})
 			},
 			repoResponse: func() []byte {
-				session := &Session{
+				session := &session.Session{
 					ID:     uuid.New(),
 					UserID: uuid.New(),
 					Role:   identity.Standard,
-					State:  SessionPending,
+					State:  session.SessionPending,
 				}
 				return createValidSessionJSON(t, session)
 			}(),
@@ -126,16 +128,16 @@ func TestRequireAccessToken(t *testing.T) {
 		// 	name: "valid access token - active session",
 		// 	setupCookie: func(req *http.Request) {
 		// 		req.AddCookie(&http.Cookie{
-		// 			Name:  AccessTokenCookieName,
+		// 			Name:  cookies.AccessTokenCookieName,
 		// 			Value: "valid_token",
 		// 		})
 		// 	},
 		// 	repoResponse: func() []byte {
-		// 		session := &Session{
+		// 		session := &session.Session{
 		// 			ID:     uuid.New(),
 		// 			UserID: uuid.New(),
 		// 			Role:   identity.Standard,
-		// 			State:  SessionActive,
+		// 			State:  session.SessionActive,
 		// 		}
 		// 		return createValidSessionJSON(t, session)
 		// 	}(),
@@ -146,12 +148,12 @@ func TestRequireAccessToken(t *testing.T) {
 			name: "valid access token - expired session (invalid state)",
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  AccessTokenCookieName,
+					Name:  cookies.AccessTokenCookieName,
 					Value: "valid_token",
 				})
 			},
 			repoResponse: func() []byte {
-				session := &Session{
+				session := &session.Session{
 					ID:     uuid.New(),
 					UserID: uuid.New(),
 					Role:   identity.Standard,
@@ -167,8 +169,8 @@ func TestRequireAccessToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			mockRepo := &MockSessionRepository{}
-			mockCrypto := encx.NewCryptoServiceMock()
+			mockRepo := &session.MockSessionRepository{}
+			mockCrypto := &encx.CryptoServiceMock{}
 			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
 
 			if tt.repoResponse != nil || tt.repoError != nil {
@@ -177,7 +179,7 @@ func TestRequireAccessToken(t *testing.T) {
 
 			// Create test handler
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				session, found := SessionFromContext(r.Context())
+				session, found := session.SessionFromContext(r.Context())
 				if tt.expectedInCtx {
 					assert.True(t, found, "Expected session in context")
 					assert.NotNil(t, session, "Expected non-nil session")
@@ -223,17 +225,17 @@ func TestRequireRefreshToken(t *testing.T) {
 		},
 		{
 			name:           "refresh endpoint - missing refresh token cookie",
-			path:           RefreshEndpoint,
+			path:           cookies.RefreshEndpoint,
 			setupCookie:    func(req *http.Request) {},
 			expectedStatus: http.StatusUnauthorized,
 			expectedInCtx:  false,
 		},
 		{
 			name: "refresh endpoint - empty refresh token cookie",
-			path: RefreshEndpoint,
+			path: cookies.RefreshEndpoint,
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  RefreshTokenCookieName,
+					Name:  cookies.RefreshTokenCookieName,
 					Value: "",
 				})
 			},
@@ -242,10 +244,10 @@ func TestRequireRefreshToken(t *testing.T) {
 		},
 		{
 			name: "refresh endpoint - valid refresh token - session not found",
-			path: RefreshEndpoint,
+			path: cookies.RefreshEndpoint,
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  RefreshTokenCookieName,
+					Name:  cookies.RefreshTokenCookieName,
 					Value: "valid_refresh_token",
 				})
 			},
@@ -255,10 +257,10 @@ func TestRequireRefreshToken(t *testing.T) {
 		},
 		{
 			name: "refresh endpoint - valid refresh token - database error",
-			path: RefreshEndpoint,
+			path: cookies.RefreshEndpoint,
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  RefreshTokenCookieName,
+					Name:  cookies.RefreshTokenCookieName,
 					Value: "valid_refresh_token",
 				})
 			},
@@ -268,19 +270,19 @@ func TestRequireRefreshToken(t *testing.T) {
 		},
 		{
 			name: "refresh endpoint - valid refresh token - active session",
-			path: RefreshEndpoint,
+			path: cookies.RefreshEndpoint,
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  RefreshTokenCookieName,
+					Name:  cookies.RefreshTokenCookieName,
 					Value: "valid_refresh_token",
 				})
 			},
 			repoResponse: func() []byte {
-				session := &Session{
+				session := &session.Session{
 					ID:     uuid.New(),
 					UserID: uuid.New(),
 					Role:   identity.Standard,
-					State:  SessionActive,
+					State:  session.SessionActive,
 				}
 				return createValidSessionJSON(t, session)
 			}(),
@@ -289,19 +291,19 @@ func TestRequireRefreshToken(t *testing.T) {
 		},
 		{
 			name: "refresh endpoint - valid refresh token - pending session",
-			path: RefreshEndpoint,
+			path: cookies.RefreshEndpoint,
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  RefreshTokenCookieName,
+					Name:  cookies.RefreshTokenCookieName,
 					Value: "valid_refresh_token",
 				})
 			},
 			repoResponse: func() []byte {
-				session := &Session{
+				session := &session.Session{
 					ID:     uuid.New(),
 					UserID: uuid.New(),
 					Role:   identity.Standard,
-					State:  SessionPending,
+					State:  session.SessionPending,
 				}
 				return createValidSessionJSON(t, session)
 			}(),
@@ -313,8 +315,8 @@ func TestRequireRefreshToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			mockRepo := &MockSessionRepository{}
-			mockCrypto := encx.NewCryptoServiceMock()
+			mockRepo := &session.MockSessionRepository{}
+			mockCrypto := &encx.CryptoServiceMock{}
 			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
 
 			if tt.repoResponse != nil || tt.repoError != nil {
@@ -323,7 +325,7 @@ func TestRequireRefreshToken(t *testing.T) {
 
 			// Create test handler
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				session, found := SessionFromContext(r.Context())
+				session, found := session.SessionFromContext(r.Context())
 				if tt.expectedInCtx {
 					assert.True(t, found, "Expected session in context")
 					assert.NotNil(t, session, "Expected non-nil session")
@@ -352,25 +354,25 @@ func TestRequireRefreshToken(t *testing.T) {
 
 // TestSession is a test-only version of Session that can marshal plaintext fields
 type TestSession struct {
-	ID                 uuid.UUID     `json:"id"`
-	UserID             uuid.UUID     `json:"user_id"`
-	UserIDEncrypted    []byte        `json:"user_id_encrypted"`
-	Role               identity.Role `json:"role"`
-	RoleEncrypted      []byte        `json:"role_encrypted"`
-	State              SessionState  `json:"state"`
-	StateEncrypted     []byte        `json:"state_encrypted"`
-	CreatedAt          time.Time     `json:"created_at"`
-	CreatedAtEncrypted []byte        `json:"created_at_encrypted"`
-	ExpiresAt          time.Time     `json:"expires_at"`
-	ExpiresAtEncrypted []byte        `json:"expires_at_encrypted"`
-	AccessTokenHash    string        `json:"access_token_hash"`
-	RefreshTokenHash   string        `json:"refresh_token_hash"`
-	DEKEncrypted       []byte        `json:"dek_encrypted"`
-	KeyVersion         int           `json:"key_version"`
+	ID                 uuid.UUID            `json:"id"`
+	UserID             uuid.UUID            `json:"user_id"`
+	UserIDEncrypted    []byte               `json:"user_id_encrypted"`
+	Role               identity.Role        `json:"role"`
+	RoleEncrypted      []byte               `json:"role_encrypted"`
+	State              session.SessionState `json:"state"`
+	StateEncrypted     []byte               `json:"state_encrypted"`
+	CreatedAt          time.Time            `json:"created_at"`
+	CreatedAtEncrypted []byte               `json:"created_at_encrypted"`
+	ExpiresAt          time.Time            `json:"expires_at"`
+	ExpiresAtEncrypted []byte               `json:"expires_at_encrypted"`
+	AccessTokenHash    string               `json:"access_token_hash"`
+	RefreshTokenHash   string               `json:"refresh_token_hash"`
+	DEKEncrypted       []byte               `json:"dek_encrypted"`
+	KeyVersion         int                  `json:"key_version"`
 }
 
 // Helper function to create valid JSON session data for testing
-func createValidSessionJSON(t *testing.T, session *Session) []byte {
+func createValidSessionJSON(t *testing.T, sessionStruct *session.Session) []byte {
 	t.Helper()
 
 	// Create test session with plaintext fields that can be marshaled

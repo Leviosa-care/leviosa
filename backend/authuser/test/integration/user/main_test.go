@@ -14,30 +14,38 @@ import (
 
 	userHandler "github.com/Leviosa-care/authuser/internal/adapters/http/user"
 	userRepository "github.com/Leviosa-care/authuser/internal/adapters/postgres/user"
+	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
 	authPayment "github.com/Leviosa-care/authuser/internal/adapters/stripe"
 	userService "github.com/Leviosa-care/authuser/internal/application/user"
 	"github.com/Leviosa-care/authuser/internal/ports"
 
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/envmode"
 	"github.com/Leviosa-care/core/logger"
 	"github.com/Leviosa-care/core/middleware"
+	"github.com/Leviosa-care/core/middleware/auth"
 	"github.com/Leviosa-care/core/migrations"
 	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/hengadev/encx"
 	"github.com/hengadev/encx/providers/hashicorpvault"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
-	pgContainer   *tu.PostgresContainer
-	testPool      *pgxpool.Pool
-	crypto        encx.CryptoService
-	repo          ports.UserRepository
-	service       ports.UserService
-	handler       userHandler.Handler
-	testServerURL string       // Global variable to hold the URL of the running test server
-	testServer    *http.Server // To allow graceful shutdown
+	pgContainer     *tu.PostgresContainer
+	testPool        *pgxpool.Pool
+	redisContainer  *tu.RedisContainer
+	testClient      *redis.Client
+	crypto          encx.CryptoService
+	repo            ports.UserRepository
+	authSessionRepo session.SessionRepository
+	sessionRepo     ports.SessionRepository
+	service         ports.UserService
+	handler         userHandler.Handler
+	testServerURL   string       // Global variable to hold the URL of the running test server
+	testServer      *http.Server // To allow graceful shutdown
 )
 
 func TestMain(m *testing.M) {
@@ -146,12 +154,36 @@ func TestMain(m *testing.M) {
 	}
 	log.Println("Crypto service created successfully")
 
+	// Redis container
+	redisContainer, err = tu.SetupRedis(ctx, nil)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to setup redis container: %v", err))
+	}
+	defer tu.TeardownRedis(ctx, nil, redisContainer)
+
+	// Redis client
+	log.Println("Creating Redis client...")
+	testClient = redisContainer.NewClient()
+
+	// Test Redis connection
+	if err = testClient.Ping(ctx).Err(); err != nil {
+		tu.TeardownRedis(ctx, nil, redisContainer)
+		panic(fmt.Sprintf("Failed to ping Redis: %v", err))
+	}
+	log.Println("Redis client connected successfully.")
+
 	payment := authPayment.NewService("sk_test_123456789012345678901234", stripeContainer.URL)
 
 	// Initialize application layers
 	repo = userRepository.New(ctx, testPool)
 	service = userService.New(repo, crypto, payment)
-	handler = userHandler.New(service)
+
+	sessionRepo = sessionRepository.New(testClient)
+
+	authSessionRepo = session.NewRedisSessionRepository(testClient)
+	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto)
+
+	handler = userHandler.New(service, authmw)
 
 	// Set required environment variables for logger middleware
 	os.Setenv("CLIENT_IP_HEADER", "X-Forwarded-For")

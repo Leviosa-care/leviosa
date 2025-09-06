@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Leviosa-care/authuser/internal/domain"
+	"github.com/Leviosa-care/core/auth/session"
 )
 
 // signup flow for the frontend pages
@@ -17,7 +18,7 @@ import (
 type AuthAggregatorService interface {
 	CheckEmailSendOTP(ctx context.Context, request *domain.CheckEmailAvailabilityRequest) error
 	ValidateOTPCreatePendingUser(ctx context.Context, request *domain.ValidateOTPRequest) (*domain.CreateSessionResponse, error)
-	CompleteUser(ctx context.Context, sessionToken string, request *domain.CompleteUserRequest) error
+	CompleteUser(ctx context.Context, sessionInfo *session.SessionInfo, request *domain.CompleteUserRequest) error
 	RefreshSession(ctx context.Context, request *domain.RefreshSessionRequest) (*domain.RefreshSessionResponse, error)
 	// SignIn(ctx context.Context, request *domain.SignInRequest) (string, error)
 	// SignOut(ctx context.Context, request *domain.SignOutRequest) error

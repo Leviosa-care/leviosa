@@ -3,13 +3,13 @@ package userHandler
 import (
 	"net/http"
 
-	// "github.com/Leviosa-care/core/contracts/identity"
+	"github.com/Leviosa-care/core/contracts/identity"
 	mw "github.com/Leviosa-care/core/middleware"
 )
 
 func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	RequireAdmin := h.authmw.RequireAdmin
-	// RequireVisitor := h.authmw.RequireMinimumRole(identity.Visitor)
+	RequireStandard := h.authmw.RequireMinimumRole(identity.Standard)
 
 	// Retrieves all users currently in pending state (admin only).
 	router.HandleFunc("GET /admin/auth/users/pending", RequireAdmin(mw.EnableCORS(h.GetPendingUsers)))
@@ -20,12 +20,12 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Approves a pending user by setting their role and status to active (admin only).
 	router.HandleFunc("PATCH /admin/users/approve", RequireAdmin(mw.EnableCORS(h.ApproveUser)))
 
+	// Retrieves the profile of the currently authenticated user.
+	router.HandleFunc("GET /users/me", RequireStandard(mw.EnableCORS(h.GetUser)))
+
 	// TODO: ==============================
 	// Suggested additional handlers:
 	// ==============================
-
-	// Retrieves the profile of the currently authenticated user.
-	// router.HandleFunc("GET /users/me", mw.EnableCORS(h.GetUser))
 
 	// Updates the profile of the currently authenticated user.
 	// router.HandleFunc("PATCH /users/me", mw.EnableCORS(h.UpdateUser))

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
@@ -22,7 +23,7 @@ func (m *SessionAuthMiddleware) RequireAnyRole(roles ...identity.Role) func(mw.H
 				return
 			}
 
-			sessionInfo, ok := SessionInfoFromContext(ctx)
+			sessionInfo, ok := session.SessionInfoFromContext(ctx)
 			if !ok {
 				logger.ErrorContext(ctx, "Auth middleware: Session info not found in context",
 					"operation", "require_any_role",

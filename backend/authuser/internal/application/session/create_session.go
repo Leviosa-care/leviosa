@@ -9,8 +9,8 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/middleware/auth"
 	"github.com/google/uuid"
 )
 
@@ -23,12 +23,12 @@ func (s *SessionService) CreateSession(ctx context.Context, request *domain.Crea
 	now := time.Now()
 
 	// Generate access and refresh tokens
-	accessToken, err := auth.GenerateToken()
+	accessToken, err := session.GenerateToken()
 	if err != nil {
 		return nil, errs.NewUnexpectedError(err)
 	}
 
-	refreshToken, err := auth.GenerateToken()
+	refreshToken, err := session.GenerateToken()
 	if err != nil {
 		return nil, errs.NewUnexpectedError(err)
 	}
@@ -38,12 +38,12 @@ func (s *SessionService) CreateSession(ctx context.Context, request *domain.Crea
 	refreshDuration := s.cache.GetRefreshTokenDuration()
 
 	// Use shorter durations for pending sessions
-	if request.State == auth.SessionPending {
-		accessDuration = auth.PendingSessionDuration
-		refreshDuration = auth.PendingSessionDuration
+	if request.State == session.SessionPending {
+		accessDuration = session.PendingSessionDuration
+		refreshDuration = session.PendingSessionDuration
 	}
 
-	session := &auth.Session{
+	session := &session.Session{
 		ID:           uuid.New(),
 		UserID:       userID,
 		Role:         request.Role,

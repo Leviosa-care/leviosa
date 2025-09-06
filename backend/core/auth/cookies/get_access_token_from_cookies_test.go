@@ -1,6 +1,7 @@
-package auth
+package cookies_test
 
 import (
+	"github.com/Leviosa-care/core/auth/cookies"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -19,7 +20,7 @@ func TestGetAccessTokenFromCookies(t *testing.T) {
 			name: "valid access token cookie",
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  AccessTokenCookieName,
+					Name:  cookies.AccessTokenCookieName,
 					Value: "test_access_token",
 				})
 			},
@@ -36,7 +37,7 @@ func TestGetAccessTokenFromCookies(t *testing.T) {
 			name: "empty access token cookie",
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  AccessTokenCookieName,
+					Name:  cookies.AccessTokenCookieName,
 					Value: "",
 				})
 			},
@@ -47,7 +48,7 @@ func TestGetAccessTokenFromCookies(t *testing.T) {
 			name: "access token with special characters",
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  AccessTokenCookieName,
+					Name:  cookies.AccessTokenCookieName,
 					Value: "token-123_456.789",
 				})
 			},
@@ -63,7 +64,7 @@ func TestGetAccessTokenFromCookies(t *testing.T) {
 			tt.setupCookie(req)
 
 			// Execute
-			token, err := GetAccessTokenFromCookies(req)
+			token, err := cookies.GetAccessTokenFromCookies(req)
 
 			// Verify
 			if tt.expectError {
@@ -76,3 +77,4 @@ func TestGetAccessTokenFromCookies(t *testing.T) {
 		})
 	}
 }
+

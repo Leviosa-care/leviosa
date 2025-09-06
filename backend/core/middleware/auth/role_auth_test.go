@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Leviosa-care/core/auth/cookies"
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/Leviosa-care/core/middleware"
 	"github.com/google/uuid"
@@ -76,15 +78,15 @@ func TestRequireAnyRole(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock repository
-			mockRepo := &MockSessionRepository{}
-			mockCrypto := encx.NewCryptoServiceMock()
+			mockRepo := &session.MockSessionRepository{}
+			mockCrypto := &encx.CryptoServiceMock{}
 
 			// Create valid session data with the test role
-			session := &Session{
+			session := &session.Session{
 				ID:               uuid.New(),
 				UserID:           uuid.New(),
 				Role:             tt.userRole,
-				State:            SessionActive,
+				State:            session.SessionActive,
 				CreatedAt:        time.Now(),
 				ExpiresAt:        time.Now().Add(time.Hour),
 				AccessTokenHash:  "test_access_hash",
@@ -110,7 +112,7 @@ func TestRequireAnyRole(t *testing.T) {
 			// Create request with access token cookie
 			req := httptest.NewRequest("GET", "/test", nil)
 			req.AddCookie(&http.Cookie{
-				Name:  AccessTokenCookieName,
+				Name:  cookies.AccessTokenCookieName,
 				Value: "valid_token",
 			})
 
@@ -157,15 +159,15 @@ func TestSessionAuthMiddleware_RequireAdmin(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock repository
-			mockRepo := &MockSessionRepository{}
-			mockCrypto := encx.NewCryptoServiceMock()
+			mockRepo := &session.MockSessionRepository{}
+			mockCrypto := &encx.CryptoServiceMock{}
 
 			// Create valid session data with the test role
-			session := &Session{
+			session := &session.Session{
 				ID:               uuid.New(),
 				UserID:           uuid.New(),
 				Role:             tt.userRole,
-				State:            SessionActive,
+				State:            session.SessionActive,
 				CreatedAt:        time.Now(),
 				ExpiresAt:        time.Now().Add(time.Hour),
 				AccessTokenHash:  "test_access_hash",
@@ -191,7 +193,7 @@ func TestSessionAuthMiddleware_RequireAdmin(t *testing.T) {
 			// Create request with access token cookie
 			req := httptest.NewRequest("GET", "/test", nil)
 			req.AddCookie(&http.Cookie{
-				Name:  AccessTokenCookieName,
+				Name:  cookies.AccessTokenCookieName,
 				Value: "valid_token",
 			})
 
@@ -233,8 +235,8 @@ func TestRoleAuthMiddleware_NoSessionInContext(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := &MockSessionRepository{}
-			mockCrypto := encx.NewCryptoServiceMock()
+			mockRepo := &session.MockSessionRepository{}
+			mockCrypto := &encx.CryptoServiceMock{}
 			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
 
 			// Create a handler that manually adds broken context (no session)
@@ -262,15 +264,15 @@ func TestRoleAuthMiddleware_NoSessionInContext(t *testing.T) {
 
 func TestRoleAuthMiddleware_Integration(t *testing.T) {
 	// Test the full flow: RequireSession -> RequireMinimumRole
-	mockRepo := &MockSessionRepository{}
-	mockCrypto := encx.NewCryptoServiceMock()
+	mockRepo := &session.MockSessionRepository{}
+	mockCrypto := &encx.CryptoServiceMock{}
 
 	// Create session data for partner user
-	session := &Session{
+	session := &session.Session{
 		ID:               uuid.New(),
 		UserID:           uuid.New(),
 		Role:             identity.Partner,
-		State:            SessionActive,
+		State:            session.SessionActive,
 		CreatedAt:        time.Now(),
 		ExpiresAt:        time.Now().Add(time.Hour),
 		AccessTokenHash:  "test_access_hash",
@@ -285,7 +287,7 @@ func TestRoleAuthMiddleware_Integration(t *testing.T) {
 	nextCalled := false
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Verify session is available in context
-		session, ok := SessionFromContext(r.Context())
+		session, ok := session.SessionFromContext(r.Context())
 		assert.True(t, ok, "session should be in context")
 		assert.Equal(t, identity.Partner, session.Role, "session should have partner role")
 
@@ -298,7 +300,7 @@ func TestRoleAuthMiddleware_Integration(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/partner-endpoint", nil)
 	req.AddCookie(&http.Cookie{
-		Name:  AccessTokenCookieName,
+		Name:  cookies.AccessTokenCookieName,
 		Value: "valid_token",
 	})
 

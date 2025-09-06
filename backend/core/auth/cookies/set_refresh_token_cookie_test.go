@@ -1,6 +1,7 @@
-package auth
+package cookies_test
 
 import (
+	"github.com/Leviosa-care/core/auth/cookies"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,18 +18,19 @@ func TestSetRefreshTokenCookie(t *testing.T) {
 	expiry := time.Now().Add(24 * time.Hour)
 
 	// Execute
-	SetRefreshTokenCookie(w, refreshToken, expiry)
+	cookies.SetRefreshTokenCookie(w, refreshToken, expiry)
 
 	// Verify
-	cookies := w.Result().Cookies()
-	require.Len(t, cookies, 1, "Should set exactly 1 cookie")
+	responseCookies := w.Result().Cookies()
+	require.Len(t, responseCookies, 1, "Should set exactly 1 cookie")
 
-	cookie := cookies[0]
-	assert.Equal(t, RefreshTokenCookieName, cookie.Name)
+	cookie := responseCookies[0]
+	assert.Equal(t, cookies.RefreshTokenCookieName, cookie.Name)
 	assert.Equal(t, refreshToken, cookie.Value)
-	assert.Equal(t, RefreshEndpoint, cookie.Path)
+	assert.Equal(t, cookies.RefreshEndpoint, cookie.Path)
 	assert.True(t, cookie.HttpOnly)
 	assert.True(t, cookie.Secure)
 	assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
 	assert.WithinDuration(t, expiry, cookie.Expires, time.Second)
 }
+

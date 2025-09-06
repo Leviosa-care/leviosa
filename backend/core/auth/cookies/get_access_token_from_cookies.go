@@ -1,4 +1,4 @@
-package auth
+package cookies
 
 import "net/http"
 
@@ -10,3 +10,4 @@ func GetAccessTokenFromCookies(r *http.Request) (string, error) {
 	}
 	return cookie.Value, nil
 }
+

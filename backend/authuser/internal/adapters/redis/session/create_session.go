@@ -4,15 +4,15 @@ import (
 	"context"
 	"time"
 
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/middleware/auth"
 	"github.com/google/uuid"
 	"github.com/hengadev/errsx"
 )
 
 func (r *SessionRepository) CreateSession(ctx context.Context, sessionID uuid.UUID, tokenHash string, sessionEncoded []byte, ttl time.Duration) error {
-	sessionKey := auth.FormatSessionKey(sessionID.String())
-	accessTokenKey := auth.FormatAccessTokenKey(tokenHash)
+	sessionKey := session.FormatSessionKey(sessionID.String())
+	accessTokenKey := session.FormatAccessTokenKey(tokenHash)
 
 	if err := r.client.Set(ctx, sessionKey, sessionEncoded, ttl).Err(); err != nil {
 		return errs.ClassifyRedisError("save session with ID key", err)

@@ -17,4 +17,3 @@ func (r Role) IsAtLeast(target Role) bool {
 func (r Role) HasPermission(target Role) bool {
 	return r.IsAtLeast(target)
 }
-

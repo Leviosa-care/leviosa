@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Leviosa-care/core/auth/cookies"
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/google/uuid"
 	"github.com/hengadev/encx"
@@ -75,15 +77,15 @@ func TestRequireMinimumRole(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock repository
-			mockRepo := &MockSessionRepository{}
-			mockCrypto := encx.NewCryptoServiceMock()
+			mockRepo := &session.MockSessionRepository{}
+			mockCrypto := &encx.CryptoServiceMock{}
 
 			// Create valid session data with the test role
-			session := &Session{
+			session := &session.Session{
 				ID:               uuid.New(),
 				UserID:           uuid.New(),
 				Role:             tt.userRole,
-				State:            SessionActive,
+				State:            session.SessionActive,
 				CreatedAt:        time.Now(),
 				ExpiresAt:        time.Now().Add(time.Hour),
 				AccessTokenHash:  "test_access_hash",
@@ -109,7 +111,7 @@ func TestRequireMinimumRole(t *testing.T) {
 			// Create request with access token cookie
 			req := httptest.NewRequest("GET", "/test", nil)
 			req.AddCookie(&http.Cookie{
-				Name:  AccessTokenCookieName,
+				Name:  cookies.AccessTokenCookieName,
 				Value: "valid_token",
 			})
 

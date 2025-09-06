@@ -1,4 +1,4 @@
-package auth
+package cookies
 
 const (
 	AccessTokenCookieName  = "leviosa_access_token"

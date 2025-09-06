@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/middleware/auth"
 	"github.com/google/uuid"
 	"github.com/hengadev/errsx"
 )
@@ -13,9 +13,9 @@ import (
 // CreateTokenPair creates session data with both access and refresh tokens
 // Implements secure two-step lookup: token -> session ID -> session data
 func (r *SessionRepository) CreateTokenPair(ctx context.Context, sessionID uuid.UUID, accessTokenHash, refreshTokenHash string, sessionEncoded []byte, accessTTL, refreshTTL time.Duration) error {
-	sessionKey := auth.FormatSessionKey(sessionID.String())
-	accessTokenKey := auth.FormatAccessTokenKey(accessTokenHash)
-	refreshTokenKey := auth.FormatRefreshTokenKey(refreshTokenHash)
+	sessionKey := session.FormatSessionKey(sessionID.String())
+	accessTokenKey := session.FormatAccessTokenKey(accessTokenHash)
+	refreshTokenKey := session.FormatRefreshTokenKey(refreshTokenHash)
 	sessionIDStr := sessionID.String()
 
 	var creationErrs errsx.Map

@@ -1,6 +1,7 @@
-package auth
+package cookies_test
 
 import (
+	"github.com/Leviosa-care/core/auth/cookies"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -19,7 +20,7 @@ func TestGetRefreshTokenFromCookies(t *testing.T) {
 			name: "valid refresh token cookie",
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  RefreshTokenCookieName,
+					Name:  cookies.RefreshTokenCookieName,
 					Value: "test_refresh_token",
 				})
 			},
@@ -36,7 +37,7 @@ func TestGetRefreshTokenFromCookies(t *testing.T) {
 			name: "empty refresh token cookie",
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  RefreshTokenCookieName,
+					Name:  cookies.RefreshTokenCookieName,
 					Value: "",
 				})
 			},
@@ -47,7 +48,7 @@ func TestGetRefreshTokenFromCookies(t *testing.T) {
 			name: "refresh token with special characters",
 			setupCookie: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
-					Name:  RefreshTokenCookieName,
+					Name:  cookies.RefreshTokenCookieName,
 					Value: "refresh-987_654.321",
 				})
 			},
@@ -63,7 +64,7 @@ func TestGetRefreshTokenFromCookies(t *testing.T) {
 			tt.setupCookie(req)
 
 			// Execute
-			token, err := GetRefreshTokenFromCookies(req)
+			token, err := cookies.GetRefreshTokenFromCookies(req)
 
 			// Verify
 			if tt.expectError {
@@ -76,3 +77,4 @@ func TestGetRefreshTokenFromCookies(t *testing.T) {
 		})
 	}
 }
+

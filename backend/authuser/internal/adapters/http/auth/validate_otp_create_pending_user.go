@@ -9,10 +9,10 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 
+	"github.com/Leviosa-care/core/auth/cookies"
 	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/httpx"
-	mw "github.com/Leviosa-care/core/middleware/auth"
 )
 
 func (h *handler) ValidateOTPCreatePendingUser(w http.ResponseWriter, r *http.Request) {
@@ -168,7 +168,7 @@ func (h *handler) ValidateOTPCreatePendingUser(w http.ResponseWriter, r *http.Re
 		"status_code", http.StatusCreated)
 
 	// Set dual token cookies
-	mw.SetTokenCookies(w, session.AccessToken, session.RefreshToken,
+	cookies.SetTokenCookies(w, session.AccessToken, session.RefreshToken,
 		session.AccessTokenExpiry, session.RefreshTokenExpiry)
 
 	httpx.RespondWithJSON(w, struct {

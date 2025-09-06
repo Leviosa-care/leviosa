@@ -9,39 +9,29 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 
-	// "github.com/Leviosa-care/core/ctxutil"
+	"github.com/Leviosa-care/core/auth/session"
+	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/httpx"
-	mw "github.com/Leviosa-care/core/middleware/auth"
 )
 
 func (h *handler) CompleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// logger, err := ctxutil.GetLoggerFromContext(ctx)
-	// if err != nil {
-	// 	httpx.RespondWithError(w, err, http.StatusInternalServerError)
-	// 	return
-	// }
-
-	// Extract session token from cookie
-	sessionCookie, err := r.Cookie(mw.AccessTokenCookieName)
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
 	if err != nil {
-		// logger.WarnContext(ctx, "Handler: Missing session cookie",
-		// 	"error", err,
-		// 	"operation", "complete_user",
-		// 	"method", r.Method,
-		// 	"path", r.URL.Path)
-		httpx.RespondWithError(w, errs.NewInvalidValueErr("session token required"), http.StatusUnauthorized)
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	if sessionCookie.Value == "" {
-		// logger.WarnContext(ctx, "Handler: Empty session token",
-		// 	"operation", "complete_user",
-		// 	"method", r.Method,
-		// 	"path", r.URL.Path)
-		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid session token"), http.StatusUnauthorized)
+	sessionInfo, ok := session.SessionInfoFromContext(ctx)
+	if !ok {
+		logger.WarnContext(ctx, "Handler: Missing session info",
+			"error", err,
+			"operation", "complete_user",
+			"method", r.Method,
+			"path", r.URL.Path)
+		httpx.RespondWithError(w, errs.NewInvalidValueErr("session informatino from context required"), http.StatusUnauthorized)
 		return
 	}
 
@@ -51,23 +41,23 @@ func (h *handler) CompleteUser(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&payload); err != nil {
-		// logger.WarnContext(ctx, "Handler: Invalid JSON request body",
-		// 	"error", err,
-		// 	"operation", "complete_user",
-		// 	"method", r.Method,
-		// 	"path", r.URL.Path)
+		logger.WarnContext(ctx, "Handler: Invalid JSON request body",
+			"error", err,
+			"operation", "complete_user",
+			"method", r.Method,
+			"path", r.URL.Path)
 		httpx.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("invalid request body: %v", err)), http.StatusBadRequest)
 		return
 	}
 
-	// logger.InfoContext(ctx, "Handler: Processing complete user request",
-	// 	"operation", "complete_user",
-	// 	"method", r.Method,
-	// 	"path", r.URL.Path,
-	// 	"user_agent", r.Header.Get("User-Agent"))
+	logger.InfoContext(ctx, "Handler: Processing complete user request",
+		"operation", "complete_user",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"user_agent", r.Header.Get("User-Agent"))
 
 	// Call the aggregator service
-	err = h.svc.CompleteUser(ctx, sessionCookie.Value, &payload)
+	err = h.svc.CompleteUser(ctx, sessionInfo, &payload)
 	if err != nil {
 		// Log with specific error context based on error type
 		var logLevel string
@@ -157,11 +147,11 @@ func (h *handler) CompleteUser(w http.ResponseWriter, r *http.Request) {
 
 		switch logLevel {
 		case "info":
-			// logger.InfoContext(ctx, "Handler: Complete user request result", logFields...)
+			logger.InfoContext(ctx, "Handler: Complete user request result", logFields...)
 		case "warn":
-			// logger.WarnContext(ctx, "Handler: Complete user request failed", logFields...)
+			logger.WarnContext(ctx, "Handler: Complete user request failed", logFields...)
 		case "error":
-			// logger.ErrorContext(ctx, "Handler: Complete user request failed", logFields...)
+			logger.ErrorContext(ctx, "Handler: Complete user request failed", logFields...)
 		}
 
 		httpx.RespondWithError(w, err, statusCode)
@@ -169,11 +159,11 @@ func (h *handler) CompleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Log successful operation
-	// logger.InfoContext(ctx, "Handler: Complete user request completed successfully",
-	// 	"operation", "complete_user",
-	// 	"method", r.Method,
-	// 	"path", r.URL.Path,
-	// 	"status_code", http.StatusOK)
+	logger.InfoContext(ctx, "Handler: Complete user request completed successfully",
+		"operation", "complete_user",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"status_code", http.StatusOK)
 
 	// Respond with success message (no session cookie changes)
 	httpx.RespondWithJSON(w, struct {

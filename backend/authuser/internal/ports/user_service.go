@@ -13,4 +13,7 @@ type UserService interface {
 	CompleteUser(ctx context.Context, userID uuid.UUID, request *domain.CompleteUserRequest) error
 	GetPendingUsers(ctx context.Context) ([]*domain.UserResponse, error)
 	GetAllUsers(ctx context.Context) ([]*domain.UserResponse, error)
+	GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.UserResponse, error)
+	GetUserByEmailHash(ctx context.Context, emailHash string) (*domain.UserResponse, error)
+	ApproveUser(ctx context.Context, request *domain.ApproveUserRequest) error
 }

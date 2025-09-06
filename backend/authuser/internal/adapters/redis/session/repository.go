@@ -10,7 +10,5 @@ type SessionRepository struct {
 }
 
 func New(client *redis.Client) ports.SessionRepository {
-	return &SessionRepository{
-		client: client,
-	}
+	return &SessionRepository{client: client}
 }

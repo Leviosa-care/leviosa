@@ -1,4 +1,4 @@
-package auth
+package cookies
 
 import (
 	"net/http"
@@ -17,3 +17,4 @@ func SetRefreshTokenCookie(w http.ResponseWriter, refreshToken string, expiry ti
 		Expires:  expiry,
 	})
 }
+

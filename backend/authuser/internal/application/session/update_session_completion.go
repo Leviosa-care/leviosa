@@ -7,17 +7,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/middleware/auth"
 	"github.com/google/uuid"
 )
 
-func (s *SessionService) UpdateSessionCompletion(ctx context.Context, sessionID string, completedAt *time.Time) error {
-	sessionUUID, err := uuid.Parse(sessionID)
-	if err != nil {
-		return errs.NewInvalidValueErr("invalid session ID format")
-	}
-
+func (s *SessionService) UpdateSessionCompletion(ctx context.Context, sessionID uuid.UUID, completedAt *time.Time) error {
 	// First get the current session to update it
 	sessionData, err := s.repo.FindSessionByID(ctx, sessionID)
 	if err != nil {
@@ -33,28 +28,7 @@ func (s *SessionService) UpdateSessionCompletion(ctx context.Context, sessionID 
 		}
 	}
 
-	// NOTE: what was that ?
-	// // Parse the session data (it's encrypted JSON)
-	// var sessionMap map[string]any
-	// err = json.Unmarshal(sessionData, &sessionMap)
-	// if err != nil {
-	// 	return errs.NewJSONUnmarshalErr(err)
-	// }
-	//
-	// // If we have a completed timestamp, encrypt it and add to the session
-	// if completedAt != nil {
-	// 	// Here we'd normally use the crypto service to encrypt the timestamp
-	// 	// For now, we'll add the encrypted fields to the map
-	// 	sessionMap["completed_at"] = completedAt
-	// 	// In a real implementation, you'd encrypt this and store in completed_at_encrypted
-	// }
-	// // Re-encode the session
-	// updatedSessionData, err := json.Marshal(sessionMap)
-	// if err != nil {
-	// 	return errs.NewJSONMarshalErr(err)
-	// }
-
-	var session *auth.Session
+	var session *session.Session
 	err = json.Unmarshal(sessionData, &session)
 	if err != nil {
 		return errs.NewJSONUnmarshalErr(err)
@@ -72,7 +46,7 @@ func (s *SessionService) UpdateSessionCompletion(ctx context.Context, sessionID 
 	}
 
 	// Update the session in the repository
-	if err := s.repo.UpdateSessionCompletion(ctx, sessionUUID, updatedSessionData); err != nil {
+	if err := s.repo.UpdateSessionCompletion(ctx, sessionID, updatedSessionData); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
 			return errs.NewNotFoundErr(fmt.Errorf("session not found during update: %w", err), "session")

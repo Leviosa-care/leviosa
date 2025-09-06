@@ -1,4 +1,4 @@
-package auth
+package session
 
 import (
 	"encoding/json"
@@ -61,4 +61,3 @@ func DecodeSession(data []byte) (*Session, error) {
 
 	return session, nil
 }
-
