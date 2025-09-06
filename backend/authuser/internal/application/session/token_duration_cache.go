@@ -84,4 +84,3 @@ func (c *TokenDurationCache) Reset() {
 	c.accessTokenDurationMinutes = 30
 	c.refreshTokenDurationHours = 168
 }
-
