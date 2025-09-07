@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -10,7 +11,11 @@ import (
 )
 
 func (s *SessionService) RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error {
-	userIDHash := s.crypto.HashBasic(ctx, []byte(userID.String()))
+	userIDBytes, err := json.Marshal(userID)
+	if err != nil {
+		return fmt.Errorf("failed to serialize userID: %w", err)
+	}
+	userIDHash := s.crypto.HashBasic(ctx, userIDBytes)
 
 	// Call repository with the hashed userID
 	if err := s.repo.RevokeAllUserSessions(ctx, userIDHash); err != nil {
