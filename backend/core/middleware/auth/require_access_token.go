@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/Leviosa-care/core/auth/cookies"
 	"github.com/Leviosa-care/core/auth/session"
@@ -91,6 +92,20 @@ func (m *SessionAuthMiddleware) RequireAccessToken(next mw.Handler) mw.Handler {
 			"user_id", sessionStruct.UserID,
 			"session_state", sessionStruct.State,
 			"user_role", sessionStruct.Role)
+
+		// Check session expiration
+		if time.Now().After(sessionStruct.ExpiresAt) {
+			logger.WarnContext(ctx, "Auth middleware: Session has expired",
+				"operation", "require_access_token",
+				"method", r.Method,
+				"path", r.URL.Path,
+				"session_id", sessionID,
+				"user_id", sessionStruct.UserID,
+				"expires_at", sessionStruct.ExpiresAt,
+				"current_time", time.Now())
+			httpx.RespondWithError(w, errs.ErrExpiredToken, http.StatusUnauthorized)
+			return
+		}
 
 		// Check session state - access tokens work for both pending and active sessions
 		if sessionStruct.State != session.SessionActive && sessionStruct.State != session.SessionPending {

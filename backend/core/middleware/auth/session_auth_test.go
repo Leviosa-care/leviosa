@@ -164,6 +164,66 @@ func TestRequireAccessToken(t *testing.T) {
 			expectedStatus: http.StatusUnauthorized,
 			expectedInCtx:  false,
 		},
+		{
+			name: "valid access token - expired session (time-based expiration)",
+			setupCookie: func(req *http.Request) {
+				req.AddCookie(&http.Cookie{
+					Name:  cookies.AccessTokenCookieName,
+					Value: "valid_token",
+				})
+			},
+			repoResponse: func() []byte {
+				session := &session.Session{
+					ID:     uuid.New(),
+					UserID: uuid.New(),
+					Role:   identity.Standard,
+					State:  session.SessionActive, // Valid state but expired
+				}
+				return createExpiredSessionJSON(t, session, time.Now().Add(-time.Hour))
+			}(),
+			expectedStatus: http.StatusUnauthorized,
+			expectedInCtx:  false,
+		},
+		{
+			name: "valid access token - pending session expired (time-based expiration)",
+			setupCookie: func(req *http.Request) {
+				req.AddCookie(&http.Cookie{
+					Name:  cookies.AccessTokenCookieName,
+					Value: "valid_token",
+				})
+			},
+			repoResponse: func() []byte {
+				session := &session.Session{
+					ID:     uuid.New(),
+					UserID: uuid.New(),
+					Role:   identity.Standard,
+					State:  session.SessionPending, // Valid state but expired
+				}
+				return createExpiredSessionJSON(t, session, time.Now().Add(-time.Minute))
+			}(),
+			expectedStatus: http.StatusUnauthorized,
+			expectedInCtx:  false,
+		},
+		{
+			name: "valid access token - active session not expired",
+			setupCookie: func(req *http.Request) {
+				req.AddCookie(&http.Cookie{
+					Name:  cookies.AccessTokenCookieName,
+					Value: "valid_token",
+				})
+			},
+			repoResponse: func() []byte {
+				session := &session.Session{
+					ID:     uuid.New(),
+					UserID: uuid.New(),
+					Role:   identity.Standard,
+					State:  session.SessionActive,
+				}
+				return createValidSessionJSON(t, session) // Uses future expiration
+			}(),
+			expectedStatus: http.StatusOK,
+			expectedInCtx:  true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -387,6 +447,36 @@ func createValidSessionJSON(t *testing.T, sessionStruct *session.Session) []byte
 		CreatedAt:          time.Now(),
 		CreatedAtEncrypted: []byte("encrypted_created_at"),
 		ExpiresAt:          time.Now().Add(time.Hour),
+		ExpiresAtEncrypted: []byte("encrypted_expires_at"),
+		AccessTokenHash:    "access_token_hash",
+		RefreshTokenHash:   "refresh_token_hash",
+		DEKEncrypted:       []byte("encrypted_dek"),
+		KeyVersion:         1,
+	}
+
+	// Marshal to JSON
+	data, err := json.Marshal(testSession)
+	require.NoError(t, err)
+
+	return data
+}
+
+// Helper function to create expired session JSON data for testing
+func createExpiredSessionJSON(t *testing.T, sessionStruct *session.Session, expiresAt time.Time) []byte {
+	t.Helper()
+
+	// Create test session with plaintext fields that can be marshaled
+	testSession := &TestSession{
+		ID:                 sessionStruct.ID,
+		UserID:             sessionStruct.UserID,
+		UserIDEncrypted:    []byte("encrypted_user_id"),
+		Role:               sessionStruct.Role,
+		RoleEncrypted:      []byte("encrypted_role"),
+		State:              sessionStruct.State,
+		StateEncrypted:     []byte("encrypted_state"),
+		CreatedAt:          time.Now().Add(-2 * time.Hour), // Past creation time
+		CreatedAtEncrypted: []byte("encrypted_created_at"),
+		ExpiresAt:          expiresAt, // Use provided expiration time
 		ExpiresAtEncrypted: []byte("encrypted_expires_at"),
 		AccessTokenHash:    "access_token_hash",
 		RefreshTokenHash:   "refresh_token_hash",
