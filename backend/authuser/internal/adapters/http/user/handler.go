@@ -11,6 +11,7 @@ type Handler interface {
 	RegisterRoutes(router *http.ServeMux)
 	GetPendingUsers(w http.ResponseWriter, r *http.Request)
 	GetAllUsers(w http.ResponseWriter, r *http.Request)
+	GetUser(w http.ResponseWriter, r *http.Request)
 	ApproveUser(w http.ResponseWriter, r *http.Request)
 }
 
