@@ -35,7 +35,6 @@ func NewTestUser(email, firstName, lastName string) *domain.User {
 		Role:       identity.Standard.String(),
 		CreatedAt:  time.Now(),
 		LoggedInAt: time.Now(),
-		// KeyVersion: 1,
 	}
 }
 

@@ -67,14 +67,6 @@ func (r *RemoveSessionRequest) Valid(ctx context.Context) error {
 	return session.ValidateToken(r.Token)
 }
 
-type RefreshSessionRequest struct {
-	RefreshToken string `json:"refresh_token"`
-}
-
-func (r *RefreshSessionRequest) Valid(ctx context.Context) error {
-	return session.ValidateToken(r.RefreshToken)
-}
-
 type RefreshSessionResponse struct {
 	AccessToken        string    `json:"access_token"`
 	RefreshToken       string    `json:"refresh_token"`
