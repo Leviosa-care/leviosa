@@ -110,4 +110,3 @@ func (h *handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 
 	httpx.RespondWithJSON(w, users, http.StatusOK)
 }
-

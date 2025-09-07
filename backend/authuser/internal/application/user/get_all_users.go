@@ -71,4 +71,3 @@ func (s *UserService) GetAllUsers(ctx context.Context) ([]*domain.UserResponse, 
 
 	return responses, nil
 }
-

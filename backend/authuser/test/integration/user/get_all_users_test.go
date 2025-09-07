@@ -9,6 +9,7 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 	td "github.com/Leviosa-care/authuser/test/helpers"
+	"github.com/Leviosa-care/core/contracts/identity"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,8 +25,10 @@ func TestGetAllUsers(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
+		accessToken := setupAdminUser(t, ctx)
+
 		// Act
-		req := td.NewGetAllUsersRequest(t, ctx, testServerURL)
+		req := td.NewGetAllUsersRequest(t, ctx, testServerURL, accessToken)
 		resp, err := client.Do(req)
 
 		// Assert
@@ -34,12 +37,15 @@ func TestGetAllUsers(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		users := td.ParseGetAllUsersResponse(t, resp)
-		assert.Empty(t, users, "Should return empty array when no users exist")
+		assert.Len(t, users, 1, "Should return only the admin user when no other users exist")
+		assert.Equal(t, identity.AdministratorStr, users[0].Role, "The only user should be the admin user")
 	})
 
 	t.Run("should return all users regardless of state", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
+
+		accessToken := setupAdminUser(t, ctx)
 
 		// Insert test users with different states
 		pendingUser := td.NewTestUser("pending@example.com", "John", "Pending")
@@ -59,7 +65,7 @@ func TestGetAllUsers(t *testing.T) {
 		td.InsertUser(t, ctx, unverifiedUser, testPool)
 
 		// Act
-		req := td.NewGetAllUsersRequest(t, ctx, testServerURL)
+		req := td.NewGetAllUsersRequest(t, ctx, testServerURL, accessToken)
 		resp, err := client.Do(req)
 
 		// Assert
@@ -68,16 +74,20 @@ func TestGetAllUsers(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		users := td.ParseGetAllUsersResponse(t, resp)
-		assert.Len(t, users, 3, "Should return all users regardless of state")
+		assert.Len(t, users, 4, "Should return all users regardless of state (3 test users + 1 admin)")
 
 		// Verify user data (should be decrypted in response)
-		emails := []string{users[0].Email, users[1].Email, users[2].Email}
+		emails := []string{users[0].Email, users[1].Email, users[2].Email, users[3].Email}
 		assert.Contains(t, emails, "pending@example.com")
 		assert.Contains(t, emails, "active@example.com")
 		assert.Contains(t, emails, "unverified@example.com")
 
+		// Verify admin user is present by checking roles
+		roles := []string{users[0].Role, users[1].Role, users[2].Role, users[3].Role}
+		assert.Contains(t, roles, identity.AdministratorStr)
+
 		// Verify all different states are present
-		states := []domain.UserState{users[0].State, users[1].State, users[2].State}
+		states := []domain.UserState{users[0].State, users[1].State, users[2].State, users[3].State}
 		assert.Contains(t, states, domain.Pending)
 		assert.Contains(t, states, domain.Active)
 		assert.Contains(t, states, domain.Unverified)
@@ -86,6 +96,8 @@ func TestGetAllUsers(t *testing.T) {
 	t.Run("should return users ordered by creation date descending", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
+
+		accessToken := setupAdminUser(t, ctx)
 
 		// Insert users with slight delay to ensure different timestamps
 		firstUser := td.NewTestUser("first@example.com", "First", "User")
@@ -108,7 +120,7 @@ func TestGetAllUsers(t *testing.T) {
 		td.InsertUser(t, ctx, thirdUser, testPool)
 
 		// Act
-		req := td.NewGetAllUsersRequest(t, ctx, testServerURL)
+		req := td.NewGetAllUsersRequest(t, ctx, testServerURL, accessToken)
 		resp, err := client.Do(req)
 
 		// Assert
@@ -117,17 +129,22 @@ func TestGetAllUsers(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		users := td.ParseGetAllUsersResponse(t, resp)
-		require.Len(t, users, 3)
+		require.Len(t, users, 4)
 
 		// Should be ordered by creation date descending (newest first)
+		// Admin user is created in setupAdminUser (first), so will be last
+		// Test users created in order: first, second, third (newest)
 		assert.Equal(t, "third@example.com", users[0].Email)
 		assert.Equal(t, "second@example.com", users[1].Email)
 		assert.Equal(t, "first@example.com", users[2].Email)
+		assert.Equal(t, identity.AdministratorStr, users[3].Role)
 	})
 
 	t.Run("should properly decrypt and return all user fields", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
+
+		accessToken := setupAdminUser(t, ctx)
 
 		// Insert test user with all fields populated
 		testUser := td.NewTestUser("complete@example.com", "John", "Doe")
@@ -146,7 +163,7 @@ func TestGetAllUsers(t *testing.T) {
 		td.InsertUser(t, ctx, testUser, testPool)
 
 		// Act
-		req := td.NewGetAllUsersRequest(t, ctx, testServerURL)
+		req := td.NewGetAllUsersRequest(t, ctx, testServerURL, accessToken)
 		resp, err := client.Do(req)
 
 		// Assert
@@ -155,9 +172,17 @@ func TestGetAllUsers(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		users := td.ParseGetAllUsersResponse(t, resp)
-		require.Len(t, users, 1)
+		require.Len(t, users, 2)
 
-		user := users[0]
+		// Find the test user (not the admin user)
+		var user *domain.UserResponse
+		for _, u := range users {
+			if u.Role != identity.AdministratorStr {
+				user = u
+				break
+			}
+		}
+		require.NotNil(t, user, "Should find the test user in response")
 		assert.Equal(t, "complete@example.com", user.Email)
 		assert.Equal(t, "John", user.FirstName)
 		assert.Equal(t, "Doe", user.LastName)
@@ -180,6 +205,8 @@ func TestGetAllUsers(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
+		accessToken := setupAdminUser(t, ctx)
+
 		// Insert minimal user (only required fields)
 		minimalUser := td.NewTestUser("minimal@example.com", "Min", "User")
 		minimalUser.State = domain.Pending
@@ -189,7 +216,7 @@ func TestGetAllUsers(t *testing.T) {
 		td.InsertUser(t, ctx, minimalUser, testPool)
 
 		// Act
-		req := td.NewGetAllUsersRequest(t, ctx, testServerURL)
+		req := td.NewGetAllUsersRequest(t, ctx, testServerURL, accessToken)
 		resp, err := client.Do(req)
 
 		// Assert
@@ -198,13 +225,21 @@ func TestGetAllUsers(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		users := td.ParseGetAllUsersResponse(t, resp)
-		require.Len(t, users, 1)
+		require.Len(t, users, 2)
 
-		user := users[0]
+		// Find the test user (not the admin user)
+		var user *domain.UserResponse
+		for _, u := range users {
+			if u.Role != identity.AdministratorStr {
+				user = u
+				break
+			}
+		}
+		require.NotNil(t, user, "Should find the test user in response")
 		assert.Equal(t, "minimal@example.com", user.Email)
 		assert.Equal(t, "Min", user.FirstName)
 		assert.Equal(t, "User", user.LastName)
-		assert.Equal(t, "0123456789", user.Telephone) // Default value from NewTestUser
+		assert.Equal(t, "0612345678", user.Telephone) // Default value from NewTestUser
 		assert.Empty(t, user.Picture)
 		assert.True(t, user.BirthDate.IsZero()) // time.Time zero value
 		assert.Empty(t, user.Gender)
@@ -216,6 +251,8 @@ func TestGetAllUsers(t *testing.T) {
 	t.Run("should include all user states in mixed scenario", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
+
+		accessToken := setupAdminUser(t, ctx)
 
 		// Create users with all possible states
 		users := []*domain.User{
@@ -235,7 +272,7 @@ func TestGetAllUsers(t *testing.T) {
 		}
 
 		// Act
-		req := td.NewGetAllUsersRequest(t, ctx, testServerURL)
+		req := td.NewGetAllUsersRequest(t, ctx, testServerURL, accessToken)
 		resp, err := client.Do(req)
 
 		// Assert
@@ -244,7 +281,7 @@ func TestGetAllUsers(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		responseUsers := td.ParseGetAllUsersResponse(t, resp)
-		require.Len(t, responseUsers, 5)
+		require.Len(t, responseUsers, 6)
 
 		// Count states
 		stateCount := make(map[domain.UserState]int)
@@ -253,13 +290,15 @@ func TestGetAllUsers(t *testing.T) {
 		}
 
 		assert.Equal(t, 2, stateCount[domain.Pending], "Should have 2 pending users")
-		assert.Equal(t, 2, stateCount[domain.Active], "Should have 2 active users")
+		assert.Equal(t, 3, stateCount[domain.Active], "Should have 3 active users (2 test + 1 admin)")
 		assert.Equal(t, 1, stateCount[domain.Unverified], "Should have 1 unverified user")
 	})
 
 	t.Run("should handle concurrent requests properly", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
+
+		accessToken := setupAdminUser(t, ctx)
 
 		// Insert multiple users with different states
 		for i := range 5 {
@@ -274,7 +313,7 @@ func TestGetAllUsers(t *testing.T) {
 		responses := make(chan *http.Response, 3)
 		for range 3 {
 			go func() {
-				req := td.NewGetAllUsersRequest(t, ctx, testServerURL)
+				req := td.NewGetAllUsersRequest(t, ctx, testServerURL, accessToken)
 				resp, err := client.Do(req)
 				require.NoError(t, err)
 				responses <- resp
@@ -290,7 +329,7 @@ func TestGetAllUsers(t *testing.T) {
 			if resp.StatusCode == http.StatusOK {
 				successCount++
 				users := td.ParseGetAllUsersResponse(t, resp)
-				assert.Len(t, users, 5, "Each concurrent request should return all users")
+				assert.Len(t, users, 6, "Each concurrent request should return all users (5 test + 1 admin)")
 			}
 		}
 
@@ -300,6 +339,8 @@ func TestGetAllUsers(t *testing.T) {
 	t.Run("should handle large number of users efficiently", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
+
+		accessToken := setupAdminUser(t, ctx)
 
 		// Insert many users with various states
 		userCount := 100
@@ -313,7 +354,7 @@ func TestGetAllUsers(t *testing.T) {
 
 		// Act with timeout to ensure reasonable performance
 		start := time.Now()
-		req := td.NewGetAllUsersRequest(t, ctx, testServerURL)
+		req := td.NewGetAllUsersRequest(t, ctx, testServerURL, accessToken)
 		resp, err := client.Do(req)
 		duration := time.Since(start)
 
@@ -323,7 +364,7 @@ func TestGetAllUsers(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		users := td.ParseGetAllUsersResponse(t, resp)
-		assert.Len(t, users, userCount)
+		assert.Len(t, users, userCount+1)
 
 		// Performance check - should complete within reasonable time
 		assert.Less(t, duration, 10*time.Second, "Should handle large user lists efficiently")
@@ -334,11 +375,17 @@ func TestGetAllUsers(t *testing.T) {
 			stateCount[user.State]++
 		}
 
-		// Should have roughly equal distribution of states
+		// Should have roughly equal distribution of states (plus admin user adds 1 to Active)
 		expectedPerState := userCount / len(states)
 		for _, state := range states {
-			assert.GreaterOrEqual(t, stateCount[state], expectedPerState-1, "State %v should appear at least %d times", state, expectedPerState-1)
-			assert.LessOrEqual(t, stateCount[state], expectedPerState+1, "State %v should appear at most %d times", state, expectedPerState+1)
+			if state == domain.Active {
+				// Active state has one extra admin user
+				assert.GreaterOrEqual(t, stateCount[state], expectedPerState, "State %v should appear at least %d times", state, expectedPerState)
+				assert.LessOrEqual(t, stateCount[state], expectedPerState+2, "State %v should appear at most %d times", state, expectedPerState+2)
+			} else {
+				assert.GreaterOrEqual(t, stateCount[state], expectedPerState-1, "State %v should appear at least %d times", state, expectedPerState-1)
+				assert.LessOrEqual(t, stateCount[state], expectedPerState+1, "State %v should appear at most %d times", state, expectedPerState+1)
+			}
 		}
 	})
 
