@@ -4,10 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"time"
 
-	"github.com/Leviosa-care/core/contracts/settings"
 	mq "github.com/Leviosa-care/core/contracts/rabbitmq"
+	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/core/messaging/rabbitmq"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -58,12 +57,12 @@ func (c *SettingsConsumer) Start(ctx context.Context) error {
 	// Start consuming messages
 	msgs, err := ch.Consume(
 		mq.AuthUserSettingsQueueName, // queue
-		"authuser-settings-consumer",  // consumer
-		false,                         // auto-ack
-		false,                         // exclusive
-		false,                         // no-local
-		false,                         // no-wait
-		nil,                           // args
+		"authuser-settings-consumer", // consumer
+		false,                        // auto-ack
+		false,                        // exclusive
+		false,                        // no-local
+		false,                        // no-wait
+		nil,                          // args
 	)
 	if err != nil {
 		return err

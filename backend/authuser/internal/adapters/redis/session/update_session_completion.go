@@ -31,4 +31,3 @@ func (r *SessionRepository) UpdateSessionCompletion(ctx context.Context, session
 
 	return nil
 }
-

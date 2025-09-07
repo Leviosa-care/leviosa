@@ -180,6 +180,7 @@ func InsertSessionDirectly(t *testing.T, ctx context.Context, client *redis.Clie
 	sessionKey := session.FormatSessionKey(sess.ID.String())
 	accessTokenKey := session.FormatAccessTokenKey(sess.AccessTokenHash)
 	refreshTokenKey := session.FormatRefreshTokenKey(sess.RefreshTokenHash)
+	userSessionIndexKey := session.FormatUserSessionIndexKey(sess.UserIDHash)
 
 	// Store session data
 	sessionData := EncodeSession(t, sess)
@@ -193,6 +194,19 @@ func InsertSessionDirectly(t *testing.T, ctx context.Context, client *redis.Clie
 	// Store refresh token mapping
 	err = client.Set(ctx, refreshTokenKey, sess.ID.String(), ttl).Err()
 	require.NoError(t, err, "Failed to insert refresh token mapping directly")
+
+	// Add session ID to user session index
+	err = client.SAdd(ctx, userSessionIndexKey, sess.ID.String()).Err()
+	// Rollback all previous operations
+	if err != nil {
+		delErr := client.Del(ctx, sessionKey).Err()
+		require.NoError(t, delErr)
+		delErr = client.Del(ctx, accessTokenKey).Err()
+		require.NoError(t, delErr)
+		delErr = client.Del(ctx, refreshTokenKey).Err()
+		require.NoError(t, delErr)
+	}
+	require.NoError(t, err, "Failed to add user session values")
 }
 
 // CheckSessionExistsInRedis checks if a session exists by session ID
@@ -291,6 +305,8 @@ func CreateTestSessionWithUserIDAndCrypto(t *testing.T, userID uuid.UUID, crypto
 
 // CreateTestPendingSessionWithUserIDAndCrypto is a convenience function that creates and returns a pending session with specific user ID
 func CreateTestPendingSessionWithUserIDAndCrypto(t *testing.T, userID uuid.UUID, crypto encx.CryptoService) *session.Session {
+	t.Helper()
+
 	now := time.Now()
 	sessionID := uuid.New()
 
@@ -298,7 +314,6 @@ func CreateTestPendingSessionWithUserIDAndCrypto(t *testing.T, userID uuid.UUID,
 	accessToken, err := session.GenerateToken()
 	require.NoError(t, err)
 
-	// print("THE ACCESS TOKEN BEFORE ENCRYPTION IS :", accessToken)
 	refreshToken, err := session.GenerateToken()
 	require.NoError(t, err)
 

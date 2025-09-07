@@ -167,7 +167,7 @@ func ParseCompleteUserResponse(t *testing.T, resp *http.Response) string {
 }
 
 // NewGetPendingUsersRequest creates an HTTP request for getting pending users
-func NewGetPendingUsersRequest(t *testing.T, ctx context.Context, baseURL string) *http.Request {
+func NewGetPendingUsersRequest(t *testing.T, ctx context.Context, baseURL string, accessToken string) *http.Request {
 	t.Helper()
 
 	req, err := http.NewRequestWithContext(
@@ -178,6 +178,14 @@ func NewGetPendingUsersRequest(t *testing.T, ctx context.Context, baseURL string
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
 
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
 	return req
 }
 
@@ -194,7 +202,7 @@ func ParseGetPendingUsersResponse(t *testing.T, resp *http.Response) []*domain.U
 }
 
 // NewGetAllUsersRequest creates an HTTP request for getting all users
-func NewGetAllUsersRequest(t *testing.T, ctx context.Context, baseURL string) *http.Request {
+func NewGetAllUsersRequest(t *testing.T, ctx context.Context, baseURL string, accessToken string) *http.Request {
 	t.Helper()
 
 	req, err := http.NewRequestWithContext(
@@ -205,6 +213,14 @@ func NewGetAllUsersRequest(t *testing.T, ctx context.Context, baseURL string) *h
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
 
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
 	return req
 }
 
@@ -304,7 +320,7 @@ func ParseGetUserResponse(t *testing.T, resp *http.Response) *domain.UserRespons
 }
 
 // NewApproveUserRequest creates an HTTP request for approving a user
-func NewApproveUserRequest(t *testing.T, ctx context.Context, baseURL string, request domain.ApproveUserRequest) *http.Request {
+func NewApproveUserRequest(t *testing.T, ctx context.Context, baseURL string, request domain.ApproveUserRequest, accessToken string) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -319,11 +335,20 @@ func NewApproveUserRequest(t *testing.T, ctx context.Context, baseURL string, re
 	require.NoError(t, err, "Failed to create HTTP request")
 
 	req.Header.Set("Content-Type", "application/json")
+
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
 	return req
 }
 
 // NewMalformedApproveUserRequest creates an HTTP request with malformed JSON
-func NewMalformedApproveUserRequest(t *testing.T, ctx context.Context, baseURL string) *http.Request {
+func NewMalformedApproveUserRequest(t *testing.T, ctx context.Context, baseURL string, accessToken string) *http.Request {
 	t.Helper()
 
 	malformedJSON := `{"user_id": "not-a-uuid", "role": }`
@@ -337,6 +362,15 @@ func NewMalformedApproveUserRequest(t *testing.T, ctx context.Context, baseURL s
 	require.NoError(t, err, "Failed to create HTTP request")
 
 	req.Header.Set("Content-Type", "application/json")
+
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
 	return req
 }
 

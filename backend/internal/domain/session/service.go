@@ -9,7 +9,6 @@ import (
 // type Service interface {
 type SessionService interface {
 	CreateSession(ctx context.Context, userID string, role models.Role) (string, error)
-	GetSession(ctx context.Context, sessionID string) (*Session, error)
 	RemoveSession(ctx context.Context, sessionID string) error
 }
 

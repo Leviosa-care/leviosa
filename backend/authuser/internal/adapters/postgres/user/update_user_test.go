@@ -140,7 +140,6 @@ func TestUpdateUser(t *testing.T) {
 		user.Address2 = "Suite 100"
 		user.Telephone = "+33123456789"
 		err := crypto.ProcessStruct(ctx, user)
-		print("THE FIRST HASH INSERTED IN DATABASE IS :", user.TelephoneHash)
 		require.NoError(t, err)
 		err = repo.CreateUser(ctx, user)
 		require.NoError(t, err)
@@ -149,7 +148,6 @@ func TestUpdateUser(t *testing.T) {
 		user.Address2 = ""
 		user.Telephone = ""
 		err = crypto.ProcessStruct(ctx, user)
-		print("THE HASH INSERTED IN DATABASE IS :", user.TelephoneHash)
 		require.NoError(t, err)
 
 		// Act

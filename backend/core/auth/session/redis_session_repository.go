@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	SessionKeyPrefix           = "auth:session:"
-	AccessTokenKeyPrefix       = "auth:access:"
-	RefreshTokenKeyPrefix      = "auth:refresh:"
-	UserSessionIndexKeyPrefix  = "auth:user_sessions:"
+	SessionKeyPrefix          = "auth:session:"
+	AccessTokenKeyPrefix      = "auth:access:"
+	RefreshTokenKeyPrefix     = "auth:refresh:"
+	UserSessionIndexKeyPrefix = "auth:user_sessions:"
 )
 
 // RedisSessionRepository implements the minimal SessionRepository interface for authentication middleware
