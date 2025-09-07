@@ -1,12 +1,18 @@
 package aggregatorHandler
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/Leviosa-care/core/auth/cookies"
+	"github.com/Leviosa-care/core/contracts/identity"
 	mw "github.com/Leviosa-care/core/middleware"
 )
 
 func (h *handler) RegisterRoutes(router *http.ServeMux) {
+	RequireMinVisitor := h.authmw.RequireMinimumRole(identity.Visitor)
+	RequireRefreshToken := h.authmw.RequireRefreshToken
+
 	// Sends an OTP to the provided email address for verification.
 	router.HandleFunc("POST /auth/email", mw.EnableCORS(h.CheckEmailSendOTP))
 
@@ -14,10 +20,13 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /auth/otp", mw.EnableCORS(h.ValidateOTPCreatePendingUser))
 
 	// Completes user registration (e.g., creates Stripe user, sets initial state).
-	router.HandleFunc("POST /auth/complete", mw.EnableCORS(h.CompleteUser))
+	router.HandleFunc("POST /auth/complete", RequireMinVisitor(mw.EnableCORS(h.CompleteUser)))
 
 	// Refreshes the user session and issues new tokens.
-	router.HandleFunc("POST /auth/refresh", mw.EnableCORS(h.RefreshSession))
+	router.HandleFunc(
+		fmt.Sprintf("POST %s", cookies.RefreshEndpoint),
+		RequireRefreshToken(mw.EnableCORS(h.RefreshSession)),
+	)
 
 	// TODO:
 	// ==============================
