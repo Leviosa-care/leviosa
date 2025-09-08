@@ -439,3 +439,96 @@ func ParseRefreshSessionResponse(t *testing.T, resp *http.Response) (string, str
 
 	return response.Message, response.Status
 }
+
+// NewDeleteUserByAdminRequest creates an HTTP request for admin deleting a user
+func NewDeleteUserByAdminRequest(t *testing.T, ctx context.Context, baseURL string, userID uuid.UUID, accessToken string) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodDelete,
+		fmt.Sprintf("%s/admin/auth/users/%s", baseURL, userID.String()),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+	return req
+}
+
+// NewDeleteUserByAdminRequestWithoutAuth creates an HTTP request for admin deleting a user without authentication
+func NewDeleteUserByAdminRequestWithoutAuth(t *testing.T, ctx context.Context, baseURL string, userID uuid.UUID) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodDelete,
+		fmt.Sprintf("%s/admin/auth/users/%s", baseURL, userID.String()),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Explicitly do not add any authorization headers
+	return req
+}
+
+// NewDeleteOwnAccountRequest creates an HTTP request for user deleting their own account
+func NewDeleteOwnAccountRequest(t *testing.T, ctx context.Context, baseURL string, accessToken string) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodDelete,
+		fmt.Sprintf("%s/auth/me", baseURL),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+	return req
+}
+
+// NewDeleteOwnAccountRequestWithoutAuth creates an HTTP request for user deleting their own account without authentication
+func NewDeleteOwnAccountRequestWithoutAuth(t *testing.T, ctx context.Context, baseURL string) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodDelete,
+		fmt.Sprintf("%s/auth/me", baseURL),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Explicitly do not add any authorization headers
+	return req
+}
+
+// ParseDeleteUserResponse parses the HTTP response for delete user request
+func ParseDeleteUserResponse(t *testing.T, resp *http.Response) string {
+	t.Helper()
+
+	var response struct {
+		Message string `json:"message"`
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(&response)
+	require.NoError(t, err, "Failed to decode delete user response")
+
+	return response.Message
+}

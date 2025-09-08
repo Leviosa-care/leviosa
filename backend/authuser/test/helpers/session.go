@@ -334,3 +334,51 @@ func CreateTestPendingSessionWithUserIDAndCrypto(t *testing.T, userID uuid.UUID,
 
 	return session
 }
+
+// CreateSessionWithEncryption creates and stores a session in Redis, returns access token
+func CreateSessionWithEncryption(t *testing.T, ctx context.Context, sessionInfo *session.SessionInfo, client *redis.Client, crypto encx.CryptoService) string {
+	t.Helper()
+
+	// Generate tokens
+	accessToken, err := session.GenerateToken()
+	require.NoError(t, err)
+
+	refreshToken, err := session.GenerateToken()
+	require.NoError(t, err)
+
+	// Create session object
+	sess := &session.Session{
+		ID:           sessionInfo.ID,
+		UserID:       sessionInfo.UserID,
+		Role:         sessionInfo.Role,
+		State:        sessionInfo.State,
+		CreatedAt:    time.Now(),
+		ExpiresAt:    time.Now().Add(24 * time.Hour),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	// Process encryption
+	err = crypto.ProcessStruct(ctx, sess)
+	require.NoError(t, err)
+
+	// Store in Redis
+	ttl := 24 * time.Hour
+	InsertSessionDirectly(t, ctx, client, sess, ttl)
+
+	return accessToken
+}
+
+// GetSessionByID retrieves a session by ID, returns nil if not found
+func GetSessionByID(t *testing.T, ctx context.Context, sessionID uuid.UUID, client *redis.Client) *session.Session {
+	t.Helper()
+
+	sessionKey := session.FormatSessionKey(sessionID.String())
+	data, err := client.Get(ctx, sessionKey).Bytes()
+	if err != nil {
+		// Return nil if session not found
+		return nil
+	}
+
+	return DecodeSession(t, data)
+}

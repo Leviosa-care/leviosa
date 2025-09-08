@@ -75,7 +75,7 @@ func TestCompleteUser(t *testing.T) {
 		assert.Equal(t, "User registration completed successfully", message)
 
 		// Verify user was created in database
-		user, err := td.GetUserByID(t, ctx, pendingUser.ID.String(), testPool, crypto)
+		user, err := td.GetUserByIDDecrypted(t, ctx, pendingUser.ID.String(), testPool, crypto)
 		require.NoError(t, err)
 		verifyCompletedUserFields(t, pendingSession.UserID, &validRequest, user)
 
@@ -355,7 +355,7 @@ func TestCompleteUser(t *testing.T) {
 		assert.Equal(t, "User registration completed successfully", message)
 
 		// Verify user was created in database
-		user, err := td.GetUserByID(t, ctx, pendingUser.ID.String(), testPool, crypto)
+		user, err := td.GetUserByIDDecrypted(t, ctx, pendingUser.ID.String(), testPool, crypto)
 		require.NoError(t, err)
 		verifyCompletedUserFields(t, pendingSession.UserID, &request, user)
 
@@ -467,7 +467,7 @@ func TestCompleteUser(t *testing.T) {
 		message := td.ParseCompleteUserResponse(t, resp)
 		assert.Equal(t, "User registration completed successfully", message)
 
-		user, err := td.GetUserByID(t, ctx, pendingUser.ID.String(), testPool, crypto)
+		user, err := td.GetUserByIDDecrypted(t, ctx, pendingUser.ID.String(), testPool, crypto)
 		require.NoError(t, err)
 		verifyCompletedUserFields(t, pendingSession.UserID, &request, user)
 

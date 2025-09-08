@@ -83,8 +83,8 @@ func InsertTestUser(t *testing.T, ctx context.Context, email, firstName, lastNam
 	InsertUser(t, ctx, user, pool)
 }
 
-// GetUserByID retrieves a user by user ID for test verification
-func GetUserByID(t *testing.T, ctx context.Context, userID string, pool *pgxpool.Pool, crypto encx.CryptoService) (*domain.User, error) {
+// GetUserByIDDecrypted retrieves a user by user ID for test verification
+func GetUserByIDDecrypted(t *testing.T, ctx context.Context, userID string, pool *pgxpool.Pool, crypto encx.CryptoService) (*domain.User, error) {
 	t.Helper()
 	var user domain.User
 	query := `
@@ -205,8 +205,45 @@ func InsertUserWithEncryption(t *testing.T, ctx context.Context, user *domain.Us
 func GetUserByIDFromDB(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pgxpool.Pool, crypto encx.CryptoService) *domain.User {
 	t.Helper()
 
-	user, err := GetUserByID(t, ctx, userID.String(), pool, crypto)
+	user, err := GetUserByIDDecrypted(t, ctx, userID.String(), pool, crypto)
 	require.NoError(t, err, "Failed to get user by ID from database")
 
 	return user
+}
+
+// GetUserByID returns a user by ID, returns nil if not found (for test assertions)
+func GetUserByID(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pgxpool.Pool) *domain.User {
+	t.Helper()
+
+	var user domain.User
+	query := `
+		SELECT
+			id, state, email_hash, email_encrypted, password_hash,
+			picture_encrypted, first_name_encrypted, last_name_encrypted,
+			birth_date_encrypted, gender_encrypted, role_encrypted,
+			telephone_hash, telephone_encrypted, postal_code_encrypted,
+			city_encrypted, address1_encrypted, address2_encrypted, stripe_customer_id_encrypted,
+			google_id_encrypted, apple_id_encrypted, created_at_encrypted,
+			logged_in_at_encrypted, dek_encrypted, key_version
+		FROM auth.users
+		WHERE id = $1
+	`
+
+	err := pool.QueryRow(ctx, query, userID).Scan(
+		&user.ID, &user.State, &user.EmailHash, &user.EmailEncrypted,
+		&user.PasswordHash, &user.PictureEncrypted, &user.FirstNameEncrypted,
+		&user.LastNameEncrypted, &user.BirthDateEncrypted, &user.GenderEncrypted,
+		&user.RoleEncrypted, &user.TelephoneHash, &user.TelephoneEncrypted,
+		&user.PostalCodeEncrypted, &user.CityEncrypted, &user.Address1Encrypted,
+		&user.Address2Encrypted, &user.StripeCustomerIDEncrypted, &user.GoogleIDEncrypted, &user.AppleIDEncrypted,
+		&user.CreatedAtEncrypted, &user.LoggedInAtEncrypted, &user.DEKEncrypted,
+		&user.KeyVersion,
+	)
+
+	if err != nil {
+		// Return nil if user not found (for test assertions)
+		return nil
+	}
+
+	return &user
 }

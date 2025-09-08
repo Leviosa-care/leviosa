@@ -167,3 +167,31 @@ func ValidateOTPData(t *testing.T, expected, actual *domain.OTP) {
 	// Plaintext fields (Email, Code, DEK) should not be compared
 	// as they are not stored/retrieved from Redis
 }
+
+// CreateOTP creates and stores an OTP in Redis for testing
+func CreateOTP(t *testing.T, ctx context.Context, email string, client *redis.Client) {
+	t.Helper()
+
+	otp := NewValidOTP(email)
+	// Create basic hash for email (simplified for test)
+	otp.EmailHash = fmt.Sprintf("hash_%s", email)
+
+	ttl := 10 * time.Minute
+	InsertOTP(t, ctx, otp, client, ttl)
+}
+
+// GetOTP retrieves an OTP by email, returns nil if not found
+func GetOTP(t *testing.T, ctx context.Context, email string, client *redis.Client) *domain.OTP {
+	t.Helper()
+
+	// Create basic hash for email (simplified for test)
+	emailHash := fmt.Sprintf("hash_%s", email)
+
+	otp, err := GetOTPFromRedis(t, ctx, emailHash, client)
+	if err != nil {
+		// Return nil if OTP not found
+		return nil
+	}
+
+	return otp
+}
