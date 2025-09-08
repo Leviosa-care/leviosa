@@ -16,4 +16,5 @@ type UserService interface {
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.UserResponse, error)
 	GetUserByEmailHash(ctx context.Context, emailHash string) (*domain.UserResponse, error)
 	ApproveUser(ctx context.Context, request *domain.ApproveUserRequest) error
+	DeleteUser(ctx context.Context, userID uuid.UUID) error
 }

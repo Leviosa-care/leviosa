@@ -17,4 +17,6 @@ type OTPService interface {
 	// application
 	// HACK: loading
 	ValidateOTP(ctx context.Context, request *domain.ValidateOTPRequest) error
+	CreateOTP(ctx context.Context, email string) error
+	CancelOTP(ctx context.Context, email string) error
 }

@@ -10,7 +10,9 @@ import (
 )
 
 func (h *handler) RegisterRoutes(router *http.ServeMux) {
-	RequireMinVisitor := h.authmw.RequireMinimumRole(identity.Visitor)
+	RequireVisitor := h.authmw.RequireMinimumRole(identity.Visitor)
+	RequireStandard := h.authmw.RequireMinimumRole(identity.Standard)
+	RequireAdministrator := h.authmw.RequireMinimumRole(identity.Administrator)
 	RequireRefreshToken := h.authmw.RequireRefreshToken
 
 	// Sends an OTP to the provided email address for verification.
@@ -20,13 +22,19 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /auth/otp", mw.EnableCORS(h.ValidateOTPCreatePendingUser))
 
 	// Completes user registration (e.g., creates Stripe user, sets initial state).
-	router.HandleFunc("POST /auth/complete", RequireMinVisitor(mw.EnableCORS(h.CompleteUser)))
+	router.HandleFunc("POST /auth/complete", RequireVisitor(mw.EnableCORS(h.CompleteUser)))
 
 	// Refreshes the user session and issues new tokens.
 	router.HandleFunc(
 		fmt.Sprintf("POST %s", cookies.RefreshEndpoint),
 		RequireRefreshToken(mw.EnableCORS(h.RefreshSession)),
 	)
+
+	// Deletes any user account (admin only).
+	router.HandleFunc("DELETE /admin/auth/users/{id}", RequireAdministrator(mw.EnableCORS(h.DeleteUserByAdmin)))
+
+	// Deletes the current user's own account.
+	router.HandleFunc("DELETE /auth/me", RequireStandard(mw.EnableCORS(h.DeleteOwnAccount)))
 
 	// TODO:
 	// ==============================

@@ -21,6 +21,8 @@ type AuthAggregatorService interface {
 	ValidateOTPCreatePendingUser(ctx context.Context, request *domain.ValidateOTPRequest) (*domain.CreateSessionResponse, error)
 	CompleteUser(ctx context.Context, sessionInfo *session.SessionInfo, request *domain.CompleteUserRequest) error
 	RefreshSession(ctx context.Context, sessionID uuid.UUID) (*domain.RefreshSessionResponse, error)
+	DeleteUserByAdmin(ctx context.Context, userID uuid.UUID) error
+	DeleteOwnAccount(ctx context.Context, sessionInfo *session.SessionInfo) error
 	// SignIn(ctx context.Context, request *domain.SignInRequest) (string, error)
 	// SignOut(ctx context.Context, request *domain.SignOutRequest) error
 	// TODO: not sure about that one

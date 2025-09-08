@@ -15,4 +15,5 @@ type UserRepository interface {
 	GetAllUsers(ctx context.Context) ([]*domain.User, error)
 	CreateUser(ctx context.Context, user *domain.User) error
 	UpdateUser(ctx context.Context, user *domain.User) error
+	DeleteUser(ctx context.Context, userID uuid.UUID) error
 }
