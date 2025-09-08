@@ -17,34 +17,28 @@ func (s *UserService) GetUserByID(ctx context.Context, userID uuid.UUID) (*domai
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
 			// User not found
-			return nil, fmt.Errorf("get user by ID: %w", err)
-		case errors.Is(err, errs.ErrConnectionFailure):
+			return nil, errs.NewNotFoundErr(err, "user by ID")
+		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
 			// Database connection issues
-			return nil, fmt.Errorf("get user by ID: %w", err)
-		case errors.Is(err, errs.ErrTooManyConnections):
-			// Connection pool exhausted
-			return nil, fmt.Errorf("get user by ID: %w", err)
+			return nil, errs.NewExternalServiceErr(err, "database unavailable")
 		case errors.Is(err, errs.ErrQueryCancelled):
 			// Query was cancelled
-			return nil, fmt.Errorf("get user by ID: %w", err)
-		case errors.Is(err, errs.ErrTransactionFailure):
+			return nil, fmt.Errorf("get user by ID cancelled: %w", err)
+		case errors.Is(err, errs.ErrTransactionFailure), errors.Is(err, errs.ErrDeadlock):
 			// Transaction/serialization failure
-			return nil, fmt.Errorf("get user by ID: %w", err)
-		case errors.Is(err, errs.ErrDeadlock):
-			// Database deadlock
-			return nil, fmt.Errorf("get user by ID: %w", err)
+			return nil, errs.NewExternalServiceErr(err, "database transaction failed")
 		case errors.Is(err, errs.ErrResourceExhausted):
 			// Database resources exhausted
-			return nil, fmt.Errorf("get user by ID: %w", err)
+			return nil, errs.NewExternalServiceErr(err, "database resources exhausted")
 		case errors.Is(err, errs.ErrPermissionDenied):
 			// Database permission issues
-			return nil, fmt.Errorf("get user by ID: %w", err)
+			return nil, errs.NewInternalErr(fmt.Errorf("database permission denied: %w", err))
 		case errors.Is(err, errs.ErrDatabase):
 			// General database error
-			return nil, fmt.Errorf("get user by ID: %w", err)
+			return nil, errs.NewInternalErr(fmt.Errorf("database error: %w", err))
 		case errors.Is(err, errs.ErrInvalidInput):
 			// Invalid user ID format
-			return nil, fmt.Errorf("get user by ID: %w", err)
+			return nil, errs.NewInvalidValueErr("invalid user ID format")
 		case errors.Is(err, context.Canceled):
 			// Request was cancelled
 			return nil, fmt.Errorf("get user by ID cancelled: %w", err)
@@ -53,7 +47,7 @@ func (s *UserService) GetUserByID(ctx context.Context, userID uuid.UUID) (*domai
 			return nil, fmt.Errorf("get user by ID timeout: %w", err)
 		default:
 			// Any unhandled error - wrap with operation context
-			return nil, fmt.Errorf("get user by ID: %w", err)
+			return nil, errs.NewInternalErr(fmt.Errorf("failed to get user by ID: %w", err))
 		}
 	}
 
