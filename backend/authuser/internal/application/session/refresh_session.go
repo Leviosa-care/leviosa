@@ -37,6 +37,12 @@ func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID
 		return nil, errs.NewUnexpectedError(fmt.Errorf("failed to decode session during refresh: %w", err))
 	}
 
+	if err := s.crypto.DecryptStruct(ctx, session); err != nil {
+		return nil, errs.NewNotDecryptedErr("refresh session", err)
+	}
+
+	session.ID = sessionID
+
 	// Verify session state - both pending and active sessions can be refreshed
 	if session.State != authsession.SessionActive && session.State != authsession.SessionPending {
 		return nil, errs.NewUnauthorizedErr("invalid session state for refresh")
@@ -64,7 +70,9 @@ func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID
 	}
 
 	// Encrypt new token pair
-	s.crypto.ProcessStruct(ctx, newTokenPair)
+	if err := s.crypto.ProcessStruct(ctx, newTokenPair); err != nil {
+		return nil, errs.NewNotEncryptedErr("new token pair in session refreshing", err)
+	}
 
 	now := time.Now()
 	accessExpiry := now.Add(accessDuration)
@@ -73,7 +81,7 @@ func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID
 	// Perform token rotation - replace old tokens with new ones
 	if err := s.repo.RefreshTokenPair(
 		ctx,
-		session.RefreshToken,          // oldRefreshTokenHash
+		session.RefreshTokenHash,      // oldRefreshTokenHash
 		newTokenPair.AccessTokenHash,  // newAccessTokenHash
 		newTokenPair.RefreshTokenHash, // newRefreshTokenHash
 		session.ID,                    // sessionID (uuid.UUID)
