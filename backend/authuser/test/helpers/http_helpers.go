@@ -385,3 +385,57 @@ func ParseApproveUserResponse(t *testing.T, resp *http.Response) map[string]stri
 
 	return response
 }
+
+// NewRefreshSessionRequest creates an HTTP request for refreshing a session with refresh token cookie
+func NewRefreshSessionRequest(t *testing.T, ctx context.Context, baseURL string, refreshToken string) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("%s/auth/refresh", baseURL),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Add refresh token cookie
+	cookie := &http.Cookie{
+		Name:  ck.RefreshTokenCookieName,
+		Value: refreshToken,
+	}
+	req.AddCookie(cookie)
+
+	return req
+}
+
+// NewRefreshSessionRequestWithoutToken creates an HTTP request for refreshing a session without token
+func NewRefreshSessionRequestWithoutToken(t *testing.T, ctx context.Context, baseURL string) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("%s/auth/refresh", baseURL),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Explicitly do not add any cookies
+	return req
+}
+
+// ParseRefreshSessionResponse parses the HTTP response for session refresh
+func ParseRefreshSessionResponse(t *testing.T, resp *http.Response) (string, string) {
+	t.Helper()
+
+	var response struct {
+		Message string `json:"message"`
+		Status  string `json:"status"`
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(&response)
+	require.NoError(t, err, "Failed to decode refresh session response")
+
+	return response.Message, response.Status
+}

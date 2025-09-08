@@ -36,7 +36,7 @@ func (h *handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 		"path", r.URL.Path,
 		"user_agent", r.Header.Get("User-Agent"))
 
-	response, err := h.svc.RefreshSession(ctx, sessionInfo.ID.String())
+	response, err := h.svc.RefreshSession(ctx, sessionInfo.ID)
 	if err != nil {
 		// Log with specific error context based on error type
 		var logLevel string
