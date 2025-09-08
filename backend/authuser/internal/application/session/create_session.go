@@ -55,7 +55,9 @@ func (s *SessionService) CreateSession(ctx context.Context, request *domain.Crea
 	}
 
 	// Encrypt session and token pair
-	s.crypto.ProcessStruct(ctx, session)
+	if err := s.crypto.ProcessStruct(ctx, session); err != nil {
+		return nil, errs.NewNotEncryptedErr("create session", err)
+	}
 
 	sessionEncoded, err := json.Marshal(session)
 	if err != nil {
