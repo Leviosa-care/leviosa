@@ -36,7 +36,13 @@ func TestRefreshTokenPair(t *testing.T) {
 		// Refresh with new access and refresh tokens
 		newAccessTokenHash := "new_access_token_hash"
 		newRefreshTokenHash := "new_refresh_token_hash"
-		err = repo.RefreshTokenPair(ctx, refreshTokenHash, newAccessTokenHash, newRefreshTokenHash, session.ID, accessTTL, refreshTTL)
+		
+		// Update session with new token hashes for test
+		session.AccessTokenHash = newAccessTokenHash
+		session.RefreshTokenHash = newRefreshTokenHash
+		updatedSessionData := td.EncodeSession(t, session)
+		
+		err = repo.RefreshTokenPair(ctx, refreshTokenHash, newAccessTokenHash, newRefreshTokenHash, session.ID, string(updatedSessionData), accessTTL, refreshTTL)
 		require.NoError(t, err)
 
 		// Old access token should be removed
@@ -89,7 +95,13 @@ func TestRefreshTokenPair(t *testing.T) {
 		// Refresh tokens
 		newAccessTokenHash := "new_access_token"
 		newRefreshTokenHash := "new_refresh_token"
-		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, session.ID, accessTTL, refreshTTL)
+		
+		// Update session with new token hashes for test
+		session.AccessTokenHash = newAccessTokenHash
+		session.RefreshTokenHash = newRefreshTokenHash
+		updatedSessionData := td.EncodeSession(t, session)
+		
+		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, session.ID, string(updatedSessionData), accessTTL, refreshTTL)
 		require.NoError(t, err)
 
 		// All old access tokens should be cleaned up
@@ -135,7 +147,13 @@ func TestRefreshTokenPair(t *testing.T) {
 		// Try to refresh tokens - should fail
 		newAccessTokenHash := "rollback_test_new_access"
 		newRefreshTokenHash := "rollback_test_new_refresh"
-		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, session.ID, time.Hour, 24*time.Hour)
+		
+		// Update session with new token hashes for test
+		session.AccessTokenHash = newAccessTokenHash
+		session.RefreshTokenHash = newRefreshTokenHash
+		updatedSessionData := td.EncodeSession(t, session)
+		
+		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, session.ID, string(updatedSessionData), time.Hour, 24*time.Hour)
 		assert.Error(t, err)
 
 		// Reconnect and verify state
@@ -169,7 +187,13 @@ func TestRefreshTokenPair(t *testing.T) {
 		newAccessTokenHash := "ttl_test_new_access"
 		newRefreshTokenHash := "ttl_test_new_refresh"
 		newTTL := 2 * time.Hour
-		err = repo.RefreshTokenPair(ctx, refreshTokenHash, newAccessTokenHash, newRefreshTokenHash, session.ID, newTTL, longTTL)
+		
+		// Update session with new token hashes for test
+		session.AccessTokenHash = newAccessTokenHash
+		session.RefreshTokenHash = newRefreshTokenHash
+		updatedSessionData := td.EncodeSession(t, session)
+		
+		err = repo.RefreshTokenPair(ctx, refreshTokenHash, newAccessTokenHash, newRefreshTokenHash, session.ID, string(updatedSessionData), newTTL, longTTL)
 		require.NoError(t, err)
 
 		// Verify new access token has longer TTL
@@ -195,7 +219,12 @@ func TestRefreshTokenPair(t *testing.T) {
 		newAccessTokenHash := "new-access_token.with:special@chars+999/888="
 		newRefreshTokenHash := "new-refresh_token.with:special@chars+777/666="
 
-		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, session.ID, time.Hour, 24*time.Hour)
+		// Update session with new token hashes for test
+		session.AccessTokenHash = newAccessTokenHash
+		session.RefreshTokenHash = newRefreshTokenHash
+		updatedSessionData := td.EncodeSession(t, session)
+
+		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, session.ID, string(updatedSessionData), time.Hour, 24*time.Hour)
 		require.NoError(t, err)
 
 		// Verify new tokens work
@@ -215,7 +244,9 @@ func TestRefreshTokenPair(t *testing.T) {
 
 		// Try to refresh tokens with closed connection
 		sessionID := uuid.New()
-		err := repo.RefreshTokenPair(ctx, "old_refresh", "new_access", "new_refresh", sessionID, time.Hour, 24*time.Hour)
+		// For this error case, we just need some valid session data
+		updatedSessionData := "{\"id\":\"test\",\"access_token_hash\":\"new_access\",\"refresh_token_hash\":\"new_refresh\"}"
+		err := repo.RefreshTokenPair(ctx, "old_refresh", "new_access", "new_refresh", sessionID, updatedSessionData, time.Hour, 24*time.Hour)
 		assert.Error(t, err)
 
 		// Reconnect for subsequent tests

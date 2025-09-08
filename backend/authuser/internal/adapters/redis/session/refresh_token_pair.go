@@ -13,7 +13,7 @@ import (
 
 // RefreshTokenPair refreshes access token and rotates refresh token
 // This method cleans up ALL existing tokens for the session to ensure security
-func (r *SessionRepository) RefreshTokenPair(ctx context.Context, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash string, sessionID uuid.UUID, accessTTL, refreshTTL time.Duration) error {
+func (r *SessionRepository) RefreshTokenPair(ctx context.Context, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash string, sessionID uuid.UUID, updatedSessionData []byte, accessTTL, refreshTTL time.Duration) error {
 	sessionIDStr := sessionID.String()
 	oldRefreshTokenKey := session.FormatRefreshTokenKey(oldRefreshTokenHash)
 	newAccessTokenKey := session.FormatAccessTokenKey(newAccessTokenHash)
@@ -34,6 +34,17 @@ func (r *SessionRepository) RefreshTokenPair(ctx context.Context, oldRefreshToke
 			refreshErrs.Set("rollback_new_access_token", delErr.Error())
 		}
 		refreshErrs.Set("new_refresh_token", errs.ClassifyRedisError("save new refresh token", err).Error())
+		return refreshErrs.AsError()
+	}
+
+	// Update session data with new token hashes
+	sessionKey := session.FormatSessionKey(sessionIDStr)
+	if err := r.client.Set(ctx, sessionKey, updatedSessionData, 0).Err(); err != nil {
+		// Rollback new tokens
+		if delErr := r.client.Del(ctx, newAccessTokenKey, newRefreshTokenKey).Err(); delErr != nil {
+			refreshErrs.Set("rollback_new_tokens", delErr.Error())
+		}
+		refreshErrs.Set("update_session_data", errs.ClassifyRedisError("update session data", err).Error())
 		return refreshErrs.AsError()
 	}
 
@@ -74,7 +85,7 @@ func (r *SessionRepository) RefreshTokenPair(ctx context.Context, oldRefreshToke
 	}
 
 	// If there were any cleanup errors, log them but don't fail the operation
-	if len(refreshErrs) > 0 {
+	if !refreshErrs.IsEmpty() {
 		logger, err := ctxutil.GetLoggerFromContext(ctx)
 		if err != nil {
 			return err

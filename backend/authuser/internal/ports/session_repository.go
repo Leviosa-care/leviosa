@@ -11,7 +11,7 @@ import (
 type SessionRepository interface {
 	CreateSession(ctx context.Context, sessionID uuid.UUID, accessTokenHash, refreshTokenHash, userIDHash string, sessionEncoded []byte, accessTTL, refreshTTL time.Duration) error
 	FindSessionByID(ctx context.Context, sessionID uuid.UUID) ([]byte, error)
-	RefreshTokenPair(ctx context.Context, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash string, sessionID uuid.UUID, accessTTL, refreshTTL time.Duration) error
+	RefreshTokenPair(ctx context.Context, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash string, sessionID uuid.UUID, updatedSessionData []byte, accessTTL, refreshTTL time.Duration) error
 	RevokeAllUserSessions(ctx context.Context, userIDHash string) error
 	UpdateSessionCompletion(ctx context.Context, sessionID uuid.UUID, sessionEncoded []byte) error
 	RemoveSessionByID(ctx context.Context, sessionID uuid.UUID) error

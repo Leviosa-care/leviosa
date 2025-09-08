@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -74,6 +75,24 @@ func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID
 		return nil, errs.NewNotEncryptedErr("new token pair in session refreshing", err)
 	}
 
+	// Store old refresh token hash before updating session
+	oldRefreshTokenHash := session.RefreshTokenHash
+
+	// Update session with new token hashes
+	session.AccessTokenHash = newTokenPair.AccessTokenHash
+	session.RefreshTokenHash = newTokenPair.RefreshTokenHash
+
+	// Encrypt updated session
+	if err := s.crypto.ProcessStruct(ctx, session); err != nil {
+		return nil, errs.NewNotEncryptedErr("updated session", err)
+	}
+
+	// Encode updated session data
+	updatedSessionData, err := json.Marshal(session)
+	if err != nil {
+		return nil, errs.NewJSONMarshalErr(err)
+	}
+
 	now := time.Now()
 	accessExpiry := now.Add(accessDuration)
 	refreshExpiry := now.Add(refreshDuration)
@@ -81,10 +100,11 @@ func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID
 	// Perform token rotation - replace old tokens with new ones
 	if err := s.repo.RefreshTokenPair(
 		ctx,
-		session.RefreshTokenHash,      // oldRefreshTokenHash
+		oldRefreshTokenHash,           // oldRefreshTokenHash
 		newTokenPair.AccessTokenHash,  // newAccessTokenHash
 		newTokenPair.RefreshTokenHash, // newRefreshTokenHash
 		session.ID,                    // sessionID (uuid.UUID)
+		updatedSessionData,            // updatedSessionData
 		accessDuration,
 		refreshDuration,
 	); err != nil {
