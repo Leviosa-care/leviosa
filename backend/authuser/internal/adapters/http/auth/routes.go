@@ -48,7 +48,7 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// router.HandleFunc("POST /auth/login", mw.EnableCORS(h.LoginUser))
 
 	// Logs out the currently authenticated user (e.g., invalidates refresh token).
-	// router.HandleFunc("POST /auth/logout", mw.EnableCORS(h.LogoutUser))
+	router.HandleFunc("POST /auth/logout", RequireStandard(mw.EnableCORS(h.SignOut)))
 
 	// Initiates password reset flow by sending a reset link/OTP to the user.
 	// router.HandleFunc("POST /auth/password/reset/request", mw.EnableCORS(h.RequestPasswordReset))

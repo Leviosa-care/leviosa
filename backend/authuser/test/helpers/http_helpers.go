@@ -34,6 +34,69 @@ func NewCheckEmailSendOTPRequest(t *testing.T, ctx context.Context, baseURL stri
 	return req
 }
 
+// NewInvalidJSONRequest creates an HTTP request with invalid JSON body
+func NewInvalidJSONRequest(t *testing.T, ctx context.Context, baseURL, method, path string) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		method,
+		fmt.Sprintf("%s%s", baseURL, path),
+		bytes.NewBufferString("{invalid json"),
+	)
+	require.NoError(t, err, "Failed to create invalid JSON HTTP request")
+
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+// NewSignOutRequest creates an HTTP request for user sign-out with authentication
+func NewSignOutRequest(t *testing.T, ctx context.Context, baseURL string, accessToken string) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("%s/auth/logout", baseURL),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create sign-out HTTP request")
+
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+	return req
+}
+
+// NewSignOutRequestWithoutAuth creates an HTTP request for user sign-out without authentication
+func NewSignOutRequestWithoutAuth(t *testing.T, ctx context.Context, baseURL string) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("%s/auth/logout", baseURL),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create sign-out HTTP request without auth")
+
+	return req
+}
+
+// ParseJSONResponse parses a JSON HTTP response into the provided struct
+func ParseJSONResponse(t *testing.T, resp *http.Response, v interface{}) {
+	t.Helper()
+
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(v)
+	require.NoError(t, err, "Failed to decode JSON response")
+}
+
 // ParseCheckEmailAvailabilityResponse parses the HTTP response for email availability
 func ParseCheckEmailAvailabilityResponse(t *testing.T, resp *http.Response) (bool, string) {
 	t.Helper()
