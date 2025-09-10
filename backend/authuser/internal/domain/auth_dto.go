@@ -62,3 +62,15 @@ type SignOutRequest struct {
 func (r *SignOutRequest) Valid(ctx context.Context) error {
 	return session.ValidateToken(r.Token)
 }
+
+type RequestPasswordResetRequest struct {
+	Email string `json:"email"`
+}
+
+func (r *RequestPasswordResetRequest) Valid(ctx context.Context) error {
+	var errs errsx.Map
+	if err := validation.ValidateEmail(r.Email); err != nil {
+		errs.Set("email", err)
+	}
+	return errs.AsError()
+}

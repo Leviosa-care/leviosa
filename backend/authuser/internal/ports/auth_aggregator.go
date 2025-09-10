@@ -25,6 +25,7 @@ type AuthAggregatorService interface {
 	DeleteOwnAccount(ctx context.Context, sessionInfo *session.SessionInfo) error
 	SignIn(ctx context.Context, request *domain.SignInRequest) (*domain.CreateSessionResponse, error)
 	SignOut(ctx context.Context, sessionInfo *session.SessionInfo) error
+	RequestPasswordReset(ctx context.Context, request *domain.RequestPasswordResetRequest) error
 	// TODO: not sure about that one
 	// ValidateSession(ctx context.Context) error
 }

@@ -36,22 +36,19 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Deletes the current user's own account.
 	router.HandleFunc("DELETE /auth/me", RequireStandard(mw.EnableCORS(h.DeleteOwnAccount)))
 
-	// TODO:
-	// ==============================
-	// Suggested additional handlers:
-	// ==============================
-
-	// Activates a pending user, sets their state to active, and assigns the specified role (admin only).
-	// router.HandleFunc("PATCH /admin/auth/users/{id}/activate", mw.EnableCORS(h.ValidateUserRegistration))
-
 	// Logs in a user with email + password (if you support password-based login).
-	// router.HandleFunc("POST /auth/login", mw.EnableCORS(h.LoginUser))
+	router.HandleFunc("POST /auth/login", mw.EnableCORS(h.SignIn))
 
 	// Logs out the currently authenticated user (e.g., invalidates refresh token).
 	router.HandleFunc("POST /auth/logout", RequireStandard(mw.EnableCORS(h.SignOut)))
 
-	// Initiates password reset flow by sending a reset link/OTP to the user.
-	// router.HandleFunc("POST /auth/password/reset/request", mw.EnableCORS(h.RequestPasswordReset))
+	// Initiates password reset flow by sending a reset OTP to the user.
+	router.HandleFunc("POST /auth/password/reset/request", mw.EnableCORS(h.RequestPasswordReset))
+
+	// TODO:
+	// ==============================
+	// Suggested additional handlers:
+	// ==============================
 
 	// Confirms password reset with a valid token/OTP and updates the password.
 	// router.HandleFunc("POST /auth/password/reset/confirm", mw.EnableCORS(h.ConfirmPasswordReset))

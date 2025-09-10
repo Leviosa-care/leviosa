@@ -860,6 +860,41 @@ func ParseChangePasswordResponse(t *testing.T, resp *http.Response) string {
 	return response.Message
 }
 
+// NewRequestPasswordResetRequest creates an HTTP request for password reset
+func NewRequestPasswordResetRequest(t *testing.T, ctx context.Context, baseURL string, request domain.RequestPasswordResetRequest) *http.Request {
+	t.Helper()
+
+	jsonData, err := json.Marshal(request)
+	require.NoError(t, err, "Failed to marshal request")
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("%s/auth/password/reset/request", baseURL),
+		bytes.NewBuffer(jsonData),
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+// ParseRequestPasswordResetResponse parses the HTTP response for password reset request
+func ParseRequestPasswordResetResponse(t *testing.T, resp *http.Response) (string, string) {
+	t.Helper()
+
+	var response struct {
+		Message string `json:"message"`
+		Status  string `json:"status"`
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(&response)
+	require.NoError(t, err, "Failed to decode password reset response")
+
+	return response.Message, response.Status
+}
+
 // AddAuthCookie adds authentication cookie to an existing request
 func AddAuthCookie(req *http.Request, accessToken string) {
 	cookie := &http.Cookie{
