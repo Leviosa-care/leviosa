@@ -40,3 +40,16 @@ func (r *ApproveUserRequest) Valid(ctx context.Context) error {
 	}
 	return errs.AsError()
 }
+
+type UpdateUserRoleRequest struct {
+	UserID uuid.UUID `json:"user_id"`
+	Role   string    `json:"role"`
+}
+
+func (r *UpdateUserRoleRequest) Valid(ctx context.Context) error {
+	var errs errsx.Map
+	if _, err := identity.ParseRole(r.Role); err != nil {
+		errs.Set("user role", err)
+	}
+	return errs.AsError()
+}

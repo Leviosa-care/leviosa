@@ -14,6 +14,7 @@ type Handler interface {
 	GetUser(w http.ResponseWriter, r *http.Request)
 	GetUserByID(w http.ResponseWriter, r *http.Request)
 	ApproveUser(w http.ResponseWriter, r *http.Request)
+	UpdateUserRole(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {

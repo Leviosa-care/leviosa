@@ -468,6 +468,79 @@ func ParseApproveUserResponse(t *testing.T, resp *http.Response) map[string]stri
 	return response
 }
 
+// NewUpdateUserRoleRequest creates an HTTP request for updating a user's role
+func NewUpdateUserRoleRequest(t *testing.T, ctx context.Context, baseURL string, userID uuid.UUID, role string, accessToken string) *http.Request {
+	t.Helper()
+
+	requestBody := struct {
+		Role string `json:"role"`
+	}{
+		Role: role,
+	}
+
+	jsonData, err := json.Marshal(requestBody)
+	require.NoError(t, err, "Failed to marshal request")
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPatch,
+		fmt.Sprintf("%s/admin/users/%s/role", baseURL, userID.String()),
+		bytes.NewBuffer(jsonData),
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	req.Header.Set("Content-Type", "application/json")
+
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+	return req
+}
+
+// NewMalformedUpdateUserRoleRequest creates an HTTP request with malformed JSON for role update
+func NewMalformedUpdateUserRoleRequest(t *testing.T, ctx context.Context, baseURL string, userID uuid.UUID, accessToken string) *http.Request {
+	t.Helper()
+
+	malformedJSON := `{"role": }`
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPatch,
+		fmt.Sprintf("%s/admin/users/%s/role", baseURL, userID.String()),
+		bytes.NewBuffer([]byte(malformedJSON)),
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	req.Header.Set("Content-Type", "application/json")
+
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+	return req
+}
+
+// ParseUpdateUserRoleResponse parses the HTTP response for update user role request
+func ParseUpdateUserRoleResponse(t *testing.T, resp *http.Response) map[string]string {
+	t.Helper()
+
+	var response map[string]string
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(&response)
+	require.NoError(t, err, "Failed to decode update user role response")
+
+	return response
+}
+
 // NewRefreshSessionRequest creates an HTTP request for refreshing a session with refresh token cookie
 func NewRefreshSessionRequest(t *testing.T, ctx context.Context, baseURL string, refreshToken string) *http.Request {
 	t.Helper()

@@ -14,7 +14,9 @@ type UserService interface {
 	GetPendingUsers(ctx context.Context) ([]*domain.UserResponse, error)
 	GetAllUsers(ctx context.Context) ([]*domain.UserResponse, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.UserResponse, error)
-	GetUserByEmailHash(ctx context.Context, emailHash string) (*domain.UserResponse, error)
+	GetUserByEmailHash(ctx context.Context, email string) (*domain.UserResponse, error)
+	VerifyUserPassword(ctx context.Context, userID uuid.UUID, password string) error
 	ApproveUser(ctx context.Context, request *domain.ApproveUserRequest) error
+	UpdateUserRole(ctx context.Context, request *domain.UpdateUserRoleRequest) error
 	DeleteUser(ctx context.Context, userID uuid.UUID) error
 }
