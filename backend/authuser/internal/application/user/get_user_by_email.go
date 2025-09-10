@@ -11,7 +11,7 @@ import (
 	"github.com/Leviosa-care/core/validation"
 )
 
-func (s *UserService) GetUserByEmailHash(ctx context.Context, email string) (*domain.UserResponse, error) {
+func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*domain.UserResponse, error) {
 	if err := validation.ValidateEmail(email); err != nil {
 		return nil, errs.NewInvalidValueErr(err.Error())
 	}
@@ -31,12 +31,12 @@ func (s *UserService) GetUserByEmailHash(ctx context.Context, email string) (*do
 		case errors.Is(err, errs.ErrTransactionFailure), errors.Is(err, errs.ErrDeadlock):
 			return nil, errs.NewExternalServiceErr(err, "database transaction failed")
 		default:
-			return nil, errs.NewInternalErr(fmt.Errorf("failed to get user by email hash: %w", err))
+			return nil, errs.NewInternalErr(fmt.Errorf("failed to get user by email: %w", err))
 		}
 	}
 
 	if err := s.crypto.DecryptStruct(ctx, user); err != nil {
-		return nil, errs.NewNotDecryptedErr("user retrieved by email hash", err)
+		return nil, errs.NewNotDecryptedErr("user retrieved by email", err)
 	}
 
 	return user.ToResponse(), nil

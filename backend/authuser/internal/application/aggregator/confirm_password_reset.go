@@ -35,7 +35,7 @@ func (s *AuthAggregatorService) ConfirmPasswordReset(ctx context.Context, reques
 	}
 
 	// Get user by email to update password
-	user, err := s.user.GetUserByEmailHash(ctx, userEmail)
+	user, err := s.user.GetUserByEmail(ctx, userEmail)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrDomainNotFound):

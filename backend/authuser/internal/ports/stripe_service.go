@@ -10,6 +10,9 @@ import (
 // StripeService defines operations for Stripe customer management
 type StripeService interface {
 	CreateCustomer(ctx context.Context, userID uuid.UUID, email, firstName, lastName string) (*stripe.Customer, error)
+	RetrieveCustomer(ctx context.Context, customerID string) (*stripe.Customer, error)
+	UpdateCustomer(ctx context.Context, customerID string, params *stripe.CustomerUpdateParams) (*stripe.Customer, error)
 	DeleteCustomer(ctx context.Context, customerID string) (*stripe.Customer, error)
+	FindCustomerByUserID(ctx context.Context, userID uuid.UUID) (*stripe.Customer, error)
 }
 

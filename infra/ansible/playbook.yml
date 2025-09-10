@@ -13,3 +13,32 @@
     - caddy
     - gpg
     - rclone
+
+- hosts: manager
+  become: yes
+  remote_user: root
+  vars_files:
+    - group_vars/manager_secrets.yml
+  roles:
+    - common
+    - ssh
+    - fail2ban
+    - ufw
+    - docker
+    - caddy
+    - gpg
+    - rclone
+  
+- hosts: workers
+  become: yes
+  remote_user: root
+  vars_files:
+    - group_vars/worker_secrets.yml
+  roles:
+    - common
+    - ssh
+    - fail2ban
+    - ufw
+    - docker
+    - gpg
+    - rclone

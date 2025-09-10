@@ -16,13 +16,13 @@ func (s AuthAggregatorService) SignIn(ctx context.Context, request *domain.SignI
 		return nil, errs.NewInvalidValueErr(err.Error())
 	}
 
-	// Get user by email hash
-	user, err := s.user.GetUserByEmailHash(ctx, request.Email)
+	// Get user by email
+	user, err := s.user.GetUserByEmail(ctx, request.Email)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return nil, errs.NewUnauthorizedErr("invalid credentials")
 		}
-		return nil, fmt.Errorf("failed to retrieve user by email hash: %w", err)
+		return nil, fmt.Errorf("failed to retrieve user by email: %w", err)
 	}
 
 	// Check if user is in active state (not pending or unverified)

@@ -4,6 +4,12 @@ import { NODE_ENV, CLIENT_IP_HEADER, SESSION_COOKIE_NAME, API_URL } from "$env/s
 import { handleLoginRedirect } from '$lib/utils/redirect';
 import { mockUser } from '$lib/data/user';
 
+// TODO: for the session thing
+// on each request, send the accesstoken or session_token
+// when the access token is no longer valid, use will receive 401 status code
+// then make a request to a dedicated refresh endpoint on the server and the server resend an access token
+// and optionnaly a new refresh  token. This is the rotation step !
+
 export const handle: Handle = async ({ event, resolve }) => {
     if (NODE_ENV === 'development' || NODE_ENV === 'staging') {
         event.locals.user = mockUser

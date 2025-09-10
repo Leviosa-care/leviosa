@@ -16,7 +16,11 @@ type OTPService interface {
 	GetOTPMaxAttempts() int
 	// application
 	// HACK: loading
+	RequestOTP(ctx context.Context, email string) error
+	// TODO:
 	ValidateOTP(ctx context.Context, request *domain.ValidateOTPRequest) error
 	CreateOTP(ctx context.Context, email string) error
+	// VerifyOTP(ctx context.Context, email, code string) error
 	CancelOTP(ctx context.Context, email string) error
+	ResendOTP(ctx context.Context, email string) error
 }
