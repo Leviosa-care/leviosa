@@ -45,13 +45,16 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Initiates password reset flow by sending a reset OTP to the user.
 	router.HandleFunc("POST /auth/password/reset/request", mw.EnableCORS(h.RequestPasswordReset))
 
+	// Validates password reset OTP and issues a reset confirmation token.
+	router.HandleFunc("POST /auth/password/reset/validate", mw.EnableCORS(h.ValidatePasswordResetOTP))
+
+	// Confirms password reset with a valid token/OTP and updates the password.
+	router.HandleFunc("POST /auth/password/reset/confirm", mw.EnableCORS(h.ConfirmPasswordReset))
+
 	// TODO:
 	// ==============================
 	// Suggested additional handlers:
 	// ==============================
-
-	// Confirms password reset with a valid token/OTP and updates the password.
-	// router.HandleFunc("POST /auth/password/reset/confirm", mw.EnableCORS(h.ConfirmPasswordReset))
 
 	// ==============================
 	// OAuth: Generic provider

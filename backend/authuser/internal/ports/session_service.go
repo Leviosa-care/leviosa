@@ -15,4 +15,6 @@ type SessionService interface {
 	RemoveSession(ctx context.Context, sessionID uuid.UUID) error
 	UpdateSessionCompletion(ctx context.Context, sessionID uuid.UUID, completedAt *time.Time) error
 	RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error
+	CreateResetSession(ctx context.Context, token, userEmail string, ttl time.Duration) error
+	ValidateResetSession(ctx context.Context, token string) (string, error)
 }

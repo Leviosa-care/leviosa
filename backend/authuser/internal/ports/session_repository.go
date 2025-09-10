@@ -15,4 +15,6 @@ type SessionRepository interface {
 	RevokeAllUserSessions(ctx context.Context, userIDHash string) error
 	UpdateSessionCompletion(ctx context.Context, sessionID uuid.UUID, sessionEncoded []byte) error
 	RemoveSessionByID(ctx context.Context, sessionID uuid.UUID) error
+	StoreResetSession(ctx context.Context, tokenHash, userEmail string, ttl time.Duration) error
+	ValidateResetSession(ctx context.Context, tokenHash string) (string, error)
 }

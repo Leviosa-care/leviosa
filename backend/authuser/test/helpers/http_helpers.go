@@ -903,3 +903,101 @@ func AddAuthCookie(req *http.Request, accessToken string) {
 	}
 	req.AddCookie(cookie)
 }
+
+// NewValidatePasswordResetOTPRequest creates an HTTP request for password reset OTP validation
+func NewValidatePasswordResetOTPRequest(t *testing.T, ctx context.Context, baseURL string, request domain.ValidatePasswordResetOTPRequest) *http.Request {
+	t.Helper()
+
+	jsonData, err := json.Marshal(request)
+	require.NoError(t, err, "Failed to marshal request")
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("%s/auth/password/reset/validate", baseURL),
+		bytes.NewBuffer(jsonData),
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+// ParseValidatePasswordResetOTPResponse parses the success response from password reset OTP validation
+func ParseValidatePasswordResetOTPResponse(t *testing.T, resp *http.Response) (message, status string, expiresAt string) {
+	t.Helper()
+
+	var response struct {
+		Message   string `json:"message"`
+		Status    string `json:"status"`
+		ExpiresAt string `json:"expires_at"`
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(&response)
+	require.NoError(t, err, "Failed to decode password reset OTP validation response")
+
+	return response.Message, response.Status, response.ExpiresAt
+}
+
+// GetPasswordResetTokenCookie extracts the password reset token from response cookies
+func GetPasswordResetTokenCookie(t *testing.T, resp *http.Response) *http.Cookie {
+	t.Helper()
+
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == "leviosa_password_reset_token" {
+			return cookie
+		}
+	}
+	require.Fail(t, "Password reset token cookie not found in response")
+	return nil
+}
+
+// NewConfirmPasswordResetRequest creates an HTTP request for password reset confirmation
+func NewConfirmPasswordResetRequest(t *testing.T, ctx context.Context, baseURL string, request domain.ConfirmPasswordResetRequest) *http.Request {
+	t.Helper()
+
+	jsonData, err := json.Marshal(request)
+	require.NoError(t, err, "Failed to marshal request")
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("%s/auth/password/reset/confirm", baseURL),
+		bytes.NewBuffer(jsonData),
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+// NewConfirmPasswordResetRequestWithCookie creates an HTTP request with password reset token cookie
+func NewConfirmPasswordResetRequestWithCookie(t *testing.T, ctx context.Context, baseURL string, request domain.ConfirmPasswordResetRequest, resetTokenCookie *http.Cookie) *http.Request {
+	t.Helper()
+
+	req := NewConfirmPasswordResetRequest(t, ctx, baseURL, request)
+
+	// Add the reset token cookie
+	if resetTokenCookie != nil {
+		req.AddCookie(resetTokenCookie)
+	}
+
+	return req
+}
+
+// ParseConfirmPasswordResetResponse parses the success response from password reset confirmation
+func ParseConfirmPasswordResetResponse(t *testing.T, resp *http.Response) (message, status string) {
+	t.Helper()
+
+	var response struct {
+		Message string `json:"message"`
+		Status  string `json:"status"`
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(&response)
+	require.NoError(t, err, "Failed to decode password reset confirmation response")
+
+	return response.Message, response.Status
+}
