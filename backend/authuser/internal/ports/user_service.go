@@ -18,5 +18,6 @@ type UserService interface {
 	VerifyUserPassword(ctx context.Context, userID uuid.UUID, password string) error
 	ApproveUser(ctx context.Context, request *domain.ApproveUserRequest) error
 	UpdateUserRole(ctx context.Context, request *domain.UpdateUserRoleRequest) error
+	UpdateUser(ctx context.Context, userID uuid.UUID, request *domain.UpdateUserRequest) (*domain.UserResponse, error)
 	DeleteUser(ctx context.Context, userID uuid.UUID) error
 }

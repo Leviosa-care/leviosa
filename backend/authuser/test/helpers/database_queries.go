@@ -6,6 +6,7 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 )
@@ -117,4 +118,45 @@ func CheckUserHasEncryptedFieldsSQL(t *testing.T, ctx context.Context, emailHash
 	}
 
 	return emailEncrypted && dekEncrypted && keyVersionValid
+}
+
+// GetUserFromDB retrieves a user by ID using raw SQL query
+func GetUserFromDB(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pgxpool.Pool) *domain.User {
+	t.Helper()
+
+	query := `
+		SELECT 
+			id, state, email_hash, email_encrypted, password_hash,
+			picture_encrypted, first_name_encrypted, last_name_encrypted, 
+			birth_date_encrypted, gender_encrypted, role_encrypted,
+			telephone_hash, telephone_encrypted, postal_code_encrypted,
+			city_encrypted, address1_encrypted, address2_encrypted,
+			google_id_encrypted, apple_id_encrypted, stripe_customer_id_encrypted,
+			created_at_encrypted, logged_in_at_encrypted, dek_encrypted, key_version
+		FROM auth.users 
+		WHERE id = $1
+	`
+
+	user := &domain.User{}
+	var telephoneHash *string // Handle nullable field
+
+	err := pool.QueryRow(ctx, query, userID).Scan(
+		&user.ID, &user.State, &user.EmailHash, &user.EmailEncrypted,
+		&user.PasswordHash, &user.PictureEncrypted, &user.FirstNameEncrypted,
+		&user.LastNameEncrypted, &user.BirthDateEncrypted, &user.GenderEncrypted,
+		&user.RoleEncrypted, &telephoneHash, &user.TelephoneEncrypted,
+		&user.PostalCodeEncrypted, &user.CityEncrypted, &user.Address1Encrypted,
+		&user.Address2Encrypted, &user.GoogleIDEncrypted, &user.AppleIDEncrypted,
+		&user.StripeCustomerIDEncrypted, &user.CreatedAtEncrypted, &user.LoggedInAtEncrypted,
+		&user.DEKEncrypted, &user.KeyVersion,
+	)
+
+	require.NoError(t, err, "Failed to get user from database")
+
+	// Handle nullable telephone_hash
+	if telephoneHash != nil {
+		user.TelephoneHash = *telephoneHash
+	}
+
+	return user
 }

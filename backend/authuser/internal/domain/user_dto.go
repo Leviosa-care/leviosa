@@ -53,3 +53,17 @@ func (r *UpdateUserRoleRequest) Valid(ctx context.Context) error {
 	}
 	return errs.AsError()
 }
+
+type UpdateUserRequest struct {
+	Picture    *string    `json:"picture,omitempty"`
+	FirstName  *string    `json:"first_name,omitempty"`
+	LastName   *string    `json:"last_name,omitempty"`
+	BirthDate  *time.Time `json:"birthdate,omitempty"`
+	Gender     *string    `json:"gender,omitempty"`
+	Email      *string    `json:"email,omitempty"`
+	Telephone  *string    `json:"telephone,omitempty"`
+	PostalCode *string    `json:"postal_code,omitempty"`
+	City       *string    `json:"city,omitempty"`
+	Address1   *string    `json:"address1,omitempty"`
+	Address2   *string    `json:"address2,omitempty"`
+}

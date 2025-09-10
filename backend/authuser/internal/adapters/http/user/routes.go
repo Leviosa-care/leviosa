@@ -29,12 +29,12 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Updates the role of a specific user by ID (admin only).
 	router.HandleFunc("PATCH /admin/users/{id}/role", RequireAdmin(mw.EnableCORS(h.UpdateUserRole)))
 
+	// Updates the profile of the currently authenticated user.
+	router.HandleFunc("PATCH /users/me", RequireStandard(mw.EnableCORS(h.UpdateUser)))
+
 	// TODO: ==============================
 	// Suggested additional handlers:
 	// ==============================
-
-	// Updates the profile of the currently authenticated user.
-	// router.HandleFunc("PATCH /users/me", mw.EnableCORS(h.UpdateUser))
 
 	// Changes the password of the authenticated user (requires old password).
 	// router.HandleFunc("PATCH /users/me/password", mw.EnableCORS(h.ChangePassword))
