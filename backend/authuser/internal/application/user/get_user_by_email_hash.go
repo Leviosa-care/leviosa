@@ -35,5 +35,9 @@ func (s *UserService) GetUserByEmailHash(ctx context.Context, email string) (*do
 		}
 	}
 
+	if err := s.crypto.DecryptStruct(ctx, user); err != nil {
+		return nil, errs.NewNotDecryptedErr("user retrieved by email hash", err)
+	}
+
 	return user.ToResponse(), nil
 }
