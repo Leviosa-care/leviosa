@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/identity"
@@ -50,6 +51,25 @@ func (r *UpdateUserRoleRequest) Valid(ctx context.Context) error {
 	var errs errsx.Map
 	if _, err := identity.ParseRole(r.Role); err != nil {
 		errs.Set("user role", err)
+	}
+	return errs.AsError()
+}
+
+type ChangePasswordRequest struct {
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}
+
+func (r *ChangePasswordRequest) Valid(ctx context.Context) error {
+	var errs errsx.Map
+	if err := ValidatePassword(r.OldPassword); err != nil {
+		errs.Set("old_password", err)
+	}
+	if err := ValidatePassword(r.NewPassword); err != nil {
+		errs.Set("new_password", err)
+	}
+	if r.OldPassword == r.NewPassword {
+		errs.Set("new_password", errors.New("new password must be different from old password"))
 	}
 	return errs.AsError()
 }

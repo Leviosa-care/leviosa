@@ -797,6 +797,69 @@ func ParseUpdateUserResponse(t *testing.T, resp *http.Response) *domain.UserResp
 	return user
 }
 
+// NewChangePasswordRequest creates an HTTP request for changing password
+func NewChangePasswordRequest(t *testing.T, ctx context.Context, baseURL string, request domain.ChangePasswordRequest, accessToken string) *http.Request {
+	t.Helper()
+
+	jsonData, err := json.Marshal(request)
+	require.NoError(t, err, "Failed to marshal change password request")
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPatch,
+		fmt.Sprintf("%s/users/me/password", baseURL),
+		bytes.NewBuffer(jsonData),
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	req.Header.Set("Content-Type", "application/json")
+
+	// Add authentication cookie
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+
+	return req
+}
+
+// NewChangePasswordRequestWithoutAuth creates an HTTP request for changing password without authentication
+func NewChangePasswordRequestWithoutAuth(t *testing.T, ctx context.Context, baseURL string, request domain.ChangePasswordRequest) *http.Request {
+	t.Helper()
+
+	jsonData, err := json.Marshal(request)
+	require.NoError(t, err, "Failed to marshal change password request")
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPatch,
+		fmt.Sprintf("%s/users/me/password", baseURL),
+		bytes.NewBuffer(jsonData),
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+// ParseChangePasswordResponse parses the HTTP response for change password request
+func ParseChangePasswordResponse(t *testing.T, resp *http.Response) string {
+	t.Helper()
+
+	var response struct {
+		Message string `json:"message"`
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(&response)
+	require.NoError(t, err, "Failed to decode change password response")
+
+	return response.Message
+}
+
 // AddAuthCookie adds authentication cookie to an existing request
 func AddAuthCookie(req *http.Request, accessToken string) {
 	cookie := &http.Cookie{

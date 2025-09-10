@@ -16,6 +16,7 @@ type Handler interface {
 	ApproveUser(w http.ResponseWriter, r *http.Request)
 	UpdateUserRole(w http.ResponseWriter, r *http.Request)
 	UpdateUser(w http.ResponseWriter, r *http.Request)
+	ChangePassword(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {

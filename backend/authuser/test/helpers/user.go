@@ -211,6 +211,44 @@ func GetUserByIDFromDB(t *testing.T, ctx context.Context, userID uuid.UUID, pool
 	return user
 }
 
+// NewTestUserWithPassword creates a User domain object with a specific password
+func NewTestUserWithPassword(email, firstName, lastName, password string) *domain.User {
+	return &domain.User{
+		ID:         uuid.New(),
+		State:      domain.Active,
+		Email:      email,
+		FirstName:  firstName,
+		LastName:   lastName,
+		Password:   password,
+		Telephone:  "0612345678",
+		Role:       identity.Standard.String(),
+		CreatedAt:  time.Now(),
+		LoggedInAt: time.Now(),
+	}
+}
+
+// NewTestUserWithPasswordAndEncryption creates a User with specific password and all encrypted/hashed fields populated
+func NewTestUserWithPasswordAndEncryption(email, firstName, lastName, password string, crypto encx.CryptoService) (*domain.User, error) {
+	user := NewTestUserWithPassword(email, firstName, lastName, password)
+
+	// Use crypto service to process the struct and populate encrypted/hashed fields
+	err := crypto.ProcessStruct(context.Background(), user)
+	if err != nil {
+		return nil, fmt.Errorf("process user struct for encryption: %w", err)
+	}
+
+	return user, nil
+}
+
+// InsertTestUserWithPassword convenience function that creates and inserts a test user with specific password
+func InsertTestUserWithPassword(t *testing.T, ctx context.Context, email, firstName, lastName, password string, pool *pgxpool.Pool, crypto encx.CryptoService) uuid.UUID {
+	t.Helper()
+	user, err := NewTestUserWithPasswordAndEncryption(email, firstName, lastName, password, crypto)
+	require.NoError(t, err, "Failed to create encrypted test user with password")
+	InsertUser(t, ctx, user, pool)
+	return user.ID
+}
+
 // GetUserByID returns a user by ID, returns nil if not found (for test assertions)
 func GetUserByID(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pgxpool.Pool) *domain.User {
 	t.Helper()

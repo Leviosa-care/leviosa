@@ -32,10 +32,6 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Updates the profile of the currently authenticated user.
 	router.HandleFunc("PATCH /users/me", RequireStandard(mw.EnableCORS(h.UpdateUser)))
 
-	// TODO: ==============================
-	// Suggested additional handlers:
-	// ==============================
-
 	// Changes the password of the authenticated user (requires old password).
-	// router.HandleFunc("PATCH /users/me/password", mw.EnableCORS(h.ChangePassword))
+	router.HandleFunc("PATCH /users/me/password", RequireStandard(mw.EnableCORS(h.ChangePassword)))
 }
