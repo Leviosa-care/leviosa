@@ -23,21 +23,15 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Retrieves the profile of the currently authenticated user.
 	router.HandleFunc("GET /users/me", RequireStandard(mw.EnableCORS(h.GetUser)))
 
+	// Retrieves details of a specific user by ID (admin only).
+	router.HandleFunc("GET /admin/users/{id}", RequireAdmin(mw.EnableCORS(h.GetUserByID)))
+
 	// TODO: ==============================
 	// Suggested additional handlers:
 	// ==============================
 
 	// Updates the profile of the currently authenticated user.
 	// router.HandleFunc("PATCH /users/me", mw.EnableCORS(h.UpdateUser))
-
-	// Deletes the profile of the currently authenticated user (account removal).
-	// router.HandleFunc("DELETE /users/me", mw.EnableCORS(h.DeleteUser))
-
-	// Permanently deletes or suspends a user profile by ID (admin only).
-	// router.HandleFunc("DELETE /admin/users/{id}", mw.EnableCORS(h.BanUser))
-
-	// Retrieves details of a specific user by ID (admin only).
-	// router.HandleFunc("GET /admin/users/{id}", mw.EnableCORS(h.GetUserByID))
 
 	// Changes the password of the authenticated user (requires old password).
 	// router.HandleFunc("PATCH /users/me/password", mw.EnableCORS(h.ChangePassword))

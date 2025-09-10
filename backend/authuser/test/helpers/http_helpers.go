@@ -34,6 +34,25 @@ func NewCheckEmailSendOTPRequest(t *testing.T, ctx context.Context, baseURL stri
 	return req
 }
 
+// NewSignInRequest creates an HTTP request for user sign-in
+func NewSignInRequest(t *testing.T, ctx context.Context, baseURL string, request domain.SignInRequest) *http.Request {
+	t.Helper()
+
+	jsonData, err := json.Marshal(request)
+	require.NoError(t, err, "Failed to marshal sign-in request")
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("%s/auth/login", baseURL),
+		bytes.NewBuffer(jsonData),
+	)
+	require.NoError(t, err, "Failed to create sign-in HTTP request")
+
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
 // NewInvalidJSONRequest creates an HTTP request with invalid JSON body
 func NewInvalidJSONRequest(t *testing.T, ctx context.Context, baseURL, method, path string) *http.Request {
 	t.Helper()
@@ -594,4 +613,55 @@ func ParseDeleteUserResponse(t *testing.T, resp *http.Response) string {
 	require.NoError(t, err, "Failed to decode delete user response")
 
 	return response.Message
+}
+
+// NewGetUserByIDRequest creates an HTTP request for getting a specific user by ID (admin endpoint)
+func NewGetUserByIDRequest(t *testing.T, ctx context.Context, baseURL string, userID uuid.UUID, accessToken string) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		fmt.Sprintf("%s/admin/users/%s", baseURL, userID.String()),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+	return req
+}
+
+// NewGetUserByIDRequestWithoutAuth creates an HTTP request for getting a specific user by ID without authentication
+func NewGetUserByIDRequestWithoutAuth(t *testing.T, ctx context.Context, baseURL string, userID uuid.UUID) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		fmt.Sprintf("%s/admin/users/%s", baseURL, userID.String()),
+		nil,
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Explicitly do not add any authorization headers
+	return req
+}
+
+// ParseGetUserByIDResponse parses the HTTP response for get user by ID request
+func ParseGetUserByIDResponse(t *testing.T, resp *http.Response) *domain.UserResponse {
+	t.Helper()
+
+	var user *domain.UserResponse
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(&user)
+	require.NoError(t, err, "Failed to decode get user by ID response")
+
+	return user
 }
