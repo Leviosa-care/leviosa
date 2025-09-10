@@ -23,7 +23,7 @@ type AuthAggregatorService interface {
 	RefreshSession(ctx context.Context, sessionID uuid.UUID) (*domain.RefreshSessionResponse, error)
 	DeleteUserByAdmin(ctx context.Context, userID uuid.UUID) error
 	DeleteOwnAccount(ctx context.Context, sessionInfo *session.SessionInfo) error
-	// SignIn(ctx context.Context, request *domain.SignInRequest) (string, error)
+	SignIn(ctx context.Context, request *domain.SignInRequest) (*domain.CreateSessionResponse, error)
 	SignOut(ctx context.Context, sessionInfo *session.SessionInfo) error
 	// TODO: not sure about that one
 	// ValidateSession(ctx context.Context) error

@@ -60,8 +60,6 @@ func (s *UserService) GetPendingUsers(ctx context.Context) ([]*domain.UserRespon
 	responses := make([]*domain.UserResponse, 0, len(users))
 	for _, user := range users {
 		// Decrypt user data
-		fmt.Printf("WITH THE ADDRESS2 FIELD: %q\n", user.Address2)
-
 		if err := s.crypto.DecryptStruct(ctx, user); err != nil {
 			return nil, errs.NewNotDecryptedErr("pending users list", err)
 		}

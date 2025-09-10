@@ -58,9 +58,6 @@ func TestGetPendingUsers(t *testing.T) {
 		crypto.ProcessStruct(ctx, pendingUser2)
 		crypto.ProcessStruct(ctx, activeUser)
 
-		fmt.Printf("THE PENDING USER 1 AFTER ENCRYPTION: %#+v", pendingUser1)
-		fmt.Println()
-
 		td.InsertUser(t, ctx, pendingUser1, testPool)
 		td.InsertUser(t, ctx, pendingUser2, testPool)
 		td.InsertUser(t, ctx, activeUser, testPool)

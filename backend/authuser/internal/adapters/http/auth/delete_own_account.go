@@ -40,7 +40,6 @@ func (h *handler) DeleteOwnAccount(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, errs.ErrTransactionFailure):
 			statusCode = http.StatusServiceUnavailable
 		default:
-			print("THE ERROR IS : ", err.Error(), "\n")
 			statusCode = http.StatusInternalServerError
 		}
 
@@ -55,4 +54,3 @@ func (h *handler) DeleteOwnAccount(w http.ResponseWriter, r *http.Request) {
 		Message: "Account deleted successfully",
 	}, http.StatusOK)
 }
-

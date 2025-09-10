@@ -3,12 +3,46 @@ package user
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/Leviosa-care/core/errs"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/argon2"
 )
+
+func (s *UserService) VerifyUserPassword(ctx context.Context, userID uuid.UUID, password string) error {
+	// Get the user from repository to access the stored password hash
+	user, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, errs.ErrRepositoryNotFound):
+			return errs.NewNotFoundErr(err, "user")
+		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
+			return errs.NewExternalServiceErr(err, "database unavailable")
+		default:
+			return errs.NewInternalErr(fmt.Errorf("failed to get user: %w", err))
+		}
+	}
+
+	// Decrypt user to get right DEK value
+	if err := s.crypto.DecryptStruct(ctx, user); err != nil {
+		return errs.NewNotEncryptedErr("user retrieved by ID", err)
+	}
+	// Compare the hashed password with the stored password hash
+	// TODO: Wait for good implementation of github.com/hengadev/encx. The current one here is just to pass tests
+	ok, err := CompareSecureHashAndValue(ctx, password, user.PasswordHash)
+	if err != nil {
+		return errs.NewUnexpectedError(err)
+	}
+	if !ok {
+		return errs.NewInvalidValueErr("password verification failed: provided password does not match stored hash")
+	}
+
+	return nil
+}
 
 // CompareSecureHashAndValue compares a secure hash with a value
 func CompareSecureHashAndValue(ctx context.Context, value string, hashValue string) (bool, error) {
