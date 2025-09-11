@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 
+	"github.com/Leviosa-care/core/middleware/auth"
 	"github.com/Leviosa-care/settings/internal/ports"
 )
 
@@ -31,9 +32,10 @@ type Handler interface {
 }
 
 type handler struct {
-	svc ports.SettingsService
+	svc    ports.SettingsService
+	authmw auth.AuthMiddleware
 }
 
-func New(svc ports.SettingsService) *handler {
-	return &handler{svc}
+func New(svc ports.SettingsService, authmw auth.AuthMiddleware) *handler {
+	return &handler{svc, authmw}
 }
