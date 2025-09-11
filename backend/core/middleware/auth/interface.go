@@ -15,4 +15,7 @@ type AuthMiddleware interface {
 	RequireMinimumRole(minRole identity.Role) func(mw.Handler) mw.Handler
 	RequireAnyRole(roles ...identity.Role) func(mw.Handler) mw.Handler
 	RequireAdmin(next mw.Handler) mw.Handler
+
+	// Service-to-service authentication
+	RequireServiceAuth(next mw.Handler) mw.Handler
 }
