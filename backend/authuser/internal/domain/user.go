@@ -70,5 +70,7 @@ func (u *User) ToResponse() *UserResponse {
 		City:       u.City,
 		Address1:   u.Address1,
 		Address2:   u.Address2,
+		GoogleID:   u.GoogleID,
+		AppleID:    u.AppleID,
 	}
 }

@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 	"github.com/Leviosa-care/core/auth/session"
@@ -28,6 +29,8 @@ type AuthAggregatorService interface {
 	RequestPasswordReset(ctx context.Context, request *domain.RequestPasswordResetRequest) error
 	ValidatePasswordResetOTP(ctx context.Context, request *domain.ValidatePasswordResetOTPRequest) (*domain.ValidatePasswordResetOTPResponse, error)
 	ConfirmPasswordReset(ctx context.Context, request *domain.ConfirmPasswordResetRequest) error
+	OAuthStart(ctx context.Context, request *domain.OAuthStartRequest) (*domain.OAuthStartResponse, error)
+	OAuthCallback(ctx context.Context, w http.ResponseWriter, r *http.Request, provider string) (*domain.OAuthCallbackResponse, error)
 	// TODO: not sure about that one
 	// ValidateSession(ctx context.Context) error
 }

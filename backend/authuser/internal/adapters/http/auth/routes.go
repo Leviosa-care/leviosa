@@ -63,12 +63,12 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Starts the OAuth flow by redirecting to the provider's consent/authorization screen.
 	// Example: GET /auth/oauth/google → start Google login
 	//          GET /auth/oauth/apple → start Apple login
-	// router.HandleFunc("GET /auth/oauth/{provider}", mw.EnableCORS(h.OAuthStart))
+	router.HandleFunc("GET /auth/oauth/{provider}", mw.EnableCORS(h.OAuthStart))
 
 	// Handles the provider callback, exchanges code for tokens, and creates/logs in the user.
 	// Example: GET /auth/oauth/google/callback → Google callback
 	//          GET /auth/oauth/apple/callback → Apple callback
-	// router.HandleFunc("GET /auth/oauth/{provider}/callback", mw.EnableCORS(h.OAuthCallback))
+	router.HandleFunc("GET /auth/oauth/{provider}/callback", mw.EnableCORS(h.OAuthCallback))
 
 	// ==============================
 	// Optional: Account linking

@@ -16,4 +16,8 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, user *domain.User) error
 	UpdateUser(ctx context.Context, user *domain.User) error
 	DeleteUser(ctx context.Context, userID uuid.UUID) error
+	GetUserByGoogleID(ctx context.Context, googleID string) (*domain.User, error)
+	GetUserByAppleID(ctx context.Context, appleID string) (*domain.User, error)
+	ExistsByGoogleID(ctx context.Context, googleID string) (bool, error)
+	ExistsByAppleID(ctx context.Context, appleID string) (bool, error)
 }

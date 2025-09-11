@@ -22,4 +22,7 @@ type UserService interface {
 	UpdateUserRole(ctx context.Context, request *domain.UpdateUserRoleRequest) error
 	UpdateUser(ctx context.Context, userID uuid.UUID, request *domain.UpdateUserRequest) (*domain.UserResponse, error)
 	DeleteUser(ctx context.Context, userID uuid.UUID) error
+	GetOrCreateOAuthUser(ctx context.Context, provider, userID, email, firstName, lastName string) (*domain.UserResponse, bool, error)
+	GetUserByGoogleID(ctx context.Context, googleID string) (*domain.UserResponse, error)
+	GetUserByAppleID(ctx context.Context, appleID string) (*domain.UserResponse, error)
 }
