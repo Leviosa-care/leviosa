@@ -109,7 +109,7 @@ func (m *SessionAuthMiddleware) validateServiceKey(ctx context.Context, serviceN
 
 	// Get the Vault path for this service's API key
 	vaultPath := services.ServiceAPIKeyPath(serviceName)
-	
+
 	logger.InfoContext(ctx, "Service auth middleware: Validating service key with Vault",
 		"operation", "validate_service_key",
 		"service_name", serviceName,
@@ -125,7 +125,7 @@ func (m *SessionAuthMiddleware) validateServiceKey(ctx context.Context, serviceN
 			"error", err)
 		return false
 	}
-	
+
 	if secret == nil || secret.Data == nil {
 		logger.WarnContext(ctx, "Service auth middleware: Service key not found in Vault",
 			"operation", "validate_service_key",
@@ -133,7 +133,7 @@ func (m *SessionAuthMiddleware) validateServiceKey(ctx context.Context, serviceN
 			"vault_path", vaultPath)
 		return false
 	}
-	
+
 	// Extract the stored key hash from Vault response
 	// Vault KV v2 nests data under "data" key
 	data, ok := secret.Data["data"].(map[string]interface{})
@@ -144,7 +144,7 @@ func (m *SessionAuthMiddleware) validateServiceKey(ctx context.Context, serviceN
 			"vault_path", vaultPath)
 		return false
 	}
-	
+
 	storedKeyHash, ok := data["key_hash"].(string)
 	if !ok || storedKeyHash == "" {
 		logger.WarnContext(ctx, "Service auth middleware: Missing or invalid key_hash in Vault",
@@ -153,12 +153,12 @@ func (m *SessionAuthMiddleware) validateServiceKey(ctx context.Context, serviceN
 			"vault_path", vaultPath)
 		return false
 	}
-	
+
 	// Hash the provided key and compare with stored hash
 	providedKeyHash := m.crypto.HashBasic(ctx, []byte(serviceKey))
-	
+
 	isValid := storedKeyHash == providedKeyHash
-	
+
 	if isValid {
 		logger.InfoContext(ctx, "Service auth middleware: Service key validation successful",
 			"operation", "validate_service_key",
@@ -168,7 +168,7 @@ func (m *SessionAuthMiddleware) validateServiceKey(ctx context.Context, serviceN
 			"operation", "validate_service_key",
 			"service_name", serviceName)
 	}
-	
+
 	return isValid
 }
 
@@ -180,3 +180,4 @@ func GetServiceInfoFromContext(ctx context.Context) (*ServiceInfo, error) {
 	}
 	return serviceInfo, nil
 }
+
