@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -260,7 +261,7 @@ func insertSession(t *testing.T, ctx context.Context, sess *session.Session, cli
 	userSessionIndexKey := session.FormatUserSessionIndexKey(sess.UserIDHash)
 	
 	// Encode session to JSON
-	sessionData, err := sess.MarshalJSON()
+	sessionData, err := json.Marshal(sess)
 	require.NoError(t, err, "Failed to marshal session")
 	
 	// Store session data
