@@ -1,7 +1,9 @@
 package httpx
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -129,4 +131,28 @@ func (sc *ServiceClient) GetServiceName() string {
 // GetBaseURL returns the base URL this client is configured for
 func (sc *ServiceClient) GetBaseURL() string {
 	return sc.baseURL
+}
+
+// NewJSONRequest creates an HTTP request with JSON body encoding
+func NewJSONRequest(method, url string, body interface{}) (*http.Request, error) {
+	var reqBody []byte
+	var err error
+	
+	if body != nil {
+		reqBody, err = json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		}
+	}
+	
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(reqBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	
+	return req, nil
 }
