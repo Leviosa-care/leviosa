@@ -5,10 +5,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/Leviosa-care/core/contracts/services"
+	"github.com/hashicorp/vault/api"
+	"github.com/hengadev/encx"
+	"github.com/hengadev/encx/providers/hashicorpvault"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -141,6 +148,16 @@ func enableTransitEngine(vaultContainer *VaultContainer) error {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusBadRequest {
+		// Check if engine already exists
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		if strings.Contains(string(bodyBytes), "path is already in use") {
+			fmt.Println("Transit engine already enabled, continuing...")
+			return nil
+		}
+		return fmt.Errorf("vault returned status %d when enabling transit engine: %s", resp.StatusCode, string(bodyBytes))
+	}
+	
 	if resp.StatusCode != http.StatusNoContent {
 		return fmt.Errorf("vault returned status %d when enabling transit engine", resp.StatusCode)
 	}
@@ -245,4 +262,298 @@ func verifyVaultSecret(vaultContainer *VaultContainer, path string) error {
 
 	fmt.Printf("Vault secret verification for %s: %+v\n", path, result)
 	return nil
+}
+
+// InitializeServiceKeys creates API keys for all services in the test Vault instance
+func InitializeServiceKeys(vaultContainer *VaultContainer, cryptoService encx.CryptoService) (map[string]string, error) {
+	// Create Vault API client
+	config := &VaultClientConfig{
+		Address: vaultContainer.HTTPSEndpoint,
+		Token:   vaultContainer.RootToken,
+	}
+
+	vaultClient, err := NewVaultClient(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Vault client: %w", err)
+	}
+
+	// Create service key manager
+	keyManager := services.NewServiceKeyManager(vaultClient, cryptoService)
+
+	// Generate all service keys
+	serviceKeys, err := keyManager.GenerateAllServiceKeys(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate service keys: %w", err)
+	}
+
+	fmt.Printf("Generated API keys for %d services\n", len(serviceKeys))
+	return serviceKeys, nil
+}
+
+// VaultClientConfig holds configuration for creating a Vault client
+type VaultClientConfig struct {
+	Address string
+	Token   string
+}
+
+// NewVaultClient creates a new Vault API client with the given configuration
+func NewVaultClient(config *VaultClientConfig) (*api.Client, error) {
+	vaultConfig := api.DefaultConfig()
+	vaultConfig.Address = config.Address
+
+	client, err := api.NewClient(vaultConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Vault client: %w", err)
+	}
+
+	client.SetToken(config.Token)
+	return client, nil
+}
+
+// Helper functions for per-service encryption setup
+
+// GetServiceEncryptionKeyName returns the transit key name for a service
+func GetServiceEncryptionKeyName(serviceName string) string {
+	return fmt.Sprintf("%s-encryption-key", serviceName)
+}
+
+// GetServicePepperPath returns the pepper secret path for a service
+func GetServicePepperPath(serviceName string) string {
+	return fmt.Sprintf("secret/data/peppers/%s", serviceName)
+}
+
+// createServiceEncryptionKey creates a service-specific encryption key in Vault transit engine
+func createServiceEncryptionKey(vaultContainer *VaultContainer, serviceName string) error {
+	keyName := GetServiceEncryptionKeyName(serviceName)
+	url := fmt.Sprintf("%s/v1/transit/keys/%s", vaultContainer.HTTPSEndpoint, keyName)
+	
+	payload := map[string]any{
+		"type": "aes256-gcm96",
+	}
+	
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal key creation payload: %w", err)
+	}
+	
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return fmt.Errorf("failed to create key creation request: %w", err)
+	}
+	
+	req.Header.Set("X-Vault-Token", vaultContainer.RootToken)
+	req.Header.Set("Content-Type", "application/json")
+	
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to create service encryption key: %w", err)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode == http.StatusOK {
+		// Key already exists, which is fine
+		fmt.Printf("✓ Service encryption key already exists: %s\n", keyName)
+		return nil
+	}
+	
+	if resp.StatusCode != http.StatusNoContent {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to create service encryption key %s, status: %d, body: %s", keyName, resp.StatusCode, string(body))
+	}
+	
+	fmt.Printf("✓ Created service encryption key: %s\n", keyName)
+	return nil
+}
+
+// createServicePepper creates a service-specific pepper secret in Vault KV store
+func createServicePepper(vaultContainer *VaultContainer, serviceName string) error {
+	pepperPath := GetServicePepperPath(serviceName)
+	
+	// Generate a unique 32-character pepper for this service
+	pepper := fmt.Sprintf("test%s%s", serviceName, strings.Repeat("x", 28-len(serviceName)))
+	if len(pepper) > 32 {
+		pepper = pepper[:32]
+	}
+	if len(pepper) < 32 {
+		pepper = pepper + strings.Repeat("y", 32-len(pepper))
+	}
+	
+	pepperData := map[string]any{
+		"data": map[string]any{
+			"value": pepper,
+		},
+	}
+	
+	return createVaultSecret(vaultContainer, pepperPath, pepperData)
+}
+
+// CreateServiceCryptoService creates a service-specific crypto service with isolated encryption
+func CreateServiceCryptoService(ctx context.Context, vaultContainer *VaultContainer, serviceName string) (encx.CryptoService, error) {
+	// Ensure the service encryption key exists
+	if err := createServiceEncryptionKey(vaultContainer, serviceName); err != nil {
+		return nil, fmt.Errorf("failed to create service encryption key: %w", err)
+	}
+	
+	// Ensure the service pepper exists
+	if err := createServicePepper(vaultContainer, serviceName); err != nil {
+		return nil, fmt.Errorf("failed to create service pepper: %w", err)
+	}
+	
+	// Create Vault client for this service
+	config := &VaultClientConfig{
+		Address: vaultContainer.HTTPSEndpoint,
+		Token:   vaultContainer.RootToken,
+	}
+	
+	// Create KMS provider using HashiCorp Vault
+	// Set environment variables for the hashicorpvault.New() function
+	originalAddr := os.Getenv("VAULT_ADDR")
+	originalToken := os.Getenv("VAULT_TOKEN")
+	
+	os.Setenv("VAULT_ADDR", config.Address)
+	os.Setenv("VAULT_TOKEN", config.Token)
+	
+	kms, err := hashicorpvault.New()
+	
+	// Restore original environment variables
+	os.Setenv("VAULT_ADDR", originalAddr)
+	os.Setenv("VAULT_TOKEN", originalToken)
+	
+	if err != nil {
+		return nil, fmt.Errorf("failed to create KMS provider: %w", err)
+	}
+	
+	// Create crypto service with service-specific keys
+	serviceKeyName := GetServiceEncryptionKeyName(serviceName)
+	servicePepperPath := GetServicePepperPath(serviceName)
+	
+	crypto, err := encx.New(ctx, kms, serviceKeyName, servicePepperPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create crypto service for %s: %w", serviceName, err)
+	}
+	
+	fmt.Printf("✓ Created crypto service for service: %s\n", serviceName)
+	return crypto, nil
+}
+
+// ServiceVaultSetup contains the complete setup for service-specific Vault configuration
+type ServiceVaultSetup struct {
+	VaultContainer  *VaultContainer
+	ServiceKeys     map[string]string               // service name -> API key
+	CryptoServices  map[string]encx.CryptoService   // service name -> crypto service
+	VaultClient     *api.Client                     // Vault client for auth middleware
+}
+
+// InitializeServiceVault sets up Vault with per-service encryption and service authentication
+// This function creates the complete GDPR-compliant setup for multiple services
+func InitializeServiceVault(ctx context.Context, vaultContainer *VaultContainer, serviceNames []string) (*ServiceVaultSetup, error) {
+	fmt.Printf("=== Initializing Service Vault Setup ===\n")
+	fmt.Printf("Services: %v\n", serviceNames)
+	
+	// Initialize the basic Vault setup (KV and Transit engines, shared encryption key)
+	if err := initializeVaultSecrets(vaultContainer); err != nil {
+		return nil, fmt.Errorf("failed to initialize basic Vault secrets: %w", err)
+	}
+	
+	// Create Vault client for auth middleware and service key operations
+	vaultClient, err := NewVaultClient(&VaultClientConfig{
+		Address: vaultContainer.HTTPSEndpoint,
+		Token:   vaultContainer.RootToken,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Vault client: %w", err)
+	}
+	
+	// Create a shared crypto service for service key hashing
+	// This uses the original shared key for API key operations
+	// Set environment variables for the hashicorpvault.New() function
+	originalAddr := os.Getenv("VAULT_ADDR")
+	originalToken := os.Getenv("VAULT_TOKEN")
+	
+	os.Setenv("VAULT_ADDR", vaultContainer.HTTPSEndpoint)
+	os.Setenv("VAULT_TOKEN", vaultContainer.RootToken)
+	
+	kms, err := hashicorpvault.New()
+	
+	// Restore original environment variables
+	os.Setenv("VAULT_ADDR", originalAddr)
+	os.Setenv("VAULT_TOKEN", originalToken)
+	
+	if err != nil {
+		return nil, fmt.Errorf("failed to create KMS provider: %w", err)
+	}
+	
+	sharedCrypto, err := encx.New(ctx, kms, EncryptionKey, "secret/data/pepper")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create shared crypto service: %w", err)
+	}
+	
+	// Generate service API keys using the existing function
+	serviceKeys, err := InitializeServiceKeys(vaultContainer, sharedCrypto)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize service keys: %w", err)
+	}
+	
+	// Create per-service crypto services for data encryption
+	cryptoServices := make(map[string]encx.CryptoService)
+	
+	for _, serviceName := range serviceNames {
+		fmt.Printf("Creating service-specific crypto for: %s\n", serviceName)
+		
+		serviceCrypto, err := CreateServiceCryptoService(ctx, vaultContainer, serviceName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create crypto service for %s: %w", serviceName, err)
+		}
+		
+		cryptoServices[serviceName] = serviceCrypto
+	}
+	
+	setup := &ServiceVaultSetup{
+		VaultContainer: vaultContainer,
+		ServiceKeys:    serviceKeys,
+		CryptoServices: cryptoServices,
+		VaultClient:    vaultClient,
+	}
+	
+	fmt.Printf("✅ Service Vault setup complete!\n")
+	fmt.Printf("   - %d service API keys generated\n", len(serviceKeys))
+	fmt.Printf("   - %d service-specific crypto services created\n", len(cryptoServices))
+	fmt.Printf("   - GDPR-compliant data isolation enabled\n")
+	
+	return setup, nil
+}
+
+// SetupServiceVault is a convenience function that creates a Vault container and initializes service-specific setup
+// This is the main function that tests should use for GDPR-compliant service testing
+func SetupServiceVault(ctx context.Context, t *testing.T, serviceNames []string) (*ServiceVaultSetup, error) {
+	// Create Vault container
+	vaultContainer, err := SetupVault(ctx, t)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup Vault container: %w", err)
+	}
+	
+	// Initialize service-specific configuration
+	setup, err := InitializeServiceVault(ctx, vaultContainer, serviceNames)
+	if err != nil {
+		// Clean up container on failure
+		if t != nil {
+			TeardownVault(ctx, t, vaultContainer)
+		}
+		return nil, fmt.Errorf("failed to initialize service vault: %w", err)
+	}
+	
+	return setup, nil
+}
+
+// GetServiceCrypto is a convenience method to get crypto service for a specific service
+func (s *ServiceVaultSetup) GetServiceCrypto(serviceName string) (encx.CryptoService, bool) {
+	crypto, exists := s.CryptoServices[serviceName]
+	return crypto, exists
+}
+
+// GetServiceAPIKey is a convenience method to get API key for a specific service
+func (s *ServiceVaultSetup) GetServiceAPIKey(serviceName string) (string, bool) {
+	key, exists := s.ServiceKeys[serviceName]
+	return key, exists
 }
