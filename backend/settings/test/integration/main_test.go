@@ -20,10 +20,12 @@ import (
 	"github.com/Leviosa-care/settings/internal/ports"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
+	"github.com/Leviosa-care/core/contracts/services"
 	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/envmode"
 	"github.com/Leviosa-care/core/logger"
 	"github.com/Leviosa-care/core/middleware"
+	"github.com/Leviosa-care/core/middleware/auth"
 	"github.com/Leviosa-care/core/migrations"
 	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -31,7 +33,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/hengadev/encx"
-	"github.com/hengadev/encx/providers/hashicorpvault"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -42,6 +43,7 @@ var (
 	testPool      *pgxpool.Pool
 	s3Client      *s3.Client
 	crypto        encx.CryptoService
+	vaultSetup    *tu.ServiceVaultSetup  // Enhanced Vault setup with per-service keys
 	repo          ports.SettingsRepository
 	mediaRepo     ports.SettingsMedia
 	handler       settingsHandler.Handler
@@ -173,46 +175,51 @@ func TestMain(m *testing.M) {
 	// Store connection for test verification
 	testMQConn = conn
 
-	// Setup Vault testcontainer
-	log.Println("Setting up Vault testcontainer...")
-	vaultContainer, err := tu.SetupVault(ctx, nil)
+	// Setup enhanced Vault testcontainer with per-service encryption (GDPR compliant)
+	log.Println("Setting up enhanced Vault testcontainer with per-service keys...")
+	serviceNames := []string{services.Settings} // Only settings service for this test
+	vaultSetup, err = tu.SetupServiceVault(ctx, nil, serviceNames)
 	if err != nil {
-		log.Fatalf("Failed to setup Vault container: %v", err)
+		log.Fatalf("Failed to setup service Vault container: %v", err)
 	}
-	defer tu.TeardownVault(ctx, nil, vaultContainer)
+	defer tu.TeardownVault(ctx, nil, vaultSetup.VaultContainer)
 
-	// Set environment variables for Vault
-	os.Setenv("VAULT_ADDR", vaultContainer.HTTPSEndpoint)
-	os.Setenv("VAULT_TOKEN", vaultContainer.RootToken)
+	// Set environment variables for Vault (for encx library)
+	os.Setenv("VAULT_ADDR", vaultSetup.VaultContainer.HTTPSEndpoint)
+	os.Setenv("VAULT_TOKEN", vaultSetup.VaultContainer.RootToken)
 
-	// crypto
-	kms, err := hashicorpvault.New()
-	if err != nil {
-		fmt.Println("creating vault:", err)
-		return
-	}
-	crypto, err = encx.New(
-		ctx,
-		kms,
-		tu.EncryptionKey,
-		"secret/data/pepper",
-	)
-	if err != nil {
-		log.Printf("Crypto service creation error details: %+v", err)
-		log.Fatalf("Failed to create crypto service: %v", err)
+	// Get service-specific crypto service (GDPR compliant)
+	var exists bool
+	crypto, exists = vaultSetup.GetServiceCrypto(services.Settings)
+	if !exists {
+		log.Fatal("Settings service crypto not found in vault setup")
 	}
 	if crypto == nil {
-		log.Fatal("Crypto service is nil after creation")
+		log.Fatal("Settings crypto service is nil")
 	}
-	log.Println("Crypto service created successfully")
+	log.Printf("✓ Settings service crypto initialized with per-service encryption key")
+	
+	// Log vault setup details for debugging
+	log.Printf("✓ Vault setup complete:")
+	log.Printf("  - Services: %d", len(vaultSetup.CryptoServices))
+	log.Printf("  - API Keys: %d", len(vaultSetup.ServiceKeys))
+	log.Printf("  - GDPR compliant per-service encryption: enabled")
 
 	rabbitmq.Setup(ctx, ch)
 
 	repo = postgres.New(ctx, testPool)
 	mediaRepo = media.New(ctx, s3Client, th.BUCKETNAME)
 
+	// Create application service
 	service := settings.New(repo, mediaRepo, crypto, conn)
-	handler = settingsHandler.New(service)
+	
+	// Create authentication middleware with Vault client
+	// For integration tests, we pass nil session repository since we're testing service auth
+	authmw := auth.NewSessionAuthMiddleware(nil, crypto, vaultSetup.VaultClient)
+	
+	// Create HTTP handler with auth middleware
+	handler = settingsHandler.New(service, authmw)
+	log.Printf("✓ Settings handler created with service authentication middleware")
 
 	router := http.NewServeMux()
 	handler.RegisterRoutes(router)
