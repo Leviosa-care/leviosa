@@ -59,6 +59,8 @@ CREATE INDEX idx_users_email_hash ON auth.users (email_hash);
 CREATE INDEX idx_users_telephone_hash ON auth.users (telephone_hash) WHERE telephone_hash IS NOT NULL;
 CREATE INDEX idx_users_state ON auth.users (state);
 CREATE INDEX idx_users_created_at ON auth.users (created_at);
+CREATE INDEX idx_users_google_id_encrypted ON auth.users (google_id_encrypted) WHERE google_id_encrypted IS NOT NULL;
+CREATE INDEX idx_users_apple_id_encrypted ON auth.users (apple_id_encrypted) WHERE apple_id_encrypted IS NOT NULL;
 
 -- Update trigger for updated_at timestamp
 CREATE OR REPLACE FUNCTION auth.update_updated_at_column()
@@ -82,4 +84,7 @@ CREATE TRIGGER update_users_updated_at
 -- Drop the auth schema and all its contents
 DROP SCHEMA IF EXISTS auth CASCADE;
 
+-- NOTE: should I keep that ?
+DROP INDEX IF EXISTS auth.idx_users_google_id_encrypted;
+DROP INDEX IF EXISTS auth.idx_users_apple_id_encrypted;
 -- +goose StatementEnd

@@ -224,7 +224,7 @@ func TestMain(m *testing.M) {
 	service = aggregator.New(otpService, userService, sessionService)
 
 	authSessionRepo = authsession.NewRedisSessionRepository(testClient)
-	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto)
+	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
 
 	handler = authHandler.New(service, authmw)
 

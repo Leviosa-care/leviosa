@@ -97,7 +97,7 @@ func TestRequireAnyRole(t *testing.T) {
 			// Mock the repository call
 			mockRepo.On("FindSessionByAccessTokenHash", mock.Anything, mock.AnythingOfType("string")).Return(session.ID.String(), sessionData, nil)
 
-			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
+			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
 			// Track if next handler was called
 			nextCalled := false
@@ -178,7 +178,7 @@ func TestSessionAuthMiddleware_RequireAdmin(t *testing.T) {
 			// Mock the repository call
 			mockRepo.On("FindSessionByAccessTokenHash", mock.Anything, mock.AnythingOfType("string")).Return(session.ID.String(), sessionData, nil)
 
-			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
+			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
 			// Track if next handler was called
 			nextCalled := false
@@ -237,7 +237,7 @@ func TestRoleAuthMiddleware_NoSessionInContext(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &session.MockSessionRepository{}
 			mockCrypto := &encx.CryptoServiceMock{}
-			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
+			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
 			// Create a handler that manually adds broken context (no session)
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -281,7 +281,7 @@ func TestRoleAuthMiddleware_Integration(t *testing.T) {
 	sessionData := createValidSessionJSON(t, session)
 	mockRepo.On("FindSessionByAccessTokenHash", mock.Anything, mock.AnythingOfType("string")).Return(session.ID.String(), sessionData, nil)
 
-	middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
+	middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
 	// Create endpoint that requires partner role
 	nextCalled := false

@@ -23,7 +23,7 @@ func TestNewSessionAuthMiddleware(t *testing.T) {
 	mockRepo := &session.MockSessionRepository{}
 	mockCrypto := &encx.CryptoServiceMock{}
 
-	middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
+	middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
 	assert.NotNil(t, middleware)
 	assert.IsType(t, &SessionAuthMiddleware{}, middleware)
@@ -231,7 +231,7 @@ func TestRequireAccessToken(t *testing.T) {
 			// Setup
 			mockRepo := &session.MockSessionRepository{}
 			mockCrypto := &encx.CryptoServiceMock{}
-			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
+			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
 			if tt.repoResponse != nil || tt.repoError != nil {
 				mockRepo.On("FindSessionByAccessTokenHash", mock.Anything, mock.AnythingOfType("string")).Return("test-session-id", tt.repoResponse, tt.repoError)
@@ -377,7 +377,7 @@ func TestRequireRefreshToken(t *testing.T) {
 			// Setup
 			mockRepo := &session.MockSessionRepository{}
 			mockCrypto := &encx.CryptoServiceMock{}
-			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
+			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
 			if tt.repoResponse != nil || tt.repoError != nil {
 				mockRepo.On("FindSessionByRefreshTokenHash", mock.Anything, mock.AnythingOfType("string")).Return("test-session-id", tt.repoResponse, tt.repoError)

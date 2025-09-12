@@ -96,7 +96,7 @@ func TestRequireMinimumRole(t *testing.T) {
 			// Mock the repository call
 			mockRepo.On("FindSessionByAccessTokenHash", mock.Anything, mock.AnythingOfType("string")).Return(session.ID.String(), sessionData, nil)
 
-			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto)
+			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
 			// Track if next handler was called
 			nextCalled := false

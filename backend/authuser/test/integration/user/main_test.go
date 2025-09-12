@@ -181,7 +181,7 @@ func TestMain(m *testing.M) {
 	sessionRepo = sessionRepository.New(testClient)
 
 	authSessionRepo = session.NewRedisSessionRepository(testClient)
-	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto)
+	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
 
 	handler = userHandler.New(service, authmw)
 
