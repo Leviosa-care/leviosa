@@ -390,3 +390,35 @@ func GetOTPMaxAttemptsFromDB(t *testing.T, ctx context.Context, pool *pgxpool.Po
 	}
 	return strconv.Atoi(maxAttemptsStr)
 }
+
+// Simple test data insert functions for service authentication tests
+
+func InsertTestCompanyName(t *testing.T, ctx context.Context, name string, pool *pgxpool.Pool) {
+	InsertCompanyName(t, ctx, name, pool)
+}
+
+func InsertTestCompanyEmail(t *testing.T, ctx context.Context, email string, pool *pgxpool.Pool) {
+	InsertCompanyEmail(t, ctx, email, pool)
+}
+
+func InsertTestCompanyPhone(t *testing.T, ctx context.Context, phone string, pool *pgxpool.Pool) {
+	// For simplicity in tests, we'll insert phone as a plain setting
+	// In production it would be encrypted, but for testing service auth we just need data
+	query := `
+		INSERT INTO settings.plain (key, value)
+		VALUES ($1, $2)
+		ON CONFLICT (key) DO UPDATE SET
+			value = EXCLUDED.value,
+			updated_at = NOW();
+	`
+	_, err := pool.Exec(ctx, query, settings.CompanyPhone, phone)
+	require.NoError(t, err)
+}
+
+func InsertTestCompanyAddress(t *testing.T, ctx context.Context, address string, pool *pgxpool.Pool) {
+	InsertCompanyAddress(t, ctx, address, pool)
+}
+
+func InsertTestOTPDuration(t *testing.T, ctx context.Context, duration int, pool *pgxpool.Pool) {
+	InsertOTPDuration(t, ctx, duration, pool)
+}

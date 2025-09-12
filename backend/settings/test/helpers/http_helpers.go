@@ -159,3 +159,41 @@ func NewBulkSettingsRequest(t *testing.T, ctx context.Context, serverURL string,
 	require.NoError(t, err)
 	return req
 }
+
+// Internal Service-to-Service Endpoint Helpers
+
+func NewInternalGetCompanyNameRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/internal/settings/name", nil)
+	require.NoError(t, err)
+	return req
+}
+
+func NewInternalGetCompanyEmailRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/internal/settings/email", nil)
+	require.NoError(t, err)
+	return req
+}
+
+func NewInternalGetCompanyPhoneRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/internal/settings/phone", nil)
+	require.NoError(t, err)
+	return req
+}
+
+func NewInternalGetCompanyAddressRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/internal/settings/address", nil)
+	require.NoError(t, err)
+	return req
+}
+
+func NewInternalGetOTPDurationRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/internal/settings/otp/duration", nil)
+	require.NoError(t, err)
+	return req
+}
+
+func NewInternalBulkSettingsRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/internal/settings/bulk", nil)
+	require.NoError(t, err)
+	return req
+}
