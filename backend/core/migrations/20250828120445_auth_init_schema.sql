@@ -71,9 +71,93 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_users_updated_at 
-    BEFORE UPDATE ON auth.users 
-    FOR EACH ROW 
+CREATE TRIGGER update_users_updated_at
+    BEFORE UPDATE ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION auth.update_updated_at_column();
+
+-- Create specializations table for dynamic partner specialization types
+CREATE TABLE auth.specializations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- Specialization details (all encrypted for GDPR compliance)
+    name_encrypted BYTEA NOT NULL,                    -- e.g., "physiotherapist", "mindset_coach"
+    display_name_encrypted BYTEA NOT NULL,            -- e.g., "Physiotherapist", "Mindset Coach"
+    description_encrypted BYTEA,                      -- Description of specialization
+
+    -- Status
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    -- Encryption metadata
+    dek_encrypted BYTEA NOT NULL,
+    key_version INTEGER NOT NULL DEFAULT 1,
+
+    -- Database metadata (unencrypted for system use)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create partners table extending users with partner-specific data
+CREATE TABLE auth.partners (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+
+    -- Partner profile data (all encrypted for GDPR compliance)
+    bio_encrypted BYTEA,                             -- Professional bio
+    experience_encrypted BYTEA,                      -- Years of experience, background
+    certifications_encrypted BYTEA,                  -- JSON array of certifications
+
+    -- Verification status
+    is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    verified_at_encrypted BYTEA,                     -- When verified (encrypted timestamp)
+    verified_by_user_id UUID REFERENCES auth.users(id), -- Admin who verified
+
+    -- Encryption metadata
+    dek_encrypted BYTEA NOT NULL,
+    key_version INTEGER NOT NULL DEFAULT 1,
+
+    -- Database metadata (unencrypted for system use)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create junction table for partner specializations (many-to-many)
+CREATE TABLE auth.partner_specializations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    partner_id UUID NOT NULL REFERENCES auth.partners(id) ON DELETE CASCADE,
+    specialization_id UUID NOT NULL REFERENCES auth.specializations(id) ON DELETE CASCADE,
+
+    -- Database metadata (unencrypted for system use)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    -- Ensure unique combinations
+    UNIQUE(partner_id, specialization_id)
+);
+
+-- Indexes for specializations table
+CREATE INDEX idx_specializations_is_active ON auth.specializations (is_active);
+CREATE INDEX idx_specializations_created_at ON auth.specializations (created_at);
+
+-- Indexes for partners table
+CREATE INDEX idx_partners_user_id ON auth.partners (user_id);
+CREATE INDEX idx_partners_is_verified ON auth.partners (is_verified);
+CREATE INDEX idx_partners_verified_by_user_id ON auth.partners (verified_by_user_id) WHERE verified_by_user_id IS NOT NULL;
+CREATE INDEX idx_partners_created_at ON auth.partners (created_at);
+
+-- Indexes for partner_specializations junction table
+CREATE INDEX idx_partner_specializations_partner_id ON auth.partner_specializations (partner_id);
+CREATE INDEX idx_partner_specializations_specialization_id ON auth.partner_specializations (specialization_id);
+CREATE INDEX idx_partner_specializations_created_at ON auth.partner_specializations (created_at);
+
+-- Update triggers for updated_at timestamps
+CREATE TRIGGER update_specializations_updated_at
+    BEFORE UPDATE ON auth.specializations
+    FOR EACH ROW
+    EXECUTE FUNCTION auth.update_updated_at_column();
+
+CREATE TRIGGER update_partners_updated_at
+    BEFORE UPDATE ON auth.partners
+    FOR EACH ROW
     EXECUTE FUNCTION auth.update_updated_at_column();
 
 -- +goose StatementEnd
