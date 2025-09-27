@@ -382,3 +382,46 @@ func GetSessionByID(t *testing.T, ctx context.Context, sessionID uuid.UUID, clie
 
 	return DecodeSession(t, data)
 }
+
+// CreateTestSession creates a test session with specific role and stores it in Redis
+func CreateTestSession(t *testing.T, ctx context.Context, client *redis.Client, role identity.Role) *session.Session {
+	t.Helper()
+
+	now := time.Now()
+	userID := uuid.New()
+	sessionID := uuid.New()
+
+	// Generate valid base64 tokens for testing
+	accessToken, err := session.GenerateToken()
+	require.NoError(t, err, "Failed to generate access token")
+
+	refreshToken, err := session.GenerateToken()
+	require.NoError(t, err, "Failed to generate refresh token")
+
+	sess := &session.Session{
+		ID:           sessionID,
+		UserID:       userID,
+		Role:         role,
+		State:        session.SessionActive,
+		CreatedAt:    now,
+		ExpiresAt:    now.Add(24 * time.Hour),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	// For testing, we'll set the hashes manually to avoid needing crypto service in this helper
+	// In real usage, crypto.ProcessStruct would handle this
+	sess.UserIDHash = session.HashUserID(userID.String())
+	sess.AccessTokenHash = session.HashToken(accessToken)
+	sess.RefreshTokenHash = session.HashToken(refreshToken)
+
+	// Store session in Redis
+	InsertSessionDirectly(t, ctx, client, sess, 24*time.Hour)
+
+	return sess
+}
+
+// ToCookieString generates a cookie string for the session access token
+func ToCookieString(sess *session.Session) string {
+	return fmt.Sprintf("access_token=%s", sess.AccessToken)
+}
