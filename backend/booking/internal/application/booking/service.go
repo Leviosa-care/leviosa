@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Leviosa-care/booking/internal/adapters/stripe"
 	"github.com/Leviosa-care/booking/internal/domain"
 	"github.com/Leviosa-care/booking/internal/ports"
 	"github.com/Leviosa-care/core/errs"
@@ -14,16 +15,19 @@ import (
 type BookingService struct {
 	bookingRepo      ports.BookingRepository
 	availabilityRepo ports.AvailabilityRepository
+	paymentService   ports.PaymentService
 }
 
 // New creates a new instance of the booking service
 func New(
 	bookingRepo ports.BookingRepository,
 	availabilityRepo ports.AvailabilityRepository,
+	paymentService ports.PaymentService,
 ) ports.BookingService {
 	return &BookingService{
 		bookingRepo:      bookingRepo,
 		availabilityRepo: availabilityRepo,
+		paymentService:   paymentService,
 	}
 }
 
@@ -74,6 +78,31 @@ func (s *BookingService) CreateBooking(ctx context.Context, availabilityID, clie
 	// Set client notes if provided
 	if clientNotes != "" {
 		booking.SetClientNotes(clientNotes)
+	}
+
+	// Create payment intent if booking has a price
+	if totalPriceCents > 0 {
+		description := fmt.Sprintf("Booking for availability %s", availabilityID.String())
+		metadata := map[string]string{
+			"booking_id":      booking.ID.String(),
+			"availability_id": availabilityID.String(),
+			"client_id":       clientID.String(),
+			"partner_id":      availability.PartnerID.String(),
+		}
+
+		paymentIntentID, _, err := s.paymentService.CreatePaymentIntent(
+			ctx,
+			totalPriceCents,
+			booking.Currency,
+			description,
+			metadata,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("create payment intent: %w", err)
+		}
+
+		// Update booking with payment intent ID
+		booking.SetPaymentIntentID(paymentIntentID)
 	}
 
 	// Mark availability as booked (atomic operation would be ideal here)
@@ -226,12 +255,38 @@ func (s *BookingService) ProcessPayment(ctx context.Context, id uuid.UUID, payme
 		return nil, fmt.Errorf("get booking for payment: %w", err)
 	}
 
-	// Set payment intent ID
-	booking.SetPaymentIntentID(paymentIntentID)
+	// Verify payment intent status with Stripe
+	paymentInfo, err := s.paymentService.RetrievePaymentIntent(ctx, paymentIntentID)
+	if err != nil {
+		return nil, fmt.Errorf("retrieve payment intent: %w", err)
+	}
 
-	// Mark payment as paid (in real implementation, this would be triggered by webhook)
-	if err := booking.MarkPaymentPaid(); err != nil {
-		return nil, fmt.Errorf("mark payment as paid: %w", err)
+	// Set payment intent ID if not already set
+	if booking.PaymentIntentID == nil || *booking.PaymentIntentID != paymentIntentID {
+		booking.SetPaymentIntentID(paymentIntentID)
+	}
+
+	// Update payment status based on Stripe payment intent status
+	switch paymentInfo.Status {
+	case stripe.PaymentIntentStatusSucceeded:
+		if err := booking.MarkPaymentPaid(); err != nil {
+			return nil, fmt.Errorf("mark payment as paid: %w", err)
+		}
+	case stripe.PaymentIntentStatusRequiresPaymentMethod,
+		 stripe.PaymentIntentStatusRequiresConfirmation,
+		 stripe.PaymentIntentStatusRequiresAction,
+		 stripe.PaymentIntentStatusProcessing:
+		// Payment is still pending, no action needed
+	case stripe.PaymentIntentStatusCanceled:
+		if err := booking.MarkPaymentFailed(); err != nil {
+			return nil, fmt.Errorf("mark payment as failed: %w", err)
+		}
+	case stripe.PaymentIntentStatusPaymentFailed:
+		if err := booking.MarkPaymentFailed(); err != nil {
+			return nil, fmt.Errorf("mark payment as failed: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("unknown payment status: %s", paymentInfo.Status)
 	}
 
 	// Persist changes
@@ -252,10 +307,34 @@ func (s *BookingService) RefundBooking(ctx context.Context, id uuid.UUID) (*doma
 		return nil, fmt.Errorf("get booking for refund: %w", err)
 	}
 
-	// Process refund
+	// Validate booking can be refunded
+	if booking.PaymentStatus != domain.PaymentStatusPaid {
+		return nil, fmt.Errorf("booking payment must be paid to process refund")
+	}
+
+	if booking.PaymentIntentID == nil {
+		return nil, fmt.Errorf("booking has no payment intent ID")
+	}
+
+	// Process Stripe refund
+	refundID, err := s.paymentService.RefundPayment(
+		ctx,
+		*booking.PaymentIntentID,
+		0, // 0 = full refund
+		stripe.RefundReasonRequestedByCustomer,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("process stripe refund: %w", err)
+	}
+
+	// Mark booking as refunded
 	if err := booking.RefundPayment(); err != nil {
 		return nil, fmt.Errorf("refund booking payment: %w", err)
 	}
+
+	// Store refund ID in booking notes for tracking
+	notes := fmt.Sprintf("Refund processed: %s", refundID)
+	booking.SetPartnerNotes(notes)
 
 	// Persist changes
 	if err := s.bookingRepo.Update(ctx, booking); err != nil {
