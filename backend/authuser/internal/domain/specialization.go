@@ -10,19 +10,19 @@ import (
 )
 
 type Specialization struct {
-	ID                     uuid.UUID `json:"id"`
-	Name                   string    `json:"name" encx:"encrypt"`
-	NameEncrypted          []byte    `json:"-"`
-	DisplayName            string    `json:"display_name" encx:"encrypt"`
-	DisplayNameEncrypted   []byte    `json:"-"`
-	Description            string    `json:"description" encx:"encrypt"`
-	DescriptionEncrypted   []byte    `json:"-"`
-	IsActive               bool      `json:"is_active"`
-	DEK                    []byte    `json:"-" encx:"encrypt"`
-	DEKEncrypted           []byte    `json:"-"`
-	KeyVersion             int       `json:"-"`
-	CreatedAt              time.Time `json:"created_at"`
-	UpdatedAt              time.Time `json:"updated_at"`
+	ID                   uuid.UUID `json:"id"`
+	Name                 string    `json:"name" encx:"encrypt"`
+	NameEncrypted        []byte    `json:"-"`
+	DisplayName          string    `json:"display_name" encx:"encrypt"`
+	DisplayNameEncrypted []byte    `json:"-"`
+	Description          string    `json:"description" encx:"encrypt"`
+	DescriptionEncrypted []byte    `json:"-"`
+	IsActive             bool      `json:"is_active"`
+	DEK                  []byte    `json:"-" encx:"encrypt"`
+	DEKEncrypted         []byte    `json:"-"`
+	KeyVersion           int       `json:"-"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
 }
 
 func (s *Specialization) Valid(ctx context.Context) error {
