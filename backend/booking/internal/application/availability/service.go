@@ -16,6 +16,7 @@ type AvailabilityService struct {
 	availabilityRepo ports.AvailabilityRepository
 	allocationRepo   ports.RoomAllocationRepository
 	roomRepo         ports.RoomRepository
+	authUserClient   ports.AuthUserClient
 }
 
 // New creates a new instance of the availability service
@@ -23,15 +24,26 @@ func New(
 	availabilityRepo ports.AvailabilityRepository,
 	allocationRepo ports.RoomAllocationRepository,
 	roomRepo ports.RoomRepository,
+	authUserClient ports.AuthUserClient,
 ) ports.AvailabilityService {
 	return &AvailabilityService{
 		availabilityRepo: availabilityRepo,
 		allocationRepo:   allocationRepo,
 		roomRepo:         roomRepo,
+		authUserClient:   authUserClient,
 	}
 }
 
 func (s *AvailabilityService) CreateAvailability(ctx context.Context, partnerID, roomID uuid.UUID, startTime, endTime time.Time, maxCapacity int) (*domain.Availability, error) {
+	// Validate partner exists and is verified
+	isValidPartner, err := s.authUserClient.ValidatePartnerExists(ctx, partnerID)
+	if err != nil {
+		return nil, fmt.Errorf("validate partner: %w", err)
+	}
+	if !isValidPartner {
+		return nil, fmt.Errorf("partner not found or not verified")
+	}
+
 	// Verify room exists and is active
 	room, err := s.roomRepo.GetByID(ctx, roomID)
 	if err != nil {
@@ -83,6 +95,15 @@ func (s *AvailabilityService) CreateAvailability(ctx context.Context, partnerID,
 }
 
 func (s *AvailabilityService) CreateRecurringAvailability(ctx context.Context, partnerID, roomID uuid.UUID, startTime, endTime time.Time, maxCapacity int, pattern domain.RecurrencePattern) (*domain.Availability, error) {
+	// Validate partner exists and is verified
+	isValidPartner, err := s.authUserClient.ValidatePartnerExists(ctx, partnerID)
+	if err != nil {
+		return nil, fmt.Errorf("validate partner: %w", err)
+	}
+	if !isValidPartner {
+		return nil, fmt.Errorf("partner not found or not verified")
+	}
+
 	// Verify room exists and is active
 	room, err := s.roomRepo.GetByID(ctx, roomID)
 	if err != nil {
