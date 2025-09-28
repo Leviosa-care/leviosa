@@ -15,17 +15,28 @@ import (
 type RoomAllocationService struct {
 	allocationRepo ports.RoomAllocationRepository
 	roomRepo       ports.RoomRepository
+	authUserClient ports.AuthUserClient
 }
 
 // New creates a new instance of the room allocation service
-func New(allocationRepo ports.RoomAllocationRepository, roomRepo ports.RoomRepository) ports.RoomAllocationService {
+func New(allocationRepo ports.RoomAllocationRepository, roomRepo ports.RoomRepository, authUserClient ports.AuthUserClient) ports.RoomAllocationService {
 	return &RoomAllocationService{
 		allocationRepo: allocationRepo,
 		roomRepo:       roomRepo,
+		authUserClient: authUserClient,
 	}
 }
 
 func (s *RoomAllocationService) CreateSharedAllocation(ctx context.Context, roomID, partnerID uuid.UUID) (*domain.RoomAllocation, error) {
+	// Validate partner exists and is verified
+	isValidPartner, err := s.authUserClient.ValidatePartnerExists(ctx, partnerID)
+	if err != nil {
+		return nil, fmt.Errorf("validate partner: %w", err)
+	}
+	if !isValidPartner {
+		return nil, fmt.Errorf("partner not found or not verified")
+	}
+
 	// Verify room exists and is active
 	room, err := s.roomRepo.GetByID(ctx, roomID)
 	if err != nil {
@@ -64,6 +75,15 @@ func (s *RoomAllocationService) CreateSharedAllocation(ctx context.Context, room
 }
 
 func (s *RoomAllocationService) CreateDedicatedAllocation(ctx context.Context, roomID, partnerID uuid.UUID, startDate, endDate *time.Time) (*domain.RoomAllocation, error) {
+	// Validate partner exists and is verified
+	isValidPartner, err := s.authUserClient.ValidatePartnerExists(ctx, partnerID)
+	if err != nil {
+		return nil, fmt.Errorf("validate partner: %w", err)
+	}
+	if !isValidPartner {
+		return nil, fmt.Errorf("partner not found or not verified")
+	}
+
 	// Verify room exists and is active
 	room, err := s.roomRepo.GetByID(ctx, roomID)
 	if err != nil {
