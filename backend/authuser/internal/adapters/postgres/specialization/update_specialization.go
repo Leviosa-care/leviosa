@@ -9,7 +9,7 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
-func (r *Repository) UpdateSpecialization(ctx context.Context, specialization *domain.Specialization) error {
+func (r *Repository) UpdateSpecialization(ctx context.Context, specialization *domain.SpecializationEncx) error {
 	query := fmt.Sprintf(`
 		UPDATE %s.specializations SET
 			display_name_encrypted = $2,

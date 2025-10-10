@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*domain.Partner, error) {
+func (r *Repository) GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*domain.PartnerEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, user_id, bio_encrypted, experience_encrypted, certifications_encrypted,
@@ -20,7 +20,7 @@ func (r *Repository) GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (
 		WHERE user_id = $1
 	`, r.schema)
 
-	partner := &domain.Partner{}
+	partner := &domain.PartnerEncx{}
 	err := r.pool.QueryRow(ctx, query, userID).Scan(
 		&partner.ID,
 		&partner.UserID,

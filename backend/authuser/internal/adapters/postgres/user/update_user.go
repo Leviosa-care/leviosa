@@ -9,13 +9,13 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
-func (r *Repository) UpdateUser(ctx context.Context, user *domain.User) error {
+func (r *Repository) UpdateUser(ctx context.Context, user *domain.UserEncx) error {
 	query := fmt.Sprintf(`
 		UPDATE %s.users SET
 			state = $2,
 			email_hash = $3,
 			email_encrypted = $4,
-			password_hash = $5,
+			password_hash_secure = $5,
 			picture_encrypted = $6,
 			first_name_encrypted = $7,
 			last_name_encrypted = $8,
@@ -40,7 +40,7 @@ func (r *Repository) UpdateUser(ctx context.Context, user *domain.User) error {
 
 	result, err := r.pool.Exec(ctx, query,
 		user.ID, user.State, user.EmailHash, user.EmailEncrypted,
-		user.PasswordHash, user.PictureEncrypted, user.FirstNameEncrypted,
+		user.PasswordHashSecure, user.PictureEncrypted, user.FirstNameEncrypted,
 		user.LastNameEncrypted, user.BirthDateEncrypted, user.GenderEncrypted,
 		user.RoleEncrypted, user.TelephoneHash, user.TelephoneEncrypted,
 		user.PostalCodeEncrypted, user.CityEncrypted, user.Address1Encrypted,

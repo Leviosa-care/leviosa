@@ -9,7 +9,7 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
-func (r *Repository) UpdatePartner(ctx context.Context, partner *domain.Partner) error {
+func (r *Repository) UpdatePartner(ctx context.Context, partner *domain.PartnerEncx) error {
 	query := fmt.Sprintf(`
 		UPDATE %s.partners SET
 			bio_encrypted = $2,

@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) GetPartnerSpecializations(ctx context.Context, partnerID uuid.UUID) ([]*domain.Specialization, error) {
+func (r *Repository) GetPartnerSpecializations(ctx context.Context, partnerID uuid.UUID) ([]*domain.SpecializationEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			s.id, s.name_encrypted, s.display_name_encrypted, s.description_encrypted,
@@ -27,9 +27,9 @@ func (r *Repository) GetPartnerSpecializations(ctx context.Context, partnerID uu
 	}
 	defer rows.Close()
 
-	var specializations []*domain.Specialization
+	var specializations []*domain.SpecializationEncx
 	for rows.Next() {
-		specialization := &domain.Specialization{}
+		specialization := &domain.SpecializationEncx{}
 		err := rows.Scan(
 			&specialization.ID,
 			&specialization.NameEncrypted,

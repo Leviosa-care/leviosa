@@ -11,28 +11,28 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
+func (r *Repository) GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.UserEncx, error) {
 	query := fmt.Sprintf(`
-		SELECT 
-			id, state, email_hash, email_encrypted, password_hash,
-			picture_encrypted, first_name_encrypted, last_name_encrypted, 
+		SELECT
+			id, state, email_hash, email_encrypted, password_hash_secure,
+			picture_encrypted, first_name_encrypted, last_name_encrypted,
 			birth_date_encrypted, gender_encrypted, role_encrypted,
 			telephone_hash, telephone_encrypted, postal_code_encrypted,
 			city_encrypted, address1_encrypted, address2_encrypted, stripe_customer_id_encrypted,
 			google_id_encrypted, apple_id_encrypted, created_at_encrypted,
 			logged_in_at_encrypted, dek_encrypted, key_version
-		FROM %s.users 
+		FROM %s.users
 		WHERE id = $1
 	`, r.schema)
 
-	user := &domain.User{}
+	user := &domain.UserEncx{}
 
 	// Only nullable string fields need special handling
 	var telephoneHash sql.NullString
 
 	err := r.pool.QueryRow(ctx, query, userID).Scan(
 		&user.ID, &user.State, &user.EmailHash, &user.EmailEncrypted,
-		&user.PasswordHash, &user.PictureEncrypted, &user.FirstNameEncrypted,
+		&user.PasswordHashSecure, &user.PictureEncrypted, &user.FirstNameEncrypted,
 		&user.LastNameEncrypted, &user.BirthDateEncrypted, &user.GenderEncrypted,
 		&user.RoleEncrypted, &telephoneHash, &user.TelephoneEncrypted,
 		&user.PostalCodeEncrypted, &user.CityEncrypted, &user.Address1Encrypted,

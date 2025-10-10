@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) GetSpecializationByID(ctx context.Context, specializationID uuid.UUID) (*domain.Specialization, error) {
+func (r *Repository) GetSpecializationByID(ctx context.Context, specializationID uuid.UUID) (*domain.SpecializationEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, name_encrypted, display_name_encrypted, description_encrypted,
@@ -19,7 +19,7 @@ func (r *Repository) GetSpecializationByID(ctx context.Context, specializationID
 		WHERE id = $1
 	`, r.schema)
 
-	specialization := &domain.Specialization{}
+	specialization := &domain.SpecializationEncx{}
 	err := r.pool.QueryRow(ctx, query, specializationID).Scan(
 		&specialization.ID,
 		&specialization.NameEncrypted,

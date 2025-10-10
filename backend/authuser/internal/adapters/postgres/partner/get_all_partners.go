@@ -9,7 +9,7 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
-func (r *Repository) GetAllPartners(ctx context.Context) ([]*domain.Partner, error) {
+func (r *Repository) GetAllPartners(ctx context.Context) ([]*domain.PartnerEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, user_id, bio_encrypted, experience_encrypted, certifications_encrypted,
@@ -25,9 +25,9 @@ func (r *Repository) GetAllPartners(ctx context.Context) ([]*domain.Partner, err
 	}
 	defer rows.Close()
 
-	var partners []*domain.Partner
+	var partners []*domain.PartnerEncx
 	for rows.Next() {
-		partner := &domain.Partner{}
+		partner := &domain.PartnerEncx{}
 		err := rows.Scan(
 			&partner.ID,
 			&partner.UserID,

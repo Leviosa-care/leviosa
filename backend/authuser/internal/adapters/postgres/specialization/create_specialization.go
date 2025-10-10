@@ -9,7 +9,7 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
-func (r *Repository) CreateSpecialization(ctx context.Context, specialization *domain.Specialization) error {
+func (r *Repository) CreateSpecialization(ctx context.Context, specialization *domain.SpecializationEncx) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s.specializations (
 			id, name_encrypted, display_name_encrypted, description_encrypted,

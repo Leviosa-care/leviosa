@@ -9,19 +9,19 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
-func (r *Repository) GetPartnersWithUsers(ctx context.Context) ([]*domain.Partner, error) {
+func (r *Repository) GetPartnersWithUsers(ctx context.Context) ([]*domain.PartnerEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			p.id, p.user_id, p.bio_encrypted, p.experience_encrypted, p.certifications_encrypted,
 			p.is_verified, p.verified_at_encrypted, p.verified_by_user_id,
 			p.dek_encrypted, p.key_version, p.created_at, p.updated_at,
-			u.id, u.state, u.email_hash, u.email_encrypted, u.password_hash,
+			u.id, u.state, u.email_hash, u.email_encrypted, u.password_hash_secure,
 			u.picture_encrypted, u.first_name_encrypted, u.last_name_encrypted,
 			u.birth_date_encrypted, u.gender_encrypted, u.role_encrypted,
 			u.telephone_hash, u.telephone_encrypted, u.postal_code_encrypted,
-			u.city_encrypted, u.address1_encrypted, u.address2_encrypted,
-			u.google_id_encrypted, u.apple_id_encrypted, u.stripe_customer_id_encrypted,
-			u.created_at_encrypted, u.logged_in_at_encrypted, u.dek_encrypted, u.key_version
+			u.city_encrypted, u.address1_encrypted, u.address2_encrypted, u.stripe_customer_id_encrypted,
+			u.google_id_encrypted, u.apple_id_encrypted, u.created_at_encrypted,
+			u.logged_in_at_encrypted, u.dek_encrypted, u.key_version
 		FROM %s.partners p
 		INNER JOIN %s.users u ON p.user_id = u.id
 		ORDER BY p.created_at DESC
@@ -33,10 +33,10 @@ func (r *Repository) GetPartnersWithUsers(ctx context.Context) ([]*domain.Partne
 	}
 	defer rows.Close()
 
-	var partners []*domain.Partner
+	var partners []*domain.PartnerEncx
 	for rows.Next() {
-		partner := &domain.Partner{}
-		user := &domain.User{}
+		partner := &domain.PartnerEncx{}
+		user := &domain.UserEncx{}
 
 		err := rows.Scan(
 			&partner.ID,
@@ -55,7 +55,7 @@ func (r *Repository) GetPartnersWithUsers(ctx context.Context) ([]*domain.Partne
 			&user.State,
 			&user.EmailHash,
 			&user.EmailEncrypted,
-			&user.PasswordHash,
+			&user.PasswordHashSecure,
 			&user.PictureEncrypted,
 			&user.FirstNameEncrypted,
 			&user.LastNameEncrypted,

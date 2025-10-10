@@ -9,7 +9,7 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
-func (r *Repository) GetActiveSpecializations(ctx context.Context) ([]*domain.Specialization, error) {
+func (r *Repository) GetActiveSpecializations(ctx context.Context) ([]*domain.SpecializationEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, name_encrypted, display_name_encrypted, description_encrypted,
@@ -25,9 +25,9 @@ func (r *Repository) GetActiveSpecializations(ctx context.Context) ([]*domain.Sp
 	}
 	defer rows.Close()
 
-	var specializations []*domain.Specialization
+	var specializations []*domain.SpecializationEncx
 	for rows.Next() {
-		specialization := &domain.Specialization{}
+		specialization := &domain.SpecializationEncx{}
 		err := rows.Scan(
 			&specialization.ID,
 			&specialization.NameEncrypted,

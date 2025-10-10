@@ -9,10 +9,10 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
-func (r *Repository) CreateUser(ctx context.Context, user *domain.User) error {
+func (r *Repository) CreateUser(ctx context.Context, user *domain.UserEncx) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s.users (
-			id, state, email_hash, email_encrypted, password_hash,
+			id, state, email_hash, email_encrypted, password_hash_secure,
 			picture_encrypted, first_name_encrypted, last_name_encrypted,
 			birth_date_encrypted, gender_encrypted, role_encrypted,
 			telephone_hash, telephone_encrypted, postal_code_encrypted,
@@ -27,7 +27,7 @@ func (r *Repository) CreateUser(ctx context.Context, user *domain.User) error {
 
 	_, err := r.pool.Exec(ctx, query,
 		user.ID, user.State, user.EmailHash, user.EmailEncrypted,
-		user.PasswordHash, user.PictureEncrypted, user.FirstNameEncrypted,
+		user.PasswordHashSecure, user.PictureEncrypted, user.FirstNameEncrypted,
 		user.LastNameEncrypted, user.BirthDateEncrypted, user.GenderEncrypted,
 		user.RoleEncrypted, user.TelephoneHash, user.TelephoneEncrypted,
 		user.PostalCodeEncrypted, user.CityEncrypted, user.Address1Encrypted,

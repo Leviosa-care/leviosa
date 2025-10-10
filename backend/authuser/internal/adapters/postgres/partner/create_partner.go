@@ -9,7 +9,7 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
-func (r *Repository) CreatePartner(ctx context.Context, partner *domain.Partner) error {
+func (r *Repository) CreatePartner(ctx context.Context, partner *domain.PartnerEncx) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s.partners (
 			id, user_id, bio_encrypted, experience_encrypted, certifications_encrypted,
