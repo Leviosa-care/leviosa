@@ -11,7 +11,7 @@ import (
 
 func (s *UserService) GetAllUsers(ctx context.Context) ([]*domain.UserResponse, error) {
 	// Get all users from repository
-	users, err := s.repo.GetAllUsers(ctx)
+	usersEncx, err := s.repo.GetAllUsers(ctx)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
@@ -57,10 +57,11 @@ func (s *UserService) GetAllUsers(ctx context.Context) ([]*domain.UserResponse, 
 	}
 
 	// Decrypt and convert each user to UserResponse
-	responses := make([]*domain.UserResponse, 0, len(users))
-	for _, user := range users {
-		// Decrypt user data
-		if err := s.crypto.DecryptStruct(ctx, user); err != nil {
+	responses := make([]*domain.UserResponse, 0, len(usersEncx))
+	for _, userEncx := range usersEncx {
+		// Decrypt user data using the new generated function
+		user, err := domain.DecryptUserEncx(ctx, s.crypto, userEncx)
+		if err != nil {
 			return nil, errs.NewNotDecryptedErr("all users list", err)
 		}
 

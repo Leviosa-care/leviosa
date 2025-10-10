@@ -26,20 +26,22 @@ func (s *SpecializationService) CreateSpecialization(ctx context.Context, reques
 	// Create specialization entity
 	specialization := request.ToSpecialization()
 
-	// Encrypt sensitive fields
-	if err := s.crypto.Encrypt(ctx, specialization); err != nil {
-		return nil, errs.ErrInvalidValue
+	// Encrypt sensitive fields using the new generated function
+	specializationEncx, err := domain.ProcessSpecializationEncx(ctx, s.crypto, specialization)
+	if err != nil {
+		return nil, errs.NewNotEncryptedErr("specialization during creation", err)
 	}
 
 	// Create in database
-	if err := s.repo.CreateSpecialization(ctx, specialization); err != nil {
+	if err := s.repo.CreateSpecialization(ctx, specializationEncx); err != nil {
 		return nil, err
 	}
 
-	// Decrypt for response
-	if err := s.crypto.Decrypt(ctx, specialization); err != nil {
-		return nil, errs.ErrInvalidValue
+	// Decrypt for response using the new generated function
+	decryptedSpecialization, err := domain.DecryptSpecializationEncx(ctx, s.crypto, specializationEncx)
+	if err != nil {
+		return nil, errs.NewNotDecryptedErr("specialization for response", err)
 	}
 
-	return specialization.ToResponse(), nil
+	return decryptedSpecialization.ToResponse(), nil
 }

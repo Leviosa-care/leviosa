@@ -32,13 +32,14 @@ func (s *SessionService) RemoveSession(ctx context.Context, sessionID uuid.UUID)
 		}
 	}
 
-	// Decode and decrypt the session
-	var session session.Session
-	if err := json.Unmarshal(sessionBytes, &session); err != nil {
+	// Decode and decrypt the session using the new generated function
+	var sessionEncx session.SessionEncx
+	if err := json.Unmarshal(sessionBytes, &sessionEncx); err != nil {
 		return errs.NewJSONUnmarshalErr(err)
 	}
 
-	if err := s.crypto.DecryptStruct(ctx, &session); err != nil {
+	session, err := session.DecryptSessionEncx(ctx, s.crypto, &sessionEncx)
+	if err != nil {
 		return errs.NewNotDecryptedErr("session", err)
 	}
 

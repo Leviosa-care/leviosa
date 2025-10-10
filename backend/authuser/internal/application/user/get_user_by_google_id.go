@@ -16,7 +16,7 @@ func (s *UserService) GetUserByGoogleID(ctx context.Context, googleID string) (*
 
 	// We need to pass the encrypted Google ID to match what's stored in DB
 	// The repository method expects the encrypted value to match against google_id_encrypted column
-	user, err := s.repo.GetUserByGoogleID(ctx, googleID)
+	userEncx, err := s.repo.GetUserByGoogleID(ctx, googleID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
@@ -34,9 +34,12 @@ func (s *UserService) GetUserByGoogleID(ctx context.Context, googleID string) (*
 		}
 	}
 
-	if err := s.crypto.DecryptStruct(ctx, user); err != nil {
+	// Decrypt user data using the new generated function
+	user, err := domain.DecryptUserEncx(ctx, s.crypto, userEncx)
+	if err != nil {
 		return nil, errs.NewNotDecryptedErr("user retrieved by Google ID", err)
 	}
 
 	return user.ToResponse(), nil
 }
+

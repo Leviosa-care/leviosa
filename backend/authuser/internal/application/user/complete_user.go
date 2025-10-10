@@ -18,7 +18,7 @@ func (s *UserService) CompleteUser(ctx context.Context, userID uuid.UUID, reques
 	}
 
 	// Get the existing pending user
-	user, err := s.repo.GetUserByID(ctx, userID)
+	userEncx, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
@@ -28,6 +28,12 @@ func (s *UserService) CompleteUser(ctx context.Context, userID uuid.UUID, reques
 		default:
 			return errs.NewInternalErr(fmt.Errorf("failed to get user: %w", err))
 		}
+	}
+
+	// Decrypt the user data using the new generated function
+	user, err := domain.DecryptUserEncx(ctx, s.crypto, userEncx)
+	if err != nil {
+		return errs.NewNotDecryptedErr("user for completion", err)
 	}
 
 	// Verify user is in unverified state
@@ -70,13 +76,14 @@ func (s *UserService) CompleteUser(ctx context.Context, userID uuid.UUID, reques
 		user.Gender = string(request.Gender.Gender)
 	}
 
-	// Process encryption on the updated user
-	if err := s.crypto.ProcessStruct(ctx, user); err != nil {
+	// Encrypt the user data using the new generated function
+	updatedUserEncx, err := domain.ProcessUserEncx(ctx, s.crypto, user)
+	if err != nil {
 		return errs.NewNotEncryptedErr("user", err)
 	}
 
 	// Update user in repository
-	if err := s.repo.UpdateUser(ctx, user); err != nil {
+	if err := s.repo.UpdateUser(ctx, updatedUserEncx); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
 			return errs.NewNotFoundErr(err, "user")

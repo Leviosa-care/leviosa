@@ -8,15 +8,16 @@ import (
 
 func (s *SpecializationService) GetAllSpecializations(ctx context.Context) (*domain.GetSpecializationsResponse, error) {
 	// Get from database
-	specializations, err := s.repo.GetAllSpecializations(ctx)
+	specializationsEncx, err := s.repo.GetAllSpecializations(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// Decrypt all specializations
-	responses := make([]domain.SpecializationResponse, 0, len(specializations))
-	for _, spec := range specializations {
-		if err := s.crypto.Decrypt(ctx, spec); err != nil {
+	// Decrypt all specializations using the new generated function
+	responses := make([]domain.SpecializationResponse, 0, len(specializationsEncx))
+	for _, specEncx := range specializationsEncx {
+		spec, err := domain.DecryptSpecializationEncx(ctx, s.crypto, specEncx)
+		if err != nil {
 			return nil, err
 		}
 		responses = append(responses, *spec.ToResponse())

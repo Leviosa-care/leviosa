@@ -14,7 +14,7 @@ func (s *UserService) UpdateUserRole(ctx context.Context, request *domain.Update
 		return errs.NewInvalidValueErr(err.Error())
 	}
 
-	user, err := s.repo.GetUserByID(ctx, request.UserID)
+	userEncx, err := s.repo.GetUserByID(ctx, request.UserID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
@@ -42,19 +42,22 @@ func (s *UserService) UpdateUserRole(ctx context.Context, request *domain.Update
 		}
 	}
 
-	if err := s.crypto.DecryptStruct(ctx, user); err != nil {
+	// Decrypt user data using the new generated function
+	user, err := domain.DecryptUserEncx(ctx, s.crypto, userEncx)
+	if err != nil {
 		return errs.NewNotDecryptedErr("user for role update", err)
 	}
 
 	// Update only the role field
 	user.Role = request.Role
-	user.RoleEncrypted = nil // Clear encrypted field so it gets re-encrypted
 
-	if err := s.crypto.ProcessStruct(ctx, user); err != nil {
+	// Encrypt the user data using the new generated function
+	updatedUserEncx, err := domain.ProcessUserEncx(ctx, s.crypto, user)
+	if err != nil {
 		return errs.NewNotEncryptedErr("user for role update", err)
 	}
 
-	if err := s.repo.UpdateUser(ctx, user); err != nil {
+	if err := s.repo.UpdateUser(ctx, updatedUserEncx); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
 			return errs.NewNotFoundErr(err, "user")

@@ -141,13 +141,14 @@ func (s *UserService) createNewOAuthUser(ctx context.Context, provider, oauthUse
 		return nil, false, errs.NewInvalidValueErr("unsupported provider: " + provider)
 	}
 
-	// Encrypt sensitive fields
-	if err := s.crypto.ProcessStruct(ctx, user); err != nil {
+	// Encrypt the user data using the new generated function
+	userEncx, err := domain.ProcessUserEncx(ctx, s.crypto, user)
+	if err != nil {
 		return nil, false, fmt.Errorf("failed to encrypt user data: %w", err)
 	}
 
 	// Create user in repository
-	err := s.repo.CreateUser(ctx, user)
+	err = s.repo.CreateUser(ctx, userEncx)
 	if err != nil {
 		if errors.Is(err, errs.ErrUniqueViolation) {
 			return nil, false, errs.NewConflictErr(fmt.Errorf("user with this email already exists"))
@@ -155,7 +156,7 @@ func (s *UserService) createNewOAuthUser(ctx context.Context, provider, oauthUse
 		return nil, false, fmt.Errorf("failed to create OAuth user: %w", err)
 	}
 
-	// Create Stripe customer for new user
+	// Create Stripe customer for new user (use the plain user object for this)
 	stripeCustomer, err := s.stripe.CreateCustomer(ctx, userID, user.Email, user.FirstName, user.LastName)
 	if err != nil {
 		// Log error but don't fail user creation
@@ -164,11 +165,13 @@ func (s *UserService) createNewOAuthUser(ctx context.Context, provider, oauthUse
 	} else {
 		// Update user with Stripe customer ID
 		user.StripeCustomerID = stripeCustomer.ID
-		if err := s.crypto.ProcessStruct(ctx, user); err == nil {
-			s.repo.UpdateUser(ctx, user) // Best effort update
+		// Encrypt the updated user data
+		updatedUserEncx, err := domain.ProcessUserEncx(ctx, s.crypto, user)
+		if err == nil {
+			s.repo.UpdateUser(ctx, updatedUserEncx) // Best effort update
 		}
 	}
 
-	// Convert to response format
+	// Convert to response format (use the plain user object)
 	return user.ToResponse(), true, nil
 }

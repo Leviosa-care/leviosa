@@ -9,13 +9,14 @@ import (
 
 func (s *SpecializationService) GetSpecializationByID(ctx context.Context, specializationID uuid.UUID) (*domain.SpecializationResponse, error) {
 	// Get from database
-	specialization, err := s.repo.GetSpecializationByID(ctx, specializationID)
+	specializationEncx, err := s.repo.GetSpecializationByID(ctx, specializationID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Decrypt sensitive fields
-	if err := s.crypto.Decrypt(ctx, specialization); err != nil {
+	// Decrypt sensitive fields using the new generated function
+	specialization, err := domain.DecryptSpecializationEncx(ctx, s.crypto, specializationEncx)
+	if err != nil {
 		return nil, err
 	}
 

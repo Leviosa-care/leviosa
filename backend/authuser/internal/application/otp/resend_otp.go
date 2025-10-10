@@ -16,7 +16,15 @@ func (s *OTPService) ResendOTP(ctx context.Context, email string) error {
 		return errs.NewInvalidValueErr("email is required")
 	}
 
-	emailHash := s.crypto.HashBasic(ctx, []byte(email))
+	// Create a temporary OTP to get the email hash (since there's no standalone hash function)
+	tempOTP := &domain.OTP{
+		Email: email,
+	}
+	tempOTPEncx, err := domain.ProcessOTPEncx(ctx, s.crypto, tempOTP)
+	if err != nil {
+		return errs.NewNotEncryptedErr("temporary OTP for email hash", err)
+	}
+	emailHash := tempOTPEncx.EmailHash
 
 	// Check if existing OTP exists
 	marshaledOTP, err := s.repo.GetOTP(ctx, emailHash)
@@ -29,13 +37,14 @@ func (s *OTPService) ResendOTP(ctx context.Context, email string) error {
 		}
 	}
 
-	// Deserialize and decrypt existing OTP
-	var existingOTP domain.OTP
-	if err := json.Unmarshal(marshaledOTP, &existingOTP); err != nil {
+	// Deserialize and decrypt existing OTP using the new generated function
+	var existingOTPEncx domain.OTPEncx
+	if err := json.Unmarshal(marshaledOTP, &existingOTPEncx); err != nil {
 		return errs.NewJSONUnmarshalErr(err)
 	}
 
-	if err := s.crypto.DecryptStruct(ctx, &existingOTP); err != nil {
+	existingOTP, err := domain.DecryptOTPEncx(ctx, s.crypto, &existingOTPEncx)
+	if err != nil {
 		return errs.NewNotDecryptedErr("OTP", err)
 	}
 

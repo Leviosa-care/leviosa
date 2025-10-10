@@ -12,7 +12,7 @@ import (
 
 func (s *UserService) GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.UserResponse, error) {
 	// Get user from repository
-	user, err := s.repo.GetUserByID(ctx, userID)
+	userEncx, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
@@ -51,8 +51,9 @@ func (s *UserService) GetUserByID(ctx context.Context, userID uuid.UUID) (*domai
 		}
 	}
 
-	// Decrypt user data
-	if err := s.crypto.DecryptStruct(ctx, user); err != nil {
+	// Decrypt user data using the new generated function
+	user, err := domain.DecryptUserEncx(ctx, s.crypto, userEncx)
+	if err != nil {
 		return nil, errs.NewNotDecryptedErr("user by ID", err)
 	}
 

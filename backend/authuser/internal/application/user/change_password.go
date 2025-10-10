@@ -15,7 +15,7 @@ func (s *UserService) ChangePassword(ctx context.Context, userID uuid.UUID, requ
 		return errs.NewInvalidValueErr(err.Error())
 	}
 
-	user, err := s.repo.GetUserByID(ctx, userID)
+	userEncx, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
@@ -43,7 +43,9 @@ func (s *UserService) ChangePassword(ctx context.Context, userID uuid.UUID, requ
 		}
 	}
 
-	if err := s.crypto.DecryptStruct(ctx, user); err != nil {
+	// Decrypt the user data using the new generated function
+	user, err := domain.DecryptUserEncx(ctx, s.crypto, userEncx)
+	if err != nil {
 		return errs.NewNotDecryptedErr("user for password change", err)
 	}
 
@@ -61,13 +63,14 @@ func (s *UserService) ChangePassword(ctx context.Context, userID uuid.UUID, requ
 
 	// Update only the password field
 	user.Password = request.NewPassword
-	user.PasswordHash = ""
 
-	if err := s.crypto.ProcessStruct(ctx, user); err != nil {
+	// Encrypt the user data using the new generated function
+	updatedUserEncx, err := domain.ProcessUserEncx(ctx, s.crypto, user)
+	if err != nil {
 		return errs.NewNotEncryptedErr("user for password change", err)
 	}
 
-	if err := s.repo.UpdateUser(ctx, user); err != nil {
+	if err := s.repo.UpdateUser(ctx, updatedUserEncx); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
 			return errs.NewNotFoundErr(err, "user")

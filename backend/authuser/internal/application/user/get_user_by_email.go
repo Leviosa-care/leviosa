@@ -17,7 +17,7 @@ func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*domain
 	}
 
 	emailHash := s.crypto.HashBasic(ctx, []byte(email))
-	user, err := s.repo.GetUserByEmailHash(ctx, emailHash)
+	userEncx, err := s.repo.GetUserByEmailHash(ctx, emailHash)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
@@ -35,7 +35,9 @@ func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*domain
 		}
 	}
 
-	if err := s.crypto.DecryptStruct(ctx, user); err != nil {
+	// Decrypt user data
+	user, err := domain.DecryptUserEncx(ctx, s.crypto, userEncx)
+	if err != nil {
 		return nil, errs.NewNotDecryptedErr("user retrieved by email", err)
 	}
 

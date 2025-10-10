@@ -17,8 +17,15 @@ func (s *OTPService) ValidateOTP(ctx context.Context, request *domain.ValidateOT
 		return errs.NewInvalidValueErr(fmt.Sprintf("OTP validation failed: %s", err.Error()))
 	}
 
-	// Hash email for lookup
-	emailHash := s.crypto.HashBasic(ctx, []byte(request.Email))
+	// Create a temporary OTP to get the email hash (since there's no standalone hash function)
+	tempOTP := &domain.OTP{
+		Email: request.Email,
+	}
+	tempOTPEncx, err := domain.ProcessOTPEncx(ctx, s.crypto, tempOTP)
+	if err != nil {
+		return errs.NewNotEncryptedErr("temporary OTP for email hash", err)
+	}
+	emailHash := tempOTPEncx.EmailHash
 
 	// Get OTP from repository
 	otpData, err := s.repo.GetOTP(ctx, emailHash)
@@ -27,13 +34,14 @@ func (s *OTPService) ValidateOTP(ctx context.Context, request *domain.ValidateOT
 	}
 
 	// Deserialize OTP
-	var otp domain.OTP
-	if err := json.Unmarshal(otpData, &otp); err != nil {
+	var otpEncx domain.OTPEncx
+	if err := json.Unmarshal(otpData, &otpEncx); err != nil {
 		return errs.NewJSONUnmarshalErr(err)
 	}
 
-	// Decrypt OTP
-	if err := s.crypto.DecryptStruct(ctx, &otp); err != nil {
+	// Decrypt OTP using the new generated function
+	otp, err := domain.DecryptOTPEncx(ctx, s.crypto, &otpEncx)
+	if err != nil {
 		return errs.NewNotDecryptedErr("OTP", err)
 	}
 
@@ -64,12 +72,13 @@ func (s *OTPService) ValidateOTP(ctx context.Context, request *domain.ValidateOT
 			return errs.NewExpiredTokenErr("OTP", errors.New("OTP has expired"))
 		}
 
-		// Re-encrypt and save updated OTP
-		if err := s.crypto.ProcessStruct(ctx, &otp); err != nil {
+		// Re-encrypt and save updated OTP using the new generated function
+		updatedOTPEncx, err := domain.ProcessOTPEncx(ctx, s.crypto, otp)
+		if err != nil {
 			return errs.NewNotEncryptedErr("OTP", err)
 		}
 
-		updatedData, err := json.Marshal(&otp)
+		updatedData, err := json.Marshal(&updatedOTPEncx)
 		if err != nil {
 			return errs.NewJSONMarshalErr(err)
 		}

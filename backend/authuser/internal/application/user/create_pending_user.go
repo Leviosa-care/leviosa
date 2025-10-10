@@ -20,20 +20,21 @@ func (s *UserService) CreatePendingUser(ctx context.Context, email string) (uuid
 	emailHash := s.crypto.HashBasic(ctx, []byte(email))
 
 	// Check if user already exists
-	existingUser, err := s.repo.GetUserByEmailHash(ctx, emailHash)
+	existingUserEncx, err := s.repo.GetUserByEmailHash(ctx, emailHash)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
 			// User doesn't exist, proceed with creation
 			user := newPendingUser(email)
 
-			// Process encryption for all encrypted fields before storing
-			if err := s.crypto.ProcessStruct(ctx, user); err != nil {
+			// Encrypt the user data using the new generated function
+			userEncx, err := domain.ProcessUserEncx(ctx, s.crypto, user)
+			if err != nil {
 				return uuid.Nil, errs.NewInternalErr(fmt.Errorf("failed to encrypt user data: %w", err))
 			}
 
 			// Create user in database
-			if err := s.repo.CreateUser(ctx, user); err != nil {
+			if err := s.repo.CreateUser(ctx, userEncx); err != nil {
 				switch {
 				case errors.Is(err, errs.ErrUniqueViolation):
 					return uuid.Nil, errs.NewConflictErr(errors.New("user already exists"))
@@ -46,7 +47,7 @@ func (s *UserService) CreatePendingUser(ctx context.Context, email string) (uuid
 				}
 			}
 
-			return user.ID, nil
+			return userEncx.ID, nil
 		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
 			return uuid.Nil, errs.NewExternalServiceErr(err, "database unavailable")
 		default:
@@ -56,7 +57,7 @@ func (s *UserService) CreatePendingUser(ctx context.Context, email string) (uuid
 
 	// User already exists, return the existing user's ID with conflict error
 	// This allows callers to still get the user ID even when there's a conflict
-	return existingUser.ID, errs.NewConflictErr(errors.New("user already exists"))
+	return existingUserEncx.ID, errs.NewConflictErr(errors.New("user already exists"))
 }
 
 func newPendingUser(email string) *domain.User {

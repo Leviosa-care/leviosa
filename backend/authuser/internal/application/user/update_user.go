@@ -12,7 +12,7 @@ import (
 
 func (s *UserService) UpdateUser(ctx context.Context, userID uuid.UUID, request *domain.UpdateUserRequest) (*domain.UserResponse, error) {
 	// Get existing user from repository
-	user, err := s.repo.GetUserByID(ctx, userID)
+	userEncx, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
@@ -40,8 +40,9 @@ func (s *UserService) UpdateUser(ctx context.Context, userID uuid.UUID, request 
 		}
 	}
 
-	// Decrypt user data to allow field updates
-	if err := s.crypto.DecryptStruct(ctx, user); err != nil {
+	// Decrypt user data to allow field updates using the new generated function
+	user, err := domain.DecryptUserEncx(ctx, s.crypto, userEncx)
+	if err != nil {
 		return nil, errs.NewNotDecryptedErr("user for update", err)
 	}
 
@@ -80,13 +81,14 @@ func (s *UserService) UpdateUser(ctx context.Context, userID uuid.UUID, request 
 		user.Address2 = *request.Address2
 	}
 
-	// Encrypt user data before saving
-	if err := s.crypto.ProcessStruct(ctx, user); err != nil {
+	// Encrypt the user data using the new generated function
+	updatedUserEncx, err := domain.ProcessUserEncx(ctx, s.crypto, user)
+	if err != nil {
 		return nil, errs.NewNotEncryptedErr("user for update", err)
 	}
 
 	// Save updated user to repository
-	if err := s.repo.UpdateUser(ctx, user); err != nil {
+	if err := s.repo.UpdateUser(ctx, updatedUserEncx); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
 			return nil, errs.NewNotFoundErr(err, "user")
@@ -121,12 +123,7 @@ func (s *UserService) UpdateUser(ctx context.Context, userID uuid.UUID, request 
 		}
 	}
 
-	// Decrypt user data again for response
-	if err := s.crypto.DecryptStruct(ctx, user); err != nil {
-		return nil, errs.NewNotDecryptedErr("updated user", err)
-	}
-
-	// Convert to response format
+	// Convert to response format (use the plain user object)
 	response := user.ToResponse()
 	return response, nil
 }

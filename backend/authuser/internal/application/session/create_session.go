@@ -43,7 +43,7 @@ func (s *SessionService) CreateSession(ctx context.Context, request *domain.Crea
 		refreshDuration = session.PendingSessionDuration
 	}
 
-	session := &session.Session{
+	sess := &session.Session{
 		ID:           uuid.New(),
 		UserID:       userID,
 		Role:         request.Role,
@@ -54,12 +54,13 @@ func (s *SessionService) CreateSession(ctx context.Context, request *domain.Crea
 		RefreshToken: refreshToken,
 	}
 
-	// Encrypt session and token pair
-	if err := s.crypto.ProcessStruct(ctx, session); err != nil {
+	// Encrypt session and token pair using the new generated function
+	sessionEncx, err := session.ProcessSessionEncx(ctx, s.crypto, sess)
+	if err != nil {
 		return nil, errs.NewNotEncryptedErr("create session", err)
 	}
 
-	sessionEncoded, err := json.Marshal(session)
+	sessionEncoded, err := json.Marshal(sessionEncx)
 	if err != nil {
 		return nil, errs.NewJSONMarshalErr(err)
 	}
@@ -67,7 +68,7 @@ func (s *SessionService) CreateSession(ctx context.Context, request *domain.Crea
 	accessExpiry := now.Add(accessDuration)
 	refreshExpiry := now.Add(refreshDuration)
 
-	if err := s.repo.CreateSession(ctx, session.ID, session.AccessTokenHash, session.RefreshTokenHash, session.UserIDHash, sessionEncoded, accessDuration, refreshDuration); err != nil {
+	if err := s.repo.CreateSession(ctx, sessionEncx.ID, sessionEncx.AccessTokenHash, sessionEncx.RefreshTokenHash, sessionEncx.UserIDHash, sessionEncoded, accessDuration, refreshDuration); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
 			return nil, errs.NewNotFoundErr(fmt.Errorf("session not found during session creation: %w", err), "session")
@@ -83,8 +84,8 @@ func (s *SessionService) CreateSession(ctx context.Context, request *domain.Crea
 	}
 
 	return &domain.CreateSessionResponse{
-		RefreshToken:       session.RefreshToken,
-		AccessToken:        session.AccessToken,
+		RefreshToken:       sess.RefreshToken,  // These are still accessible from the original session
+		AccessToken:        sess.AccessToken,
 		AccessTokenExpiry:  accessExpiry,
 		RefreshTokenExpiry: refreshExpiry,
 	}, nil

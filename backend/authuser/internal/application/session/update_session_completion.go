@@ -28,19 +28,27 @@ func (s *SessionService) UpdateSessionCompletion(ctx context.Context, sessionID 
 		}
 	}
 
-	var session *session.Session
-	err = json.Unmarshal(sessionData, &session)
+	var sessionEncx *session.SessionEncx
+	err = json.Unmarshal(sessionData, &sessionEncx)
 	if err != nil {
 		return errs.NewJSONUnmarshalErr(err)
 	}
 
-	if err := s.crypto.DecryptStruct(ctx, session); err != nil {
+	// Decrypt session using the new generated function
+	sess, err := session.DecryptSessionEncx(ctx, s.crypto, sessionEncx)
+	if err != nil {
 		return errs.NewNotDecryptedErr("session retrieved during user completion process", err)
 	}
 
-	session.CompletedAt = completedAt
+	sess.CompletedAt = completedAt
 
-	updatedSessionData, err := json.Marshal(session)
+	// Encrypt updated session using the new generated function
+	updatedSessionEncx, err := session.ProcessSessionEncx(ctx, s.crypto, sess)
+	if err != nil {
+		return errs.NewNotEncryptedErr("session during completion update", err)
+	}
+
+	updatedSessionData, err := json.Marshal(updatedSessionEncx)
 	if err != nil {
 		return errs.NewJSONMarshalErr(err)
 	}

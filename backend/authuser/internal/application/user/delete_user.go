@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Leviosa-care/authuser/internal/domain"
 	"github.com/Leviosa-care/core/errs"
 	"github.com/google/uuid"
 )
 
 func (s *UserService) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 	// 1. Get user first to retrieve encrypted Stripe customer ID
-	user, err := s.repo.GetUserByID(ctx, userID)
+	userEncx, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
@@ -24,7 +25,8 @@ func (s *UserService) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 	}
 
 	// 2. Decrypt user data to access Stripe customer ID
-	if err := s.crypto.DecryptStruct(ctx, user); err != nil {
+	user, err := domain.DecryptUserEncx(ctx, s.crypto, userEncx)
+	if err != nil {
 		return errs.NewNotDecryptedErr("user", err)
 	}
 

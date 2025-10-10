@@ -32,13 +32,15 @@ func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID
 		}
 	}
 
-	// Decode session
-	session, err := authsession.DecodeSession(sessionData)
-	if err != nil {
+	// Decode session as SessionEncx
+	var sessionEncx authsession.SessionEncx
+	if err := json.Unmarshal(sessionData, &sessionEncx); err != nil {
 		return nil, errs.NewUnexpectedError(fmt.Errorf("failed to decode session during refresh: %w", err))
 	}
 
-	if err := s.crypto.DecryptStruct(ctx, session); err != nil {
+	// Decrypt session using the new generated function
+	session, err := authsession.DecryptSessionEncx(ctx, s.crypto, &sessionEncx)
+	if err != nil {
 		return nil, errs.NewNotDecryptedErr("refresh session", err)
 	}
 
@@ -64,31 +66,18 @@ func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID
 	accessDuration := s.cache.GetAccessTokenDuration()
 	refreshDuration := s.cache.GetRefreshTokenDuration()
 
-	// Create new token pair
-	newTokenPair := &authsession.TokenPair{
-		AccessToken:  newAccessToken,
-		RefreshToken: newRefreshToken,
-	}
+	// Update session with new tokens
+	session.AccessToken = newAccessToken
+	session.RefreshToken = newRefreshToken
 
-	// Encrypt new token pair
-	if err := s.crypto.ProcessStruct(ctx, newTokenPair); err != nil {
-		return nil, errs.NewNotEncryptedErr("new token pair in session refreshing", err)
-	}
-
-	// Store old refresh token hash before updating session
-	oldRefreshTokenHash := session.RefreshTokenHash
-
-	// Update session with new token hashes
-	session.AccessTokenHash = newTokenPair.AccessTokenHash
-	session.RefreshTokenHash = newTokenPair.RefreshTokenHash
-
-	// Encrypt updated session
-	if err := s.crypto.ProcessStruct(ctx, session); err != nil {
+	// Encrypt updated session using the new generated function
+	updatedSessionEncx, err := authsession.ProcessSessionEncx(ctx, s.crypto, session)
+	if err != nil {
 		return nil, errs.NewNotEncryptedErr("updated session", err)
 	}
 
 	// Encode updated session data
-	updatedSessionData, err := json.Marshal(session)
+	updatedSessionData, err := json.Marshal(updatedSessionEncx)
 	if err != nil {
 		return nil, errs.NewJSONMarshalErr(err)
 	}
@@ -100,11 +89,11 @@ func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID
 	// Perform token rotation - replace old tokens with new ones
 	if err := s.repo.RefreshTokenPair(
 		ctx,
-		oldRefreshTokenHash,           // oldRefreshTokenHash
-		newTokenPair.AccessTokenHash,  // newAccessTokenHash
-		newTokenPair.RefreshTokenHash, // newRefreshTokenHash
-		session.ID,                    // sessionID (uuid.UUID)
-		updatedSessionData,            // updatedSessionData
+		sessionEncx.RefreshTokenHash,         // oldRefreshTokenHash
+		updatedSessionEncx.AccessTokenHash,   // newAccessTokenHash
+		updatedSessionEncx.RefreshTokenHash,  // newRefreshTokenHash
+		session.ID,                           // sessionID (uuid.UUID)
+		updatedSessionData,                   // updatedSessionData
 		accessDuration,
 		refreshDuration,
 	); err != nil {
@@ -123,8 +112,8 @@ func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID
 	}
 
 	return &domain.RefreshSessionResponse{
-		AccessToken:        newTokenPair.AccessTokenHash,
-		RefreshToken:       newTokenPair.RefreshTokenHash,
+		AccessToken:        newAccessToken,
+		RefreshToken:       newRefreshToken,
 		AccessTokenExpiry:  accessExpiry,
 		RefreshTokenExpiry: refreshExpiry,
 	}, nil

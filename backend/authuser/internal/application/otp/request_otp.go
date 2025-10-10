@@ -16,7 +16,15 @@ func (s *OTPService) RequestOTP(ctx context.Context, email string) error {
 		return errs.NewInvalidValueErr("email is required")
 	}
 
-	emailHash := s.crypto.HashBasic(ctx, []byte(email))
+	// Create a temporary OTP to get the email hash (since there's no standalone hash function)
+	tempOTP := &domain.OTP{
+		Email: email,
+	}
+	tempOTPEncx, err := domain.ProcessOTPEncx(ctx, s.crypto, tempOTP)
+	if err != nil {
+		return errs.NewNotEncryptedErr("temporary OTP for email hash", err)
+	}
+	emailHash := tempOTPEncx.EmailHash
 
 	// Check if OTP already exists and is still valid
 	marshaledOTP, err := s.repo.GetOTP(ctx, emailHash)
@@ -51,12 +59,13 @@ func (s *OTPService) RequestOTP(ctx context.Context, email string) error {
 		}
 	} else {
 		// OTP exists, check if still valid
-		var existingOTP domain.OTP
-		if err := json.Unmarshal(marshaledOTP, &existingOTP); err != nil {
+		var existingOTPEncx domain.OTPEncx
+		if err := json.Unmarshal(marshaledOTP, &existingOTPEncx); err != nil {
 			return errs.NewJSONUnmarshalErr(err)
 		}
 
-		if err := s.crypto.DecryptStruct(ctx, &existingOTP); err != nil {
+		existingOTP, err := domain.DecryptOTPEncx(ctx, s.crypto, &existingOTPEncx)
+		if err != nil {
 			return errs.NewNotDecryptedErr("OTP", err)
 		}
 
@@ -71,19 +80,20 @@ func (s *OTPService) RequestOTP(ctx context.Context, email string) error {
 		return errs.NewNotCreatedErr(err, "OTP")
 	}
 
-	// Encrypt OTP data
-	if err := s.crypto.ProcessStruct(ctx, otp); err != nil {
+	// Encrypt OTP data using the new generated function
+	otpEncx, err := domain.ProcessOTPEncx(ctx, s.crypto, otp)
+	if err != nil {
 		return errs.NewNotEncryptedErr("OTP", err)
 	}
 	// Serialize and save to repository
-	otpData, err := json.Marshal(otp)
+	otpData, err := json.Marshal(otpEncx)
 	if err != nil {
 		return errs.NewJSONMarshalErr(err)
 	}
 
 	ttl := time.Duration(s.GetOTPDuration()) * time.Minute
 
-	if err := s.repo.SaveOTP(ctx, otp.EmailHash, otpData, ttl); err != nil {
+	if err := s.repo.SaveOTP(ctx, otpEncx.EmailHash, otpData, ttl); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrConnectionFailure):
 			// Redis connection issues

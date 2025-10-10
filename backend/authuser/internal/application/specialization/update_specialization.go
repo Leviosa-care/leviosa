@@ -16,14 +16,15 @@ func (s *SpecializationService) UpdateSpecialization(ctx context.Context, specia
 	}
 
 	// Get existing specialization
-	specialization, err := s.repo.GetSpecializationByID(ctx, specializationID)
+	specializationEncx, err := s.repo.GetSpecializationByID(ctx, specializationID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Decrypt current data
-	if err := s.crypto.Decrypt(ctx, specialization); err != nil {
-		return nil, err
+	// Decrypt current data using the new generated function
+	specialization, err := domain.DecryptSpecializationEncx(ctx, s.crypto, specializationEncx)
+	if err != nil {
+		return nil, errs.NewNotDecryptedErr("specialization for update", err)
 	}
 
 	// Update fields if provided
@@ -56,20 +57,22 @@ func (s *SpecializationService) UpdateSpecialization(ctx context.Context, specia
 		return specialization.ToResponse(), nil
 	}
 
-	// Encrypt updated fields
-	if err := s.crypto.Encrypt(ctx, specialization); err != nil {
-		return nil, errs.ErrInvalidValue
+	// Encrypt updated fields using the new generated function
+	updatedSpecializationEncx, err := domain.ProcessSpecializationEncx(ctx, s.crypto, specialization)
+	if err != nil {
+		return nil, errs.NewNotEncryptedErr("specialization for update", err)
 	}
 
 	// Update in database
-	if err := s.repo.UpdateSpecialization(ctx, specialization); err != nil {
+	if err := s.repo.UpdateSpecialization(ctx, updatedSpecializationEncx); err != nil {
 		return nil, err
 	}
 
-	// Decrypt for response
-	if err := s.crypto.Decrypt(ctx, specialization); err != nil {
-		return nil, errs.ErrInvalidValue
+	// Decrypt for response using the new generated function
+	responseSpecialization, err := domain.DecryptSpecializationEncx(ctx, s.crypto, updatedSpecializationEncx)
+	if err != nil {
+		return nil, errs.NewNotDecryptedErr("specialization for response", err)
 	}
 
-	return specialization.ToResponse(), nil
+	return responseSpecialization.ToResponse(), nil
 }
