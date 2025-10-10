@@ -27,3 +27,4 @@ func ServiceVaultPaths(serviceName string) map[string]string {
 		"api_key": ServiceAPIKeyPath(serviceName),
 	}
 }
+
