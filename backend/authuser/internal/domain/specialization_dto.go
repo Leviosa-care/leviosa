@@ -67,7 +67,6 @@ func (r *CreateSpecializationRequest) ToSpecialization() *Specialization {
 		DisplayName: strings.TrimSpace(r.DisplayName),
 		Description: strings.TrimSpace(r.Description),
 		IsActive:    true, // New specializations are active by default
-		KeyVersion:  1,
 	}
 }
 

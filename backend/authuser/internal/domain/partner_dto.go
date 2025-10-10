@@ -155,21 +155,20 @@ func (r *CreatePartnerRequest) ToUser() (*User, error) {
 	}
 
 	return &User{
-		ID:         uuid.New(),
-		State:      UserStateUnverified,
-		Email:      strings.TrimSpace(r.Email),
-		Password:   r.Password,
-		FirstName:  strings.TrimSpace(r.FirstName),
-		LastName:   strings.TrimSpace(r.LastName),
-		Telephone:  strings.TrimSpace(r.Telephone),
-		BirthDate:  birthDate,
-		Gender:     strings.TrimSpace(r.Gender),
+		ID:        uuid.New(),
+		State:     Unverified,
+		Email:     strings.TrimSpace(r.Email),
+		Password:  r.Password,
+		FirstName: strings.TrimSpace(r.FirstName),
+		LastName:  strings.TrimSpace(r.LastName),
+		Telephone: strings.TrimSpace(r.Telephone),
+		BirthDate: birthDate,
+		Gender:    strings.TrimSpace(r.Gender),
 		PostalCode: strings.TrimSpace(r.PostalCode),
-		City:       strings.TrimSpace(r.City),
-		Address1:   strings.TrimSpace(r.Address1),
-		Address2:   strings.TrimSpace(r.Address2),
-		Role:       identity.PartnerStr,
-		KeyVersion: 1,
+		City:      strings.TrimSpace(r.City),
+		Address1:  strings.TrimSpace(r.Address1),
+		Address2:  strings.TrimSpace(r.Address2),
+		Role:      identity.PartnerStr,
 	}, nil
 }
 
@@ -189,7 +188,6 @@ func (r *CreatePartnerRequest) ToPartner(userID uuid.UUID) *Partner {
 		Experience:     strings.TrimSpace(r.Experience),
 		Certifications: cleanCertifications,
 		IsVerified:     false, // Partners start unverified
-		KeyVersion:     1,
 	}
 }
 

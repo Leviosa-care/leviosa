@@ -11,26 +11,19 @@ import (
 )
 
 type Partner struct {
-	ID                      uuid.UUID       `json:"id"`
-	UserID                  uuid.UUID       `json:"user_id"`
-	Bio                     string          `json:"bio" encx:"encrypt"`
-	BioEncrypted            []byte          `json:"-"`
-	Experience              string          `json:"experience" encx:"encrypt"`
-	ExperienceEncrypted     []byte          `json:"-"`
-	Certifications          []string        `json:"certifications" encx:"encrypt"`
-	CertificationsEncrypted []byte          `json:"-"`
-	IsVerified              bool            `json:"is_verified"`
-	VerifiedAt              *time.Time      `json:"verified_at" encx:"encrypt"`
-	VerifiedAtEncrypted     []byte          `json:"-"`
-	VerifiedByUserID        *uuid.UUID      `json:"verified_by_user_id"`
-	DEK                     []byte          `json:"-" encx:"encrypt"`
-	DEKEncrypted            []byte          `json:"-"`
-	KeyVersion              int             `json:"-"`
-	CreatedAt               time.Time       `json:"created_at"`
-	UpdatedAt               time.Time       `json:"updated_at"`
+	ID               uuid.UUID       `json:"id"`
+	UserID           uuid.UUID       `json:"user_id"`
+	Bio              string          `json:"bio" encx:"encrypt"`
+	Experience       string          `json:"experience" encx:"encrypt"`
+	Certifications   []string        `json:"certifications" encx:"encrypt"`
+	IsVerified       bool            `json:"is_verified"`
+	VerifiedAt       *time.Time      `json:"verified_at" encx:"encrypt"`
+	VerifiedByUserID *uuid.UUID      `json:"verified_by_user_id"`
+	CreatedAt        time.Time       `json:"created_at"`
+	UpdatedAt        time.Time       `json:"updated_at"`
 
 	// Embedded user data (populated when joining with users table)
-	User          *User                      `json:"user,omitempty"`
+	User           *User                      `json:"user,omitempty"`
 	Specializations []SpecializationResponse `json:"specializations,omitempty"`
 }
 
@@ -59,7 +52,7 @@ func (p *Partner) Valid(ctx context.Context) error {
 		errs.Set("certifications", "maximum 20 certifications allowed")
 	}
 
-	for i, cert := range p.Certifications {
+	for _, cert := range p.Certifications {
 		cert = strings.TrimSpace(cert)
 		if cert == "" {
 			errs.Set("certifications", "certification cannot be empty")

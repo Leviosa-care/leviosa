@@ -5,16 +5,11 @@ import (
 )
 
 type OTP struct {
-	Email         string    `json:"-" encx:"hash_basic"`
-	EmailHash     string    `json:"-"`
-	Code          string    `json:"-" validate:"len=6" encx:"encrypt"`
-	CodeEncrypted []byte    `json:"code_encrypted"`
-	Attempts      int       `json:"attempts"`
-	ExpiresAt     time.Time `json:"expires_at"`
-	CreatedAt     time.Time `json:"created_at"`
-	DEK           []byte    `json:"-"`
-	DEKEncrypted  []byte    `json:"dek_encrypted"`
-	KeyVersion    int       `json:"key_version"`
+	Email     string    `json:"-" encx:"hash_basic"`
+	Code      string    `json:"-" validate:"len=6" encx:"encrypt"`
+	Attempts  int       `json:"attempts"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func (o *OTP) IsExpired() bool {
