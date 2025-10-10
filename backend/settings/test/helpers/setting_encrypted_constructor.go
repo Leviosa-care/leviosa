@@ -18,66 +18,50 @@ func randomBytes(n int) []byte {
 
 // ----- FACTORIES WITH PROVIDED VALUES -----
 
-func NewValidEncryptedSettingString(key, value string) *domain.SettingEncrypted[string] {
+func NewValidEncryptedSettingString(key, value string) *domain.SettingEncrypted {
 	now := time.Now()
-	return &domain.SettingEncrypted[string]{
-		Key:            key,
-		Value:          value,
-		ValueEncrypted: randomBytes(16),
-		CreatedAt:      now,
-		UpdatedAt:      now,
-		DEK:            randomBytes(32),
-		DEKEncrypted:   randomBytes(48),
-		KeyVersion:     1,
+	return &domain.SettingEncrypted{
+		Key:       key,
+		Value:     value,
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 }
 
-func NewValidEncryptedSettingInt(key string, value int) *domain.SettingEncrypted[int] {
+func NewValidEncryptedSettingInt(key string, value int) *domain.SettingEncrypted {
 	now := time.Now()
-	return &domain.SettingEncrypted[int]{
-		Key:            key,
-		Value:          value,
-		ValueEncrypted: randomBytes(16),
-		CreatedAt:      now,
-		UpdatedAt:      now,
-		DEK:            randomBytes(32),
-		DEKEncrypted:   randomBytes(48),
-		KeyVersion:     1,
+	return &domain.SettingEncrypted{
+		Key:       key,
+		Value:     fmt.Sprintf("%d", value), // Convert int to string since SettingEncrypted.Value is string
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 }
 
 // ----- RANDOM FACTORIES -----
 
-func NewRandomEncryptedSettingString() *domain.SettingEncrypted[string] {
+func NewRandomEncryptedSettingString() *domain.SettingEncrypted {
 	now := time.Now()
 	key := fmt.Sprintf("key_%d", mrand.Int())
 	value := fmt.Sprintf("value_%d", mrand.Int())
 
-	return &domain.SettingEncrypted[string]{
-		Key:            key,
-		Value:          value,
-		ValueEncrypted: randomBytes(16),
-		CreatedAt:      now,
-		UpdatedAt:      now,
-		DEK:            randomBytes(32),
-		DEKEncrypted:   randomBytes(48),
-		KeyVersion:     mrand.Intn(5) + 1, // 1..5
+	return &domain.SettingEncrypted{
+		Key:       key,
+		Value:     value,
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 }
 
-func NewRandomEncryptedSettingInt() *domain.SettingEncrypted[int] {
+func NewRandomEncryptedSettingInt() *domain.SettingEncrypted {
 	now := time.Now()
 	key := fmt.Sprintf("key_%d", mrand.Int())
 	value := mrand.Intn(1000)
 
-	return &domain.SettingEncrypted[int]{
-		Key:            key,
-		Value:          value,
-		ValueEncrypted: randomBytes(16),
-		CreatedAt:      now,
-		UpdatedAt:      now,
-		DEK:            randomBytes(32),
-		DEKEncrypted:   randomBytes(48),
-		KeyVersion:     mrand.Intn(5) + 1,
+	return &domain.SettingEncrypted{
+		Key:       key,
+		Value:     fmt.Sprintf("%d", value), // Convert int to string since SettingEncrypted.Value is string
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 }

@@ -49,11 +49,11 @@ func InsertSettingInt(t *testing.T, ctx context.Context, setting *domain.Setting
 	require.NoError(t, err)
 }
 
-func InsertEncryptedSettingString(t *testing.T, ctx context.Context, setting *domain.SettingEncrypted[string], pool *pgxpool.Pool) {
+func InsertEncryptedSettingString(t *testing.T, ctx context.Context, setting *domain.SettingEncryptedEncx, pool *pgxpool.Pool) {
 	t.Helper()
 	query := `
-		INSERT INTO settings.encrypted (key, value_encrypted, dek_encrypted, key_version)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO settings.encrypted (key, value_encrypted, dek_encrypted, key_version, metadata)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, created_at, updated_at;
 	`
 	err := pool.QueryRow(
@@ -63,6 +63,7 @@ func InsertEncryptedSettingString(t *testing.T, ctx context.Context, setting *do
 		setting.ValueEncrypted,
 		setting.DEKEncrypted,
 		setting.KeyVersion,
+		setting.Metadata,
 	).Scan(
 		&setting.ID,
 		&setting.CreatedAt,
@@ -196,9 +197,9 @@ func GetOTPDurationFromDB(t *testing.T, ctx context.Context, pool *pgxpool.Pool)
 	return strconv.Atoi(durationStr)
 }
 
-func GetEncryptedSettingByKey(t *testing.T, ctx context.Context, key string, pool *pgxpool.Pool) *domain.SettingEncrypted[string] {
+func GetEncryptedSettingByKey(t *testing.T, ctx context.Context, key string, pool *pgxpool.Pool) *domain.SettingEncryptedEncx {
 	t.Helper()
-	var setting domain.SettingEncrypted[string]
+	var setting domain.SettingEncryptedEncx
 
 	query := `
 	SELECT
@@ -247,10 +248,9 @@ func GetCompanyAddressFromDB(t *testing.T, ctx context.Context, pool *pgxpool.Po
 	return address, err
 }
 
-func NewCompanyPhone(t *testing.T, ctx context.Context) *domain.SettingEncrypted[string] {
+func NewCompanyPhone(t *testing.T, ctx context.Context) *domain.SettingEncrypted {
 	now := time.Now()
-	return &domain.SettingEncrypted[string]{
-		// ID:        "1",
+	return &domain.SettingEncrypted{
 		Key:       settings.CompanyPhone,
 		Value:     "0612345678",
 		CreatedAt: now,
@@ -258,21 +258,21 @@ func NewCompanyPhone(t *testing.T, ctx context.Context) *domain.SettingEncrypted
 	}
 }
 
-// Company Phone specific helpers
-// func InsertCompanyPhoneEncrypted(t *testing.T, ctx context.Context, phone string, pool *pgxpool.Pool) {
-func InsertCompanyPhoneEncrypted(t *testing.T, ctx context.Context, setting *domain.SettingEncrypted[string], pool *pgxpool.Pool) {
+// Company Phone specific helpers - now uses generated ENCX structs
+func InsertCompanyPhoneEncrypted(t *testing.T, ctx context.Context, settingEncx *domain.SettingEncryptedEncx, pool *pgxpool.Pool) {
 	t.Helper()
 	query := `
-		INSERT INTO settings.encrypted (key, value_encrypted, dek_encrypted, key_version)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO settings.encrypted (key, value_encrypted, dek_encrypted, key_version, metadata)
+		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT (key) DO UPDATE SET
 			value_encrypted = EXCLUDED.value_encrypted,
 			dek_encrypted = EXCLUDED.dek_encrypted,
 			key_version = EXCLUDED.key_version,
+			metadata = EXCLUDED.metadata,
 			updated_at = NOW()
 	`
 
-	_, err := pool.Exec(ctx, query, settings.CompanyPhone, setting.ValueEncrypted, setting.DEKEncrypted, setting.KeyVersion)
+	_, err := pool.Exec(ctx, query, settings.CompanyPhone, settingEncx.ValueEncrypted, settingEncx.DEKEncrypted, settingEncx.KeyVersion, settingEncx.Metadata)
 	require.NoError(t, err)
 }
 
@@ -291,10 +291,10 @@ func InsertEncryptedSetting(t *testing.T, ctx context.Context, key string, value
 	require.NoError(t, err)
 }
 
-func GetEncryptedSettingFromDB(t *testing.T, ctx context.Context, key string, pool *pgxpool.Pool) *domain.SettingEncrypted[string] {
+func GetEncryptedSettingFromDB(t *testing.T, ctx context.Context, key string, pool *pgxpool.Pool) *domain.SettingEncryptedEncx {
 	t.Helper()
 
-	var setting domain.SettingEncrypted[string]
+	var setting domain.SettingEncryptedEncx
 
 	query := `
 	SELECT

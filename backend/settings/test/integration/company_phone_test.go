@@ -44,11 +44,11 @@ func TestGetCompanyPhone(t *testing.T) {
 	t.Run("should successfully retrieve company phone (admin endpoint)", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
 
-		// Setup: Insert company phoneSetting directly into database
+		// Setup: Insert company phone setting directly into database using generated ENCX functions
 		phoneSetting := th.NewCompanyPhone(t, ctx)
-		err := crypto.ProcessStruct(ctx, phoneSetting)
+		phoneSettingEncx, err := domain.ProcessSettingEncryptedEncx(ctx, crypto, phoneSetting)
 		require.NoError(t, err)
-		th.InsertCompanyPhoneEncrypted(t, ctx, phoneSetting, testPool)
+		th.InsertCompanyPhoneEncrypted(t, ctx, phoneSettingEncx, testPool)
 
 		// Test: Get the company phone (admin endpoint)
 		req := th.NewGetCompanyPhoneRequest(t, ctx, testServerURL)
@@ -97,8 +97,8 @@ func TestSetCompanyPhone(t *testing.T) {
 		assert.True(t, respBody.Success)
 
 		// Verify data was persisted directly in database
-		phoneSetting := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
-		err = crypto.DecryptStruct(ctx, phoneSetting)
+		phoneSettingEncx := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+		phoneSetting, err := domain.DecryptSettingEncryptedEncx(ctx, crypto, phoneSettingEncx)
 		require.NoError(t, err)
 		assert.Equal(t, phoneValue, phoneSetting.Value)
 
@@ -209,8 +209,8 @@ func TestSetCompanyPhone(t *testing.T) {
 				assert.True(t, respBody.Success)
 
 				// Verify the phone was stored directly in database
-				phoneSetting := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
-				err = crypto.DecryptStruct(ctx, phoneSetting)
+				phoneSettingEncx := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+				phoneSetting, err := domain.DecryptSettingEncryptedEncx(ctx, crypto, phoneSettingEncx)
 				require.NoError(t, err)
 				assert.Equal(t, phone, phoneSetting.Value)
 			})
@@ -240,8 +240,8 @@ func TestSetCompanyPhone(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify the phone was trimmed and stored correctly directly in database
-		phoneSetting := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
-		err = crypto.DecryptStruct(ctx, phoneSetting)
+		phoneSettingEncx := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+		phoneSetting, err := domain.DecryptSettingEncryptedEncx(ctx, crypto, phoneSettingEncx)
 		require.NoError(t, err)
 		// Should be able to retrieve the original value
 		assert.Equal(t, phoneValue, phoneSetting.Value)
@@ -304,9 +304,9 @@ func TestSetCompanyPhone(t *testing.T) {
 
 		// Set initial phone
 		initialPhoneSetting := th.NewCompanyPhone(t, ctx)
-		err := crypto.ProcessStruct(ctx, initialPhoneSetting)
+		initialPhoneSettingEncx, err := domain.ProcessSettingEncryptedEncx(ctx, crypto, initialPhoneSetting)
 		require.NoError(t, err)
-		th.InsertCompanyPhoneEncrypted(t, ctx, initialPhoneSetting, testPool)
+		th.InsertCompanyPhoneEncrypted(t, ctx, initialPhoneSettingEncx, testPool)
 
 		// Update to new phone
 		newPhoneValue := "0222222222"
@@ -317,8 +317,8 @@ func TestSetCompanyPhone(t *testing.T) {
 		defer resp2.Body.Close()
 		require.Equal(t, http.StatusOK, resp2.StatusCode)
 
-		phoneSetting := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
-		err = crypto.DecryptStruct(ctx, phoneSetting)
+		phoneSettingEncx := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
+		phoneSetting, err := domain.DecryptSettingEncryptedEncx(ctx, crypto, phoneSettingEncx)
 		require.NoError(t, err)
 		assert.Equal(t, newPhoneValue, phoneSetting.Value)
 

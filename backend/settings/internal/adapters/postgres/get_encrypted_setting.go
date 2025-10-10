@@ -9,8 +9,8 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
-func (r *repository) GetEncryptedSetting(ctx context.Context, key string) (*domain.SettingEncrypted[string], error) {
-	var res domain.SettingEncrypted[string]
+func (r *repository) GetEncryptedSetting(ctx context.Context, key string) (*domain.SettingEncryptedEncx, error) {
+	var res domain.SettingEncryptedEncx
 	query := `
 	SELECT
 	id,
@@ -18,7 +18,8 @@ func (r *repository) GetEncryptedSetting(ctx context.Context, key string) (*doma
 	created_at,
 	updated_at,
 	dek_encrypted,
-	key_version
+	key_version,
+	metadata
 	FROM settings.encrypted
 	WHERE key = $1;`
 
@@ -29,6 +30,7 @@ func (r *repository) GetEncryptedSetting(ctx context.Context, key string) (*doma
 		&res.UpdatedAt,
 		&res.DEKEncrypted,
 		&res.KeyVersion,
+		&res.Metadata,
 	)
 	if err != nil {
 		return nil, errs.ClassifyPgError(fmt.Sprintf("get encrypted setting for key '%s'", key), err)

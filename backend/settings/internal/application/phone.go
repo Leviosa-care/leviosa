@@ -13,7 +13,7 @@ import (
 )
 
 func (s *SettingsService) GetCompanyTelephone(ctx context.Context) (*domain.GetCompanyTelephoneResponse, error) {
-	setting, err := s.repo.GetEncryptedSetting(ctx, settings.CompanyPhone)
+	settingEncx, err := s.repo.GetEncryptedSetting(ctx, settings.CompanyPhone)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
@@ -24,9 +24,13 @@ func (s *SettingsService) GetCompanyTelephone(ctx context.Context) (*domain.GetC
 			return nil, errs.NewQueryFailedErr(err)
 		}
 	}
-	if err := s.crypto.DecryptStruct(ctx, setting); err != nil {
+
+	// Use generated decrypt function
+	setting, err := domain.DecryptSettingEncryptedEncx(ctx, s.crypto, settingEncx)
+	if err != nil {
 		return nil, errs.NewNotDecryptedErr("settings phone number", err)
 	}
+
 	return &domain.GetCompanyTelephoneResponse{Telephone: setting.Value}, nil
 }
 
@@ -42,15 +46,19 @@ func (s *SettingsService) SetCompanyTelephone(ctx context.Context, request *doma
 		return nil, errs.NewInvalidValueErr(err.Error())
 	}
 
-	setting, err := NewSettingEncrypted(s, settings.CompanyPhone, trimmedPhone)
-	if err != nil {
-		return nil, errs.NewNotCreatedErr(err, "company telephone")
+	// Create clean source struct
+	setting := &domain.SettingEncrypted{
+		Key:   settings.CompanyPhone,
+		Value: trimmedPhone,
 	}
-	if err := s.crypto.ProcessStruct(ctx, setting); err != nil {
+
+	// Use generated process function - handles DEK generation automatically
+	settingEncx, err := domain.ProcessSettingEncryptedEncx(ctx, s.crypto, setting)
+	if err != nil {
 		return nil, errs.NewNotEncryptedErr("settings phone number", err)
 	}
 
-	if err := s.repo.SetEncryptedSetting(ctx, setting); err != nil {
+	if err := s.repo.SetEncryptedSetting(ctx, settingEncx); err != nil {
 		return nil, err
 	}
 

@@ -13,9 +13,9 @@ type SettingsRepository interface {
 	GetInt(ctx context.Context, key string) (*domain.Setting[int], error)
 	SetString(ctx context.Context, setting *domain.Setting[string]) error
 	SetInt(ctx context.Context, setting *domain.Setting[int]) error
-	// encrypted
-	GetEncryptedSetting(ctx context.Context, key string) (*domain.SettingEncrypted[string], error)
-	SetEncryptedSetting(ctx context.Context, setting *domain.SettingEncrypted[string]) error
+	// encrypted - using generated ENCX structs
+	GetEncryptedSetting(ctx context.Context, key string) (*domain.SettingEncryptedEncx, error)
+	SetEncryptedSetting(ctx context.Context, settingEncx *domain.SettingEncryptedEncx) error
 }
 
 type SettingsMedia interface {

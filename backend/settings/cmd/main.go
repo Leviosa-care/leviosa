@@ -254,7 +254,12 @@ func setupCryptoService(ctx context.Context, vaultClient *api.Client) (encx.Cryp
 	serviceKeyName := fmt.Sprintf("%s-encryption-key", services.Settings)
 	servicePepperPath := fmt.Sprintf("secret/data/peppers/%s", services.Settings)
 	
-	crypto, err := encx.New(ctx, kms, serviceKeyName, servicePepperPath)
+	crypto, err := encx.NewCrypto(
+		ctx,
+		encx.WithKMSService(kms),
+		encx.WithKEKAlias(serviceKeyName),
+		encx.WithPepperSecretPath(servicePepperPath),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto service: %w", err)
 	}
