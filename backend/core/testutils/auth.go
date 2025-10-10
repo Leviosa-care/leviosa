@@ -1,12 +1,50 @@
+// Package testutils provides authentication testing utilities for all microservices.
+//
+// This package offers comprehensive helpers for setting up users with different roles,
+// creating sessions, and testing authentication/authorization scenarios across the
+// Leviosa platform microservices (catalog, settings, notification, etc.).
+//
+// Key Features:
+// - Role-based user setup (Visitor, Standard, Premium, Guest, Partner, Administrator)
+// - Session management with ENCX encryption
+// - HTTP request helpers for middleware testing
+// - Granular cleanup utilities
+// - Support for expired/invalid session testing
+//
+// Basic Usage:
+//
+//	authCtx := &testutils.AuthTestContext{
+//		Pool:   testPool,    // Your test database pool
+//		Redis:  testClient,  // Your test Redis client
+//		Crypto: crypto,      // Your ENCX crypto service
+//	}
+//
+//	// Setup a user with specific role
+//	accessToken := testutils.SetupAdminUser(t, ctx, authCtx)
+//
+//	// Create authenticated HTTP request
+//	req := testutils.CreateAuthenticatedRequest("GET", "/api/settings", accessToken)
+//
+//	// Test your middleware/endpoint
+//	resp := httptest.NewRecorder()
+//	handler.ServeHTTP(resp, req)
+//
+//	// Cleanup after test
+//	testutils.ClearAuthData(t, ctx, authCtx)
+//
 package testutils
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/Leviosa-care/core/auth/cookies"
 	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/google/uuid"
@@ -190,6 +228,65 @@ func SetupPendingUserWithRole(t *testing.T, ctx context.Context, role identity.R
 	return accessToken
 }
 
+// SetupExpiredUserWithRole creates a user with expired session for the specified role
+// Useful for testing session expiration and timeout scenarios
+func SetupExpiredUserWithRole(t *testing.T, ctx context.Context, role identity.Role, authCtx *AuthTestContext) string {
+	t.Helper()
+
+	now := time.Now()
+	userID := uuid.New()
+
+	// Create test user
+	user := &User{
+		ID:         userID,
+		State:      "active",
+		Email:      fmt.Sprintf("expired_%s@leviosa.care", role.String()),
+		FirstName:  role.String(),
+		LastName:   role.String(),
+		Password:   "bMPSrxQK#?rPO.[<",
+		Telephone:  "0612345678",
+		Role:       role.String(),
+		CreatedAt:  now,
+		LoggedInAt: now,
+	}
+
+	// Encrypt user data
+	userEncx, err := ProcessUserEncx(ctx, authCtx.Crypto, user)
+	require.NoError(t, err, "Failed to encrypt user struct")
+
+	// Insert user into database
+	insertUser(t, ctx, userEncx, authCtx.Pool)
+
+	// Create expired session
+	sessionID := uuid.New()
+	accessToken, err := session.GenerateToken()
+	require.NoError(t, err, "Failed to generate access token")
+
+	refreshToken, err := session.GenerateToken()
+	require.NoError(t, err, "Failed to generate refresh token")
+
+	// Session expired 1 hour ago
+	sess := &session.Session{
+		ID:           sessionID,
+		UserID:       userID,
+		Role:         role,
+		State:        session.SessionActive,
+		CreatedAt:    now.Add(-2 * time.Hour),
+		ExpiresAt:    now.Add(-1 * time.Hour), // Expired 1 hour ago
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	// Encrypt session data
+	sessionEncx, err := session.ProcessSessionEncx(ctx, authCtx.Crypto, sess)
+	require.NoError(t, err, "Failed to encrypt session struct")
+
+	// Store session in Redis with no TTL (it's already expired)
+	insertSession(t, ctx, sessionEncx, authCtx.Redis, 0)
+
+	return accessToken
+}
+
 // SetupMultipleUsers creates users for multiple roles and returns their access tokens
 // Useful for testing role-based authorization across different privilege levels
 func SetupMultipleUsers(t *testing.T, ctx context.Context, roles []identity.Role, authCtx *AuthTestContext) map[identity.Role]string {
@@ -203,6 +300,139 @@ func SetupMultipleUsers(t *testing.T, ctx context.Context, roles []identity.Role
 	return tokens
 }
 
+// SetupUserWithCustomData creates a user with custom data and active session
+// Useful for testing specific user scenarios (custom emails, names, etc.)
+func SetupUserWithCustomData(t *testing.T, ctx context.Context, role identity.Role, email, firstName, lastName, telephone string, authCtx *AuthTestContext) string {
+	t.Helper()
+
+	now := time.Now()
+	userID := uuid.New()
+
+	// Use provided data or defaults
+	if email == "" {
+		email = fmt.Sprintf("%s@leviosa.care", role.String())
+	}
+	if firstName == "" {
+		firstName = role.String()
+	}
+	if lastName == "" {
+		lastName = role.String()
+	}
+	if telephone == "" {
+		telephone = "0612345678"
+	}
+
+	// Create test user with custom data
+	user := &User{
+		ID:         userID,
+		State:      "active",
+		Email:      email,
+		FirstName:  firstName,
+		LastName:   lastName,
+		Password:   "bMPSrxQK#?rPO.[<",
+		Telephone:  telephone,
+		Role:       role.String(),
+		CreatedAt:  now,
+		LoggedInAt: now,
+	}
+
+	// Encrypt user data
+	userEncx, err := ProcessUserEncx(ctx, authCtx.Crypto, user)
+	require.NoError(t, err, "Failed to encrypt user struct")
+
+	// Insert user into database
+	insertUser(t, ctx, userEncx, authCtx.Pool)
+
+	// Create active session
+	sessionID := uuid.New()
+	accessToken, err := session.GenerateToken()
+	require.NoError(t, err, "Failed to generate access token")
+
+	refreshToken, err := session.GenerateToken()
+	require.NoError(t, err, "Failed to generate refresh token")
+
+	sess := &session.Session{
+		ID:           sessionID,
+		UserID:       userID,
+		Role:         role,
+		State:        session.SessionActive,
+		CreatedAt:    now,
+		ExpiresAt:    now.Add(24 * time.Hour),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	// Encrypt session data
+	sessionEncx, err := session.ProcessSessionEncx(ctx, authCtx.Crypto, sess)
+	require.NoError(t, err, "Failed to encrypt session struct")
+
+	// Store session in Redis
+	insertSession(t, ctx, sessionEncx, authCtx.Redis, 24*time.Hour)
+
+	return accessToken
+}
+
+// CreateAuthHeader creates an Authorization header with Bearer token for HTTP requests
+// Returns a header map that can be used with httptest.NewRequest
+func CreateAuthHeader(accessToken string) http.Header {
+	header := make(http.Header)
+	header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	return header
+}
+
+// CreateAuthCookie creates an HTTP cookie with the access token for middleware testing
+// Returns a cookie that can be added to HTTP requests using req.AddCookie()
+func CreateAuthCookie(accessToken string) *http.Cookie {
+	return &http.Cookie{
+		Name:     cookies.AccessTokenCookieName,
+		Value:    accessToken,
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}
+}
+
+// CreateRefreshCookie creates an HTTP cookie with the refresh token for refresh endpoint testing
+// Returns a cookie that can be added to HTTP requests using req.AddCookie()
+func CreateRefreshCookie(refreshToken string) *http.Cookie {
+	return &http.Cookie{
+		Name:     cookies.RefreshTokenCookieName,
+		Value:    refreshToken,
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}
+}
+
+// CreateAuthenticatedRequest creates an HTTP request with both Authorization header and cookie
+// Useful for testing different auth middleware approaches
+func CreateAuthenticatedRequest(method, url string, accessToken string) *http.Request {
+	req := httptest.NewRequest(method, url, nil)
+
+	// Add Authorization header
+	req.Header = CreateAuthHeader(accessToken)
+
+	// Add cookie for cookie-based middleware
+	req.AddCookie(CreateAuthCookie(accessToken))
+
+	return req
+}
+
+// CreateAuthenticatedRequestWithBody creates an HTTP request with auth and request body
+// Useful for testing POST/PUT endpoints with authentication
+func CreateAuthenticatedRequestWithBody(method, url string, accessToken string, body *strings.Reader) *http.Request {
+	req := httptest.NewRequest(method, url, body)
+	req.Header.Set("Content-Type", "application/json")
+
+	// Add Authorization header
+	req.Header = CreateAuthHeader(accessToken)
+
+	// Add cookie for cookie-based middleware
+	req.AddCookie(CreateAuthCookie(accessToken))
+
+	return req
+}
+
 // ClearAuthData cleans up all auth-related test data (users and sessions)
 func ClearAuthData(t *testing.T, ctx context.Context, authCtx *AuthTestContext) {
 	t.Helper()
@@ -213,6 +443,61 @@ func ClearAuthData(t *testing.T, ctx context.Context, authCtx *AuthTestContext) 
 
 	// Clear all session-related Redis keys
 	clearSessionsRedis(t, ctx, authCtx.Redis)
+}
+
+// ClearSessionsOnly clears only session-related test data, keeping users
+// Useful when you want to test multiple session scenarios with the same users
+func ClearSessionsOnly(t *testing.T, ctx context.Context, authCtx *AuthTestContext) {
+	t.Helper()
+
+	// Clear all session-related Redis keys only
+	clearSessionsRedis(t, ctx, authCtx.Redis)
+}
+
+// ClearUsersOnly clears only user-related test data, keeping sessions
+// Useful when you want to test session cleanup scenarios
+func ClearUsersOnly(t *testing.T, ctx context.Context, authCtx *AuthTestContext) {
+	t.Helper()
+
+	// Clear users table only
+	_, err := authCtx.Pool.Exec(ctx, "TRUNCATE TABLE auth.users RESTART IDENTITY CASCADE")
+	require.NoError(t, err, "Failed to clear users table")
+}
+
+// CountAuthUsers returns the number of users in the auth.users table for test verification
+func CountAuthUsers(t *testing.T, ctx context.Context, pool *pgxpool.Pool) int {
+	t.Helper()
+	var count int
+	query := `SELECT COUNT(*) FROM auth.users`
+	err := pool.QueryRow(ctx, query).Scan(&count)
+	require.NoError(t, err, "Failed to count auth users")
+	return count
+}
+
+// CountActiveSessions returns the number of active sessions in Redis for test verification
+func CountActiveSessions(t *testing.T, ctx context.Context, client *redis.Client) int {
+	t.Helper()
+
+	// Count session keys
+	sessionKeys, err := client.Keys(ctx, fmt.Sprintf("%s*", session.SessionKeyPrefix)).Result()
+	require.NoError(t, err, "Failed to get session keys")
+	return len(sessionKeys)
+}
+
+// UserExists checks if a user exists by email hash for test verification
+func UserExists(t *testing.T, ctx context.Context, email string, pool *pgxpool.Pool, crypto encx.CryptoService) bool {
+	t.Helper()
+
+	// Hash the email for lookup
+	emailBytes, err := encx.SerializeValue(email)
+	require.NoError(t, err, "Failed to serialize email")
+	emailHash := crypto.HashBasic(ctx, emailBytes)
+
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM auth.users WHERE email_hash = $1)`
+	err = pool.QueryRow(ctx, query, emailHash).Scan(&exists)
+	require.NoError(t, err, "Failed to check user existence")
+	return exists
 }
 
 // insertUser inserts a user into the auth.users table
