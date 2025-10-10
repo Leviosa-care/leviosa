@@ -11,24 +11,16 @@ type Building struct {
 	ID uuid.UUID `json:"id"`
 
 	// Name and address (encrypted for GDPR compliance)
-	Name                    string `json:"name" encx:"encrypt"`
-	NameEncrypted           []byte `json:"-"`
-	Address                 string `json:"address" encx:"encrypt"`
-	AddressEncrypted        []byte `json:"-"`
-	City                    string `json:"city" encx:"encrypt"`
-	CityEncrypted           []byte `json:"-"`
-	PostalCode              string `json:"postal_code" encx:"encrypt"`
-	PostalCodeEncrypted     []byte `json:"-"`
-	Country                 string `json:"country" encx:"encrypt"`
-	CountryEncrypted        []byte `json:"-"`
+	Name        string `json:"name" encx:"encrypt"`
+	Address     string `json:"address" encx:"encrypt"`
+	City        string `json:"city" encx:"encrypt"`
+	PostalCode  string `json:"postal_code" encx:"encrypt"`
+	Country     string `json:"country" encx:"encrypt"`
 
 	// Business information
-	Description             string `json:"description,omitempty" encx:"encrypt"`
-	DescriptionEncrypted    []byte `json:"-"`
-	Phone                   string `json:"phone,omitempty" encx:"encrypt"`
-	PhoneEncrypted          []byte `json:"-"`
-	Email                   string `json:"email,omitempty" encx:"encrypt"`
-	EmailEncrypted          []byte `json:"-"`
+	Description string `json:"description,omitempty" encx:"encrypt"`
+	Phone       string `json:"phone,omitempty" encx:"encrypt"`
+	Email       string `json:"email,omitempty" encx:"encrypt"`
 
 	// Administrative fields
 	IsActive  bool      `json:"is_active"`

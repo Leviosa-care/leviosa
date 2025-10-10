@@ -36,17 +36,14 @@ type Availability struct {
 	EndTime   time.Time `json:"end_time"`
 
 	// Service offering details
-	ServiceType                string `json:"service_type,omitempty" encx:"encrypt"`
-	ServiceTypeEncrypted       []byte `json:"-"`
-	PriceCents                 *int   `json:"price_cents,omitempty"`
-	MaxCapacity                int    `json:"max_capacity"`
+	ServiceType       string             `json:"service_type,omitempty" encx:"encrypt"`
+	PriceCents        *int               `json:"price_cents,omitempty"`
+	MaxCapacity       int                `json:"max_capacity"`
 
 	// Availability metadata
-	Notes                      string `json:"notes,omitempty" encx:"encrypt"`
-	NotesEncrypted             []byte `json:"-"`
-	IsRecurring                bool   `json:"is_recurring"`
-	RecurrencePattern          *RecurrencePattern `json:"recurrence_pattern,omitempty" encx:"encrypt"`
-	RecurrencePatternEncrypted []byte `json:"-"`
+	Notes             string             `json:"notes,omitempty" encx:"encrypt"`
+	IsRecurring       bool               `json:"is_recurring"`
+	RecurrencePattern *RecurrencePattern `json:"recurrence_pattern,omitempty" encx:"encrypt"`
 
 	// Status tracking
 	Status AvailabilityStatus `json:"status"`

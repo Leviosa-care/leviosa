@@ -35,10 +35,8 @@ type Booking struct {
 	RoomID         uuid.UUID `json:"room_id"`
 
 	// Booking details (encrypted for GDPR compliance)
-	ClientNotes                     string `json:"client_notes,omitempty" encx:"encrypt"`
-	ClientNotesEncrypted            []byte `json:"-"`
-	PartnerNotes                    string `json:"partner_notes,omitempty" encx:"encrypt"`
-	PartnerNotesEncrypted           []byte `json:"-"`
+	ClientNotes  string `json:"client_notes,omitempty" encx:"encrypt"`
+	PartnerNotes string `json:"partner_notes,omitempty" encx:"encrypt"`
 
 	// Pricing information
 	TotalPriceCents int    `json:"total_price_cents"`
@@ -51,8 +49,7 @@ type Booking struct {
 	// Booking lifecycle
 	Status                          BookingStatus `json:"status"`
 	CancelledAt                     *time.Time    `json:"cancelled_at,omitempty"`
-	CancellationReason              string        `json:"cancellation_reason,omitempty" encx:"encrypt"`
-	CancellationReasonEncrypted     []byte        `json:"-"`
+	CancellationReason string `json:"cancellation_reason,omitempty" encx:"encrypt"`
 
 	// Administrative fields
 	CreatedAt time.Time `json:"created_at"`
