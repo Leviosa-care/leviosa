@@ -15,7 +15,8 @@ func (r *Repository) List(ctx context.Context, filter ports.BuildingFilter) ([]*
 		SELECT
 			id, name_encrypted, address_encrypted, city_encrypted,
 			postal_code_encrypted, country_encrypted, description_encrypted,
-			phone_encrypted, email_encrypted, is_active, created_at, updated_at
+			phone_encrypted, email_encrypted, is_active, created_at, updated_at,
+			dek_encrypted, key_version, metadata
 		FROM %s.buildings
 	`, r.schema)
 
@@ -71,27 +72,31 @@ func (r *Repository) List(ctx context.Context, filter ports.BuildingFilter) ([]*
 
 	var buildings []*domain.Building
 	for rows.Next() {
-		building := &domain.Building{}
+		buildingEncx := &domain.BuildingEncx{}
 		err := rows.Scan(
-			&building.ID,
-			&building.NameEncrypted,
-			&building.AddressEncrypted,
-			&building.CityEncrypted,
-			&building.PostalCodeEncrypted,
-			&building.CountryEncrypted,
-			&building.DescriptionEncrypted,
-			&building.PhoneEncrypted,
-			&building.EmailEncrypted,
-			&building.IsActive,
-			&building.CreatedAt,
-			&building.UpdatedAt,
+			&buildingEncx.ID,
+			&buildingEncx.NameEncrypted,
+			&buildingEncx.AddressEncrypted,
+			&buildingEncx.CityEncrypted,
+			&buildingEncx.PostalCodeEncrypted,
+			&buildingEncx.CountryEncrypted,
+			&buildingEncx.DescriptionEncrypted,
+			&buildingEncx.PhoneEncrypted,
+			&buildingEncx.EmailEncrypted,
+			&buildingEncx.IsActive,
+			&buildingEncx.CreatedAt,
+			&buildingEncx.UpdatedAt,
+			&buildingEncx.DEKEncrypted,
+			&buildingEncx.KeyVersion,
+			&buildingEncx.Metadata,
 		)
 		if err != nil {
 			return nil, errs.ClassifyPgError("scan building row", err)
 		}
 
-		// Decrypt sensitive fields
-		if err := r.crypto.DecryptStruct(ctx, building); err != nil {
+		// Decrypt sensitive fields using ENCX
+		building, err := domain.DecryptBuildingEncx(ctx, r.crypto, buildingEncx)
+		if err != nil {
 			return nil, fmt.Errorf("decrypt building data: %w", err)
 		}
 

@@ -15,7 +15,8 @@ func (r *Repository) List(ctx context.Context, filter ports.RoomFilter) ([]*doma
 		SELECT
 			id, building_id, name_encrypted, description_encrypted,
 			room_number_encrypted, capacity, equipment_encrypted,
-			hourly_rate_cents, is_active, created_at, updated_at
+			hourly_rate_cents, is_active, created_at, updated_at,
+			dek_encrypted, key_version, metadata
 		FROM %s.rooms
 	`, r.schema)
 
@@ -101,26 +102,30 @@ func (r *Repository) List(ctx context.Context, filter ports.RoomFilter) ([]*doma
 
 	var rooms []*domain.Room
 	for rows.Next() {
-		room := &domain.Room{}
+		roomEncx := &domain.RoomEncx{}
 		err := rows.Scan(
-			&room.ID,
-			&room.BuildingID,
-			&room.NameEncrypted,
-			&room.DescriptionEncrypted,
-			&room.RoomNumberEncrypted,
-			&room.Capacity,
-			&room.EquipmentEncrypted,
-			&room.HourlyRateCents,
-			&room.IsActive,
-			&room.CreatedAt,
-			&room.UpdatedAt,
+			&roomEncx.ID,
+			&roomEncx.BuildingID,
+			&roomEncx.NameEncrypted,
+			&roomEncx.DescriptionEncrypted,
+			&roomEncx.RoomNumberEncrypted,
+			&roomEncx.Capacity,
+			&roomEncx.EquipmentEncrypted,
+			&roomEncx.HourlyRateCents,
+			&roomEncx.IsActive,
+			&roomEncx.CreatedAt,
+			&roomEncx.UpdatedAt,
+			&roomEncx.DEKEncrypted,
+			&roomEncx.KeyVersion,
+			&roomEncx.Metadata,
 		)
 		if err != nil {
 			return nil, errs.ClassifyPgError("scan room row", err)
 		}
 
-		// Decrypt sensitive fields
-		if err := r.crypto.DecryptStruct(ctx, room); err != nil {
+		// Decrypt sensitive fields using the new generated function
+		room, err := domain.DecryptRoomEncx(ctx, r.crypto, roomEncx)
+		if err != nil {
 			return nil, fmt.Errorf("decrypt room data: %w", err)
 		}
 

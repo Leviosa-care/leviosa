@@ -18,36 +18,41 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Booking
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
 			status, cancelled_at, cancellation_reason_encrypted,
-			created_at, updated_at
+			created_at, updated_at,
+			dek_encrypted, key_version, metadata
 		FROM %s.bookings
 		WHERE id = $1
 	`, r.schema)
 
-	booking := &domain.Booking{}
+	bookingEncx := &domain.BookingEncx{}
 	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&booking.ID,
-		&booking.AvailabilityID,
-		&booking.ClientID,
-		&booking.PartnerID,
-		&booking.RoomID,
-		&booking.ClientNotesEncrypted,
-		&booking.PartnerNotesEncrypted,
-		&booking.TotalPriceCents,
-		&booking.Currency,
-		&booking.PaymentStatus,
-		&booking.PaymentIntentID,
-		&booking.Status,
-		&booking.CancelledAt,
-		&booking.CancellationReasonEncrypted,
-		&booking.CreatedAt,
-		&booking.UpdatedAt,
+		&bookingEncx.ID,
+		&bookingEncx.AvailabilityID,
+		&bookingEncx.ClientID,
+		&bookingEncx.PartnerID,
+		&bookingEncx.RoomID,
+		&bookingEncx.ClientNotesEncrypted,
+		&bookingEncx.PartnerNotesEncrypted,
+		&bookingEncx.TotalPriceCents,
+		&bookingEncx.Currency,
+		&bookingEncx.PaymentStatus,
+		&bookingEncx.PaymentIntentID,
+		&bookingEncx.Status,
+		&bookingEncx.CancelledAt,
+		&bookingEncx.CancellationReasonEncrypted,
+		&bookingEncx.CreatedAt,
+		&bookingEncx.UpdatedAt,
+		&bookingEncx.DEKEncrypted,
+		&bookingEncx.KeyVersion,
+		&bookingEncx.Metadata,
 	)
 	if err != nil {
 		return nil, errs.ClassifyPgError("get booking by id", err)
 	}
 
-	// Decrypt sensitive fields
-	if err := r.crypto.DecryptStruct(ctx, booking); err != nil {
+	// Decrypt sensitive fields using the new generated function
+	booking, err := domain.DecryptBookingEncx(ctx, r.crypto, bookingEncx)
+	if err != nil {
 		return nil, fmt.Errorf("decrypt booking data: %w", err)
 	}
 
@@ -55,8 +60,9 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Booking
 }
 
 func (r *Repository) Update(ctx context.Context, booking *domain.Booking) error {
-	// Encrypt sensitive fields
-	if err := r.crypto.EncryptStruct(ctx, booking); err != nil {
+	// Encrypt sensitive fields using the new generated function
+	bookingEncx, err := domain.ProcessBookingEncx(ctx, r.crypto, booking)
+	if err != nil {
 		return fmt.Errorf("encrypt booking data: %w", err)
 	}
 
@@ -75,26 +81,32 @@ func (r *Repository) Update(ctx context.Context, booking *domain.Booking) error 
 			status = $12,
 			cancelled_at = $13,
 			cancellation_reason_encrypted = $14,
-			updated_at = $15
+			updated_at = $15,
+			dek_encrypted = $16,
+			key_version = $17,
+			metadata = $18
 		WHERE id = $1
 	`, r.schema)
 
 	result, err := r.pool.Exec(ctx, query,
-		booking.ID,
-		booking.AvailabilityID,
-		booking.ClientID,
-		booking.PartnerID,
-		booking.RoomID,
-		booking.ClientNotesEncrypted,
-		booking.PartnerNotesEncrypted,
-		booking.TotalPriceCents,
-		booking.Currency,
-		booking.PaymentStatus,
-		booking.PaymentIntentID,
-		booking.Status,
-		booking.CancelledAt,
-		booking.CancellationReasonEncrypted,
-		booking.UpdatedAt,
+		bookingEncx.ID,
+		bookingEncx.AvailabilityID,
+		bookingEncx.ClientID,
+		bookingEncx.PartnerID,
+		bookingEncx.RoomID,
+		bookingEncx.ClientNotesEncrypted,
+		bookingEncx.PartnerNotesEncrypted,
+		bookingEncx.TotalPriceCents,
+		bookingEncx.Currency,
+		bookingEncx.PaymentStatus,
+		bookingEncx.PaymentIntentID,
+		bookingEncx.Status,
+		bookingEncx.CancelledAt,
+		bookingEncx.CancellationReasonEncrypted,
+		bookingEncx.UpdatedAt,
+		bookingEncx.DEKEncrypted,
+		bookingEncx.KeyVersion,
+		bookingEncx.Metadata,
 	)
 	if err != nil {
 		return errs.ClassifyPgError("update booking", err)
@@ -135,38 +147,43 @@ func (r *Repository) GetByAvailabilityID(ctx context.Context, availabilityID uui
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
 			status, cancelled_at, cancellation_reason_encrypted,
-			created_at, updated_at
+			created_at, updated_at,
+			dek_encrypted, key_version, metadata
 		FROM %s.bookings
 		WHERE availability_id = $1
 		ORDER BY created_at DESC
 		LIMIT 1
 	`, r.schema)
 
-	booking := &domain.Booking{}
+	bookingEncx := &domain.BookingEncx{}
 	err := r.pool.QueryRow(ctx, query, availabilityID).Scan(
-		&booking.ID,
-		&booking.AvailabilityID,
-		&booking.ClientID,
-		&booking.PartnerID,
-		&booking.RoomID,
-		&booking.ClientNotesEncrypted,
-		&booking.PartnerNotesEncrypted,
-		&booking.TotalPriceCents,
-		&booking.Currency,
-		&booking.PaymentStatus,
-		&booking.PaymentIntentID,
-		&booking.Status,
-		&booking.CancelledAt,
-		&booking.CancellationReasonEncrypted,
-		&booking.CreatedAt,
-		&booking.UpdatedAt,
+		&bookingEncx.ID,
+		&bookingEncx.AvailabilityID,
+		&bookingEncx.ClientID,
+		&bookingEncx.PartnerID,
+		&bookingEncx.RoomID,
+		&bookingEncx.ClientNotesEncrypted,
+		&bookingEncx.PartnerNotesEncrypted,
+		&bookingEncx.TotalPriceCents,
+		&bookingEncx.Currency,
+		&bookingEncx.PaymentStatus,
+		&bookingEncx.PaymentIntentID,
+		&bookingEncx.Status,
+		&bookingEncx.CancelledAt,
+		&bookingEncx.CancellationReasonEncrypted,
+		&bookingEncx.CreatedAt,
+		&bookingEncx.UpdatedAt,
+		&bookingEncx.DEKEncrypted,
+		&bookingEncx.KeyVersion,
+		&bookingEncx.Metadata,
 	)
 	if err != nil {
 		return nil, errs.ClassifyPgError("get booking by availability id", err)
 	}
 
-	// Decrypt sensitive fields
-	if err := r.crypto.DecryptStruct(ctx, booking); err != nil {
+	// Decrypt sensitive fields using the new generated function
+	booking, err := domain.DecryptBookingEncx(ctx, r.crypto, bookingEncx)
+	if err != nil {
 		return nil, fmt.Errorf("decrypt booking data: %w", err)
 	}
 
@@ -180,36 +197,41 @@ func (r *Repository) GetByPaymentIntentID(ctx context.Context, paymentIntentID s
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
 			status, cancelled_at, cancellation_reason_encrypted,
-			created_at, updated_at
+			created_at, updated_at,
+			dek_encrypted, key_version, metadata
 		FROM %s.bookings
 		WHERE payment_intent_id = $1
 	`, r.schema)
 
-	booking := &domain.Booking{}
+	bookingEncx := &domain.BookingEncx{}
 	err := r.pool.QueryRow(ctx, query, paymentIntentID).Scan(
-		&booking.ID,
-		&booking.AvailabilityID,
-		&booking.ClientID,
-		&booking.PartnerID,
-		&booking.RoomID,
-		&booking.ClientNotesEncrypted,
-		&booking.PartnerNotesEncrypted,
-		&booking.TotalPriceCents,
-		&booking.Currency,
-		&booking.PaymentStatus,
-		&booking.PaymentIntentID,
-		&booking.Status,
-		&booking.CancelledAt,
-		&booking.CancellationReasonEncrypted,
-		&booking.CreatedAt,
-		&booking.UpdatedAt,
+		&bookingEncx.ID,
+		&bookingEncx.AvailabilityID,
+		&bookingEncx.ClientID,
+		&bookingEncx.PartnerID,
+		&bookingEncx.RoomID,
+		&bookingEncx.ClientNotesEncrypted,
+		&bookingEncx.PartnerNotesEncrypted,
+		&bookingEncx.TotalPriceCents,
+		&bookingEncx.Currency,
+		&bookingEncx.PaymentStatus,
+		&bookingEncx.PaymentIntentID,
+		&bookingEncx.Status,
+		&bookingEncx.CancelledAt,
+		&bookingEncx.CancellationReasonEncrypted,
+		&bookingEncx.CreatedAt,
+		&bookingEncx.UpdatedAt,
+		&bookingEncx.DEKEncrypted,
+		&bookingEncx.KeyVersion,
+		&bookingEncx.Metadata,
 	)
 	if err != nil {
 		return nil, errs.ClassifyPgError("get booking by payment intent id", err)
 	}
 
-	// Decrypt sensitive fields
-	if err := r.crypto.DecryptStruct(ctx, booking); err != nil {
+	// Decrypt sensitive fields using the new generated function
+	booking, err := domain.DecryptBookingEncx(ctx, r.crypto, bookingEncx)
+	if err != nil {
 		return nil, fmt.Errorf("decrypt booking data: %w", err)
 	}
 
@@ -223,7 +245,8 @@ func (r *Repository) List(ctx context.Context, filter ports.BookingFilter) ([]*d
 			b.client_notes_encrypted, b.partner_notes_encrypted,
 			b.total_price_cents, b.currency, b.payment_status, b.payment_intent_id,
 			b.status, b.cancelled_at, b.cancellation_reason_encrypted,
-			b.created_at, b.updated_at
+			b.created_at, b.updated_at,
+			b.dek_encrypted, b.key_version, b.metadata
 		FROM %s.bookings b
 	`, r.schema)
 
@@ -329,31 +352,35 @@ func (r *Repository) List(ctx context.Context, filter ports.BookingFilter) ([]*d
 
 	var bookings []*domain.Booking
 	for rows.Next() {
-		booking := &domain.Booking{}
+		bookingEncx := &domain.BookingEncx{}
 		err := rows.Scan(
-			&booking.ID,
-			&booking.AvailabilityID,
-			&booking.ClientID,
-			&booking.PartnerID,
-			&booking.RoomID,
-			&booking.ClientNotesEncrypted,
-			&booking.PartnerNotesEncrypted,
-			&booking.TotalPriceCents,
-			&booking.Currency,
-			&booking.PaymentStatus,
-			&booking.PaymentIntentID,
-			&booking.Status,
-			&booking.CancelledAt,
-			&booking.CancellationReasonEncrypted,
-			&booking.CreatedAt,
-			&booking.UpdatedAt,
+			&bookingEncx.ID,
+			&bookingEncx.AvailabilityID,
+			&bookingEncx.ClientID,
+			&bookingEncx.PartnerID,
+			&bookingEncx.RoomID,
+			&bookingEncx.ClientNotesEncrypted,
+			&bookingEncx.PartnerNotesEncrypted,
+			&bookingEncx.TotalPriceCents,
+			&bookingEncx.Currency,
+			&bookingEncx.PaymentStatus,
+			&bookingEncx.PaymentIntentID,
+			&bookingEncx.Status,
+			&bookingEncx.CancelledAt,
+			&bookingEncx.CancellationReasonEncrypted,
+			&bookingEncx.CreatedAt,
+			&bookingEncx.UpdatedAt,
+			&bookingEncx.DEKEncrypted,
+			&bookingEncx.KeyVersion,
+			&bookingEncx.Metadata,
 		)
 		if err != nil {
 			return nil, errs.ClassifyPgError("scan booking row", err)
 		}
 
-		// Decrypt sensitive fields
-		if err := r.crypto.DecryptStruct(ctx, booking); err != nil {
+		// Decrypt sensitive fields using the new generated function
+		booking, err := domain.DecryptBookingEncx(ctx, r.crypto, bookingEncx)
+		if err != nil {
 			return nil, fmt.Errorf("decrypt booking data: %w", err)
 		}
 

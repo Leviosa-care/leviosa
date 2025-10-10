@@ -13,8 +13,9 @@ import (
 )
 
 func (r *Repository) Update(ctx context.Context, availability *domain.Availability) error {
-	// Encrypt sensitive fields
-	if err := r.crypto.EncryptStruct(ctx, availability); err != nil {
+	// Encrypt sensitive fields using ENCX
+	availabilityEncx, err := domain.ProcessAvailabilityEncx(ctx, r.crypto, availability)
+	if err != nil {
 		return fmt.Errorf("encrypt availability data: %w", err)
 	}
 
@@ -31,7 +32,10 @@ func (r *Repository) Update(ctx context.Context, availability *domain.Availabili
 			is_recurring = $10,
 			recurrence_pattern_encrypted = $11,
 			status = $12,
-			updated_at = $13
+			updated_at = $13,
+			dek_encrypted = $14,
+			key_version = $15,
+			metadata = $16
 		WHERE id = $1
 	`, r.schema)
 
@@ -41,14 +45,17 @@ func (r *Repository) Update(ctx context.Context, availability *domain.Availabili
 		availability.RoomID,
 		availability.StartTime,
 		availability.EndTime,
-		availability.ServiceTypeEncrypted,
+		availabilityEncx.ServiceTypeEncrypted,
 		availability.PriceCents,
 		availability.MaxCapacity,
-		availability.NotesEncrypted,
+		availabilityEncx.NotesEncrypted,
 		availability.IsRecurring,
-		availability.RecurrencePatternEncrypted,
+		availabilityEncx.RecurrencePatternEncrypted,
 		availability.Status,
 		availability.UpdatedAt,
+		availabilityEncx.DEKEncrypted,
+		availabilityEncx.KeyVersion,
+		availabilityEncx.Metadata,
 	)
 	if err != nil {
 		return errs.ClassifyPgError("update availability", err)
@@ -87,7 +94,8 @@ func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) 
 			id, partner_id, room_id, start_time, end_time,
 			service_type_encrypted, price_cents, max_capacity,
 			notes_encrypted, is_recurring, recurrence_pattern_encrypted,
-			status, created_at, updated_at
+			status, created_at, updated_at,
+			dek_encrypted, key_version, metadata
 		FROM %s.availabilities
 	`, r.schema)
 
@@ -181,29 +189,33 @@ func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) 
 
 	var availabilities []*domain.Availability
 	for rows.Next() {
-		availability := &domain.Availability{}
+		availabilityEncx := &domain.AvailabilityEncx{}
 		err := rows.Scan(
-			&availability.ID,
-			&availability.PartnerID,
-			&availability.RoomID,
-			&availability.StartTime,
-			&availability.EndTime,
-			&availability.ServiceTypeEncrypted,
-			&availability.PriceCents,
-			&availability.MaxCapacity,
-			&availability.NotesEncrypted,
-			&availability.IsRecurring,
-			&availability.RecurrencePatternEncrypted,
-			&availability.Status,
-			&availability.CreatedAt,
-			&availability.UpdatedAt,
+			&availabilityEncx.ID,
+			&availabilityEncx.PartnerID,
+			&availabilityEncx.RoomID,
+			&availabilityEncx.StartTime,
+			&availabilityEncx.EndTime,
+			&availabilityEncx.ServiceTypeEncrypted,
+			&availabilityEncx.PriceCents,
+			&availabilityEncx.MaxCapacity,
+			&availabilityEncx.NotesEncrypted,
+			&availabilityEncx.IsRecurring,
+			&availabilityEncx.RecurrencePatternEncrypted,
+			&availabilityEncx.Status,
+			&availabilityEncx.CreatedAt,
+			&availabilityEncx.UpdatedAt,
+			&availabilityEncx.DEKEncrypted,
+			&availabilityEncx.KeyVersion,
+			&availabilityEncx.Metadata,
 		)
 		if err != nil {
 			return nil, errs.ClassifyPgError("scan availability row", err)
 		}
 
-		// Decrypt sensitive fields
-		if err := r.crypto.DecryptStruct(ctx, availability); err != nil {
+		// Decrypt sensitive fields using ENCX
+		availability, err := domain.DecryptAvailabilityEncx(ctx, r.crypto, availabilityEncx)
+		if err != nil {
 			return nil, fmt.Errorf("decrypt availability data: %w", err)
 		}
 
@@ -249,7 +261,8 @@ func (r *Repository) GetRecurringAvailabilities(ctx context.Context, until time.
 			id, partner_id, room_id, start_time, end_time,
 			service_type_encrypted, price_cents, max_capacity,
 			notes_encrypted, is_recurring, recurrence_pattern_encrypted,
-			status, created_at, updated_at
+			status, created_at, updated_at,
+			dek_encrypted, key_version, metadata
 		FROM %s.availabilities
 		WHERE is_recurring = true
 		AND status = 'available'
@@ -265,29 +278,33 @@ func (r *Repository) GetRecurringAvailabilities(ctx context.Context, until time.
 
 	var availabilities []*domain.Availability
 	for rows.Next() {
-		availability := &domain.Availability{}
+		availabilityEncx := &domain.AvailabilityEncx{}
 		err := rows.Scan(
-			&availability.ID,
-			&availability.PartnerID,
-			&availability.RoomID,
-			&availability.StartTime,
-			&availability.EndTime,
-			&availability.ServiceTypeEncrypted,
-			&availability.PriceCents,
-			&availability.MaxCapacity,
-			&availability.NotesEncrypted,
-			&availability.IsRecurring,
-			&availability.RecurrencePatternEncrypted,
-			&availability.Status,
-			&availability.CreatedAt,
-			&availability.UpdatedAt,
+			&availabilityEncx.ID,
+			&availabilityEncx.PartnerID,
+			&availabilityEncx.RoomID,
+			&availabilityEncx.StartTime,
+			&availabilityEncx.EndTime,
+			&availabilityEncx.ServiceTypeEncrypted,
+			&availabilityEncx.PriceCents,
+			&availabilityEncx.MaxCapacity,
+			&availabilityEncx.NotesEncrypted,
+			&availabilityEncx.IsRecurring,
+			&availabilityEncx.RecurrencePatternEncrypted,
+			&availabilityEncx.Status,
+			&availabilityEncx.CreatedAt,
+			&availabilityEncx.UpdatedAt,
+			&availabilityEncx.DEKEncrypted,
+			&availabilityEncx.KeyVersion,
+			&availabilityEncx.Metadata,
 		)
 		if err != nil {
 			return nil, errs.ClassifyPgError("scan recurring availability row", err)
 		}
 
-		// Decrypt sensitive fields
-		if err := r.crypto.DecryptStruct(ctx, availability); err != nil {
+		// Decrypt sensitive fields using ENCX
+		availability, err := domain.DecryptAvailabilityEncx(ctx, r.crypto, availabilityEncx)
+		if err != nil {
 			return nil, fmt.Errorf("decrypt availability data: %w", err)
 		}
 
