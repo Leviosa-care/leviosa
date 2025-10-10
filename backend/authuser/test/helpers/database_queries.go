@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Leviosa-care/authuser/internal/domain"
+	"github.com/hengadev/encx"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -24,35 +25,35 @@ func CheckUserExistsByEmailHashSQL(t *testing.T, ctx context.Context, emailHash 
 	return exists
 }
 
-// GetUserByEmailHashSQL retrieves a user using raw SQL query
-func GetUserByEmailHashSQL(t *testing.T, ctx context.Context, emailHash string, pool *pgxpool.Pool) *domain.User {
+// GetUserByEmailHashSQL retrieves a user using raw SQL query and returns a decrypted domain user
+func GetUserByEmailHashSQL(t *testing.T, ctx context.Context, emailHash string, pool *pgxpool.Pool, crypto encx.CryptoService) *domain.User {
 	t.Helper()
 
 	query := `
-		SELECT 
-			id, state, email_hash, email_encrypted, password_hash,
-			picture_encrypted, first_name_encrypted, last_name_encrypted, 
+		SELECT
+			id, state, email_hash, email_encrypted, password_hash_secure,
+			picture_encrypted, first_name_encrypted, last_name_encrypted,
 			birth_date_encrypted, gender_encrypted, role_encrypted,
 			telephone_hash, telephone_encrypted, postal_code_encrypted,
 			city_encrypted, address1_encrypted, address2_encrypted,
-			google_id_encrypted, apple_id_encrypted, created_at_encrypted,
-			logged_in_at_encrypted, dek_encrypted, key_version
-		FROM auth.users 
+			google_id_encrypted, apple_id_encrypted, stripe_customer_id_encrypted,
+			created_at_encrypted, logged_in_at_encrypted, dek_encrypted, key_version
+		FROM auth.users
 		WHERE email_hash = $1
 	`
 
-	user := &domain.User{}
+	userEncx := &domain.UserEncx{}
 	var telephoneHash *string // Handle nullable field
 
 	err := pool.QueryRow(ctx, query, emailHash).Scan(
-		&user.ID, &user.State, &user.EmailHash, &user.EmailEncrypted,
-		&user.PasswordHash, &user.PictureEncrypted, &user.FirstNameEncrypted,
-		&user.LastNameEncrypted, &user.BirthDateEncrypted, &user.GenderEncrypted,
-		&user.RoleEncrypted, &telephoneHash, &user.TelephoneEncrypted,
-		&user.PostalCodeEncrypted, &user.CityEncrypted, &user.Address1Encrypted,
-		&user.Address2Encrypted, &user.GoogleIDEncrypted, &user.AppleIDEncrypted,
-		&user.CreatedAtEncrypted, &user.LoggedInAtEncrypted, &user.DEKEncrypted,
-		&user.KeyVersion,
+		&userEncx.ID, &userEncx.State, &userEncx.EmailHash, &userEncx.EmailEncrypted,
+		&userEncx.PasswordHashSecure, &userEncx.PictureEncrypted, &userEncx.FirstNameEncrypted,
+		&userEncx.LastNameEncrypted, &userEncx.BirthDateEncrypted, &userEncx.GenderEncrypted,
+		&userEncx.RoleEncrypted, &telephoneHash, &userEncx.TelephoneEncrypted,
+		&userEncx.PostalCodeEncrypted, &userEncx.CityEncrypted, &userEncx.Address1Encrypted,
+		&userEncx.Address2Encrypted, &userEncx.GoogleIDEncrypted, &userEncx.AppleIDEncrypted,
+		&userEncx.StripeCustomerIDEncrypted, &userEncx.CreatedAtEncrypted, &userEncx.LoggedInAtEncrypted,
+		&userEncx.DEKEncrypted, &userEncx.KeyVersion,
 	)
 
 	if err != nil {
@@ -62,7 +63,13 @@ func GetUserByEmailHashSQL(t *testing.T, ctx context.Context, emailHash string, 
 
 	// Handle nullable telephone_hash
 	if telephoneHash != nil {
-		user.TelephoneHash = *telephoneHash
+		userEncx.TelephoneHash = *telephoneHash
+	}
+
+	// Decrypt the user using the new generated function
+	user, err := domain.DecryptUserEncx(ctx, crypto, userEncx)
+	if err != nil {
+		t.Fatalf("Failed to decrypt user: %v", err)
 	}
 
 	return user
@@ -120,42 +127,48 @@ func CheckUserHasEncryptedFieldsSQL(t *testing.T, ctx context.Context, emailHash
 	return emailEncrypted && dekEncrypted && keyVersionValid
 }
 
-// GetUserFromDB retrieves a user by ID using raw SQL query
-func GetUserFromDB(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pgxpool.Pool) *domain.User {
+// GetUserFromDB retrieves a user by ID using raw SQL query and returns a decrypted domain user
+func GetUserFromDB(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pgxpool.Pool, crypto encx.CryptoService) *domain.User {
 	t.Helper()
 
 	query := `
-		SELECT 
-			id, state, email_hash, email_encrypted, password_hash,
-			picture_encrypted, first_name_encrypted, last_name_encrypted, 
+		SELECT
+			id, state, email_hash, email_encrypted, password_hash_secure,
+			picture_encrypted, first_name_encrypted, last_name_encrypted,
 			birth_date_encrypted, gender_encrypted, role_encrypted,
 			telephone_hash, telephone_encrypted, postal_code_encrypted,
 			city_encrypted, address1_encrypted, address2_encrypted,
 			google_id_encrypted, apple_id_encrypted, stripe_customer_id_encrypted,
 			created_at_encrypted, logged_in_at_encrypted, dek_encrypted, key_version
-		FROM auth.users 
+		FROM auth.users
 		WHERE id = $1
 	`
 
-	user := &domain.User{}
+	userEncx := &domain.UserEncx{}
 	var telephoneHash *string // Handle nullable field
 
 	err := pool.QueryRow(ctx, query, userID).Scan(
-		&user.ID, &user.State, &user.EmailHash, &user.EmailEncrypted,
-		&user.PasswordHash, &user.PictureEncrypted, &user.FirstNameEncrypted,
-		&user.LastNameEncrypted, &user.BirthDateEncrypted, &user.GenderEncrypted,
-		&user.RoleEncrypted, &telephoneHash, &user.TelephoneEncrypted,
-		&user.PostalCodeEncrypted, &user.CityEncrypted, &user.Address1Encrypted,
-		&user.Address2Encrypted, &user.GoogleIDEncrypted, &user.AppleIDEncrypted,
-		&user.StripeCustomerIDEncrypted, &user.CreatedAtEncrypted, &user.LoggedInAtEncrypted,
-		&user.DEKEncrypted, &user.KeyVersion,
+		&userEncx.ID, &userEncx.State, &userEncx.EmailHash, &userEncx.EmailEncrypted,
+		&userEncx.PasswordHashSecure, &userEncx.PictureEncrypted, &userEncx.FirstNameEncrypted,
+		&userEncx.LastNameEncrypted, &userEncx.BirthDateEncrypted, &userEncx.GenderEncrypted,
+		&userEncx.RoleEncrypted, &telephoneHash, &userEncx.TelephoneEncrypted,
+		&userEncx.PostalCodeEncrypted, &userEncx.CityEncrypted, &userEncx.Address1Encrypted,
+		&userEncx.Address2Encrypted, &userEncx.GoogleIDEncrypted, &userEncx.AppleIDEncrypted,
+		&userEncx.StripeCustomerIDEncrypted, &userEncx.CreatedAtEncrypted, &userEncx.LoggedInAtEncrypted,
+		&userEncx.DEKEncrypted, &userEncx.KeyVersion,
 	)
 
 	require.NoError(t, err, "Failed to get user from database")
 
 	// Handle nullable telephone_hash
 	if telephoneHash != nil {
-		user.TelephoneHash = *telephoneHash
+		userEncx.TelephoneHash = *telephoneHash
+	}
+
+	// Decrypt the user using the new generated function
+	user, err := domain.DecryptUserEncx(ctx, crypto, userEncx)
+	if err != nil {
+		t.Fatalf("Failed to decrypt user: %v", err)
 	}
 
 	return user

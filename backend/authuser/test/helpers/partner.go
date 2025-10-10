@@ -2,10 +2,12 @@ package helpers
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 	"github.com/google/uuid"
+	"github.com/hengadev/encx"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 )
@@ -60,103 +62,118 @@ func NewTestSpecialization(name, displayName, description string) *domain.Specia
 	}
 }
 
-// InsertSpecialization directly inserts a specialization into the database for testing
-func InsertSpecialization(t *testing.T, ctx context.Context, spec *domain.Specialization, pool *pgxpool.Pool) {
+// InsertSpecialization directly inserts a specialization into the database for testing using the new Encx approach
+func InsertSpecialization(t *testing.T, ctx context.Context, spec *domain.Specialization, pool *pgxpool.Pool, crypto encx.CryptoService) {
 	t.Helper()
+
+	// Process the specialization to get encrypted data
+	specEncx, err := domain.ProcessSpecializationEncx(ctx, crypto, spec)
+	require.NoError(t, err, "Failed to process specialization for encryption")
 
 	query := `
 		INSERT INTO auth.specializations (
-			id, name, name_encrypted, name_hash,
-			display_name, display_name_encrypted, display_name_hash,
-			description, description_encrypted, description_hash,
-			is_active, created_at, updated_at
+			id, name_encrypted, description_encrypted, display_name_encrypted,
+			is_active, created_at, updated_at, dek_encrypted, key_version, metadata
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 		)`
 
-	_, err := pool.Exec(ctx, query,
-		spec.ID,
-		spec.Name, spec.NameEncrypted, spec.NameHash,
-		spec.DisplayName, spec.DisplayNameEncrypted, spec.DisplayNameHash,
-		spec.Description, spec.DescriptionEncrypted, spec.DescriptionHash,
-		spec.IsActive,
+	_, err = pool.Exec(ctx, query,
+		specEncx.ID,
+		specEncx.NameEncrypted, specEncx.DescriptionEncrypted, specEncx.DisplayNameEncrypted,
+		specEncx.IsActive, specEncx.CreatedAt, specEncx.UpdatedAt,
+		specEncx.DEKEncrypted, specEncx.KeyVersion, specEncx.Metadata,
 	)
 	require.NoError(t, err, "Failed to insert test specialization")
 }
 
-// GetSpecializationFromDB retrieves a specialization directly from the database
-func GetSpecializationFromDB(t *testing.T, ctx context.Context, pool *pgxpool.Pool, id uuid.UUID) (*domain.Specialization, error) {
+// GetSpecializationFromDB retrieves a specialization directly from the database using the new Encx approach
+func GetSpecializationFromDB(t *testing.T, ctx context.Context, pool *pgxpool.Pool, id uuid.UUID, crypto encx.CryptoService) (*domain.Specialization, error) {
 	t.Helper()
 
-	var spec domain.Specialization
+	var specEncx domain.SpecializationEncx
 	query := `
-		SELECT id, name, name_encrypted, name_hash,
-			   display_name, display_name_encrypted, display_name_hash,
-			   description, description_encrypted, description_hash,
-			   is_active, created_at, updated_at
+		SELECT id, name_encrypted, description_encrypted, display_name_encrypted,
+			   is_active, created_at, updated_at, dek_encrypted, key_version, metadata
 		FROM auth.specializations
 		WHERE id = $1`
 
 	err := pool.QueryRow(ctx, query, id).Scan(
-		&spec.ID,
-		&spec.Name, &spec.NameEncrypted, &spec.NameHash,
-		&spec.DisplayName, &spec.DisplayNameEncrypted, &spec.DisplayNameHash,
-		&spec.Description, &spec.DescriptionEncrypted, &spec.DescriptionHash,
-		&spec.IsActive,
-		&spec.CreatedAt, &spec.UpdatedAt,
+		&specEncx.ID,
+		&specEncx.NameEncrypted, &specEncx.DescriptionEncrypted, &specEncx.DisplayNameEncrypted,
+		&specEncx.IsActive, &specEncx.CreatedAt, &specEncx.UpdatedAt,
+		&specEncx.DEKEncrypted, &specEncx.KeyVersion, &specEncx.Metadata,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return &spec, err
+	// Decrypt the specialization using the new generated function
+	spec, err := domain.DecryptSpecializationEncx(ctx, crypto, &specEncx)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt specialization: %w", err)
+	}
+
+	return spec, nil
 }
 
-// InsertPartner directly inserts a partner into the database for testing
-func InsertPartner(t *testing.T, ctx context.Context, partner *domain.Partner, pool *pgxpool.Pool) {
+// InsertPartner directly inserts a partner into the database for testing using the new Encx approach
+func InsertPartner(t *testing.T, ctx context.Context, partner *domain.Partner, pool *pgxpool.Pool, crypto encx.CryptoService) {
 	t.Helper()
+
+	// Process the partner to get encrypted data
+	partnerEncx, err := domain.ProcessPartnerEncx(ctx, crypto, partner)
+	require.NoError(t, err, "Failed to process partner for encryption")
 
 	query := `
 		INSERT INTO auth.partners (
-			id, user_id, bio, bio_encrypted, bio_hash,
-			experience, experience_encrypted, experience_hash,
-			certifications, certifications_encrypted, certifications_hash,
-			is_verified, verified_at, verified_by, created_at, updated_at
+			id, user_id, bio_encrypted, experience_encrypted, certifications_encrypted,
+			verified_at_encrypted, is_verified, verified_by, created_at, updated_at,
+			dek_encrypted, key_version, metadata
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
-			$12, $13, $14, NOW(), NOW()
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
 		)`
 
-	_, err := pool.Exec(ctx, query,
-		partner.ID, partner.UserID,
-		partner.Bio, partner.BioEncrypted, partner.BioHash,
-		partner.Experience, partner.ExperienceEncrypted, partner.ExperienceHash,
-		partner.Certifications, partner.CertificationsEncrypted, partner.CertificationsHash,
-		partner.IsVerified, partner.VerifiedAt, partner.VerifiedBy,
+	_, err = pool.Exec(ctx, query,
+		partnerEncx.ID, partnerEncx.UserID,
+		partnerEncx.BioEncrypted, partnerEncx.ExperienceEncrypted, partnerEncx.CertificationsEncrypted,
+		partnerEncx.VerifiedAtEncrypted, partnerEncx.IsVerified, partnerEncx.VerifiedByUserID,
+		partnerEncx.CreatedAt, partnerEncx.UpdatedAt,
+		partnerEncx.DEKEncrypted, partnerEncx.KeyVersion, partnerEncx.Metadata,
 	)
 	require.NoError(t, err, "Failed to insert test partner")
 }
 
-// GetPartnerFromDB retrieves a partner directly from the database
-func GetPartnerFromDB(t *testing.T, ctx context.Context, pool *pgxpool.Pool, id uuid.UUID) (*domain.Partner, error) {
+// GetPartnerFromDB retrieves a partner directly from the database using the new Encx approach
+func GetPartnerFromDB(t *testing.T, ctx context.Context, pool *pgxpool.Pool, id uuid.UUID, crypto encx.CryptoService) (*domain.Partner, error) {
 	t.Helper()
 
-	var partner domain.Partner
+	var partnerEncx domain.PartnerEncx
 	query := `
-		SELECT id, user_id, bio, bio_encrypted, bio_hash,
-			   experience, experience_encrypted, experience_hash,
-			   certifications, certifications_encrypted, certifications_hash,
-			   is_verified, verified_at, verified_by, created_at, updated_at
+		SELECT id, user_id, bio_encrypted, experience_encrypted, certifications_encrypted,
+			   verified_at_encrypted, is_verified, verified_by, created_at, updated_at,
+			   dek_encrypted, key_version, metadata
 		FROM auth.partners
 		WHERE id = $1`
 
 	err := pool.QueryRow(ctx, query, id).Scan(
-		&partner.ID, &partner.UserID,
-		&partner.Bio, &partner.BioEncrypted, &partner.BioHash,
-		&partner.Experience, &partner.ExperienceEncrypted, &partner.ExperienceHash,
-		&partner.Certifications, &partner.CertificationsEncrypted, &partner.CertificationsHash,
-		&partner.IsVerified, &partner.VerifiedAt, &partner.VerifiedBy,
-		&partner.CreatedAt, &partner.UpdatedAt,
+		&partnerEncx.ID, &partnerEncx.UserID,
+		&partnerEncx.BioEncrypted, &partnerEncx.ExperienceEncrypted, &partnerEncx.CertificationsEncrypted,
+		&partnerEncx.VerifiedAtEncrypted, &partnerEncx.IsVerified, &partnerEncx.VerifiedByUserID,
+		&partnerEncx.CreatedAt, &partnerEncx.UpdatedAt,
+		&partnerEncx.DEKEncrypted, &partnerEncx.KeyVersion, &partnerEncx.Metadata,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return &partner, err
+	// Decrypt the partner using the new generated function
+	partner, err := domain.DecryptPartnerEncx(ctx, crypto, &partnerEncx)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt partner: %w", err)
+	}
+
+	return partner, nil
 }
 
 // AddPartnerSpecializationToDB directly adds a partner-specialization association to the database

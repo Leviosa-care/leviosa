@@ -53,7 +53,8 @@ func ClearSessionsRedis(t *testing.T, ctx context.Context, client *redis.Client)
 }
 
 // NewTestSession creates a test session with reasonable defaults using real encryption
-func NewTestSession(crypto encx.CryptoService) (*session.Session, error) {
+// Returns both the original session and the processed SessionEncx for test usage
+func NewTestSession(crypto encx.CryptoService) (*session.Session, *session.SessionEncx, error) {
 	now := time.Now()
 	userID := uuid.New()
 	sessionID := uuid.New()
@@ -61,15 +62,15 @@ func NewTestSession(crypto encx.CryptoService) (*session.Session, error) {
 	// Generate valid base64 tokens for testing
 	accessToken, err := session.GenerateToken()
 	if err != nil {
-		return nil, fmt.Errorf("generate access token: %w", err)
+		return nil, nil, fmt.Errorf("generate access token: %w", err)
 	}
 
 	refreshToken, err := session.GenerateToken()
 	if err != nil {
-		return nil, fmt.Errorf("generate refresh token: %w", err)
+		return nil, nil, fmt.Errorf("generate refresh token: %w", err)
 	}
 
-	session := &session.Session{
+	sess := &session.Session{
 		ID:           sessionID,
 		UserID:       userID,
 		Role:         identity.Visitor,
@@ -80,49 +81,55 @@ func NewTestSession(crypto encx.CryptoService) (*session.Session, error) {
 		RefreshToken: refreshToken,
 	}
 
-	// Use crypto service to process the struct and populate encrypted/hashed fields
-	err = crypto.ProcessStruct(context.Background(), session)
+	// Process the session to get encrypted data and hashes
+	sessionEncx, err := session.ProcessSessionEncx(context.Background(), crypto, sess)
 	if err != nil {
-		return nil, fmt.Errorf("process session struct for encryption: %w", err)
+		return nil, nil, fmt.Errorf("process session for encryption: %w", err)
 	}
 
-	return session, nil
+	return sess, sessionEncx, nil
+}
+
+// NewTestSessionSimple creates a test session and returns only the session (for backward compatibility)
+func NewTestSessionSimple(crypto encx.CryptoService) (*session.Session, error) {
+	sess, _, err := NewTestSession(crypto)
+	return sess, err
 }
 
 // NewTestPendingSession creates a test session with pending state
-func NewTestPendingSession(crypto encx.CryptoService) (*session.Session, error) {
-	s, err := NewTestSession(crypto)
+func NewTestPendingSession(crypto encx.CryptoService) (*session.Session, *session.SessionEncx, error) {
+	s, _, err := NewTestSession(crypto)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	s.State = session.SessionPending
 
-	// Re-process the struct to update encrypted state
-	err = crypto.ProcessStruct(context.Background(), s)
+	// Re-process the session to update encrypted state and hashes
+	sessionEncx, err := session.ProcessSessionEncx(context.Background(), crypto, s)
 	if err != nil {
-		return nil, fmt.Errorf("re-process session struct for state update: %w", err)
+		return nil, nil, fmt.Errorf("re-process session struct for state update: %w", err)
 	}
 
-	return s, nil
+	return s, sessionEncx, nil
 }
 
 // NewTestSessionWithUserID creates a test session for a specific user ID
-func NewTestSessionWithUserID(userID uuid.UUID, crypto encx.CryptoService) (*session.Session, error) {
+func NewTestSessionWithUserID(userID uuid.UUID, crypto encx.CryptoService) (*session.Session, *session.SessionEncx, error) {
 	now := time.Now()
 	sessionID := uuid.New()
 
 	// Generate valid base64 tokens for testing
 	accessToken, err := session.GenerateToken()
 	if err != nil {
-		return nil, fmt.Errorf("generate access token: %w", err)
+		return nil, nil, fmt.Errorf("generate access token: %w", err)
 	}
 
 	refreshToken, err := session.GenerateToken()
 	if err != nil {
-		return nil, fmt.Errorf("generate refresh token: %w", err)
+		return nil, nil, fmt.Errorf("generate refresh token: %w", err)
 	}
 
-	session := &session.Session{
+	sess := &session.Session{
 		ID:           sessionID,
 		UserID:       userID,
 		Role:         identity.Visitor,
@@ -133,13 +140,13 @@ func NewTestSessionWithUserID(userID uuid.UUID, crypto encx.CryptoService) (*ses
 		RefreshToken: refreshToken,
 	}
 
-	// Process the struct to update encrypted user ID
-	err = crypto.ProcessStruct(context.Background(), session)
+	// Process the session to get encrypted data and hashes
+	sessionEncx, err := session.ProcessSessionEncx(context.Background(), crypto, sess)
 	if err != nil {
-		return nil, fmt.Errorf("re-process session struct for user ID update: %w", err)
+		return nil, nil, fmt.Errorf("process session struct for user ID update: %w", err)
 	}
 
-	return session, nil
+	return sess, sessionEncx, nil
 }
 
 // EncodeSession marshals a session to JSON bytes for Redis storage
@@ -159,32 +166,47 @@ func DecodeSession(t *testing.T, data []byte) *session.Session {
 	return &session
 }
 
-// DecodeSessionWithDecryption unmarshals JSON bytes back to a session and decrypts it
+// DecodeSessionWithDecryption unmarshals JSON bytes back to a session and decrypts it using the new approach
 func DecodeSessionWithDecryption(t *testing.T, data []byte, crypto encx.CryptoService) *session.Session {
 	t.Helper()
-	var session session.Session
-	err := json.Unmarshal(data, &session)
-	require.NoError(t, err, "Failed to unmarshal session")
 
-	// Decrypt the session to populate plaintext fields
-	err = crypto.DecryptStruct(context.Background(), &session)
+	// First unmarshal as SessionEncx (since that's how we store it now)
+	var sessionEncx session.SessionEncx
+	err := json.Unmarshal(data, &sessionEncx)
+	require.NoError(t, err, "Failed to unmarshal SessionEncx")
+
+	// Decrypt the SessionEncx to get the original session
+	session, err := session.DecryptSessionEncx(context.Background(), crypto, &sessionEncx)
 	require.NoError(t, err, "Failed to decrypt session")
 
-	return &session
+	return session
 }
 
-// InsertSessionDirectly inserts a session directly into Redis (bypasses repository)
+// InsertSessionDirectly inserts a session directly into Redis (bypasses repository) - DEPRECATED
+// This function is kept for backward compatibility but requires hash fields on session
 func InsertSessionDirectly(t *testing.T, ctx context.Context, client *redis.Client, sess *session.Session, ttl time.Duration) {
 	t.Helper()
 
-	sessionKey := session.FormatSessionKey(sess.ID.String())
-	accessTokenKey := session.FormatAccessTokenKey(sess.AccessTokenHash)
-	refreshTokenKey := session.FormatRefreshTokenKey(sess.RefreshTokenHash)
-	userSessionIndexKey := session.FormatUserSessionIndexKey(sess.UserIDHash)
+	// For backward compatibility, we need to process the session to get hashes
+	// This requires a crypto service, so this approach is deprecated
+	// Use InsertSessionDirectlyWithEncx instead
+	panic("InsertSessionDirectly is deprecated. Use InsertSessionDirectlyWithEncx instead.")
+}
 
-	// Store session data
-	sessionData := EncodeSession(t, sess)
-	err := client.Set(ctx, sessionKey, sessionData, ttl).Err()
+// InsertSessionDirectlyWithEncx inserts a session directly into Redis using the new Encx approach
+func InsertSessionDirectlyWithEncx(t *testing.T, ctx context.Context, client *redis.Client, sess *session.Session, sessionEncx *session.SessionEncx, ttl time.Duration) {
+	t.Helper()
+
+	sessionKey := session.FormatSessionKey(sess.ID.String())
+	accessTokenKey := session.FormatAccessTokenKey(sessionEncx.AccessTokenHash)
+	refreshTokenKey := session.FormatRefreshTokenKey(sessionEncx.RefreshTokenHash)
+	userSessionIndexKey := session.FormatUserSessionIndexKey(sessionEncx.UserIDHash)
+
+	// Store session data as SessionEncx (for Redis storage)
+	sessionData, err := json.Marshal(sessionEncx)
+	require.NoError(t, err, "Failed to marshal SessionEncx for Redis storage")
+
+	err = client.Set(ctx, sessionKey, sessionData, ttl).Err()
 	require.NoError(t, err, "Failed to insert session directly")
 
 	// Store access token mapping
@@ -279,10 +301,16 @@ type SessionTestData struct {
 	SessionData []byte
 }
 
+// TestSession is a helper struct that contains both the session and its encrypted/hash data for testing
+type TestSession struct {
+	Session       *session.Session
+	SessionEncx   *session.SessionEncx
+}
+
 // CreateTestSessionWithCrypto is a convenience function that creates and returns a session
 func CreateTestSessionWithCrypto(t *testing.T, crypto encx.CryptoService) *session.Session {
 	t.Helper()
-	session, err := NewTestSession(crypto)
+	session, _, err := NewTestSession(crypto)
 	require.NoError(t, err, "Failed to create test session with encryption")
 	return session
 }
@@ -290,7 +318,7 @@ func CreateTestSessionWithCrypto(t *testing.T, crypto encx.CryptoService) *sessi
 // CreateTestPendingSessionWithCrypto is a convenience function that creates and returns a pending session
 func CreateTestPendingSessionWithCrypto(t *testing.T, crypto encx.CryptoService) *session.Session {
 	t.Helper()
-	session, err := NewTestPendingSession(crypto)
+	session, _, err := NewTestPendingSession(crypto)
 	require.NoError(t, err, "Failed to create test pending session with encryption")
 	return session
 }
@@ -298,7 +326,7 @@ func CreateTestPendingSessionWithCrypto(t *testing.T, crypto encx.CryptoService)
 // CreateTestSessionWithUserIDAndCrypto is a convenience function that creates and returns a session with specific user ID
 func CreateTestSessionWithUserIDAndCrypto(t *testing.T, userID uuid.UUID, crypto encx.CryptoService) *session.Session {
 	t.Helper()
-	session, err := NewTestSessionWithUserID(userID, crypto)
+	session, _, err := NewTestSessionWithUserID(userID, crypto)
 	require.NoError(t, err, "Failed to create test session with user ID and encryption")
 	return session
 }
@@ -307,32 +335,17 @@ func CreateTestSessionWithUserIDAndCrypto(t *testing.T, userID uuid.UUID, crypto
 func CreateTestPendingSessionWithUserIDAndCrypto(t *testing.T, userID uuid.UUID, crypto encx.CryptoService) *session.Session {
 	t.Helper()
 
-	now := time.Now()
-	sessionID := uuid.New()
+	// Create a session with the specific user ID and pending state
+	sess, _, err := NewTestSessionWithUserID(userID, crypto)
+	require.NoError(t, err, "Failed to create test session with user ID and encryption")
 
-	// Generate valid base64 tokens for testing
-	accessToken, err := session.GenerateToken()
-	require.NoError(t, err)
+	sess.State = session.SessionPending
 
-	refreshToken, err := session.GenerateToken()
-	require.NoError(t, err)
-
-	session := &session.Session{
-		ID:           sessionID,
-		UserID:       userID,
-		Role:         identity.Visitor,
-		State:        session.SessionPending,
-		CreatedAt:    now,
-		ExpiresAt:    now.Add(24 * time.Hour),
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}
-
-	// Re-process the struct to update encrypted state
-	err = crypto.ProcessStruct(context.Background(), session)
+	// Re-process to update encrypted state and hashes for the pending state
+	_, err = session.ProcessSessionEncx(context.Background(), crypto, sess)
 	require.NoError(t, err, "Failed to re-process session struct for state update")
 
-	return session
+	return sess
 }
 
 // CreateSessionWithEncryption creates and stores a session in Redis, returns access token
@@ -358,13 +371,13 @@ func CreateSessionWithEncryption(t *testing.T, ctx context.Context, sessionInfo 
 		RefreshToken: refreshToken,
 	}
 
-	// Process encryption
-	err = crypto.ProcessStruct(ctx, sess)
+	// Process encryption using the new generated function
+	sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, sess)
 	require.NoError(t, err)
 
-	// Store in Redis
+	// Store in Redis using the new approach
 	ttl := 24 * time.Hour
-	InsertSessionDirectly(t, ctx, client, sess, ttl)
+	InsertSessionDirectlyWithEncx(t, ctx, client, sess, sessionEncx, ttl)
 
 	return accessToken
 }
@@ -383,8 +396,18 @@ func GetSessionByID(t *testing.T, ctx context.Context, sessionID uuid.UUID, clie
 	return DecodeSession(t, data)
 }
 
-// CreateTestSession creates a test session with specific role and stores it in Redis
+// CreateTestSession creates a test session with specific role and stores it in Redis - DEPRECATED
+// This function requires crypto service for proper hash generation - use CreateTestSessionWithCryptoAndStore instead
 func CreateTestSession(t *testing.T, ctx context.Context, client *redis.Client, role identity.Role) *session.Session {
+	t.Helper()
+
+	// This function cannot work without crypto service for hash generation
+	// Use CreateTestSessionWithCryptoAndStore instead
+	panic("CreateTestSession is deprecated. Use CreateTestSessionWithCryptoAndStore instead.")
+}
+
+// CreateTestSessionWithCryptoAndStore creates a test session with specific role and stores it in Redis using the new approach
+func CreateTestSessionWithCryptoAndStore(t *testing.T, ctx context.Context, client *redis.Client, role identity.Role, crypto encx.CryptoService) *session.Session {
 	t.Helper()
 
 	now := time.Now()
@@ -409,14 +432,12 @@ func CreateTestSession(t *testing.T, ctx context.Context, client *redis.Client, 
 		RefreshToken: refreshToken,
 	}
 
-	// For testing, we'll set the hashes manually to avoid needing crypto service in this helper
-	// In real usage, crypto.ProcessStruct would handle this
-	sess.UserIDHash = session.HashUserID(userID.String())
-	sess.AccessTokenHash = session.HashToken(accessToken)
-	sess.RefreshTokenHash = session.HashToken(refreshToken)
+	// Process encryption using the new generated function
+	sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, sess)
+	require.NoError(t, err, "Failed to process session for encryption")
 
-	// Store session in Redis
-	InsertSessionDirectly(t, ctx, client, sess, 24*time.Hour)
+	// Store session in Redis using the new approach
+	InsertSessionDirectlyWithEncx(t, ctx, client, sess, sessionEncx, 24*time.Hour)
 
 	return sess
 }
