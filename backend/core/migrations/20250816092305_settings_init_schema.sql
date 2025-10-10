@@ -43,6 +43,7 @@ CREATE TABLE settings.encrypted (
     value_encrypted BYTEA NOT NULL,    -- Encrypted value
     dek_encrypted BYTEA NOT NULL,      -- Data encryption key (encrypted)
     key_version INT NOT NULL,          -- Version of the encryption key used
+    metadata JSONB,                    -- ENCX encryption metadata (KEK alias, timestamp, version)
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

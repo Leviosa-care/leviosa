@@ -21,7 +21,8 @@ import (
 
 func TestNewSessionAuthMiddleware(t *testing.T) {
 	mockRepo := &session.MockSessionRepository{}
-	mockCrypto := &encx.CryptoServiceMock{}
+	mockCrypto, err := NewTestCrypto(t)
+	require.NoError(t, err, "Failed to create test crypto service")
 
 	middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
@@ -230,7 +231,8 @@ func TestRequireAccessToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			mockRepo := &session.MockSessionRepository{}
-			mockCrypto := &encx.CryptoServiceMock{}
+			mockCrypto, err := NewTestCrypto(t)
+			require.NoError(t, err, "Failed to create test crypto service")
 			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
 			if tt.repoResponse != nil || tt.repoError != nil {
@@ -239,7 +241,7 @@ func TestRequireAccessToken(t *testing.T) {
 
 			// Create test handler
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				session, found := session.SessionFromContext(r.Context())
+				session, found := session.SessionInfoFromContext(r.Context())
 				if tt.expectedInCtx {
 					assert.True(t, found, "Expected session in context")
 					assert.NotNil(t, session, "Expected non-nil session")
@@ -376,7 +378,8 @@ func TestRequireRefreshToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			mockRepo := &session.MockSessionRepository{}
-			mockCrypto := &encx.CryptoServiceMock{}
+			mockCrypto, err := NewTestCrypto(t)
+			require.NoError(t, err, "Failed to create test crypto service")
 			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
 			if tt.repoResponse != nil || tt.repoError != nil {
@@ -385,7 +388,7 @@ func TestRequireRefreshToken(t *testing.T) {
 
 			// Create test handler
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				session, found := session.SessionFromContext(r.Context())
+				session, found := session.SessionInfoFromContext(r.Context())
 				if tt.expectedInCtx {
 					assert.True(t, found, "Expected session in context")
 					assert.NotNil(t, session, "Expected non-nil session")
@@ -412,46 +415,46 @@ func TestRequireRefreshToken(t *testing.T) {
 	}
 }
 
-// TestSession is a test-only version of Session that can marshal plaintext fields
+// TestSession is a test-only version of SessionEncx that can marshal plaintext fields
 type TestSession struct {
 	ID                 uuid.UUID            `json:"id"`
-	UserID             uuid.UUID            `json:"user_id"`
-	UserIDEncrypted    []byte               `json:"user_id_encrypted"`
-	Role               identity.Role        `json:"role"`
+	UserIDEncrypted    []byte               `json:"userid_encrypted"`
+	UserIDHash         string               `json:"userid_hash"`
 	RoleEncrypted      []byte               `json:"role_encrypted"`
-	State              session.SessionState `json:"state"`
 	StateEncrypted     []byte               `json:"state_encrypted"`
-	CreatedAt          time.Time            `json:"created_at"`
-	CreatedAtEncrypted []byte               `json:"created_at_encrypted"`
-	ExpiresAt          time.Time            `json:"expires_at"`
-	ExpiresAtEncrypted []byte               `json:"expires_at_encrypted"`
-	AccessTokenHash    string               `json:"access_token_hash"`
-	RefreshTokenHash   string               `json:"refresh_token_hash"`
+	CreatedAtEncrypted []byte               `json:"createdat_encrypted"`
+	ExpiresAtEncrypted []byte               `json:"expiresat_encrypted"`
+	CompletedAtEncrypted []byte             `json:"completedat_encrypted"`
+	AccessTokenHash    string               `json:"accesstoken_hash"`
+	RefreshTokenHash   string               `json:"refreshtoken_hash"`
 	DEKEncrypted       []byte               `json:"dek_encrypted"`
 	KeyVersion         int                  `json:"key_version"`
+	Metadata           encx.EncryptionMetadata `json:"metadata"`
 }
 
 // Helper function to create valid JSON session data for testing
 func createValidSessionJSON(t *testing.T, sessionStruct *session.Session) []byte {
 	t.Helper()
 
-	// Create test session with plaintext fields that can be marshaled
+	// Create test session with encrypted fields that can be marshaled
 	testSession := &TestSession{
-		ID:                 session.ID,
-		UserID:             session.UserID,
+		ID:                 sessionStruct.ID,
 		UserIDEncrypted:    []byte("encrypted_user_id"),
-		Role:               session.Role,
+		UserIDHash:         "user_id_hash",
 		RoleEncrypted:      []byte("encrypted_role"),
-		State:              session.State,
 		StateEncrypted:     []byte("encrypted_state"),
-		CreatedAt:          time.Now(),
 		CreatedAtEncrypted: []byte("encrypted_created_at"),
-		ExpiresAt:          time.Now().Add(time.Hour),
 		ExpiresAtEncrypted: []byte("encrypted_expires_at"),
+		CompletedAtEncrypted: []byte("encrypted_completed_at"),
 		AccessTokenHash:    "access_token_hash",
 		RefreshTokenHash:   "refresh_token_hash",
 		DEKEncrypted:       []byte("encrypted_dek"),
 		KeyVersion:         1,
+		Metadata: encx.EncryptionMetadata{
+			KEKAlias:         "test-kek-alias",
+			EncryptionTime:   time.Now().Unix(),
+			GeneratorVersion: "1.0.0",
+		},
 	}
 
 	// Marshal to JSON
@@ -465,23 +468,25 @@ func createValidSessionJSON(t *testing.T, sessionStruct *session.Session) []byte
 func createExpiredSessionJSON(t *testing.T, sessionStruct *session.Session, expiresAt time.Time) []byte {
 	t.Helper()
 
-	// Create test session with plaintext fields that can be marshaled
+	// Create test session with encrypted fields that can be marshaled
 	testSession := &TestSession{
 		ID:                 sessionStruct.ID,
-		UserID:             sessionStruct.UserID,
 		UserIDEncrypted:    []byte("encrypted_user_id"),
-		Role:               sessionStruct.Role,
+		UserIDHash:         "user_id_hash",
 		RoleEncrypted:      []byte("encrypted_role"),
-		State:              sessionStruct.State,
 		StateEncrypted:     []byte("encrypted_state"),
-		CreatedAt:          time.Now().Add(-2 * time.Hour), // Past creation time
 		CreatedAtEncrypted: []byte("encrypted_created_at"),
-		ExpiresAt:          expiresAt, // Use provided expiration time
 		ExpiresAtEncrypted: []byte("encrypted_expires_at"),
+		CompletedAtEncrypted: []byte("encrypted_completed_at"),
 		AccessTokenHash:    "access_token_hash",
 		RefreshTokenHash:   "refresh_token_hash",
 		DEKEncrypted:       []byte("encrypted_dek"),
 		KeyVersion:         1,
+		Metadata: encx.EncryptionMetadata{
+			KEKAlias:         "test-kek-alias",
+			EncryptionTime:   time.Now().Add(-2 * time.Hour).Unix(), // Past encryption time
+			GeneratorVersion: "1.0.0",
+		},
 	}
 
 	// Marshal to JSON

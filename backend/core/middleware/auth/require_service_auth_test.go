@@ -2,13 +2,10 @@ package auth
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/Leviosa-care/core/contracts/services"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestServiceConstants(t *testing.T) {

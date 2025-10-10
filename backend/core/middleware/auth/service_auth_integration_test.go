@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/services"
-	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/testutils"
 	"github.com/hashicorp/vault/api"
 	"github.com/hengadev/encx"
@@ -37,13 +36,9 @@ func TestServiceAuthWithVault(t *testing.T) {
 	require.NoError(t, err, "Failed to create Vault client")
 	vaultClient.SetToken(vaultContainer.RootToken)
 	
-	// Initialize encx crypto service with Vault
-	cryptoService, err := encx.NewCryptoService(encx.Config{
-		VaultClient: vaultClient,
-		KeyName:     testutils.EncryptionKey,
-		PepperPath:  "secret/data/pepper",
-	})
-	require.NoError(t, err, "Failed to create crypto service")
+	// Initialize encx crypto service for testing
+	cryptoService, err := encx.NewTestCrypto(t)
+	require.NoError(t, err, "Failed to create test crypto service")
 	
 	// Initialize service key manager
 	keyManager := services.NewServiceKeyManager(vaultClient, cryptoService)
@@ -64,9 +59,8 @@ func TestServiceAuthWithVault(t *testing.T) {
 		req.Header.Set(services.ServiceNameHeader, testServiceName)
 		req.Header.Set(services.ServiceKeyHeader, apiKey)
 		
-		// Add logger to context (required by middleware)
-		logger := ctxutil.NewTestLogger()
-		ctx := ctxutil.WithLogger(req.Context(), logger)
+		// Add basic context (no logger required for this test)
+		ctx := req.Context()
 		req = req.WithContext(ctx)
 		
 		// Create response recorder
@@ -105,8 +99,8 @@ func TestServiceAuthWithVault(t *testing.T) {
 		req.Header.Set(services.ServiceNameHeader, testServiceName)
 		req.Header.Set(services.ServiceKeyHeader, "invalid-key-12345")
 		
-		logger := ctxutil.NewTestLogger()
-		ctx := ctxutil.WithLogger(req.Context(), logger)
+		// Add basic context (no logger required for this test)
+		ctx := req.Context()
 		req = req.WithContext(ctx)
 		
 		rr := httptest.NewRecorder()
@@ -132,8 +126,8 @@ func TestServiceAuthWithVault(t *testing.T) {
 		req.Header.Set(services.ServiceNameHeader, nonExistentService)
 		req.Header.Set(services.ServiceKeyHeader, apiKey)
 		
-		logger := ctxutil.NewTestLogger()
-		ctx := ctxutil.WithLogger(req.Context(), logger)
+		// Add basic context (no logger required for this test)
+		ctx := req.Context()
 		req = req.WithContext(ctx)
 		
 		rr := httptest.NewRecorder()
@@ -173,11 +167,7 @@ func TestServiceKeyManager(t *testing.T) {
 	vaultClient.SetToken(vaultContainer.RootToken)
 	
 	// Initialize crypto service
-	cryptoService, err := encx.NewCryptoService(encx.Config{
-		VaultClient: vaultClient,
-		KeyName:     testutils.EncryptionKey,
-		PepperPath:  "secret/data/pepper",
-	})
+	cryptoService, err := encx.NewTestCrypto(t)
 	require.NoError(t, err, "Failed to create crypto service")
 	
 	// Initialize service key manager
@@ -245,11 +235,7 @@ func TestEndToEndServiceCommunication(t *testing.T) {
 	require.NoError(t, err)
 	vaultClient.SetToken(vaultContainer.RootToken)
 	
-	cryptoService, err := encx.NewCryptoService(encx.Config{
-		VaultClient: vaultClient,
-		KeyName:     testutils.EncryptionKey,
-		PepperPath:  "secret/data/pepper",
-	})
+	cryptoService, err := encx.NewTestCrypto(t)
 	require.NoError(t, err)
 	
 	// Generate service keys
@@ -280,13 +266,8 @@ func TestEndToEndServiceCommunication(t *testing.T) {
 			response["message"], response["service"], response["endpoint"], response["method"])
 	}
 	
-	// Wrap handler with service auth middleware and logger
+	// Wrap handler with service auth middleware
 	protectedHandler := func(w http.ResponseWriter, r *http.Request) {
-		// Add logger to context
-		logger := ctxutil.NewTestLogger()
-		ctx := ctxutil.WithLogger(r.Context(), logger)
-		r = r.WithContext(ctx)
-		
 		// Apply service auth middleware
 		middleware.RequireServiceAuth(testHandler)(w, r)
 	}
@@ -311,9 +292,6 @@ func TestEndToEndServiceCommunication(t *testing.T) {
 		
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		
-		// Verify response contains service info
-		var responseBody map[string]string
-		err = fmt.Errorf("json.NewDecoder(resp.Body).Decode(&responseBody)")
 		// Note: In a real test, you'd decode the JSON response here
 		// For this example, we'll just verify the status code
 	})

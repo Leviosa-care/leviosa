@@ -10,9 +10,9 @@ import (
 	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/google/uuid"
-	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRequireMinimumRole(t *testing.T) {
@@ -78,18 +78,17 @@ func TestRequireMinimumRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock repository
 			mockRepo := &session.MockSessionRepository{}
-			mockCrypto := &encx.CryptoServiceMock{}
+			mockCrypto, err := NewTestCrypto(t)
+			require.NoError(t, err, "Failed to create test crypto service")
 
 			// Create valid session data with the test role
 			session := &session.Session{
-				ID:               uuid.New(),
-				UserID:           uuid.New(),
-				Role:             tt.userRole,
-				State:            session.SessionActive,
-				CreatedAt:        time.Now(),
-				ExpiresAt:        time.Now().Add(time.Hour),
-				AccessTokenHash:  "test_access_hash",
-				RefreshTokenHash: "test_refresh_hash",
+				ID:        uuid.New(),
+				UserID:    uuid.New(),
+				Role:      tt.userRole,
+				State:     session.SessionActive,
+				CreatedAt: time.Now(),
+				ExpiresAt: time.Now().Add(time.Hour),
 			}
 			sessionData := createValidSessionJSON(t, session)
 

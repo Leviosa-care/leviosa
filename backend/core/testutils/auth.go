@@ -24,26 +24,11 @@ type User struct {
 	Email      string    `json:"-" encx:"encrypt,hash_basic"`
 	FirstName  string    `json:"-" encx:"encrypt"`
 	LastName   string    `json:"-" encx:"encrypt"`
-	Password   string    `json:"-" encx:"hash_bcrypt"`
+	Password   string    `json:"-" encx:"hash_secure"`
 	Telephone  string    `json:"-" encx:"encrypt,hash_basic"`
 	Role       string    `json:"-" encx:"encrypt"`
 	CreatedAt  time.Time `json:"-" encx:"encrypt"`
 	LoggedInAt time.Time `json:"-" encx:"encrypt"`
-
-	// Encrypted fields
-	StateEncrypted     []byte `json:"state_encrypted"`
-	EmailEncrypted     []byte `json:"email_encrypted"`
-	EmailHash          string `json:"email_hash"`
-	FirstNameEncrypted []byte `json:"first_name_encrypted"`
-	LastNameEncrypted  []byte `json:"last_name_encrypted"`
-	PasswordHash       string `json:"password_hash"`
-	TelephoneEncrypted []byte `json:"telephone_encrypted"`
-	TelephoneHash      string `json:"telephone_hash"`
-	RoleEncrypted      []byte `json:"role_encrypted"`
-	CreatedAtEncrypted []byte `json:"created_at_encrypted"`
-	LoggedInAtEncrypted []byte `json:"logged_in_at_encrypted"`
-	DEKEncrypted       []byte `json:"dek_encrypted"`
-	KeyVersion         int    `json:"key_version"`
 }
 
 // AuthTestContext holds the necessary dependencies for auth test utilities
@@ -57,10 +42,10 @@ type AuthTestContext struct {
 // Returns the access token that can be used in Authorization headers
 func SetupUserWithRole(t *testing.T, ctx context.Context, role identity.Role, authCtx *AuthTestContext) string {
 	t.Helper()
-	
+
 	now := time.Now()
 	userID := uuid.New()
-	
+
 	// Create test user
 	user := &User{
 		ID:         userID,
@@ -74,22 +59,22 @@ func SetupUserWithRole(t *testing.T, ctx context.Context, role identity.Role, au
 		CreatedAt:  now,
 		LoggedInAt: now,
 	}
-	
+
 	// Encrypt user data
-	err := authCtx.Crypto.ProcessStruct(ctx, user)
+	userEncx, err := ProcessUserEncx(ctx, authCtx.Crypto, user)
 	require.NoError(t, err, "Failed to encrypt user struct")
-	
+
 	// Insert user into database
-	insertUser(t, ctx, user, authCtx.Pool)
-	
+	insertUser(t, ctx, userEncx, authCtx.Pool)
+
 	// Create active session
 	sessionID := uuid.New()
 	accessToken, err := session.GenerateToken()
 	require.NoError(t, err, "Failed to generate access token")
-	
+
 	refreshToken, err := session.GenerateToken()
 	require.NoError(t, err, "Failed to generate refresh token")
-	
+
 	sess := &session.Session{
 		ID:           sessionID,
 		UserID:       userID,
@@ -100,14 +85,14 @@ func SetupUserWithRole(t *testing.T, ctx context.Context, role identity.Role, au
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}
-	
+
 	// Encrypt session data
-	err = authCtx.Crypto.ProcessStruct(ctx, sess)
+	sessionEncx, err := session.ProcessSessionEncx(ctx, authCtx.Crypto, sess)
 	require.NoError(t, err, "Failed to encrypt session struct")
-	
+
 	// Store session in Redis
-	insertSession(t, ctx, sess, authCtx.Redis, 24*time.Hour)
-	
+	insertSession(t, ctx, sessionEncx, authCtx.Redis, 24*time.Hour)
+
 	return accessToken
 }
 
@@ -151,10 +136,10 @@ func SetupAdminUser(t *testing.T, ctx context.Context, authCtx *AuthTestContext)
 // Useful for testing registration flows
 func SetupPendingUserWithRole(t *testing.T, ctx context.Context, role identity.Role, authCtx *AuthTestContext) string {
 	t.Helper()
-	
+
 	now := time.Now()
 	userID := uuid.New()
-	
+
 	// Create test user in unverified state
 	user := &User{
 		ID:         userID,
@@ -168,22 +153,22 @@ func SetupPendingUserWithRole(t *testing.T, ctx context.Context, role identity.R
 		CreatedAt:  now,
 		LoggedInAt: now,
 	}
-	
+
 	// Encrypt user data
-	err := authCtx.Crypto.ProcessStruct(ctx, user)
+	userEncx, err := ProcessUserEncx(ctx, authCtx.Crypto, user)
 	require.NoError(t, err, "Failed to encrypt user struct")
-	
+
 	// Insert user into database
-	insertUser(t, ctx, user, authCtx.Pool)
-	
+	insertUser(t, ctx, userEncx, authCtx.Pool)
+
 	// Create pending session
 	sessionID := uuid.New()
 	accessToken, err := session.GenerateToken()
 	require.NoError(t, err, "Failed to generate access token")
-	
+
 	refreshToken, err := session.GenerateToken()
 	require.NoError(t, err, "Failed to generate refresh token")
-	
+
 	sess := &session.Session{
 		ID:           sessionID,
 		UserID:       userID,
@@ -194,14 +179,14 @@ func SetupPendingUserWithRole(t *testing.T, ctx context.Context, role identity.R
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}
-	
+
 	// Encrypt session data
-	err = authCtx.Crypto.ProcessStruct(ctx, sess)
+	sessionEncx, err := session.ProcessSessionEncx(ctx, authCtx.Crypto, sess)
 	require.NoError(t, err, "Failed to encrypt session struct")
-	
+
 	// Store session in Redis
-	insertSession(t, ctx, sess, authCtx.Redis, 30*time.Minute)
-	
+	insertSession(t, ctx, sessionEncx, authCtx.Redis, 30*time.Minute)
+
 	return accessToken
 }
 
@@ -209,42 +194,42 @@ func SetupPendingUserWithRole(t *testing.T, ctx context.Context, role identity.R
 // Useful for testing role-based authorization across different privilege levels
 func SetupMultipleUsers(t *testing.T, ctx context.Context, roles []identity.Role, authCtx *AuthTestContext) map[identity.Role]string {
 	t.Helper()
-	
+
 	tokens := make(map[identity.Role]string)
 	for _, role := range roles {
 		tokens[role] = SetupUserWithRole(t, ctx, role, authCtx)
 	}
-	
+
 	return tokens
 }
 
 // ClearAuthData cleans up all auth-related test data (users and sessions)
 func ClearAuthData(t *testing.T, ctx context.Context, authCtx *AuthTestContext) {
 	t.Helper()
-	
+
 	// Clear users table
 	_, err := authCtx.Pool.Exec(ctx, "TRUNCATE TABLE auth.users RESTART IDENTITY CASCADE")
 	require.NoError(t, err, "Failed to clear users table")
-	
+
 	// Clear all session-related Redis keys
 	clearSessionsRedis(t, ctx, authCtx.Redis)
 }
 
 // insertUser inserts a user into the auth.users table
-func insertUser(t *testing.T, ctx context.Context, user *User, pool *pgxpool.Pool) {
+func insertUser(t *testing.T, ctx context.Context, user *UserEncx, pool *pgxpool.Pool) {
 	t.Helper()
-	
+
 	query := `
 		INSERT INTO auth.users (
 			id, state, email_hash, email_encrypted, password_hash,
 			first_name_encrypted, last_name_encrypted, telephone_hash, telephone_encrypted,
-			role_encrypted, created_at_encrypted, logged_in_at_encrypted, 
+			role_encrypted, created_at_encrypted, logged_in_at_encrypted,
 			dek_encrypted, key_version
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	`
-	
+
 	_, err := pool.Exec(ctx, query,
-		user.ID, user.StateEncrypted, user.EmailHash, user.EmailEncrypted, user.PasswordHash,
+		user.ID, user.StateEncrypted, user.EmailHash, user.EmailEncrypted, user.PasswordHashSecure,
 		user.FirstNameEncrypted, user.LastNameEncrypted, user.TelephoneHash, user.TelephoneEncrypted,
 		user.RoleEncrypted, user.CreatedAtEncrypted, user.LoggedInAtEncrypted,
 		user.DEKEncrypted, user.KeyVersion)
@@ -252,30 +237,30 @@ func insertUser(t *testing.T, ctx context.Context, user *User, pool *pgxpool.Poo
 }
 
 // insertSession inserts a session into Redis with proper key formatting
-func insertSession(t *testing.T, ctx context.Context, sess *session.Session, client *redis.Client, ttl time.Duration) {
+func insertSession(t *testing.T, ctx context.Context, sess *session.SessionEncx, client *redis.Client, ttl time.Duration) {
 	t.Helper()
-	
+
 	sessionKey := session.FormatSessionKey(sess.ID.String())
 	accessTokenKey := session.FormatAccessTokenKey(sess.AccessTokenHash)
 	refreshTokenKey := session.FormatRefreshTokenKey(sess.RefreshTokenHash)
 	userSessionIndexKey := session.FormatUserSessionIndexKey(sess.UserIDHash)
-	
+
 	// Encode session to JSON
 	sessionData, err := json.Marshal(sess)
 	require.NoError(t, err, "Failed to marshal session")
-	
+
 	// Store session data
 	err = client.Set(ctx, sessionKey, sessionData, ttl).Err()
 	require.NoError(t, err, "Failed to store session")
-	
+
 	// Store access token mapping
 	err = client.Set(ctx, accessTokenKey, sess.ID.String(), ttl).Err()
 	require.NoError(t, err, "Failed to store access token mapping")
-	
+
 	// Store refresh token mapping
 	err = client.Set(ctx, refreshTokenKey, sess.ID.String(), ttl).Err()
 	require.NoError(t, err, "Failed to store refresh token mapping")
-	
+
 	// Add session ID to user session index
 	err = client.SAdd(ctx, userSessionIndexKey, sess.ID.String()).Err()
 	require.NoError(t, err, "Failed to add to user session index")
@@ -284,7 +269,7 @@ func insertSession(t *testing.T, ctx context.Context, sess *session.Session, cli
 // clearSessionsRedis clears all session-related Redis keys
 func clearSessionsRedis(t *testing.T, ctx context.Context, client *redis.Client) {
 	t.Helper()
-	
+
 	// Clear session keys
 	sessionKeys, err := client.Keys(ctx, fmt.Sprintf("%s*", session.SessionKeyPrefix)).Result()
 	require.NoError(t, err, "Failed to get session keys")
@@ -292,7 +277,7 @@ func clearSessionsRedis(t *testing.T, ctx context.Context, client *redis.Client)
 		err = client.Del(ctx, sessionKeys...).Err()
 		require.NoError(t, err, "Failed to delete session keys")
 	}
-	
+
 	// Clear access token keys
 	accessTokenKeys, err := client.Keys(ctx, fmt.Sprintf("%s*", session.AccessTokenKeyPrefix)).Result()
 	require.NoError(t, err, "Failed to get access token keys")
@@ -300,7 +285,7 @@ func clearSessionsRedis(t *testing.T, ctx context.Context, client *redis.Client)
 		err = client.Del(ctx, accessTokenKeys...).Err()
 		require.NoError(t, err, "Failed to delete access token keys")
 	}
-	
+
 	// Clear refresh token keys
 	refreshTokenKeys, err := client.Keys(ctx, fmt.Sprintf("%s*", session.RefreshTokenKeyPrefix)).Result()
 	require.NoError(t, err, "Failed to get refresh token keys")
@@ -308,7 +293,7 @@ func clearSessionsRedis(t *testing.T, ctx context.Context, client *redis.Client)
 		err = client.Del(ctx, refreshTokenKeys...).Err()
 		require.NoError(t, err, "Failed to delete refresh token keys")
 	}
-	
+
 	// Clear user session index keys
 	userSessionKeys, err := client.Keys(ctx, "authuser:user_sessions:*").Result()
 	require.NoError(t, err, "Failed to get user session keys")

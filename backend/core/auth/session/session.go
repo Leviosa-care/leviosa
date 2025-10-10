@@ -33,27 +33,15 @@ type SessionInfo struct {
 }
 
 type Session struct {
-	ID                   uuid.UUID     `json:"-"`
-	UserID               uuid.UUID     `json:"-" encx:"encrypt,hash_basic"`
-	UserIDEncrypted      []byte        `json:"user_id_encrypted"`
-	UserIDHash           string        `json:"user_id_hash"`
-	Role                 identity.Role `json:"-" encx:"encrypt"`
-	RoleEncrypted        []byte        `json:"role_encrypted"`
-	State                SessionState  `json:"-" encx:"encrypt"`
-	StateEncrypted       []byte        `json:"state_encrypted"`
-	CreatedAt            time.Time     `json:"-" encx:"encrypt"`
-	CreatedAtEncrypted   []byte        `json:"created_at_encrypted"`
-	ExpiresAt            time.Time     `json:"-" encx:"encrypt"`
-	ExpiresAtEncrypted   []byte        `json:"expires_at_encrypted"`
-	CompletedAt          *time.Time    `json:"-" encx:"encrypt"`
-	CompletedAtEncrypted []byte        `json:"completed_at_encrypted,omitempty"`
-	AccessToken          string        `json:"-" encx:"hash_basic"`
-	AccessTokenHash      string        `json:"access_token_hash"`
-	RefreshToken         string        `json:"-" encx:"hash_basic"`
-	RefreshTokenHash     string        `json:"refresh_token_hash"`
-	DEK                  []byte        `json:"-" encx:"encrypt"`
-	DEKEncrypted         []byte        `json:"dek_encrypted"`
-	KeyVersion           int           `json:"key_version"`
+	ID          uuid.UUID     `json:"-"`
+	UserID      uuid.UUID     `json:"-" encx:"encrypt,hash_basic"`
+	Role        identity.Role `json:"-" encx:"encrypt"`
+	State       SessionState  `json:"-" encx:"encrypt"`
+	CreatedAt   time.Time     `json:"-" encx:"encrypt"`
+	ExpiresAt   time.Time     `json:"-" encx:"encrypt"`
+	CompletedAt *time.Time    `json:"-" encx:"encrypt"`
+	AccessToken string        `json:"-" encx:"hash_basic"`
+	RefreshToken string       `json:"-" encx:"hash_basic"`
 }
 
 func (s *Session) Valid(ctx context.Context) error {
@@ -63,11 +51,6 @@ func (s *Session) Valid(ctx context.Context) error {
 
 // TokenPair represents access and refresh tokens with their hashed values
 type TokenPair struct {
-	AccessToken      string `json:"-" encx:"hash_basic"`
-	AccessTokenHash  string `json:"access_token_hash"`
-	RefreshToken     string `json:"-" encx:"hash_basic"`
-	RefreshTokenHash string `json:"refresh_token_hash"`
-	DEK              []byte `json:"-" encx:"encrypt"`
-	DEKEncrypted     []byte `json:"dek_encrypted"`
-	KeyVersion       int    `json:"key_version"`
+	AccessToken  string `json:"-" encx:"hash_basic"`
+	RefreshToken string `json:"-" encx:"hash_basic"`
 }

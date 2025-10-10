@@ -69,8 +69,8 @@ func (m *SessionAuthMiddleware) RequireAccessToken(next mw.Handler) mw.Handler {
 			return
 		}
 
-		// Decode session
-		sessionStruct, err := session.DecodeSession(sessionData)
+		// Decode session as encrypted struct
+		sessionEncx, err := session.DecodeSession(sessionData)
 		if err != nil {
 			logger.ErrorContext(ctx, "Auth middleware: Failed to decode session",
 				"operation", "require_access_token",
@@ -82,7 +82,17 @@ func (m *SessionAuthMiddleware) RequireAccessToken(next mw.Handler) mw.Handler {
 			return
 		}
 
-		m.crypto.DecryptStruct(ctx, sessionStruct)
+		sessionStruct, err := session.DecryptSessionEncx(ctx, m.crypto, sessionEncx)
+		if err != nil {
+			logger.ErrorContext(ctx, "Auth middleware: Failed to decrypt session",
+				"operation", "require_access_token",
+				"method", r.Method,
+				"path", r.URL.Path,
+				"session_id", sessionID,
+				"error", err)
+			httpx.RespondWithError(w, err, http.StatusInternalServerError)
+			return
+		}
 
 		logger.InfoContext(ctx, "Auth middleware: Session retrieved and decrypted",
 			"operation", "require_access_token",

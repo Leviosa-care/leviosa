@@ -11,9 +11,9 @@ import (
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/Leviosa-care/core/middleware"
 	"github.com/google/uuid"
-	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRequireAnyRole(t *testing.T) {
@@ -79,23 +79,22 @@ func TestRequireAnyRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock repository
 			mockRepo := &session.MockSessionRepository{}
-			mockCrypto := &encx.CryptoServiceMock{}
+			mockCrypto, err := NewTestCrypto(t)
+			require.NoError(t, err, "Failed to create test crypto service")
 
 			// Create valid session data with the test role
-			session := &session.Session{
-				ID:               uuid.New(),
-				UserID:           uuid.New(),
-				Role:             tt.userRole,
-				State:            session.SessionActive,
-				CreatedAt:        time.Now(),
-				ExpiresAt:        time.Now().Add(time.Hour),
-				AccessTokenHash:  "test_access_hash",
-				RefreshTokenHash: "test_refresh_hash",
+			sessionData := &session.Session{
+				ID:        uuid.New(),
+				UserID:    uuid.New(),
+				Role:      tt.userRole,
+				State:     session.SessionActive,
+				CreatedAt: time.Now(),
+				ExpiresAt: time.Now().Add(time.Hour),
 			}
-			sessionData := createValidSessionJSON(t, session)
+			sessionJSON := createValidSessionJSON(t, sessionData)
 
 			// Mock the repository call
-			mockRepo.On("FindSessionByAccessTokenHash", mock.Anything, mock.AnythingOfType("string")).Return(session.ID.String(), sessionData, nil)
+			mockRepo.On("FindSessionByAccessTokenHash", mock.Anything, mock.AnythingOfType("string")).Return(sessionData.ID.String(), sessionJSON, nil)
 
 			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
@@ -160,23 +159,22 @@ func TestSessionAuthMiddleware_RequireAdmin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock repository
 			mockRepo := &session.MockSessionRepository{}
-			mockCrypto := &encx.CryptoServiceMock{}
+			mockCrypto, err := NewTestCrypto(t)
+			require.NoError(t, err, "Failed to create test crypto service")
 
 			// Create valid session data with the test role
-			session := &session.Session{
-				ID:               uuid.New(),
-				UserID:           uuid.New(),
-				Role:             tt.userRole,
-				State:            session.SessionActive,
-				CreatedAt:        time.Now(),
-				ExpiresAt:        time.Now().Add(time.Hour),
-				AccessTokenHash:  "test_access_hash",
-				RefreshTokenHash: "test_refresh_hash",
+			sessionData := &session.Session{
+				ID:        uuid.New(),
+				UserID:    uuid.New(),
+				Role:      tt.userRole,
+				State:     session.SessionActive,
+				CreatedAt: time.Now(),
+				ExpiresAt: time.Now().Add(time.Hour),
 			}
-			sessionData := createValidSessionJSON(t, session)
+			sessionJSON := createValidSessionJSON(t, sessionData)
 
 			// Mock the repository call
-			mockRepo.On("FindSessionByAccessTokenHash", mock.Anything, mock.AnythingOfType("string")).Return(session.ID.String(), sessionData, nil)
+			mockRepo.On("FindSessionByAccessTokenHash", mock.Anything, mock.AnythingOfType("string")).Return(sessionData.ID.String(), sessionJSON, nil)
 
 			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
@@ -236,7 +234,8 @@ func TestRoleAuthMiddleware_NoSessionInContext(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &session.MockSessionRepository{}
-			mockCrypto := &encx.CryptoServiceMock{}
+			mockCrypto, err := NewTestCrypto(t)
+			require.NoError(t, err, "Failed to create test crypto service")
 			middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
 			// Create a handler that manually adds broken context (no session)
@@ -265,21 +264,20 @@ func TestRoleAuthMiddleware_NoSessionInContext(t *testing.T) {
 func TestRoleAuthMiddleware_Integration(t *testing.T) {
 	// Test the full flow: RequireSession -> RequireMinimumRole
 	mockRepo := &session.MockSessionRepository{}
-	mockCrypto := &encx.CryptoServiceMock{}
+	mockCrypto, err := NewTestCrypto(t)
+	require.NoError(t, err, "Failed to create test crypto service")
 
 	// Create session data for partner user
-	session := &session.Session{
+	sessionData := &session.Session{
 		ID:               uuid.New(),
 		UserID:           uuid.New(),
 		Role:             identity.Partner,
 		State:            session.SessionActive,
 		CreatedAt:        time.Now(),
 		ExpiresAt:        time.Now().Add(time.Hour),
-		AccessTokenHash:  "test_access_hash",
-		RefreshTokenHash: "test_refresh_hash",
-	}
-	sessionData := createValidSessionJSON(t, session)
-	mockRepo.On("FindSessionByAccessTokenHash", mock.Anything, mock.AnythingOfType("string")).Return(session.ID.String(), sessionData, nil)
+			}
+	sessionJSON := createValidSessionJSON(t, sessionData)
+	mockRepo.On("FindSessionByAccessTokenHash", mock.Anything, mock.AnythingOfType("string")).Return(sessionData.ID.String(), sessionJSON, nil)
 
 	middleware := NewSessionAuthMiddleware(mockRepo, mockCrypto, nil)
 
@@ -287,9 +285,9 @@ func TestRoleAuthMiddleware_Integration(t *testing.T) {
 	nextCalled := false
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Verify session is available in context
-		session, ok := session.SessionFromContext(r.Context())
+		sessionInfo, ok := session.SessionInfoFromContext(r.Context())
 		assert.True(t, ok, "session should be in context")
-		assert.Equal(t, identity.Partner, session.Role, "session should have partner role")
+		assert.Equal(t, identity.Partner, sessionInfo.Role, "session should have partner role")
 
 		nextCalled = true
 		w.WriteHeader(http.StatusOK)

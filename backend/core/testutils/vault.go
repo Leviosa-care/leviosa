@@ -157,7 +157,7 @@ func enableTransitEngine(vaultContainer *VaultContainer) error {
 		}
 		return fmt.Errorf("vault returned status %d when enabling transit engine: %s", resp.StatusCode, string(bodyBytes))
 	}
-	
+
 	if resp.StatusCode != http.StatusNoContent {
 		return fmt.Errorf("vault returned status %d when enabling transit engine", resp.StatusCode)
 	}
@@ -326,42 +326,42 @@ func GetServicePepperPath(serviceName string) string {
 func createServiceEncryptionKey(vaultContainer *VaultContainer, serviceName string) error {
 	keyName := GetServiceEncryptionKeyName(serviceName)
 	url := fmt.Sprintf("%s/v1/transit/keys/%s", vaultContainer.HTTPSEndpoint, keyName)
-	
+
 	payload := map[string]any{
 		"type": "aes256-gcm96",
 	}
-	
+
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal key creation payload: %w", err)
 	}
-	
+
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return fmt.Errorf("failed to create key creation request: %w", err)
 	}
-	
+
 	req.Header.Set("X-Vault-Token", vaultContainer.RootToken)
 	req.Header.Set("Content-Type", "application/json")
-	
+
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to create service encryption key: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode == http.StatusOK {
 		// Key already exists, which is fine
 		fmt.Printf("✓ Service encryption key already exists: %s\n", keyName)
 		return nil
 	}
-	
+
 	if resp.StatusCode != http.StatusNoContent {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("failed to create service encryption key %s, status: %d, body: %s", keyName, resp.StatusCode, string(body))
 	}
-	
+
 	fmt.Printf("✓ Created service encryption key: %s\n", keyName)
 	return nil
 }
@@ -369,7 +369,7 @@ func createServiceEncryptionKey(vaultContainer *VaultContainer, serviceName stri
 // createServicePepper creates a service-specific pepper secret in Vault KV store
 func createServicePepper(vaultContainer *VaultContainer, serviceName string) error {
 	pepperPath := GetServicePepperPath(serviceName)
-	
+
 	// Generate a unique 32-character pepper for this service
 	pepper := fmt.Sprintf("test%s%s", serviceName, strings.Repeat("x", 28-len(serviceName)))
 	if len(pepper) > 32 {
@@ -378,13 +378,13 @@ func createServicePepper(vaultContainer *VaultContainer, serviceName string) err
 	if len(pepper) < 32 {
 		pepper = pepper + strings.Repeat("y", 32-len(pepper))
 	}
-	
+
 	pepperData := map[string]any{
 		"data": map[string]any{
 			"value": pepper,
 		},
 	}
-	
+
 	return createVaultSecret(vaultContainer, pepperPath, pepperData)
 }
 
@@ -394,55 +394,60 @@ func CreateServiceCryptoService(ctx context.Context, vaultContainer *VaultContai
 	if err := createServiceEncryptionKey(vaultContainer, serviceName); err != nil {
 		return nil, fmt.Errorf("failed to create service encryption key: %w", err)
 	}
-	
+
 	// Ensure the service pepper exists
 	if err := createServicePepper(vaultContainer, serviceName); err != nil {
 		return nil, fmt.Errorf("failed to create service pepper: %w", err)
 	}
-	
+
 	// Create Vault client for this service
 	config := &VaultClientConfig{
 		Address: vaultContainer.HTTPSEndpoint,
 		Token:   vaultContainer.RootToken,
 	}
-	
+
 	// Create KMS provider using HashiCorp Vault
 	// Set environment variables for the hashicorpvault.New() function
 	originalAddr := os.Getenv("VAULT_ADDR")
 	originalToken := os.Getenv("VAULT_TOKEN")
-	
+
 	os.Setenv("VAULT_ADDR", config.Address)
 	os.Setenv("VAULT_TOKEN", config.Token)
-	
+
 	kms, err := hashicorpvault.New()
-	
+
 	// Restore original environment variables
 	os.Setenv("VAULT_ADDR", originalAddr)
 	os.Setenv("VAULT_TOKEN", originalToken)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KMS provider: %w", err)
 	}
-	
+
 	// Create crypto service with service-specific keys
 	serviceKeyName := GetServiceEncryptionKeyName(serviceName)
 	servicePepperPath := GetServicePepperPath(serviceName)
-	
-	crypto, err := encx.New(ctx, kms, serviceKeyName, servicePepperPath)
+
+	crypto, err := encx.NewCrypto(
+		ctx,
+		encx.WithKMSService(kms),
+		encx.WithKEKAlias(serviceKeyName),
+		encx.WithPepperSecretPath(servicePepperPath),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto service for %s: %w", serviceName, err)
 	}
-	
+
 	fmt.Printf("✓ Created crypto service for service: %s\n", serviceName)
 	return crypto, nil
 }
 
 // ServiceVaultSetup contains the complete setup for service-specific Vault configuration
 type ServiceVaultSetup struct {
-	VaultContainer  *VaultContainer
-	ServiceKeys     map[string]string               // service name -> API key
-	CryptoServices  map[string]encx.CryptoService   // service name -> crypto service
-	VaultClient     *api.Client                     // Vault client for auth middleware
+	VaultContainer *VaultContainer
+	ServiceKeys    map[string]string             // service name -> API key
+	CryptoServices map[string]encx.CryptoService // service name -> crypto service
+	VaultClient    *api.Client                   // Vault client for auth middleware
 }
 
 // InitializeServiceVault sets up Vault with per-service encryption and service authentication
@@ -450,12 +455,12 @@ type ServiceVaultSetup struct {
 func InitializeServiceVault(ctx context.Context, vaultContainer *VaultContainer, serviceNames []string) (*ServiceVaultSetup, error) {
 	fmt.Printf("=== Initializing Service Vault Setup ===\n")
 	fmt.Printf("Services: %v\n", serviceNames)
-	
+
 	// Initialize the basic Vault setup (KV and Transit engines, shared encryption key)
 	if err := initializeVaultSecrets(vaultContainer); err != nil {
 		return nil, fmt.Errorf("failed to initialize basic Vault secrets: %w", err)
 	}
-	
+
 	// Create Vault client for auth middleware and service key operations
 	vaultClient, err := NewVaultClient(&VaultClientConfig{
 		Address: vaultContainer.HTTPSEndpoint,
@@ -464,63 +469,68 @@ func InitializeServiceVault(ctx context.Context, vaultContainer *VaultContainer,
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Vault client: %w", err)
 	}
-	
+
 	// Create a shared crypto service for service key hashing
 	// This uses the original shared key for API key operations
 	// Set environment variables for the hashicorpvault.New() function
 	originalAddr := os.Getenv("VAULT_ADDR")
 	originalToken := os.Getenv("VAULT_TOKEN")
-	
+
 	os.Setenv("VAULT_ADDR", vaultContainer.HTTPSEndpoint)
 	os.Setenv("VAULT_TOKEN", vaultContainer.RootToken)
-	
+
 	kms, err := hashicorpvault.New()
-	
+
 	// Restore original environment variables
 	os.Setenv("VAULT_ADDR", originalAddr)
 	os.Setenv("VAULT_TOKEN", originalToken)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KMS provider: %w", err)
 	}
-	
-	sharedCrypto, err := encx.New(ctx, kms, EncryptionKey, "secret/data/pepper")
+
+	sharedCrypto, err := encx.NewCrypto(
+		ctx,
+		encx.WithKMSService(kms),
+		encx.WithKEKAlias(EncryptionKey),
+		encx.WithPepperSecretPath("secret/data/pepper"),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create shared crypto service: %w", err)
 	}
-	
+
 	// Generate service API keys using the existing function
 	serviceKeys, err := InitializeServiceKeys(vaultContainer, sharedCrypto)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize service keys: %w", err)
 	}
-	
+
 	// Create per-service crypto services for data encryption
 	cryptoServices := make(map[string]encx.CryptoService)
-	
+
 	for _, serviceName := range serviceNames {
 		fmt.Printf("Creating service-specific crypto for: %s\n", serviceName)
-		
+
 		serviceCrypto, err := CreateServiceCryptoService(ctx, vaultContainer, serviceName)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create crypto service for %s: %w", serviceName, err)
 		}
-		
+
 		cryptoServices[serviceName] = serviceCrypto
 	}
-	
+
 	setup := &ServiceVaultSetup{
 		VaultContainer: vaultContainer,
 		ServiceKeys:    serviceKeys,
 		CryptoServices: cryptoServices,
 		VaultClient:    vaultClient,
 	}
-	
+
 	fmt.Printf("✅ Service Vault setup complete!\n")
 	fmt.Printf("   - %d service API keys generated\n", len(serviceKeys))
 	fmt.Printf("   - %d service-specific crypto services created\n", len(cryptoServices))
 	fmt.Printf("   - GDPR-compliant data isolation enabled\n")
-	
+
 	return setup, nil
 }
 
@@ -532,7 +542,7 @@ func SetupServiceVault(ctx context.Context, t *testing.T, serviceNames []string)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup Vault container: %w", err)
 	}
-	
+
 	// Initialize service-specific configuration
 	setup, err := InitializeServiceVault(ctx, vaultContainer, serviceNames)
 	if err != nil {
@@ -542,7 +552,7 @@ func SetupServiceVault(ctx context.Context, t *testing.T, serviceNames []string)
 		}
 		return nil, fmt.Errorf("failed to initialize service vault: %w", err)
 	}
-	
+
 	return setup, nil
 }
 
