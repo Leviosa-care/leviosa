@@ -5,7 +5,7 @@ go 1.24.2
 require (
 	github.com/Leviosa-care/core v0.0.0
 	github.com/google/uuid v1.6.0
-	github.com/hengadev/encx v0.3.0
+	github.com/hengadev/encx v0.5.0
 	github.com/hengadev/errsx v1.2.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/pressly/goose/v3 v3.25.0
