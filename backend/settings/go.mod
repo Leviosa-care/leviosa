@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/vault/api v1.16.0
-	github.com/hengadev/encx v0.5.2
+	github.com/hengadev/encx v0.5.3
 	github.com/hengadev/errsx v1.2.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/pressly/goose/v3 v3.25.0
