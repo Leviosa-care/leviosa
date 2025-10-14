@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Leviosa-care/core/auth/session"
 	settingsHandler "github.com/Leviosa-care/settings/internal/adapters/http"
 	"github.com/Leviosa-care/settings/internal/adapters/postgres"
 	"github.com/Leviosa-care/settings/internal/adapters/rabbitmq"
@@ -36,20 +37,25 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
-	pgContainer   *tu.PostgresContainer
-	testPool      *pgxpool.Pool
-	s3Client      *s3.Client
-	crypto        encx.CryptoService
-	vaultSetup    *tu.ServiceVaultSetup  // Enhanced Vault setup with per-service keys
-	repo          ports.SettingsRepository
-	mediaRepo     ports.SettingsMedia
-	handler       settingsHandler.Handler
-	testServerURL string           // Global variable to hold the URL of the running test server
-	testServer    *http.Server     // To allow graceful shutdown
-	testMQConn    *amqp.Connection // RabbitMQ connection for test verification
+	pgContainer    *tu.PostgresContainer
+	testPool       *pgxpool.Pool
+	redisContainer *tu.RedisContainer // Redis container for session management
+	redisClient    *redis.Client      // Redis client for session management
+	s3Client       *s3.Client
+	crypto         encx.CryptoService
+	vaultSetup     *tu.ServiceVaultSetup // Enhanced Vault setup with per-service keys
+	authCtx        *tu.AuthTestContext   // Authentication context for user/session tests
+	repo           ports.SettingsRepository
+	mediaRepo      ports.SettingsMedia
+	sessionRepo    session.SessionRepository
+	handler        settingsHandler.Handler
+	testServerURL  string           // Global variable to hold the URL of the running test server
+	testServer     *http.Server     // To allow graceful shutdown
+	testMQConn     *amqp.Connection // RabbitMQ connection for test verification
 )
 
 func TestMain(m *testing.M) {
@@ -103,6 +109,18 @@ func TestMain(m *testing.M) {
 		panic(fmt.Sprintf("Failed to ping database pool: %v", err))
 	}
 	log.Println("Database pool ping successful.")
+
+	// Redis container for session management
+	log.Println("Setting up Redis container for session management...")
+	redisContainer, err = tu.SetupRedis(ctx, nil)
+	if err != nil {
+		log.Fatalf("Failed to setup Redis container: %v", err)
+	}
+	defer tu.TeardownRedis(ctx, nil, redisContainer)
+
+	// Create Redis client for tests
+	redisClient = redisContainer.NewClient()
+	log.Printf("✓ Redis client created for session management")
 
 	// migrations for schema and table
 	log.Println("Applying database migrations...")
@@ -198,12 +216,21 @@ func TestMain(m *testing.M) {
 		log.Fatal("Settings crypto service is nil")
 	}
 	log.Printf("✓ Settings service crypto initialized with per-service encryption key")
-	
+
 	// Log vault setup details for debugging
 	log.Printf("✓ Vault setup complete:")
 	log.Printf("  - Services: %d", len(vaultSetup.CryptoServices))
 	log.Printf("  - API Keys: %d", len(vaultSetup.ServiceKeys))
 	log.Printf("  - GDPR compliant per-service encryption: enabled")
+
+	// Initialize AuthTestContext for user/session testing
+	authCtx = &tu.AuthTestContext{
+		Pool:   testPool,
+		Redis:  redisClient,
+		Crypto: crypto,
+	}
+
+	log.Printf("✓ AuthTestContext initialized for user authentication testing")
 
 	rabbitmq.Setup(ctx, ch)
 
@@ -212,11 +239,12 @@ func TestMain(m *testing.M) {
 
 	// Create application service
 	service := settings.New(repo, mediaRepo, crypto, conn)
-	
+
 	// Create authentication middleware with Vault client
 	// For integration tests, we pass nil session repository since we're testing service auth
-	authmw := auth.NewSessionAuthMiddleware(nil, crypto, vaultSetup.VaultClient)
-	
+	sessionRepo = session.NewRedisSessionRepository(redisClient)
+	authmw := auth.NewSessionAuthMiddleware(sessionRepo, crypto, vaultSetup.VaultClient)
+
 	// Create HTTP handler with auth middleware
 	handler = settingsHandler.New(service, authmw)
 	log.Printf("✓ Settings handler created with service authentication middleware")
