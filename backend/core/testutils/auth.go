@@ -31,7 +31,6 @@
 //
 //	// Cleanup after test
 //	testutils.ClearAuthData(t, ctx, authCtx)
-//
 package testutils
 
 import (
@@ -58,7 +57,7 @@ import (
 // This avoids coupling to specific domain models in authuser module
 type User struct {
 	ID         uuid.UUID `json:"-"`
-	State      string    `json:"-" encx:"encrypt"`
+	State      string    `json:"-"`
 	Email      string    `json:"-" encx:"encrypt,hash_basic"`
 	FirstName  string    `json:"-" encx:"encrypt"`
 	LastName   string    `json:"-" encx:"encrypt"`
@@ -514,7 +513,7 @@ func insertUser(t *testing.T, ctx context.Context, user *UserEncx, pool *pgxpool
 	`
 
 	_, err := pool.Exec(ctx, query,
-		user.ID, user.StateEncrypted, user.EmailHash, user.EmailEncrypted, user.PasswordHashSecure,
+		user.ID, user.State, user.EmailHash, user.EmailEncrypted, user.PasswordHashSecure,
 		user.FirstNameEncrypted, user.LastNameEncrypted, user.TelephoneHash, user.TelephoneEncrypted,
 		user.RoleEncrypted, user.CreatedAtEncrypted, user.LoggedInAtEncrypted,
 		user.DEKEncrypted, user.KeyVersion)
