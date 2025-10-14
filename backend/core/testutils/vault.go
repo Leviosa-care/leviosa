@@ -3,6 +3,7 @@ package testutils
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,7 +16,8 @@ import (
 	"github.com/Leviosa-care/core/contracts/services"
 	"github.com/hashicorp/vault/api"
 	"github.com/hengadev/encx"
-	"github.com/hengadev/encx/providers/hashicorpvault"
+	hashicorpkeys "github.com/hengadev/encx/providers/keys/hashicorp"
+	hashicorpsecrets "github.com/hengadev/encx/providers/secrets/hashicorp"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -106,9 +108,14 @@ func initializeVaultSecrets(vaultContainer *VaultContainer) error {
 	}
 
 	// 3. Create the pepper secret required by encx (must be exactly 32 characters)
+	// NEW: Base64-encode the pepper for ENCX v0.6.0 compatibility
+	pepper := "testpepper123456testpepper123456" // Exactly 32 chars
+	pepperBytes := []byte(pepper)
+	pepperBase64 := base64.StdEncoding.EncodeToString(pepperBytes)
+
 	pepperData := map[string]any{
 		"data": map[string]any{
-			"value": "testpepper123456testpepper123456", // Exactly 32 chars
+			"value": pepperBase64,  // Base64-encoded pepper
 		},
 	}
 
@@ -379,9 +386,13 @@ func createServicePepper(vaultContainer *VaultContainer, serviceName string) err
 		pepper = pepper + strings.Repeat("y", 32-len(pepper))
 	}
 
+	// Convert pepper string to bytes and encode as base64 for proper ENCX compatibility
+	pepperBytes := []byte(pepper)
+	pepperBase64 := base64.StdEncoding.EncodeToString(pepperBytes)
+
 	pepperData := map[string]any{
 		"data": map[string]any{
-			"value": pepper,
+			"value": pepperBase64,
 		},
 	}
 
@@ -406,39 +417,51 @@ func CreateServiceCryptoService(ctx context.Context, vaultContainer *VaultContai
 		Token:   vaultContainer.RootToken,
 	}
 
-	// Create KMS provider using HashiCorp Vault
-	// Set environment variables for the hashicorpvault.New() function
+	// NEW: Set environment variables for both providers
 	originalAddr := os.Getenv("VAULT_ADDR")
 	originalToken := os.Getenv("VAULT_TOKEN")
 
 	os.Setenv("VAULT_ADDR", config.Address)
 	os.Setenv("VAULT_TOKEN", config.Token)
 
-	kms, err := hashicorpvault.New()
-
-	// Restore original environment variables
-	os.Setenv("VAULT_ADDR", originalAddr)
-	os.Setenv("VAULT_TOKEN", originalToken)
-
+	// NEW: Create KMS provider (KeyManagementService) for cryptographic operations
+	kms, err := hashicorpkeys.NewTransitService()
 	if err != nil {
+		// Restore environment variables on error
+		os.Setenv("VAULT_ADDR", originalAddr)
+		os.Setenv("VAULT_TOKEN", originalToken)
 		return nil, fmt.Errorf("failed to create KMS provider: %w", err)
 	}
 
-	// Create crypto service with service-specific keys
-	serviceKeyName := GetServiceEncryptionKeyName(serviceName)
-	servicePepperPath := GetServicePepperPath(serviceName)
+	// NEW: Create secrets provider (SecretManagementService) for pepper storage
+	secrets, err := hashicorpsecrets.NewKVStore()
+	if err != nil {
+		// Restore environment variables on error
+		os.Setenv("VAULT_ADDR", originalAddr)
+		os.Setenv("VAULT_TOKEN", originalToken)
+		return nil, fmt.Errorf("failed to create secrets store: %w", err)
+	}
 
-	crypto, err := encx.NewCrypto(
-		ctx,
-		encx.WithKMSService(kms),
-		encx.WithKEKAlias(serviceKeyName),
-		encx.WithPepperSecretPath(servicePepperPath),
-	)
+	// Restore original environment variables after provider creation
+	os.Setenv("VAULT_ADDR", originalAddr)
+	os.Setenv("VAULT_TOKEN", originalToken)
+
+	// NEW: Create explicit Config struct with service-specific values
+	serviceKeyName := GetServiceEncryptionKeyName(serviceName)
+
+	cfg := encx.Config{
+		KEKAlias:    serviceKeyName,  // Use key name, not full path
+		PepperAlias: serviceName,      // Use service name, not full Vault path
+	}
+
+	// NEW: Create crypto service with new v0.6.0 API signature
+	crypto, err := encx.NewCrypto(ctx, kms, secrets, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto service for %s: %w", serviceName, err)
 	}
 
-	fmt.Printf("✓ Created crypto service for service: %s\n", serviceName)
+	fmt.Printf("✓ Created crypto service for service: %s (key: %s, pepper: %s)\n",
+		serviceName, cfg.KEKAlias, cfg.PepperAlias)
 	return crypto, nil
 }
 
@@ -472,32 +495,47 @@ func InitializeServiceVault(ctx context.Context, vaultContainer *VaultContainer,
 
 	// Create a shared crypto service for service key hashing
 	// This uses the original shared key for API key operations
-	// Set environment variables for the hashicorpvault.New() function
 	originalAddr := os.Getenv("VAULT_ADDR")
 	originalToken := os.Getenv("VAULT_TOKEN")
 
 	os.Setenv("VAULT_ADDR", vaultContainer.HTTPSEndpoint)
 	os.Setenv("VAULT_TOKEN", vaultContainer.RootToken)
 
-	kms, err := hashicorpvault.New()
+	// NEW: Create KMS provider for cryptographic operations
+	kms, err := hashicorpkeys.NewTransitService()
+	if err != nil {
+		os.Setenv("VAULT_ADDR", originalAddr)
+		os.Setenv("VAULT_TOKEN", originalToken)
+		return nil, fmt.Errorf("failed to create KMS provider: %w", err)
+	}
+
+	// NEW: Create secrets provider for pepper storage
+	secrets, err := hashicorpsecrets.NewKVStore()
+	if err != nil {
+		os.Setenv("VAULT_ADDR", originalAddr)
+		os.Setenv("VAULT_TOKEN", originalToken)
+		return nil, fmt.Errorf("failed to create secrets store: %w", err)
+	}
 
 	// Restore original environment variables
 	os.Setenv("VAULT_ADDR", originalAddr)
 	os.Setenv("VAULT_TOKEN", originalToken)
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to create KMS provider: %w", err)
+	// NEW: Create Config struct for shared crypto service
+	// Note: Using "leviosa" as pepper alias (shared pepper for API key hashing)
+	cfg := encx.Config{
+		KEKAlias:    EncryptionKey,  // "leviosa-app-key"
+		PepperAlias: "leviosa",      // Use base name for shared pepper
 	}
 
-	sharedCrypto, err := encx.NewCrypto(
-		ctx,
-		encx.WithKMSService(kms),
-		encx.WithKEKAlias(EncryptionKey),
-		encx.WithPepperSecretPath("secret/data/pepper"),
-	)
+	// NEW: Create crypto service with new API
+	sharedCrypto, err := encx.NewCrypto(ctx, kms, secrets, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create shared crypto service: %w", err)
 	}
+
+	fmt.Printf("✓ Created shared crypto service (key: %s, pepper: %s)\n",
+		cfg.KEKAlias, cfg.PepperAlias)
 
 	// Generate service API keys using the existing function
 	serviceKeys, err := InitializeServiceKeys(vaultContainer, sharedCrypto)
