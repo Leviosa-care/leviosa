@@ -9,6 +9,8 @@ import (
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/httpx"
 	mw "github.com/Leviosa-care/core/middleware"
+
+	"github.com/hengadev/encx"
 )
 
 // ServiceInfo contains service authentication details for request context
@@ -155,7 +157,15 @@ func (m *SessionAuthMiddleware) validateServiceKey(ctx context.Context, serviceN
 	}
 
 	// Hash the provided key and compare with stored hash
-	providedKeyHash := m.crypto.HashBasic(ctx, []byte(serviceKey))
+	providedKeyBytes, err := encx.SerializeValue(serviceKey)
+	if err != nil {
+		logger.ErrorContext(ctx, "Service auth middleware: Failed to serialize service key",
+			"operation", "validate_service_key",
+			"service_name", serviceName,
+			"error", err)
+		return false
+	}
+	providedKeyHash := m.crypto.HashBasic(ctx, providedKeyBytes)
 
 	isValid := storedKeyHash == providedKeyHash
 

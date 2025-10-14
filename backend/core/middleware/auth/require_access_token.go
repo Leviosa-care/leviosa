@@ -13,6 +13,8 @@ import (
 	"github.com/Leviosa-care/core/httpx"
 	mw "github.com/Leviosa-care/core/middleware"
 	"github.com/google/uuid"
+
+	"github.com/hengadev/encx"
 )
 
 // RequireAccessToken validates access token from cookies and makes session available in context
@@ -47,7 +49,17 @@ func (m *SessionAuthMiddleware) RequireAccessToken(next mw.Handler) mw.Handler {
 			return
 		}
 
-		accessTokenHash := m.crypto.HashBasic(ctx, []byte(accessToken))
+		accessTokenBytes, err := encx.SerializeValue(accessToken)
+		if err != nil {
+			logger.ErrorContext(ctx, "Auth middleware: Failed to serialize access token",
+				"operation", "require_access_token",
+				"method", r.Method,
+				"path", r.URL.Path,
+				"error", err)
+			httpx.RespondWithError(w, err, http.StatusInternalServerError)
+			return
+		}
+		accessTokenHash := m.crypto.HashBasic(ctx, accessTokenBytes)
 
 		// Find session by access token using two-step lookup
 		sessionID, sessionData, err := m.sessionRepo.FindSessionByAccessTokenHash(ctx, accessTokenHash)

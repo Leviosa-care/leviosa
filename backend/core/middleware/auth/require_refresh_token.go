@@ -13,6 +13,8 @@ import (
 	"github.com/Leviosa-care/core/httpx"
 	mw "github.com/Leviosa-care/core/middleware"
 	"github.com/google/uuid"
+
+	"github.com/hengadev/encx"
 )
 
 // RequireRefreshToken validates refresh token from cookies for token refresh operations only
@@ -58,7 +60,17 @@ func (m *SessionAuthMiddleware) RequireRefreshToken(next mw.Handler) mw.Handler 
 			return
 		}
 
-		refreshTokenHash := m.crypto.HashBasic(ctx, []byte(refreshToken))
+		refreshTokenBytes, err := encx.SerializeValue(refreshToken)
+		if err != nil {
+			logger.ErrorContext(ctx, "Auth middleware: Failed to serialize refresh token",
+				"operation", "require_refresh_token",
+				"method", r.Method,
+				"path", r.URL.Path,
+				"error", err)
+			httpx.RespondWithError(w, err, http.StatusInternalServerError)
+			return
+		}
+		refreshTokenHash := m.crypto.HashBasic(ctx, refreshTokenBytes)
 
 		// Find session by refresh token using two-step lookup
 		sessionID, sessionData, err := m.sessionRepo.FindSessionByRefreshTokenHash(ctx, refreshTokenHash)
