@@ -26,7 +26,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/hashicorp/vault/api"
 	"github.com/hengadev/encx"
-	"github.com/hengadev/encx/providers/hashicorpvault"
+	hashicorpkeys "github.com/hengadev/encx/providers/keys/hashicorp"
+	hashicorpsecrets "github.com/hengadev/encx/providers/secrets/hashicorp"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
@@ -243,27 +244,34 @@ func setupVaultClient(cfg *Config) (*api.Client, error) {
 }
 
 func setupCryptoService(ctx context.Context, vaultClient *api.Client) (encx.CryptoService, error) {
-	// Create KMS provider using environment-based configuration
-	// The encx library will use VAULT_ADDR and VAULT_TOKEN environment variables
-	kms, err := hashicorpvault.New()
+	// Create KMS provider (KeyManagementService) for cryptographic operations
+	kms, err := hashicorpkeys.NewTransitService()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KMS provider: %w", err)
 	}
-	
+
+	// Create secrets provider (SecretManagementService) for pepper storage
+	secrets, err := hashicorpsecrets.NewKVStore()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create secrets provider: %w", err)
+	}
+
 	// Use service-specific encryption key and pepper for GDPR compliance
 	serviceKeyName := fmt.Sprintf("%s-encryption-key", services.Settings)
-	servicePepperPath := fmt.Sprintf("secret/data/peppers/%s", services.Settings)
-	
-	crypto, err := encx.NewCrypto(
-		ctx,
-		encx.WithKMSService(kms),
-		encx.WithKEKAlias(serviceKeyName),
-		encx.WithPepperSecretPath(servicePepperPath),
-	)
+	servicePepperAlias := services.Settings
+
+	// Create explicit Config struct with service-specific values
+	cfg := encx.Config{
+		KEKAlias:    serviceKeyName,  // Use key name, not full path
+		PepperAlias: servicePepperAlias, // Use service name, not full Vault path
+	}
+
+	// Create crypto service with new v0.6.0 API signature
+	crypto, err := encx.NewCrypto(ctx, kms, secrets, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto service: %w", err)
 	}
-	
+
 	slog.Info("Crypto service initialized", "service", services.Settings, "key", serviceKeyName)
 	return crypto, nil
 }
