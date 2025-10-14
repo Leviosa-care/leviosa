@@ -10,6 +10,7 @@ import (
 
 	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/core/errs"
+	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -25,8 +26,21 @@ func TestGetCompanyPhone(t *testing.T) {
 
 	t.Run("should return 404 when company phone not set", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		req := th.NewGetCompanyPhoneRequest(t, ctx, testServerURL)
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -43,6 +57,7 @@ func TestGetCompanyPhone(t *testing.T) {
 
 	t.Run("should successfully retrieve company phone (admin endpoint)", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Setup: Insert company phone setting directly into database using generated ENCX functions
 		phoneSetting := th.NewCompanyPhone(t, ctx)
@@ -50,8 +65,21 @@ func TestGetCompanyPhone(t *testing.T) {
 		require.NoError(t, err)
 		th.InsertCompanyPhoneEncrypted(t, ctx, phoneSettingEncx, testPool)
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Test: Get the company phone (admin endpoint)
 		req := th.NewGetCompanyPhoneRequest(t, ctx, testServerURL)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -73,6 +101,7 @@ func TestSetCompanyPhone(t *testing.T) {
 
 	t.Run("should successfully set company phone", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -81,9 +110,21 @@ func TestSetCompanyPhone(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		phoneValue := "0145678910"
 		request := domain.SetCompanyTelephoneRequest{Telephone: phoneValue}
 		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -108,9 +149,22 @@ func TestSetCompanyPhone(t *testing.T) {
 
 	t.Run("should return 400 for empty telephone", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		request := domain.SetCompanyTelephoneRequest{Telephone: ""}
 		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -127,8 +181,6 @@ func TestSetCompanyPhone(t *testing.T) {
 	})
 
 	t.Run("should return 400 for telephone shorter than 10 characters", func(t *testing.T) {
-		th.ClearAllTestData(t, ctx, testPool)
-
 		shortPhones := []string{
 			"123",
 			"12345678",
@@ -137,8 +189,23 @@ func TestSetCompanyPhone(t *testing.T) {
 
 		for _, phone := range shortPhones {
 			t.Run("short phone: "+phone, func(t *testing.T) {
+				th.ClearAllTestData(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
+
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetCompanyTelephoneRequest{Telephone: phone}
 				req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -158,10 +225,24 @@ func TestSetCompanyPhone(t *testing.T) {
 
 	t.Run("should return 400 for telephone longer than 20 characters", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		longPhone := "01234567890123456789012345" // 25 characters
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		request := domain.SetCompanyTelephoneRequest{Telephone: longPhone}
 		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -178,8 +259,6 @@ func TestSetCompanyPhone(t *testing.T) {
 	})
 
 	t.Run("should successfully accept various valid phone formats", func(t *testing.T) {
-		th.ClearAllTestData(t, ctx, testPool)
-
 		validPhones := []string{
 			"0123456789", // French mobile format
 			"0156789012", // French Paris landline
@@ -193,9 +272,22 @@ func TestSetCompanyPhone(t *testing.T) {
 		for _, phone := range validPhones {
 			t.Run("valid phone: "+phone, func(t *testing.T) {
 				th.ClearAllTestData(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
+
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 				request := domain.SetCompanyTelephoneRequest{Telephone: phone}
 				req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -219,6 +311,7 @@ func TestSetCompanyPhone(t *testing.T) {
 
 	t.Run("should handle whitespace trimming correctly", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -227,11 +320,24 @@ func TestSetCompanyPhone(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Phone with leading/trailing whitespace
 		phoneValue := "0123456789"
 		phoneValueWithSpaces := "  " + phoneValue + "  "
+
 		request := domain.SetCompanyTelephoneRequest{Telephone: phoneValueWithSpaces}
 		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -251,10 +357,23 @@ func TestSetCompanyPhone(t *testing.T) {
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		request := domain.SetCompanyTelephoneRequest{Telephone: "0123456789"}
 		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
 		req.Header.Set("Content-Type", "text/plain")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -272,11 +391,24 @@ func TestSetCompanyPhone(t *testing.T) {
 
 	t.Run("should return 400 for unknown JSON fields", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/phone",
 			strings.NewReader(`{"telephone": "0123456789", "unknown_field": "value"}`))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -294,6 +426,7 @@ func TestSetCompanyPhone(t *testing.T) {
 
 	t.Run("should successfully update existing company phone", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -310,12 +443,26 @@ func TestSetCompanyPhone(t *testing.T) {
 
 		// Update to new phone
 		newPhoneValue := "0222222222"
-		request2 := domain.SetCompanyTelephoneRequest{Telephone: newPhoneValue}
-		req2 := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request2)
-		resp2, err := client.Do(req2)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		request := domain.SetCompanyTelephoneRequest{Telephone: newPhoneValue}
+		req := th.NewSetCompanyPhoneRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
+		resp, err := client.Do(req)
 		require.NoError(t, err)
-		defer resp2.Body.Close()
-		require.Equal(t, http.StatusOK, resp2.StatusCode)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		phoneSettingEncx := th.GetEncryptedSettingFromDB(t, ctx, settings.CompanyPhone, testPool)
 		phoneSetting, err := domain.DecryptSettingEncryptedEncx(ctx, crypto, phoneSettingEncx)

@@ -8,7 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/settings/internal/domain"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -151,12 +153,15 @@ func NewSetOTPMaxAttemptsRequest(t *testing.T, ctx context.Context, serverURL st
 }
 
 // Bulk Settings Request Helper
-
 func NewBulkSettingsRequest(t *testing.T, ctx context.Context, serverURL string, keys []string) *http.Request {
-	keysParam := strings.Join(keys, ",")
-	url := serverURL + "/settings/bulk?keys=" + keysParam
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	require.NoError(t, err)
+	paramkeys := strings.Join(keys, ",")
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		serverURL+"/admin/settings/bulk?keys="+paramkeys,
+		nil,
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
 	return req
 }
 
@@ -193,7 +198,8 @@ func NewInternalGetOTPDurationRequest(t *testing.T, ctx context.Context, serverU
 }
 
 func NewInternalBulkSettingsRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/internal/settings/bulk", nil)
+	url := "/internal/settings/bulk?keys=" + settings.CompanyLogo
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+url, nil)
 	require.NoError(t, err)
 	return req
 }

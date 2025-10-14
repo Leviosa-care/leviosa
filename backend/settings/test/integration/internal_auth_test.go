@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/services"
+	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/core/httpx"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
@@ -15,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// TEST=TestServiceAuthentication make test-integration-test
 
 // TestServiceAuthentication tests the /internal/* endpoints that require service authentication
 func TestServiceAuthentication(t *testing.T) {
@@ -49,7 +52,7 @@ func TestServiceAuthentication(t *testing.T) {
 		})
 
 		t.Run("should allow notification service to access company email", func(t *testing.T) {
-			// Get notification service API key  
+			// Get notification service API key
 			notificationAPIKey, exists := vaultSetup.GetServiceAPIKey(services.Notification)
 			require.True(t, exists, "Notification service API key should exist")
 
@@ -90,7 +93,7 @@ func TestServiceAuthentication(t *testing.T) {
 	t.Run("Invalid Service Authentication", func(t *testing.T) {
 		t.Run("should reject request with missing service name header", func(t *testing.T) {
 			catalogAPIKey, _ := vaultSetup.GetServiceAPIKey(services.Catalog)
-			
+
 			req := th.NewInternalGetCompanyNameRequest(t, ctx, testServerURL)
 			// Missing X-Service-Name header
 			req.Header.Set(services.ServiceKeyHeader, catalogAPIKey)
@@ -112,14 +115,14 @@ func TestServiceAuthentication(t *testing.T) {
 
 		t.Run("should reject request with invalid service name", func(t *testing.T) {
 			catalogAPIKey, _ := vaultSetup.GetServiceAPIKey(services.Catalog)
-			
+
 			req := th.NewInternalGetCompanyNameRequest(t, ctx, testServerURL)
 			req.Header.Set(services.ServiceNameHeader, "invalid-service")
 			req.Header.Set(services.ServiceKeyHeader, catalogAPIKey)
 
 			resp, err := client.Do(req)
 			require.NoError(t, err)
-			assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		})
 
 		t.Run("should reject request with invalid API key", func(t *testing.T) {
@@ -135,7 +138,7 @@ func TestServiceAuthentication(t *testing.T) {
 		t.Run("should reject request with wrong service API key", func(t *testing.T) {
 			// Try to use notification service key with catalog service name
 			notificationAPIKey, _ := vaultSetup.GetServiceAPIKey(services.Notification)
-			
+
 			req := th.NewInternalGetCompanyNameRequest(t, ctx, testServerURL)
 			req.Header.Set(services.ServiceNameHeader, services.Catalog)
 			req.Header.Set(services.ServiceKeyHeader, notificationAPIKey) // Wrong key for service
@@ -172,13 +175,16 @@ func TestServiceAuthentication(t *testing.T) {
 	})
 }
 
+// TEST=TestInternalEndpointsComprehensive make test-integration-test
+
 // TestInternalEndpointsComprehensive tests all internal endpoints with service auth
+
 func TestInternalEndpointsComprehensive(t *testing.T) {
 	ctx := context.Background()
-	
+
 	// Setup test data
 	setupServiceAuthTestData(t, ctx)
-	
+
 	// Get API key for testing
 	catalogAPIKey, exists := vaultSetup.GetServiceAPIKey(services.Catalog)
 	require.True(t, exists)
@@ -197,14 +203,14 @@ func TestInternalEndpointsComprehensive(t *testing.T) {
 			expectedCode: http.StatusOK,
 		},
 		{
-			name:         "internal company email", 
+			name:         "internal company email",
 			endpoint:     "/internal/settings/email",
 			requestFunc:  th.NewInternalGetCompanyEmailRequest,
 			expectedCode: http.StatusOK,
 		},
 		{
 			name:         "internal company phone",
-			endpoint:     "/internal/settings/phone", 
+			endpoint:     "/internal/settings/phone",
 			requestFunc:  th.NewInternalGetCompanyPhoneRequest,
 			expectedCode: http.StatusOK,
 		},
@@ -239,7 +245,7 @@ func TestInternalEndpointsComprehensive(t *testing.T) {
 			resp, err := client.Do(req)
 			require.NoError(t, err, "Request should not fail")
 			assert.Equal(t, tc.expectedCode, resp.StatusCode, "Should return expected status code")
-			
+
 			// All internal endpoints should return JSON
 			contentType := resp.Header.Get("Content-Type")
 			if tc.expectedCode == http.StatusOK {
@@ -251,13 +257,25 @@ func TestInternalEndpointsComprehensive(t *testing.T) {
 
 // setupServiceAuthTestData creates test data needed for service authentication tests
 func setupServiceAuthTestData(t *testing.T, ctx context.Context) {
+	t.Helper()
+
 	// Clear existing data
 	th.ClearSettingsTable(t, ctx, testPool)
-	
+
 	// Insert test company data
 	th.InsertTestCompanyName(t, ctx, "Test Company Inc", testPool)
 	th.InsertTestCompanyEmail(t, ctx, "test@company.com", testPool)
-	th.InsertTestCompanyPhone(t, ctx, "+1234567890", testPool)
 	th.InsertTestCompanyAddress(t, ctx, "123 Test Street", testPool)
 	th.InsertTestOTPDuration(t, ctx, 300, testPool) // 5 minutes
+	now := time.Now()
+	phoneSettings := domain.SettingEncrypted{
+		ID:        "858374573",
+		Key:       settings.CompanyPhone,
+		Value:     "0612345679",
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	phoneEncrypted, err := domain.ProcessSettingEncryptedEncx(ctx, crypto, &phoneSettings)
+	require.NoError(t, err)
+	th.InsertTestCompanyPhone(t, ctx, phoneEncrypted, testPool)
 }

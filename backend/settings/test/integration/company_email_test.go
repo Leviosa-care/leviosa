@@ -10,6 +10,7 @@ import (
 
 	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/core/errs"
+	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/Leviosa-care/core/validation"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
@@ -72,6 +73,7 @@ func TestSetCompanyEmail(t *testing.T) {
 
 	t.Run("should successfully set company email", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -80,8 +82,20 @@ func TestSetCompanyEmail(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		request := domain.SetCompanyEmailRequest{Email: "contact@newcompany.com"}
 		req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -105,9 +119,19 @@ func TestSetCompanyEmail(t *testing.T) {
 
 	t.Run("should return 400 for empty email", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 		request := domain.SetCompanyEmailRequest{Email: ""}
 		req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -124,8 +148,6 @@ func TestSetCompanyEmail(t *testing.T) {
 	})
 
 	t.Run("should return 400 for invalid email format", func(t *testing.T) {
-		th.ClearSettingsTable(t, ctx, testPool)
-
 		invalidEmails := []string{
 			"notanemail",
 			"@domain.com",
@@ -137,8 +159,20 @@ func TestSetCompanyEmail(t *testing.T) {
 
 		for _, email := range invalidEmails {
 			t.Run("invalid email: "+email, func(t *testing.T) {
+				th.ClearSettingsTable(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
+
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 				request := domain.SetCompanyEmailRequest{Email: email}
 				req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -158,6 +192,9 @@ func TestSetCompanyEmail(t *testing.T) {
 
 	t.Run("should return 400 for email exceeding 255 characters", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create a long email address
 		longLocalPart := strings.Repeat("a", validation.EmailMaxLength)
@@ -165,6 +202,14 @@ func TestSetCompanyEmail(t *testing.T) {
 
 		request := domain.SetCompanyEmailRequest{Email: longEmail}
 		req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -181,8 +226,6 @@ func TestSetCompanyEmail(t *testing.T) {
 	})
 
 	t.Run("should successfully accept valid email formats", func(t *testing.T) {
-		th.ClearSettingsTable(t, ctx, testPool)
-
 		validEmails := []string{
 			"simple@domain.com",
 			"user.name@domain.com",
@@ -195,6 +238,7 @@ func TestSetCompanyEmail(t *testing.T) {
 		for _, email := range validEmails {
 			t.Run("valid email: "+email, func(t *testing.T) {
 				th.ClearSettingsTable(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
 
 				// Create a test channel for RabbitMQ verification
 				testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -203,8 +247,19 @@ func TestSetCompanyEmail(t *testing.T) {
 				// Purge queues to ensure clean state
 				th.PurgeSettingsQueues(t, testCh)
 
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetCompanyEmailRequest{Email: email}
 				req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -225,10 +280,20 @@ func TestSetCompanyEmail(t *testing.T) {
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 		request := domain.SetCompanyEmailRequest{Email: "test@company.com"}
 		req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+
 		req.Header.Set("Content-Type", "text/plain")
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -246,11 +311,22 @@ func TestSetCompanyEmail(t *testing.T) {
 
 	t.Run("should return 400 for unknown JSON fields", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/email",
 			strings.NewReader(`{"email": "test@company.com", "unknown_field": "value"}`))
 		require.NoError(t, err)
+
 		req.Header.Set("Content-Type", "application/json")
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -268,6 +344,7 @@ func TestSetCompanyEmail(t *testing.T) {
 
 	t.Run("should successfully update existing company email", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -280,11 +357,20 @@ func TestSetCompanyEmail(t *testing.T) {
 		oldEmail := "old@company.com"
 		th.InsertCompanyEmail(t, ctx, oldEmail, testPool)
 
-		// Update to new email
+		// Setup admin user and update to new email
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 		newEmail := "new@company.com"
-		request2 := domain.SetCompanyEmailRequest{Email: newEmail}
-		req2 := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request2)
-		resp2, err := client.Do(req2)
+		request := domain.SetCompanyEmailRequest{Email: newEmail}
+		req := th.NewSetCompanyEmailRequest(t, ctx, testServerURL, request)
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
+		resp2, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		require.Equal(t, http.StatusOK, resp2.StatusCode)

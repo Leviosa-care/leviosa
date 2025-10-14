@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/settings"
+	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -25,8 +26,17 @@ func TestGetOTPLength(t *testing.T) {
 
 	t.Run("should return 404 when OTP length not set", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		req := th.NewGetOTPLengthRequest(t, ctx, testServerURL)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -43,13 +53,21 @@ func TestGetOTPLength(t *testing.T) {
 
 	t.Run("should successfully retrieve OTP length (admin endpoint)", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Setup: Insert OTP length directly into database
 		length := 6
 		th.InsertOTPLength(t, ctx, length, testPool)
 
-		// Test: Get the OTP length
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		req := th.NewGetOTPLengthRequest(t, ctx, testServerURL)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -71,6 +89,7 @@ func TestSetOTPLength(t *testing.T) {
 
 	t.Run("should successfully set OTP length", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -80,8 +99,21 @@ func TestSetOTPLength(t *testing.T) {
 		th.PurgeSettingsQueues(t, testCh)
 
 		length := 8
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		request := domain.SetOTPLengthRequest{Length: length}
 		req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -104,14 +136,27 @@ func TestSetOTPLength(t *testing.T) {
 	})
 
 	t.Run("should return 400 for length less than 4 digits", func(t *testing.T) {
-		th.ClearAllTestData(t, ctx, testPool)
-
 		invalidLengths := []int{0, -1, 1, 2, 3}
 
 		for _, length := range invalidLengths {
 			t.Run(fmt.Sprintf("invalid length: %d", length), func(t *testing.T) {
+				th.ClearAllTestData(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
+
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetOTPLengthRequest{Length: length}
 				req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -130,14 +175,27 @@ func TestSetOTPLength(t *testing.T) {
 	})
 
 	t.Run("should return 400 for length greater than 10 digits", func(t *testing.T) {
-		th.ClearAllTestData(t, ctx, testPool)
-
 		invalidLengths := []int{11, 12, 15, 20}
 
 		for _, length := range invalidLengths {
 			t.Run(fmt.Sprintf("invalid length: %d", length), func(t *testing.T) {
+				th.ClearAllTestData(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
+
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetOTPLengthRequest{Length: length}
 				req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -156,8 +214,6 @@ func TestSetOTPLength(t *testing.T) {
 	})
 
 	t.Run("should successfully accept valid length ranges", func(t *testing.T) {
-		th.ClearAllTestData(t, ctx, testPool)
-
 		validLengths := []struct {
 			length int
 			name   string
@@ -174,6 +230,7 @@ func TestSetOTPLength(t *testing.T) {
 		for _, test := range validLengths {
 			t.Run(test.name, func(t *testing.T) {
 				th.ClearAllTestData(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
 
 				// Create a test channel for RabbitMQ verification
 				testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -182,8 +239,20 @@ func TestSetOTPLength(t *testing.T) {
 				// Purge queues to ensure clean state
 				th.PurgeSettingsQueues(t, testCh)
 
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetOTPLengthRequest{Length: test.length}
 				req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -209,10 +278,23 @@ func TestSetOTPLength(t *testing.T) {
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		request := domain.SetOTPLengthRequest{Length: 6}
 		req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
 		req.Header.Set("Content-Type", "text/plain")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -230,11 +312,24 @@ func TestSetOTPLength(t *testing.T) {
 
 	t.Run("should return 400 for unknown JSON fields", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/otp/length",
 			strings.NewReader(`{"length": 6, "unknown_field": "value"}`))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -252,6 +347,7 @@ func TestSetOTPLength(t *testing.T) {
 
 	t.Run("should successfully update existing OTP length", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -266,12 +362,26 @@ func TestSetOTPLength(t *testing.T) {
 
 		// Update to new length
 		newLength := 8
-		request2 := domain.SetOTPLengthRequest{Length: newLength}
-		req2 := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request2)
-		resp2, err := client.Do(req2)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		request := domain.SetOTPLengthRequest{Length: newLength}
+		req := th.NewSetOTPLengthRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
+		resp, err := client.Do(req)
 		require.NoError(t, err)
-		defer resp2.Body.Close()
-		require.Equal(t, http.StatusOK, resp2.StatusCode)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify updated length directly in database
 		retrievedLength, err := th.GetOTPLengthFromDB(t, ctx, testPool)

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/settings"
+	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -70,6 +71,7 @@ func TestSetCompanyName(t *testing.T) {
 
 	t.Run("should successfully set company name", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -78,9 +80,21 @@ func TestSetCompanyName(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		name := "New Company Name"
 		request := domain.SetCompanyNameRequest{Name: name}
 		req := th.NewSetCompanyNameRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -104,9 +118,22 @@ func TestSetCompanyName(t *testing.T) {
 
 	t.Run("should return 400 for empty company name", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		request := domain.SetCompanyNameRequest{Name: ""}
 		req := th.NewSetCompanyNameRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -124,9 +151,20 @@ func TestSetCompanyName(t *testing.T) {
 
 	t.Run("should return 400 for whitespace-only company name", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 		request := domain.SetCompanyNameRequest{Name: "   "}
 		req := th.NewSetCompanyNameRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -144,6 +182,9 @@ func TestSetCompanyName(t *testing.T) {
 
 	t.Run("should return 400 for company name exceeding 255 characters", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		longName := string(make([]byte, 256))
 		for i := range longName {
@@ -152,6 +193,15 @@ func TestSetCompanyName(t *testing.T) {
 
 		request := domain.SetCompanyNameRequest{Name: longName}
 		req := th.NewSetCompanyNameRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -169,10 +219,21 @@ func TestSetCompanyName(t *testing.T) {
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 		request := domain.SetCompanyNameRequest{Name: "Test Company"}
 		req := th.NewSetCompanyNameRequest(t, ctx, testServerURL, request)
 		req.Header.Set("Content-Type", "text/plain")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -190,11 +251,22 @@ func TestSetCompanyName(t *testing.T) {
 
 	t.Run("should return 400 for invalid JSON", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/name",
 			strings.NewReader(`{"name": "test", "invalid_field": "value"}`))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -212,6 +284,7 @@ func TestSetCompanyName(t *testing.T) {
 
 	t.Run("should successfully update existing company name", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -224,11 +297,22 @@ func TestSetCompanyName(t *testing.T) {
 		oldName := "Initial Company"
 		th.InsertCompanyName(t, ctx, oldName, testPool)
 
-		// Update to new name
+		// Setup admin user and update to new name
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 		newName := "Updated Company"
-		request2 := domain.SetCompanyNameRequest{Name: newName}
-		req2 := th.NewSetCompanyNameRequest(t, ctx, testServerURL, request2)
-		resp2, err := client.Do(req2)
+		request := domain.SetCompanyNameRequest{Name: newName}
+		req := th.NewSetCompanyNameRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
+		resp2, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		require.Equal(t, http.StatusOK, resp2.StatusCode)

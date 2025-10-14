@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/services"
+	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/core/httpx"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
@@ -16,10 +17,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TEST=TestMultiServiceIntegration make test-integration-test
+
 // TestMultiServiceIntegration tests service-to-service communication scenarios
 func TestMultiServiceIntegration(t *testing.T) {
 	ctx := context.Background()
-	
+
 	// Setup test data
 	setupMultiServiceTestData(t, ctx)
 
@@ -124,7 +127,8 @@ func TestMultiServiceIntegration(t *testing.T) {
 			require.NoError(t, err, "Should create service client successfully")
 
 			// Settings service accessing its own bulk endpoint
-			resp, err := serviceClient.Get(ctx, "/internal/settings/bulk")
+			url := "/internal/settings/bulk?keys=" + settings.CompanyLogo
+			resp, err := serviceClient.Get(ctx, url)
 			require.NoError(t, err, "Should make request successfully")
 			assert.Equal(t, http.StatusOK, resp.StatusCode, "Should return 200 OK")
 			resp.Body.Close()
@@ -135,10 +139,10 @@ func TestMultiServiceIntegration(t *testing.T) {
 		t.Run("service cannot use another service's API key", func(t *testing.T) {
 			// Try to use notification service key with catalog service name
 			notificationAPIKey, _ := vaultSetup.GetServiceAPIKey(services.Notification)
-			
+
 			client := &http.Client{Timeout: 10 * time.Second}
 			req := th.NewInternalGetCompanyNameRequest(t, ctx, testServerURL)
-			req.Header.Set(services.ServiceNameHeader, services.Catalog) // Wrong service name
+			req.Header.Set(services.ServiceNameHeader, services.Catalog)  // Wrong service name
 			req.Header.Set(services.ServiceKeyHeader, notificationAPIKey) // Wrong key for catalog
 
 			resp, err := client.Do(req)
@@ -148,7 +152,7 @@ func TestMultiServiceIntegration(t *testing.T) {
 
 		t.Run("invalid service name should be rejected", func(t *testing.T) {
 			catalogAPIKey, _ := vaultSetup.GetServiceAPIKey(services.Catalog)
-			
+
 			client := &http.Client{Timeout: 10 * time.Second}
 			req := th.NewInternalGetCompanyNameRequest(t, ctx, testServerURL)
 			req.Header.Set(services.ServiceNameHeader, "invalid-service") // Invalid service name
@@ -156,7 +160,7 @@ func TestMultiServiceIntegration(t *testing.T) {
 
 			resp, err := client.Do(req)
 			require.NoError(t, err)
-			assert.Equal(t, http.StatusUnauthorized, resp.StatusCode, "Should reject invalid service names")
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "Should reject invalid service names")
 		})
 	})
 
@@ -183,7 +187,7 @@ func TestMultiServiceIntegration(t *testing.T) {
 
 		t.Run("should reject missing base URL", func(t *testing.T) {
 			catalogAPIKey, _ := vaultSetup.GetServiceAPIKey(services.Catalog)
-			
+
 			_, err := httpx.NewServiceClient(httpx.ServiceClientConfig{
 				ServiceName: services.Catalog,
 				APIKey:      catalogAPIKey,
@@ -194,6 +198,8 @@ func TestMultiServiceIntegration(t *testing.T) {
 		})
 	})
 }
+
+// TEST=TestServiceDiscoveryScenarios make test-integration-test
 
 // TestServiceDiscoveryScenarios tests realistic service discovery patterns
 func TestServiceDiscoveryScenarios(t *testing.T) {
@@ -273,11 +279,23 @@ func TestServiceDiscoveryScenarios(t *testing.T) {
 func setupMultiServiceTestData(t *testing.T, ctx context.Context) {
 	// Clear existing data
 	th.ClearSettingsTable(t, ctx, testPool)
-	
+
 	// Insert comprehensive test data
 	th.InsertTestCompanyName(t, ctx, "Multi-Service Test Company", testPool)
 	th.InsertTestCompanyEmail(t, ctx, "multiservice@testcompany.com", testPool)
-	th.InsertTestCompanyPhone(t, ctx, "+1-555-MULTI", testPool)
+
+	now := time.Now()
+	phoneSettings := domain.SettingEncrypted{
+		ID:        "",
+		Key:       settings.CompanyPhone,
+		Value:     "0612345679",
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	phoneEncrypted, err := domain.ProcessSettingEncryptedEncx(ctx, crypto, &phoneSettings)
+	require.NoError(t, err)
+	th.InsertTestCompanyPhone(t, ctx, phoneEncrypted, testPool)
 	th.InsertTestCompanyAddress(t, ctx, "456 Service Integration Blvd", testPool)
 	th.InsertTestOTPDuration(t, ctx, 600, testPool) // 10 minutes
 }
+

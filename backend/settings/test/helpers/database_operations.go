@@ -401,17 +401,25 @@ func InsertTestCompanyEmail(t *testing.T, ctx context.Context, email string, poo
 	InsertCompanyEmail(t, ctx, email, pool)
 }
 
-func InsertTestCompanyPhone(t *testing.T, ctx context.Context, phone string, pool *pgxpool.Pool) {
-	// For simplicity in tests, we'll insert phone as a plain setting
-	// In production it would be encrypted, but for testing service auth we just need data
+// func InsertTestCompanyPhone(t *testing.T, ctx context.Context, phone string, pool *pgxpool.Pool) {
+func InsertTestCompanyPhone(t *testing.T, ctx context.Context, phoneSetting *domain.SettingEncryptedEncx, pool *pgxpool.Pool) {
 	query := `
-		INSERT INTO settings.plain (key, value)
-		VALUES ($1, $2)
+		INSERT INTO settings.encrypted (key, value_encrypted, dek_encrypted, key_version, metadata)
+		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT (key) DO UPDATE SET
-			value = EXCLUDED.value,
-			updated_at = NOW();
+			value_encrypted = EXCLUDED.value_encrypted,
+			dek_encrypted = EXCLUDED.dek_encrypted,
+			key_version = EXCLUDED.key_version;
 	`
-	_, err := pool.Exec(ctx, query, settings.CompanyPhone, phone)
+	_, err := pool.Exec(
+		ctx,
+		query,
+		phoneSetting.Key,
+		phoneSetting.ValueEncrypted,
+		phoneSetting.DEKEncrypted,
+		phoneSetting.KeyVersion,
+		phoneSetting.Metadata,
+	)
 	require.NoError(t, err)
 }
 

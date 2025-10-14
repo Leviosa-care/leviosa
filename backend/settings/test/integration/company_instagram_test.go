@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/settings"
+	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -70,6 +71,7 @@ func TestSetCompanyInstagram(t *testing.T) {
 
 	t.Run("should successfully set company instagram", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -79,8 +81,21 @@ func TestSetCompanyInstagram(t *testing.T) {
 		th.PurgeSettingsQueues(t, testCh)
 
 		insta := "https://instagram.com/mycompany"
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		request := domain.SetCompanyInstagramRequest{Instagram: insta}
 		req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -104,9 +119,22 @@ func TestSetCompanyInstagram(t *testing.T) {
 
 	t.Run("should return 400 for empty instagram link", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		request := domain.SetCompanyInstagramRequest{Instagram: ""}
 		req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -136,8 +164,21 @@ func TestSetCompanyInstagram(t *testing.T) {
 
 		for _, url := range invalidUrls {
 			t.Run("invalid URL: "+url, func(t *testing.T) {
+				defer tu.ClearAuthData(t, ctx, authCtx)
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetCompanyInstagramRequest{Instagram: url}
 				req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -157,13 +198,26 @@ func TestSetCompanyInstagram(t *testing.T) {
 
 	t.Run("should return 400 for instagram link exceeding 255 characters", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a long URL
 		longPath := strings.Repeat("a", 240)
 		longUrl := "https://instagram.com/" + longPath // Total > 255 chars
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		request := domain.SetCompanyInstagramRequest{Instagram: longUrl}
 		req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -180,8 +234,6 @@ func TestSetCompanyInstagram(t *testing.T) {
 	})
 
 	t.Run("should successfully accept various valid URL formats", func(t *testing.T) {
-		th.ClearAllTestData(t, ctx, testPool)
-
 		validUrls := []string{
 			"https://instagram.com/company",
 			"https://www.instagram.com/company",
@@ -198,6 +250,10 @@ func TestSetCompanyInstagram(t *testing.T) {
 		for _, url := range validUrls {
 			t.Run("valid URL: "+url, func(t *testing.T) {
 				th.ClearAllTestData(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
+
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 				// Create a test channel for RabbitMQ verification
 				testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -208,6 +264,15 @@ func TestSetCompanyInstagram(t *testing.T) {
 
 				request := domain.SetCompanyInstagramRequest{Instagram: url}
 				req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -227,8 +292,6 @@ func TestSetCompanyInstagram(t *testing.T) {
 	})
 
 	t.Run("should accept non-Instagram URLs (business requirement)", func(t *testing.T) {
-		th.ClearAllTestData(t, ctx, testPool)
-
 		// Test that the field accepts any valid URL, not just Instagram
 		nonInstagramUrls := []string{
 			"https://twitter.com/company",
@@ -240,6 +303,7 @@ func TestSetCompanyInstagram(t *testing.T) {
 		for _, url := range nonInstagramUrls {
 			t.Run("non-Instagram URL: "+url, func(t *testing.T) {
 				th.ClearAllTestData(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
 
 				// Create a test channel for RabbitMQ verification
 				testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -248,8 +312,20 @@ func TestSetCompanyInstagram(t *testing.T) {
 				// Purge queues to ensure clean state
 				th.PurgeSettingsQueues(t, testCh)
 
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetCompanyInstagramRequest{Instagram: url}
 				req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -270,10 +346,23 @@ func TestSetCompanyInstagram(t *testing.T) {
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		request := domain.SetCompanyInstagramRequest{Instagram: "https://instagram.com/test"}
 		req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
 		req.Header.Set("Content-Type", "text/plain")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -291,11 +380,24 @@ func TestSetCompanyInstagram(t *testing.T) {
 
 	t.Run("should return 400 for unknown JSON fields", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/instagram",
 			strings.NewReader(`{"instagram": "https://instagram.com/test", "unknown_field": "value"}`))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -313,6 +415,7 @@ func TestSetCompanyInstagram(t *testing.T) {
 
 	t.Run("should successfully update existing company instagram", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -326,14 +429,28 @@ func TestSetCompanyInstagram(t *testing.T) {
 		oldInsta := "https://instagram.com/oldcompany"
 		th.InsertCompanyInstagram(t, ctx, oldInsta, testPool)
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Update to new instagram
 		newInsta := "https://instagram.com/newcompany"
-		request2 := domain.SetCompanyInstagramRequest{Instagram: newInsta}
-		req2 := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request2)
-		resp2, err := client.Do(req2)
+
+		request := domain.SetCompanyInstagramRequest{Instagram: newInsta}
+		req := th.NewSetCompanyInstagramRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
+		resp, err := client.Do(req)
 		require.NoError(t, err)
-		defer resp2.Body.Close()
-		require.Equal(t, http.StatusOK, resp2.StatusCode)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify updated instagram directly in database
 		instagram, err := th.GetCompanyInstagramFromDB(t, ctx, testPool)

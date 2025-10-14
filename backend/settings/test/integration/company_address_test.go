@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/settings"
+	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -69,7 +70,9 @@ func TestSetCompanyAddress(t *testing.T) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	t.Run("should successfully set company address", func(t *testing.T) {
-		th.ClearSettingsTable(t, ctx, testPool)
+		// th.ClearSettingsTable(t, ctx, testPool)
+		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -78,9 +81,21 @@ func TestSetCompanyAddress(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		addressValue := "456 Business Ave, San Francisco, CA 94105"
 		request := domain.SetCompanyLegalAddressRequest{Address: addressValue}
 		req := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -104,9 +119,22 @@ func TestSetCompanyAddress(t *testing.T) {
 
 	t.Run("should return 400 for empty address", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		request := domain.SetCompanyLegalAddressRequest{Address: ""}
 		req := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -124,9 +152,22 @@ func TestSetCompanyAddress(t *testing.T) {
 
 	t.Run("should return 400 for whitespace-only address", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		request := domain.SetCompanyLegalAddressRequest{Address: "   \n\t   "}
 		req := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -144,10 +185,23 @@ func TestSetCompanyAddress(t *testing.T) {
 
 	t.Run("should return 400 for address exceeding 500 characters", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		longAddress := strings.Repeat("A", 501)
 		request := domain.SetCompanyLegalAddressRequest{Address: longAddress}
 		req := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -165,6 +219,7 @@ func TestSetCompanyAddress(t *testing.T) {
 
 	t.Run("should successfully accept multiline addresses", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -173,14 +228,27 @@ func TestSetCompanyAddress(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		multilineAddress := `Company Headquarters
-123 Main Street
-Suite 456
-New York, NY 10001
-United States`
+
+	123 Main Street
+	Suite 456
+	New York, NY 10001
+	United States`
 
 		request := domain.SetCompanyLegalAddressRequest{Address: multilineAddress}
 		req := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -204,7 +272,8 @@ United States`
 	})
 
 	t.Run("should successfully accept international addresses", func(t *testing.T) {
-		th.ClearAllTestData(t, ctx, testPool)
+		// th.ClearAllTestData(t, ctx, testPool)
+		// defer tu.ClearAuthData(t, ctx, authCtx)
 
 		internationalAddresses := []string{
 			"1-2-3 Shibuya, Tokyo 150-0002, Japan",
@@ -215,6 +284,8 @@ United States`
 
 		for _, address := range internationalAddresses {
 			t.Run("international address", func(t *testing.T) {
+				th.ClearAllTestData(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
 				th.ClearSettingsTable(t, ctx, testPool)
 
 				// Create a test channel for RabbitMQ verification
@@ -224,8 +295,20 @@ United States`
 				// Purge queues to ensure clean state
 				th.PurgeSettingsQueues(t, testCh)
 
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetCompanyLegalAddressRequest{Address: address}
 				req := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -242,15 +325,27 @@ United States`
 				th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyLegalAddress, address)
 			})
 		}
-
 	})
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		request := domain.SetCompanyLegalAddressRequest{Address: "123 Test St"}
 		req := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request)
 		req.Header.Set("Content-Type", "text/plain")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -268,6 +363,7 @@ United States`
 
 	t.Run("should successfully update existing company address", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -276,15 +372,28 @@ United States`
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Set initial address
 		oldAddress := "Old Address, Old City, OC 12345"
 		th.InsertCompanyAddress(t, ctx, oldAddress, testPool)
 
 		// Update to new address
 		newAddress := "New Address, New City, NC 67890"
-		request2 := domain.SetCompanyLegalAddressRequest{Address: newAddress}
-		req2 := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request2)
-		resp2, err := client.Do(req2)
+		request := domain.SetCompanyLegalAddressRequest{Address: newAddress}
+		req := th.NewSetCompanyAddressRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
+		resp2, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		require.Equal(t, http.StatusOK, resp2.StatusCode)

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/settings"
+	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -25,8 +26,17 @@ func TestGetOTPMaxAttempts(t *testing.T) {
 
 	t.Run("should return 404 when OTP max attempts not set", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		req := th.NewGetOTPMaxAttemptsRequest(t, ctx, testServerURL)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -43,13 +53,22 @@ func TestGetOTPMaxAttempts(t *testing.T) {
 
 	t.Run("should successfully retrieve OTP max attempts (admin endpoint)", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Setup: Insert OTP max attempts directly into database
 		attempts := 5
 		th.InsertOTPMaxAttempts(t, ctx, attempts, testPool)
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Test: Get the OTP max attempts
 		req := th.NewGetOTPMaxAttemptsRequest(t, ctx, testServerURL)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -71,6 +90,7 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 
 	t.Run("should successfully set OTP max attempts", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -80,8 +100,21 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 		th.PurgeSettingsQueues(t, testCh)
 
 		attempts := 3
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		request := domain.SetOTPMaxAttemptsRequest{MaxAttempts: attempts}
 		req := th.NewSetOTPMaxAttemptsRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -104,14 +137,27 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 	})
 
 	t.Run("should return 400 for max attempts less than 1", func(t *testing.T) {
-		th.ClearAllTestData(t, ctx, testPool)
-
 		invalidAttempts := []int{0, -1, -5}
 
 		for _, attempts := range invalidAttempts {
 			t.Run(fmt.Sprintf("invalid attempts: %d", attempts), func(t *testing.T) {
+				th.ClearAllTestData(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
+
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetOTPMaxAttemptsRequest{MaxAttempts: attempts}
 				req := th.NewSetOTPMaxAttemptsRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -130,14 +176,27 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 	})
 
 	t.Run("should return 400 for max attempts greater than 10", func(t *testing.T) {
-		th.ClearAllTestData(t, ctx, testPool)
-
 		invalidAttempts := []int{11, 15, 20, 100}
 
 		for _, attempts := range invalidAttempts {
 			t.Run(fmt.Sprintf("invalid attempts: %d", attempts), func(t *testing.T) {
+				th.ClearAllTestData(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
+
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetOTPMaxAttemptsRequest{MaxAttempts: attempts}
 				req := th.NewSetOTPMaxAttemptsRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -156,8 +215,6 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 	})
 
 	t.Run("should successfully accept valid max attempts ranges", func(t *testing.T) {
-		th.ClearAllTestData(t, ctx, testPool)
-
 		validAttempts := []struct {
 			attempts int
 			name     string
@@ -177,6 +234,7 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 		for _, test := range validAttempts {
 			t.Run(test.name, func(t *testing.T) {
 				th.ClearAllTestData(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
 
 				// Create a test channel for RabbitMQ verification
 				testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -185,8 +243,20 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 				// Purge queues to ensure clean state
 				th.PurgeSettingsQueues(t, testCh)
 
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetOTPMaxAttemptsRequest{MaxAttempts: test.attempts}
 				req := th.NewSetOTPMaxAttemptsRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -212,10 +282,23 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		request := domain.SetOTPMaxAttemptsRequest{MaxAttempts: 3}
 		req := th.NewSetOTPMaxAttemptsRequest(t, ctx, testServerURL, request)
 		req.Header.Set("Content-Type", "text/plain")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -233,11 +316,24 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 
 	t.Run("should return 400 for unknown JSON fields", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/otp/max-attempts",
 			strings.NewReader(`{"max_attempts": 3, "unknown_field": "value"}`))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -255,6 +351,7 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 
 	t.Run("should successfully update existing OTP max attempts", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -268,12 +365,26 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 
 		// Update to new max attempts
 		newAttempts := 7
-		request2 := domain.SetOTPMaxAttemptsRequest{MaxAttempts: newAttempts}
-		req2 := th.NewSetOTPMaxAttemptsRequest(t, ctx, testServerURL, request2)
-		resp2, err := client.Do(req2)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		request := domain.SetOTPMaxAttemptsRequest{MaxAttempts: newAttempts}
+		req := th.NewSetOTPMaxAttemptsRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
+		resp, err := client.Do(req)
 		require.NoError(t, err)
-		defer resp2.Body.Close()
-		require.Equal(t, http.StatusOK, resp2.StatusCode)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify updated max attempts directly in database
 		maxAttempts, err := th.GetOTPMaxAttemptsFromDB(t, ctx, testPool)
@@ -285,8 +396,6 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 	})
 
 	t.Run("should handle security considerations properly", func(t *testing.T) {
-		th.ClearAllTestData(t, ctx, testPool)
-
 		// Test edge cases for security
 		securityTests := []struct {
 			attempts    int
@@ -300,9 +409,22 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 		for _, test := range securityTests {
 			t.Run(fmt.Sprintf("security test: %s", test.description), func(t *testing.T) {
 				th.ClearAllTestData(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
+
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 				request := domain.SetOTPMaxAttemptsRequest{MaxAttempts: test.attempts}
 				req := th.NewSetOTPMaxAttemptsRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)

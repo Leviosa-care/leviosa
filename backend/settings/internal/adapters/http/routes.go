@@ -45,8 +45,8 @@ func (h *handler) RegisterExternalRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /admin/settings/tokens/refresh-duration", RequireAdministrator(mw.EnableCORS(h.GetRefreshTokenDuration)))
 	router.HandleFunc("POST /admin/settings/tokens/refresh-duration", RequireAdministrator(mw.EnableCORS(h.SetRefreshTokenDuration)))
 
-	// Bulk settings endpoint
-	router.HandleFunc("GET /settings/bulk", RequireAdministrator(mw.EnableCORS(h.BulkSettingsHandler)))
+	// Admin-only Bulk settings endpoint
+	router.HandleFunc("GET /admin/settings/bulk", RequireAdministrator(mw.EnableCORS(h.BulkSettingsHandler)))
 }
 
 // Internal service-to-service endpoints (protected by service authentication)

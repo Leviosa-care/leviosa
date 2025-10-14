@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/settings"
+	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -25,8 +26,17 @@ func TestGetOTPDuration(t *testing.T) {
 
 	t.Run("should return 404 when OTP duration not set", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		req := th.NewGetOTPDurationRequest(t, ctx, testServerURL)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -43,13 +53,21 @@ func TestGetOTPDuration(t *testing.T) {
 
 	t.Run("should successfully retrieve OTP duration (admin endpoint)", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Setup: Insert OTP duration directly into database
 		duration := 300
 		th.InsertOTPDuration(t, ctx, duration, testPool) // 5 minutes
 
-		// Test: Get the OTP duration via HTTP
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		req := th.NewGetOTPDurationRequest(t, ctx, testServerURL)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -71,6 +89,7 @@ func TestSetOTPDuration(t *testing.T) {
 
 	t.Run("should successfully set OTP duration", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
 		testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -79,9 +98,21 @@ func TestSetOTPDuration(t *testing.T) {
 		// Purge queues to ensure clean state
 		th.PurgeSettingsQueues(t, testCh)
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		duration := 600
 		request := domain.SetOTPDurationRequest{Duration: duration} // 10 minutes
 		req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -104,14 +135,28 @@ func TestSetOTPDuration(t *testing.T) {
 	})
 
 	t.Run("should return 400 for duration less than 60 seconds", func(t *testing.T) {
-		th.ClearSettingsTable(t, ctx, testPool)
 
 		invalidDurations := []int{0, -1, 30, 59}
 
 		for _, duration := range invalidDurations {
 			t.Run(fmt.Sprintf("invalid duration: %d", duration), func(t *testing.T) {
+				th.ClearSettingsTable(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
+
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetOTPDurationRequest{Duration: duration}
 				req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -130,14 +175,27 @@ func TestSetOTPDuration(t *testing.T) {
 	})
 
 	t.Run("should return 400 for duration greater than 3600 seconds", func(t *testing.T) {
-		th.ClearSettingsTable(t, ctx, testPool)
-
 		invalidDurations := []int{3601, 7200, 10000}
 
 		for _, duration := range invalidDurations {
 			t.Run(fmt.Sprintf("invalid duration: %d", duration), func(t *testing.T) {
+				th.ClearSettingsTable(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
+
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetOTPDurationRequest{Duration: duration}
 				req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -156,8 +214,6 @@ func TestSetOTPDuration(t *testing.T) {
 	})
 
 	t.Run("should successfully accept valid duration ranges", func(t *testing.T) {
-		th.ClearSettingsTable(t, ctx, testPool)
-
 		validDurations := []struct {
 			duration int
 			name     string
@@ -174,6 +230,7 @@ func TestSetOTPDuration(t *testing.T) {
 		for _, test := range validDurations {
 			t.Run(test.name, func(t *testing.T) {
 				th.ClearSettingsTable(t, ctx, testPool)
+				defer tu.ClearAuthData(t, ctx, authCtx)
 
 				// Create a test channel for RabbitMQ verification
 				testCh := th.GetRabbitMQChannel(t, testMQConn)
@@ -182,8 +239,20 @@ func TestSetOTPDuration(t *testing.T) {
 				// Purge queues to ensure clean state
 				th.PurgeSettingsQueues(t, testCh)
 
+				// Setup admin user and create authenticated request
+				accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 				request := domain.SetOTPDurationRequest{Duration: test.duration}
 				req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
+
+				// Add authentication to the request
+				authHeader := tu.CreateAuthHeader(accessToken)
+				for key, values := range authHeader {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
+				}
+				req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -209,10 +278,23 @@ func TestSetOTPDuration(t *testing.T) {
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		request := domain.SetOTPDurationRequest{Duration: 300}
 		req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
 		req.Header.Set("Content-Type", "text/plain")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -230,11 +312,24 @@ func TestSetOTPDuration(t *testing.T) {
 
 	t.Run("should return 400 for unknown JSON fields", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/otp/duration",
 			strings.NewReader(`{"duration": 300, "unknown_field": "value"}`))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -252,23 +347,33 @@ func TestSetOTPDuration(t *testing.T) {
 
 	t.Run("should successfully update existing OTP duration", func(t *testing.T) {
 		th.ClearSettingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
-		// Set initial duration
-		request1 := domain.SetOTPDurationRequest{Duration: 300}
-		req1 := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request1)
-		resp1, err := client.Do(req1)
-		require.NoError(t, err)
-		defer resp1.Body.Close()
-		require.Equal(t, http.StatusOK, resp1.StatusCode)
+		// Setup: Insert OTP duration directly into database
+		duration := 300
+		th.InsertOTPDuration(t, ctx, duration, testPool) // 5 minutes
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Update to new duration
 		newDuration := 900
-		request2 := domain.SetOTPDurationRequest{Duration: newDuration}
-		req2 := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request2)
-		resp2, err := client.Do(req2)
+		request := domain.SetOTPDurationRequest{Duration: newDuration}
+		req := th.NewSetOTPDurationRequest(t, ctx, testServerURL, request)
+
+		// Add authentication to the request
+		authHeader := tu.CreateAuthHeader(accessToken)
+		for key, values := range authHeader {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
+		resp, err := client.Do(req)
 		require.NoError(t, err)
-		defer resp2.Body.Close()
-		require.Equal(t, http.StatusOK, resp2.StatusCode)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify updated duration directly in database
 		retrievedDuration, err := th.GetOTPDurationFromDB(t, ctx, testPool)

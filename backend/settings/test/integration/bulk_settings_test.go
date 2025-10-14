@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/contracts/settings"
+	tu "github.com/Leviosa-care/core/testutils"
+	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
 	"github.com/stretchr/testify/assert"
@@ -18,11 +20,22 @@ import (
 
 func TestBulkSettingsHandler(t *testing.T) {
 	ctx := context.Background()
+	now := time.Now()
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	t.Run("should return 400 when keys parameter is missing", func(t *testing.T) {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/settings/bulk", nil)
+		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/admin/settings/bulk", nil)
 		require.NoError(t, err)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -32,8 +45,18 @@ func TestBulkSettingsHandler(t *testing.T) {
 	})
 
 	t.Run("should return 400 when keys parameter is empty", func(t *testing.T) {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/settings/bulk?keys=", nil)
+		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/admin/settings/bulk?keys=", nil)
 		require.NoError(t, err)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -44,18 +67,27 @@ func TestBulkSettingsHandler(t *testing.T) {
 
 	t.Run("should successfully retrieve single setting", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Setup: Insert company name
 		th.InsertCompanyName(t, ctx, "Test Company", testPool)
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, []string{settings.CompanyName})
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var response []settings.SettingDTO
+		var response []*settings.SettingDTO
 		err = json.NewDecoder(resp.Body).Decode(&response)
 		require.NoError(t, err)
 
@@ -66,6 +98,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 
 	t.Run("should successfully retrieve multiple settings", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Setup: Insert multiple settings
 		th.InsertCompanyName(t, ctx, "Bulk Test Company", testPool)
@@ -84,7 +117,15 @@ func TestBulkSettingsHandler(t *testing.T) {
 			settings.OTPMaxAttempts,
 		}
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -113,6 +154,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 
 	t.Run("should handle partial success with some invalid keys", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Setup: Insert only some settings
 		th.InsertCompanyName(t, ctx, "Partial Test Company", testPool)
@@ -125,7 +167,15 @@ func TestBulkSettingsHandler(t *testing.T) {
 			settings.CompanyEmail, // doesn't exist (not set)
 		}
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -158,9 +208,20 @@ func TestBulkSettingsHandler(t *testing.T) {
 	})
 
 	t.Run("should handle all invalid keys", func(t *testing.T) {
+		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
 		keys := []string{"invalid_key1", "invalid_key2"}
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -185,6 +246,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 
 	t.Run("should handle missing settings with not found errors", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		keys := []string{
 			settings.CompanyName,
@@ -192,7 +254,15 @@ func TestBulkSettingsHandler(t *testing.T) {
 			settings.OTPDuration,
 		}
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -218,6 +288,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 
 	t.Run("should handle duplicate keys in request", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Setup: Insert company name
 		th.InsertCompanyName(t, ctx, "Duplicate Test Company", testPool)
@@ -228,7 +299,15 @@ func TestBulkSettingsHandler(t *testing.T) {
 			settings.CompanyName, // another duplicate
 		}
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -249,6 +328,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 
 	t.Run("should handle all supported setting types", func(t *testing.T) {
 		th.ClearAllTestData(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Setup: Insert all types of settings
 		th.InsertCompanyName(t, ctx, "All Types Company", testPool)
@@ -258,20 +338,42 @@ func TestBulkSettingsHandler(t *testing.T) {
 		th.InsertOTPDuration(t, ctx, 20, testPool)
 		th.InsertOTPLength(t, ctx, 4, testPool)
 		th.InsertOTPMaxAttempts(t, ctx, 7, testPool)
+		// TODO: Add company phone just to get encrypted value test
+		phoneValue := "0612345679"
+		phoneSetting := domain.SettingEncrypted{
+			ID:        "",
+			Key:       settings.CompanyPhone,
+			Value:     phoneValue,
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
 
-		// Note: CompanyPhone and CompanyLogo are not included as they require special setup
+		phoneEncx, err := domain.ProcessSettingEncryptedEncx(ctx, crypto, &phoneSetting)
+		require.NoError(t, err)
+		th.InsertCompanyPhoneEncrypted(t, ctx, phoneEncx, testPool)
+
+		// Note: CompanyLogo is not included as it requires special setup
 
 		keys := []string{
 			settings.CompanyName,
 			settings.CompanyEmail,
 			settings.CompanyLegalAddress,
 			settings.CompanyInstagram,
+			settings.CompanyPhone,
 			settings.OTPDuration,
 			settings.OTPLength,
 			settings.OTPMaxAttempts,
 		}
 
+		// Setup admin user and create authenticated request
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		req := th.NewBulkSettingsRequest(t, ctx, testServerURL, keys)
+
+		// Add authentication to the request
+		req.Header = tu.CreateAuthHeader(accessToken)
+		req.AddCookie(tu.CreateAuthCookie(accessToken))
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -282,7 +384,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&response)
 		require.NoError(t, err)
 
-		require.Len(t, response, 7)
+		require.Len(t, response, 8)
 
 		// Create a map for easier verification
 		responseMap := make(map[string]string)
@@ -297,5 +399,6 @@ func TestBulkSettingsHandler(t *testing.T) {
 		assert.Equal(t, "20", responseMap[settings.OTPDuration])
 		assert.Equal(t, "4", responseMap[settings.OTPLength])
 		assert.Equal(t, "7", responseMap[settings.OTPMaxAttempts])
+		assert.Equal(t, phoneValue, responseMap[settings.CompanyPhone])
 	})
 }
