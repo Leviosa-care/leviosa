@@ -14,7 +14,7 @@ func TestServicePepperPath(t *testing.T) {
 		{Settings, "secret/data/settings/pepper"},
 		{Notification, "secret/data/notification/pepper"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.service, func(t *testing.T) {
 			result := ServicePepperPath(tt.service)
@@ -35,7 +35,7 @@ func TestServiceKEKPath(t *testing.T) {
 		{Settings, "transit/keys/settings-kek"},
 		{Notification, "transit/keys/notification-kek"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.service, func(t *testing.T) {
 			result := ServiceKEKPath(tt.service)
@@ -56,7 +56,7 @@ func TestServiceAPIKeyPath(t *testing.T) {
 		{Settings, "secret/data/services/settings/api-key"},
 		{Notification, "secret/data/services/notification/api-key"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.service, func(t *testing.T) {
 			result := ServiceAPIKeyPath(tt.service)
@@ -69,16 +69,17 @@ func TestServiceAPIKeyPath(t *testing.T) {
 
 func TestServiceVaultPaths(t *testing.T) {
 	paths := ServiceVaultPaths(Settings)
-	
+
 	expected := map[string]string{
 		"pepper":  "secret/data/settings/pepper",
 		"kek":     "transit/keys/settings-kek",
 		"api_key": "secret/data/services/settings/api-key",
 	}
-	
+
 	for key, expectedPath := range expected {
 		if paths[key] != expectedPath {
 			t.Errorf("ServiceVaultPaths()[%s] = %s, expected %s", key, paths[key], expectedPath)
 		}
 	}
 }
+
