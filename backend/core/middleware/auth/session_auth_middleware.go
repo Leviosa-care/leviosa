@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/Leviosa-care/core/auth/session"
+
 	"github.com/hashicorp/vault/api"
 	"github.com/hengadev/encx"
 )
