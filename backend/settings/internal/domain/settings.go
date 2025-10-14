@@ -20,7 +20,7 @@ type Setting[T any] struct {
 type SettingEncrypted struct {
 	ID        string    `json:"-"`
 	Key       string    `json:"-"`
-	Value     string    `json:"value" encx:"encrypt"`  // Clean - no companion fields!
+	Value     string    `json:"value" encx:"encrypt"` // Clean - no companion fields!
 	CreatedAt time.Time `json:"-"`
 	UpdatedAt time.Time `json:"-"`
 }
