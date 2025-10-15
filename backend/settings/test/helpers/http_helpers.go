@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/Leviosa-care/core/contracts/settings"
+	httpEndpoints "github.com/Leviosa-care/settings/internal/adapters/http"
 	"github.com/Leviosa-care/settings/internal/domain"
 
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,7 @@ import (
 // HTTP Request Helpers for Company Settings
 
 func NewGetCompanyNameRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/settings/name", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.GetCompanyNameEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
@@ -26,14 +27,14 @@ func NewSetCompanyNameRequest(t *testing.T, ctx context.Context, serverURL strin
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/name", bytes.NewReader(jsonBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+httpEndpoints.SetCompanyNameEndpoint, bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	return req
 }
 
 func NewGetCompanyEmailRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/settings/email", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.GetCompanyEmailEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
@@ -42,14 +43,14 @@ func NewSetCompanyEmailRequest(t *testing.T, ctx context.Context, serverURL stri
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/email", bytes.NewReader(jsonBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+httpEndpoints.SetCompanyEmailEndpoint, bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	return req
 }
 
 func NewGetCompanyPhoneRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/admin/settings/phone", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.AdminGetCompanyPhoneEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
@@ -58,14 +59,14 @@ func NewSetCompanyPhoneRequest(t *testing.T, ctx context.Context, serverURL stri
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/phone", bytes.NewReader(jsonBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+httpEndpoints.SetCompanyPhoneEndpoint, bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	return req
 }
 
 func NewGetCompanyAddressRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/settings/address", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.GetCompanyAddressEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
@@ -74,14 +75,14 @@ func NewSetCompanyAddressRequest(t *testing.T, ctx context.Context, serverURL st
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/address", bytes.NewReader(jsonBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+httpEndpoints.SetCompanyAddressEndpoint, bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	return req
 }
 
 func NewGetCompanyInstagramRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/settings/instagram", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.GetCompanyInstagramEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
@@ -90,14 +91,14 @@ func NewSetCompanyInstagramRequest(t *testing.T, ctx context.Context, serverURL 
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/instagram", bytes.NewReader(jsonBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+httpEndpoints.SetCompanyInstagramEndpoint, bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	return req
 }
 
 func NewGetCompanyLogoRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/settings/logo", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.GetCompanyLogoEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
@@ -105,7 +106,7 @@ func NewGetCompanyLogoRequest(t *testing.T, ctx context.Context, serverURL strin
 // HTTP Request Helpers for OTP Settings
 
 func NewGetOTPDurationRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/admin/settings/otp/duration", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.AdminGetOTPDurationEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
@@ -114,14 +115,14 @@ func NewSetOTPDurationRequest(t *testing.T, ctx context.Context, serverURL strin
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/otp/duration", bytes.NewReader(jsonBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+httpEndpoints.AdminSetOTPDurationEndpoint, bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	return req
 }
 
 func NewGetOTPLengthRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/admin/settings/otp/length", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.AdminGetOTPLengthEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
@@ -130,14 +131,14 @@ func NewSetOTPLengthRequest(t *testing.T, ctx context.Context, serverURL string,
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/otp/length", bytes.NewReader(jsonBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+httpEndpoints.AdminSetOTPLengthEndpoint, bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	return req
 }
 
 func NewGetOTPMaxAttemptsRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/admin/settings/otp/max-attempts", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.AdminGetOTPMaxAttemptsEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
@@ -146,7 +147,7 @@ func NewSetOTPMaxAttemptsRequest(t *testing.T, ctx context.Context, serverURL st
 	jsonBody, err := json.Marshal(request)
 	require.NoError(t, err)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/admin/settings/otp/max-attempts", bytes.NewReader(jsonBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+httpEndpoints.AdminSetOTPMaxAttemptsEndpoint, bytes.NewReader(jsonBody))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	return req
@@ -158,7 +159,7 @@ func NewBulkSettingsRequest(t *testing.T, ctx context.Context, serverURL string,
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		serverURL+"/admin/settings/bulk?keys="+paramkeys,
+		serverURL+httpEndpoints.AdminBulkEndpoint+"?keys="+paramkeys,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -168,37 +169,37 @@ func NewBulkSettingsRequest(t *testing.T, ctx context.Context, serverURL string,
 // Internal Service-to-Service Endpoint Helpers
 
 func NewInternalGetCompanyNameRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/internal/settings/name", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.InternalGetCompanyNameEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
 
 func NewInternalGetCompanyEmailRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/internal/settings/email", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.InternalGetCompanyEmailEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
 
 func NewInternalGetCompanyPhoneRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/internal/settings/phone", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.InternalGetCompanyPhoneEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
 
 func NewInternalGetCompanyAddressRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/internal/settings/address", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.InternalGetCompanyAddressEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
 
 func NewInternalGetOTPDurationRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/internal/settings/otp/duration", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+httpEndpoints.InternalGetOTPDurationEndpoint, nil)
 	require.NoError(t, err)
 	return req
 }
 
 func NewInternalBulkSettingsRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	url := "/internal/settings/bulk?keys=" + settings.CompanyLogo
+	url := httpEndpoints.InternalBulkEndpoint + "?keys=" + settings.CompanyLogo
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+url, nil)
 	require.NoError(t, err)
 	return req
