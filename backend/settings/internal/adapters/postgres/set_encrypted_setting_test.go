@@ -10,39 +10,51 @@ import (
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/settings/internal/domain"
 
+	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+// make test-unit-postgres TEST=TestSetPhone
+
 func TestSetPhone(t *testing.T) {
 	ctx := context.Background()
 
+	dek := "4tw34trw5yw34t8q039i4t3w5y3q4"
+	metadata := encx.EncryptionMetadata{
+		PepperVersion:    1,
+		KEKAlias:         "test-alias",
+		EncryptionTime:   1234567890,
+		GeneratorVersion: "1.0.0",
+	}
+	now := time.Now()
+
 	t.Run("successful phone setting creation", func(t *testing.T) {
 		// Arrange
-		setting := &domain.SettingEncrypted[string]{
-			Key:            settings.CompanyPhone, // Assuming this is domain.CompanyPhoneKey
-			Value:          "0123456789",         // Actual phone value (unencrypted)
-			ValueEncrypted: []byte("encrypted_phone_bytes_12345"),
-			DEK:            []byte("data_encryption_key"),
-			DEKEncrypted:   []byte("encrypted_dek_bytes_67890"),
+		phoneSetting := &domain.SettingEncryptedEncx{
+			Key:            settings.CompanyPhone,
+			ValueEncrypted: []byte("0612345679"),
+			DEKEncrypted:   []byte(dek),
 			KeyVersion:     1,
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			Metadata:       metadata,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		// Clean up before and after test
 		defer func() {
-			_, _ = testPool.Exec(ctx, "DELETE FROM settings.encrypted WHERE key = $1", setting.Key)
+			_, _ = testPool.Exec(ctx, "DELETE FROM settings.encrypted WHERE key = $1", phoneSetting.Key)
 		}()
 
 		// Act
-		err := repo.SetPhone(ctx, setting)
+		// err = repo.SetEncryptedSetting(ctx, phoneEncrypted)
+		err := repo.SetEncryptedSetting(ctx, phoneSetting)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify the record was inserted
-		var retrievedSetting domain.SettingEncrypted[string]
+		var retrievedSetting domain.SettingEncryptedEncx
 		query := `SELECT key, value_encrypted, created_at, updated_at, dek_encrypted, key_version 
 				  FROM settings.encrypted WHERE key = $1`
 
@@ -56,62 +68,60 @@ func TestSetPhone(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		assert.Equal(t, setting.ValueEncrypted, retrievedSetting.ValueEncrypted)
-		assert.Equal(t, setting.DEKEncrypted, retrievedSetting.DEKEncrypted)
-		assert.Equal(t, setting.KeyVersion, retrievedSetting.KeyVersion)
-		assert.WithinDuration(t, setting.CreatedAt, retrievedSetting.CreatedAt, time.Second)
-		assert.WithinDuration(t, setting.UpdatedAt, retrievedSetting.UpdatedAt, time.Second)
+		assert.Equal(t, phoneSetting.ValueEncrypted, retrievedSetting.ValueEncrypted)
+		assert.Equal(t, phoneSetting.DEKEncrypted, retrievedSetting.DEKEncrypted)
+		assert.Equal(t, phoneSetting.KeyVersion, retrievedSetting.KeyVersion)
+		assert.WithinDuration(t, phoneSetting.CreatedAt, retrievedSetting.CreatedAt, time.Second)
+		assert.WithinDuration(t, phoneSetting.UpdatedAt, retrievedSetting.UpdatedAt, time.Second)
 	})
 
 	t.Run("successful phone setting with empty encrypted values", func(t *testing.T) {
 		// Arrange
-		setting := &domain.SettingEncrypted[string]{
+		phoneSetting := &domain.SettingEncryptedEncx{
 			Key:            settings.CompanyPhone,
-			Value:          "",
-			ValueEncrypted: []byte{},
-			DEK:            []byte{},
-			DEKEncrypted:   []byte{},
-			KeyVersion:     0,
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			ValueEncrypted: []byte(""),
+			DEKEncrypted:   []byte(dek),
+			KeyVersion:     1,
+			Metadata:       metadata,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		defer func() {
-			_, _ = testPool.Exec(ctx, "DELETE FROM settings.encrypted WHERE key = $1", setting.Key)
+			_, _ = testPool.Exec(ctx, "DELETE FROM settings.encrypted WHERE key = $1", phoneSetting.Key)
 		}()
 
 		// Act
-		err := repo.SetPhone(ctx, setting)
+		err := repo.SetEncryptedSetting(ctx, phoneSetting)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify the record was inserted
 		var count int
-		err = testPool.QueryRow(ctx, "SELECT COUNT(*) FROM settings.encrypted WHERE key = $1", setting.Key).Scan(&count)
+		err = testPool.QueryRow(ctx, "SELECT COUNT(*) FROM settings.encrypted WHERE key = $1", phoneSetting.Key).Scan(&count)
 		require.NoError(t, err)
 		assert.Equal(t, 1, count)
 	})
 
 	t.Run("successful phone setting with nil encrypted values", func(t *testing.T) {
 		// Arrange
-		setting := &domain.SettingEncrypted[string]{
+		phoneSetting := &domain.SettingEncryptedEncx{
 			Key:            settings.CompanyPhone,
-			Value:          "0187654321",
-			ValueEncrypted: nil, // nil slice
-			DEK:            nil, // nil slice
-			DEKEncrypted:   nil, // nil slice
-			KeyVersion:     0,
+			ValueEncrypted: nil,
+			DEKEncrypted:   []byte(dek),
+			KeyVersion:     1,
+			Metadata:       metadata,
 			CreatedAt:      time.Now(),
 			UpdatedAt:      time.Now(),
 		}
 
 		defer func() {
-			_, _ = testPool.Exec(ctx, "DELETE FROM settings.encrypted WHERE key = $1", setting.Key)
+			_, _ = testPool.Exec(ctx, "DELETE FROM settings.encrypted WHERE key = $1", phoneSetting.Key)
 		}()
 
 		// Act
-		err := repo.SetPhone(ctx, setting)
+		err := repo.SetEncryptedSetting(ctx, phoneSetting)
 
 		// Assert
 		assert.ErrorIs(t, err, errs.ErrNotNullViolation)
@@ -119,21 +129,21 @@ func TestSetPhone(t *testing.T) {
 
 	t.Run("context cancellation returns error", func(t *testing.T) {
 		// Arrange
-		setting := &domain.SettingEncrypted[string]{
+		phoneSetting := &domain.SettingEncryptedEncx{
 			Key:            settings.CompanyPhone,
-			Value:          "0111111111",
-			ValueEncrypted: []byte("encrypted_value"),
-			DEKEncrypted:   []byte("encrypted_dek"),
+			ValueEncrypted: []byte("0612345679"),
+			DEKEncrypted:   []byte(dek),
 			KeyVersion:     1,
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			Metadata:       metadata,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		cancelledCtx, cancel := context.WithCancel(ctx)
 		cancel()
 
 		// Act
-		err := repo.SetPhone(cancelledCtx, setting)
+		err := repo.SetEncryptedSetting(cancelledCtx, phoneSetting)
 
 		// Assert
 		require.Error(t, err)
@@ -153,22 +163,22 @@ func TestSetPhone(t *testing.T) {
 			largeDEKEncrypted[i] = byte((i + 128) % 256)
 		}
 
-		setting := &domain.SettingEncrypted[string]{
+		phoneSetting := &domain.SettingEncryptedEncx{
 			Key:            settings.CompanyPhone,
-			Value:          "0155555555",
 			ValueEncrypted: largeValueEncrypted,
 			DEKEncrypted:   largeDEKEncrypted,
 			KeyVersion:     1,
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			Metadata:       metadata,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		defer func() {
-			_, _ = testPool.Exec(ctx, "DELETE FROM settings.encrypted WHERE key = $1", setting.Key)
+			_, _ = testPool.Exec(ctx, "DELETE FROM settings.encrypted WHERE key = $1", phoneSetting.Key)
 		}()
 
 		// Act
-		err := repo.SetPhone(ctx, setting)
+		err := repo.SetEncryptedSetting(ctx, phoneSetting)
 
 		// Assert - this might fail if your database has column length restrictions
 		// You might want to handle this case in your actual implementation
@@ -181,7 +191,7 @@ func TestSetPhone(t *testing.T) {
 			// Verify the large data was stored correctly
 			var retrievedValueEncrypted, retrievedDEKEncrypted []byte
 			query := "SELECT value_encrypted, dek_encrypted FROM settings.encrypted WHERE key = $1"
-			err = testPool.QueryRow(ctx, query, setting.Key).Scan(&retrievedValueEncrypted, &retrievedDEKEncrypted)
+			err = testPool.QueryRow(ctx, query, phoneSetting.Key).Scan(&retrievedValueEncrypted, &retrievedDEKEncrypted)
 			require.NoError(t, err)
 
 			assert.Equal(t, largeValueEncrypted, retrievedValueEncrypted)
@@ -194,30 +204,29 @@ func TestSetPhone(t *testing.T) {
 
 		for _, version := range versions {
 			t.Run(fmt.Sprintf("key_version_%d", version), func(t *testing.T) {
-				setting := &domain.SettingEncrypted[string]{
-					Key:            settings.CompanyPhone,
-					Value:          fmt.Sprintf("01%08d", version),
-					ValueEncrypted: []byte(fmt.Sprintf("encrypted_value_%d", version)),
-					DEKEncrypted:   []byte(fmt.Sprintf("encrypted_dek_%d", version)),
+				phoneSetting := &domain.SettingEncryptedEncx{Key: settings.CompanyPhone,
+					ValueEncrypted: []byte("0612345679"),
+					DEKEncrypted:   []byte(dek),
 					KeyVersion:     version,
+					Metadata:       metadata,
 					CreatedAt:      time.Now(),
 					UpdatedAt:      time.Now(),
 				}
 
 				defer func() {
-					_, _ = testPool.Exec(ctx, "DELETE FROM settings.encrypted WHERE key = $1", setting.Key)
+					_, _ = testPool.Exec(ctx, "DELETE FROM settings.encrypted WHERE key = $1", phoneSetting.Key)
 				}()
 
 				// Act
-				err := repo.SetPhone(ctx, setting)
+				err := repo.SetEncryptedSetting(ctx, phoneSetting)
 
 				// Assert
-				require.NoError(t, err)
+				assert.NoError(t, err)
 
 				// Verify key version was stored correctly
 				var retrievedKeyVersion int
 				query := "SELECT key_version FROM settings.encrypted WHERE key = $1"
-				err = testPool.QueryRow(ctx, query, setting.Key).Scan(&retrievedKeyVersion)
+				err = testPool.QueryRow(ctx, query, phoneSetting.Key).Scan(&retrievedKeyVersion)
 				require.NoError(t, err)
 				assert.Equal(t, version, retrievedKeyVersion)
 			})
@@ -225,8 +234,14 @@ func TestSetPhone(t *testing.T) {
 	})
 }
 
+// TEST=BenchmarkRepository_SetPhone make test-unit-test
+
 func BenchmarkRepository_SetPhone(b *testing.B) {
 	ctx := context.Background()
+
+	dek := "4tw34trw5yw34t8q039i4t3w5y3q4"
+	metadata := encx.EncryptionMetadata{}
+	now := time.Now()
 
 	// Test different encrypted data sizes
 	testCases := []struct {
@@ -246,31 +261,27 @@ func BenchmarkRepository_SetPhone(b *testing.B) {
 			for i := range b.N {
 				b.StopTimer()
 
-				// Create test data
-				valueEncrypted := make([]byte, tc.valueSize)
-				dekEncrypted := make([]byte, tc.dekSize)
-
-				setting := &domain.SettingEncrypted[string]{
+				phoneSetting := &domain.SettingEncryptedEncx{
 					ID:             fmt.Sprintf("benchmark-set-%s-%d", tc.name, i),
 					Key:            "company_phone",
-					Value:          fmt.Sprintf("01%08d", i),
-					ValueEncrypted: valueEncrypted,
-					DEKEncrypted:   dekEncrypted,
+					ValueEncrypted: []byte(fmt.Sprintf("01%08d", i)),
+					DEKEncrypted:   []byte(dek),
 					KeyVersion:     1,
-					CreatedAt:      time.Now(),
-					UpdatedAt:      time.Now(),
+					Metadata:       metadata,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				b.StartTimer()
 
-				err := repo.SetPhone(ctx, setting)
+				err := repo.SetEncryptedSetting(ctx, phoneSetting)
 				if err != nil {
 					b.Fatal(err)
 				}
 
 				b.StopTimer()
 				// Clean up
-				_, _ = testPool.Exec(ctx, "DELETE FROM settings.encrypted WHERE id = $1", setting.ID)
+				_, _ = testPool.Exec(ctx, "DELETE FROM settings.encrypted WHERE id = $1", phoneSetting.ID)
 			}
 		})
 	}

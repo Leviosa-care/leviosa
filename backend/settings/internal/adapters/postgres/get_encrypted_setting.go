@@ -9,6 +9,8 @@ import (
 	"github.com/Leviosa-care/core/errs"
 )
 
+// make test-unit-postgres TEST=GetEncryptedSetting
+
 func (r *repository) GetEncryptedSetting(ctx context.Context, key string) (*domain.SettingEncryptedEncx, error) {
 	var res domain.SettingEncryptedEncx
 	query := `

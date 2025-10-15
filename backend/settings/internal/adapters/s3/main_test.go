@@ -9,7 +9,7 @@ import (
 
 	media "github.com/Leviosa-care/settings/internal/adapters/s3"
 	"github.com/Leviosa-care/settings/internal/ports"
-	td "github.com/Leviosa-care/settings/test/testdata"
+	td "github.com/Leviosa-care/settings/test/helpers"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"

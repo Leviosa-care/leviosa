@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-unit-postgres TEST=TestSetString
+
 func TestSetString(t *testing.T) {
 	ctx := context.Background()
 

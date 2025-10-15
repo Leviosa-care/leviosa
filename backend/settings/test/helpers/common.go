@@ -32,4 +32,3 @@ func ClearAllTestData(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
 	ClearSettingsTable(t, ctx, pool)
 	ClearS3Bucket(t, ctx)
 }
-
