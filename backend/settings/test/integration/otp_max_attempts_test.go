@@ -11,6 +11,7 @@ import (
 
 	"github.com/Leviosa-care/core/contracts/settings"
 	tu "github.com/Leviosa-care/core/testutils"
+	httpEndpoints "github.com/Leviosa-care/settings/internal/adapters/http"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -321,7 +322,7 @@ func TestSetOTPMaxAttempts(t *testing.T) {
 		// Setup admin user and create authenticated request
 		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/otp/max-attempts",
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+httpEndpoints.AdminSetOTPMaxAttemptsEndpoint,
 			strings.NewReader(`{"max_attempts": 3, "unknown_field": "value"}`))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")

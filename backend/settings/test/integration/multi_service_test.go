@@ -10,6 +10,7 @@ import (
 	"github.com/Leviosa-care/core/contracts/services"
 	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/core/httpx"
+	httpEndpoints "github.com/Leviosa-care/settings/internal/adapters/http"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -41,7 +42,7 @@ func TestMultiServiceIntegration(t *testing.T) {
 			require.NoError(t, err, "Should create service client successfully")
 
 			// Test fetching company name
-			resp, err := serviceClient.Get(ctx, "/internal/settings/name")
+			resp, err := serviceClient.Get(ctx, httpEndpoints.InternalGetCompanyNameEndpoint)
 			require.NoError(t, err, "Should make request successfully")
 			assert.Equal(t, http.StatusOK, resp.StatusCode, "Should return 200 OK")
 
@@ -52,7 +53,7 @@ func TestMultiServiceIntegration(t *testing.T) {
 			resp.Body.Close()
 
 			// Test fetching company email
-			resp, err = serviceClient.Get(ctx, "/internal/settings/email")
+			resp, err = serviceClient.Get(ctx, httpEndpoints.InternalGetCompanyEmailEndpoint)
 			require.NoError(t, err, "Should make request successfully")
 			assert.Equal(t, http.StatusOK, resp.StatusCode, "Should return 200 OK")
 
@@ -77,7 +78,7 @@ func TestMultiServiceIntegration(t *testing.T) {
 			require.NoError(t, err, "Should create service client successfully")
 
 			// Notification service would typically fetch email settings
-			resp, err := serviceClient.Get(ctx, "/internal/settings/email")
+			resp, err := serviceClient.Get(ctx, httpEndpoints.InternalGetCompanyEmailEndpoint)
 			require.NoError(t, err, "Should make request successfully")
 			assert.Equal(t, http.StatusOK, resp.StatusCode, "Should return 200 OK")
 
@@ -102,7 +103,7 @@ func TestMultiServiceIntegration(t *testing.T) {
 			require.NoError(t, err, "Should create service client successfully")
 
 			// AuthUser service would fetch OTP configuration
-			resp, err := serviceClient.Get(ctx, "/internal/settings/otp/duration")
+			resp, err := serviceClient.Get(ctx, httpEndpoints.InternalGetOTPDurationEndpoint)
 			require.NoError(t, err, "Should make request successfully")
 			assert.Equal(t, http.StatusOK, resp.StatusCode, "Should return 200 OK")
 
@@ -127,7 +128,7 @@ func TestMultiServiceIntegration(t *testing.T) {
 			require.NoError(t, err, "Should create service client successfully")
 
 			// Settings service accessing its own bulk endpoint
-			url := "/internal/settings/bulk?keys=" + settings.CompanyLogo
+			url := httpEndpoints.InternalBulkEndpoint + "?keys=" + settings.CompanyLogo
 			resp, err := serviceClient.Get(ctx, url)
 			require.NoError(t, err, "Should make request successfully")
 			assert.Equal(t, http.StatusOK, resp.StatusCode, "Should return 200 OK")
@@ -219,13 +220,13 @@ func TestServiceDiscoveryScenarios(t *testing.T) {
 			require.NoError(t, err)
 
 			// 1. Fetch company name for product page headers
-			resp, err := serviceClient.Get(ctx, "/internal/settings/name")
+			resp, err := serviceClient.Get(ctx, httpEndpoints.InternalGetCompanyNameEndpoint)
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 			resp.Body.Close()
 
 			// 2. Fetch company address for shipping calculations
-			resp, err = serviceClient.Get(ctx, "/internal/settings/address")
+			resp, err = serviceClient.Get(ctx, httpEndpoints.InternalGetCompanyAddressEndpoint)
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 			resp.Body.Close()
@@ -243,13 +244,13 @@ func TestServiceDiscoveryScenarios(t *testing.T) {
 			require.NoError(t, err)
 
 			// 1. Fetch company name for email headers
-			resp, err := serviceClient.Get(ctx, "/internal/settings/name")
+			resp, err := serviceClient.Get(ctx, httpEndpoints.InternalGetCompanyNameEndpoint)
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 			resp.Body.Close()
 
 			// 2. Fetch company email for from address
-			resp, err = serviceClient.Get(ctx, "/internal/settings/email")
+			resp, err = serviceClient.Get(ctx, httpEndpoints.InternalGetCompanyEmailEndpoint)
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 			resp.Body.Close()
@@ -267,7 +268,7 @@ func TestServiceDiscoveryScenarios(t *testing.T) {
 			require.NoError(t, err)
 
 			// Fetch OTP configuration
-			resp, err := serviceClient.Get(ctx, "/internal/settings/otp/duration")
+			resp, err := serviceClient.Get(ctx, httpEndpoints.InternalGetOTPDurationEndpoint)
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 			resp.Body.Close()

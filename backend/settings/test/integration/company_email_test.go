@@ -12,6 +12,7 @@ import (
 	"github.com/Leviosa-care/core/errs"
 	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/Leviosa-care/core/validation"
+	httpEndpoints "github.com/Leviosa-care/settings/internal/adapters/http"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -315,7 +316,7 @@ func TestSetCompanyEmail(t *testing.T) {
 
 		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/email",
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+httpEndpoints.SetCompanyEmailEndpoint,
 			strings.NewReader(`{"email": "test@company.com", "unknown_field": "value"}`))
 		require.NoError(t, err)
 

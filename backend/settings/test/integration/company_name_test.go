@@ -10,6 +10,7 @@ import (
 
 	"github.com/Leviosa-care/core/contracts/settings"
 	tu "github.com/Leviosa-care/core/testutils"
+	httpEndpoints "github.com/Leviosa-care/settings/internal/adapters/http"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -254,7 +255,7 @@ func TestSetCompanyName(t *testing.T) {
 		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/name",
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+httpEndpoints.SetCompanyNameEndpoint,
 			strings.NewReader(`{"name": "test", "invalid_field": "value"}`))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")

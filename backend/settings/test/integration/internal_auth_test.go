@@ -10,6 +10,7 @@ import (
 	"github.com/Leviosa-care/core/contracts/services"
 	"github.com/Leviosa-care/core/contracts/settings"
 	"github.com/Leviosa-care/core/httpx"
+	httpEndpoints "github.com/Leviosa-care/settings/internal/adapters/http"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -162,7 +163,7 @@ func TestServiceAuthentication(t *testing.T) {
 			require.NoError(t, err)
 
 			// Make authenticated request using service client
-			resp, err := serviceClient.Get(ctx, "/internal/settings/name")
+			resp, err := serviceClient.Get(ctx, httpEndpoints.InternalGetCompanyNameEndpoint)
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -198,37 +199,37 @@ func TestInternalEndpointsComprehensive(t *testing.T) {
 	}{
 		{
 			name:         "internal company name",
-			endpoint:     "/internal/settings/name",
+			endpoint:     httpEndpoints.InternalGetCompanyNameEndpoint,
 			requestFunc:  th.NewInternalGetCompanyNameRequest,
 			expectedCode: http.StatusOK,
 		},
 		{
 			name:         "internal company email",
-			endpoint:     "/internal/settings/email",
+			endpoint:     httpEndpoints.InternalGetCompanyEmailEndpoint,
 			requestFunc:  th.NewInternalGetCompanyEmailRequest,
 			expectedCode: http.StatusOK,
 		},
 		{
 			name:         "internal company phone",
-			endpoint:     "/internal/settings/phone",
+			endpoint:     httpEndpoints.InternalGetCompanyPhoneEndpoint,
 			requestFunc:  th.NewInternalGetCompanyPhoneRequest,
 			expectedCode: http.StatusOK,
 		},
 		{
 			name:         "internal company address",
-			endpoint:     "/internal/settings/address",
+			endpoint:     httpEndpoints.InternalGetCompanyAddressEndpoint,
 			requestFunc:  th.NewInternalGetCompanyAddressRequest,
 			expectedCode: http.StatusOK,
 		},
 		{
 			name:         "internal OTP duration",
-			endpoint:     "/internal/settings/otp/duration",
+			endpoint:     httpEndpoints.InternalGetOTPDurationEndpoint,
 			requestFunc:  th.NewInternalGetOTPDurationRequest,
 			expectedCode: http.StatusOK,
 		},
 		{
 			name:         "internal bulk settings",
-			endpoint:     "/internal/settings/bulk",
+			endpoint:     httpEndpoints.InternalBulkEndpoint,
 			requestFunc:  th.NewInternalBulkSettingsRequest,
 			expectedCode: http.StatusOK,
 		},

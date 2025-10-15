@@ -11,6 +11,7 @@ import (
 
 	"github.com/Leviosa-care/core/contracts/settings"
 	tu "github.com/Leviosa-care/core/testutils"
+	httpEndpoints "github.com/Leviosa-care/settings/internal/adapters/http"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -317,7 +318,7 @@ func TestSetOTPDuration(t *testing.T) {
 		// Setup admin user and create authenticated request
 		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/settings/otp/duration",
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+httpEndpoints.AdminSetOTPDurationEndpoint,
 			strings.NewReader(`{"duration": 300, "unknown_field": "value"}`))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")

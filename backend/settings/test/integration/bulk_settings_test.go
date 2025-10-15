@@ -9,6 +9,7 @@ import (
 
 	"github.com/Leviosa-care/core/contracts/settings"
 	tu "github.com/Leviosa-care/core/testutils"
+	httpEndpoints "github.com/Leviosa-care/settings/internal/adapters/http"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"
 
@@ -30,7 +31,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 		// Setup admin user and create authenticated request
 		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/admin/settings/bulk", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+httpEndpoints.AdminBulkEndpoint, nil)
 		require.NoError(t, err)
 
 		// Add authentication to the request
@@ -51,7 +52,7 @@ func TestBulkSettingsHandler(t *testing.T) {
 		// Setup admin user and create authenticated request
 		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/admin/settings/bulk?keys=", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+httpEndpoints.AdminBulkEndpoint+"?keys=", nil)
 		require.NoError(t, err)
 
 		// Add authentication to the request
