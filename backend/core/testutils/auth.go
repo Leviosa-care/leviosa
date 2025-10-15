@@ -505,7 +505,7 @@ func insertUser(t *testing.T, ctx context.Context, user *UserEncx, pool *pgxpool
 
 	query := `
 		INSERT INTO auth.users (
-			id, state, email_hash, email_encrypted, password_hash,
+			id, state, email_hash, email_encrypted, password_hash_secure,
 			first_name_encrypted, last_name_encrypted, telephone_hash, telephone_encrypted,
 			role_encrypted, created_at_encrypted, logged_in_at_encrypted,
 			dek_encrypted, key_version

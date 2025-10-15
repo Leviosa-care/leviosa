@@ -190,4 +190,3 @@ func GetServiceInfoFromContext(ctx context.Context) (*ServiceInfo, error) {
 	}
 	return serviceInfo, nil
 }
-

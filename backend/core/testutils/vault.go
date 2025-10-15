@@ -115,7 +115,7 @@ func initializeVaultSecrets(vaultContainer *VaultContainer) error {
 
 	pepperData := map[string]any{
 		"data": map[string]any{
-			"value": pepperBase64,  // Base64-encoded pepper
+			"value": pepperBase64, // Base64-encoded pepper
 		},
 	}
 
@@ -450,8 +450,8 @@ func CreateServiceCryptoService(ctx context.Context, vaultContainer *VaultContai
 	serviceKeyName := GetServiceEncryptionKeyName(serviceName)
 
 	cfg := encx.Config{
-		KEKAlias:    serviceKeyName,  // Use key name, not full path
-		PepperAlias: serviceName,      // Use service name, not full Vault path
+		KEKAlias:    serviceKeyName, // Use key name, not full path
+		PepperAlias: serviceName,    // Use service name, not full Vault path
 	}
 
 	// NEW: Create crypto service with new v0.6.0 API signature
@@ -524,8 +524,8 @@ func InitializeServiceVault(ctx context.Context, vaultContainer *VaultContainer,
 	// NEW: Create Config struct for shared crypto service
 	// Note: Using "leviosa" as pepper alias (shared pepper for API key hashing)
 	cfg := encx.Config{
-		KEKAlias:    EncryptionKey,  // "leviosa-app-key"
-		PepperAlias: "leviosa",      // Use base name for shared pepper
+		KEKAlias:    EncryptionKey, // "leviosa-app-key"
+		PepperAlias: "leviosa",     // Use base name for shared pepper
 	}
 
 	// NEW: Create crypto service with new API

@@ -14,7 +14,7 @@ CREATE TABLE auth.users (
     email_encrypted BYTEA NOT NULL,
     
     -- Password (hashed only for authentication)  
-    password_hash VARCHAR(255) NOT NULL,
+    password_hash_secure VARCHAR(255) NOT NULL,
     
     -- Role (encrypted for GDPR compliance)
     role_encrypted BYTEA,
