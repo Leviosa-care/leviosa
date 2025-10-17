@@ -18,7 +18,11 @@ package session
 // 		return false, errs.NewInvalidValueErr(err.Error())
 // 	}
 //
-// 	tokenHash := s.crypto.HashBasic(ctx, []byte(request.Token))
+// 	tokenBytes, err := encx.SerializeValue(ctx, request.Token)
+// 	if err != nil {
+// 		return false, errs.NewInvalidValueErr(err.Error())
+// 	}
+// 	tokenHash := s.crypto.HashBasic(ctx, tokenBytes)
 //
 // 	sessionID, encryptedSession, err := s.repo.FindSessionByAccessTokenHash(ctx, tokenHash)
 // 	if err != nil {

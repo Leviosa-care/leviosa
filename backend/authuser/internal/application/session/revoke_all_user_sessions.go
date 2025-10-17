@@ -2,18 +2,19 @@ package session
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/core/errs"
+
 	"github.com/google/uuid"
+	"github.com/hengadev/encx"
 )
 
 func (s *SessionService) RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error {
-	userIDBytes, err := json.Marshal(userID)
+	userIDBytes, err := encx.SerializeValue(userID)
 	if err != nil {
-		return fmt.Errorf("failed to serialize userID: %w", err)
+		return errs.NewInvalidValueErr(fmt.Sprintf("failed to serialize userID: %w", err))
 	}
 	userIDHash := s.crypto.HashBasic(ctx, userIDBytes)
 

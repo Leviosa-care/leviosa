@@ -43,6 +43,7 @@ func (s *SessionService) UpdateSessionCompletion(ctx context.Context, sessionID 
 	sess.CompletedAt = completedAt
 
 	// Encrypt updated session using the new generated function
+	// BUG: This is the part that is causing the issue since we have *time.Time
 	updatedSessionEncx, err := session.ProcessSessionEncx(ctx, s.crypto, sess)
 	if err != nil {
 		return errs.NewNotEncryptedErr("session during completion update", err)

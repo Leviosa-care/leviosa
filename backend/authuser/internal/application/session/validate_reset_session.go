@@ -6,11 +6,16 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/core/errs"
+	"github.com/hengadev/encx"
 )
 
 func (s *SessionService) ValidateResetSession(ctx context.Context, token string) (string, error) {
 	// Hash the token for lookup
-	tokenHash := s.crypto.HashBasic(ctx, []byte(token))
+	tokenBytes, err := encx.SerializeValue(token)
+	if err != nil {
+		return "", errs.NewInvalidValueErr(err.Error())
+	}
+	tokenHash := s.crypto.HashBasic(ctx, tokenBytes)
 
 	userEmailHash, err := s.repo.ValidateResetSession(ctx, tokenHash)
 	if err != nil {

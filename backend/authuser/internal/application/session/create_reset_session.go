@@ -7,11 +7,16 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/core/errs"
+	"github.com/hengadev/encx"
 )
 
 func (s *SessionService) CreateResetSession(ctx context.Context, token, userEmail string, ttl time.Duration) error {
 	// Hash the token for storage
-	tokenHash := s.crypto.HashBasic(ctx, []byte(token))
+	tokenBytes, err := encx.SerializeValue(token)
+	if err != nil {
+		return errs.NewInvalidValueErr(err.Error())
+	}
+	tokenHash := s.crypto.HashBasic(ctx, tokenBytes)
 
 	// Store plaintext email directly (no hashing needed)
 	if err := s.repo.StoreResetSession(ctx, tokenHash, userEmail, ttl); err != nil {
@@ -39,4 +44,3 @@ func (s *SessionService) CreateResetSession(ctx context.Context, token, userEmai
 
 	return nil
 }
-
