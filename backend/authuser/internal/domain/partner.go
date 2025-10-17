@@ -11,19 +11,19 @@ import (
 )
 
 type Partner struct {
-	ID               uuid.UUID       `json:"id"`
-	UserID           uuid.UUID       `json:"user_id"`
-	Bio              string          `json:"bio" encx:"encrypt"`
-	Experience       string          `json:"experience" encx:"encrypt"`
-	Certifications   []string        `json:"certifications" encx:"encrypt"`
-	IsVerified       bool            `json:"is_verified"`
-	VerifiedAt       *time.Time      `json:"verified_at" encx:"encrypt"`
-	VerifiedByUserID *uuid.UUID      `json:"verified_by_user_id"`
-	CreatedAt        time.Time       `json:"created_at"`
-	UpdatedAt        time.Time       `json:"updated_at"`
+	ID               uuid.UUID  `json:"id"`
+	UserID           uuid.UUID  `json:"user_id"`
+	Bio              string     `json:"bio" encx:"encrypt"`
+	Experience       string     `json:"experience" encx:"encrypt"`
+	Certifications   []string   `json:"certifications" encx:"encrypt"`
+	IsVerified       bool       `json:"is_verified"`
+	VerifiedAt       *time.Time `json:"verified_at" encx:"encrypt"`
+	VerifiedByUserID *uuid.UUID `json:"verified_by_user_id"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
 
 	// Embedded user data (populated when joining with users table)
-	User           *User                      `json:"user,omitempty"`
+	User            *User                    `json:"user,omitempty"`
 	Specializations []SpecializationResponse `json:"specializations,omitempty"`
 }
 
@@ -127,3 +127,4 @@ func (p *Partner) UnmarshalCertifications(data []byte) error {
 	}
 	return json.Unmarshal(data, &p.Certifications)
 }
+

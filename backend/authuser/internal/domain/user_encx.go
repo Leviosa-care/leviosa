@@ -9,66 +9,62 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hengadev/errsx"
 	"github.com/hengadev/encx"
-
+	"github.com/hengadev/errsx"
 )
 
 // UserEncx represents the encrypted version of User
 type UserEncx struct {
-	
 	ID uuid.UUID `db:"id" json:"id"`
-	
+
 	State UserState `db:"state" json:"state"`
-	
-	
+
 	EmailEncrypted []byte `db:"email_encrypted" json:"email_encrypted"`
-	
+
 	EmailHash string `db:"email_hash" json:"email_hash"`
-	
+
 	PasswordHashSecure string `db:"password_hash_secure" json:"password_hash_secure"`
-	
+
 	PictureEncrypted []byte `db:"picture_encrypted" json:"picture_encrypted"`
-	
+
 	CreatedAtEncrypted []byte `db:"createdat_encrypted" json:"createdat_encrypted"`
-	
+
 	LoggedInAtEncrypted []byte `db:"loggedinat_encrypted" json:"loggedinat_encrypted"`
-	
+
 	RoleEncrypted []byte `db:"role_encrypted" json:"role_encrypted"`
-	
+
 	BirthDateEncrypted []byte `db:"birthdate_encrypted" json:"birthdate_encrypted"`
-	
+
 	LastNameEncrypted []byte `db:"lastname_encrypted" json:"lastname_encrypted"`
-	
+
 	FirstNameEncrypted []byte `db:"firstname_encrypted" json:"firstname_encrypted"`
-	
+
 	GenderEncrypted []byte `db:"gender_encrypted" json:"gender_encrypted"`
-	
+
 	TelephoneEncrypted []byte `db:"telephone_encrypted" json:"telephone_encrypted"`
-	
+
 	TelephoneHash string `db:"telephone_hash" json:"telephone_hash"`
-	
+
 	PostalCodeEncrypted []byte `db:"postalcode_encrypted" json:"postalcode_encrypted"`
-	
+
 	CityEncrypted []byte `db:"city_encrypted" json:"city_encrypted"`
-	
+
 	Address1Encrypted []byte `db:"address1_encrypted" json:"address1_encrypted"`
-	
+
 	Address2Encrypted []byte `db:"address2_encrypted" json:"address2_encrypted"`
-	
+
 	GoogleIDEncrypted []byte `db:"googleid_encrypted" json:"googleid_encrypted"`
-	
+
 	AppleIDEncrypted []byte `db:"appleid_encrypted" json:"appleid_encrypted"`
-	
+
 	StripeCustomerIDEncrypted []byte `db:"stripecustomerid_encrypted" json:"stripecustomerid_encrypted"`
-	
 
 	// Essential encryption fields
-	DEKEncrypted  []byte `db:"dek_encrypted" json:"dek_encrypted"`
-	KeyVersion    int    `db:"key_version" json:"key_version"`
+	DEKEncrypted []byte `db:"dek_encrypted" json:"dek_encrypted"`
+	KeyVersion   int    `db:"key_version" json:"key_version"`
 
 	// Metadata
-	Metadata      encx.EncryptionMetadata `db:"metadata" json:"metadata"`
+	Metadata encx.EncryptionMetadata `db:"metadata" json:"metadata"`
 }
 
 // ProcessUserEncx encrypts and hashes fields based on encx tags
@@ -85,11 +81,10 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 	}
 
 	// Copy plain fields (non-encx fields)
-	
+
 	result.ID = source.ID
-	
+
 	result.State = source.State
-	
 
 	// Generate DEK
 	dek, err := crypto.GenerateDEK()
@@ -98,8 +93,6 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 		return result, errs.AsError()
 	}
 
-	
-	
 	// Process Email (encrypt)
 	if source.Email != "" {
 		EmailBytes, err := encx.SerializeValue(source.Email)
@@ -112,8 +105,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process Email (hash_basic)
 	if source.Email != "" {
 		EmailBytes, err := encx.SerializeValue(source.Email)
@@ -123,8 +115,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			result.EmailHash = crypto.HashBasic(ctx, EmailBytes)
 		}
 	}
-	
-	
+
 	// Process Password (hash_secure)
 	if source.Password != "" {
 		PasswordBytes, err := encx.SerializeValue(source.Password)
@@ -137,8 +128,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process Picture (encrypt)
 	if source.Picture != "" {
 		PictureBytes, err := encx.SerializeValue(source.Picture)
@@ -151,8 +141,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process CreatedAt (encrypt)
 	var CreatedAtBytes []byte
 	CreatedAtBytes, err = encx.SerializeValue(source.CreatedAt)
@@ -164,7 +153,6 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			errs.Set("CreatedAt encryption", err)
 		}
 	}
-
 
 	// Process LoggedInAt (encrypt)
 	var LoggedInAtBytes []byte
@@ -178,7 +166,6 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 		}
 	}
 
-
 	// Process Role (encrypt)
 	var RoleBytes []byte
 	RoleBytes, err = encx.SerializeValue(source.Role)
@@ -191,7 +178,6 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 		}
 	}
 
-
 	// Process BirthDate (encrypt)
 	var BirthDateBytes []byte
 	BirthDateBytes, err = encx.SerializeValue(source.BirthDate)
@@ -203,8 +189,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			errs.Set("BirthDate encryption", err)
 		}
 	}
-	
-	
+
 	// Process LastName (encrypt)
 	if source.LastName != "" {
 		LastNameBytes, err := encx.SerializeValue(source.LastName)
@@ -217,8 +202,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process FirstName (encrypt)
 	if source.FirstName != "" {
 		FirstNameBytes, err := encx.SerializeValue(source.FirstName)
@@ -231,8 +215,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process Gender (encrypt)
 	if source.Gender != "" {
 		GenderBytes, err := encx.SerializeValue(source.Gender)
@@ -245,8 +228,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process Telephone (encrypt)
 	if source.Telephone != "" {
 		TelephoneBytes, err := encx.SerializeValue(source.Telephone)
@@ -259,8 +241,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process Telephone (hash_basic)
 	if source.Telephone != "" {
 		TelephoneBytes, err := encx.SerializeValue(source.Telephone)
@@ -270,8 +251,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			result.TelephoneHash = crypto.HashBasic(ctx, TelephoneBytes)
 		}
 	}
-	
-	
+
 	// Process PostalCode (encrypt)
 	if source.PostalCode != "" {
 		PostalCodeBytes, err := encx.SerializeValue(source.PostalCode)
@@ -284,8 +264,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process City (encrypt)
 	if source.City != "" {
 		CityBytes, err := encx.SerializeValue(source.City)
@@ -298,8 +277,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process Address1 (encrypt)
 	if source.Address1 != "" {
 		Address1Bytes, err := encx.SerializeValue(source.Address1)
@@ -312,8 +290,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process Address2 (encrypt)
 	if source.Address2 != "" {
 		Address2Bytes, err := encx.SerializeValue(source.Address2)
@@ -326,8 +303,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process GoogleID (encrypt)
 	if source.GoogleID != "" {
 		GoogleIDBytes, err := encx.SerializeValue(source.GoogleID)
@@ -340,8 +316,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process AppleID (encrypt)
 	if source.AppleID != "" {
 		AppleIDBytes, err := encx.SerializeValue(source.AppleID)
@@ -354,8 +329,7 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Process StripeCustomerID (encrypt)
 	if source.StripeCustomerID != "" {
 		StripeCustomerIDBytes, err := encx.SerializeValue(source.StripeCustomerID)
@@ -368,7 +342,6 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
 
 	// Encrypt and store DEK
 	result.DEKEncrypted, err = crypto.EncryptDEK(ctx, dek)
@@ -393,11 +366,10 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 	result := &User{}
 
 	// Copy plain fields (non-encx fields)
-	
+
 	result.ID = source.ID
-	
+
 	result.State = source.State
-	
 
 	// Decrypt DEK
 	dek, err := crypto.DecryptDEKWithVersion(ctx, source.DEKEncrypted, source.KeyVersion)
@@ -406,8 +378,6 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 		return result, errs.AsError()
 	}
 
-	
-	
 	// Decrypt Email
 	if len(source.EmailEncrypted) > 0 {
 		EmailBytes, err := crypto.DecryptData(ctx, source.EmailEncrypted, dek)
@@ -420,8 +390,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Picture
 	if len(source.PictureEncrypted) > 0 {
 		PictureBytes, err := crypto.DecryptData(ctx, source.PictureEncrypted, dek)
@@ -434,8 +403,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt CreatedAt
 	if len(source.CreatedAtEncrypted) > 0 {
 		CreatedAtBytes, err := crypto.DecryptData(ctx, source.CreatedAtEncrypted, dek)
@@ -448,8 +416,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt LoggedInAt
 	if len(source.LoggedInAtEncrypted) > 0 {
 		LoggedInAtBytes, err := crypto.DecryptData(ctx, source.LoggedInAtEncrypted, dek)
@@ -462,8 +429,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Role
 	if len(source.RoleEncrypted) > 0 {
 		RoleBytes, err := crypto.DecryptData(ctx, source.RoleEncrypted, dek)
@@ -476,8 +442,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt BirthDate
 	if len(source.BirthDateEncrypted) > 0 {
 		BirthDateBytes, err := crypto.DecryptData(ctx, source.BirthDateEncrypted, dek)
@@ -490,8 +455,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt LastName
 	if len(source.LastNameEncrypted) > 0 {
 		LastNameBytes, err := crypto.DecryptData(ctx, source.LastNameEncrypted, dek)
@@ -504,8 +468,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt FirstName
 	if len(source.FirstNameEncrypted) > 0 {
 		FirstNameBytes, err := crypto.DecryptData(ctx, source.FirstNameEncrypted, dek)
@@ -518,8 +481,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Gender
 	if len(source.GenderEncrypted) > 0 {
 		GenderBytes, err := crypto.DecryptData(ctx, source.GenderEncrypted, dek)
@@ -532,8 +494,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Telephone
 	if len(source.TelephoneEncrypted) > 0 {
 		TelephoneBytes, err := crypto.DecryptData(ctx, source.TelephoneEncrypted, dek)
@@ -546,8 +507,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt PostalCode
 	if len(source.PostalCodeEncrypted) > 0 {
 		PostalCodeBytes, err := crypto.DecryptData(ctx, source.PostalCodeEncrypted, dek)
@@ -560,8 +520,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt City
 	if len(source.CityEncrypted) > 0 {
 		CityBytes, err := crypto.DecryptData(ctx, source.CityEncrypted, dek)
@@ -574,8 +533,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Address1
 	if len(source.Address1Encrypted) > 0 {
 		Address1Bytes, err := crypto.DecryptData(ctx, source.Address1Encrypted, dek)
@@ -588,8 +546,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Address2
 	if len(source.Address2Encrypted) > 0 {
 		Address2Bytes, err := crypto.DecryptData(ctx, source.Address2Encrypted, dek)
@@ -602,8 +559,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt GoogleID
 	if len(source.GoogleIDEncrypted) > 0 {
 		GoogleIDBytes, err := crypto.DecryptData(ctx, source.GoogleIDEncrypted, dek)
@@ -616,8 +572,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt AppleID
 	if len(source.AppleIDEncrypted) > 0 {
 		AppleIDBytes, err := crypto.DecryptData(ctx, source.AppleIDEncrypted, dek)
@@ -630,8 +585,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
-	
+
 	// Decrypt StripeCustomerID
 	if len(source.StripeCustomerIDEncrypted) > 0 {
 		StripeCustomerIDBytes, err := crypto.DecryptData(ctx, source.StripeCustomerIDEncrypted, dek)
@@ -644,7 +598,6 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 			}
 		}
 	}
-	
 
 	return result, errs.AsError()
 }

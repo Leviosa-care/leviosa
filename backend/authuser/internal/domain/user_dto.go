@@ -27,8 +27,8 @@ type UserResponse struct {
 	City       string    `json:"city,omitempty"`
 	Address1   string    `json:"address1,omitempty"`
 	Address2   string    `json:"address2,omitempty"`
-	GoogleID string    `json:"google_id,omitempty"`
-	AppleID  string    `json:"apple_id,omitempty"`
+	GoogleID   string    `json:"google_id,omitempty"`
+	AppleID    string    `json:"apple_id,omitempty"`
 }
 
 type ApproveUserRequest struct {
@@ -88,6 +88,6 @@ type UpdateUserRequest struct {
 	City       *string    `json:"city,omitempty"`
 	Address1   *string    `json:"address1,omitempty"`
 	Address2   *string    `json:"address2,omitempty"`
-	GoogleID *string    `json:"google_id,omitempty"`
-	AppleID  *string    `json:"apple_id,omitempty"`
+	GoogleID   *string    `json:"google_id,omitempty"`
+	AppleID    *string    `json:"apple_id,omitempty"`
 }

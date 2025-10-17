@@ -8,32 +8,28 @@ import (
 	"context"
 	"time"
 
-	"github.com/hengadev/errsx"
 	"github.com/hengadev/encx"
-	
+	"github.com/hengadev/errsx"
 )
 
 // OTPEncx represents the encrypted version of OTP
 type OTPEncx struct {
-	
 	Attempts int `db:"attempts" json:"attempts"`
-	
+
 	ExpiresAt time.Time `db:"expiresat" json:"expiresat"`
-	
+
 	CreatedAt time.Time `db:"createdat" json:"createdat"`
-	
-	
+
 	EmailHash string `db:"email_hash" json:"email_hash"`
-	
+
 	CodeEncrypted []byte `db:"code_encrypted" json:"code_encrypted"`
-	
 
 	// Essential encryption fields
-	DEKEncrypted  []byte `db:"dek_encrypted" json:"dek_encrypted"`
-	KeyVersion    int    `db:"key_version" json:"key_version"`
+	DEKEncrypted []byte `db:"dek_encrypted" json:"dek_encrypted"`
+	KeyVersion   int    `db:"key_version" json:"key_version"`
 
 	// Metadata
-	Metadata      encx.EncryptionMetadata `db:"metadata" json:"metadata"`
+	Metadata encx.EncryptionMetadata `db:"metadata" json:"metadata"`
 }
 
 // ProcessOTPEncx encrypts and hashes fields based on encx tags
@@ -50,13 +46,12 @@ func ProcessOTPEncx(ctx context.Context, crypto encx.CryptoService, source *OTP)
 	}
 
 	// Copy plain fields (non-encx fields)
-	
+
 	result.Attempts = source.Attempts
-	
+
 	result.ExpiresAt = source.ExpiresAt
-	
+
 	result.CreatedAt = source.CreatedAt
-	
 
 	// Generate DEK
 	dek, err := crypto.GenerateDEK()
@@ -65,8 +60,6 @@ func ProcessOTPEncx(ctx context.Context, crypto encx.CryptoService, source *OTP)
 		return result, errs.AsError()
 	}
 
-	
-	
 	// Process Email (hash_basic)
 	if source.Email != "" {
 		EmailBytes, err := encx.SerializeValue(source.Email)
@@ -76,8 +69,7 @@ func ProcessOTPEncx(ctx context.Context, crypto encx.CryptoService, source *OTP)
 			result.EmailHash = crypto.HashBasic(ctx, EmailBytes)
 		}
 	}
-	
-	
+
 	// Process Code (encrypt)
 	if source.Code != "" {
 		CodeBytes, err := encx.SerializeValue(source.Code)
@@ -90,7 +82,6 @@ func ProcessOTPEncx(ctx context.Context, crypto encx.CryptoService, source *OTP)
 			}
 		}
 	}
-	
 
 	// Encrypt and store DEK
 	result.DEKEncrypted, err = crypto.EncryptDEK(ctx, dek)
@@ -115,13 +106,12 @@ func DecryptOTPEncx(ctx context.Context, crypto encx.CryptoService, source *OTPE
 	result := &OTP{}
 
 	// Copy plain fields (non-encx fields)
-	
+
 	result.Attempts = source.Attempts
-	
+
 	result.ExpiresAt = source.ExpiresAt
-	
+
 	result.CreatedAt = source.CreatedAt
-	
 
 	// Decrypt DEK
 	dek, err := crypto.DecryptDEKWithVersion(ctx, source.DEKEncrypted, source.KeyVersion)
@@ -130,8 +120,6 @@ func DecryptOTPEncx(ctx context.Context, crypto encx.CryptoService, source *OTPE
 		return result, errs.AsError()
 	}
 
-	
-	
 	// Decrypt Code
 	if len(source.CodeEncrypted) > 0 {
 		CodeBytes, err := crypto.DecryptData(ctx, source.CodeEncrypted, dek)
@@ -144,7 +132,6 @@ func DecryptOTPEncx(ctx context.Context, crypto encx.CryptoService, source *OTPE
 			}
 		}
 	}
-	
 
 	return result, errs.AsError()
 }
