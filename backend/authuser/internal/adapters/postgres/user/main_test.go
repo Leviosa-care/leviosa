@@ -14,8 +14,6 @@ import (
 
 	"github.com/Leviosa-care/core/migrations"
 	tu "github.com/Leviosa-care/core/testutils"
-	"github.com/hengadev/encx"
-	"github.com/hengadev/encx/providers/hashicorpvault"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
 )
@@ -23,7 +21,6 @@ import (
 var (
 	pgContainer *tu.PostgresContainer
 	testPool    *pgxpool.Pool
-	crypto      encx.CryptoService
 	repo        ports.UserRepository
 )
 
@@ -85,39 +82,6 @@ func TestMain(m *testing.M) {
 		panic(fmt.Sprintf("running all migrations: %s\n", err))
 	}
 	log.Println("Migrations applied.")
-
-	// Setup Vault testcontainer
-	log.Println("Setting up Vault testcontainer...")
-	vaultContainer, err := tu.SetupVault(ctx, nil)
-	if err != nil {
-		log.Fatalf("Failed to setup Vault container: %v", err)
-	}
-	defer tu.TeardownVault(ctx, nil, vaultContainer)
-
-	// Set environment variables for Vault
-	os.Setenv("VAULT_ADDR", vaultContainer.HTTPSEndpoint)
-	os.Setenv("VAULT_TOKEN", vaultContainer.RootToken)
-
-	// crypto
-	kms, err := hashicorpvault.New()
-	if err != nil {
-		fmt.Println("creating vault:", err)
-		return
-	}
-	crypto, err = encx.New(
-		ctx,
-		kms,
-		tu.EncryptionKey,
-		"secret/data/pepper",
-	)
-	if err != nil {
-		log.Printf("Crypto service creation error details: %+v", err)
-		log.Fatalf("Failed to create crypto service: %v", err)
-	}
-	if crypto == nil {
-		log.Fatal("Crypto service is nil after creation")
-	}
-	log.Println("Crypto service created successfully")
 
 	repo = userRepository.New(ctx, testPool)
 

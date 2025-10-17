@@ -67,4 +67,3 @@ func (r *Repository) GetAllUsers(ctx context.Context) ([]*domain.UserEncx, error
 
 	return users, nil
 }
-
