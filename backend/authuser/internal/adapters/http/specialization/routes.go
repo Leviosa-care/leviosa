@@ -13,19 +13,19 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 
 	// Admin specialization management
 	// Create new specialization (admin only)
-	router.HandleFunc("POST /admin/specializations", RequireAdmin(mw.EnableCORS(h.CreateSpecialization)))
+	router.HandleFunc("POST "+CreateSpecializationEndpoint, RequireAdmin(mw.EnableCORS(h.CreateSpecialization)))
 
 	// Get specialization by ID (admin only for detailed view)
-	router.HandleFunc("GET /admin/specializations/{id}", RequireAdmin(mw.EnableCORS(h.GetSpecializationByID)))
+	router.HandleFunc("GET "+GetSpecializationByIDEndpoint, RequireAdmin(mw.EnableCORS(h.GetSpecializationByID)))
 
 	// Update specialization (admin only)
-	router.HandleFunc("PUT /admin/specializations/{id}", RequireAdmin(mw.EnableCORS(h.UpdateSpecialization)))
+	router.HandleFunc("PUT "+UpdateSpecializationEndpoint, RequireAdmin(mw.EnableCORS(h.UpdateSpecialization)))
 
 	// Delete specialization (admin only)
-	router.HandleFunc("DELETE /admin/specializations/{id}", RequireAdmin(mw.EnableCORS(h.DeleteSpecialization)))
+	router.HandleFunc("DELETE "+DeleteSpecializationEndpoint, RequireAdmin(mw.EnableCORS(h.DeleteSpecialization)))
 
 	// Public specialization access
 	// Get all active specializations (any authenticated user can view for selection)
-	router.HandleFunc("GET /specializations", RequireStandard(mw.EnableCORS(h.GetAllSpecializations)))
+	router.HandleFunc("GET "+GetAllSpecializationsEndpoint, RequireStandard(mw.EnableCORS(h.GetAllSpecializations)))
 }
 
