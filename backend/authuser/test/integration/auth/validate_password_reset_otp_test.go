@@ -10,8 +10,9 @@ import (
 	aggregatorHandler "github.com/Leviosa-care/authuser/internal/adapters/http/auth"
 	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
 	"github.com/Leviosa-care/authuser/internal/domain"
-
 	td "github.com/Leviosa-care/authuser/test/helpers"
+
+	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,23 +27,27 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should successfully validate password reset OTP and return reset token", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "reset@example.com"
-		td.InsertTestUser(t, ctx, existingEmail, "Reset", "User", testPool, crypto)
+		user := td.NewTestUser(t, existingEmail, "Reset", "User")
+
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Directly create and insert OTP for testing (no HTTP request needed)
-		otp := td.NewValidOTP(existingEmail)
-		emailHash := crypto.HashBasic(ctx, []byte(existingEmail))
-		otp.EmailHash = emailHash
+		otp := td.NewTestOTP(existingEmail)
 
 		// Encrypt OTP before storing
-		err := crypto.ProcessStruct(ctx, otp)
+		otpEncx, err := domain.ProcessOTPEncx(ctx, crypto, otp)
 		require.NoError(t, err)
 
 		// Store OTP in Redis with TTL
 		ttl := 10 * time.Minute
-		td.InsertOTP(t, ctx, otp, testClient, ttl)
+		td.InsertOTPEncx(t, ctx, otpEncx, redisClient, ttl)
 
 		// Step 2: Validate password reset OTP
 		validateRequest := domain.ValidatePasswordResetOTPRequest{
@@ -70,18 +75,20 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 		assert.Equal(t, http.SameSiteStrictMode, resetTokenCookie.SameSite, "Cookie should use SameSite=Strict")
 
 		// Verify OTP was consumed (no longer exists in Redis)
-		exists := td.CheckOTPExists(t, ctx, emailHash, testClient)
+		exists := td.CheckOTPExists(t, ctx, otpEncx.EmailHash, redisClient)
 		assert.False(t, exists, "OTP should be consumed and no longer exist in Redis")
 
 		// Verify reset token was stored in Redis using repository helper
-		tokenHash := crypto.HashBasic(ctx, []byte(resetTokenCookie.Value))
+		tokenBytes, err := encx.SerializeValue(resetTokenCookie.Value)
+		require.NoError(t, err)
+		tokenHash := crypto.HashBasic(ctx, tokenBytes)
 		resetSessionKey := sessionRepository.FormatResetSessionKey(tokenHash)
-		storedEmail, err := testClient.Get(ctx, resetSessionKey).Result()
+		storedEmail, err := redisClient.Get(ctx, resetSessionKey).Result()
 		require.NoError(t, err, "Reset session should exist in Redis")
 		assert.Equal(t, existingEmail, storedEmail, "Stored email should match")
 
 		// Verify reset token has proper TTL (should be around 15 minutes)
-		ttl, err = testClient.TTL(ctx, resetSessionKey).Result()
+		ttl, err = redisClient.TTL(ctx, resetSessionKey).Result()
 		require.NoError(t, err)
 		assert.True(t, ttl > 13*time.Minute, "Reset token TTL should be around 15 minutes")
 		assert.True(t, ttl <= 15*time.Minute, "Reset token TTL should not exceed 15 minutes")
@@ -89,10 +96,17 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should return not found when OTP does not exist", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "noopt@example.com"
-		td.InsertTestUser(t, ctx, existingEmail, "No", "OTP", testPool, crypto)
+		// td.InsertTestUser(t, ctx, existingEmail, "No", "OTP", testPool, crypto)
+		user := td.NewTestUser(t, existingEmail, "No", "OTP")
+
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Try to validate OTP without requesting one first
 		validateRequest := domain.ValidatePasswordResetOTPRequest{
@@ -118,23 +132,29 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should return unauthorized for wrong OTP code", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "wrongcode@example.com"
-		td.InsertTestUser(t, ctx, existingEmail, "Wrong", "Code", testPool, crypto)
+		// td.InsertTestUser(t, ctx, existingEmail, "Wrong", "Code", testPool, crypto)
+
+		user := td.NewTestUser(t, existingEmail, "Wrong", "Code")
+
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Directly create and insert OTP for testing
-		otp := td.NewValidOTP(existingEmail)
-		emailHash := crypto.HashBasic(ctx, []byte(existingEmail))
-		otp.EmailHash = emailHash
+		otp := td.NewTestOTP(existingEmail)
 
 		// Encrypt OTP before storing
-		err := crypto.ProcessStruct(ctx, otp)
+		otpEncx, err := domain.ProcessOTPEncx(ctx, crypto, otp)
 		require.NoError(t, err)
 
 		// Store OTP in Redis with TTL
 		ttl := 10 * time.Minute
-		td.InsertOTP(t, ctx, otp, testClient, ttl)
+		td.InsertOTPEncx(t, ctx, otpEncx, redisClient, ttl)
 
 		// Step 2: Try to validate with wrong OTP code
 		validateRequest := domain.ValidatePasswordResetOTPRequest{
@@ -158,14 +178,13 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 		}
 
 		// Verify OTP still exists (failed attempt)
-		emailHash = crypto.HashBasic(ctx, []byte(existingEmail))
-		exists := td.CheckOTPExists(t, ctx, emailHash, testClient)
+		exists := td.CheckOTPExists(t, ctx, otpEncx.EmailHash, redisClient)
 		assert.True(t, exists, "OTP should still exist after failed validation")
 	})
 
 	t.Run("should return bad request for invalid email format", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		// Test with invalid email
 		validateRequest := domain.ValidatePasswordResetOTPRequest{
@@ -186,7 +205,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should return bad request for invalid OTP code format", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		// Test with invalid OTP code (non-numeric)
 		validateRequest := domain.ValidatePasswordResetOTPRequest{
@@ -207,23 +226,28 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should return gone for expired OTP", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "expired@example.com"
-		td.InsertTestUser(t, ctx, existingEmail, "Expired", "OTP", testPool, crypto)
+		// td.InsertTestUser(t, ctx, existingEmail, "Expired", "OTP", testPool, crypto)
+		user := td.NewTestUser(t, existingEmail, "Expired", "OTP")
+
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Directly create and insert an expired OTP for testing
 		otp := td.NewExpiredOTP(existingEmail)
-		emailHash := crypto.HashBasic(ctx, []byte(existingEmail))
-		otp.EmailHash = emailHash
 
 		// Encrypt OTP before storing
-		err := crypto.ProcessStruct(ctx, otp)
+		otpEncx, err := domain.ProcessOTPEncx(ctx, crypto, otp)
 		require.NoError(t, err)
 
 		// Store already-expired OTP in Redis with short TTL to simulate expiration
 		ttl := 1 * time.Millisecond
-		td.InsertOTP(t, ctx, otp, testClient, ttl)
+		td.InsertOTPEncx(t, ctx, otpEncx, redisClient, ttl)
 
 		// Wait for expiration
 		time.Sleep(10 * time.Millisecond)
@@ -247,23 +271,28 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should handle concurrent OTP validation attempts", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "concurrent@example.com"
-		td.InsertTestUser(t, ctx, existingEmail, "Concurrent", "User", testPool, crypto)
+		// td.InsertTestUser(t, ctx, existingEmail, "Concurrent", "User", testPool, crypto)
+		user := td.NewTestUser(t, existingEmail, "Concurrent", "User")
+
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Directly create and insert OTP for testing
-		otp := td.NewValidOTP(existingEmail)
-		emailHash := crypto.HashBasic(ctx, []byte(existingEmail))
-		otp.EmailHash = emailHash
+		otp := td.NewTestOTP(existingEmail)
 
 		// Encrypt OTP before storing
-		err := crypto.ProcessStruct(ctx, otp)
+		otpEncx, err := domain.ProcessOTPEncx(ctx, crypto, otp)
 		require.NoError(t, err)
 
 		// Store OTP in Redis with TTL
 		ttl := 10 * time.Minute
-		td.InsertOTP(t, ctx, otp, testClient, ttl)
+		td.InsertOTPEncx(t, ctx, otpEncx, redisClient, ttl)
 
 		// Step 2: Make concurrent validation requests
 		validateRequest := domain.ValidatePasswordResetOTPRequest{
@@ -313,13 +342,13 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 		assert.Equal(t, 1, conflictCount, "Exactly one request should be conflicted")
 
 		// Verify OTP is consumed
-		exists := td.CheckOTPExists(t, ctx, emailHash, testClient)
+		exists := td.CheckOTPExists(t, ctx, otpEncx.EmailHash, redisClient)
 		assert.False(t, exists, "OTP should be consumed")
 	})
 
 	t.Run("should handle malformed JSON request", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create request with malformed JSON
 		req, err := http.NewRequestWithContext(
@@ -344,7 +373,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should return bad request for empty fields", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		// Test with empty email and code
 		validateRequest := domain.ValidatePasswordResetOTPRequest{

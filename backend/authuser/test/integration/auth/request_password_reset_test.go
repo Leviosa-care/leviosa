@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/authuser/internal/domain"
+	"github.com/hengadev/encx"
 
 	td "github.com/Leviosa-care/authuser/test/helpers"
 	"github.com/stretchr/testify/assert"
@@ -31,11 +32,15 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should successfully request password reset for registered email", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		existingEmail := "user@example.com"
-		td.InsertTestUser(t, ctx, existingEmail, "John", "Doe", testPool, crypto)
+		user := td.NewTestUser(t, existingEmail, "John", "DOE")
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Test password reset request
 		request := domain.RequestPasswordResetRequest{
@@ -53,12 +58,14 @@ func TestRequestPasswordReset(t *testing.T) {
 		assert.Equal(t, "sent", status)
 
 		// Verify OTP was created in Redis
-		emailHash := crypto.HashBasic(ctx, []byte(request.Email))
-		exists := td.CheckOTPExists(t, ctx, emailHash, testClient)
+		emailBytes, err := encx.SerializeValue(request.Email)
+		require.NoError(t, err)
+		emailHash := crypto.HashBasic(ctx, emailBytes)
+		exists := td.CheckOTPExists(t, ctx, emailHash, redisClient)
 		assert.True(t, exists, "OTP should exist in Redis")
 
 		// Verify OTP has proper TTL
-		ttl := td.GetOTPTTL(t, ctx, emailHash, testClient)
+		ttl := td.GetOTPTTL(t, ctx, emailHash, redisClient)
 		assert.True(t, ttl > 8*time.Minute, "OTP TTL should be around 10 minutes")
 		assert.True(t, ttl <= 10*time.Minute, "OTP TTL should not exceed 10 minutes")
 
@@ -66,9 +73,10 @@ func TestRequestPasswordReset(t *testing.T) {
 		delivery := td.WaitForOTPMessage(t, msgs, 2*time.Second)
 
 		// Get OTP from Redis to verify the code
-		otp, err := td.GetOTPFromRedis(t, ctx, emailHash, testClient)
+		otpEncx, err := td.GetOTPEncxByEmailHash(t, ctx, emailHash, redisClient, crypto)
 		require.NoError(t, err)
-		err = crypto.DecryptStruct(ctx, otp)
+
+		otp, err := domain.DecryptOTPEncx(ctx, crypto, otpEncx)
 		require.NoError(t, err)
 
 		// Verify message content
@@ -77,7 +85,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should return not found when email is not registered", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test with non-existent email
@@ -96,8 +104,10 @@ func TestRequestPasswordReset(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, statusCode)
 
 		// Verify no OTP was created
-		emailHash := crypto.HashBasic(ctx, []byte(request.Email))
-		exists := td.CheckOTPExists(t, ctx, emailHash, testClient)
+		emailBytes, err := encx.SerializeValue(request.Email)
+		require.NoError(t, err)
+		emailHash := crypto.HashBasic(ctx, emailBytes)
+		exists := td.CheckOTPExists(t, ctx, emailHash, redisClient)
 		assert.False(t, exists, "OTP should not exist in Redis")
 
 		// Verify no RabbitMQ message was sent
@@ -111,7 +121,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should return bad request for invalid email format", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test with invalid email
@@ -130,8 +140,10 @@ func TestRequestPasswordReset(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, statusCode)
 
 		// Verify no OTP was created
-		emailHash := crypto.HashBasic(ctx, []byte(request.Email))
-		exists := td.CheckOTPExists(t, ctx, emailHash, testClient)
+		emailBytes, err := encx.SerializeValue(request.Email)
+		require.NoError(t, err)
+		emailHash := crypto.HashBasic(ctx, emailBytes)
+		exists := td.CheckOTPExists(t, ctx, emailHash, redisClient)
 		assert.False(t, exists, "OTP should not exist in Redis")
 
 		// Verify no RabbitMQ message was sent
@@ -145,7 +157,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should return bad request for empty email", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test with empty email
@@ -163,9 +175,11 @@ func TestRequestPasswordReset(t *testing.T) {
 		assert.Contains(t, strings.ToLower(errorMsg), "email")
 		assert.Equal(t, http.StatusBadRequest, statusCode)
 
-		// Verify no OTP was created
-		emailHash := crypto.HashBasic(ctx, []byte(request.Email))
-		exists := td.CheckOTPExists(t, ctx, emailHash, testClient)
+		// Verify no OTP was create
+		emailBytes, err := encx.SerializeValue(request.Email)
+		require.NoError(t, err)
+		emailHash := crypto.HashBasic(ctx, emailBytes)
+		exists := td.CheckOTPExists(t, ctx, emailHash, redisClient)
 		assert.False(t, exists, "OTP should not exist in Redis")
 
 		// Verify no RabbitMQ message was sent
@@ -179,11 +193,16 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should handle OTP rate limiting properly", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		existingEmail := "ratelimit@example.com"
-		td.InsertTestUser(t, ctx, existingEmail, "Rate", "Limited", testPool, crypto)
+		// td.InsertTestUser(t, ctx, existingEmail, "Rate", "Limited", testPool, crypto)
+		user := td.NewTestUser(t, existingEmail, "Rate", "Limited")
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Send multiple password reset requests rapidly
 		request := domain.RequestPasswordResetRequest{
@@ -217,7 +236,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should handle malformed JSON request", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create request with malformed JSON
 		req, err := http.NewRequestWithContext(
@@ -242,10 +261,16 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should handle missing content-type header", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "contenttype@example.com"
-		td.InsertTestUser(t, ctx, existingEmail, "Content", "Type", testPool, crypto)
+		// td.InsertTestUser(t, ctx, existingEmail, "Content", "Type", testPool, crypto)
+
+		user := td.NewTestUser(t, existingEmail, "Content", "Type")
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create request without Content-Type header
 		req, err := http.NewRequestWithContext(
@@ -275,7 +300,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("edge case: very long email address", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Create a very long but technically valid email

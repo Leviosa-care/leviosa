@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/authuser/internal/domain"
-
 	td "github.com/Leviosa-care/authuser/test/helpers"
+
+	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +32,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should successfully request email verification for available email", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test with valid, available email
@@ -50,12 +51,14 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		assert.Equal(t, "sent", status)
 
 		// Verify OTP was created in Redis
-		emailHash := crypto.HashBasic(ctx, []byte(request.Email))
-		exists := td.CheckOTPExists(t, ctx, emailHash, testClient)
+		emailBytes, err := encx.SerializeValue(request.Email)
+		require.NoError(t, err)
+		emailHash := crypto.HashBasic(ctx, emailBytes)
+		exists := td.CheckOTPExists(t, ctx, emailHash, redisClient)
 		assert.True(t, exists, "OTP should exist in Redis")
 
 		// Verify OTP has proper TTL
-		ttl := td.GetOTPTTL(t, ctx, emailHash, testClient)
+		ttl := td.GetOTPTTL(t, ctx, emailHash, redisClient)
 		assert.True(t, ttl > 8*time.Minute, "OTP TTL should be around 10 minutes")
 		assert.True(t, ttl <= 10*time.Minute, "OTP TTL should not exceed 10 minutes")
 
@@ -63,10 +66,10 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		delivery := td.WaitForOTPMessage(t, msgs, 2*time.Second)
 
 		// Get OTP from Redis to verify the code
-		otp, err := td.GetOTPFromRedis(t, ctx, emailHash, testClient)
-		require.NoError(t, err)
-		err = crypto.DecryptStruct(ctx, otp)
-		require.NoError(t, err)
+		otpEncx, err := td.GetOTPEncxByEmailHash(t, ctx, emailHash, redisClient, crypto)
+		assert.NoError(t, err)
+		otp, err := domain.DecryptOTPEncx(ctx, crypto, otpEncx)
+		assert.NoError(t, err)
 
 		// Verify message content
 		td.VerifyOTPMessage(t, delivery, request.Email, otp.Code)
@@ -74,11 +77,15 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should return conflict when email is already registered", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		existingEmail := "existing@example.com"
-		td.InsertTestUser(t, ctx, existingEmail, "John", "Doe", testPool, crypto)
+		user := td.NewTestUser(t, existingEmail, "John", "Doe")
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Test with existing email
 		request := domain.CheckEmailAvailabilityRequest{
@@ -90,14 +97,15 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		defer resp.Body.Close()
 
 		// Assert conflict response
-		assert.Equal(t, http.StatusConflict, resp.StatusCode)
 		errorMsg, statusCode := td.ParseErrorResponse(t, resp)
 		assert.Contains(t, errorMsg, "email is already registered")
 		assert.Equal(t, http.StatusConflict, statusCode)
 
 		// Verify no OTP was created
-		emailHash := crypto.HashBasic(ctx, []byte(request.Email))
-		exists := td.CheckOTPExists(t, ctx, emailHash, testClient)
+		emailBytes, err := encx.SerializeValue(request.Email)
+		require.NoError(t, err)
+		emailHash := crypto.HashBasic(ctx, emailBytes)
+		exists := td.CheckOTPExists(t, ctx, emailHash, redisClient)
 		assert.False(t, exists, "No OTP should be created for existing email")
 
 		// Verify no RabbitMQ message was sent
@@ -106,15 +114,17 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should return rate limit when OTP already exists", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		email := "ratelimit@example.com"
 
 		// Insert existing OTP
-		existingOTP := td.NewValidOTP(email)
-		crypto.ProcessStruct(ctx, existingOTP)
-		td.InsertOTP(t, ctx, existingOTP, testClient, 10*time.Minute)
+		existingOTP := td.NewTestOTP(email)
+		existingOTPEncx, err := domain.ProcessOTPEncx(ctx, crypto, existingOTP)
+		require.NoError(t, err)
+		err = td.InsertOTPEncx(t, ctx, existingOTPEncx, redisClient, 10*time.Minute)
+		require.NoError(t, err)
 
 		// Test with same email (should hit rate limit)
 		request := domain.CheckEmailAvailabilityRequest{
@@ -137,7 +147,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should return bad request for invalid email", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test with invalid email
@@ -156,7 +166,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, statusCode)
 
 		// Verify no OTP was created
-		exists := td.CheckOTPExists(t, ctx, "invalid-hash", testClient)
+		exists := td.CheckOTPExists(t, ctx, "invalid-hash", redisClient)
 		assert.False(t, exists, "No OTP should be created for invalid email")
 
 		// Verify no RabbitMQ message was sent
@@ -165,7 +175,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should return bad request for empty email", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test with empty email
@@ -189,7 +199,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should handle malformed JSON request", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Create malformed JSON request
@@ -219,7 +229,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should successfully handle concurrent requests for different emails", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test concurrent requests
@@ -257,8 +267,10 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 		// Verify all OTPs were created
 		for _, email := range emails {
-			emailHash := crypto.HashBasic(ctx, []byte(email))
-			exists := td.CheckOTPExists(t, ctx, emailHash, testClient)
+			emailBytes, err := encx.SerializeValue(email)
+			require.NoError(t, err)
+			emailHash := crypto.HashBasic(ctx, emailBytes)
+			exists := td.CheckOTPExists(t, ctx, emailHash, redisClient)
 			assert.True(t, exists, "OTP should exist for email: %s", email)
 		}
 

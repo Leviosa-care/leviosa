@@ -23,13 +23,18 @@ func TestSignOut(t *testing.T) {
 
 	t.Run("should successfully sign out with valid session", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create active user
-		user := td.NewTestUser("signout-test@example.com", "Sign", "Out")
+		user := td.NewTestUser(t, "signout-test@example.com", "Sign", "Out")
 		user.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, user, testPool, crypto)
+
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create active session
 		sessionInfo := &session.SessionInfo{
@@ -37,7 +42,7 @@ func TestSignOut(t *testing.T) {
 			Role:   identity.Standard,
 			State:  session.SessionActive,
 		}
-		accessToken := td.CreateSessionWithEncryption(t, ctx, sessionInfo, testClient, crypto)
+		accessToken := td.CreateSessionWithEncryption(t, ctx, sessionInfo, redisClient, crypto)
 
 		// Make sign-out request
 		req := td.NewSignOutRequest(t, ctx, testServerURL, accessToken)
@@ -60,7 +65,7 @@ func TestSignOut(t *testing.T) {
 		assert.Equal(t, "signed_out", response.Status)
 
 		// Verify session was removed from Redis
-		session := td.GetSessionByID(t, ctx, sessionInfo.ID, testClient)
+		session := td.GetSessionByID(t, ctx, sessionInfo.ID, redisClient)
 		assert.Nil(t, session, "Session should be removed after sign-out")
 	})
 
@@ -88,13 +93,18 @@ func TestSignOut(t *testing.T) {
 
 	t.Run("should handle double sign-out gracefully", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create active user
-		user := td.NewTestUser("double-signout@example.com", "Double", "SignOut")
+		user := td.NewTestUser(t, "double-signout@example.com", "Double", "SignOut")
 		user.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, user, testPool, crypto)
+
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create active session
 		sessionInfo := &session.SessionInfo{
@@ -102,7 +112,7 @@ func TestSignOut(t *testing.T) {
 			Role:   identity.Standard,
 			State:  session.SessionActive,
 		}
-		accessToken := td.CreateSessionWithEncryption(t, ctx, sessionInfo, testClient, crypto)
+		accessToken := td.CreateSessionWithEncryption(t, ctx, sessionInfo, redisClient, crypto)
 
 		// First sign-out request
 		req1 := td.NewSignOutRequest(t, ctx, testServerURL, accessToken)
@@ -125,13 +135,18 @@ func TestSignOut(t *testing.T) {
 
 	t.Run("should fail with guest role (below minimum required role)", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create active user
-		user := td.NewTestUser("guest-signout@example.com", "Guest", "User")
+		user := td.NewTestUser(t, "guest-signout@example.com", "Guest", "User")
 		user.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, user, testPool, crypto)
+
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create guest session (below Standard minimum role)
 		sessionInfo := &session.SessionInfo{
@@ -139,7 +154,7 @@ func TestSignOut(t *testing.T) {
 			Role:   identity.Guest,
 			State:  session.SessionActive,
 		}
-		accessToken := td.CreateSessionWithEncryption(t, ctx, sessionInfo, testClient, crypto)
+		accessToken := td.CreateSessionWithEncryption(t, ctx, sessionInfo, redisClient, crypto)
 
 		// Make sign-out request with guest role
 		req := td.NewSignOutRequest(t, ctx, testServerURL, accessToken)
@@ -153,13 +168,18 @@ func TestSignOut(t *testing.T) {
 
 	t.Run("should work with administrator role", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create active user
-		user := td.NewTestUser("admin-signout@example.com", "Admin", "User")
+		user := td.NewTestUser(t, "admin-signout@example.com", "Admin", "User")
 		user.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, user, testPool, crypto)
+
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create administrator session
 		sessionInfo := &session.SessionInfo{
@@ -167,7 +187,7 @@ func TestSignOut(t *testing.T) {
 			Role:   identity.Administrator,
 			State:  session.SessionActive,
 		}
-		accessToken := td.CreateSessionWithEncryption(t, ctx, sessionInfo, testClient, crypto)
+		accessToken := td.CreateSessionWithEncryption(t, ctx, sessionInfo, redisClient, crypto)
 
 		// Make sign-out request with administrator role
 		req := td.NewSignOutRequest(t, ctx, testServerURL, accessToken)
@@ -179,7 +199,7 @@ func TestSignOut(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify session was removed from Redis
-		session := td.GetSessionByID(t, ctx, sessionInfo.ID, testClient)
+		session := td.GetSessionByID(t, ctx, sessionInfo.ID, redisClient)
 		assert.Nil(t, session, "Session should be removed after sign-out")
 	})
 }

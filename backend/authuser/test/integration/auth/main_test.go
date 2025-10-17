@@ -26,6 +26,7 @@ import (
 
 	authsession "github.com/Leviosa-care/core/auth/session"
 	mq "github.com/Leviosa-care/core/contracts/rabbitmq"
+	"github.com/Leviosa-care/core/contracts/services"
 	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/envmode"
 	"github.com/Leviosa-care/core/logger"
@@ -35,7 +36,6 @@ import (
 	"github.com/Leviosa-care/core/migrations"
 	tu "github.com/Leviosa-care/core/testutils"
 	"github.com/hengadev/encx"
-	"github.com/hengadev/encx/providers/hashicorpvault"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -46,11 +46,13 @@ var (
 	pgContainer     *tu.PostgresContainer
 	testPool        *pgxpool.Pool
 	redisContainer  *tu.RedisContainer
-	testClient      *redis.Client
+	redisClient     *redis.Client
 	crypto          encx.CryptoService
 	userRepo        ports.UserRepository
 	otpRepo         ports.OTPRepository
 	sessionRepo     ports.SessionRepository
+	vaultSetup      *tu.ServiceVaultSetup // Enhanced Vault setup with per-service keys
+	authCtx         *tu.AuthTestContext   // Authentication context for user/session tests
 	authSessionRepo authsession.SessionRepository
 	service         ports.AuthAggregatorService
 	handler         authHandler.Handler
@@ -70,6 +72,8 @@ func TestMain(m *testing.M) {
 	}
 	testLogger := slog.New(loggerHandler)
 	slog.SetDefault(testLogger) // Set as default for the application
+
+	ctx = context.WithValue(ctx, ctxutil.LoggerKey, testLogger)
 
 	// Postgres container
 	pgContainer, err = tu.SetupPostgres(ctx, nil)
@@ -134,10 +138,10 @@ func TestMain(m *testing.M) {
 
 	// Redis client
 	log.Println("Creating Redis client...")
-	testClient = redisContainer.NewClient()
+	redisClient = redisContainer.NewClient()
 
 	// Test Redis connection
-	if err = testClient.Ping(ctx).Err(); err != nil {
+	if err = redisClient.Ping(ctx).Err(); err != nil {
 		tu.TeardownRedis(ctx, nil, redisContainer)
 		panic(fmt.Sprintf("Failed to ping Redis: %v", err))
 	}
@@ -167,37 +171,44 @@ func TestMain(m *testing.M) {
 	}
 	defer tu.TeardownStripeMock(ctx, nil, stripeContainer)
 
-	// Setup Vault testcontainer
-	log.Println("Setting up Vault testcontainer...")
-	vaultContainer, err := tu.SetupVault(ctx, nil)
+	// Setup enhanced Vault testcontainer with per-service encryption (GDPR compliant)
+	log.Println("Setting up enhanced Vault testcontainer with per-service keys...")
+	serviceNames := []string{services.AuthUser} // Only settings service for this test
+	vaultSetup, err = tu.SetupServiceVault(ctx, nil, serviceNames)
 	if err != nil {
-		log.Fatalf("Failed to setup Vault container: %v", err)
+		log.Fatalf("Failed to setup service Vault container: %v", err)
 	}
-	defer tu.TeardownVault(ctx, nil, vaultContainer)
+	defer tu.TeardownVault(ctx, nil, vaultSetup.VaultContainer)
 
-	// Set environment variables for Vault
-	os.Setenv("VAULT_ADDR", vaultContainer.HTTPSEndpoint)
-	os.Setenv("VAULT_TOKEN", vaultContainer.RootToken)
+	// Set environment variables for Vault (for encx library)
+	os.Setenv("VAULT_ADDR", vaultSetup.VaultContainer.HTTPSEndpoint)
+	os.Setenv("VAULT_TOKEN", vaultSetup.VaultContainer.RootToken)
 
-	// Crypto service
-	log.Println("Creating crypto service...")
-	kms, err := hashicorpvault.New()
-	if err != nil {
-		log.Fatalf("Failed to create vault provider: %v", err)
-	}
-
-	crypto, err = encx.New(
-		ctx, kms,
-		tu.EncryptionKey,
-		"secret/data/pepper",
-	)
-	if err != nil {
-		log.Fatalf("Failed to create crypto service: %v", err)
+	// Get service-specific crypto service (GDPR compliant)
+	var exists bool
+	crypto, exists = vaultSetup.GetServiceCrypto(services.AuthUser)
+	if !exists {
+		log.Fatal("AuthUser service crypto not found in vault setup")
 	}
 	if crypto == nil {
-		log.Fatal("Crypto service is nil after creation")
+		log.Fatal("AuthUser crypto service is nil")
 	}
-	log.Println("Crypto service created successfully")
+	log.Printf("✓ AuthUser service crypto initialized with per-service encryption key")
+
+	// Log vault setup details for debugging
+	log.Printf("✓ Vault setup complete:")
+	log.Printf("  - Services: %d", len(vaultSetup.CryptoServices))
+	log.Printf("  - API Keys: %d", len(vaultSetup.ServiceKeys))
+	log.Printf("  - GDPR compliant per-service encryption: enabled")
+
+	// Initialize AuthTestContext for user/session testing
+	authCtx = &tu.AuthTestContext{
+		Pool:   testPool,
+		Redis:  redisClient,
+		Crypto: crypto,
+	}
+
+	log.Printf("✓ AuthTestContext initialized for user authentication testing")
 
 	payment := authPayment.NewService("sk_test_123456789012345678901234", stripeContainer.URL)
 
@@ -212,18 +223,18 @@ func TestMain(m *testing.M) {
 	userRepo = userRepository.New(ctx, testPool)
 	userService := user.New(userRepo, crypto, payment)
 
-	otpRepo = otpRepository.New(testClient)
+	otpRepo = otpRepository.New(redisClient)
 	otpService, err := otp.New(ctx, otpRepo, crypto, testMQConn)
 	if err != nil {
 		log.Fatalf("Failed to create OTP service: %v", err)
 	}
 
-	sessionRepo = sessionRepository.New(testClient)
+	sessionRepo = sessionRepository.New(redisClient)
 	sessionService := session.New(ctx, sessionRepo, crypto)
 
 	service = aggregator.New(otpService, userService, sessionService)
 
-	authSessionRepo = authsession.NewRedisSessionRepository(testClient)
+	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
 
 	handler = authHandler.New(service, authmw)

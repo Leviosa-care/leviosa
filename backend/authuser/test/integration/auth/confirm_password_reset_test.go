@@ -13,9 +13,10 @@ import (
 	aggregatorHandler "github.com/Leviosa-care/authuser/internal/adapters/http/auth"
 	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
 	"github.com/Leviosa-care/authuser/internal/domain"
-
 	td "github.com/Leviosa-care/authuser/test/helpers"
 	session "github.com/Leviosa-care/core/auth/session"
+
+	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -40,24 +41,32 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should successfully confirm password reset with valid token", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "resetconfirm@example.com"
 		oldPassword := generateStrongPassword(t)
 		newPassword := generateStrongPassword(t)
 
 		// Insert user with old password
-		td.InsertTestUserWithPassword(t, ctx, existingEmail, "Reset", "Confirm", oldPassword, testPool, crypto)
+		user := td.NewTestUser(t, existingEmail, "Reset", "Confirm")
+		user.Password = oldPassword
+		user.State = domain.Active
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Generate a reset token and store reset session directly
 		resetToken, err := session.GenerateToken()
 		require.NoError(t, err)
-		tokenHash := crypto.HashBasic(ctx, []byte(resetToken))
+		resetTokenBytes, err := encx.SerializeValue(resetToken)
+		require.NoError(t, err)
+		tokenHash := crypto.HashBasic(ctx, resetTokenBytes)
 
 		// Store reset session in Redis directly
 		resetSessionKey := sessionRepository.FormatResetSessionKey(tokenHash)
 		ttl := 15 * time.Minute
-		err = testClient.Set(ctx, resetSessionKey, existingEmail, ttl).Err()
+		err = redisClient.Set(ctx, resetSessionKey, existingEmail, ttl).Err()
 		require.NoError(t, err)
 
 		// Create reset cookie for the request
@@ -66,12 +75,13 @@ func TestConfirmPasswordReset(t *testing.T) {
 			Value: resetToken,
 		}
 
-		// Step 3: Confirm password reset
+		// Confirm password reset
 		confirmRequest := domain.ConfirmPasswordResetRequest{
 			Token:       resetTokenCookie.Value,
 			NewPassword: newPassword,
 		}
 		req := td.NewConfirmPasswordResetRequestWithCookie(t, ctx, testServerURL, confirmRequest, resetTokenCookie)
+
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -93,9 +103,10 @@ func TestConfirmPasswordReset(t *testing.T) {
 		assert.True(t, foundResetCookie, "Reset token cookie should be cleared")
 
 		// Verify reset session was consumed (no longer exists in Redis)
-		tokenHash = crypto.HashBasic(ctx, []byte(resetTokenCookie.Value))
+		resetSessionTokenBytes, err := encx.SerializeValue(resetTokenCookie.Value)
+		tokenHash = crypto.HashBasic(ctx, resetSessionTokenBytes)
 		resetSessionKey = sessionRepository.FormatResetSessionKey(tokenHash)
-		_, err = testClient.Get(ctx, resetSessionKey).Result()
+		_, err = redisClient.Get(ctx, resetSessionKey).Result()
 		assert.Error(t, err, "Reset session should be consumed and no longer exist")
 
 		// NOTE: remove that part for the moment, because I do not need to assert it for now
@@ -125,7 +136,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should return not found for invalid reset token", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		newPassword := generateStrongPassword(t)
 
@@ -148,20 +159,29 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should return not found for expired reset token", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "expired@example.com"
-		td.InsertTestUser(t, ctx, existingEmail, "Expired", "Token", testPool, crypto)
+
+		user := td.NewTestUser(t, existingEmail, "Reset", "Confirm")
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Generate a reset token and store with very short TTL to simulate expiration
 		resetToken, err := session.GenerateToken()
 		require.NoError(t, err)
-		tokenHash := crypto.HashBasic(ctx, []byte(resetToken))
-		emailHash := crypto.HashBasic(ctx, []byte(existingEmail))
+		tokenBytes, err := encx.SerializeValue(resetToken)
+		require.NoError(t, err)
+		tokenHash := crypto.HashBasic(ctx, tokenBytes)
+		emailBytes, err := encx.SerializeValue(existingEmail)
+		require.NoError(t, err)
+		emailHash := crypto.HashBasic(ctx, emailBytes)
 
 		// Store reset session in Redis with short TTL
 		resetSessionKey := sessionRepository.FormatResetSessionKey(tokenHash)
-		err = testClient.Set(ctx, resetSessionKey, emailHash, 1*time.Millisecond).Err()
+		err = redisClient.Set(ctx, resetSessionKey, emailHash, 1*time.Millisecond).Err()
 		require.NoError(t, err)
 
 		// Wait for expiration
@@ -194,21 +214,30 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should return bad request for invalid password format", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "weakpass@example.com"
-		td.InsertTestUser(t, ctx, existingEmail, "Weak", "Pass", testPool, crypto)
+
+		user := td.NewTestUser(t, existingEmail, "Reset", "Confirm")
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Generate a reset token and store reset session directly
 		resetToken, err := session.GenerateToken()
 		require.NoError(t, err)
-		tokenHash := crypto.HashBasic(ctx, []byte(resetToken))
-		emailHash := crypto.HashBasic(ctx, []byte(existingEmail))
+		tokenBytes, err := encx.SerializeValue(resetToken)
+		require.NoError(t, err)
+		tokenHash := crypto.HashBasic(ctx, tokenBytes)
+		emailBytes, err := encx.SerializeValue(existingEmail)
+		require.NoError(t, err)
+		emailHash := crypto.HashBasic(ctx, emailBytes)
 
 		// Store reset session in Redis directly
 		resetSessionKey := sessionRepository.FormatResetSessionKey(tokenHash)
 		ttl := 15 * time.Minute
-		err = testClient.Set(ctx, resetSessionKey, emailHash, ttl).Err()
+		err = redisClient.Set(ctx, resetSessionKey, emailHash, ttl).Err()
 		require.NoError(t, err)
 
 		// Create reset cookie for the request
@@ -234,32 +263,40 @@ func TestConfirmPasswordReset(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, statusCode)
 
 		// Verify reset token was not consumed (still exists)
-		tokenHash = crypto.HashBasic(ctx, []byte(resetTokenCookie.Value))
+		tokenBytes, err = encx.SerializeValue(resetTokenCookie.Value)
+		tokenHash = crypto.HashBasic(ctx, tokenBytes)
 		resetSessionKey = sessionRepository.FormatResetSessionKey(tokenHash)
-		_, err = testClient.Get(ctx, resetSessionKey).Result()
+		_, err = redisClient.Get(ctx, resetSessionKey).Result()
 		assert.NoError(t, err, "Reset token should still exist after failed validation")
 	})
 
 	t.Run("should handle token in request body instead of cookie", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "tokenbody@example.com"
 		newPassword := generateStrongPassword(t)
-		td.InsertTestUser(t, ctx, existingEmail, "Token", "Body", testPool, crypto)
+
+		user := td.NewTestUser(t, existingEmail, "Token", "Body")
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Generate a reset token and store reset session directly
 		resetToken, err := session.GenerateToken()
 		require.NoError(t, err)
-		tokenHash := crypto.HashBasic(ctx, []byte(resetToken))
+		tokenBytes, err := encx.SerializeValue(resetToken)
+		require.NoError(t, err)
+		tokenHash := crypto.HashBasic(ctx, tokenBytes)
 
 		// Store reset session in Redis directly
 		resetSessionKey := sessionRepository.FormatResetSessionKey(tokenHash)
 		ttl := 15 * time.Minute
-		err = testClient.Set(ctx, resetSessionKey, existingEmail, ttl).Err()
+		err = redisClient.Set(ctx, resetSessionKey, existingEmail, ttl).Err()
 		require.NoError(t, err)
 
-		// Step 3: Confirm password reset with token in request body (no cookie)
+		// Confirm password reset with token in request body (no cookie)
 		confirmRequest := domain.ConfirmPasswordResetRequest{
 			Token:       resetToken,
 			NewPassword: newPassword,
@@ -278,7 +315,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should return bad request for missing token", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		newPassword := generateStrongPassword(t)
 
@@ -301,21 +338,28 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should handle concurrent confirmation attempts", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "concurrent@example.com"
 		newPassword := generateStrongPassword(t)
-		td.InsertTestUser(t, ctx, existingEmail, "Concurrent", "User", testPool, crypto)
+
+		user := td.NewTestUser(t, existingEmail, "Concurrent", "User")
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Generate a reset token and store reset session directly
 		resetToken, err := session.GenerateToken()
 		require.NoError(t, err)
-		tokenHash := crypto.HashBasic(ctx, []byte(resetToken))
+		tokenBytes, err := encx.SerializeValue(resetToken)
+		require.NoError(t, err)
+		tokenHash := crypto.HashBasic(ctx, tokenBytes)
 
 		// Store reset session in Redis directly
 		resetSessionKey := sessionRepository.FormatResetSessionKey(tokenHash)
 		ttl := 15 * time.Minute
-		err = testClient.Set(ctx, resetSessionKey, existingEmail, ttl).Err()
+		err = redisClient.Set(ctx, resetSessionKey, existingEmail, ttl).Err()
 		require.NoError(t, err)
 
 		// Create reset cookie for the request
@@ -373,7 +417,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should handle malformed JSON request", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create request with malformed JSON
 		req, err := http.NewRequestWithContext(

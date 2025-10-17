@@ -21,26 +21,23 @@ func TestSignIn(t *testing.T) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	validEmail := "signin-test@example.com"
-	_ = validEmail
 	validPassword := "K9$!qf>2]Ez~:Kb6C(D3RqP8"
-	_ = validPassword
 
 	t.Run("should successfully sign in with valid credentials", func(t *testing.T) {
 		// Clear all test data
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create an active user with the test password
-		user, err := td.NewTestUserWithEncryption(validEmail, "John", "Doe", crypto)
-		require.NoError(t, err)
+		user := td.NewTestUser(t, validEmail, "John", "Doe")
 		user.State = domain.Active
 		user.Password = validPassword
 
-		// Process encryption/hashing again to hash the password
-		err = crypto.ProcessStruct(ctx, user)
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
 		// Insert the user into database
-		td.InsertUser(t, ctx, user, testPool)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create sign-in request
 		request := domain.SignInRequest{
@@ -106,7 +103,7 @@ func TestSignIn(t *testing.T) {
 
 	t.Run("should fail with invalid email", func(t *testing.T) {
 		// Clear all test data
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create sign-in request with non-existent email
 		request := domain.SignInRequest{
@@ -125,20 +122,19 @@ func TestSignIn(t *testing.T) {
 
 	t.Run("should fail with invalid password", func(t *testing.T) {
 		// Clear all test data
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create an active user with the test password
-		user, err := td.NewTestUserWithEncryption(validEmail, "John", "Doe", crypto)
-		require.NoError(t, err)
+		user := td.NewTestUser(t, validEmail, "John", "Doe")
 		user.State = domain.Active
 		user.Password = validPassword
 
-		// Process encryption/hashing again to hash the password
-		err = crypto.ProcessStruct(ctx, user)
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
 		// Insert the user into database
-		td.InsertUser(t, ctx, user, testPool)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create sign-in request with wrong password
 		request := domain.SignInRequest{
@@ -157,20 +153,19 @@ func TestSignIn(t *testing.T) {
 
 	t.Run("should fail with inactive user account", func(t *testing.T) {
 		// Clear all test data
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending user (not yet activated)
-		user, err := td.NewTestUserWithEncryption(validEmail, "John", "Doe", crypto)
-		require.NoError(t, err)
+		user := td.NewTestUser(t, validEmail, "John", "Doe")
 		user.State = domain.Pending
 		user.Password = validPassword
 
-		// Process encryption/hashing
-		err = crypto.ProcessStruct(ctx, user)
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
 		// Insert the user into database
-		td.InsertUser(t, ctx, user, testPool)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create sign-in request
 		request := domain.SignInRequest{
@@ -189,20 +184,19 @@ func TestSignIn(t *testing.T) {
 
 	t.Run("should fail with unverified user account", func(t *testing.T) {
 		// Clear all test data
-		td.ClearAllTestData(t, ctx, testPool, testClient)
+		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create an unverified user
-		user, err := td.NewTestUserWithEncryption(validEmail, "John", "Doe", crypto)
-		require.NoError(t, err)
+		user := td.NewTestUser(t, validEmail, "John", "Doe")
 		user.State = domain.Unverified
 		user.Password = validPassword
 
-		// Process encryption/hashing
-		err = crypto.ProcessStruct(ctx, user)
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
 		// Insert the user into database
-		td.InsertUser(t, ctx, user, testPool)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create sign-in request
 		request := domain.SignInRequest{

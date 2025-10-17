@@ -2,17 +2,19 @@ package auth_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
 
-	"github.com/Leviosa-care/authuser/test/helpers"
-	"github.com/hengadev/leviosa/core/errs"
-
+	th "github.com/Leviosa-care/authuser/test/helpers"
 	ck "github.com/Leviosa-care/core/auth/cookies"
 	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
+
+	"github.com/Leviosa-care/core/errs"
 	"github.com/google/uuid"
+	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,22 +27,24 @@ func TestRefreshSession(t *testing.T) {
 
 	t.Run("should successfully refresh active session", func(t *testing.T) {
 		// Clean state
-		helpers.ClearSessionsRedis(t, ctx, testClient)
+		th.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create a valid active session
-		activeSession := helpers.CreateTestSessionWithCrypto(t, crypto)
+		// activeSession := th.CreateTestSessionWithCrypto(t, crypto)
+		activeSession, err := th.NewTestSession(t, crypto)
+		require.NoError(t, err)
 		activeSession.State = session.SessionActive
 		activeSession.Role = identity.Standard
 
 		// Re-process after state change
-		err := crypto.ProcessStruct(ctx, activeSession)
+		activeSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, activeSession)
 		require.NoError(t, err)
 
 		// Insert session into Redis
-		helpers.InsertSessionDirectly(t, ctx, testClient, activeSession, 24*time.Hour)
+		th.InsertSessionEncx(t, ctx, redisClient, activeSessionEncx, 24*time.Hour)
 
 		// Make refresh request
-		req := helpers.NewRefreshSessionRequest(t, ctx, testServerURL, activeSession.RefreshToken)
+		req := th.NewRefreshSessionRequest(t, ctx, testServerURL, activeSession.RefreshToken)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -49,7 +53,7 @@ func TestRefreshSession(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Parse response
-		message, status := helpers.ParseRefreshSessionResponse(t, resp)
+		message, status := th.ParseRefreshSessionResponse(t, resp)
 		assert.Equal(t, "Session refreshed successfully", message)
 		assert.Equal(t, "success", status)
 
@@ -73,44 +77,56 @@ func TestRefreshSession(t *testing.T) {
 		assert.True(t, refreshCookie.HttpOnly, "Refresh token cookie should be HTTP only")
 
 		// Verify tokens are different from original
-		assert.NotEqual(t, activeSession.AccessTokenHash, accessCookie.Value, "Access token cookie should have a different value than the original")
-		assert.NotEqual(t, activeSession.RefreshTokenHash, refreshCookie.Value, "Refresh token cookie should have a different value than the original")
+		assert.NotEqual(t, activeSessionEncx.AccessTokenHash, accessCookie.Value, "Access token cookie should have a different value than the original")
+		assert.NotEqual(t, activeSessionEncx.RefreshTokenHash, refreshCookie.Value, "Refresh token cookie should have a different value than the original")
 
 		// Verify session still exists with new tokens
-		sessionExists, err := testClient.Exists(ctx, session.FormatSessionKey(activeSession.ID.String())).Result()
+		sessionExists, err := redisClient.Exists(ctx, session.FormatSessionKey(activeSession.ID.String())).Result()
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), sessionExists, "Session should still exists with new token")
 
 		// Verify old tokens are invalidated and new ones exist
-		oldAccessExists, err := testClient.Exists(ctx, session.FormatAccessTokenKey(activeSession.AccessTokenHash)).Result()
+		oldAccessExists, err := redisClient.Exists(ctx, session.FormatAccessTokenKey(activeSessionEncx.AccessTokenHash)).Result()
 		require.NoError(t, err)
 		assert.Equal(t, int64(0), oldAccessExists, "Old access token should be invalidated")
 
-		oldRefreshExists, err := testClient.Exists(ctx, session.FormatRefreshTokenKey(activeSession.RefreshTokenHash)).Result()
+		oldRefreshExists, err := redisClient.Exists(ctx, session.FormatRefreshTokenKey(activeSessionEncx.RefreshTokenHash)).Result()
 		require.NoError(t, err)
 		assert.Equal(t, int64(0), oldRefreshExists, "Old refresh token should be invalidated")
 
-		newAccessExists, err := testClient.Exists(ctx, session.FormatAccessTokenKey(accessCookie.Value)).Result()
+		accessCookieBytes, err := encx.SerializeValue(accessCookie.Value)
+		require.NoError(t, err)
+		accessCookieHash := crypto.HashBasic(ctx, accessCookieBytes)
+		newAccessExists, err := redisClient.Exists(ctx, session.FormatAccessTokenKey(accessCookieHash)).Result()
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), newAccessExists, "New access token should be set in Redis")
 
-		newRefreshExists, err := testClient.Exists(ctx, session.FormatRefreshTokenKey(refreshCookie.Value)).Result()
+		refreshCookieBytes, err := encx.SerializeValue(refreshCookie.Value)
+		require.NoError(t, err)
+		refreshCookieHash := crypto.HashBasic(ctx, refreshCookieBytes)
+		newRefreshExists, err := redisClient.Exists(ctx, session.FormatRefreshTokenKey(refreshCookieHash)).Result()
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), newRefreshExists, "New refresh token should be set in Redis")
 	})
 
 	t.Run("should successfully refresh pending session", func(t *testing.T) {
 		// Clean state
-		helpers.ClearSessionsRedis(t, ctx, testClient)
+		th.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create a valid pending session
-		pendingSession := helpers.CreateTestPendingSessionWithCrypto(t, crypto)
+		// pendingSession := th.CreateTestPendingSessionWithCrypto(t, crypto)
+		pendingSession, err := th.NewTestSession(t, crypto)
+		require.NoError(t, err)
+		pendingSession.State = session.SessionPending
+
+		pendingSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, pendingSession)
+		require.NoError(t, err)
 
 		// Insert session into Redis
-		helpers.InsertSessionDirectly(t, ctx, testClient, pendingSession, 24*time.Hour)
+		th.InsertSessionEncx(t, ctx, redisClient, pendingSessionEncx, 24*time.Hour)
 
 		// Make refresh request
-		req := helpers.NewRefreshSessionRequest(t, ctx, testServerURL, pendingSession.RefreshToken)
+		req := th.NewRefreshSessionRequest(t, ctx, testServerURL, pendingSession.RefreshToken)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -119,7 +135,7 @@ func TestRefreshSession(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Parse response
-		message, status := helpers.ParseRefreshSessionResponse(t, resp)
+		message, status := th.ParseRefreshSessionResponse(t, resp)
 		assert.Equal(t, "Session refreshed successfully", message)
 		assert.Equal(t, "success", status)
 
@@ -143,10 +159,10 @@ func TestRefreshSession(t *testing.T) {
 
 	t.Run("should fail with missing session info in context", func(t *testing.T) {
 		// Clean state
-		helpers.ClearSessionsRedis(t, ctx, testClient)
+		th.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Make request without proper session context (no refresh token cookie)
-		req := helpers.NewRefreshSessionRequestWithoutToken(t, ctx, testServerURL)
+		req := th.NewRefreshSessionRequestWithoutToken(t, ctx, testServerURL)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -154,20 +170,21 @@ func TestRefreshSession(t *testing.T) {
 		// Assert error response
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-		errorMsg, statusCode := helpers.ParseErrorResponse(t, resp)
+		errorMsg, statusCode := th.ParseErrorResponse(t, resp)
 		assert.Equal(t, http.StatusUnauthorized, statusCode)
 		assert.Contains(t, errorMsg, errs.ErrUnauthorized.Error())
 	})
 
 	t.Run("should fail when session not found in Redis", func(t *testing.T) {
 		// Clean state
-		helpers.ClearSessionsRedis(t, ctx, testClient)
+		th.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create session but don't insert into Redis
-		nonExistentSession := helpers.CreateTestSessionWithCrypto(t, crypto)
+		nonExistentSession, err := th.NewTestSession(t, crypto)
+		require.NoError(t, err)
 
 		// Make refresh request for non-existent session
-		req := helpers.NewRefreshSessionRequest(t, ctx, testServerURL, nonExistentSession.RefreshToken)
+		req := th.NewRefreshSessionRequest(t, ctx, testServerURL, nonExistentSession.RefreshToken)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -175,28 +192,29 @@ func TestRefreshSession(t *testing.T) {
 		// Assert not found response
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-		errorMsg, statusCode := helpers.ParseErrorResponse(t, resp)
+		errorMsg, statusCode := th.ParseErrorResponse(t, resp)
 		assert.Equal(t, http.StatusUnauthorized, statusCode)
 		assert.Contains(t, errorMsg, errs.ErrUnauthorized.Error())
 	})
 
 	t.Run("should fail for invalid session state", func(t *testing.T) {
 		// Clean state
-		helpers.ClearSessionsRedis(t, ctx, testClient)
+		th.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create session with invalid state (neither active nor pending)
-		invalidSession := helpers.CreateTestSessionWithCrypto(t, crypto)
+		invalidSession, err := th.NewTestSession(t, crypto)
+		require.NoError(t, err)
 		invalidSession.State = session.SessionState("invalid") // Invalid state for refresh
 
 		// Re-process after state change
-		err := crypto.ProcessStruct(ctx, invalidSession)
+		invalidSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, invalidSession)
 		require.NoError(t, err)
 
 		// Insert session into Redis
-		helpers.InsertSessionDirectly(t, ctx, testClient, invalidSession, 24*time.Hour)
+		th.InsertSessionEncx(t, ctx, redisClient, invalidSessionEncx, 24*time.Hour)
 
 		// Make refresh request
-		req := helpers.NewRefreshSessionRequest(t, ctx, testServerURL, invalidSession.RefreshToken)
+		req := th.NewRefreshSessionRequest(t, ctx, testServerURL, invalidSession.RefreshToken)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -204,31 +222,32 @@ func TestRefreshSession(t *testing.T) {
 		// Assert unauthorized response
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-		errorMsg, statusCode := helpers.ParseErrorResponse(t, resp)
+		errorMsg, statusCode := th.ParseErrorResponse(t, resp)
 		assert.Equal(t, http.StatusUnauthorized, statusCode)
 		assert.Contains(t, errorMsg, "unauthorized")
 	})
 
 	t.Run("should handle expired tokens gracefully", func(t *testing.T) {
 		// Clean state
-		helpers.ClearSessionsRedis(t, ctx, testClient)
+		th.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create session with expired timestamps
-		expiredSession := helpers.CreateTestSessionWithCrypto(t, crypto)
+		expiredSession, err := th.NewTestSession(t, crypto)
+		require.NoError(t, err)
 		expiredSession.ExpiresAt = time.Now().Add(-1 * time.Hour) // Expired 1 hour ago
 
 		// Re-process after timestamp change
-		err := crypto.ProcessStruct(ctx, expiredSession)
+		expiredSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, expiredSession)
 		require.NoError(t, err)
 
 		// Insert session into Redis with very short TTL
-		helpers.InsertSessionDirectly(t, ctx, testClient, expiredSession, 1*time.Millisecond)
+		th.InsertSessionEncx(t, ctx, redisClient, expiredSessionEncx, 1*time.Millisecond)
 
 		// Wait for Redis to expire the keys
 		time.Sleep(10 * time.Millisecond)
 
 		// Make refresh request
-		req := helpers.NewRefreshSessionRequest(t, ctx, testServerURL, expiredSession.RefreshToken)
+		req := th.NewRefreshSessionRequest(t, ctx, testServerURL, expiredSession.RefreshToken)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -248,11 +267,16 @@ func TestRefreshSession(t *testing.T) {
 
 	t.Run("should handle database transaction failures", func(t *testing.T) {
 		// Clean state
-		helpers.ClearSessionsRedis(t, ctx, testClient)
+		th.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create a valid session
-		validSession := helpers.CreateTestSessionWithCrypto(t, crypto)
-		helpers.InsertSessionDirectly(t, ctx, testClient, validSession, 24*time.Hour)
+		validSession, err := th.NewTestSession(t, crypto)
+		require.NoError(t, err)
+
+		validSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, validSession)
+		require.NoError(t, err)
+
+		th.InsertSessionEncx(t, ctx, redisClient, validSessionEncx, 24*time.Hour)
 
 		// This test would require causing a Redis transaction failure
 		// by manipulating the Redis instance or using mocks
@@ -261,25 +285,27 @@ func TestRefreshSession(t *testing.T) {
 
 	t.Run("should preserve session state after successful refresh", func(t *testing.T) {
 		// Clean state
-		helpers.ClearSessionsRedis(t, ctx, testClient)
+		th.ClearSessionsRedis(t, ctx, redisClient)
 
 		role := identity.Premium
 		state := session.SessionActive
 
 		// Create session with specific user ID and role
 		userID := uuid.New()
-		specificSession := helpers.CreateTestSessionWithUserIDAndCrypto(t, userID, crypto)
+		specificSession, err := th.NewTestSession(t, crypto)
+		require.NoError(t, err)
+		specificSession.UserID = userID
 		specificSession.Role = role
 		specificSession.State = state
 
 		// Re-process after changes
-		err := crypto.ProcessStruct(ctx, specificSession)
+		specificSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, specificSession)
 		require.NoError(t, err)
 
-		helpers.InsertSessionDirectly(t, ctx, testClient, specificSession, 24*time.Hour)
+		th.InsertSessionEncx(t, ctx, redisClient, specificSessionEncx, 24*time.Hour)
 
 		// Make refresh request
-		req := helpers.NewRefreshSessionRequest(t, ctx, testServerURL, specificSession.RefreshToken)
+		req := th.NewRefreshSessionRequest(t, ctx, testServerURL, specificSession.RefreshToken)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -288,10 +314,15 @@ func TestRefreshSession(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Retrieve session data from Redis to verify preservation
-		sessionData, err := testClient.Get(ctx, session.FormatSessionKey(specificSession.ID.String())).Bytes()
+		sessionData, err := redisClient.Get(ctx, session.FormatSessionKey(specificSession.ID.String())).Bytes()
 		require.NoError(t, err)
 
-		retrievedSession := helpers.DecodeSessionWithDecryption(t, sessionData, crypto)
+		var retrievedSessionEncx session.SessionEncx
+		err = json.Unmarshal(sessionData, &retrievedSessionEncx)
+		require.NoError(t, err, "Failed to unmarshal SessionEncx")
+
+		retrievedSession, err := session.DecryptSessionEncx(context.Background(), crypto, &retrievedSessionEncx)
+		require.NoError(t, err, "Failed to decrypt session")
 
 		// Verify that non-token fields are preserved
 		assert.Equal(t, userID, retrievedSession.UserID)
@@ -299,16 +330,16 @@ func TestRefreshSession(t *testing.T) {
 		assert.Equal(t, state, retrievedSession.State)
 
 		// Verify that tokens have been updated
-		assert.NotEqual(t, specificSession.AccessTokenHash, retrievedSession.AccessTokenHash)
-		assert.NotEqual(t, specificSession.RefreshTokenHash, retrievedSession.RefreshTokenHash)
+		assert.NotEqual(t, specificSessionEncx.AccessTokenHash, retrievedSessionEncx.AccessTokenHash)
+		assert.NotEqual(t, specificSessionEncx.RefreshTokenHash, retrievedSessionEncx.RefreshTokenHash)
 	})
 
 	t.Run("should handle malformed refresh token gracefully", func(t *testing.T) {
 		// Clean state
-		helpers.ClearSessionsRedis(t, ctx, testClient)
+		th.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Make request with malformed/invalid refresh token
-		req := helpers.NewRefreshSessionRequest(t, ctx, testServerURL, "invalid-token-format")
+		req := th.NewRefreshSessionRequest(t, ctx, testServerURL, "invalid-token-format")
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
