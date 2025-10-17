@@ -43,3 +43,4 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Get partner specializations (any authenticated user can view)
 	router.HandleFunc("GET /partners/{id}/specializations", RequireStandard(mw.EnableCORS(h.GetPartnerSpecializations)))
 }
+

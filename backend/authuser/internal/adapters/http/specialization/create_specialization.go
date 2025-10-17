@@ -131,3 +131,4 @@ func (h *handler) CreateSpecialization(w http.ResponseWriter, r *http.Request) {
 
 	httpx.RespondWithJSON(w, specialization, http.StatusCreated)
 }
+

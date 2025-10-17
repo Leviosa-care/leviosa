@@ -28,3 +28,4 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Get all active specializations (any authenticated user can view for selection)
 	router.HandleFunc("GET /specializations", RequireStandard(mw.EnableCORS(h.GetAllSpecializations)))
 }
+
