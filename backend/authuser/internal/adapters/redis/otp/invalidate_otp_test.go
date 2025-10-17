@@ -19,7 +19,7 @@ func TestInvalidateOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert test OTP
-		otp := helpers.NewValidOTP("invalidate@example.com")
+		otp := helpers.NewTestOTP("invalidate@example.com")
 		helpers.InsertOTP(t, ctx, otp, testClient, 10*time.Minute)
 
 		// Verify OTP exists before invalidation
@@ -53,9 +53,9 @@ func TestInvalidateOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert multiple OTPs
-		otp1 := helpers.NewValidOTP("user1@example.com")
-		otp2 := helpers.NewValidOTP("user2@example.com")
-		otp3 := helpers.NewValidOTP("user3@example.com")
+		otp1 := helpers.NewTestOTP("user1@example.com")
+		otp2 := helpers.NewTestOTP("user2@example.com")
+		otp3 := helpers.NewTestOTP("user3@example.com")
 
 		helpers.InsertOTP(t, ctx, otp1, testClient, 10*time.Minute)
 		helpers.InsertOTP(t, ctx, otp2, testClient, 10*time.Minute)
@@ -81,7 +81,7 @@ func TestInvalidateOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert OTP with very short TTL
-		otp := helpers.NewValidOTP("expired@example.com")
+		otp := helpers.NewTestOTP("expired@example.com")
 		helpers.InsertOTP(t, ctx, otp, testClient, 100*time.Millisecond)
 
 		// Wait for expiration
@@ -101,7 +101,7 @@ func TestInvalidateOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create OTP with empty email hash (edge case)
-		otp := helpers.NewValidOTP("empty@example.com")
+		otp := helpers.NewTestOTP("empty@example.com")
 		otp.EmailHash = ""
 		helpers.InsertOTP(t, ctx, otp, testClient, 5*time.Minute)
 
@@ -123,7 +123,7 @@ func TestInvalidateOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert test OTP
-		otp := helpers.NewValidOTP("double@example.com")
+		otp := helpers.NewTestOTP("double@example.com")
 		helpers.InsertOTP(t, ctx, otp, testClient, 10*time.Minute)
 
 		// First invalidation
@@ -144,7 +144,7 @@ func TestInvalidateOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert OTP
-		otp := helpers.NewValidOTP("cancelled@example.com")
+		otp := helpers.NewTestOTP("cancelled@example.com")
 		helpers.InsertOTP(t, ctx, otp, testClient, 10*time.Minute)
 
 		// Create cancelled context
@@ -166,7 +166,7 @@ func TestInvalidateOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create OTP with large data
-		otp := helpers.NewValidOTP("large@example.com")
+		otp := helpers.NewTestOTP("large@example.com")
 		otp.DEK = make([]byte, 1024) // 1KB of data
 		for i := range otp.DEK {
 			otp.DEK[i] = byte(i % 256)

@@ -19,7 +19,7 @@ func TestTouchOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert test OTP with initial TTL
-		otp := helpers.NewValidOTP("touch@example.com")
+		otp := helpers.NewTestOTP("touch@example.com")
 		initialTTL := 5 * time.Minute
 		helpers.InsertOTP(t, ctx, otp, testClient, initialTTL)
 
@@ -43,7 +43,7 @@ func TestTouchOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert test OTP with long initial TTL
-		otp := helpers.NewValidOTP("shorter@example.com")
+		otp := helpers.NewTestOTP("shorter@example.com")
 		initialTTL := 20 * time.Minute
 		helpers.InsertOTP(t, ctx, otp, testClient, initialTTL)
 
@@ -76,7 +76,7 @@ func TestTouchOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert test OTP with TTL
-		otp := helpers.NewValidOTP("noexpiry@example.com")
+		otp := helpers.NewTestOTP("noexpiry@example.com")
 		helpers.InsertOTP(t, ctx, otp, testClient, 10*time.Minute)
 
 		// Verify initial TTL exists
@@ -104,7 +104,7 @@ func TestTouchOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert test OTP
-		otp := helpers.NewValidOTP("short@example.com")
+		otp := helpers.NewTestOTP("short@example.com")
 		helpers.InsertOTP(t, ctx, otp, testClient, 10*time.Minute)
 
 		// Update TTL to very short duration (1 second minimum for Redis)
@@ -128,7 +128,7 @@ func TestTouchOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert OTP with very short TTL (1 second minimum for Redis)
-		otp := helpers.NewValidOTP("expired@example.com")
+		otp := helpers.NewTestOTP("expired@example.com")
 		helpers.InsertOTP(t, ctx, otp, testClient, 1*time.Second)
 
 		// Wait for expiration
@@ -152,7 +152,7 @@ func TestTouchOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create OTP with empty email hash
-		otp := helpers.NewValidOTP("empty@example.com")
+		otp := helpers.NewTestOTP("empty@example.com")
 		otp.EmailHash = ""
 		helpers.InsertOTP(t, ctx, otp, testClient, 5*time.Minute)
 
@@ -170,7 +170,7 @@ func TestTouchOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert OTP
-		otp := helpers.NewValidOTP("cancelled@example.com")
+		otp := helpers.NewTestOTP("cancelled@example.com")
 		helpers.InsertOTP(t, ctx, otp, testClient, 10*time.Minute)
 
 		// Create cancelled context

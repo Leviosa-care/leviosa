@@ -21,7 +21,7 @@ func TestGetOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert test OTP
-		otp := helpers.NewValidOTP("get@example.com")
+		otp := helpers.NewTestOTP("get@example.com")
 		helpers.InsertOTP(t, ctx, otp, testClient, 10*time.Minute)
 
 		// Retrieve OTP
@@ -82,7 +82,7 @@ func TestGetOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert OTP with short TTL
-		otp := helpers.NewValidOTP("expiring@example.com")
+		otp := helpers.NewTestOTP("expiring@example.com")
 		helpers.InsertOTP(t, ctx, otp, testClient, 2*time.Second)
 
 		// Wait a moment but retrieve before expiration
@@ -107,7 +107,7 @@ func TestGetOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create OTP with empty hash (edge case)
-		otp := helpers.NewValidOTP("empty@example.com")
+		otp := helpers.NewTestOTP("empty@example.com")
 		otp.EmailHash = ""
 		helpers.InsertOTP(t, ctx, otp, testClient, 5*time.Minute)
 
@@ -122,7 +122,7 @@ func TestGetOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert OTP
-		otp := helpers.NewValidOTP("cancelled@example.com")
+		otp := helpers.NewTestOTP("cancelled@example.com")
 		helpers.InsertOTP(t, ctx, otp, testClient, 10*time.Minute)
 
 		// Create cancelled context
@@ -140,7 +140,7 @@ func TestGetOTP(t *testing.T) {
 		helpers.ClearOTPKeys(t, ctx, testClient)
 
 		// Create test data with specific byte sequence
-		otp := helpers.NewValidOTP("bytes@example.com")
+		otp := helpers.NewTestOTP("bytes@example.com")
 		originalData, err := json.Marshal(otp)
 		require.NoError(t, err)
 
