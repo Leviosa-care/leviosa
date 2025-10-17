@@ -5,19 +5,24 @@ import (
 	"errors"
 
 	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/core/validation"
+	"github.com/hengadev/encx"
 )
 
 func (s *OTPService) CancelOTP(ctx context.Context, email string) error {
-	if email == "" {
-		return errs.NewInvalidValueErr("email is required")
+	if err := validation.ValidateEmail(email); err != nil {
+		return errs.NewInvalidValueErr(err.Error())
 	}
 
 	// Hash email for lookup
-	emailHash := s.crypto.HashBasic(ctx, []byte(email))
+	emailBytes, err := encx.SerializeValue(email)
+	if err != nil {
+		return errs.NewInvalidValueErr(err.Error())
+	}
+	emailHash := s.crypto.HashBasic(ctx, emailBytes)
 
 	// Attempt to invalidate the OTP
-	err := s.repo.InvalidateOTP(ctx, emailHash)
-	if err != nil {
+	if err = s.repo.InvalidateOTP(ctx, emailHash); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
 			return errs.NewNotFoundErr(err, "OTP")

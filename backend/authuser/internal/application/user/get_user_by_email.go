@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/authuser/internal/domain"
+	"github.com/hengadev/encx"
 
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/validation"
@@ -16,7 +17,12 @@ func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*domain
 		return nil, errs.NewInvalidValueErr(err.Error())
 	}
 
-	emailHash := s.crypto.HashBasic(ctx, []byte(email))
+	emailBytes, err := encx.SerializeValue(email)
+	if err != nil {
+		return nil, errs.NewInvalidValueErr(err.Error())
+	}
+	emailHash := s.crypto.HashBasic(ctx, emailBytes)
+
 	userEncx, err := s.repo.GetUserByEmailHash(ctx, emailHash)
 	if err != nil {
 		switch {

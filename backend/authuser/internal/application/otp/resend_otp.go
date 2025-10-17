@@ -9,22 +9,20 @@ import (
 
 	"github.com/Leviosa-care/core/contracts/otp"
 	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/core/validation"
+	"github.com/hengadev/encx"
 )
 
 func (s *OTPService) ResendOTP(ctx context.Context, email string) error {
-	if email == "" {
-		return errs.NewInvalidValueErr("email is required")
+	if err := validation.ValidateEmail(email); err != nil {
+		return errs.NewInvalidValueErr(err.Error())
 	}
 
-	// Create a temporary OTP to get the email hash (since there's no standalone hash function)
-	tempOTP := &domain.OTP{
-		Email: email,
-	}
-	tempOTPEncx, err := domain.ProcessOTPEncx(ctx, s.crypto, tempOTP)
+	emailBytes, err := encx.SerializeValue(email)
 	if err != nil {
-		return errs.NewNotEncryptedErr("temporary OTP for email hash", err)
+		return errs.NewInvalidValueErr(err.Error())
 	}
-	emailHash := tempOTPEncx.EmailHash
+	emailHash := s.crypto.HashBasic(ctx, emailBytes)
 
 	// Check if existing OTP exists
 	marshaledOTP, err := s.repo.GetOTP(ctx, emailHash)

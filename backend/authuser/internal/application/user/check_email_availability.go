@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/authuser/internal/domain"
+	"github.com/hengadev/encx"
 
 	"github.com/Leviosa-care/core/errs"
 )
@@ -15,7 +16,11 @@ func (s *UserService) CheckEmailAvailability(ctx context.Context, request *domai
 		return false, errs.NewInvalidValueErr(err.Error())
 	}
 
-	emailHash := s.crypto.HashBasic(ctx, []byte(request.Email))
+	emailBytes, err := encx.SerializeValue(request.Email)
+	if err != nil {
+		return false, errs.NewInvalidValueErr(fmt.Sprintf("failed to serialize userID: %w", err))
+	}
+	emailHash := s.crypto.HashBasic(ctx, emailBytes)
 
 	exists, err := s.repo.ExistsByEmailHash(ctx, emailHash)
 	if err != nil {

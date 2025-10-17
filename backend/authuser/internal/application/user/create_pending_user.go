@@ -10,6 +10,7 @@ import (
 	"github.com/Leviosa-care/core/errs"
 	"github.com/Leviosa-care/core/validation"
 	"github.com/google/uuid"
+	"github.com/hengadev/encx"
 )
 
 func (s *UserService) CreatePendingUser(ctx context.Context, email string) (uuid.UUID, error) {
@@ -17,7 +18,11 @@ func (s *UserService) CreatePendingUser(ctx context.Context, email string) (uuid
 		return uuid.Nil, errs.NewInvalidValueErr(err.Error())
 	}
 
-	emailHash := s.crypto.HashBasic(ctx, []byte(email))
+	emailBytes, err := encx.SerializeValue(email)
+	if err != nil {
+		return uuid.Nil, errs.NewInvalidValueErr(err.Error())
+	}
+	emailHash := s.crypto.HashBasic(ctx, emailBytes)
 
 	// Check if user already exists
 	existingUserEncx, err := s.repo.GetUserByEmailHash(ctx, emailHash)

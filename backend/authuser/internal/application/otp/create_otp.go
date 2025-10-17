@@ -8,6 +8,7 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 	"github.com/Leviosa-care/core/errs"
+	"github.com/hengadev/encx"
 )
 
 func (s *OTPService) CreateOTP(ctx context.Context, email string) error {
@@ -15,15 +16,11 @@ func (s *OTPService) CreateOTP(ctx context.Context, email string) error {
 		return errs.NewInvalidValueErr("email is required")
 	}
 
-	// Create a temporary OTP to get the email hash (since there's no standalone hash function)
-	tempOTP := &domain.OTP{
-		Email: email,
-	}
-	tempOTPEncx, err := domain.ProcessOTPEncx(ctx, s.crypto, tempOTP)
+	emailBytes, err := encx.SerializeValue(email)
 	if err != nil {
-		return errs.NewNotEncryptedErr("temporary OTP for email hash", err)
+		return errs.NewInvalidValueErr(err.Error())
 	}
-	emailHash := tempOTPEncx.EmailHash
+	emailHash := s.crypto.HashBasic(ctx, emailBytes)
 
 	// Check if OTP already exists and is still valid
 	marshaledOTP, err := s.repo.GetOTP(ctx, emailHash)

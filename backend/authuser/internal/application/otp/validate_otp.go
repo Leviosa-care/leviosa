@@ -10,6 +10,7 @@ import (
 	"github.com/Leviosa-care/authuser/internal/domain"
 	"github.com/Leviosa-care/core/ctxutil"
 	"github.com/Leviosa-care/core/errs"
+	"github.com/hengadev/encx"
 )
 
 func (s *OTPService) ValidateOTP(ctx context.Context, request *domain.ValidateOTPRequest) error {
@@ -17,15 +18,11 @@ func (s *OTPService) ValidateOTP(ctx context.Context, request *domain.ValidateOT
 		return errs.NewInvalidValueErr(fmt.Sprintf("OTP validation failed: %s", err.Error()))
 	}
 
-	// Create a temporary OTP to get the email hash (since there's no standalone hash function)
-	tempOTP := &domain.OTP{
-		Email: request.Email,
-	}
-	tempOTPEncx, err := domain.ProcessOTPEncx(ctx, s.crypto, tempOTP)
+	emailBytes, err := encx.SerializeValue(request.Email)
 	if err != nil {
-		return errs.NewNotEncryptedErr("temporary OTP for email hash", err)
+		return errs.NewInvalidValueErr(err.Error())
 	}
-	emailHash := tempOTPEncx.EmailHash
+	emailHash := s.crypto.HashBasic(ctx, emailBytes)
 
 	// Get OTP from repository
 	otpData, err := s.repo.GetOTP(ctx, emailHash)
