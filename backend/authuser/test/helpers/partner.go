@@ -217,3 +217,4 @@ func CheckPartnerSpecializationExists(t *testing.T, ctx context.Context, pool *p
 
 	return exists
 }
+

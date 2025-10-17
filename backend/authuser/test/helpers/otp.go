@@ -3,7 +3,6 @@ package helpers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -21,7 +20,7 @@ func ClearOTPKeys(t *testing.T, ctx context.Context, client *redis.Client) {
 	t.Helper()
 
 	// Get all OTP keys
-	keys, err := client.Keys(ctx, "authuser:otp:*").Result()
+	keys, err := client.Keys(ctx, otpRepository.OTPKeyPrefix+"*").Result()
 	require.NoError(t, err)
 
 	// Delete all OTP keys if any exist
@@ -31,8 +30,8 @@ func ClearOTPKeys(t *testing.T, ctx context.Context, client *redis.Client) {
 	}
 }
 
-// NewValidOTP creates a valid OTP domain object for testing
-func NewValidOTP(email string) *domain.OTP {
+// NewTestOTP creates a valid OTP domain object for testing
+func NewTestOTP(email string) *domain.OTP {
 	now := time.Now().UTC().Truncate(time.Microsecond)
 	return &domain.OTP{
 		Email:     email,
@@ -68,12 +67,8 @@ func NewOTPWithAttempts(email string, attempts int) *domain.OTP {
 }
 
 // InsertOTP directly inserts an OTP into Redis for test setup using the new Encx approach
-func InsertOTP(t *testing.T, ctx context.Context, otp *domain.OTP, client *redis.Client, ttl time.Duration, crypto encx.CryptoService) {
+func InsertOTPEncx(t *testing.T, ctx context.Context, otpEncx *domain.OTPEncx, client *redis.Client, ttl time.Duration) error {
 	t.Helper()
-
-	// Process the OTP to get encrypted data using the new generated function
-	otpEncx, err := domain.ProcessOTPEncx(ctx, crypto, otp)
-	require.NoError(t, err, "Failed to process OTP for encryption")
 
 	// Serialize OTPEncx to JSON
 	otpData, err := json.Marshal(otpEncx)
@@ -84,37 +79,74 @@ func InsertOTP(t *testing.T, ctx context.Context, otp *domain.OTP, client *redis
 
 	// Insert into Redis with TTL
 	err = client.Set(ctx, key, otpData, ttl).Err()
-	require.NoError(t, err, "Failed to insert OTP for email hash: %s", otpEncx.EmailHash)
+	return err
 }
 
-// GetOTPFromRedis retrieves an OTP directly from Redis for verification using the new Encx approach
-func GetOTPFromRedis(t *testing.T, ctx context.Context, emailHash string, client *redis.Client, crypto encx.CryptoService) (*domain.OTP, error) {
+// // InsertOTP directly inserts an OTP into Redis for test setup using the new Encx approach
+// func InsertOTP(t *testing.T, ctx context.Context, otp *domain.OTP, client *redis.Client, ttl time.Duration, crypto encx.CryptoService) {
+// 	t.Helper()
+// 	// Process the OTP to get encrypted data using the new generated function
+// 	otpEncx, err := domain.ProcessOTPEncx(ctx, crypto, otp)
+// 	require.NoError(t, err, "Failed to process OTP for encryption")
+//
+// 	// Serialize OTPEncx to JSON
+// 	otpData, err := json.Marshal(otpEncx)
+// 	require.NoError(t, err, "Failed to marshal OTPEncx for test insertion")
+//
+// 	// Format the key using the generated email hash
+// 	key := otpRepository.FormatOTPKey(otpEncx.EmailHash)
+//
+// 	// Insert into Redis with TTL
+// 	err = client.Set(ctx, key, otpData, ttl).Err()
+// 	require.NoError(t, err, "Failed to insert OTP for email hash: %s", otpEncx.EmailHash)
+// }
+
+// GetOTPEncxByEmailHash retrieves an OTP directly from Redis for verification using the new Encx approach
+func GetOTPEncxByEmailHash(t *testing.T, ctx context.Context, emailHash string, client *redis.Client, crypto encx.CryptoService) (*domain.OTPEncx, error) {
 	t.Helper()
 
 	key := otpRepository.FormatOTPKey(emailHash)
 
-	// Get data from Redis
-	data, err := client.Get(ctx, key).Result()
+	data, err := client.Get(ctx, key).Bytes()
 	if err != nil {
-		if err == redis.Nil {
-			return nil, fmt.Errorf("OTP not found for hash %s", emailHash)
-		}
-		return nil, fmt.Errorf("failed to get OTP from Redis: %w", err)
+		return nil, err
 	}
 
 	// Deserialize OTPEncx
 	var otpEncx domain.OTPEncx
-	err = json.Unmarshal([]byte(data), &otpEncx)
-	require.NoError(t, err, "Failed to unmarshal OTPEncx from Redis")
+	err = json.Unmarshal(data, &otpEncx)
 
-	// Decrypt the OTP using the new generated function
-	otp, err := domain.DecryptOTPEncx(ctx, crypto, &otpEncx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt OTP: %w", err)
-	}
-
-	return otp, nil
+	return &otpEncx, err
 }
+
+// // GetOTPFromRedis retrieves an OTP directly from Redis for verification using the new Encx approach
+// func GetOTPFromRedis(t *testing.T, ctx context.Context, emailHash string, client *redis.Client, crypto encx.CryptoService) (*domain.OTP, error) {
+// 	t.Helper()
+//
+// 	key := otpRepository.FormatOTPKey(emailHash)
+//
+// 	// Get data from Redis
+// 	data, err := client.Get(ctx, key).Result()
+// 	if err != nil {
+// 		if err == redis.Nil {
+// 			return nil, fmt.Errorf("OTP not found for hash %s", emailHash)
+// 		}
+// 		return nil, fmt.Errorf("failed to get OTP from Redis: %w", err)
+// 	}
+//
+// 	// Deserialize OTPEncx
+// 	var otpEncx domain.OTPEncx
+// 	err = json.Unmarshal([]byte(data), &otpEncx)
+// 	require.NoError(t, err, "Failed to unmarshal OTPEncx from Redis")
+//
+// 	// Decrypt the OTP using the new generated function
+// 	otp, err := domain.DecryptOTPEncx(ctx, crypto, &otpEncx)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to decrypt OTP: %w", err)
+// 	}
+//
+// 	return otp, nil
+// }
 
 // CheckOTPExists verifies if an OTP exists in Redis
 func CheckOTPExists(t *testing.T, ctx context.Context, emailHash string, client *redis.Client) bool {
@@ -138,21 +170,7 @@ func GetOTPTTL(t *testing.T, ctx context.Context, emailHash string, client *redi
 	return ttl
 }
 
-// CreateEncryptedOTPData creates encrypted OTP data using real encryption for testing with the new Encx approach
-func CreateEncryptedOTPData(t *testing.T, otp *domain.OTP, crypto encx.CryptoService) []byte {
-	t.Helper()
-
-	// Use the new generated function to process the OTP and get encrypted data
-	otpEncx, err := domain.ProcessOTPEncx(context.Background(), crypto, otp)
-	require.NoError(t, err, "Failed to process OTP for encryption")
-
-	data, err := json.Marshal(otpEncx)
-	require.NoError(t, err, "Failed to marshal encrypted OTP data")
-
-	return data
-}
-
-// FormatOTPKey formats an OTP key for Redis (public for testing)
+// FormatOTPKey formats an OTP key for Redis
 func FormatOTPKey(emailHash string) string {
 	return otpRepository.FormatOTPKey(emailHash)
 }
@@ -171,16 +189,13 @@ func ValidateOTPData(t *testing.T, expected, actual *domain.OTPEncx) {
 
 	// CodeEncrypted should be compared since it's stored in Redis
 	assert.Equal(t, expected.CodeEncrypted, actual.CodeEncrypted, "CodeEncrypted mismatch")
-
-	// Plaintext fields (Email, Code) should not be compared
-	// as they are not stored/retrieved from Redis
 }
 
 // CreateOTP creates and stores an OTP in Redis for testing using the new Encx approach
 func CreateOTP(t *testing.T, ctx context.Context, email string, client *redis.Client, crypto encx.CryptoService) {
 	t.Helper()
 
-	otp := NewValidOTP(email)
+	otp := NewTestOTP(email)
 
 	// Process the OTP to get encrypted data and email hash
 	otpEncx, err := domain.ProcessOTPEncx(ctx, crypto, otp)
@@ -203,23 +218,20 @@ func CreateOTP(t *testing.T, ctx context.Context, email string, client *redis.Cl
 	require.NoError(t, err, "Failed to insert OTP for email hash: %s", emailHash)
 }
 
-// GetOTP retrieves an OTP by email, returns nil if not found using the new Encx approach
-func GetOTP(t *testing.T, ctx context.Context, email string, client *redis.Client, crypto encx.CryptoService) *domain.OTP {
+// GetOTPByEmail retrieves an OTP by email, returns nil if not found using the new Encx approach
+func GetOTPByEmail(t *testing.T, ctx context.Context, email string, client *redis.Client, crypto encx.CryptoService) (*domain.OTPEncx, error) {
 	t.Helper()
 
-	// Create a temporary OTP to get the email hash
-	tempOTP := NewValidOTP(email)
-	otpEncx, err := domain.ProcessOTPEncx(ctx, crypto, tempOTP)
-	require.NoError(t, err, "Failed to process OTP for email hash generation")
+	// Get the email hash using github.com/hengadev/encx functions
+	emailBytes, err := encx.SerializeValue(email)
+	require.NoError(t, err)
+	emailHash := crypto.HashBasic(ctx, emailBytes)
 
-	// Get the email hash from the processed OTP
-	emailHash := otpEncx.EmailHash
-
-	otp, err := GetOTPFromRedis(t, ctx, emailHash, client, crypto)
+	otp, err := GetOTPEncxByEmailHash(t, ctx, emailHash, client, crypto)
 	if err != nil {
 		// Return nil if OTP not found
-		return nil
+		return nil, err
 	}
 
-	return otp
+	return otp, nil
 }
