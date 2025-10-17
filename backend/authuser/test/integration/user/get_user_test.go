@@ -27,9 +27,12 @@ func TestGetUser(t *testing.T) {
 		td.ClearUsersTable(t, ctx, testPool)
 
 		// Create test user first
-		testUser := td.NewTestUser("testuser@example.com", "John", "Doe")
+		testUser := td.NewTestUser(t, "testuser@example.com", "John", "Doe")
 		testUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, testUser, testPool, crypto)
+		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Act - make request without authentication
 		req := td.NewGetUserRequest(t, ctx, testServerURL)
@@ -44,7 +47,7 @@ func TestGetUser(t *testing.T) {
 	t.Run("should return user data with valid authentication", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		email := "authenticateduser@example.com"
 		city := "Test City"
@@ -53,15 +56,16 @@ func TestGetUser(t *testing.T) {
 		lastname := "Smith"
 
 		// Create test user with specific data
-		testUser := td.NewTestUser(email, firstname, lastname)
+		testUser := td.NewTestUser(t, email, firstname, lastname)
 		testUser.State = domain.Active
 		testUser.City = city
 		testUser.Telephone = telephone
 
-		// Process encryption before insertion
-		err := crypto.ProcessStruct(ctx, testUser)
+		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
-		td.InsertUser(t, ctx, testUser, testPool)
+
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create a valid session for the user
 		now := time.Now()
@@ -74,7 +78,7 @@ func TestGetUser(t *testing.T) {
 		refreshToken, err := session.GenerateToken()
 		require.NoError(t, err)
 
-		session := &session.Session{
+		standardSession := &session.Session{
 			ID:           sessionID,
 			UserID:       testUser.ID,
 			Role:         identity.Standard,
@@ -85,13 +89,13 @@ func TestGetUser(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		err = crypto.ProcessStruct(ctx, session)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectly(t, ctx, testClient, session, time.Hour)
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
 
 		// Create request with authentication cookie
-		req := td.NewGetUserRequestWithAuth(t, ctx, testServerURL, session.AccessToken)
+		req := td.NewGetUserRequestWithAuth(t, ctx, testServerURL, standardSession.AccessToken)
 		resp, err := client.Do(req)
 
 		// Assert response
@@ -113,7 +117,7 @@ func TestGetUser(t *testing.T) {
 	t.Run("should handle invalid session token format", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create request with malformed session token
 		req := td.NewGetUserRequestWithAuth(t, ctx, testServerURL, "invalid-token-format")
@@ -129,12 +133,15 @@ func TestGetUser(t *testing.T) {
 	t.Run("should handle expired session", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create test user
-		testUser := td.NewTestUser("expireduser@example.com", "Expired", "User")
+		testUser := td.NewTestUser(t, "expireduser@example.com", "Expired", "User")
 		testUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, testUser, testPool, crypto)
+		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create expired session (negative duration to ensure it's expired)
 		now := time.Now()
@@ -158,10 +165,10 @@ func TestGetUser(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		err = crypto.ProcessStruct(ctx, expiredSession)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, expiredSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectly(t, ctx, testClient, expiredSession, -time.Hour) // Expired 1 hour ago
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, expiredSession, sessionEncx, -time.Hour) // Expired 1 hour ago
 
 		// Create request with expired session
 		req := td.NewGetUserRequestWithAuth(t, ctx, testServerURL, expiredSession.AccessToken)

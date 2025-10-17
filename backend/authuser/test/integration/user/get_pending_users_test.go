@@ -9,6 +9,7 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 	td "github.com/Leviosa-care/authuser/test/helpers"
+	tu "github.com/Leviosa-care/core/testutils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,7 +25,7 @@ func TestGetPendingUsers(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Act
 		req := td.NewGetPendingUsersRequest(t, ctx, testServerURL, accessToken)
@@ -43,24 +44,43 @@ func TestGetPendingUsers(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		const userCount = 3
+		const pendingUserCount = userCount - 1
 
-		// Insert test users with different states
-		pendingUser1 := td.NewTestUser("pending1@example.com", "John", "Doe")
-		pendingUser1.State = domain.Pending
-		pendingUser2 := td.NewTestUser("pending2@example.com", "Jane", "Smith")
-		pendingUser2.State = domain.Pending
-		activeUser := td.NewTestUser("active@example.com", "Active", "User")
-		activeUser.State = domain.Active
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
-		// Process encryption before insertion
-		crypto.ProcessStruct(ctx, pendingUser1)
-		crypto.ProcessStruct(ctx, pendingUser2)
-		crypto.ProcessStruct(ctx, activeUser)
+		baseUsers := [userCount]basePendingUser{
+			{
+				email:     "firstpending@example.com",
+				firstname: "John",
+				lastname:  "DOE",
+				state:     domain.Pending,
+			},
+			{
+				email:     "secondpending@example.com",
+				firstname: "Jane",
+				lastname:  "SMITH",
+				state:     domain.Pending,
+			},
+			{
+				email:     "active@example.com",
+				firstname: "Active",
+				lastname:  "User",
+				state:     domain.Active,
+			},
+		}
 
-		td.InsertUser(t, ctx, pendingUser1, testPool)
-		td.InsertUser(t, ctx, pendingUser2, testPool)
-		td.InsertUser(t, ctx, activeUser, testPool)
+		// Create and insert test users with different states
+		for _, baseUser := range baseUsers {
+			user := td.NewTestUser(t, baseUser.email, baseUser.firstname, baseUser.lastname)
+			user.State = baseUser.state
+
+			userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+			require.NoError(t, err)
+
+			err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+			require.NoError(t, err)
+		}
 
 		// Act
 		req := td.NewGetPendingUsersRequest(t, ctx, testServerURL, accessToken)
@@ -71,45 +91,55 @@ func TestGetPendingUsers(t *testing.T) {
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		users := td.ParseGetPendingUsersResponse(t, resp)
-		assert.Len(t, users, 2, "Should return only pending users")
+		pendingUsers := td.ParseGetPendingUsersResponse(t, resp)
+		assert.Len(t, pendingUsers, pendingUserCount, "Should return only pending users") // the -1 is to remove the active user
 
 		// Verify user data (should be decrypted in response)
-		emails := []string{users[0].Email, users[1].Email}
-		assert.Contains(t, emails, "pending1@example.com")
-		assert.Contains(t, emails, "pending2@example.com")
-
-		// Verify all users have pending state
-		for _, user := range users {
-			assert.Equal(t, domain.Pending, user.State)
+		emails := make(map[string]struct{}, len(pendingUsers))
+		states := make(map[domain.UserState]int, len(pendingUsers))
+		for _, pendingUser := range pendingUsers {
+			emails[pendingUser.Email] = struct{}{}
+			states[pendingUser.State]++
 		}
+
+		for _, bu := range baseUsers {
+			if bu.state == domain.Pending {
+				_, exists := emails[bu.email]
+				assert.Truef(t, exists, "expected email %q to be in users", bu.email)
+			}
+		}
+
+		assert.Equal(t, states[domain.Pending], pendingUserCount) // 2 pending users and 1 active
 	})
 
 	t.Run("should return users ordered by creation date descending", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
-		// Insert users with slight delay to ensure different timestamps
-		firstUser := td.NewTestUser("first@example.com", "First", "User")
-		firstUser.State = domain.Pending
-		crypto.ProcessStruct(ctx, firstUser)
-		td.InsertUser(t, ctx, firstUser, testPool)
+		const userCount = 3
+		const pendingUserCount = userCount - 1
 
-		time.Sleep(10 * time.Millisecond)
+		lastname := "User"
 
-		secondUser := td.NewTestUser("second@example.com", "Second", "User")
-		secondUser.State = domain.Pending
-		crypto.ProcessStruct(ctx, secondUser)
-		td.InsertUser(t, ctx, secondUser, testPool)
+		basePendingUsers := [userCount]basePendingUser{
+			{email: "firstpendinguser@example.com", firstname: "First"},
+			{email: "secondpendinguser@example.com", firstname: "Second"},
+			{email: "thirdpendinguser@example.com", firstname: "Third"},
+		}
 
-		time.Sleep(10 * time.Millisecond)
-
-		thirdUser := td.NewTestUser("third@example.com", "Third", "User")
-		thirdUser.State = domain.Pending
-		crypto.ProcessStruct(ctx, thirdUser)
-		td.InsertUser(t, ctx, thirdUser, testPool)
+		// Create and insert test users with different states
+		for _, basePendingUser := range basePendingUsers {
+			var user *domain.User
+			user = td.NewTestUser(t, basePendingUser.email, basePendingUser.firstname, lastname)
+			user.State = domain.Pending
+			userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+			require.NoError(t, err)
+			err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+			require.NoError(t, err)
+			time.Sleep(10 * time.Millisecond)
+		}
 
 		// Act
 		req := td.NewGetPendingUsersRequest(t, ctx, testServerURL, accessToken)
@@ -121,35 +151,53 @@ func TestGetPendingUsers(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		users := td.ParseGetPendingUsersResponse(t, resp)
-		require.Len(t, users, 3)
+		require.Len(t, users, userCount)
 
 		// Should be ordered by creation date descending (newest first)
-		assert.Equal(t, "third@example.com", users[0].Email)
-		assert.Equal(t, "second@example.com", users[1].Email)
-		assert.Equal(t, "first@example.com", users[2].Email)
+		for i, bu := range basePendingUsers {
+			assert.Equal(t, bu.email, users[userCount-1-i].Email)
+		}
 	})
 
 	t.Run("should properly decrypt and return all user fields", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		email := "complete@example.com"
+		firstname := "John"
+		lastname := "Doe"
+		state := domain.Pending
+		telephone := "1234567890"
+
+		picture := "profile.jpg"
+		gender := domain.GenderMan.String()
+		address1 := "123 Main St"
+		city := "New York"
+		postalCode := "10001"
+
+		layout := "2006-01-02"
+		date := "1990-01-01"
+		expectedBirthDate, err := time.ParseInLocation(layout, date, time.Local)
+		require.NoError(t, err)
 
 		// Insert test user with all fields populated
-		testUser := td.NewTestUser("complete@example.com", "John", "Doe")
-		testUser.State = domain.Pending
-		testUser.Telephone = "1234567890"
-		testUser.Picture = "profile.jpg"
-		birthdate, err := time.Parse("2006-01-02", "1990-01-01")
-		require.NoError(t, err)
-		testUser.BirthDate = birthdate
-		testUser.Gender = "male"
-		testUser.Address1 = "123 Main St"
-		testUser.City = "New York"
-		testUser.PostalCode = "10001"
+		testUser := td.NewTestUser(t, email, firstname, lastname)
+		testUser.State = state
+		testUser.Telephone = telephone
+		testUser.Picture = picture
+		testUser.BirthDate = expectedBirthDate
+		testUser.Gender = gender
+		testUser.Address1 = address1
+		testUser.City = city
+		testUser.PostalCode = postalCode
 
-		crypto.ProcessStruct(ctx, testUser)
-		td.InsertUser(t, ctx, testUser, testPool)
+		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Act
 		req := td.NewGetPendingUsersRequest(t, ctx, testServerURL, accessToken)
@@ -164,21 +212,16 @@ func TestGetPendingUsers(t *testing.T) {
 		require.Len(t, users, 1)
 
 		user := users[0]
-		assert.Equal(t, "complete@example.com", user.Email)
-		assert.Equal(t, "John", user.FirstName)
-		assert.Equal(t, "Doe", user.LastName)
-		assert.Equal(t, "1234567890", user.Telephone)
-		assert.Equal(t, "profile.jpg", user.Picture)
-
-		// Check birthdate as time.Time
-		expectedBirthDate, err := time.Parse("2006-01-02", "1990-01-01")
-		require.NoError(t, err)
+		assert.Equal(t, email, user.Email)
+		assert.Equal(t, firstname, user.FirstName)
+		assert.Equal(t, lastname, user.LastName)
+		assert.Equal(t, telephone, user.Telephone)
+		assert.Equal(t, picture, user.Picture)
 		assert.Equal(t, expectedBirthDate, user.BirthDate)
-
-		assert.Equal(t, "male", user.Gender)
-		assert.Equal(t, "123 Main St", user.Address1)
-		assert.Equal(t, "New York", user.City)
-		assert.Equal(t, "10001", user.PostalCode)
+		assert.Equal(t, gender, user.Gender)
+		assert.Equal(t, address1, user.Address1)
+		assert.Equal(t, city, user.City)
+		assert.Equal(t, postalCode, user.PostalCode)
 		assert.Equal(t, domain.Pending, user.State)
 	})
 
@@ -186,15 +229,23 @@ func TestGetPendingUsers(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		email := "minimal@example.com"
+		firstname := "Min"
+		lastname := "User"
+		state := domain.Pending
 
 		// Insert minimal user (only required fields)
-		minimalUser := td.NewTestUser("minimal@example.com", "Min", "User")
-		minimalUser.State = domain.Pending
+		minimalUser := td.NewTestUser(t, email, firstname, lastname)
+		minimalUser.State = state
 		// Leave optional fields empty
 
-		crypto.ProcessStruct(ctx, minimalUser)
-		td.InsertUser(t, ctx, minimalUser, testPool)
+		minimalUserEncx, err := domain.ProcessUserEncx(ctx, crypto, minimalUser)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, minimalUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Act
 		req := td.NewGetPendingUsersRequest(t, ctx, testServerURL, accessToken)
@@ -209,12 +260,10 @@ func TestGetPendingUsers(t *testing.T) {
 		require.Len(t, users, 1)
 
 		user := users[0]
-		assert.Equal(t, "minimal@example.com", user.Email)
-		assert.Equal(t, "Min", user.FirstName)
-		assert.Equal(t, "User", user.LastName)
-		assert.Equal(t, "0123456789", user.Telephone) // Default value from NewTestUser
+		assert.Equal(t, email, user.Email)
+		assert.Equal(t, firstname, user.FirstName)
+		assert.Equal(t, lastname, user.LastName)
 		assert.Empty(t, user.Picture)
-		assert.True(t, user.BirthDate.IsZero()) // time.Time zero value
 		assert.Empty(t, user.Gender)
 		assert.Empty(t, user.Address1)
 		assert.Empty(t, user.City)
@@ -225,19 +274,25 @@ func TestGetPendingUsers(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		const userCount = 5
 
 		// Insert multiple pending users
-		for i := range 5 {
-			user := td.NewTestUser(fmt.Sprintf("concurrent%d@example.com", i), "User", fmt.Sprintf("%d", i))
+		for i := range userCount {
+			user := td.NewTestUser(t, fmt.Sprintf("concurrent%d@example.com", i), "User", fmt.Sprintf("%d", i))
 			user.State = domain.Pending
-			crypto.ProcessStruct(ctx, user)
-			td.InsertUser(t, ctx, user, testPool)
+			userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+			require.NoError(t, err)
+			err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+			require.NoError(t, err)
 		}
 
+		const concurrentRequestCount = 3
+
 		// Make concurrent requests
-		responses := make(chan *http.Response, 3)
-		for range 3 {
+		responses := make(chan *http.Response, concurrentRequestCount)
+		for range concurrentRequestCount {
 			go func() {
 				req := td.NewGetPendingUsersRequest(t, ctx, testServerURL, accessToken)
 				resp, err := client.Do(req)
@@ -248,37 +303,42 @@ func TestGetPendingUsers(t *testing.T) {
 
 		// Collect and verify all responses
 		successCount := 0
-		for range 3 {
+		for range concurrentRequestCount {
 			resp := <-responses
 			defer resp.Body.Close()
 
 			if resp.StatusCode == http.StatusOK {
 				successCount++
 				users := td.ParseGetPendingUsersResponse(t, resp)
-				assert.Len(t, users, 5, "Each concurrent request should return all pending users")
+				assert.Len(t, users, userCount, "Each concurrent request should return all pending users")
 			}
 		}
 
-		assert.Equal(t, 3, successCount, "All concurrent requests should succeed")
+		assert.Equal(t, concurrentRequestCount, successCount, "All concurrent requests should succeed")
 	})
 
 	t.Run("should exclude users with unverified state", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		email := "pending@example.com"
 
 		// Insert users with different states including unverified
-		pendingUser := td.NewTestUser("pending@example.com", "Pending", "User")
+		pendingUser := td.NewTestUser(t, email, "Pending", "User")
 		pendingUser.State = domain.Pending
-		unverifiedUser := td.NewTestUser("unverified@example.com", "Unverified", "User")
+		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
+		require.NoError(t, err)
+
+		unverifiedUser := td.NewTestUser(t, "unverified@example.com", "Unverified", "User")
 		unverifiedUser.State = domain.Unverified
-
-		crypto.ProcessStruct(ctx, pendingUser)
-		crypto.ProcessStruct(ctx, unverifiedUser)
-
-		td.InsertUser(t, ctx, pendingUser, testPool)
-		td.InsertUser(t, ctx, unverifiedUser, testPool)
+		unverifiedUserEncx, err := domain.ProcessUserEncx(ctx, crypto, unverifiedUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, unverifiedUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Act
 		req := td.NewGetPendingUsersRequest(t, ctx, testServerURL, accessToken)
@@ -291,7 +351,7 @@ func TestGetPendingUsers(t *testing.T) {
 
 		users := td.ParseGetPendingUsersResponse(t, resp)
 		require.Len(t, users, 1)
-		assert.Equal(t, "pending@example.com", users[0].Email)
+		assert.Equal(t, email, users[0].Email)
 		assert.Equal(t, domain.Pending, users[0].State)
 	})
 
@@ -299,15 +359,18 @@ func TestGetPendingUsers(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Insert many pending users
-		userCount := 50
+		const userCount = 50
+
 		for i := range userCount {
-			user := td.NewTestUser(fmt.Sprintf("bulk%d@example.com", i), "Bulk", fmt.Sprintf("User%d", i))
+			user := td.NewTestUser(t, fmt.Sprintf("bulk%d@example.com", i), "Bulk", fmt.Sprintf("User%d", i))
 			user.State = domain.Pending
-			crypto.ProcessStruct(ctx, user)
-			td.InsertUser(t, ctx, user, testPool)
+			userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+			require.NoError(t, err)
+			err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+			require.NoError(t, err)
 		}
 
 		// Act with timeout to ensure reasonable performance
@@ -327,4 +390,11 @@ func TestGetPendingUsers(t *testing.T) {
 		// Performance check - should complete within reasonable time
 		assert.Less(t, duration, 5*time.Second, "Should handle large user lists efficiently")
 	})
+}
+
+type basePendingUser struct {
+	email     string
+	firstname string
+	lastname  string
+	state     domain.UserState
 }

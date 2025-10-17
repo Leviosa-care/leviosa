@@ -23,17 +23,28 @@ func TestGetUserByID(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
+	setTargetUser := func() uuid.UUID {
+		targetUser := td.NewTestUser(t, "target@example.com", "Target", "User")
+		targetUser.State = domain.Active
+
+		targetUserEncx, err := domain.ProcessUserEncx(ctx, crypto, targetUser)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, targetUserEncx, testPool, crypto)
+		require.NoError(t, err)
+
+		return targetUser.ID
+	}
+
 	t.Run("should return 401 without authentication", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
 		// Create test user first
-		testUser := td.NewTestUser("testuser@example.com", "John", "Doe")
-		testUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, testUser, testPool, crypto)
+		userID := setTargetUser()
 
 		// Act - make request without authentication
-		req := td.NewGetUserByIDRequestWithoutAuth(t, ctx, testServerURL, testUser.ID)
+		req := td.NewGetUserByIDRequestWithoutAuth(t, ctx, testServerURL, userID)
 		resp, err := client.Do(req)
 
 		// Assert
@@ -45,17 +56,18 @@ func TestGetUserByID(t *testing.T) {
 	t.Run("should return 403 with non-admin role", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create target user to fetch
-		targetUser := td.NewTestUser("target@example.com", "Target", "User")
-		targetUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, targetUser, testPool, crypto)
+		userID := setTargetUser()
 
 		// Create standard user (non-admin) requesting the data
-		requestingUser := td.NewTestUser("requesting@example.com", "Requesting", "User")
+		requestingUser := td.NewTestUser(t, "requesting@example.com", "Requesting", "User")
 		requestingUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, requestingUser, testPool, crypto)
+		requestingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, requestingUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, requestingUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create session for standard user (non-admin)
 		now := time.Now()
@@ -78,13 +90,14 @@ func TestGetUserByID(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		err = crypto.ProcessStruct(ctx, standardSession)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectly(t, ctx, testClient, standardSession, time.Hour)
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
 
 		// Act - request target user with non-admin session
-		req := td.NewGetUserByIDRequest(t, ctx, testServerURL, targetUser.ID, standardSession.AccessToken)
+		req := td.NewGetUserByIDRequest(t, ctx, testServerURL, userID, standardSession.AccessToken)
+
 		resp, err := client.Do(req)
 
 		// Assert
@@ -96,12 +109,15 @@ func TestGetUserByID(t *testing.T) {
 	t.Run("should return 400 for invalid UUID format", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create admin user
-		adminUser := td.NewTestUser("admin@example.com", "Administrator", "User")
+		adminUser := td.NewTestUser(t, "admin@example.com", "Administrator", "User")
 		adminUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, adminUser, testPool, crypto)
+		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create admin session
 		now := time.Now()
@@ -124,10 +140,10 @@ func TestGetUserByID(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		err = crypto.ProcessStruct(ctx, adminSession)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, adminSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectly(t, ctx, testClient, adminSession, time.Hour)
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, adminSession, sessionEncx, time.Hour)
 
 		// Act - request with invalid UUID format
 		req, err := http.NewRequestWithContext(
@@ -156,12 +172,15 @@ func TestGetUserByID(t *testing.T) {
 	t.Run("should return 404 for non-existent user", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create admin user
-		adminUser := td.NewTestUser("admin@example.com", "Administrator", "User")
+		adminUser := td.NewTestUser(t, "admin@example.com", "Administrator", "User")
 		adminUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, adminUser, testPool, crypto)
+		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create admin session
 		now := time.Now()
@@ -184,10 +203,10 @@ func TestGetUserByID(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		err = crypto.ProcessStruct(ctx, adminSession)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, adminSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectly(t, ctx, testClient, adminSession, time.Hour)
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, adminSession, sessionEncx, time.Hour)
 
 		// Act - request non-existent user
 		nonExistentUserID := uuid.New()
@@ -203,7 +222,7 @@ func TestGetUserByID(t *testing.T) {
 	t.Run("should successfully return user data with valid admin authentication", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create target user with specific data
 		email := "target@example.com"
@@ -212,16 +231,22 @@ func TestGetUserByID(t *testing.T) {
 		firstname := "Target"
 		lastname := "User"
 
-		targetUser := td.NewTestUser(email, firstname, lastname)
+		targetUser := td.NewTestUser(t, email, firstname, lastname)
 		targetUser.State = domain.Active
 		targetUser.City = city
 		targetUser.Telephone = telephone
-		td.InsertUserWithEncryption(t, ctx, targetUser, testPool, crypto)
+		targetUserEncx, err := domain.ProcessUserEncx(ctx, crypto, targetUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, targetUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create admin user
-		adminUser := td.NewTestUser("admin@example.com", "Administrator", "User")
+		adminUser := td.NewTestUser(t, "admin@example.com", "Administrator", "User")
 		adminUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, adminUser, testPool, crypto)
+		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create admin session
 		now := time.Now()
@@ -244,10 +269,10 @@ func TestGetUserByID(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		err = crypto.ProcessStruct(ctx, adminSession)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, adminSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectly(t, ctx, testClient, adminSession, time.Hour)
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, adminSession, sessionEncx, time.Hour)
 
 		// Act - request target user with admin authentication
 		req := td.NewGetUserByIDRequest(t, ctx, testServerURL, targetUser.ID, adminSession.AccessToken)
@@ -271,17 +296,18 @@ func TestGetUserByID(t *testing.T) {
 	t.Run("should handle expired admin session", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create target user
-		targetUser := td.NewTestUser("target@example.com", "Target", "User")
-		targetUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, targetUser, testPool, crypto)
+		userID := setTargetUser()
 
 		// Create admin user
-		adminUser := td.NewTestUser("admin@example.com", "Administrator", "User")
+		adminUser := td.NewTestUser(t, "admin@example.com", "Administrator", "User")
 		adminUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, adminUser, testPool, crypto)
+		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
+		require.NoError(t, err)
+		td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create expired admin session
 		now := time.Now()
@@ -304,13 +330,13 @@ func TestGetUserByID(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		err = crypto.ProcessStruct(ctx, expiredAdministratorSession)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, expiredAdministratorSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectly(t, ctx, testClient, expiredAdministratorSession, -time.Hour) // Expired
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, expiredAdministratorSession, sessionEncx, -time.Hour) // Expired
 
 		// Act - request with expired admin session
-		req := td.NewGetUserByIDRequest(t, ctx, testServerURL, targetUser.ID, expiredAdministratorSession.AccessToken)
+		req := td.NewGetUserByIDRequest(t, ctx, testServerURL, userID, expiredAdministratorSession.AccessToken)
 		resp, err := client.Do(req)
 
 		// Assert
@@ -322,15 +348,12 @@ func TestGetUserByID(t *testing.T) {
 	t.Run("should handle malformed access token", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
-		// Create target user
-		targetUser := td.NewTestUser("target@example.com", "Target", "User")
-		targetUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, targetUser, testPool, crypto)
+		userID := setTargetUser()
 
 		// Act - request with malformed access token
-		req := td.NewGetUserByIDRequest(t, ctx, testServerURL, targetUser.ID, "malformed-token")
+		req := td.NewGetUserByIDRequest(t, ctx, testServerURL, userID, "malformed-token")
 		resp, err := client.Do(req)
 
 		// Assert

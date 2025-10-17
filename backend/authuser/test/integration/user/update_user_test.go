@@ -27,9 +27,14 @@ func TestUpdateUser(t *testing.T) {
 		td.ClearUsersTable(t, ctx, testPool)
 
 		// Create test user first
-		testUser := td.NewTestUser("testuser@example.com", "John", "Doe")
+		testUser := td.NewTestUser(t, "testuser@example.com", "John", "Doe")
 		testUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, testUser, testPool, crypto)
+
+		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		updateRequest := domain.UpdateUserRequest{
 			FirstName: stringPtr("UpdatedName"),
@@ -48,7 +53,7 @@ func TestUpdateUser(t *testing.T) {
 	t.Run("should successfully update user profile with valid authentication", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		email := "updateuser@example.com"
 		originalFirstName := "Original"
@@ -56,14 +61,14 @@ func TestUpdateUser(t *testing.T) {
 		originalCity := "OriginalCity"
 
 		// Create test user
-		testUser := td.NewTestUser(email, originalFirstName, originalLastName)
+		testUser := td.NewTestUser(t, email, originalFirstName, originalLastName)
 		testUser.State = domain.Active
 		testUser.City = originalCity
 
-		// Process encryption before insertion
-		err := crypto.ProcessStruct(ctx, testUser)
+		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
-		td.InsertUser(t, ctx, testUser, testPool)
+
+		td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
 
 		// Create valid session
 		now := time.Now()
@@ -75,7 +80,7 @@ func TestUpdateUser(t *testing.T) {
 		refreshToken, err := session.GenerateToken()
 		require.NoError(t, err)
 
-		session := &session.Session{
+		standardSession := &session.Session{
 			ID:           sessionID,
 			UserID:       testUser.ID,
 			Role:         identity.Standard,
@@ -86,10 +91,10 @@ func TestUpdateUser(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		err = crypto.ProcessStruct(ctx, session)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectly(t, ctx, testClient, session, time.Hour)
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
 
 		// Prepare update request with new values
 		newFirstName := "Updated"
@@ -104,7 +109,7 @@ func TestUpdateUser(t *testing.T) {
 		}
 
 		// Create request with authentication
-		req := td.NewUpdateUserRequestWithAuth(t, ctx, testServerURL, updateRequest, session.AccessToken)
+		req := td.NewUpdateUserRequestWithAuth(t, ctx, testServerURL, updateRequest, standardSession.AccessToken)
 		resp, err := client.Do(req)
 
 		// Assert response
@@ -122,35 +127,42 @@ func TestUpdateUser(t *testing.T) {
 		assert.Equal(t, newAddress1, updatedUser.Address1)      // Updated field
 
 		// Verify data was persisted in database
-		dbUser := td.GetUserByID(t, ctx, testUser.ID, testPool)
-		err = crypto.DecryptStruct(ctx, dbUser)
+		retrievedUserEncx, err := td.GetUserEnxByID(t, ctx, testUser.ID, testPool, crypto)
 		require.NoError(t, err)
 
-		assert.Equal(t, newFirstName, dbUser.FirstName)
-		assert.Equal(t, originalLastName, dbUser.LastName) // Should remain unchanged
-		assert.Equal(t, newCity, dbUser.City)
-		assert.Equal(t, newAddress1, dbUser.Address1)
+		retrievedUser, err := domain.DecryptUserEncx(ctx, crypto, retrievedUserEncx)
+		require.NoError(t, err)
+
+		assert.Equal(t, newFirstName, retrievedUser.FirstName)
+		assert.Equal(t, originalLastName, retrievedUser.LastName) // Should remain unchanged
+		assert.Equal(t, newCity, retrievedUser.City)
+		assert.Equal(t, newAddress1, retrievedUser.Address1)
 	})
 
 	t.Run("should handle invalid JSON in request body", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create test user and session
-		testUser := td.NewTestUser("jsontest@example.com", "Test", "User")
+		testUser := td.NewTestUser(t, "jsontest@example.com", "Test", "User")
 		testUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, testUser, testPool, crypto)
 
-		// Create valid session
-		session := createTestSession(t, ctx, testUser.ID)
-		err := crypto.ProcessStruct(ctx, session)
+		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
-		td.InsertSessionDirectly(t, ctx, testClient, session, time.Hour)
+
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		require.NoError(t, err)
+
+		// Create valid standardSession
+		standardSession := createTestSession(t, ctx, testUser.ID)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
+		require.NoError(t, err)
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
 
 		// Create request with invalid JSON
 		req := td.NewInvalidJSONRequest(t, ctx, testServerURL, http.MethodPatch, "/users/me")
-		td.AddAuthCookie(req, session.AccessToken)
+		td.AddAuthCookie(req, standardSession.AccessToken)
 
 		resp, err := client.Do(req)
 
@@ -163,28 +175,36 @@ func TestUpdateUser(t *testing.T) {
 	t.Run("should successfully update only email field", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		originalEmail := "original@example.com"
 		newEmail := "newemail@example.com"
 
-		// Create test user
-		testUser := td.NewTestUser(originalEmail, "Test", "User")
-		testUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, testUser, testPool, crypto)
+		firstname := "Test"
+		lastname := "User"
 
-		// Create valid session
-		session := createTestSession(t, ctx, testUser.ID)
-		err := crypto.ProcessStruct(ctx, session)
+		// Create test user
+		testUser := td.NewTestUser(t, originalEmail, firstname, lastname)
+		testUser.State = domain.Active
+
+		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
-		td.InsertSessionDirectly(t, ctx, testClient, session, time.Hour)
+
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		require.NoError(t, err)
+
+		// Create valid standardSession
+		standardSession := createTestSession(t, ctx, testUser.ID)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
+		require.NoError(t, err)
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
 
 		// Update only email
 		updateRequest := domain.UpdateUserRequest{
 			Email: &newEmail,
 		}
 
-		req := td.NewUpdateUserRequestWithAuth(t, ctx, testServerURL, updateRequest, session.AccessToken)
+		req := td.NewUpdateUserRequestWithAuth(t, ctx, testServerURL, updateRequest, standardSession.AccessToken)
 		resp, err := client.Do(req)
 
 		// Assert
@@ -194,25 +214,30 @@ func TestUpdateUser(t *testing.T) {
 
 		updatedUser := td.ParseUpdateUserResponse(t, resp)
 		assert.Equal(t, newEmail, updatedUser.Email)
-		assert.Equal(t, "Test", updatedUser.FirstName) // Should remain unchanged
-		assert.Equal(t, "User", updatedUser.LastName)  // Should remain unchanged
+		assert.Equal(t, firstname, updatedUser.FirstName) // Should remain unchanged
+		assert.Equal(t, lastname, updatedUser.LastName)   // Should remain unchanged
 	})
 
 	t.Run("should handle birth date updates correctly", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create test user
-		testUser := td.NewTestUser("datetest@example.com", "Date", "Tester")
+		testUser := td.NewTestUser(t, "datetest@example.com", "Date", "Tester")
 		testUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, testUser, testPool, crypto)
 
-		// Create valid session
-		session := createTestSession(t, ctx, testUser.ID)
-		err := crypto.ProcessStruct(ctx, session)
+		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
-		td.InsertSessionDirectly(t, ctx, testClient, session, time.Hour)
+
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		require.NoError(t, err)
+
+		// Create valid standardSession
+		standardSession := createTestSession(t, ctx, testUser.ID)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
+		require.NoError(t, err)
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
 
 		// Update birth date
 		newBirthDate := time.Date(1990, 5, 15, 0, 0, 0, 0, time.UTC)
@@ -220,7 +245,7 @@ func TestUpdateUser(t *testing.T) {
 			BirthDate: &newBirthDate,
 		}
 
-		req := td.NewUpdateUserRequestWithAuth(t, ctx, testServerURL, updateRequest, session.AccessToken)
+		req := td.NewUpdateUserRequestWithAuth(t, ctx, testServerURL, updateRequest, standardSession.AccessToken)
 		resp, err := client.Do(req)
 
 		// Assert
@@ -235,20 +260,25 @@ func TestUpdateUser(t *testing.T) {
 	t.Run("should handle expired session", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create test user
-		testUser := td.NewTestUser("expiredtest@example.com", "Expired", "User")
+		testUser := td.NewTestUser(t, "expiredtest@example.com", "Expired", "User")
 		testUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, testUser, testPool, crypto)
+
+		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create expired session
 		expiredSession := createTestSession(t, ctx, testUser.ID)
 		expiredSession.ExpiresAt = time.Now().Add(-1 * time.Hour) // Expired 1 hour ago
 
-		err := crypto.ProcessStruct(ctx, expiredSession)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, expiredSession)
 		require.NoError(t, err)
-		td.InsertSessionDirectly(t, ctx, testClient, expiredSession, -time.Hour) // Expired
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, expiredSession, sessionEncx, -time.Hour) // Expired
 
 		updateRequest := domain.UpdateUserRequest{
 			FirstName: stringPtr("ShouldNotUpdate"),
@@ -267,18 +297,23 @@ func TestUpdateUser(t *testing.T) {
 	t.Run("should update multiple fields in single request", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, testClient)
+		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create test user
-		testUser := td.NewTestUser("multiupdate@example.com", "Multi", "Update")
+		testUser := td.NewTestUser(t, "multiupdate@example.com", "Multi", "Update")
 		testUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, testUser, testPool, crypto)
+
+		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Create valid session
-		session := createTestSession(t, ctx, testUser.ID)
-		err := crypto.ProcessStruct(ctx, session)
+		standardSession := createTestSession(t, ctx, testUser.ID)
+		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
 		require.NoError(t, err)
-		td.InsertSessionDirectly(t, ctx, testClient, session, time.Hour)
+		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
 
 		// Update multiple fields
 		updateRequest := domain.UpdateUserRequest{
@@ -290,7 +325,7 @@ func TestUpdateUser(t *testing.T) {
 			Gender:     stringPtr("other"),
 		}
 
-		req := td.NewUpdateUserRequestWithAuth(t, ctx, testServerURL, updateRequest, session.AccessToken)
+		req := td.NewUpdateUserRequestWithAuth(t, ctx, testServerURL, updateRequest, standardSession.AccessToken)
 		resp, err := client.Do(req)
 
 		// Assert
@@ -337,4 +372,3 @@ func createTestSession(t *testing.T, ctx context.Context, userID uuid.UUID) *ses
 		RefreshToken: refreshToken,
 	}
 }
-

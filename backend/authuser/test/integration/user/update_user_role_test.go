@@ -10,6 +10,7 @@ import (
 	"github.com/Leviosa-care/authuser/internal/domain"
 	td "github.com/Leviosa-care/authuser/test/helpers"
 	ck "github.com/Leviosa-care/core/auth/cookies"
+	tu "github.com/Leviosa-care/core/testutils"
 
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/google/uuid"
@@ -27,13 +28,16 @@ func TestUpdateUserRole(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create an active user with standard role
-		user := td.NewTestUser("user@example.com", "John", "Doe")
+		user := td.NewTestUser(t, "user@example.com", "John", "Doe")
 		user.State = domain.Active
 		user.Role = identity.StandardStr
-		td.InsertUserWithEncryption(t, ctx, user, testPool, crypto)
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Act - Update role to premium
 		req := td.NewUpdateUserRoleRequest(t, ctx, testServerURL, user.ID, identity.PremiumStr, accessToken)
@@ -49,7 +53,12 @@ func TestUpdateUserRole(t *testing.T) {
 		assert.Equal(t, "User role updated successfully", response["message"])
 
 		// Verify role updated in database
-		updatedUser := td.GetUserByIDFromDB(t, ctx, user.ID, testPool, crypto)
+		updatedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
+		require.NoError(t, err)
+
+		updatedUser, err := domain.DecryptUserEncx(ctx, crypto, updatedUserEncx)
+		require.NoError(t, err)
+
 		assert.Equal(t, domain.Active, updatedUser.State)
 		assert.Equal(t, identity.PremiumStr, updatedUser.Role)
 		assert.Equal(t, user.Email, updatedUser.Email) // Other fields unchanged
@@ -60,13 +69,16 @@ func TestUpdateUserRole(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create an active user with premium role
-		user := td.NewTestUser("premium@example.com", "Jane", "Smith")
+		user := td.NewTestUser(t, "premium@example.com", "Jane", "Smith")
 		user.State = domain.Active
 		user.Role = identity.PremiumStr
-		td.InsertUserWithEncryption(t, ctx, user, testPool, crypto)
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Act - Update role to partner
 		req := td.NewUpdateUserRoleRequest(t, ctx, testServerURL, user.ID, identity.PartnerStr, accessToken)
@@ -82,7 +94,12 @@ func TestUpdateUserRole(t *testing.T) {
 		assert.Equal(t, "User role updated successfully", response["message"])
 
 		// Verify role updated in database
-		updatedUser := td.GetUserByIDFromDB(t, ctx, user.ID, testPool, crypto)
+		updatedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
+		require.NoError(t, err)
+
+		updatedUser, err := domain.DecryptUserEncx(ctx, crypto, updatedUserEncx)
+		require.NoError(t, err)
+
 		assert.Equal(t, identity.PartnerStr, updatedUser.Role)
 	})
 
@@ -90,7 +107,7 @@ func TestUpdateUserRole(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Use non-existent user ID
 		nonExistentID := uuid.New()
@@ -109,7 +126,7 @@ func TestUpdateUserRole(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create request with invalid UUID path parameter
 		req, err := http.NewRequestWithContext(
@@ -138,13 +155,16 @@ func TestUpdateUserRole(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create an active user
-		user := td.NewTestUser("user2@example.com", "Bob", "Wilson")
+		user := td.NewTestUser(t, "user2@example.com", "Bob", "Wilson")
 		user.State = domain.Active
 		user.Role = identity.StandardStr
-		td.InsertUserWithEncryption(t, ctx, user, testPool, crypto)
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Act - Try to update with invalid role
 		req := td.NewUpdateUserRoleRequest(t, ctx, testServerURL, user.ID, "invalid_role", accessToken)
@@ -156,7 +176,12 @@ func TestUpdateUserRole(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		// Verify role unchanged in database
-		unchangedUser := td.GetUserByIDFromDB(t, ctx, user.ID, testPool, crypto)
+		unchangedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
+		require.NoError(t, err)
+
+		unchangedUser, err := domain.DecryptUserEncx(ctx, crypto, unchangedUserEncx)
+		require.NoError(t, err)
+
 		assert.Equal(t, identity.StandardStr, unchangedUser.Role)
 	})
 
@@ -164,12 +189,17 @@ func TestUpdateUserRole(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create an active user
-		user := td.NewTestUser("user3@example.com", "Alice", "Johnson")
+		user := td.NewTestUser(t, "user3@example.com", "Alice", "Johnson")
 		user.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, user, testPool, crypto)
+
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Act
 		req := td.NewMalformedUpdateUserRoleRequest(t, ctx, testServerURL, user.ID, accessToken)
@@ -185,13 +215,18 @@ func TestUpdateUserRole(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create an active user
-		user := td.NewTestUser("user4@example.com", "Charlie", "Brown")
+		user := td.NewTestUser(t, "user@example.com", "Charlie", "Brown")
 		user.State = domain.Active
 		user.Role = identity.StandardStr
-		td.InsertUserWithEncryption(t, ctx, user, testPool, crypto)
+
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Act - Try to update with empty role
 		req := td.NewUpdateUserRoleRequest(t, ctx, testServerURL, user.ID, "", accessToken)
@@ -203,7 +238,12 @@ func TestUpdateUserRole(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		// Verify role unchanged in database
-		unchangedUser := td.GetUserByIDFromDB(t, ctx, user.ID, testPool, crypto)
+		unchangedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
+		require.NoError(t, err)
+
+		unchangedUser, err := domain.DecryptUserEncx(ctx, crypto, unchangedUserEncx)
+		require.NoError(t, err)
+
 		assert.Equal(t, identity.StandardStr, unchangedUser.Role)
 	})
 
@@ -211,7 +251,7 @@ func TestUpdateUserRole(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create request without user ID in path
 		req, err := http.NewRequestWithContext(
@@ -240,7 +280,7 @@ func TestUpdateUserRole(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Test different role updates
 		testCases := []struct {
@@ -269,8 +309,11 @@ func TestUpdateUserRole(t *testing.T) {
 					CreatedAt:  time.Now(),
 					LoggedInAt: time.Now(),
 				}
+				userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
+				require.NoError(t, err)
 
-				td.InsertUserWithEncryption(t, ctx, user, testPool, crypto)
+				err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+				require.NoError(t, err)
 
 				// Act - Update role
 				req := td.NewUpdateUserRoleRequest(t, ctx, testServerURL, user.ID, tc.toRole, accessToken)
@@ -282,7 +325,12 @@ func TestUpdateUserRole(t *testing.T) {
 				assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 				// Verify role updated in database
-				updatedUser := td.GetUserByIDFromDB(t, ctx, user.ID, testPool, crypto)
+				updatedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
+				require.NoError(t, err)
+
+				updatedUser, err := domain.DecryptUserEncx(ctx, crypto, updatedUserEncx)
+				require.NoError(t, err)
+
 				assert.Equal(t, tc.toRole, updatedUser.Role)
 				assert.Equal(t, domain.Active, updatedUser.State) // State unchanged
 			})
@@ -293,13 +341,18 @@ func TestUpdateUserRole(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create a pending user
-		pendingUser := td.NewTestUser("pending@example.com", "Pending", "User")
+		pendingUser := td.NewTestUser(t, "pending@example.com", "Pending", "User")
 		pendingUser.State = domain.Pending
 		pendingUser.Role = identity.GuestStr
-		td.InsertUserWithEncryption(t, ctx, pendingUser, testPool, crypto)
+
+		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Act - Update role of pending user
 		req := td.NewUpdateUserRoleRequest(t, ctx, testServerURL, pendingUser.ID, identity.StandardStr, accessToken)
@@ -315,7 +368,12 @@ func TestUpdateUserRole(t *testing.T) {
 		assert.Equal(t, "User role updated successfully", response["message"])
 
 		// Verify role updated but state remains pending
-		updatedUser := td.GetUserByIDFromDB(t, ctx, pendingUser.ID, testPool, crypto)
+		updatedUserEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool, crypto)
+		require.NoError(t, err)
+
+		updatedUser, err := domain.DecryptUserEncx(ctx, crypto, updatedUserEncx)
+		require.NoError(t, err)
+
 		assert.Equal(t, identity.StandardStr, updatedUser.Role)
 		assert.Equal(t, domain.Pending, updatedUser.State) // State unchanged
 	})
@@ -324,13 +382,18 @@ func TestUpdateUserRole(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create a user with administrator role
-		adminUser := td.NewTestUser("admin@example.com", "Admin", "User")
+		adminUser := td.NewTestUser(t, "admin@example.com", "Admin", "User")
 		adminUser.State = domain.Active
 		adminUser.Role = identity.AdministratorStr
-		td.InsertUserWithEncryption(t, ctx, adminUser, testPool, crypto)
+
+		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
+		require.NoError(t, err)
+
+		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Act - Downgrade from administrator to standard
 		req := td.NewUpdateUserRoleRequest(t, ctx, testServerURL, adminUser.ID, identity.StandardStr, accessToken)
@@ -342,9 +405,13 @@ func TestUpdateUserRole(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify role downgraded in database
-		updatedUser := td.GetUserByIDFromDB(t, ctx, adminUser.ID, testPool, crypto)
+		updatedUserEncx, err := td.GetUserEnxByID(t, ctx, adminUser.ID, testPool, crypto)
+		require.NoError(t, err)
+
+		updatedUser, err := domain.DecryptUserEncx(ctx, crypto, updatedUserEncx)
+		require.NoError(t, err)
+
 		assert.Equal(t, identity.StandardStr, updatedUser.Role)
 		assert.Equal(t, domain.Active, updatedUser.State)
 	})
 }
-

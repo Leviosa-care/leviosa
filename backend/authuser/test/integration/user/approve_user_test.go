@@ -9,8 +9,9 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 	td "github.com/Leviosa-care/authuser/test/helpers"
-
 	"github.com/Leviosa-care/core/contracts/identity"
+	tu "github.com/Leviosa-care/core/testutils"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,12 +27,14 @@ func TestApproveUser(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create a pending user
-		pendingUser := td.NewTestUser("pending@example.com", "John", "Doe")
+		pendingUser := td.NewTestUser(t, "pending@example.com", "John", "Doe")
 		pendingUser.State = domain.Pending
-		td.InsertUserWithEncryption(t, ctx, pendingUser, testPool, crypto)
+		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
+		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
+		require.NoError(t, err)
 
 		// Prepare approval request
 		request := domain.ApproveUserRequest{
@@ -53,17 +56,20 @@ func TestApproveUser(t *testing.T) {
 		assert.Equal(t, "User approved successfully", response["message"])
 
 		// Verify user state in database
-		user := td.GetUserByIDFromDB(t, ctx, pendingUser.ID, testPool, crypto)
+		userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool, crypto)
+		user, err := domain.DecryptUserEncx(ctx, crypto, userEncx)
+		require.NoError(t, err)
 		assert.Equal(t, domain.Active, user.State)
 		assert.Equal(t, identity.StandardStr, user.Role)
-		// assert.Nil(t, user.RoleEncrypted, "RoleEncrypted should be nil after approval")
+		// BUG: potential bug on that one, try to run it later. This is from the old encx reflection based approach
+		// assert.Nil(t, userEncx.RoleEncrypted, "RoleEncrypted should be nil after approval")
 	})
 
 	t.Run("should return error when user not found", func(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Prepare approval request with non-existent user ID
 		request := domain.ApproveUserRequest{
@@ -85,11 +91,14 @@ func TestApproveUser(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Create an active user (not pending)
-		activeUser := td.NewTestUser("active@example.com", "Jane", "Smith")
+		activeUser := td.NewTestUser(t, "active@example.com", "Jane", "Smith")
 		activeUser.State = domain.Active
-		td.InsertUserWithEncryption(t, ctx, activeUser, testPool, crypto)
+		activeUserEncx, err := domain.ProcessUserEncx(ctx, crypto, activeUser)
+		require.NoError(t, err)
+		td.InsertUserEncx(t, ctx, activeUserEncx, testPool, crypto)
 
 		// Prepare approval request
 		request := domain.ApproveUserRequest{
@@ -111,12 +120,14 @@ func TestApproveUser(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create an unverified user
-		unverifiedUser := td.NewTestUser("unverified@example.com", "Bob", "Wilson")
+		unverifiedUser := td.NewTestUser(t, "unverified@example.com", "Bob", "Wilson")
 		unverifiedUser.State = domain.Unverified
-		td.InsertUserWithEncryption(t, ctx, unverifiedUser, testPool, crypto)
+		unverifiedUserEncx, err := domain.ProcessUserEncx(ctx, crypto, unverifiedUser)
+		require.NoError(t, err)
+		td.InsertUserEncx(t, ctx, unverifiedUserEncx, testPool, crypto)
 
 		// Prepare approval request
 		request := domain.ApproveUserRequest{
@@ -134,7 +145,8 @@ func TestApproveUser(t *testing.T) {
 		assert.Equal(t, http.StatusConflict, resp.StatusCode) // User not in pending state
 
 		// Verify user state unchanged in database
-		user := td.GetUserByIDFromDB(t, ctx, unverifiedUser.ID, testPool, crypto)
+		user, err := td.GetUserEnxByID(t, ctx, unverifiedUser.ID, testPool, crypto)
+		require.NoError(t, err)
 		assert.Equal(t, domain.Unverified, user.State)
 	})
 
@@ -142,12 +154,14 @@ func TestApproveUser(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create a pending user
-		pendingUser := td.NewTestUser("pending2@example.com", "Alice", "Johnson")
+		pendingUser := td.NewTestUser(t, "pending2@example.com", "Alice", "Johnson")
 		pendingUser.State = domain.Pending
-		td.InsertUserWithEncryption(t, ctx, pendingUser, testPool, crypto)
+		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
+		require.NoError(t, err)
+		td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
 
 		// Prepare approval request with invalid role
 		request := domain.ApproveUserRequest{
@@ -165,8 +179,9 @@ func TestApproveUser(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		// Verify user state unchanged in database
-		user := td.GetUserByIDFromDB(t, ctx, pendingUser.ID, testPool, crypto)
-		assert.Equal(t, domain.Pending, user.State)
+		userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool, crypto)
+		require.NoError(t, err)
+		assert.Equal(t, domain.Pending, userEncx.State)
 	})
 
 	t.Run("should return error with malformed JSON", func(t *testing.T) {
@@ -174,7 +189,8 @@ func TestApproveUser(t *testing.T) {
 		td.ClearUsersTable(t, ctx, testPool)
 
 		// Act
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		req := td.NewMalformedApproveUserRequest(t, ctx, testServerURL, accessToken)
 		resp, err := client.Do(req)
 
@@ -188,7 +204,7 @@ func TestApproveUser(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Prepare approval request with zero UUID
 		request := domain.ApproveUserRequest{
@@ -210,7 +226,7 @@ func TestApproveUser(t *testing.T) {
 		// Clean state
 		td.ClearUsersTable(t, ctx, testPool)
 
-		accessToken := setupAdminUser(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Test different roles
 		testCases := []struct {
@@ -239,8 +255,10 @@ func TestApproveUser(t *testing.T) {
 					CreatedAt:  time.Now(),
 					LoggedInAt: time.Now(),
 				}
+				pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
+				require.NoError(t, err)
 
-				td.InsertUserWithEncryption(t, ctx, pendingUser, testPool, crypto)
+				td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
 
 				// Prepare approval request
 				request := domain.ApproveUserRequest{
@@ -257,9 +275,11 @@ func TestApproveUser(t *testing.T) {
 				defer resp.Body.Close()
 				assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-				// Verify user state in database
-				user := td.GetUserByIDFromDB(t, ctx, pendingUser.ID, testPool, crypto)
-				assert.Equal(t, domain.Active, user.State)
+				// Verify userEncx state in database
+				userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool, crypto)
+				require.NoError(t, err)
+				user, err := domain.DecryptUserEncx(ctx, crypto, userEncx)
+				assert.Equal(t, domain.Active, userEncx.State)
 				assert.Equal(t, tc.role, user.Role)
 			})
 		}
