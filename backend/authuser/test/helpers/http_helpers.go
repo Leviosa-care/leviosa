@@ -10,6 +10,9 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 
+	authEndpoints "github.com/Leviosa-care/authuser/internal/adapters/http/auth"
+	userEndpoints "github.com/Leviosa-care/authuser/internal/adapters/http/user"
+
 	ck "github.com/Leviosa-care/core/auth/cookies"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -25,7 +28,7 @@ func NewCheckEmailSendOTPRequest(t *testing.T, ctx context.Context, baseURL stri
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%s/auth/email", baseURL),
+		baseURL+authEndpoints.CheckEmailSendOTPEndpoint,
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -44,7 +47,7 @@ func NewSignInRequest(t *testing.T, ctx context.Context, baseURL string, request
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%s/auth/login", baseURL),
+		baseURL+authEndpoints.SignInEndpoint,
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create sign-in HTTP request")
@@ -76,7 +79,7 @@ func NewSignOutRequest(t *testing.T, ctx context.Context, baseURL string, access
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%s/auth/logout", baseURL),
+		baseURL+authEndpoints.SignOutEndpoint,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create sign-out HTTP request")
@@ -99,7 +102,7 @@ func NewSignOutRequestWithoutAuth(t *testing.T, ctx context.Context, baseURL str
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%s/auth/logout", baseURL),
+		baseURL+authEndpoints.SignOutEndpoint,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create sign-out HTTP request without auth")
@@ -179,7 +182,7 @@ func NewValidateOTPCreatePendingUserRequest(t *testing.T, ctx context.Context, b
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%s/auth/otp", baseURL),
+		baseURL+authEndpoints.ValidateOTPCreatePendingEndpoint,
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -214,7 +217,7 @@ func NewCompleteUserRequest(t *testing.T, ctx context.Context, baseURL string, r
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%s/auth/complete", baseURL),
+		baseURL+authEndpoints.CompleteUserEndpoint,
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -255,7 +258,7 @@ func NewGetPendingUsersRequest(t *testing.T, ctx context.Context, baseURL string
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		fmt.Sprintf("%s/admin/auth/users/pending", baseURL),
+		baseURL+userEndpoints.GetPendingUsersEndpoint,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -290,7 +293,7 @@ func NewGetAllUsersRequest(t *testing.T, ctx context.Context, baseURL string, ac
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		fmt.Sprintf("%s/admin/users", baseURL),
+		baseURL+userEndpoints.GetAllUsersEndpoint,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -313,7 +316,7 @@ func NewGetAllUsersRequestWithoutAuth(t *testing.T, ctx context.Context, baseURL
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		fmt.Sprintf("%s/admin/users", baseURL),
+		baseURL+userEndpoints.GetAllUsersEndpoint,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -341,7 +344,7 @@ func NewGetUserRequest(t *testing.T, ctx context.Context, baseURL string) *http.
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		fmt.Sprintf("%s/users/me", baseURL),
+		baseURL+userEndpoints.GetUserEndpoint,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -356,7 +359,7 @@ func NewGetUserRequestWithAuth(t *testing.T, ctx context.Context, baseURL string
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		fmt.Sprintf("%s/users/me", baseURL),
+		baseURL+userEndpoints.GetUserEndpoint,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -379,7 +382,7 @@ func NewGetUserRequestWithMockAuth(t *testing.T, ctx context.Context, baseURL st
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		fmt.Sprintf("%s/users/me", baseURL),
+		baseURL+userEndpoints.GetUserEndpoint,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -411,7 +414,7 @@ func NewApproveUserRequest(t *testing.T, ctx context.Context, baseURL string, re
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPatch,
-		fmt.Sprintf("%s/admin/users/approve", baseURL),
+		baseURL+userEndpoints.ApproveUserEndpoint,
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -438,7 +441,7 @@ func NewMalformedApproveUserRequest(t *testing.T, ctx context.Context, baseURL s
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPatch,
-		fmt.Sprintf("%s/admin/users/approve", baseURL),
+		baseURL+userEndpoints.ApproveUserEndpoint,
 		bytes.NewBuffer([]byte(malformedJSON)),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -548,7 +551,7 @@ func NewRefreshSessionRequest(t *testing.T, ctx context.Context, baseURL string,
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%s/auth/refresh", baseURL),
+		baseURL+ck.RefreshEndpoint,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -570,7 +573,7 @@ func NewRefreshSessionRequestWithoutToken(t *testing.T, ctx context.Context, bas
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%s/auth/refresh", baseURL),
+		baseURL+ck.RefreshEndpoint,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -641,7 +644,7 @@ func NewDeleteOwnAccountRequest(t *testing.T, ctx context.Context, baseURL strin
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodDelete,
-		fmt.Sprintf("%s/auth/me", baseURL),
+		baseURL+authEndpoints.DeleteOwnAccountEndpoint,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -664,7 +667,7 @@ func NewDeleteOwnAccountRequestWithoutAuth(t *testing.T, ctx context.Context, ba
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodDelete,
-		fmt.Sprintf("%s/auth/me", baseURL),
+		baseURL+authEndpoints.DeleteOwnAccountEndpoint,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -749,7 +752,7 @@ func NewUpdateUserRequest(t *testing.T, ctx context.Context, baseURL string, req
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPatch,
-		fmt.Sprintf("%s/users/me", baseURL),
+		baseURL+userEndpoints.GetUserEndpoint,
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -768,7 +771,7 @@ func NewUpdateUserRequestWithAuth(t *testing.T, ctx context.Context, baseURL str
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPatch,
-		fmt.Sprintf("%s/users/me", baseURL),
+		baseURL+userEndpoints.GetUserEndpoint,
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -807,7 +810,7 @@ func NewChangePasswordRequest(t *testing.T, ctx context.Context, baseURL string,
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPatch,
-		fmt.Sprintf("%s/users/me/password", baseURL),
+		baseURL+userEndpoints.ChangePasswordEndpoint,
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -836,7 +839,7 @@ func NewChangePasswordRequestWithoutAuth(t *testing.T, ctx context.Context, base
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPatch,
-		fmt.Sprintf("%s/users/me/password", baseURL),
+		baseURL+userEndpoints.ChangePasswordEndpoint,
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -870,7 +873,7 @@ func NewRequestPasswordResetRequest(t *testing.T, ctx context.Context, baseURL s
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%s/auth/password/reset/request", baseURL),
+		baseURL+authEndpoints.RequestPasswordResetEndpoint,
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -914,7 +917,7 @@ func NewValidatePasswordResetOTPRequest(t *testing.T, ctx context.Context, baseU
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%s/auth/password/reset/validate", baseURL),
+		baseURL+authEndpoints.ValidatePasswordResetOTPEndpoint,
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
@@ -963,7 +966,7 @@ func NewConfirmPasswordResetRequest(t *testing.T, ctx context.Context, baseURL s
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%s/auth/password/reset/confirm", baseURL),
+		baseURL+authEndpoints.ConfirmPasswordResetEndpoint,
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")

@@ -9,6 +9,10 @@ import (
 	"testing"
 
 	"github.com/Leviosa-care/authuser/internal/domain"
+
+	partnerEndpoints "github.com/Leviosa-care/authuser/internal/adapters/http/partner"
+	specializationEndpoints "github.com/Leviosa-care/authuser/internal/adapters/http/specialization"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +24,7 @@ func NewCreatePartnerRequest(t *testing.T, ctx context.Context, serverURL string
 	body, err := json.Marshal(request)
 	require.NoError(t, err, "Failed to marshal create partner request")
 
-	req, err := http.NewRequestWithContext(ctx, "POST", serverURL+"/partners", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, "POST", serverURL+partnerEndpoints.CreatePartnerEndpoint, bytes.NewReader(body))
 	require.NoError(t, err, "Failed to create HTTP request")
 
 	req.Header.Set("Content-Type", "application/json")
@@ -53,7 +57,7 @@ func NewGetPartnerByUserIDRequest(t *testing.T, ctx context.Context, serverURL s
 func NewGetAllPartnersRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
 	t.Helper()
 
-	url := fmt.Sprintf("%s/admin/partners", serverURL)
+	url := serverURL+partnerEndpoints.GetAllPartnersEndpoint
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	require.NoError(t, err, "Failed to create HTTP request")
 
@@ -137,7 +141,7 @@ func NewCreateSpecializationRequest(t *testing.T, ctx context.Context, serverURL
 	body, err := json.Marshal(request)
 	require.NoError(t, err, "Failed to marshal create specialization request")
 
-	req, err := http.NewRequestWithContext(ctx, "POST", serverURL+"/admin/specializations", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, "POST", serverURL+specializationEndpoints.CreateSpecializationEndpoint, bytes.NewReader(body))
 	require.NoError(t, err, "Failed to create HTTP request")
 
 	req.Header.Set("Content-Type", "application/json")
@@ -159,7 +163,7 @@ func NewGetSpecializationByIDRequest(t *testing.T, ctx context.Context, serverUR
 func NewGetAllSpecializationsRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
 	t.Helper()
 
-	url := fmt.Sprintf("%s/specializations", serverURL)
+	url := serverURL+specializationEndpoints.GetAllSpecializationsEndpoint
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	require.NoError(t, err, "Failed to create HTTP request")
 
