@@ -9,6 +9,8 @@ import (
 	"github.com/Leviosa-care/authuser/internal/domain"
 	td "github.com/Leviosa-care/authuser/test/helpers"
 
+	authEndpoints "github.com/Leviosa-care/authuser/internal/adapters/http/auth"
+
 	ck "github.com/Leviosa-care/core/auth/cookies"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -215,7 +217,7 @@ func TestSignIn(t *testing.T) {
 
 	t.Run("should fail with invalid request body", func(t *testing.T) {
 		// Make HTTP request with invalid JSON
-		req := td.NewInvalidJSONRequest(t, ctx, testServerURL, "POST", "/auth/login")
+		req := td.NewInvalidJSONRequest(t, ctx, testServerURL, "POST", authEndpoints.SignInEndpoint)
 		resp, err := client.Do(req)
 
 		// Assert HTTP response

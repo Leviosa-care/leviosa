@@ -69,7 +69,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 		// Verify password reset token cookie was set
 		resetTokenCookie := td.GetPasswordResetTokenCookie(t, resp)
 		assert.NotEmpty(t, resetTokenCookie.Value, "Password reset token should not be empty")
-		assert.Equal(t, "/auth/password/reset/confirm", resetTokenCookie.Path, "Cookie path should be restricted to confirm endpoint")
+		assert.Equal(t, aggregatorHandler.ConfirmPasswordResetEndpoint, resetTokenCookie.Path, "Cookie path should be restricted to confirm endpoint")
 		assert.True(t, resetTokenCookie.HttpOnly, "Cookie should be HttpOnly")
 		assert.True(t, resetTokenCookie.Secure, "Cookie should be Secure")
 		assert.Equal(t, http.SameSiteStrictMode, resetTokenCookie.SameSite, "Cookie should use SameSite=Strict")
@@ -354,7 +354,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 		req, err := http.NewRequestWithContext(
 			ctx,
 			http.MethodPost,
-			testServerURL+"/auth/password/reset/validate",
+			testServerURL+aggregatorHandler.ValidatePasswordResetOTPEndpoint,
 			strings.NewReader(`{"email": "test@example.com", "code": }`),
 		)
 		require.NoError(t, err)

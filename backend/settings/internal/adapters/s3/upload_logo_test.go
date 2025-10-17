@@ -7,7 +7,7 @@ import (
 	"io"
 	"testing"
 
-	td "github.com/Leviosa-care/catalog/test/helpers"
+	td "github.com/Leviosa-care/settings/test/helpers"
 
 	"github.com/Leviosa-care/core/errs"
 	"github.com/aws/aws-sdk-go-v2/aws"

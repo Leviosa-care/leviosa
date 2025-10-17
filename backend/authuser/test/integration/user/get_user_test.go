@@ -89,10 +89,10 @@ func TestGetUser(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
+		standardSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
+		td.InsertSessionEncx(t, ctx, redisClient, standardSessionEncx, time.Hour)
 
 		// Create request with authentication cookie
 		req := td.NewGetUserRequestWithAuth(t, ctx, testServerURL, standardSession.AccessToken)
@@ -165,10 +165,10 @@ func TestGetUser(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, expiredSession)
+		expiredSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, expiredSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, expiredSession, sessionEncx, -time.Hour) // Expired 1 hour ago
+		td.InsertSessionEncx(t, ctx, redisClient, expiredSessionEncx, -time.Hour) // Expired 1 hour ago
 
 		// Create request with expired session
 		req := td.NewGetUserRequestWithAuth(t, ctx, testServerURL, expiredSession.AccessToken)

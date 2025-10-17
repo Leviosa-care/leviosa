@@ -12,6 +12,7 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 	td "github.com/Leviosa-care/authuser/test/helpers"
+	authEndpoints "github.com/Leviosa-care/authuser/internal/adapters/http/auth"
 
 	ck "github.com/Leviosa-care/core/auth/cookies"
 	"github.com/Leviosa-care/core/auth/session"
@@ -693,7 +694,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 		req, err := http.NewRequestWithContext(
 			ctx,
 			http.MethodPost,
-			testServerURL+"/auth/otp",
+			testServerURL+authEndpoints.ValidateOTPCreatePendingEndpoint,
 			strings.NewReader(malformedJSON),
 		)
 		require.NoError(t, err)

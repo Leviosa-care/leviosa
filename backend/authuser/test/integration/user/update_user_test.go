@@ -9,6 +9,8 @@ import (
 	"github.com/Leviosa-care/authuser/internal/domain"
 	td "github.com/Leviosa-care/authuser/test/helpers"
 
+	userEndpoints "github.com/Leviosa-care/authuser/internal/adapters/http/user"
+
 	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/google/uuid"
@@ -91,10 +93,10 @@ func TestUpdateUser(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
+		standardSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
+		td.InsertSessionEncx(t, ctx, redisClient, standardSessionEncx, time.Hour)
 
 		// Prepare update request with new values
 		newFirstName := "Updated"
@@ -156,12 +158,14 @@ func TestUpdateUser(t *testing.T) {
 
 		// Create valid standardSession
 		standardSession := createTestSession(t, ctx, testUser.ID)
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
+
+		standardSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
 		require.NoError(t, err)
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
+
+		td.InsertSessionEncx(t, ctx, redisClient, standardSessionEncx, time.Hour)
 
 		// Create request with invalid JSON
-		req := td.NewInvalidJSONRequest(t, ctx, testServerURL, http.MethodPatch, "/users/me")
+		req := td.NewInvalidJSONRequest(t, ctx, testServerURL, http.MethodPatch, userEndpoints.UpdateUserEndpoint)
 		td.AddAuthCookie(req, standardSession.AccessToken)
 
 		resp, err := client.Do(req)
@@ -195,9 +199,11 @@ func TestUpdateUser(t *testing.T) {
 
 		// Create valid standardSession
 		standardSession := createTestSession(t, ctx, testUser.ID)
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
+
+		standardSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
 		require.NoError(t, err)
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
+
+		td.InsertSessionEncx(t, ctx, redisClient, standardSessionEncx, time.Hour)
 
 		// Update only email
 		updateRequest := domain.UpdateUserRequest{
@@ -235,9 +241,11 @@ func TestUpdateUser(t *testing.T) {
 
 		// Create valid standardSession
 		standardSession := createTestSession(t, ctx, testUser.ID)
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
+
+		standardSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
 		require.NoError(t, err)
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
+
+		td.InsertSessionEncx(t, ctx, redisClient, standardSessionEncx, time.Hour)
 
 		// Update birth date
 		newBirthDate := time.Date(1990, 5, 15, 0, 0, 0, 0, time.UTC)
@@ -276,9 +284,10 @@ func TestUpdateUser(t *testing.T) {
 		expiredSession := createTestSession(t, ctx, testUser.ID)
 		expiredSession.ExpiresAt = time.Now().Add(-1 * time.Hour) // Expired 1 hour ago
 
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, expiredSession)
+		expiredSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, expiredSession)
 		require.NoError(t, err)
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, expiredSession, sessionEncx, -time.Hour) // Expired
+
+		td.InsertSessionEncx(t, ctx, redisClient, expiredSessionEncx, -time.Hour) // Expired
 
 		updateRequest := domain.UpdateUserRequest{
 			FirstName: stringPtr("ShouldNotUpdate"),
@@ -311,9 +320,11 @@ func TestUpdateUser(t *testing.T) {
 
 		// Create valid session
 		standardSession := createTestSession(t, ctx, testUser.ID)
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
+
+		standardSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
 		require.NoError(t, err)
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
+
+		td.InsertSessionEncx(t, ctx, redisClient, standardSessionEncx, time.Hour)
 
 		// Update multiple fields
 		updateRequest := domain.UpdateUserRequest{

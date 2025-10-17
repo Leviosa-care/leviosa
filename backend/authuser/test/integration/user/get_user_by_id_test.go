@@ -90,10 +90,10 @@ func TestGetUserByID(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
+		standardSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, standardSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, standardSession, sessionEncx, time.Hour)
+		td.InsertSessionEncx(t, ctx, redisClient, standardSessionEncx, time.Hour)
 
 		// Act - request target user with non-admin session
 		req := td.NewGetUserByIDRequest(t, ctx, testServerURL, userID, standardSession.AccessToken)
@@ -140,10 +140,10 @@ func TestGetUserByID(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, adminSession)
+		adminSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, adminSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, adminSession, sessionEncx, time.Hour)
+		td.InsertSessionEncx(t, ctx, redisClient, adminSessionEncx, time.Hour)
 
 		// Act - request with invalid UUID format
 		req, err := http.NewRequestWithContext(
@@ -203,10 +203,10 @@ func TestGetUserByID(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, adminSession)
+		adminSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, adminSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, adminSession, sessionEncx, time.Hour)
+		td.InsertSessionEncx(t, ctx, redisClient, adminSessionEncx, time.Hour)
 
 		// Act - request non-existent user
 		nonExistentUserID := uuid.New()
@@ -269,10 +269,10 @@ func TestGetUserByID(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, adminSession)
+		adminSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, adminSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, adminSession, sessionEncx, time.Hour)
+		td.InsertSessionEncx(t, ctx, redisClient, adminSessionEncx, time.Hour)
 
 		// Act - request target user with admin authentication
 		req := td.NewGetUserByIDRequest(t, ctx, testServerURL, targetUser.ID, adminSession.AccessToken)
@@ -330,10 +330,10 @@ func TestGetUserByID(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		sessionEncx, err := session.ProcessSessionEncx(ctx, crypto, expiredAdministratorSession)
+		expiredAdministratorSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, expiredAdministratorSession)
 		require.NoError(t, err)
 
-		td.InsertSessionDirectlyWithEncx(t, ctx, redisClient, expiredAdministratorSession, sessionEncx, -time.Hour) // Expired
+		td.InsertSessionEncx(t, ctx, redisClient, expiredAdministratorSessionEncx, -time.Hour) // Expired
 
 		// Act - request with expired admin session
 		req := td.NewGetUserByIDRequest(t, ctx, testServerURL, userID, expiredAdministratorSession.AccessToken)

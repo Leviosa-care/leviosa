@@ -8,6 +8,9 @@ import (
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 	th "github.com/Leviosa-care/authuser/test/helpers"
+
+	userEndpoints "github.com/Leviosa-care/authuser/internal/adapters/http/user"
+
 	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/contracts/identity"
 	"github.com/google/uuid"
@@ -205,7 +208,7 @@ func TestChangePassword(t *testing.T) {
 		accessToken := th.CreateSessionWithEncryption(t, ctx, sessionInfo, redisClient, crypto)
 
 		// Make request with invalid JSON
-		req := th.NewInvalidJSONRequest(t, ctx, testServerURL, http.MethodPatch, "/users/me/password")
+		req := th.NewInvalidJSONRequest(t, ctx, testServerURL, http.MethodPatch, userEndpoints.ChangePasswordEndpoint)
 		th.AddAuthCookie(req, accessToken)
 		resp, err := client.Do(req)
 		require.NoError(t, err)

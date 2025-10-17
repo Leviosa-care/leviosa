@@ -215,4 +215,3 @@ func (nc *NextcloudContainer) CreateTestUser(ctx context.Context, username, emai
 func (nc *NextcloudContainer) GetOAuthConfig() (clientID, clientSecret, baseURL string) {
 	return nc.ClientID, nc.ClientSecret, nc.BaseURL
 }
-

@@ -29,4 +29,3 @@ func SetTokenCookies(w http.ResponseWriter, accessToken, refreshToken string, ac
 		Expires:  refreshExpiry,
 	})
 }
-

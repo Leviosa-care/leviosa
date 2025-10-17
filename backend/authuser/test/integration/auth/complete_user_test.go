@@ -9,6 +9,8 @@ import (
 	"github.com/Leviosa-care/authuser/internal/domain"
 	td "github.com/Leviosa-care/authuser/test/helpers"
 
+	authEndpoints "github.com/Leviosa-care/authuser/internal/adapters/http/auth"
+
 	ck "github.com/Leviosa-care/core/auth/cookies"
 	"github.com/Leviosa-care/core/auth/session"
 	"github.com/Leviosa-care/core/errs"
@@ -221,7 +223,7 @@ func TestCompleteUser(t *testing.T) {
 		req, err := http.NewRequestWithContext(
 			ctx,
 			http.MethodPost,
-			testServerURL+"/auth/complete",
+			testServerURL+authEndpoints.CompleteUserEndpoint,
 			nil, // No body - will cause JSON decode error
 		)
 		require.NoError(t, err)

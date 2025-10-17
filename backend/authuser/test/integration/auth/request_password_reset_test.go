@@ -10,6 +10,8 @@ import (
 	"github.com/Leviosa-care/authuser/internal/domain"
 	"github.com/hengadev/encx"
 
+	authEndpoints "github.com/Leviosa-care/authuser/internal/adapters/http/auth"
+
 	td "github.com/Leviosa-care/authuser/test/helpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -242,7 +244,7 @@ func TestRequestPasswordReset(t *testing.T) {
 		req, err := http.NewRequestWithContext(
 			ctx,
 			http.MethodPost,
-			testServerURL+"/auth/password/reset/request",
+			testServerURL+authEndpoints.RequestPasswordResetEndpoint,
 			strings.NewReader(`{"email": "test@example.com", "invalid": }`),
 		)
 		require.NoError(t, err)
@@ -276,7 +278,7 @@ func TestRequestPasswordReset(t *testing.T) {
 		req, err := http.NewRequestWithContext(
 			ctx,
 			http.MethodPost,
-			testServerURL+"/auth/password/reset/request",
+			testServerURL+authEndpoints.RequestPasswordResetEndpoint,
 			strings.NewReader(`{"email": "`+existingEmail+`"}`),
 		)
 		require.NoError(t, err)

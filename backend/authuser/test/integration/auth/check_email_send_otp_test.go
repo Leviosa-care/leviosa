@@ -10,6 +10,8 @@ import (
 	"github.com/Leviosa-care/authuser/internal/domain"
 	td "github.com/Leviosa-care/authuser/test/helpers"
 
+	authEndpoints "github.com/Leviosa-care/authuser/internal/adapters/http/auth"
+
 	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -207,7 +209,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		req, err := http.NewRequestWithContext(
 			ctx,
 			http.MethodPost,
-			testServerURL+"/auth/email",
+			testServerURL+authEndpoints.CheckEmailSendOTPEndpoint,
 			strings.NewReader(malformedJSON),
 		)
 		require.NoError(t, err)
