@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	otpKeyPrefix = "authuser:otp:"
+	OTPKeyPrefix = "authuser:otp:"
 )
 
 type OTPRepository struct {
@@ -24,5 +24,5 @@ func New(client *redis.Client) ports.OTPRepository {
 // FormatOTPKey formats an OTP key for Redis storage
 // This function is public to allow consistent key formatting in tests
 func FormatOTPKey(emailHash string) string {
-	return fmt.Sprintf("%s%s", otpKeyPrefix, emailHash)
+	return fmt.Sprintf("%s%s", OTPKeyPrefix, emailHash)
 }
