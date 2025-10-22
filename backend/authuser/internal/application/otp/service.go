@@ -2,18 +2,11 @@ package otp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/Leviosa-care/authuser/internal/domain"
 	"github.com/Leviosa-care/authuser/internal/ports"
 
-	"github.com/Leviosa-care/core/contracts/settings"
-	"github.com/Leviosa-care/core/messaging/rabbitmq"
 	"github.com/hengadev/encx"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -31,8 +24,19 @@ type OTPService struct {
 	mq     *amqp.Connection
 }
 
+// New creates a new OTPService instance with hardcoded OTP configuration.
+//
+// OTP settings are currently hardcoded as constants (defaultOTPDuration, defaultOTPLength, defaultOTPMaxAttempts)
+// for simplicity and production reliability. The cache layer and RabbitMQ consumer infrastructure
+// (StartOTPSettingConsumer) are preserved but not used, allowing for future migration to a microservices
+// architecture where dynamic settings may be needed.
+//
+// To re-enable dynamic settings in the future:
+// 1. Call StartOTPSettingConsumer() after service initialization
+// 2. Optionally implement HTTP-based settings loading for initial values
+// 3. Update application code to use s.GetOTPDuration(), s.GetOTPLength(), s.GetOTPMaxAttempts() instead of constants
 func New(ctx context.Context, repo ports.OTPRepository, crypto encx.CryptoService, rabbitConn *amqp.Connection) (ports.OTPService, error) {
-	// Initialize with default values first
+	// Initialize cache with hardcoded default values
 	cache := domain.NewOTPCache(
 		defaultOTPDuration,
 		defaultOTPLength,
@@ -46,65 +50,5 @@ func New(ctx context.Context, repo ports.OTPRepository, crypto encx.CryptoServic
 		mq:     rabbitConn,
 	}
 
-	// Try to load current settings asynchronously
-	go func() {
-		if err := otpService.loadOTPSettings(ctx); err != nil {
-			// TODO: Add proper logging here
-			fmt.Printf("Failed to load OTP settings, using defaults: %v\n", err)
-		}
-	}()
-
-	// Start RabbitMQ consumer for settings updates
-	ch, err := rabbitmq.NewChannel(rabbitConn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create consumer channel: %w", err)
-	}
-
-	if err := otpService.StartOTPSettingConsumer(ctx, ch); err != nil {
-		return nil, fmt.Errorf("failed to start settings consumer: %w", err)
-	}
-
 	return otpService, nil
-}
-
-func (s *OTPService) loadOTPSettings(ctx context.Context) error {
-	keysList := []string{settings.OTPDuration, settings.OTPLength, settings.OTPMaxAttempts}
-	baseURL := "http://backend:3500" // TODO: Make this configurable
-	url := fmt.Sprintf("%s/settings/bulk?keys=%s", baseURL, strings.Join(keysList, ","))
-
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(url)
-	if err != nil {
-		return fmt.Errorf("failed to fetch settings: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("settings service returned status %d", resp.StatusCode)
-	}
-
-	var list []settings.SettingDTO
-	if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
-		return fmt.Errorf("failed to decode settings response: %w", err)
-	}
-
-	// Apply loaded settings
-	for _, setting := range list {
-		value, err := strconv.Atoi(setting.Value)
-		if err != nil {
-			fmt.Printf("Warning: Invalid setting value for %s: %s\n", setting.Key, setting.Value)
-			continue
-		}
-
-		switch setting.Key {
-		case settings.OTPDuration:
-			s.SetOTPDuration(value)
-		case settings.OTPLength:
-			s.SetOTPLength(value)
-		case settings.OTPMaxAttempts:
-			s.SetOTPMaxAttempts(value)
-		}
-	}
-
-	return nil
 }
