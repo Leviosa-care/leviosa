@@ -18,6 +18,12 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+const (
+	defaultOTPDuration    = 10 // Default OTP duration in minutes
+	defaultOTPLength      = 6  // Default OTP length
+	defaultOTPMaxAttempts = 3  // Default max attempts
+)
+
 type OTPService struct {
 	repo   ports.OTPRepository
 	crypto encx.CryptoService
@@ -28,9 +34,9 @@ type OTPService struct {
 func New(ctx context.Context, repo ports.OTPRepository, crypto encx.CryptoService, rabbitConn *amqp.Connection) (ports.OTPService, error) {
 	// Initialize with default values first
 	cache := domain.NewOTPCache(
-		10, // Default OTP duration in minutes
-		6,  // Default OTP length
-		3,  // Default max attempts
+		defaultOTPDuration,
+		defaultOTPLength,
+		defaultOTPMaxAttempts,
 	)
 
 	otpService := &OTPService{
