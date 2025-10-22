@@ -66,7 +66,7 @@ func (s *OTPService) ResendOTP(ctx context.Context, email string) error {
 	}
 
 	// Check if max attempts exceeded
-	if existingOTP.Attempts >= s.GetOTPMaxAttempts() {
+	if existingOTP.Attempts >= defaultOTPMaxAttempts {
 		return errs.NewRateLimitErr(errors.New("maximum attempts exceeded"), "OTP")
 	}
 

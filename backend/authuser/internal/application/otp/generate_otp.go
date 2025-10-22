@@ -18,7 +18,7 @@ func (s *OTPService) generateOTP(email string) (*domain.OTP, error) {
 	}
 
 	now := time.Now()
-	duration := time.Duration(s.GetOTPDuration()) * time.Minute
+	duration := time.Duration(defaultOTPDuration) * time.Minute
 
 	return &domain.OTP{Email: email,
 		Code:      code,

@@ -66,7 +66,7 @@ func (s *OTPService) RequestOTP(ctx context.Context, email string) error {
 			return errs.NewNotDecryptedErr("OTP", err)
 		}
 
-		if !existingOTP.IsExpired() && existingOTP.Attempts < s.GetOTPMaxAttempts() {
+		if !existingOTP.IsExpired() && existingOTP.Attempts < defaultOTPMaxAttempts {
 			return errs.NewRateLimitErr(errors.New("OTP already active"), "OTP")
 		}
 	}
@@ -88,7 +88,7 @@ func (s *OTPService) RequestOTP(ctx context.Context, email string) error {
 		return errs.NewJSONMarshalErr(err)
 	}
 
-	ttl := time.Duration(s.GetOTPDuration()) * time.Minute
+	ttl := time.Duration(defaultOTPDuration) * time.Minute
 
 	if err := s.repo.SaveOTP(ctx, otpEncx.EmailHash, otpData, ttl); err != nil {
 		switch {

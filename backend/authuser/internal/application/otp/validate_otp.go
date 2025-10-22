@@ -50,7 +50,7 @@ func (s *OTPService) ValidateOTP(ctx context.Context, request *domain.ValidateOT
 	}
 
 	// Check if max attempts exceeded
-	if otp.Attempts >= s.GetOTPMaxAttempts() {
+	if otp.Attempts >= defaultOTPMaxAttempts {
 		// Clean up OTP that exceeded attempts (best effort - ignore errors)
 		s.cleanupOTP(ctx, emailHash, "max attempts exceeded cleanup")
 		return errs.NewRateLimitErr(errors.New("maximum attempts exceeded"), "OTP")

@@ -1,11 +1,9 @@
 package otp
 
-const DefaultOTPLength = 6
-
 func (s *OTPService) effectiveOTPLength() int {
-	length := s.GetOTPLength()
+	length := defaultOTPLength
 	if length <= 0 {
-		return DefaultOTPLength
+		return 6 // Fallback to hardcoded value (should never happen with defaultOTPLength = 6)
 	}
 	return length
 }
