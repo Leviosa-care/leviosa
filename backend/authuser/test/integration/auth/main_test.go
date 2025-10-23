@@ -13,13 +13,16 @@ import (
 	"time"
 
 	authHandler "github.com/Leviosa-care/authuser/internal/adapters/http/auth"
+	partnerRepository "github.com/Leviosa-care/authuser/internal/adapters/postgres/partner"
 	userRepository "github.com/Leviosa-care/authuser/internal/adapters/postgres/user"
 	authRabbitMQ "github.com/Leviosa-care/authuser/internal/adapters/rabbitmq"
 	otpRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/otp"
 	sessionRepository "github.com/Leviosa-care/authuser/internal/adapters/redis/session"
 	authPayment "github.com/Leviosa-care/authuser/internal/adapters/stripe"
 	"github.com/Leviosa-care/authuser/internal/application/aggregator"
+	"github.com/Leviosa-care/authuser/internal/application/catalog"
 	"github.com/Leviosa-care/authuser/internal/application/otp"
+	"github.com/Leviosa-care/authuser/internal/application/partner"
 	"github.com/Leviosa-care/authuser/internal/application/session"
 	"github.com/Leviosa-care/authuser/internal/application/user"
 	"github.com/Leviosa-care/authuser/internal/ports"
@@ -49,13 +52,14 @@ var (
 	redisClient     *redis.Client
 	crypto          encx.CryptoService
 	userRepo        ports.UserRepository
+	catalogCache    ports.CatalogCache
 	otpRepo         ports.OTPRepository
 	sessionRepo     ports.SessionRepository
 	vaultSetup      *tu.ServiceVaultSetup // Enhanced Vault setup with per-service keys
 	authCtx         *tu.AuthTestContext   // Authentication context for user/session tests
 	authSessionRepo authsession.SessionRepository
 	service         ports.AuthAggregatorService
-	handler         authHandler.Handler
+	authHandler     authHandler.Handler
 	testServerURL   string           // Global variable to hold the URL of the running test server
 	testServer      *http.Server     // To allow graceful shutdown
 	testMQConn      *amqp.Connection // RabbitMQ connection for test verification
@@ -223,6 +227,12 @@ func TestMain(m *testing.M) {
 	userRepo = userRepository.New(ctx, testPool)
 	userService := user.New(userRepo, crypto, payment)
 
+	catalogCache = catalog.NewCatalogCache()
+	catalogService, err := catalog.New(ctx, catalogCache, testMQConn)
+	if err != nil {
+		log.Fatalf("Failed to create catalog service: %v", err)
+	}
+
 	otpRepo = otpRepository.New(redisClient)
 	otpService, err := otp.New(ctx, otpRepo, crypto, testMQConn)
 	if err != nil {
@@ -232,12 +242,19 @@ func TestMain(m *testing.M) {
 	sessionRepo = sessionRepository.New(redisClient)
 	sessionService := session.New(ctx, sessionRepo, crypto)
 
-	service = aggregator.New(otpService, userService, sessionService)
+	// Create partner repository and service
+	partnerRepo := partnerRepository.New(ctx, testPool)
+	partnerService, err := partner.New(ctx, partnerRepo, userRepo, catalogService, testMQConn, crypto, payment)
+	if err != nil {
+		log.Fatalf("Failed to create partner service: %v", err)
+	}
+
+	service = aggregator.New(otpService, userService, sessionService, partnerService)
 
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
 
-	handler = authHandler.New(service, authmw)
+	authHandler = authHandler.New(service, authmw)
 
 	// Set required environment variables for logger middleware
 	os.Setenv("CLIENT_IP_HEADER", "X-Forwarded-For")
@@ -245,7 +262,7 @@ func TestMain(m *testing.M) {
 
 	// HTTP server setup with logger middleware
 	router := http.NewServeMux()
-	handler.RegisterRoutes(router)
+	authHandler.RegisterRoutes(router)
 
 	// Use the enhanced AttachLogger middleware from core package
 	loggerMiddleware := middleware.AttachLogger(envmode.Dev, testLogger)
