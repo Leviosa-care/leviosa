@@ -47,12 +47,25 @@ type CompletePartnerResponse struct {
 // NOTE: This DTO is deprecated. Partner registration now uses CompletePartnerRequest via /auth/complete/partner
 // Keeping this for potential future admin-initiated partner creation, but it's currently unused.
 type CreatePartnerRequest struct {
-	UserID         string        `json:"user_id"`          // ID of existing user to create partner profile for
-	Bio            string        `json:"bio,omitempty"`
-	Experience     string        `json:"experience,omitempty"`
-	Certifications []string      `json:"certifications,omitempty"`
-	CategoryIDs    []uuid.UUID   `json:"category_ids,omitempty"`
-	ProductIDs     []uuid.UUID   `json:"product_ids,omitempty"`
+	UserID         string      `json:"user_id"`          // ID of existing user to create partner profile for
+	Bio            string      `json:"bio,omitempty"`
+	Experience     string      `json:"experience,omitempty"`
+	Certifications []string    `json:"certifications,omitempty"`
+	CategoryIDs    []uuid.UUID `json:"category_ids,omitempty"`
+	ProductIDs     []uuid.UUID `json:"product_ids,omitempty"`
+
+	// User fields (for ToUser method - deprecated, will be removed)
+	Email      string `json:"email,omitempty"`
+	Password   string `json:"password,omitempty"`
+	FirstName  string `json:"first_name,omitempty"`
+	LastName   string `json:"last_name,omitempty"`
+	Telephone  string `json:"telephone,omitempty"`
+	BirthDate  string `json:"birthdate,omitempty"` // ISO format
+	Gender     string `json:"gender,omitempty"`
+	PostalCode string `json:"postal_code,omitempty"`
+	City       string `json:"city,omitempty"`
+	Address1   string `json:"address1,omitempty"`
+	Address2   string `json:"address2,omitempty"`
 }
 
 func (r *CreatePartnerRequest) Valid(ctx context.Context) error {

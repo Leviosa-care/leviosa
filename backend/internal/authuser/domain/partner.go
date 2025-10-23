@@ -11,19 +11,21 @@ import (
 )
 
 type Partner struct {
-	ID             uuid.UUID   `json:"id"`
-	UserID         uuid.UUID   `json:"user_id"`
-	Bio            string      `json:"bio" encx:"encrypt"`
-	Experience     string      `json:"experience" encx:"encrypt"`
-	Certifications []string    `json:"certifications" encx:"encrypt"`
-	IsVerified     bool        `json:"is_verified"`
-	VerifiedAt     *time.Time  `json:"verified_at" encx:"encrypt"`
-	CreatedAt      time.Time   `json:"created_at"`
-	UpdatedAt      time.Time   `json:"updated_at"`
-	CategoryIDs    []uuid.UUID `json:"category_ids"` // the categories the user offers his/her services
-	ProductIDs     []uuid.UUID `json:"product_ids"`  // the products the user offers his/her services
-	// Embedded user data (populated when joining with users table)
-	User *User `json:"user,omitempty"`
+	ID               uuid.UUID   `json:"id"`
+	UserID           uuid.UUID   `json:"user_id"`
+	Bio              string      `json:"bio" encx:"encrypt"`
+	Experience       string      `json:"experience" encx:"encrypt"`
+	Certifications   []string    `json:"certifications" encx:"encrypt"`
+	IsVerified       bool        `json:"is_verified"`
+	VerifiedAt       *time.Time  `json:"verified_at" encx:"encrypt"`
+	VerifiedByUserID *uuid.UUID  `json:"verified_by_user_id"`
+	CreatedAt        time.Time   `json:"created_at"`
+	UpdatedAt        time.Time   `json:"updated_at"`
+	CategoryIDs      []uuid.UUID `json:"category_ids"` // the categories the user offers his/her services
+	ProductIDs       []uuid.UUID `json:"product_ids"`  // the products the user offers his/her services
+	// Embedded data (populated when joining with related tables)
+	User            *User                    `json:"user,omitempty"`
+	Specializations []SpecializationResponse `json:"specializations,omitempty"`
 }
 
 // NOTE: the old thing that I had

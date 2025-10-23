@@ -51,14 +51,8 @@ func (r *CompletePartnerRequest) Valid(ctx context.Context) error {
 	}
 
 	if err := userRequest.Valid(ctx); err != nil {
-		// errsx.Map errors can be unwrapped and merged
-		if userErrs, ok := err.(*errsx.Map); ok {
-			for key, value := range userErrs.Errors {
-				errs.Set(key, value)
-			}
-		} else {
-			errs.Set("user_validation", err.Error())
-		}
+		// Include user validation errors
+		errs.Set("user_validation", err.Error())
 	}
 
 	// Validate partner-specific fields
@@ -71,28 +65,28 @@ func (r *CompletePartnerRequest) Valid(ctx context.Context) error {
 	}
 
 	// Validate certifications array
-	for i, cert := range r.Certifications {
+	for _, cert := range r.Certifications {
 		if len(cert) > 200 {
 			errs.Set("certifications", "each certification must be 200 characters or less")
 			break
 		}
 		if cert == "" {
-			errs.Set("certifications", "certification at index %d is empty", i)
+			errs.Set("certifications", "certifications cannot contain empty values")
 			break
 		}
 	}
 
 	// Validate UUID arrays (nil UUIDs not allowed)
-	for i, categoryID := range r.CategoryIDs {
+	for _, categoryID := range r.CategoryIDs {
 		if categoryID == uuid.Nil {
-			errs.Set("category_ids", "category ID at index %d cannot be nil", i)
+			errs.Set("category_ids", "category IDs cannot contain nil values")
 			break
 		}
 	}
 
-	for i, productID := range r.ProductIDs {
+	for _, productID := range r.ProductIDs {
 		if productID == uuid.Nil {
-			errs.Set("product_ids", "product ID at index %d cannot be nil", i)
+			errs.Set("product_ids", "product IDs cannot contain nil values")
 			break
 		}
 	}
