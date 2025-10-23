@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Leviosa-care/core/contracts/settings"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings"
 	httpEndpoints "github.com/Leviosa-care/settings/internal/adapters/http"
 	"github.com/Leviosa-care/settings/internal/domain"
 

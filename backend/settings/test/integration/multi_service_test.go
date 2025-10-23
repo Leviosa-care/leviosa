@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Leviosa-care/core/contracts/services"
-	"github.com/Leviosa-care/core/contracts/settings"
-	"github.com/Leviosa-care/core/httpx"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/services"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 	httpEndpoints "github.com/Leviosa-care/settings/internal/adapters/http"
 	"github.com/Leviosa-care/settings/internal/domain"
 	th "github.com/Leviosa-care/settings/test/helpers"

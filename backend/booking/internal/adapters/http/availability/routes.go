@@ -3,8 +3,8 @@ package availabilityHandler
 import (
 	"net/http"
 
-	"github.com/Leviosa-care/core/contracts/identity"
-	mw "github.com/Leviosa-care/core/middleware"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
+	mw "github.com/Leviosa-care/leviosa/backend/internal/common/middleware"
 )
 
 func (h *handler) RegisterRoutes(router *http.ServeMux) {

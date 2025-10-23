@@ -8,9 +8,9 @@ import (
 	"net/http"
 
 	"github.com/Leviosa-care/booking/internal/domain"
-	"github.com/Leviosa-care/core/ctxutil"
-	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/httpx"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 )
 
 func (h *handler) CreateRoom(w http.ResponseWriter, r *http.Request) {

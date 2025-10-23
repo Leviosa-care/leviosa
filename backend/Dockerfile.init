@@ -1,0 +1,23 @@
+# Dockerfile for service initialization container
+FROM alpine:latest
+
+# Install required tools
+RUN apk add --no-cache curl bash jq
+
+# Install Vault CLI
+RUN wget https://releases.hashicorp.com/vault/1.19.0/vault_1.19.0_linux_amd64.zip && \
+    unzip vault_1.19.0_linux_amd64.zip && \
+    mv vault /usr/local/bin/ && \
+    rm vault_1.19.0_linux_amd64.zip
+
+# Copy scripts
+COPY scripts/ /scripts/
+
+# Make scripts executable
+RUN chmod +x /scripts/*.sh
+
+# Set working directory
+WORKDIR /scripts
+
+# Default command
+CMD ["./docker-init-vault.sh"]

@@ -6,8 +6,8 @@ import (
 
 	"github.com/Leviosa-care/settings/internal/domain"
 
-	"github.com/Leviosa-care/core/contracts/settings"
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
 func (s *SettingsService) GetCompanyLegalAddress(ctx context.Context) (*domain.GetCompanyLegalAddressResponse, error) {

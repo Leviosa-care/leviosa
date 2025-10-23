@@ -3,7 +3,7 @@ package settings
 import (
 	"fmt"
 
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
 const (

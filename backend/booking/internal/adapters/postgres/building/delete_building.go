@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
 )
 

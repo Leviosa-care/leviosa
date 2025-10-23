@@ -1,0 +1,72 @@
+name: 🛠️Deploy staging application
+
+on:
+  push:
+    branches:
+    - staging
+
+permissions:
+  actions: write
+  contents: read
+  checks: write
+
+jobs:
+  front:
+      name: 🌐 Staging front
+      runs-on: ubuntu-latest
+      steps:
+        - name: ⬇️ Checkout repo
+          uses: actions/checkout@v4.1.1
+        - name: frontend actions
+          uses: ./.github/actions/workflow-actions/front-build
+          with:
+            tag: 'staging-frontend'
+            dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+            dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+            folder: frontend
+  back:
+      name: 🛢 Staging Back
+      runs-on: ubuntu-latest
+      steps:
+        - name: ⬇️ Checkout repo
+          uses: actions/checkout@v4.1.1
+        - name: backend actions
+          uses: ./.github/actions/workflow-actions/back-build
+          with:
+            go-version: '1.22.1'
+            build-path: './cmd/leviosa/*.go'
+            test-path: './...'
+            output-name: 'leviosa'
+            tag: 'staging-backend'
+            dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+            dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+            folder: backend
+  deploy:
+    needs: [front, back]
+    name: 🚀 Deploy staging
+    runs-on: [self-hosted]
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4.1.1
+      - uses: ./.github/actions/workflow-actions/deploy-app
+        with:
+          filter: 'staging'
+          app_env: 'staging'
+          backend_port: 3501
+          port: 3001
+          dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+          aws_region: ${{ secrets.AWS_REGION }}
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          bucketname: ${{ secrets.BUCKETNAME }}
+          stripe_secret_key: ${{ secrets.STRIPE_SECRET_KEY }}
+          gmail_email: ${{ secrets.GMAIL_EMAIL }}
+          gmail_password: ${{ secrets.GMAIL_PASSWORD }}
+          google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}
+          google_client_secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          redis_addr: ${{ secrets.REDIS_ADDR }}
+          redis_password: ${{ secrets.REDIS_PASSWORD }}
+          redis_db: ${{ secrets.REDIS_DB }}
+          user_encryption_key: ${{ secrets.USER_ENCRYPTION_KEY }}
+          logging_salt: ${{ secrets.LOGGING_SALT }}

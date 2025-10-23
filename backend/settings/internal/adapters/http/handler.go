@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 
-	"github.com/Leviosa-care/core/middleware/auth"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
 	"github.com/Leviosa-care/settings/internal/ports"
 )
 

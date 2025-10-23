@@ -16,9 +16,9 @@ import (
 	settingsS3 "github.com/Leviosa-care/settings/internal/adapters/s3"
 	settingsApp "github.com/Leviosa-care/settings/internal/application"
 
-	"github.com/Leviosa-care/core/contracts/services"
-	"github.com/Leviosa-care/core/logger"
-	"github.com/Leviosa-care/core/middleware/auth"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/services"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/logger"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
 	
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"

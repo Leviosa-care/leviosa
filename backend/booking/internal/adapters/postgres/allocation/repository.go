@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/Leviosa-care/booking/internal/ports"
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"

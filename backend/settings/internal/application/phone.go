@@ -7,9 +7,9 @@ import (
 
 	"github.com/Leviosa-care/settings/internal/domain"
 
-	"github.com/Leviosa-care/core/contracts/settings"
-	"github.com/Leviosa-care/core/errs"
-	"github.com/Leviosa-care/core/validation"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/validation"
 )
 
 func (s *SettingsService) GetCompanyTelephone(ctx context.Context) (*domain.GetCompanyTelephoneResponse, error) {

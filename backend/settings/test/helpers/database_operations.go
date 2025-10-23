@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Leviosa-care/core/contracts/settings"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings"
 	"github.com/Leviosa-care/settings/internal/domain"
 
 	"github.com/jackc/pgx/v5/pgxpool"

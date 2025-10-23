@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Leviosa-care/booking/internal/ports"
-	"github.com/Leviosa-care/core/middleware/auth"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
 )
 
 type Handler interface {

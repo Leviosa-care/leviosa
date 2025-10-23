@@ -9,7 +9,7 @@ import (
 
 	td "github.com/Leviosa-care/settings/test/helpers"
 
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"

@@ -16,7 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 
-	tu "github.com/Leviosa-care/core/testutils"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 )
 
 var (

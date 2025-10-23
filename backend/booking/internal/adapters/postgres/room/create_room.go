@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/booking/internal/domain"
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
 func (r *Repository) Create(ctx context.Context, room *domain.Room) error {

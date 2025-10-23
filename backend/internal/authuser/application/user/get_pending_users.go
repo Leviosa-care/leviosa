@@ -1,0 +1,74 @@
+package user
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+)
+
+func (s *UserService) GetPendingUsers(ctx context.Context) ([]*domain.UserResponse, error) {
+	// Get pending users from repository
+	usersEncx, err := s.repo.GetPendingUsers(ctx)
+	if err != nil {
+		switch {
+		case errors.Is(err, errs.ErrRepositoryNotFound):
+			// No pending users found - return empty list
+			return []*domain.UserResponse{}, nil
+		case errors.Is(err, errs.ErrConnectionFailure):
+			// Database connection issues
+			return nil, fmt.Errorf("get pending users: %w", err)
+		case errors.Is(err, errs.ErrTooManyConnections):
+			// Connection pool exhausted
+			return nil, fmt.Errorf("get pending users: %w", err)
+		case errors.Is(err, errs.ErrQueryCancelled):
+			// Query was cancelled
+			return nil, fmt.Errorf("get pending users: %w", err)
+		case errors.Is(err, errs.ErrTransactionFailure):
+			// Transaction/serialization failure
+			return nil, fmt.Errorf("get pending users: %w", err)
+		case errors.Is(err, errs.ErrDeadlock):
+			// Database deadlock
+			return nil, fmt.Errorf("get pending users: %w", err)
+		case errors.Is(err, errs.ErrResourceExhausted):
+			// Database resources exhausted
+			return nil, fmt.Errorf("get pending users: %w", err)
+		case errors.Is(err, errs.ErrPermissionDenied):
+			// Database permission issues
+			return nil, fmt.Errorf("get pending users: %w", err)
+		case errors.Is(err, errs.ErrDatabase):
+			// General database error
+			return nil, fmt.Errorf("get pending users: %w", err)
+		case errors.Is(err, errs.ErrInvalidInput):
+			// Malformed query or invalid data
+			return nil, fmt.Errorf("get pending users: %w", err)
+		case errors.Is(err, context.Canceled):
+			// Request was cancelled
+			return nil, fmt.Errorf("get pending users cancelled: %w", err)
+		case errors.Is(err, context.DeadlineExceeded):
+			// Request timed out
+			return nil, fmt.Errorf("get pending users timeout: %w", err)
+		default:
+			// Any unhandled error - wrap with operation context
+			return nil, fmt.Errorf("get pending users: %w", err)
+		}
+	}
+
+	// Decrypt and convert each user to UserResponse
+	responses := make([]*domain.UserResponse, 0, len(usersEncx))
+	for _, userEncx := range usersEncx {
+		// Decrypt user data using the new generated function
+		user, err := domain.DecryptUserEncx(ctx, s.crypto, userEncx)
+		if err != nil {
+			return nil, errs.NewNotDecryptedErr("pending users list", err)
+		}
+
+		// Convert to response format
+		response := user.ToResponse()
+		responses = append(responses, response)
+	}
+
+	return responses, nil
+}

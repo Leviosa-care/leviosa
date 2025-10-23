@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Leviosa-care/core/contracts/settings"
-	"github.com/Leviosa-care/core/httpx"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 	"github.com/hengadev/errsx"
 )
 

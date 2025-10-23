@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/booking/internal/domain"
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
 )
 
@@ -112,3 +112,4 @@ func (r *Repository) GetByBuildingID(ctx context.Context, buildingID uuid.UUID, 
 
 	return rooms, nil
 }
+

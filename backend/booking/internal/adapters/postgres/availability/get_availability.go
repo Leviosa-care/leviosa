@@ -6,7 +6,7 @@ import (
 
 	"github.com/Leviosa-care/booking/internal/domain"
 	"github.com/Leviosa-care/booking/internal/ports"
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
 )
 

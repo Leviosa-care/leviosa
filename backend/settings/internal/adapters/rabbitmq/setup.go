@@ -3,8 +3,8 @@ package rabbitmq
 import (
 	"context"
 
-	mq "github.com/Leviosa-care/core/contracts/rabbitmq"
-	"github.com/Leviosa-care/core/messaging/rabbitmq"
+	mq "github.com/Leviosa-care/leviosa/backend/internal/common/contracts/rabbitmq"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/messaging/rabbitmq"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

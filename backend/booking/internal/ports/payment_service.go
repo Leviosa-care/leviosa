@@ -2,8 +2,6 @@ package ports
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 // PaymentService defines the interface for payment processing

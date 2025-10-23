@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/booking/internal/ports"
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/paymentintent"
 	"github.com/stripe/stripe-go/v82/refund"

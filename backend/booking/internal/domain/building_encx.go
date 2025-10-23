@@ -8,9 +8,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hengadev/errsx"
 	"github.com/hengadev/encx"
-	
+
 )
 
 // BuildingEncx represents the encrypted version of Building

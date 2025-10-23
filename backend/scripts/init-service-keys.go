@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/Leviosa-care/core/contracts/services"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/services"
 	"github.com/hashicorp/vault/api"
 	"github.com/hengadev/encx"
 )

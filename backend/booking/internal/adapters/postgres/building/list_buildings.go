@@ -7,10 +7,10 @@ import (
 
 	"github.com/Leviosa-care/booking/internal/domain"
 	"github.com/Leviosa-care/booking/internal/ports"
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
-func (r *Repository) List(ctx context.Context, filter ports.BuildingFilter) ([]*domain.Building, error) {
+func (r *Repository) List(ctx context.Context, filter ports.BuildingFilter) ([]*domain.BuildingEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, name_encrypted, address_encrypted, city_encrypted,
@@ -70,7 +70,7 @@ func (r *Repository) List(ctx context.Context, filter ports.BuildingFilter) ([]*
 	}
 	defer rows.Close()
 
-	var buildings []*domain.Building
+	var buildings []*domain.BuildingEncx
 	for rows.Next() {
 		buildingEncx := &domain.BuildingEncx{}
 		err := rows.Scan(
@@ -94,13 +94,7 @@ func (r *Repository) List(ctx context.Context, filter ports.BuildingFilter) ([]*
 			return nil, errs.ClassifyPgError("scan building row", err)
 		}
 
-		// Decrypt sensitive fields using ENCX
-		building, err := domain.DecryptBuildingEncx(ctx, r.crypto, buildingEncx)
-		if err != nil {
-			return nil, fmt.Errorf("decrypt building data: %w", err)
-		}
-
-		buildings = append(buildings, building)
+		buildings = append(buildings, buildingEncx)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -137,3 +131,4 @@ func (r *Repository) Count(ctx context.Context, filter ports.BuildingFilter) (in
 
 	return count, nil
 }
+

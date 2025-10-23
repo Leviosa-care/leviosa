@@ -1,7 +1,6 @@
 package authuser
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/booking/internal/ports"
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
 )
 
@@ -53,13 +52,13 @@ func (c *Client) GetPartnerByID(ctx context.Context, partnerID uuid.UUID) (*port
 	switch resp.StatusCode {
 	case http.StatusOK:
 		var partnerResp struct {
-			ID               uuid.UUID `json:"id"`
-			UserID           uuid.UUID `json:"user_id"`
-			Bio              string    `json:"bio"`
-			Experience       string    `json:"experience"`
-			Certifications   []string  `json:"certifications"`
-			IsVerified       bool      `json:"is_verified"`
-			User             struct {
+			ID             uuid.UUID `json:"id"`
+			UserID         uuid.UUID `json:"user_id"`
+			Bio            string    `json:"bio"`
+			Experience     string    `json:"experience"`
+			Certifications []string  `json:"certifications"`
+			IsVerified     bool      `json:"is_verified"`
+			User           struct {
 				Email     string `json:"email"`
 				FirstName string `json:"first_name"`
 				LastName  string `json:"last_name"`
@@ -120,13 +119,13 @@ func (c *Client) GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*por
 	switch resp.StatusCode {
 	case http.StatusOK:
 		var partnerResp struct {
-			ID               uuid.UUID `json:"id"`
-			UserID           uuid.UUID `json:"user_id"`
-			Bio              string    `json:"bio"`
-			Experience       string    `json:"experience"`
-			Certifications   []string  `json:"certifications"`
-			IsVerified       bool      `json:"is_verified"`
-			User             struct {
+			ID             uuid.UUID `json:"id"`
+			UserID         uuid.UUID `json:"user_id"`
+			Bio            string    `json:"bio"`
+			Experience     string    `json:"experience"`
+			Certifications []string  `json:"certifications"`
+			IsVerified     bool      `json:"is_verified"`
+			User           struct {
 				Email     string `json:"email"`
 				FirstName string `json:"first_name"`
 				LastName  string `json:"last_name"`
@@ -238,3 +237,4 @@ func (c *Client) GetPartnerSpecializations(ctx context.Context, partnerID uuid.U
 		return nil, fmt.Errorf("unexpected response status: %d", resp.StatusCode)
 	}
 }
+

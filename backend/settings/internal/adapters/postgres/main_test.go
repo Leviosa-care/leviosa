@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Leviosa-care/core/migrations"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
 	"github.com/Leviosa-care/settings/internal/adapters/postgres"
 	"github.com/Leviosa-care/settings/internal/ports"
 
-	tu "github.com/Leviosa-care/core/testutils"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
 )

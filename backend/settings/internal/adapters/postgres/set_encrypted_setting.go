@@ -6,7 +6,7 @@ import (
 
 	"github.com/Leviosa-care/settings/internal/domain"
 
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
 func (r *repository) SetEncryptedSetting(ctx context.Context, settingEncx *domain.SettingEncryptedEncx) error {

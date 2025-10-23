@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/booking/internal/domain"
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
 )
 
-func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Building, error) {
+func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.BuildingEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, name_encrypted, address_encrypted, city_encrypted,
@@ -42,11 +42,6 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Buildin
 		return nil, errs.ClassifyPgError("get building by id", err)
 	}
 
-	// Decrypt sensitive fields using ENCX
-	building, err := domain.DecryptBuildingEncx(ctx, r.crypto, buildingEncx)
-	if err != nil {
-		return nil, fmt.Errorf("decrypt building data: %w", err)
-	}
-
-	return building, nil
+	return buildingEncx, nil
 }
+

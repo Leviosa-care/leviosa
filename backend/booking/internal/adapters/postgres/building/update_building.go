@@ -5,15 +5,10 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/booking/internal/domain"
-	"github.com/Leviosa-care/core/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
-func (r *Repository) Update(ctx context.Context, building *domain.Building) error {
-	// Encrypt sensitive fields
-	if err := r.crypto.EncryptStruct(ctx, building); err != nil {
-		return fmt.Errorf("encrypt building data: %w", err)
-	}
-
+func (r *Repository) Update(ctx context.Context, building *domain.BuildingEncx) error {
 	query := fmt.Sprintf(`
 		UPDATE %s.buildings SET
 			name_encrypted = $2,
@@ -53,3 +48,4 @@ func (r *Repository) Update(ctx context.Context, building *domain.Building) erro
 
 	return nil
 }
+

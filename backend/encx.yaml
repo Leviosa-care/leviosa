@@ -1,0 +1,5 @@
+version: "1"
+generation:
+    output_suffix: _encx
+    package_name: encx
+packages: {}

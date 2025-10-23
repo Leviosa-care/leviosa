@@ -10,19 +10,19 @@ import (
 // BuildingRepository defines the interface for building data persistence
 type BuildingRepository interface {
 	// Create stores a new building
-	Create(ctx context.Context, building *domain.Building) error
+	Create(ctx context.Context, building *domain.BuildingEncx) error
 
 	// GetByID retrieves a building by its ID
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.Building, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.BuildingEncx, error)
 
 	// Update modifies an existing building
-	Update(ctx context.Context, building *domain.Building) error
+	Update(ctx context.Context, building *domain.BuildingEncx) error
 
 	// Delete removes a building (soft delete by marking inactive)
 	Delete(ctx context.Context, id uuid.UUID) error
 
 	// List retrieves buildings with optional filtering
-	List(ctx context.Context, filter BuildingFilter) ([]*domain.Building, error)
+	List(ctx context.Context, filter BuildingFilter) ([]*domain.BuildingEncx, error)
 
 	// Count returns the total number of buildings matching the filter
 	Count(ctx context.Context, filter BuildingFilter) (int, error)
@@ -42,6 +42,7 @@ type BuildingFilter struct {
 	Offset int
 
 	// Sorting
-	OrderBy string // "name", "created_at", "city"
+	OrderBy        string // "name", "created_at", "city"
 	OrderDirection string // "asc", "desc"
 }
+

@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/Leviosa-care/core/validation"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/validation"
 	"github.com/hengadev/errsx"
 )
 

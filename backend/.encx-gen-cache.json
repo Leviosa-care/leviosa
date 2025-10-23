@@ -1,0 +1,104 @@
+{
+  "SourceHashes": {
+    "authuser/internal/domain/otp.go": "02a5de85ae25df565b0975d214fdbb217363826ff0561482f0675623f84417f8",
+    "authuser/internal/domain/partner.go": "e1c4146f15cb43fa348326792679450f4603bf97d845dc78069539e695952efb",
+    "authuser/internal/domain/specialization.go": "07356a69ab0be7ff572aeeac9d7fcefc15567763c48b4798c8c1347427b47d8b",
+    "authuser/internal/domain/user.go": "ec584c6040771885531d72ad366227cc0cff1ef242a93f70373867d1d5cf8b9b",
+    "booking/internal/domain/availability.go": "ef6bbdee03bb5088dade4a68f40ab9c40c9a1b05531ecca3279e8f4fae950bfe",
+    "booking/internal/domain/booking.go": "af7895dcb6e39808d2279cce7f71ed72fcde61eedc5c4801cbe422d9ab0ecb97",
+    "booking/internal/domain/building.go": "cac59e6ee64026f1badfb24cd4708f610d8a6038c061bd355d12bfa910607e74",
+    "booking/internal/domain/room.go": "d099a5da4fe00a09fb8c2d39c730e3cad6b7275651cb3c0442903ef99f4d68d7",
+    "core/auth/session/session.go": "14652b17b4e05afd440ce5015603838cd6a0f38505212ae6d1ad4f513ad0db81",
+    "core/testutils/auth.go": "eca9dddc8ffa168f64c66e62c683a1fe71f77aaa2701f6b73096fd7d0ac34ffb",
+    "internal/domain/event/models/event.go": "1aec829e5f95d60ad1402c2d080ff982e4b2344a11508013f247cff89af466e5",
+    "internal/domain/message/message.go": "2a11246f4af4d4a0c50b336289a2328d139fdbff1b2d641ace2e185a6af84a2b",
+    "internal/domain/otp/otp.go": "3ff5750d51c17659a64be405e17dd782e190794e00c84f719d6093774452aa3e",
+    "internal/domain/settings/setting.go": "ba3f5532d239af1cd0f30290388044c604577d24bf44ef624f5f50e7da287176",
+    "internal/domain/user/models/user.go": "dcc8011fd069ccb42042f91bd99dce2c0fee5157f57084d12039a51cfc6789d3",
+    "settings/internal/domain/settings.go": "2a397df95eb32e889c3c46b12d19951000ed5509803098d9e11877c476bc0722"
+  },
+  "ConfigHash": "",
+  "GeneratedFiles": {
+    "authuser/internal/domain/otp_encx.go": {
+      "SourceFile": "authuser/internal/domain/otp.go",
+      "SourceHash": "02a5de85ae25df565b0975d214fdbb217363826ff0561482f0675623f84417f8",
+      "GeneratedTime": "2025-10-13T21:58:47.002908972+02:00"
+    },
+    "authuser/internal/domain/partner_encx.go": {
+      "SourceFile": "authuser/internal/domain/partner.go",
+      "SourceHash": "e1c4146f15cb43fa348326792679450f4603bf97d845dc78069539e695952efb",
+      "GeneratedTime": "2025-10-13T21:58:47.00387795+02:00"
+    },
+    "authuser/internal/domain/specialization_encx.go": {
+      "SourceFile": "authuser/internal/domain/specialization.go",
+      "SourceHash": "07356a69ab0be7ff572aeeac9d7fcefc15567763c48b4798c8c1347427b47d8b",
+      "GeneratedTime": "2025-10-13T21:58:47.004598536+02:00"
+    },
+    "authuser/internal/domain/user_encx.go": {
+      "SourceFile": "authuser/internal/domain/user.go",
+      "SourceHash": "ec584c6040771885531d72ad366227cc0cff1ef242a93f70373867d1d5cf8b9b",
+      "GeneratedTime": "2025-10-13T21:58:47.001493307+02:00"
+    },
+    "booking/internal/domain/availability_encx.go": {
+      "SourceFile": "booking/internal/domain/availability.go",
+      "SourceHash": "ef6bbdee03bb5088dade4a68f40ab9c40c9a1b05531ecca3279e8f4fae950bfe",
+      "GeneratedTime": "2025-10-13T21:58:47.041938537+02:00"
+    },
+    "booking/internal/domain/booking_encx.go": {
+      "SourceFile": "booking/internal/domain/booking.go",
+      "SourceHash": "af7895dcb6e39808d2279cce7f71ed72fcde61eedc5c4801cbe422d9ab0ecb97",
+      "GeneratedTime": "2025-10-13T21:58:47.04246763+02:00"
+    },
+    "booking/internal/domain/building_encx.go": {
+      "SourceFile": "booking/internal/domain/building.go",
+      "SourceHash": "cac59e6ee64026f1badfb24cd4708f610d8a6038c061bd355d12bfa910607e74",
+      "GeneratedTime": "2025-10-13T21:58:47.043208746+02:00"
+    },
+    "booking/internal/domain/room_encx.go": {
+      "SourceFile": "booking/internal/domain/room.go",
+      "SourceHash": "d099a5da4fe00a09fb8c2d39c730e3cad6b7275651cb3c0442903ef99f4d68d7",
+      "GeneratedTime": "2025-10-13T21:58:47.043725887+02:00"
+    },
+    "core/auth/session/session_encx.go": {
+      "SourceFile": "core/auth/session/session.go",
+      "SourceHash": "14652b17b4e05afd440ce5015603838cd6a0f38505212ae6d1ad4f513ad0db81",
+      "GeneratedTime": "2025-10-13T21:58:47.130867943+02:00"
+    },
+    "core/testutils/auth_encx.go": {
+      "SourceFile": "core/testutils/auth.go",
+      "SourceHash": "eca9dddc8ffa168f64c66e62c683a1fe71f77aaa2701f6b73096fd7d0ac34ffb",
+      "GeneratedTime": "2025-10-13T21:58:47.149459014+02:00"
+    },
+    "internal/domain/event/models/event_encx.go": {
+      "SourceFile": "internal/domain/event/models/event.go",
+      "SourceHash": "1aec829e5f95d60ad1402c2d080ff982e4b2344a11508013f247cff89af466e5",
+      "GeneratedTime": "2025-10-09T09:35:59.971356412+02:00"
+    },
+    "internal/domain/message/message_encx.go": {
+      "SourceFile": "internal/domain/message/message.go",
+      "SourceHash": "2a11246f4af4d4a0c50b336289a2328d139fdbff1b2d641ace2e185a6af84a2b",
+      "GeneratedTime": "2025-10-09T09:35:59.975723868+02:00"
+    },
+    "internal/domain/otp/otp_encx.go": {
+      "SourceFile": "internal/domain/otp/otp.go",
+      "SourceHash": "3ff5750d51c17659a64be405e17dd782e190794e00c84f719d6093774452aa3e",
+      "GeneratedTime": "2025-10-09T09:35:59.986148305+02:00"
+    },
+    "internal/domain/settings/setting_encx.go": {
+      "SourceFile": "internal/domain/settings/setting.go",
+      "SourceHash": "ba3f5532d239af1cd0f30290388044c604577d24bf44ef624f5f50e7da287176",
+      "GeneratedTime": "2025-10-09T09:36:00.000762513+02:00"
+    },
+    "internal/domain/user/models/user_encx.go": {
+      "SourceFile": "internal/domain/user/models/user.go",
+      "SourceHash": "dcc8011fd069ccb42042f91bd99dce2c0fee5157f57084d12039a51cfc6789d3",
+      "GeneratedTime": "2025-10-09T09:36:00.021848035+02:00"
+    },
+    "settings/internal/domain/settings_encx.go": {
+      "SourceFile": "settings/internal/domain/settings.go",
+      "SourceHash": "2a397df95eb32e889c3c46b12d19951000ed5509803098d9e11877c476bc0722",
+      "GeneratedTime": "2025-10-13T21:58:47.245134115+02:00"
+    }
+  },
+  "LastGenerated": "2025-10-13T21:58:47.245134355+02:00"
+}
