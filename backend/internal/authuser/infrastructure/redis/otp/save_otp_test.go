@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	th "github.com/Leviosa-care/authuser/test/helpers"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/hengadev/encx"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"

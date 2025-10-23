@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	td "github.com/Leviosa-care/authuser/test/helpers"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
 
 	"github.com/google/uuid"

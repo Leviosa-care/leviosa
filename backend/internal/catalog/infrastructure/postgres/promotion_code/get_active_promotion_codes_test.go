@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-	"github.com/Leviosa-care/catalog/test/helpers"
+	"github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

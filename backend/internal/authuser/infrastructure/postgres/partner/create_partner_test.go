@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	td "github.com/Leviosa-care/authuser/test/helpers"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/stretchr/testify/assert"
 )
 

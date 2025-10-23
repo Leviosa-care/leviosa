@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Leviosa-care/authuser/test/helpers"
+	"github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

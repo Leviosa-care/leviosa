@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	imageMedia "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/s3/image"
-	td "github.com/Leviosa-care/catalog/test/helpers"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/aws/aws-sdk-go-v2/aws"

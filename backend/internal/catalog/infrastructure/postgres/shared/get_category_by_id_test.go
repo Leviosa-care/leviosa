@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-	td "github.com/Leviosa-care/catalog/test/helpers"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"

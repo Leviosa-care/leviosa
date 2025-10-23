@@ -9,7 +9,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/s3/image"
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/ports"
-	td "github.com/Leviosa-care/catalog/test/helpers"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"

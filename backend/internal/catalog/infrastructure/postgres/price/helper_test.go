@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	td "github.com/Leviosa-care/catalog/test/helpers"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

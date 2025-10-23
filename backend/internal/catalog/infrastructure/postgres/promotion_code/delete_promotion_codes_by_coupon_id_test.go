@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Leviosa-care/catalog/test/helpers"
+	"github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

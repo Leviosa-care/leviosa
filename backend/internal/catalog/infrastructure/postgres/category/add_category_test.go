@@ -7,7 +7,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/ports"
-	td "github.com/Leviosa-care/catalog/test/helpers"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"

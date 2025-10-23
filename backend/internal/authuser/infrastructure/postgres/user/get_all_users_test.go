@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/authuser/test/helpers"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

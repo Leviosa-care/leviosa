@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Leviosa-care/catalog/test/helpers"
+	"github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/stretchr/testify/assert"
