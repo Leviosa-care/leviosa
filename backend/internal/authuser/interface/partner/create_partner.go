@@ -131,3 +131,4 @@ func (h *handler) CreatePartner(w http.ResponseWriter, r *http.Request) {
 
 	httpx.RespondWithJSON(w, partner, http.StatusCreated)
 }
+
