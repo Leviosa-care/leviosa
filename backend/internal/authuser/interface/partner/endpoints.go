@@ -13,9 +13,6 @@ const (
 	// Partner verification
 	VerifyPath = "/verify"
 
-	// Partner specializations
-	SpecializationsPath = "/specializations"
-
 	// Catalog validation endpoints
 	ValidatePath = "/validate"
 
@@ -23,9 +20,6 @@ const (
 	// (None - all partner management requires authentication)
 
 	// === Authenticated Partner Endpoints ===
-
-	// Get partner specializations (any authenticated user can view)
-	GetPartnerSpecializationsEndpoint = PartnersBasePath + "/{id}" + SpecializationsPath
 
 	// Update partner profile (partner can update their own, admin can update any)
 	UpdatePartnerEndpoint = PartnersBasePath + "/{id}"
@@ -50,16 +44,7 @@ const (
 	// Verify partner credentials
 	VerifyPartnerEndpoint = AdminPartnersBasePath + "/{id}" + VerifyPath
 
-	// Add specialization to partner
-	AddPartnerSpecializationEndpoint = AdminPartnersBasePath + "/{id}" + SpecializationsPath + "/{specializationID}"
-
-	// Remove specialization from partner
-	RemovePartnerSpecializationEndpoint = AdminPartnersBasePath + "/{id}" + SpecializationsPath + "/{specializationID}"
-
 	// === Catalog Validation Endpoints ===
-
-	// Validate specializations exist in catalog
-	ValidatePartnerSpecializationsEndpoint = AdminPartnersBasePath + SpecializationsPath + ValidatePath
 
 	// Validate products exist in catalog
 	ValidatePartnerProductsEndpoint = AdminPartnersBasePath + "/products" + ValidatePath
