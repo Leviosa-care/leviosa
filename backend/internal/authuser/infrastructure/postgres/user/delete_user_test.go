@@ -6,15 +6,15 @@ import (
 	"testing"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestDeleteUser make test-unit-user-test
+// make test-func TEST_NAME=TestDeleteUser TEST_PATH=internal/authuser/infrastructure/postgres/user/delete_user_test.go
 
 func TestDeleteUser(t *testing.T) {
 	ctx := context.Background()
@@ -24,27 +24,28 @@ func TestDeleteUser(t *testing.T) {
 		td.ClearUsersTable(t, ctx, testPool)
 		email := "deleteuser@example.com"
 
-		// Create and insert user
-		user := td.NewTestUser(email, "Delete", "User")
-		err := crypto.ProcessStruct(ctx, user)
-		require.NoError(t, err)
-		err = repo.CreateUser(ctx, user)
+		// Create and insert userEncx
+		userEncx := td.NewTestUserEncx(t)
+		userEncx.EmailHash = email
+		userEncx.EmailEncrypted = []byte(email)
+
+		err := td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Verify user exists before deletion
-		existingUser, err := repo.GetUserByID(ctx, user.ID)
+		existingUser, err := td.GetUserEnxByID(t, ctx, userEncx.ID, testPool)
 		require.NoError(t, err)
 		require.NotNil(t, existingUser)
 
 		// Act
-		err = repo.DeleteUser(ctx, user.ID)
+		err = repo.DeleteUser(ctx, userEncx.ID)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify user no longer exists
-		deletedUser, err := repo.GetUserByID(ctx, user.ID)
-		require.Error(t, err)
+		deletedUser, err := repo.GetUserByID(ctx, userEncx.ID)
+		assert.Error(t, err)
 		assert.True(t, errors.Is(err, errs.ErrRepositoryNotFound))
 		assert.Nil(t, deletedUser)
 	})
@@ -58,7 +59,7 @@ func TestDeleteUser(t *testing.T) {
 		err := repo.DeleteUser(ctx, nonExistentID)
 
 		// Assert
-		require.Error(t, err)
+		assert.Error(t, err)
 		assert.True(t, errors.Is(err, errs.ErrRepositoryNotFound))
 	})
 
@@ -68,66 +69,72 @@ func TestDeleteUser(t *testing.T) {
 		email := "reuseemail@example.com"
 
 		// Create and insert first user
-		firstUser := td.NewTestUser(email, "First", "User")
-		err := crypto.ProcessStruct(ctx, firstUser)
-		require.NoError(t, err)
-		err = repo.CreateUser(ctx, firstUser)
+		// firstUser := td.NewTestUser(email, "First", "User")
+		firstUser := td.NewTestUserEncx(t)
+		firstUser.EmailEncrypted = []byte(email)
+		firstUser.EmailHash = email
+
+		err := td.InsertUserEncx(t, ctx, firstUser, testPool)
 		require.NoError(t, err)
 
 		// Delete first user
 		err = repo.DeleteUser(ctx, firstUser.ID)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Act - create second user with same email
-		secondUser := td.NewTestUser(email, "Second", "User")
-		err = crypto.ProcessStruct(ctx, secondUser)
-		require.NoError(t, err)
-		err = repo.CreateUser(ctx, secondUser)
+		secondUser := td.NewTestUserEncx(t)
+		secondUser.EmailEncrypted = []byte(email)
+		secondUser.EmailHash = email
+		secondUserFirstnameEncrypted := []byte("Second")
+		secondUser.FirstNameEncrypted = secondUserFirstnameEncrypted
+
+		err = td.InsertUserEncx(t, ctx, secondUser, testPool)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify second user exists and is different from first
-		retrievedUser, err := repo.GetUserByID(ctx, secondUser.ID)
-		require.NoError(t, err)
-		err = crypto.DecryptStruct(ctx, retrievedUser)
-		require.NoError(t, err)
+		retrievedUser, err := td.GetUserEnxByID(t, ctx, secondUser.ID, testPool)
+		assert.NoError(t, err)
 
 		assert.Equal(t, secondUser.ID, retrievedUser.ID)
 		assert.NotEqual(t, firstUser.ID, retrievedUser.ID)
-		assert.Equal(t, "Second", retrievedUser.FirstName)
+		assert.Equal(t, secondUserFirstnameEncrypted, retrievedUser.FirstNameEncrypted)
 	})
 
 	t.Run("should handle deletion of user in different states", func(t *testing.T) {
 		// Arrange
 		td.ClearUsersTable(t, ctx, testPool)
 
-		// Create users in different states
-		unverifiedUser := td.NewTestUser("unverified@example.com", "Unverified", "User")
-		pendingUser := td.NewTestUser("pending@example.com", "Pending", "User")
-		activeUser := td.NewTestUser("active@example.com", "Active", "User")
+		createUser := func(email, firstname, lastname string, state domain.UserState) *domain.UserEncx {
+			user := td.NewTestUserEncx(t)
+			user.EmailEncrypted = []byte(email)
+			user.EmailHash = email
+			user.FirstNameEncrypted = []byte(firstname)
+			user.LastNameEncrypted = []byte(lastname)
+			user.State = state
+			return user
+		}
 
-		// Set different states
-		unverifiedUser.State = "unverified"
-		pendingUser.State = "pending"
-		activeUser.State = "active"
+		// Create users in different states
+		unverifiedUser := createUser("unverified@example.com", "Unverified", "User", domain.Unverified)
+		pendingUser := createUser("pending@example.com", "Pending", "User", domain.Pending)
+		activeUser := createUser("active@example.com", "Active", "User", domain.Active)
 
 		// Process and create users
-		for _, user := range []*domain.User{unverifiedUser, pendingUser, activeUser} {
-			err := crypto.ProcessStruct(ctx, user)
-			require.NoError(t, err)
-			err = repo.CreateUser(ctx, user)
+		for _, user := range []*domain.UserEncx{unverifiedUser, pendingUser, activeUser} {
+			err := td.InsertUserEncx(t, ctx, user, testPool)
 			require.NoError(t, err)
 		}
 
 		// Act & Assert - delete each user
-		for _, user := range []*domain.User{unverifiedUser, pendingUser, activeUser} {
+		for _, user := range []*domain.UserEncx{unverifiedUser, pendingUser, activeUser} {
 			err := repo.DeleteUser(ctx, user.ID)
-			require.NoError(t, err)
+			assert.NoError(t, err)
 
 			// Verify deletion
 			deletedUser, err := repo.GetUserByID(ctx, user.ID)
-			require.Error(t, err)
+			assert.Error(t, err)
 			assert.True(t, errors.Is(err, errs.ErrRepositoryNotFound))
 			assert.Nil(t, deletedUser)
 		}
@@ -139,4 +146,3 @@ func TestDeleteUser(t *testing.T) {
 		t.Skip("Database connection error testing requires mocking")
 	})
 }
-

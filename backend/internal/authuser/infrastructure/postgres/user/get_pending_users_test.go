@@ -12,47 +12,41 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestGetPendingUsers make test-unit-user-test
+// make test-func TEST_NAME=TestGetPendingUsers TEST_PATH=internal/authuser/infrastructure/postgres/user/get_pending_users_test.go
 
 func TestGetPendingUsers(t *testing.T) {
 	ctx := context.Background()
+
+	// Create test users with different states
+	createUser := func(email, firstname, lastname string, state domain.UserState) *domain.UserEncx {
+		userEncx := td.NewTestUserEncx(t)
+		userEncx.EmailEncrypted = []byte(email)
+		userEncx.EmailHash = email
+		userEncx.FirstNameEncrypted = []byte(firstname)
+		userEncx.LastNameEncrypted = []byte(lastname)
+		userEncx.State = state
+
+		err := td.InsertUserEncx(t, ctx, userEncx, testPool)
+		require.NoError(t, err)
+		return userEncx
+	}
 
 	t.Run("should successfully retrieve pending users ordered by created_at DESC", func(t *testing.T) {
 		// Arrange
 		td.ClearUsersTable(t, ctx, testPool)
 
-		// Create test users with different states
-		// Note: helpers functions currently return wrong type, but we'll work around it for now
-		user1 := td.NewTestUser("pending1@example.com", "Alice", "Smith")
-		user1.State = domain.Pending // Use domain.Pending instead of auth.Pending
-		err := crypto.ProcessStruct(ctx, user1)
-		require.NoError(t, err)
-		td.InsertUser(t, ctx, user1, testPool)
+		user1 := createUser("pending1@example.com", "Alice", "Smith", domain.Pending)
+		_ = createUser("active@example.com", "Bob", "Jones", domain.Active)
+		user3 := createUser("pending2@example.com", "Carol", "Jones", domain.Pending)
 
-		user2 := td.NewTestUser("active@example.com", "Bob", "Jones")
-		user2.State = domain.Active // Use domain.Active instead of auth.Active
-		err = crypto.ProcessStruct(ctx, user2)
-		require.NoError(t, err)
-		td.InsertUser(t, ctx, user2, testPool)
-
-		user3 := td.NewTestUser("pending2@example.com", "Carol", "Brown")
-		user3.State = domain.Pending // Use domain.Pending instead of auth.Pending
-		err = crypto.ProcessStruct(ctx, user3)
-		require.NoError(t, err)
-		td.InsertUser(t, ctx, user3, testPool)
-
-		user4 := td.NewTestUser("unverified@example.com", "Dave", "Wilson")
-		user4.State = domain.Unverified // Use domain.Unverified instead of auth.Unverified
-		err = crypto.ProcessStruct(ctx, user4)
-		require.NoError(t, err)
-		td.InsertUser(t, ctx, user4, testPool)
+		_ = createUser("unverified@example.com", "Dave", "Wilson", domain.Unverified)
 
 		// Act
 		pendingUsers, err := repo.GetPendingUsers(ctx)
 
 		// Assert
-		require.NoError(t, err)
-		require.Len(t, pendingUsers, 2, "Should return exactly 2 pending users")
+		assert.NoError(t, err)
+		assert.Len(t, pendingUsers, 2, "Should return exactly 2 pending users")
 
 		// Verify users are ordered by created_at DESC (newest first)
 		// Since user3 was inserted after user1, it should come first
@@ -79,24 +73,15 @@ func TestGetPendingUsers(t *testing.T) {
 		td.ClearUsersTable(t, ctx, testPool)
 
 		// Create users with non-pending states
-		activeUser := td.NewTestUser("active@example.com", "Active", "User")
-		activeUser.State = domain.Active
-		err := crypto.ProcessStruct(ctx, activeUser)
-		require.NoError(t, err)
-		td.InsertUser(t, ctx, activeUser, testPool)
-
-		unverifiedUser := td.NewTestUser("unverified@example.com", "Unverified", "User")
-		unverifiedUser.State = domain.Unverified
-		err = crypto.ProcessStruct(ctx, unverifiedUser)
-		require.NoError(t, err)
-		td.InsertUser(t, ctx, unverifiedUser, testPool)
+		_ = createUser("active@example.com", "Active", "User", domain.Active)
+		_ = createUser("unverified@example.com", "Unverified", "User", domain.Unverified)
 
 		// Act
 		pendingUsers, err := repo.GetPendingUsers(ctx)
 
 		// Assert
-		require.NoError(t, err)
-		require.NotNil(t, pendingUsers, "Should return non-nil slice")
+		assert.NoError(t, err)
+		assert.NotNil(t, pendingUsers, "Should return non-nil slice")
 		assert.Empty(t, pendingUsers, "Should return empty slice when no pending users")
 	})
 
@@ -108,8 +93,8 @@ func TestGetPendingUsers(t *testing.T) {
 		pendingUsers, err := repo.GetPendingUsers(ctx)
 
 		// Assert
-		require.NoError(t, err)
-		require.NotNil(t, pendingUsers, "Should return non-nil slice")
+		assert.NoError(t, err)
+		assert.NotNil(t, pendingUsers, "Should return non-nil slice")
 		assert.Empty(t, pendingUsers, "Should return empty slice when no users exist")
 	})
 
@@ -117,51 +102,54 @@ func TestGetPendingUsers(t *testing.T) {
 		// Arrange
 		td.ClearUsersTable(t, ctx, testPool)
 
-		// User with telephone
-		userWithPhone := td.NewTestUser("withphone@example.com", "With", "Phone")
-		userWithPhone.State = domain.Pending
-		userWithPhone.Telephone = "+33123456789"
-		err := crypto.ProcessStruct(ctx, userWithPhone)
-		require.NoError(t, err)
-		td.InsertUser(t, ctx, userWithPhone, testPool)
+		// TODO: I get some not null violation for postgres
 
+		createUserWithTelephone := func(email, firstname, lastname, telephone string, state domain.UserState) *domain.UserEncx {
+			userEncx := td.NewTestUserEncx(t)
+			userEncx.EmailHash = email
+			userEncx.EmailEncrypted = []byte(email)
+			userEncx.FirstNameEncrypted = []byte(firstname)
+			userEncx.LastNameEncrypted = []byte(lastname)
+			userEncx.TelephoneHash = telephone
+			userEncx.TelephoneEncrypted = []byte(telephone)
+			userEncx.State = state
+
+			err := td.InsertUserEncx(t, ctx, userEncx, testPool)
+			require.NoError(t, err)
+
+			return userEncx
+		}
+
+		// User with telephone
+		userWithPhone := createUserWithTelephone("withphone@example.com", "With", "Phone", "+33123456789", domain.Pending)
 		// User without telephone
-		userWithoutPhone := td.NewTestUser("nophone@example.com", "No", "Phone")
-		userWithoutPhone.State = domain.Pending
-		userWithoutPhone.Telephone = ""
-		err = crypto.ProcessStruct(ctx, userWithoutPhone)
-		require.NoError(t, err)
-		td.InsertUser(t, ctx, userWithoutPhone, testPool)
+		userWithoutPhone := createUserWithTelephone("nophone@example.com", "No", "Phone", "", domain.Pending)
 
 		// Act
 		pendingUsers, err := repo.GetPendingUsers(ctx)
 
 		// Assert
-		require.NoError(t, err)
-		require.Len(t, pendingUsers, 2)
+		assert.NoError(t, err)
+		assert.Len(t, pendingUsers, 2)
 
 		// Find users in results
-		var withPhoneUser, withoutPhoneUser *domain.User
+		var withPhoneUser, withoutPhoneUser *domain.UserEncx
 		for _, user := range pendingUsers {
 			if user.EmailHash == userWithPhone.EmailHash {
+				println("with phone")
 				withPhoneUser = user
 			} else if user.EmailHash == userWithoutPhone.EmailHash {
+				println("without phone")
 				withoutPhoneUser = user
 			}
 		}
 
-		require.NotNil(t, withPhoneUser, "User with phone should be found")
-		require.NotNil(t, withoutPhoneUser, "User without phone should be found")
+		assert.NotNil(t, withPhoneUser, "User with phone should be found")
+		assert.NotNil(t, withoutPhoneUser, "User without phone should be found")
 
 		// Verify telephone hash handling
-		assert.NotEmpty(t, withPhoneUser.TelephoneHash, "User with phone should have telephone hash")
-		assert.NotEmpty(t, withPhoneUser.TelephoneEncrypted, "User with phone should have encrypted telephone")
-
-		// User without phone should have empty hash (empty string hashes to a specific value)
-		assert.Equal(t,
-			"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-			withoutPhoneUser.TelephoneHash,
-			"User without phone should have empty string hash")
+		assert.NotZero(t, withPhoneUser.TelephoneHash, "User with phone should have telephone hash")
+		assert.NotZero(t, withPhoneUser.TelephoneEncrypted, "User with phone should have encrypted telephone")
 	})
 
 	t.Run("should handle large number of pending users", func(t *testing.T) {
@@ -169,19 +157,16 @@ func TestGetPendingUsers(t *testing.T) {
 		td.ClearUsersTable(t, ctx, testPool)
 
 		const numUsers = 50
-		expectedUsers := make([]*domain.User, numUsers)
+		expectedUsers := make([]*domain.UserEncx, numUsers)
 
 		// Create many pending users
 		for i := 0; i < numUsers; i++ {
-			user := td.NewTestUser(
+			user := createUser(
 				fmt.Sprintf("pending%d@example.com", i),
 				fmt.Sprintf("User%d", i),
 				"Test",
+				domain.Pending,
 			)
-			user.State = domain.Pending
-			err := crypto.ProcessStruct(ctx, user)
-			require.NoError(t, err)
-			td.InsertUser(t, ctx, user, testPool)
 			expectedUsers[i] = user
 		}
 

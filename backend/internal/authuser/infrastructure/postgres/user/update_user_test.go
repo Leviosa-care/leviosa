@@ -4,18 +4,17 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestUpdateUser make test-unit-user-test
+// make test-func TEST_NAME=TestUpdateUser TEST_PATH=internal/authuser/infrastructure/postgres/user/update_user_test.go
 
 func TestUpdateUser(t *testing.T) {
 	ctx := context.Background()
@@ -25,107 +24,101 @@ func TestUpdateUser(t *testing.T) {
 		td.ClearUsersTable(t, ctx, testPool)
 		email := "updateuser@example.com"
 
-		// Create and insert initial user
-		user := td.NewTestUser(email, "John", "Doe")
-		err := crypto.ProcessStruct(ctx, user)
-		require.NoError(t, err)
-		err = repo.CreateUser(ctx, user)
+		// Create and insert initial userEncx
+		userEncx := td.NewTestUserEncx(t)
+		userEncx.EmailHash = email
+		userEncx.EmailEncrypted = []byte(email)
+
+		err := td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Update user data
-		user.FirstName = "Jane"
-		user.LastName = "Smith"
-		user.State = domain.Pending
-		user.Password = "newpassword123"
-		user.Gender = "woman"
-		user.Telephone = "+33987654321"
-		user.PostalCode = "75001"
-		user.City = "Paris"
-		user.Address1 = "123 Updated Street"
-		user.Address2 = "Apt 456"
-		user.BirthDate = time.Date(1990, 5, 15, 0, 0, 0, 0, time.UTC)
+		firstnameEncrypted := []byte("Jane")
+		lastnameEncrypted := []byte("Smith")
+		passwordHashSecure := "newpassword123"
+		genderEncrypted := []byte("woman")
+		telephoneEncrypted := []byte("+33987654321")
+		postalCodeEncrypted := []byte("75001")
+		cityEncrypted := []byte("Paris")
+		address1Encrypted := []byte("123 Updated Street")
+		address2Encrypted := []byte("Apt 456")
+		birthdayEncrypted := []byte("new_birthday_encrypted")
 
-		// Re-encrypt with new data
-		err = crypto.ProcessStruct(ctx, user)
-		require.NoError(t, err)
+		userEncx.FirstNameEncrypted = firstnameEncrypted
+		userEncx.LastNameEncrypted = lastnameEncrypted
+		userEncx.State = domain.Pending
+		userEncx.PasswordHashSecure = passwordHashSecure
+		userEncx.GenderEncrypted = genderEncrypted
+		userEncx.TelephoneEncrypted = telephoneEncrypted
+		userEncx.PostalCodeEncrypted = postalCodeEncrypted
+		userEncx.CityEncrypted = cityEncrypted
+		userEncx.Address1Encrypted = address1Encrypted
+		userEncx.Address2Encrypted = address2Encrypted
+		userEncx.BirthDateEncrypted = birthdayEncrypted
 
 		// Act
-		err = repo.UpdateUser(ctx, user)
+		err = repo.UpdateUser(ctx, userEncx)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify the update by retrieving the user
-		updatedUser, err := repo.GetUserByID(ctx, user.ID)
+		// updatedUser, err := repo.GetUserByID(ctx, userEncx.ID)
+		updatedUser, err := td.GetUserEnxByID(t, ctx, userEncx.ID, testPool)
 		require.NoError(t, err)
 		require.NotNil(t, updatedUser)
 
-		// Decrypt to verify data was updated
-		err = crypto.DecryptStruct(ctx, updatedUser)
-		require.NoError(t, err)
-
-		assert.Equal(t, user.ID, updatedUser.ID)
+		// Verify data was updated
+		assert.Equal(t, userEncx.ID, updatedUser.ID)
 		assert.Equal(t, domain.Pending, updatedUser.State)
-		assert.Equal(t, "Jane", updatedUser.FirstName)
-		assert.Equal(t, "Smith", updatedUser.LastName)
-		assert.Equal(t, "woman", updatedUser.Gender)
-		assert.Equal(t, "+33987654321", updatedUser.Telephone)
-		assert.Equal(t, "75001", updatedUser.PostalCode)
-		assert.Equal(t, "Paris", updatedUser.City)
-		assert.Equal(t, "123 Updated Street", updatedUser.Address1)
-		assert.Equal(t, "Apt 456", updatedUser.Address2)
-		assert.Equal(t, time.Date(1990, 5, 15, 0, 0, 0, 0, time.UTC), updatedUser.BirthDate)
-
-		// Verify encrypted fields were updated
-		assert.NotEmpty(t, updatedUser.FirstNameEncrypted)
-		assert.NotEmpty(t, updatedUser.LastNameEncrypted)
-		assert.NotEmpty(t, updatedUser.TelephoneEncrypted)
-		assert.NotEmpty(t, updatedUser.TelephoneHash)
+		assert.Equal(t, firstnameEncrypted, updatedUser.FirstNameEncrypted)
+		assert.Equal(t, lastnameEncrypted, updatedUser.LastNameEncrypted)
+		assert.Equal(t, genderEncrypted, updatedUser.GenderEncrypted)
+		assert.Equal(t, telephoneEncrypted, updatedUser.TelephoneEncrypted)
+		assert.Equal(t, postalCodeEncrypted, updatedUser.PostalCodeEncrypted)
+		assert.Equal(t, cityEncrypted, updatedUser.CityEncrypted)
+		assert.Equal(t, address1Encrypted, updatedUser.Address1Encrypted)
+		assert.Equal(t, address2Encrypted, updatedUser.Address2Encrypted)
+		assert.Equal(t, birthdayEncrypted, updatedUser.BirthDateEncrypted)
 	})
 
 	t.Run("should return not found error when updating non-existent user", func(t *testing.T) {
 		// Arrange
 		td.ClearUsersTable(t, ctx, testPool)
 
-		user := td.NewTestUser("nonexistent@example.com", "Ghost", "User")
-		user.ID = uuid.New() // Ensure this ID doesn't exist
-		err := crypto.ProcessStruct(ctx, user)
-		require.NoError(t, err)
+		user := td.NewTestUserEncx(t)
 
 		// Act
-		err = repo.UpdateUser(ctx, user)
+		err := repo.UpdateUser(ctx, user)
 
 		// Assert
-		require.Error(t, err)
+		assert.Error(t, err)
 		assert.True(t, errors.Is(err, errs.ErrRepositoryNotFound))
 	})
 
 	t.Run("should successfully update user state from unverified to pending", func(t *testing.T) {
 		// Arrange
 		td.ClearUsersTable(t, ctx, testPool)
-		email := "statechange@example.com"
+		// email := "statechange@example.com"
 
-		// Create user with unverified state
-		user := td.NewTestUser(email, "State", "User")
-		user.State = domain.Unverified
-		err := crypto.ProcessStruct(ctx, user)
-		require.NoError(t, err)
-		err = repo.CreateUser(ctx, user)
+		// Create userEncx with unverified state
+		userEncx := td.NewTestUserEncx(t)
+		userEncx.State = domain.Unverified
+
+		err := td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Update user state to pending
-		user.State = domain.Pending
-		err = crypto.ProcessStruct(ctx, user)
-		require.NoError(t, err)
+		userEncx.State = domain.Pending
 
 		// Act
-		err = repo.UpdateUser(ctx, user)
+		err = repo.UpdateUser(ctx, userEncx)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify the state change
-		updatedUser, err := repo.GetUserByID(ctx, user.ID)
+		updatedUser, err := td.GetUserEnxByID(t, ctx, userEncx.ID, testPool)
 		require.NoError(t, err)
 		assert.Equal(t, domain.Pending, updatedUser.State)
 	})
@@ -133,41 +126,29 @@ func TestUpdateUser(t *testing.T) {
 	t.Run("should successfully update user with empty optional fields", func(t *testing.T) {
 		// Arrange
 		td.ClearUsersTable(t, ctx, testPool)
-		email := "emptyfields@example.com"
 
-		// Create user with some fields populated
-		user := td.NewTestUser(email, "Full", "User")
-		user.Address2 = "Suite 100"
-		user.Telephone = "+33123456789"
-		err := crypto.ProcessStruct(ctx, user)
-		require.NoError(t, err)
-		err = repo.CreateUser(ctx, user)
+		// Create userEncx with some fields populated
+		userEncx := td.NewTestUserEncx(t)
+
+		err := td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Update user to remove optional fields
-		user.Address2 = ""
-		user.Telephone = ""
-		err = crypto.ProcessStruct(ctx, user)
-		require.NoError(t, err)
+		userEncx.Address2Encrypted = []byte("")
+		userEncx.TelephoneEncrypted = []byte("")
 
 		// Act
-		err = repo.UpdateUser(ctx, user)
+		err = repo.UpdateUser(ctx, userEncx)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify the update
-		updatedUser, err := repo.GetUserByID(ctx, user.ID)
-		require.NoError(t, err)
-		err = crypto.DecryptStruct(ctx, updatedUser)
+		updatedUser, err := td.GetUserEnxByID(t, ctx, userEncx.ID, testPool)
 		require.NoError(t, err)
 
-		assert.Equal(t, "", updatedUser.Address2)
-		assert.Equal(t, "", updatedUser.Telephone)
-		assert.Equal(t,
-			"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-			updatedUser.TelephoneHash,
-		)
+		assert.Empty(t, updatedUser.Address2Encrypted)
+		assert.Empty(t, updatedUser.TelephoneEncrypted)
 	})
 
 	t.Run("should handle database connection errors", func(t *testing.T) {
@@ -181,66 +162,63 @@ func TestUpdateUser(t *testing.T) {
 		td.ClearUsersTable(t, ctx, testPool)
 		email := "complete@example.com"
 
-		// Start with minimal unverified user
-		user := &domain.User{
-			ID:    uuid.New(),
-			State: domain.Unverified,
-			Email: email,
+		// Start with minimal unverified userEncx
+		userEncx := &domain.UserEncx{
+			ID:                 uuid.New(),
+			State:              domain.Unverified,
+			EmailEncrypted:     []byte(email),
+			CreatedAtEncrypted: []byte("created_at_encrypted"),
+			DEKEncrypted:       []byte("dek_encrypted"),
+			KeyVersion:         1,
 		}
-		err := crypto.ProcessStruct(ctx, user)
-		require.NoError(t, err)
-		err = repo.CreateUser(ctx, user)
+
+		err := td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Update with complete user information
-		user.State = domain.Pending
-		user.FirstName = "Complete"
-		user.LastName = "Registration"
-		user.Password = "securepassword123"
-		user.Gender = "non_binary"
-		user.Telephone = "+33456789012"
-		user.PostalCode = "69000"
-		user.City = "Lyon"
-		user.Address1 = "456 Complete Avenue"
-		user.Address2 = "Building C"
-		user.BirthDate = time.Date(1985, 12, 25, 0, 0, 0, 0, time.UTC)
 
-		// Re-encrypt with complete data
-		err = crypto.ProcessStruct(ctx, user)
-		require.NoError(t, err)
+		firstName := []byte("Complete")
+		lastName := []byte("Registration")
+		password := "securepassword123"
+		gender := []byte("non_binary")
+		telephone := []byte("+33456789012")
+		postalCode := []byte("69000")
+		city := []byte("Lyon")
+		address1 := []byte("456 Complete Avenue")
+		address2 := []byte("Building C")
+		birthDate := []byte("new_birthday")
+
+		userEncx.State = domain.Pending
+		userEncx.FirstNameEncrypted = firstName
+		userEncx.LastNameEncrypted = lastName
+		userEncx.PasswordHashSecure = password
+		userEncx.GenderEncrypted = gender
+		userEncx.TelephoneEncrypted = telephone
+		userEncx.PostalCodeEncrypted = postalCode
+		userEncx.CityEncrypted = city
+		userEncx.Address1Encrypted = address1
+		userEncx.Address2Encrypted = address2
+		userEncx.BirthDateEncrypted = birthDate
 
 		// Act
-		err = repo.UpdateUser(ctx, user)
+		err = repo.UpdateUser(ctx, userEncx)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify all fields were updated correctly
-		completeUser, err := repo.GetUserByID(ctx, user.ID)
-		require.NoError(t, err)
-		err = crypto.DecryptStruct(ctx, completeUser)
+		completeUser, err := repo.GetUserByID(ctx, userEncx.ID)
 		require.NoError(t, err)
 
 		assert.Equal(t, domain.Pending, completeUser.State)
-		assert.Equal(t, "Complete", completeUser.FirstName)
-		assert.Equal(t, "Registration", completeUser.LastName)
-		assert.Equal(t, "non_binary", completeUser.Gender)
-		assert.Equal(t, "+33456789012", completeUser.Telephone)
-		assert.Equal(t, "69000", completeUser.PostalCode)
-		assert.Equal(t, "Lyon", completeUser.City)
-		assert.Equal(t, "456 Complete Avenue", completeUser.Address1)
-		assert.Equal(t, "Building C", completeUser.Address2)
-		assert.NotEmpty(t, completeUser.PasswordHash) // Password should be hashed
-
-		// Verify all encrypted fields are populated
-		assert.NotEmpty(t, completeUser.FirstNameEncrypted)
-		assert.NotEmpty(t, completeUser.LastNameEncrypted)
-		assert.NotEmpty(t, completeUser.GenderEncrypted)
-		assert.NotEmpty(t, completeUser.TelephoneEncrypted)
-		assert.NotEmpty(t, completeUser.PostalCodeEncrypted)
-		assert.NotEmpty(t, completeUser.CityEncrypted)
-		assert.NotEmpty(t, completeUser.Address1Encrypted)
-		assert.NotEmpty(t, completeUser.Address2Encrypted)
-		assert.NotEmpty(t, completeUser.BirthDateEncrypted)
+		assert.Equal(t, firstName, completeUser.FirstNameEncrypted)
+		assert.Equal(t, lastName, completeUser.LastNameEncrypted)
+		assert.Equal(t, gender, completeUser.GenderEncrypted)
+		assert.Equal(t, telephone, completeUser.TelephoneEncrypted)
+		assert.Equal(t, postalCode, completeUser.PostalCodeEncrypted)
+		assert.Equal(t, city, completeUser.CityEncrypted)
+		assert.Equal(t, address1, completeUser.Address1Encrypted)
+		assert.Equal(t, address2, completeUser.Address2Encrypted)
+		assert.NotEmpty(t, completeUser.PasswordHashSecure) // Password should be hashed
 	})
 }

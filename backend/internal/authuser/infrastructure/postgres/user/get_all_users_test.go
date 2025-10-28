@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestGetAllUsers make test-unit-user-test
+// make test-func TEST_NAME=TestGetAllUsers TEST_PATH=internal/authuser/infrastructure/postgres/user/get_all_users_test.go
 
 func TestGetAllUsers(t *testing.T) {
 	ctx := context.Background()
@@ -21,31 +21,30 @@ func TestGetAllUsers(t *testing.T) {
 		// Arrange
 		td.ClearUsersTable(t, ctx, testPool)
 
+		createUser := func(email, firstname, lastname string, state domain.UserState) *domain.UserEncx {
+			user := td.NewTestUserEncx(t)
+			user.EmailEncrypted = []byte(email)
+			user.EmailHash = email
+			user.FirstNameEncrypted = []byte(firstname)
+			user.LastNameEncrypted = []byte(lastname)
+			user.State = state
+
+			err := td.InsertUserEncx(t, ctx, user, testPool)
+			require.NoError(t, err)
+			return user
+		}
+
 		// Create test users with different states
-		user1 := td.NewTestUser("pending@example.com", "Alice", "Smith")
-		user1.State = domain.Pending
-		err := crypto.ProcessStruct(ctx, user1)
-		require.NoError(t, err)
-		td.InsertUser(t, ctx, user1, testPool)
-
-		user2 := td.NewTestUser("active@example.com", "Bob", "Jones")
-		user2.State = domain.Active
-		err = crypto.ProcessStruct(ctx, user2)
-		require.NoError(t, err)
-		td.InsertUser(t, ctx, user2, testPool)
-
-		user3 := td.NewTestUser("unverified@example.com", "Carol", "Brown")
-		user3.State = domain.Unverified
-		err = crypto.ProcessStruct(ctx, user3)
-		require.NoError(t, err)
-		td.InsertUser(t, ctx, user3, testPool)
+		user1 := createUser("pending@example.com", "Alice", "SMITH", domain.Pending)
+		user2 := createUser("active@example.com", "Bob", "JONES", domain.Active)
+		user3 := createUser("unverified@example.com", "Carol", "Brown", domain.Unverified)
 
 		// Act
 		allUsers, err := repo.GetAllUsers(ctx)
 
 		// Assert
-		require.NoError(t, err)
-		require.Len(t, allUsers, 3, "Should return all users regardless of state")
+		assert.NoError(t, err)
+		assert.Len(t, allUsers, 3, "Should return all users regardless of state")
 
 		// Verify users are ordered by created_at DESC (newest first)
 		// Since user3 was inserted last, it should come first
@@ -80,40 +79,52 @@ func TestGetAllUsers(t *testing.T) {
 		allUsers, err := repo.GetAllUsers(ctx)
 
 		// Assert
-		require.NoError(t, err)
-		require.NotNil(t, allUsers, "Should return non-nil slice")
+		assert.NoError(t, err)
+		assert.NotNil(t, allUsers, "Should return non-nil slice")
 		assert.Empty(t, allUsers, "Should return empty slice when no users exist")
 	})
 
-	t.Run("should handle users with and without telephone hash correctly", func(t *testing.T) {
+	t.Run("should handle users with and without telephone encrypted correctly", func(t *testing.T) {
 		// Arrange
 		td.ClearUsersTable(t, ctx, testPool)
 
 		// User with telephone
-		userWithPhone := td.NewTestUser("withphone@example.com", "With", "Phone")
+		// userWithPhone := td.NewTestUser("withphone@example.com", "With", "Phone")
+		userWithPhone := td.NewTestUserEncx(t)
+		userWithPhone.EmailEncrypted = []byte("withphone@example.com")
+		userWithPhone.EmailHash = "withphone@example.com"
+		userWithPhone.FirstNameEncrypted = []byte("With")
+		userWithPhone.LastNameEncrypted = []byte("Phone")
 		userWithPhone.State = domain.Active
-		userWithPhone.Telephone = "+33123456789"
-		err := crypto.ProcessStruct(ctx, userWithPhone)
+		userWithPhone.TelephoneHash = "+33123456789"
+		userWithPhone.TelephoneEncrypted = []byte("+33123456789")
+
+		err := td.InsertUserEncx(t, ctx, userWithPhone, testPool)
 		require.NoError(t, err)
-		td.InsertUser(t, ctx, userWithPhone, testPool)
 
 		// User without telephone
-		userWithoutPhone := td.NewTestUser("nophone@example.com", "No", "Phone")
+		// userWithoutPhone := td.NewTestUser("nophone@example.com", "No", "Phone")
+		userWithoutPhone := td.NewTestUserEncx(t)
 		userWithoutPhone.State = domain.Pending
-		userWithoutPhone.Telephone = ""
-		err = crypto.ProcessStruct(ctx, userWithoutPhone)
+		userWithoutPhone.EmailEncrypted = []byte("nophone@example.com")
+		userWithoutPhone.EmailHash = "nophone@example.com"
+		userWithoutPhone.FirstNameEncrypted = []byte("No")
+		userWithoutPhone.LastNameEncrypted = []byte("Phone")
+		userWithoutPhone.TelephoneHash = ""
+		userWithoutPhone.TelephoneEncrypted = []byte("")
+
+		err = td.InsertUserEncx(t, ctx, userWithoutPhone, testPool)
 		require.NoError(t, err)
-		td.InsertUser(t, ctx, userWithoutPhone, testPool)
 
 		// Act
 		allUsers, err := repo.GetAllUsers(ctx)
 
 		// Assert
-		require.NoError(t, err)
-		require.Len(t, allUsers, 2)
+		assert.NoError(t, err)
+		assert.Len(t, allUsers, 2)
 
 		// Find users in results
-		var withPhoneUser, withoutPhoneUser *domain.User
+		var withPhoneUser, withoutPhoneUser *domain.UserEncx
 		for _, user := range allUsers {
 			if user.EmailHash == userWithPhone.EmailHash {
 				withPhoneUser = user
@@ -122,18 +133,12 @@ func TestGetAllUsers(t *testing.T) {
 			}
 		}
 
-		require.NotNil(t, withPhoneUser, "User with phone should be found")
-		require.NotNil(t, withoutPhoneUser, "User without phone should be found")
+		assert.NotNil(t, withPhoneUser, "User with phone should be found")
+		assert.NotNil(t, withoutPhoneUser, "User without phone should be found")
 
 		// Verify telephone hash handling
-		assert.NotEmpty(t, withPhoneUser.TelephoneHash, "User with phone should have telephone hash")
-		assert.NotEmpty(t, withPhoneUser.TelephoneEncrypted, "User with phone should have encrypted telephone")
-
-		// User without phone should have empty hash (empty string hashes to a specific value)
-		assert.Equal(t,
-			"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-			withoutPhoneUser.TelephoneHash,
-			"User without phone should have empty string hash")
+		assert.NotZero(t, withPhoneUser.TelephoneHash, "User with phone should have telephone hash")
+		assert.NotZero(t, withPhoneUser.TelephoneEncrypted, "User with phone should have encrypted telephone")
 	})
 
 	t.Run("should return users with all possible states", func(t *testing.T) {
@@ -142,32 +147,33 @@ func TestGetAllUsers(t *testing.T) {
 
 		// Create users with all possible states
 		states := []domain.UserState{domain.Pending, domain.Active, domain.Unverified}
-		expectedUsers := make(map[domain.UserState]*domain.User)
+		expectedUsers := make(map[domain.UserState]*domain.UserEncx)
 
 		for i, state := range states {
-			user := td.NewTestUser(
-				fmt.Sprintf("user%d@example.com", i),
-				fmt.Sprintf("User%d", i),
-				"Test",
-			)
-			user.State = state
-			err := crypto.ProcessStruct(ctx, user)
+			userEncx := td.NewTestUserEncx(t)
+			userEncx.EmailHash = fmt.Sprintf("user%d@example.com", i)
+			userEncx.EmailEncrypted = []byte(fmt.Sprintf("user%d@example.com", i))
+			userEncx.FirstNameEncrypted = []byte(fmt.Sprintf("User%d", i))
+			userEncx.LastNameEncrypted = []byte("Test")
+			userEncx.State = state
+
+			err := td.InsertUserEncx(t, ctx, userEncx, testPool)
 			require.NoError(t, err)
-			td.InsertUser(t, ctx, user, testPool)
-			expectedUsers[state] = user
+
+			expectedUsers[state] = userEncx
 		}
 
 		// Act
 		allUsers, err := repo.GetAllUsers(ctx)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Len(t, allUsers, len(states), "Should return users with all states")
 
 		// Verify all states are represented
 		foundStates := make(map[domain.UserState]bool)
-		for _, user := range allUsers {
-			foundStates[user.State] = true
+		for _, userEncx := range allUsers {
+			foundStates[userEncx.State] = true
 		}
 
 		for _, expectedState := range states {
@@ -180,21 +186,22 @@ func TestGetAllUsers(t *testing.T) {
 		td.ClearUsersTable(t, ctx, testPool)
 
 		const numUsers = 100
-		expectedUsers := make([]*domain.User, numUsers)
+		expectedUsers := make([]*domain.UserEncx, numUsers)
 		states := []domain.UserState{domain.Pending, domain.Active, domain.Unverified}
 
 		// Create many users with various states
 		for i := 0; i < numUsers; i++ {
-			user := td.NewTestUser(
-				fmt.Sprintf("user%d@example.com", i),
-				fmt.Sprintf("User%d", i),
-				"Test",
-			)
-			user.State = states[i%len(states)] // Cycle through states
-			err := crypto.ProcessStruct(ctx, user)
+			userEncx := td.NewTestUserEncx(t)
+			userEncx.EmailHash = fmt.Sprintf("user%d@example.com", i)
+			userEncx.EmailEncrypted = []byte(fmt.Sprintf("user%d@example.com", i))
+			userEncx.FirstNameEncrypted = []byte(fmt.Sprintf("User%d", i))
+			userEncx.LastNameEncrypted = []byte("Test")
+			userEncx.State = states[i%len(states)] // Cycle through states
+
+			err := td.InsertUserEncx(t, ctx, userEncx, testPool)
 			require.NoError(t, err)
-			td.InsertUser(t, ctx, user, testPool)
-			expectedUsers[i] = user
+
+			expectedUsers[i] = userEncx
 		}
 
 		// Act
@@ -228,4 +235,3 @@ func TestGetAllUsers(t *testing.T) {
 		t.Skip("Database connection error testing requires mocking or network disruption")
 	})
 }
-
