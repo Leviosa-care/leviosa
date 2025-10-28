@@ -56,7 +56,6 @@ func (s *PartnerService) GetPartnerByID(ctx context.Context, partnerID uuid.UUID
 		CreatedAt:        partner.CreatedAt,
 		UpdatedAt:        partner.UpdatedAt,
 		User:             user.ToResponse(),
-		Specializations:  []domain.SpecializationResponse{}, // Deprecated, return empty array
 	}, nil
 }
 
@@ -101,7 +100,6 @@ func (s *PartnerService) GetPartnerByUserID(ctx context.Context, userID uuid.UUI
 		CreatedAt:        partner.CreatedAt,
 		UpdatedAt:        partner.UpdatedAt,
 		User:             user.ToResponse(),
-		Specializations:  []domain.SpecializationResponse{}, // Deprecated, return empty array
 	}, nil
 }
 
@@ -147,7 +145,6 @@ func (s *PartnerService) GetAllPartners(ctx context.Context) (*domain.GetPartner
 			CreatedAt:        partner.CreatedAt,
 			UpdatedAt:        partner.UpdatedAt,
 			User:             user.ToResponse(),
-			Specializations:  []domain.SpecializationResponse{}, // Deprecated, return empty array
 		})
 	}
 
@@ -317,35 +314,6 @@ func (s *PartnerService) VerifyPartner(ctx context.Context, partnerID uuid.UUID,
 		CreatedAt:        updatedPartner.CreatedAt,
 		UpdatedAt:        updatedPartner.UpdatedAt,
 	}, nil
-}
-
-// NOTE: Specialization methods below are deprecated.
-// Partners now use CategoryIDs and ProductIDs stored directly in the partner table.
-// These methods may be removed in the future.
-
-// AddPartnerSpecialization is deprecated. Use UpdatePartner to modify CategoryIDs instead.
-func (s *PartnerService) AddPartnerSpecialization(ctx context.Context, partnerID uuid.UUID, specializationID uuid.UUID) error {
-	return errs.ErrNotImplemented
-}
-
-// RemovePartnerSpecialization is deprecated. Use UpdatePartner to modify CategoryIDs instead.
-func (s *PartnerService) RemovePartnerSpecialization(ctx context.Context, partnerID uuid.UUID, specializationID uuid.UUID) error {
-	return errs.ErrNotImplemented
-}
-
-// GetPartnerSpecializations is deprecated. Use GetPartnerByID and access CategoryIDs instead.
-func (s *PartnerService) GetPartnerSpecializations(ctx context.Context, partnerID uuid.UUID) (*domain.GetPartnerSpecializationsResponse, error) {
-	return nil, errs.ErrNotImplemented
-}
-
-// ValidatePartnerSpecializations is deprecated. Validation now handled in CreatePartner via catalog cache.
-func (s *PartnerService) ValidatePartnerSpecializations(ctx context.Context, specializationIDs []uuid.UUID) error {
-	return errs.ErrNotImplemented
-}
-
-// ValidatePartnerProducts is deprecated. Validation now handled in CreatePartner via catalog cache.
-func (s *PartnerService) ValidatePartnerProducts(ctx context.Context, productIDs []uuid.UUID) error {
-	return errs.ErrNotImplemented
 }
 
 func (s *PartnerService) GetAllPartnersByCategory(ctx context.Context, category string) (*domain.GetPartnersResponse, error) {
