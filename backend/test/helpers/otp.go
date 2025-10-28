@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	otpRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/redis/otp"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
+	otpRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/redis/otp"
 
 	"github.com/hengadev/encx"
 	"github.com/redis/go-redis/v9"
@@ -42,6 +42,21 @@ func NewTestOTP(email string) *domain.OTP {
 	}
 }
 
+// NewTestOTPEncx creates a valid OTPEncx domain object for testing
+func NewTestOTPEncx(t *testing.T) *domain.OTPEncx {
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	return &domain.OTPEncx{
+		EmailHash:     "email_hash",
+		CodeEncrypted: []byte("123456"),
+		Attempts:      0,
+		CreatedAt:     now,
+		ExpiresAt:     now.Add(10 * time.Minute),
+		DEKEncrypted:  []byte("dek_encrypted"),
+		KeyVersion:    1,
+		Metadata:      encx.EncryptionMetadata{},
+	}
+}
+
 // NewExpiredOTP creates an expired OTP for testing expiration scenarios
 func NewExpiredOTP(email string) *domain.OTP {
 	past := time.Now().UTC().Add(-15 * time.Minute).Truncate(time.Microsecond)
@@ -66,7 +81,7 @@ func NewOTPWithAttempts(email string, attempts int) *domain.OTP {
 	}
 }
 
-// InsertOTP directly inserts an OTP into Redis for test setup using the new Encx approach
+// InsertOTPEncx directly inserts an OTP into Redis for test setup using the new Encx approach
 func InsertOTPEncx(t *testing.T, ctx context.Context, otpEncx *domain.OTPEncx, client *redis.Client, ttl time.Duration) error {
 	t.Helper()
 
@@ -102,7 +117,7 @@ func InsertOTPEncx(t *testing.T, ctx context.Context, otpEncx *domain.OTPEncx, c
 // }
 
 // GetOTPEncxByEmailHash retrieves an OTP directly from Redis for verification using the new Encx approach
-func GetOTPEncxByEmailHash(t *testing.T, ctx context.Context, emailHash string, client *redis.Client, crypto encx.CryptoService) (*domain.OTPEncx, error) {
+func GetOTPEncxByEmailHash(t *testing.T, ctx context.Context, emailHash string, client *redis.Client) (*domain.OTPEncx, error) {
 	t.Helper()
 
 	key := otpRepository.FormatOTPKey(emailHash)
@@ -218,8 +233,8 @@ func CreateOTP(t *testing.T, ctx context.Context, email string, client *redis.Cl
 	require.NoError(t, err, "Failed to insert OTP for email hash: %s", emailHash)
 }
 
-// GetOTPByEmail retrieves an OTP by email, returns nil if not found using the new Encx approach
-func GetOTPByEmail(t *testing.T, ctx context.Context, email string, client *redis.Client, crypto encx.CryptoService) (*domain.OTPEncx, error) {
+// GetOTPEncxByEmail retrieves an OTP by email, returns nil if not found using the new Encx approach
+func GetOTPEncxByEmail(t *testing.T, ctx context.Context, email string, client *redis.Client, crypto encx.CryptoService) (*domain.OTPEncx, error) {
 	t.Helper()
 
 	// Get the email hash using github.com/hengadev/encx functions
@@ -227,11 +242,11 @@ func GetOTPByEmail(t *testing.T, ctx context.Context, email string, client *redi
 	require.NoError(t, err)
 	emailHash := crypto.HashBasic(ctx, emailBytes)
 
-	otp, err := GetOTPEncxByEmailHash(t, ctx, emailHash, client, crypto)
+	otpEncx, err := GetOTPEncxByEmailHash(t, ctx, emailHash, client)
 	if err != nil {
 		// Return nil if OTP not found
 		return nil, err
 	}
 
-	return otp, nil
+	return otpEncx, nil
 }

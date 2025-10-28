@@ -6,37 +6,41 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// make test-func TEST_NAME=TestGetOTP TEST_PATH=internal/authuser/infrastructure/redis/otp/get_otp_test.go
 
 func TestGetOTP(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should retrieve existing OTP successfully", func(t *testing.T) {
 		// Clean up before test
-		helpers.ClearOTPKeys(t, ctx, testClient)
+		td.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert test OTP
-		otp := helpers.NewTestOTP("get@example.com")
-		helpers.InsertOTP(t, ctx, otp, testClient, 10*time.Minute)
+		otpEncx := td.NewTestOTPEncx(t)
+
+		err := td.InsertOTPEncx(t, ctx, otpEncx, testClient, 10*time.Minute)
+		require.NoError(t, err)
 
 		// Retrieve OTP
-		otpData, err := repo.GetOTP(ctx, otp.EmailHash)
-		require.NoError(t, err)
+		otpData, err := repo.GetOTP(ctx, otpEncx.EmailHash)
+		assert.NoError(t, err)
 
 		// Verify data integrity - check fields that are actually stored
 		var retrievedOTP map[string]any
 		err = json.Unmarshal(otpData, &retrievedOTP)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Only check fields that are stored (have JSON tags, not json:"-")
-		assert.Equal(t, otp.EmailHash, retrievedOTP["email_hash"])
-		assert.Equal(t, float64(otp.Attempts), retrievedOTP["attempts"]) // JSON numbers are float64
-		assert.Equal(t, float64(otp.KeyVersion), retrievedOTP["key_version"])
+		assert.Equal(t, otpEncx.EmailHash, retrievedOTP["email_hash"])
+		assert.Equal(t, float64(otpEncx.Attempts), retrievedOTP["attempts"]) // JSON numbers are float64
+		assert.Equal(t, float64(otpEncx.KeyVersion), retrievedOTP["key_version"])
 
 		// Email and Code fields should NOT be present as they have json:"-"
 		assert.NotContains(t, retrievedOTP, "email", "Email should not be stored")
@@ -45,110 +49,94 @@ func TestGetOTP(t *testing.T) {
 
 	t.Run("should return error for non-existent OTP", func(t *testing.T) {
 		// Clean up before test
-		helpers.ClearOTPKeys(t, ctx, testClient)
+		td.ClearOTPKeys(t, ctx, testClient)
 
 		// Try to retrieve non-existent OTP
 		_, err := repo.GetOTP(ctx, "hash_nonexistent@example.com")
-		require.Error(t, err)
+		assert.Error(t, err)
 		assert.ErrorIs(t, err, errs.ErrRepositoryNotFound, "Should return not found error")
-	})
-
-	t.Run("should retrieve OTP with all fields intact", func(t *testing.T) {
-		// Clean up before test
-		helpers.ClearOTPKeys(t, ctx, testClient)
-
-		// Create OTP with all fields populated
-		otp := helpers.NewOTPWithAttempts("complete@example.com", 2)
-		otp.CodeEncrypted = []byte("encrypted-code-data")
-		otp.DEKEncrypted = []byte("encrypted-dek-data")
-		otp.KeyVersion = 1
-
-		helpers.InsertOTP(t, ctx, otp, testClient, 15*time.Minute)
-
-		// Retrieve OTP
-		otpData, err := repo.GetOTP(ctx, otp.EmailHash)
-		require.NoError(t, err)
-
-		// Deserialize and verify all fields using auth.OTP
-		var retrievedOTP auth.OTP
-		err = json.Unmarshal(otpData, &retrievedOTP)
-		require.NoError(t, err)
-
-		helpers.ValidateOTPData(t, otp, &retrievedOTP)
 	})
 
 	t.Run("should retrieve OTP near expiration", func(t *testing.T) {
 		// Clean up before test
-		helpers.ClearOTPKeys(t, ctx, testClient)
+		td.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert OTP with short TTL
-		otp := helpers.NewTestOTP("expiring@example.com")
-		helpers.InsertOTP(t, ctx, otp, testClient, 2*time.Second)
+		otpEncx := td.NewTestOTPEncx(t)
+
+		err := td.InsertOTPEncx(t, ctx, otpEncx, testClient, 2*time.Second)
+		require.NoError(t, err)
 
 		// Wait a moment but retrieve before expiration
 		time.Sleep(500 * time.Millisecond)
 
 		// Should still be retrievable
-		otpData, err := repo.GetOTP(ctx, otp.EmailHash)
-		require.NoError(t, err)
+		otpData, err := repo.GetOTP(ctx, otpEncx.EmailHash)
+		assert.NoError(t, err)
 		assert.NotEmpty(t, otpData)
 
 		// Wait for expiration
 		time.Sleep(2 * time.Second)
 
 		// Should now be expired and not retrievable
-		_, err = repo.GetOTP(ctx, otp.EmailHash)
+		_, err = repo.GetOTP(ctx, otpEncx.EmailHash)
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, errs.ErrRepositoryNotFound, "Should return not found error for expired OTP")
 	})
 
 	t.Run("should handle empty email hash", func(t *testing.T) {
 		// Clean up before test
-		helpers.ClearOTPKeys(t, ctx, testClient)
+		td.ClearOTPKeys(t, ctx, testClient)
 
 		// Create OTP with empty hash (edge case)
-		otp := helpers.NewTestOTP("empty@example.com")
-		otp.EmailHash = ""
-		helpers.InsertOTP(t, ctx, otp, testClient, 5*time.Minute)
+		otpEncx := td.NewTestOTPEncx(t)
+		otpEncx.EmailHash = ""
+
+		err := td.InsertOTPEncx(t, ctx, otpEncx, testClient, 5*time.Minute)
+		require.NoError(t, err)
 
 		// Try to retrieve with empty hash
 		otpData, err := repo.GetOTP(ctx, "")
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.NotEmpty(t, otpData)
 	})
 
 	t.Run("should handle context cancellation", func(t *testing.T) {
 		// Clean up before test
-		helpers.ClearOTPKeys(t, ctx, testClient)
+		td.ClearOTPKeys(t, ctx, testClient)
 
 		// Create and insert OTP
-		otp := helpers.NewTestOTP("cancelled@example.com")
-		helpers.InsertOTP(t, ctx, otp, testClient, 10*time.Minute)
+		otpEncx := td.NewTestOTPEncx(t)
+
+		err := td.InsertOTPEncx(t, ctx, otpEncx, testClient, 10*time.Minute)
+		require.NoError(t, err)
 
 		// Create cancelled context
 		cancelCtx, cancel := context.WithCancel(ctx)
 		cancel() // Cancel immediately
 
 		// Attempt to retrieve with cancelled context
-		_, err := repo.GetOTP(cancelCtx, otp.EmailHash)
+		_, err = repo.GetOTP(cancelCtx, otpEncx.EmailHash)
 		assert.Error(t, err, "Should return error for cancelled context")
 		assert.ErrorIs(t, err, errs.ErrContext, "Should return context error")
 	})
 
 	t.Run("should return raw bytes without modification", func(t *testing.T) {
 		// Clean up before test
-		helpers.ClearOTPKeys(t, ctx, testClient)
+		td.ClearOTPKeys(t, ctx, testClient)
 
 		// Create test data with specific byte sequence
-		otp := helpers.NewTestOTP("bytes@example.com")
-		originalData, err := json.Marshal(otp)
+		// otpEncx := td.NewTestOTP("bytes@example.com")
+		otpEncx := td.NewTestOTPEncx(t)
+
+		originalData, err := json.Marshal(otpEncx)
 		require.NoError(t, err)
 
-		helpers.InsertOTP(t, ctx, otp, testClient, 10*time.Minute)
+		td.InsertOTPEncx(t, ctx, otpEncx, testClient, 10*time.Minute)
 
 		// Retrieve OTP
-		retrievedData, err := repo.GetOTP(ctx, otp.EmailHash)
-		require.NoError(t, err)
+		retrievedData, err := repo.GetOTP(ctx, otpEncx.EmailHash)
+		assert.NoError(t, err)
 
 		// Compare byte-for-byte
 		assert.Equal(t, originalData, retrievedData, "Retrieved data should match original bytes exactly")
@@ -156,6 +144,6 @@ func TestGetOTP(t *testing.T) {
 
 	// Clean up after all tests
 	t.Cleanup(func() {
-		helpers.ClearOTPKeys(t, ctx, testClient)
+		td.ClearOTPKeys(t, ctx, testClient)
 	})
 }

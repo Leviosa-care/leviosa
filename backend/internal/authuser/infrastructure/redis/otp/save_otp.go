@@ -15,5 +15,4 @@ func (r *OTPRepository) SaveOTP(ctx context.Context, emailHash string, otpEncode
 	}
 
 	return nil
-
 }
