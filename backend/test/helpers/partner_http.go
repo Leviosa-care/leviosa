@@ -11,7 +11,6 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 
 	partnerEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/partner"
-	specializationEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/specialization"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -57,7 +56,7 @@ func NewGetPartnerByUserIDRequest(t *testing.T, ctx context.Context, serverURL s
 func NewGetAllPartnersRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
 	t.Helper()
 
-	url := serverURL+partnerEndpoints.GetAllPartnersEndpoint
+	url := serverURL + partnerEndpoints.GetAllPartnersEndpoint
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	require.NoError(t, err, "Failed to create HTTP request")
 
@@ -96,101 +95,6 @@ func NewVerifyPartnerRequest(t *testing.T, ctx context.Context, serverURL string
 
 	url := fmt.Sprintf("%s/admin/partners/%s/verify", serverURL, partnerID.String())
 	req, err := http.NewRequestWithContext(ctx, "POST", url, nil)
-	require.NoError(t, err, "Failed to create HTTP request")
-
-	return req
-}
-
-// NewAddPartnerSpecializationRequest creates an HTTP request for adding a specialization to a partner
-func NewAddPartnerSpecializationRequest(t *testing.T, ctx context.Context, serverURL string, partnerID, specializationID uuid.UUID) *http.Request {
-	t.Helper()
-
-	url := fmt.Sprintf("%s/admin/partners/%s/specializations/%s", serverURL, partnerID.String(), specializationID.String())
-	req, err := http.NewRequestWithContext(ctx, "POST", url, nil)
-	require.NoError(t, err, "Failed to create HTTP request")
-
-	return req
-}
-
-// NewRemovePartnerSpecializationRequest creates an HTTP request for removing a specialization from a partner
-func NewRemovePartnerSpecializationRequest(t *testing.T, ctx context.Context, serverURL string, partnerID, specializationID uuid.UUID) *http.Request {
-	t.Helper()
-
-	url := fmt.Sprintf("%s/admin/partners/%s/specializations/%s", serverURL, partnerID.String(), specializationID.String())
-	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
-	require.NoError(t, err, "Failed to create HTTP request")
-
-	return req
-}
-
-// NewGetPartnerSpecializationsRequest creates an HTTP request for getting partner specializations
-func NewGetPartnerSpecializationsRequest(t *testing.T, ctx context.Context, serverURL string, partnerID uuid.UUID) *http.Request {
-	t.Helper()
-
-	url := fmt.Sprintf("%s/partners/%s/specializations", serverURL, partnerID.String())
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	require.NoError(t, err, "Failed to create HTTP request")
-
-	return req
-}
-
-// NewCreateSpecializationRequest creates an HTTP request for creating a specialization
-func NewCreateSpecializationRequest(t *testing.T, ctx context.Context, serverURL string, request domain.CreateSpecializationRequest) *http.Request {
-	t.Helper()
-
-	body, err := json.Marshal(request)
-	require.NoError(t, err, "Failed to marshal create specialization request")
-
-	req, err := http.NewRequestWithContext(ctx, "POST", serverURL+specializationEndpoints.CreateSpecializationEndpoint, bytes.NewReader(body))
-	require.NoError(t, err, "Failed to create HTTP request")
-
-	req.Header.Set("Content-Type", "application/json")
-	return req
-}
-
-// NewGetSpecializationByIDRequest creates an HTTP request for getting a specialization by ID
-func NewGetSpecializationByIDRequest(t *testing.T, ctx context.Context, serverURL string, specializationID uuid.UUID) *http.Request {
-	t.Helper()
-
-	url := fmt.Sprintf("%s/admin/specializations/%s", serverURL, specializationID.String())
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	require.NoError(t, err, "Failed to create HTTP request")
-
-	return req
-}
-
-// NewGetAllSpecializationsRequest creates an HTTP request for getting all specializations
-func NewGetAllSpecializationsRequest(t *testing.T, ctx context.Context, serverURL string) *http.Request {
-	t.Helper()
-
-	url := serverURL+specializationEndpoints.GetAllSpecializationsEndpoint
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	require.NoError(t, err, "Failed to create HTTP request")
-
-	return req
-}
-
-// NewUpdateSpecializationRequest creates an HTTP request for updating a specialization
-func NewUpdateSpecializationRequest(t *testing.T, ctx context.Context, serverURL string, specializationID uuid.UUID, request domain.UpdateSpecializationRequest) *http.Request {
-	t.Helper()
-
-	body, err := json.Marshal(request)
-	require.NoError(t, err, "Failed to marshal update specialization request")
-
-	url := fmt.Sprintf("%s/admin/specializations/%s", serverURL, specializationID.String())
-	req, err := http.NewRequestWithContext(ctx, "PUT", url, bytes.NewReader(body))
-	require.NoError(t, err, "Failed to create HTTP request")
-
-	req.Header.Set("Content-Type", "application/json")
-	return req
-}
-
-// NewDeleteSpecializationRequest creates an HTTP request for deleting a specialization
-func NewDeleteSpecializationRequest(t *testing.T, ctx context.Context, serverURL string, specializationID uuid.UUID) *http.Request {
-	t.Helper()
-
-	url := fmt.Sprintf("%s/admin/specializations/%s", serverURL, specializationID.String())
-	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
 	require.NoError(t, err, "Failed to create HTTP request")
 
 	return req
