@@ -23,3 +23,4 @@ func (r *Repository) ExistsByAppleID(ctx context.Context, appleID string) (bool,
 
 	return exists, nil
 }
+
