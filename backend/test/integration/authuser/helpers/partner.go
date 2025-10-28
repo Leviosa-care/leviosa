@@ -12,34 +12,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// ClearPartnersTable removes all test data from partners and related tables
+// ClearPartnersTable removes all test data from partners table
 func ClearPartnersTable(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
 	t.Helper()
 
-	// Clear partner_specializations first (foreign key dependency)
-	_, err := pool.Exec(ctx, "DELETE FROM auth.partner_specializations")
-	require.NoError(t, err, "Failed to clear partner_specializations table")
-
 	// Clear partners table
-	_, err = pool.Exec(ctx, "DELETE FROM auth.partners")
+	_, err := pool.Exec(ctx, "DELETE FROM auth.partners")
 	require.NoError(t, err, "Failed to clear partners table")
 
 	// Clear users table (partners depend on users)
 	_, err = pool.Exec(ctx, "DELETE FROM auth.users")
 	require.NoError(t, err, "Failed to clear users table")
-}
-
-// ClearSpecializationsTable removes all test data from specializations table
-func ClearSpecializationsTable(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
-	t.Helper()
-
-	// Clear partner_specializations first (foreign key dependency)
-	_, err := pool.Exec(ctx, "DELETE FROM auth.partner_specializations")
-	require.NoError(t, err, "Failed to clear partner_specializations table")
-
-	// Clear specializations table
-	_, err = pool.Exec(ctx, "DELETE FROM auth.specializations")
-	require.NoError(t, err, "Failed to clear specializations table")
 }
 
 // ClearPartnerTestData clears all partner-related test data
@@ -48,7 +31,6 @@ func ClearPartnerTestData(t *testing.T, ctx context.Context, pool *pgxpool.Pool)
 
 	// Clear all partner-related tables in correct order
 	ClearPartnersTable(t, ctx, pool)
-	ClearSpecializationsTable(t, ctx, pool)
 }
 
 // NewTestSpecialization creates a test specialization with given parameters

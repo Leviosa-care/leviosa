@@ -69,7 +69,6 @@ func GetUserEnxByID(t *testing.T, ctx context.Context, userID uuid.UUID, pool *p
 		FROM auth.users
 		WHERE id = $1
 	`
-
 	err := pool.QueryRow(ctx, query, userID).Scan(
 		&userEncx.ID, &userEncx.State, &userEncx.EmailHash, &userEncx.EmailEncrypted,
 		&userEncx.PasswordHashSecure, &userEncx.PictureEncrypted, &userEncx.FirstNameEncrypted,
