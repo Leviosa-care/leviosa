@@ -1,191 +1,303 @@
-# Environment file (create a .env file in your project root if you haven't) ENV_FILE ?= .env
+# ============================================================================
+# LEVIOSA TESTING COMMANDS
+# ============================================================================
+# Supports current mixed architecture and future internal/ structure
 
-# Redis configuration
-REDIS_IMAGE = redis:alpine
-REDIS_CONTAINER = myapp-redis
-REDIS_PORT = 6379
+.PHONY: test-all test-unit test-integration test-coverage test-race test-benchmark test-verbose test-smoke test-clean test-help
+.PHONY: test-unit-authuser test-unit-catalog test-unit-settings test-unit-booking test-unit-notification
+.PHONY: test-integration-authuser test-integration-catalog test-integration-settings test-integration-booking test-integration-notification
 
-POSTGRES_IMAGE = postgres:17.5-alpine3.21
-POSTGRES_CONTAINER = myapp-postgres
-POSTGRES_PORT = 5432
+# Test settings
+TEST_TIMEOUT?=30m
+TEST_VERBOSE?=-v
+TEST_RACE?=-race
+TEST_COVERAGE?=-cover
+TEST_COVERAGE_HTML?=-coverprofile=coverage.out -covermode=atomic
 
-RABBIT_IMAGE = rabbitmq:3-management-alpine
-RABBIT_CONTAINER = myapp-rabbit
-RABBIT_PORT1=5672
-RABBIT_PORT2=15672
-RABBIT_USER=guest
-RABBIT_PASSWORD=guest
+# Service paths (future internal/ structure)
+INTERNAL_SERVICES=authuser catalog settings booking notification
+SERVICES_ROOT=internal
 
-.DEFAULT_GOAL:= run
+# Integration test paths (current structure)
+INTEGRATION_ROOT=test/integration
 
-.PHONY: run
-run: deps
-	@# APP_ENV=production air -c .air.toml
-	APP_ENV=production \
-	BUCKETNAME=leviosa-assets \
-	AWS_REGION=eu-central-1 \
-	AWS_ACCESS_KEY_ID=AKIA6D6JBL4GFGD47U4N \
-	AWS_SECRET_ACCESS_KEY=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 \
-	GMAIL_EMAIL=leviosacare@gmail.com \
-	GMAIL_PASSWORD="eurh dnow ulys zzty" \
-	STRIPE_SECRET_KEY="sk_test_51OprHjHwHXlEm0ohOgDJOaArlojFAGnNz3xULv6hgG4OCKwHw6dynWchGxjzQDZC0v8s1lXBvVEAxlbjuWq3Ho9f00ex88AzJ3" \
-	REDIS_ADDR=127.0.0.1:6379 \
-	REDIS_DB=0 \
-	REDIS_PASSWORD=secret \
-	LOGGING_SALT=20eaddaabb68c5db7bee3232552138b3 \
-	VAULT_ADDR=https://leviosa-cluster-public-vault-9da92754.27b5d5f2.z1.hashicorp.cloud:8200 \
-	VAULT_NAMESPACE=admin/leviosa \
-	VAULT_ROLE_ID=49f35e23-4c96-a413-e4e6-dd31271d7299 \
-	VAULT_SECRET_ID=645c80cb-d8b7-6c5c-db1a-e71210be6e1b \
-	RABBITMQ_HOST=localhost \
-	RABBITMQ_PORT=5672 \
-	RABBITMQ_USER=guest \
-	RABBITMQ_PASSWORD=guest \
-	POSTGRES_PASSWORD=password \
-	POSTGRES_USER=user \
-	POSTGRES_DB=leviosa \
-	POSTGRES_PORT=5432 \
-	POSTGRES_HOST=localhost \
-	air -c .air.toml;
+test-help: ## Show testing help message
+	@echo 'Leviosa Backend Testing Commands:'
+	@echo ''
+	@echo 'Primary Test Commands:'
+	@echo '  test-all           Run all unit and integration tests'
+	@echo '  test-unit          Run all unit tests across all services'
+	@echo '  test-integration   Run all integration tests'
+	@echo ''
+	@echo 'Service-Specific Unit Tests (internal/ structure):'
+	@echo '  test-unit-authuser       Run unit tests for internal/authuser/'
+	@echo '  test-unit-catalog        Run unit tests for internal/catalog/'
+	@echo '  test-unit-settings       Run unit tests for internal/settings/'
+	@echo '  test-unit-booking        Run unit tests for internal/booking/'
+	@echo '  test-unit-notification   Run unit tests for internal/notification/'
+	@echo ''
+	@echo 'Service-Specific Integration Tests:'
+	@echo '  test-integration-authuser     Run integration tests for authuser'
+	@echo '  test-integration-catalog      Run integration tests for catalog'
+	@echo '  test-integration-settings     Run integration tests for settings'
+	@echo '  test-integration-booking      Run integration tests for booking'
+	@echo '  test-integration-notification Run integration tests for notification'
+	@echo ''
+	@echo 'Advanced Testing Commands:'
+	@echo '  test-coverage      Generate HTML coverage report for all services'
+	@echo '  test-race          Run tests with race condition detection'
+	@echo '  test-benchmark     Run performance benchmarks'
+	@echo '  test-verbose       Run tests with detailed output'
+	@echo '  test-smoke         Run quick validation (short tests only)'
+	@echo ''
+	@echo 'Generic Specific Test Commands:'
+	@echo '  test-file          Run specific test file (usage: make test-file TEST_PATH=<path>)'
+	@echo '  test-func          Run specific test function (usage: make test-func TEST_NAME=<func> TEST_PATH=<path>)'
+	@echo ''
+	@echo 'Utility Commands:'
+	@echo '  test-clean         Clean test artifacts and coverage files'
 
-.PHONY: deps
-deps: start-redis start-postgres start-rabbit
-	echo "Redis, Postgres and RabbitMQ started"
+# Primary Commands
+test-all: test-unit test-integration ## Run all unit and integration tests
 
-
-.PHONY: start-redis
-start-redis:
-	@if [ -z "$$(docker ps -q -f name=$(REDIS_CONTAINER))" ]; then \
-		if [ -z "$$(docker ps -aq -f name=$(REDIS_CONTAINER))" ]; then \
-			docker run -d \
-				--name $(REDIS_CONTAINER) \
-				-p "127.0.0.1:$(REDIS_PORT)":$(REDIS_PORT) \
-				--env-file $(ENV_FILE) \
-				$(REDIS_IMAGE) redis-server --requirepass secret; \
-			echo "Redis container created and started"; \
+test-unit: ## Run all unit tests across all services in internal/
+	@echo "Running all unit tests..."
+	@for service in $(INTERNAL_SERVICES); do \
+		if [ -d "$(SERVICES_ROOT)/$$service" ]; then \
+			echo "Testing unit tests for $$service..."; \
+			go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(SERVICES_ROOT)/$$service/... || exit 1; \
 		else \
-			docker start $(REDIS_CONTAINER); \
-			echo "Redis container started"; \
-		fi \
+			echo "Warning: $(SERVICES_ROOT)/$$service not found, skipping..."; \
+		fi; \
+	done
+	@echo "All unit tests completed!"
+
+test-integration: ## Run all integration tests from test/integration/
+	@echo "Running all integration tests..."
+	@for service in $(INTERNAL_SERVICES); do \
+		if [ -d "$(INTEGRATION_ROOT)/$$service" ]; then \
+			echo "Testing integration for $$service..."; \
+			go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(INTEGRATION_ROOT)/$$service/... || exit 1; \
+		else \
+			echo "Warning: $(INTEGRATION_ROOT)/$$service not found, skipping..."; \
+		fi; \
+	done
+	@echo "All integration tests completed!"
+
+# Service-Specific Unit Tests (internal/ structure)
+test-unit-authuser: ## Run unit tests for internal/authuser/
+	@if [ -d "$(SERVICES_ROOT)/authuser" ]; then \
+		echo "Running unit tests for authuser service..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(SERVICES_ROOT)/authuser/...; \
 	else \
-		echo "Redis container already running"; \
+		echo "Error: $(SERVICES_ROOT)/authuser not found. Service may not be migrated to internal/ yet."; \
+		exit 1; \
 	fi
 
-.PHONY: stop-redis
-stop-redis:
-	@docker stop $(REDIS_CONTAINER) 2>/dev/null || true
-	echo "Redis container stopped"
-
-.PHONY: rm-redis
-rm-redis:
-	@docker stop $(REDIS_CONTAINER) 2>/dev/null || true
-	@docker rm $(REDIS_CONTAINER) 2>/dev/null || true
-	echo "Redis container stopped"
-
-.PHONY: start-postgres
-start-postgres:
-	@if [ -z "$$(docker ps -q -f name=$(POSTGRES_CONTAINER))" ]; then \
-		if [ -z "$$(docker ps -aq -f name=$(POSTGRES_CONTAINER))" ]; then \
-			docker run -d \
-				--name $(POSTGRES_CONTAINER) \
-				-p $(POSTGRES_PORT):$(POSTGRES_PORT) \
-				-v pg_data:/var/lib/postgresql/data \
-				-e POSTGRES_PASSWORD=password \
-				-e POSTGRES_USER=user \
-				-e POSTGRES_DB=development_leviosa \
-				$(POSTGRES_IMAGE); \
-			echo "Postgres container created and started"; \
-		else \
-			docker start $(POSTGRES_CONTAINER); \
-			echo "Postgres container started"; \
-		fi \
+test-unit-catalog: ## Run unit tests for internal/catalog/
+	@if [ -d "$(SERVICES_ROOT)/catalog" ]; then \
+		echo "Running unit tests for catalog service..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(SERVICES_ROOT)/catalog/...; \
 	else \
-		echo "Postgres container already running"; \
+		echo "Error: $(SERVICES_ROOT)/catalog not found. Service may not be migrated to internal/ yet."; \
+		exit 1; \
 	fi
 
-.PHONY: stop-postgres
-stop-postgres:
-	@docker stop $(POSTGRES_CONTAINER) 2>/dev/null || true
-	echo "Postgres container stopped"
-
-.PHONY: rm-postgres
-rm-postgres:
-	@docker stop $(POSTGRES_CONTAINER) 2>/dev/null || true
-	@docker rm $(POSTGRES_CONTAINER) 2>/dev/null || true
-	echo "Postgres container stopped and removed"
-
-.PHONY: start-rabbit
-start-rabbit:
-	@if [ -z "$$(docker ps -q -f name=$(RABBIT_CONTAINER))" ]; then \
-		if [ -z "$$(docker ps -aq -f name=$(RABBIT_CONTAINER))" ]; then \
-			docker run -d \
-				--name $(RABBIT_CONTAINER) \
-				-p $(RABBIT_PORT1):$(RABBIT_PORT1) \
-				-p $(RABBIT_PORT2):$(RABBIT_PORT2) \
-				-e RABBITMQ_DEFAULT_USER=$(RABBIT_USER) \
-				-e RABBITMQ_DEFAULT_PASS=$(RABBIT_PASSWORD) \
-				$(RABBIT_IMAGE); \
-			echo "RabbitMQ container created and started"; \
-		else \
-			docker start $(RABBIT_CONTAINER); \
-			echo "RabbitMQ container started"; \
-		fi \
+test-unit-settings: ## Run unit tests for internal/settings/
+	@if [ -d "$(SERVICES_ROOT)/settings" ]; then \
+		echo "Running unit tests for settings service..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(SERVICES_ROOT)/settings/...; \
 	else \
-		echo "RabbitMQ container already running"; \
+		echo "Error: $(SERVICES_ROOT)/settings not found. Service may not be migrated to internal/ yet."; \
+		exit 1; \
 	fi
 
-.PHONY: stop-rabbit
-stop-rabbit:
-	@docker stop $(RABBIT_CONTAINER) 2>/dev/null || true
-	echo "rabbit container stopped"
+test-unit-booking: ## Run unit tests for internal/booking/
+	@if [ -d "$(SERVICES_ROOT)/booking" ]; then \
+		echo "Running unit tests for booking service..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(SERVICES_ROOT)/booking/...; \
+	else \
+		echo "Error: $(SERVICES_ROOT)/booking not found. Service may not be migrated to internal/ yet."; \
+		exit 1; \
+	fi
 
-.PHONY: rm-rabbit
-rm-rabbit:
-	@docker stop $(RABBIT_CONTAINER) 2>/dev/null || true
-	@docker rm $(RABBIT_CONTAINER) 2>/dev/null || true
-	echo "rabbit container removed"
+test-unit-notification: ## Run unit tests for internal/notification/
+	@if [ -d "$(SERVICES_ROOT)/notification" ]; then \
+		echo "Running unit tests for notification service..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(SERVICES_ROOT)/notification/...; \
+	else \
+		echo "Error: $(SERVICES_ROOT)/notification not found. Service may not be migrated to internal/ yet."; \
+		exit 1; \
+	fi
 
-.PHONY: stop
-stop: stop-redis stop-postgres stop-rabbit
+# Service-Specific Integration Tests
+test-integration-authuser: ## Run integration tests for authuser
+	@if [ -d "$(INTEGRATION_ROOT)/authuser" ]; then \
+		echo "Running integration tests for authuser service..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(INTEGRATION_ROOT)/authuser/...; \
+	else \
+		echo "Warning: $(INTEGRATION_ROOT)/authuser not found, skipping..."; \
+	fi
 
-.PHONY: clean
-clean: rm-redis rm-postgres rm-rabbit
+test-integration-catalog: ## Run integration tests for catalog
+	@if [ -d "$(INTEGRATION_ROOT)/catalog" ]; then \
+		echo "Running integration tests for catalog service..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(INTEGRATION_ROOT)/catalog/...; \
+	else \
+		echo "Warning: $(INTEGRATION_ROOT)/catalog not found, skipping..."; \
+	fi
 
-.PHONY: up
-up:
-	APP_ENV=production docker compose -f compose.yaml up
+test-integration-settings: ## Run integration tests for settings
+	@if [ -d "$(INTEGRATION_ROOT)/settings" ]; then \
+		echo "Running integration tests for settings service..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(INTEGRATION_ROOT)/settings/...; \
+	else \
+		echo "Warning: $(INTEGRATION_ROOT)/settings not found, skipping..."; \
+	fi
 
-.PHONY: down
-down:
-	APP_ENV=production docker compose -f compose.yaml down
+test-integration-booking: ## Run integration tests for booking
+	@if [ -d "$(INTEGRATION_ROOT)/booking" ]; then \
+		echo "Running integration tests for booking service..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(INTEGRATION_ROOT)/booking/...; \
+	else \
+		echo "Warning: $(INTEGRATION_ROOT)/booking not found, skipping..."; \
+	fi
 
-.PHONY: docker
-docker:
-	docker run \
-		-p 3500:3500 \
-		-e APP_ENV=production \
-		-e BUCKETNAME=leviosa-assets \
-		-e AWS_REGION=eu-central-1 \
-		-e AWS_ACCESS_KEY_ID=AKIA6D6JBL4GFGD47U4N \
-		-e AWS_SECRET_ACCESS_KEY=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 \
-		-e GMAIL_EMAIL=leviosacare@gmail.com \
-		-e GMAIL_PASSWORD="eurh dnow ulys zzty" \
-		-e STRIPE_SECRET_KEY="sk_test_51OprHjHwHXlEm0ohOgDJOaArlojFAGnNz3xULv6hgG4OCKwHw6dynWchGxjzQDZC0v8s1lXBvVEAxlbjuWq3Ho9f00ex88AzJ3" \
-		-e REDIS_ADDR=127.0.0.1:6379 \
-		-e REDIS_DB=0 \
-		-e REDIS_PASSWORD=secret \
-		-e LOGGING_SALT=20eaddaabb68c5db7bee3232552138b3 \
-		-e VAULT_ADDR=https://leviosa-cluster-public-vault-9da92754.27b5d5f2.z1.hashicorp.cloud:8200 \
-		-e VAULT_NAMESPACE=admin/leviosa \
-		-e VAULT_ROLE_ID=49f35e23-4c96-a413-e4e6-dd31271d7299 \
-		-e VAULT_SECRET_ID=645c80cb-d8b7-6c5c-db1a-e71210be6e1b \
-		-e RABBITMQ_HOST=localhost \
-		-e RABBITMQ_PORT=5672 \
-		-e RABBITMQ_USER=guest \
-		-e RABBITMQ_PASSWORD=guest \
-		-e POSTGRES_PASSWORD=password \
-		-e POSTGRES_USER=user \
-		-e POSTGRES_DB=leviosa \
-		-e POSTGRES_PORT=5432 \
-		-e POSTGRES_HOST=localhost \
-		leviosa-backend:1;
+test-integration-notification: ## Run integration tests for notification
+	@if [ -d "$(INTEGRATION_ROOT)/notification" ]; then \
+		echo "Running integration tests for notification service..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(INTEGRATION_ROOT)/notification/...; \
+	else \
+		echo "Warning: $(INTEGRATION_ROOT)/notification not found, skipping..."; \
+	fi
+
+# Advanced Testing Commands
+test-coverage: ## Generate HTML coverage report for all services
+	@echo "Generating coverage report for all services..."
+	@rm -f coverage.out coverage.html
+	@echo "mode: atomic" > coverage.out
+	@for service in $(INTERNAL_SERVICES); do \
+		if [ -d "$(SERVICES_ROOT)/$$service" ]; then \
+			echo "Collecting coverage for $$service unit tests..."; \
+			go test $(TEST_COVERAGE_HTML) -timeout $(TEST_TIMEOUT) ./$(SERVICES_ROOT)/$$service/... -o $$service-coverage.out 2>/dev/null || true; \
+			if [ -f $$service-coverage.out ]; then \
+				tail -n +2 $$service-coverage.out >> coverage.out; \
+				rm $$service-coverage.out; \
+			fi; \
+		fi; \
+		if [ -d "$(INTEGRATION_ROOT)/$$service" ]; then \
+			echo "Collecting coverage for $$service integration tests..."; \
+			go test $(TEST_COVERAGE_HTML) -timeout $(TEST_TIMEOUT) ./$(INTEGRATION_ROOT)/$$service/... -o $$service-integration-coverage.out 2>/dev/null || true; \
+			if [ -f $$service-integration-coverage.out ]; then \
+				tail -n +2 $$service-integration-coverage.out >> coverage.out; \
+				rm $$service-integration-coverage.out; \
+			fi; \
+		fi; \
+	done
+	@if [ -s coverage.out ]; then \
+		go tool cover -html=coverage.out -o coverage.html; \
+		echo "Coverage report generated: coverage.html"; \
+		echo "Overall coverage: $$(go tool cover -func=coverage.out | grep total | awk '{print $$3}')"; \
+	else \
+		echo "No coverage data collected."; \
+	fi
+
+test-race: ## Run tests with race condition detection
+	@echo "Running tests with race condition detection..."
+	@$(MAKE) test-unit TEST_RACE="$(TEST_RACE)"
+	@$(MAKE) test-integration TEST_RACE="$(TEST_RACE)"
+
+test-benchmark: ## Run performance benchmarks
+	@echo "Running performance benchmarks..."
+	@for service in $(INTERNAL_SERVICES); do \
+		if [ -d "$(SERVICES_ROOT)/$$service" ]; then \
+			echo "Benchmarking $$service..."; \
+			go test -bench=. -benchmem ./$(SERVICES_ROOT)/$$service/... -timeout $(TEST_TIMEOUT) || true; \
+		fi; \
+		if [ -d "$(INTEGRATION_ROOT)/$$service" ]; then \
+			echo "Benchmarking $$service integration tests..."; \
+			go test -bench=. -benchmem ./$(INTEGRATION_ROOT)/$$service/... -timeout $(TEST_TIMEOUT) || true; \
+		fi; \
+	done
+
+test-verbose: ## Run tests with detailed output
+	@echo "Running tests with verbose output..."
+	@$(MAKE) test-unit TEST_VERBOSE="-v"
+	@$(MAKE) test-integration TEST_VERBOSE="-v"
+
+test-smoke: ## Run quick validation (short tests only)
+	@echo "Running smoke tests (short tests only)..."
+	@for service in $(INTERNAL_SERVICES); do \
+		if [ -d "$(SERVICES_ROOT)/$$service" ]; then \
+			echo "Smoke testing $$service..."; \
+			go test -short -timeout 5m ./$(SERVICES_ROOT)/$$service/... || true; \
+		fi; \
+		if [ -d "$(INTEGRATION_ROOT)/$$service" ]; then \
+			echo "Smoke testing $$service integration..."; \
+			go test -short -timeout 5m ./$(INTEGRATION_ROOT)/$$service/... || true; \
+		fi; \
+	done
+
+# Utility Commands
+test-clean: ## Clean test artifacts and coverage files
+	@echo "Cleaning test artifacts..."
+	@rm -f coverage.out coverage.html
+	@rm -f *.test
+	@rm -f *-coverage.out
+	@find . -name "*.test" -delete
+	@find . -name "*.out" -delete
+	@find . -name "*.prof" -delete
+	@echo "Test artifacts cleaned!"
+
+# Generic Specific Test Commands
+test-file: ## Run specific test file (usage: make test-file TEST_PATH=internal/authuser/infrastructure/postgres/user/create_user_test.go)
+	@if [ -z "$(TEST_PATH)" ]; then \
+		echo "Error: TEST_PATH parameter is required. Usage: make test-file TEST_PATH=<path-to-test-file>"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(TEST_PATH)" ]; then \
+		echo "Error: Test file '$(TEST_PATH)' not found."; \
+		exit 1; \
+	fi
+	@echo "Running tests in $(TEST_PATH)..."
+	@dir_path=$$(dirname "$(TEST_PATH)"); go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) "./$$dir_path"
+
+test-func: ## Run specific test function (usage: make test-func TEST_NAME=TestCreateUser TEST_PATH=internal/authuser/infrastructure/postgres/user/create_user_test.go)
+	@if [ -z "$(TEST_NAME)" ] || [ -z "$(TEST_PATH)" ]; then \
+		echo "Error: Both TEST_NAME and TEST_PATH parameters are required."; \
+		echo "Usage: make test-func TEST_NAME=<test-function-name> TEST_PATH=<path-to-test-file>"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(TEST_PATH)" ]; then \
+		echo "Error: Test file '$(TEST_PATH)' not found."; \
+		exit 1; \
+	fi
+	@echo "Running test function $(TEST_NAME) in $(TEST_PATH)..."
+	@dir_path=$$(dirname "$(TEST_PATH)"); go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) -run "$(TEST_NAME)" "./$$dir_path"
+
+# Forward compatibility handles current mixed architecture
+test-unit-current: ## Run unit tests for current mixed architecture (internal/ + standalone services)
+	@echo "Running unit tests for current architecture..."
+	# Test services in internal/
+	@if [ -d "$(SERVICES_ROOT)/authuser" ]; then \
+		echo "Testing internal/authuser..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(SERVICES_ROOT)/authuser/... || true; \
+	fi
+	@if [ -d "$(SERVICES_ROOT)/catalog" ]; then \
+		echo "Testing internal/catalog..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(SERVICES_ROOT)/catalog/... || true; \
+	fi
+	# Test standalone services (current reality)
+	@if [ -d "settings" ]; then \
+		echo "Testing standalone settings..."; \
+		cd settings && go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./... && cd .. || true; \
+	fi
+	@if [ -d "booking" ]; then \
+		echo "Testing standalone booking..."; \
+		cd booking && go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./... && cd .. || true; \
+	fi
+	@if [ -d "notification" ]; then \
+		echo "Testing standalone notification..."; \
+		cd notification && go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./... && cd .. || true; \
+	fi
+	@echo "Current architecture unit tests completed!"
