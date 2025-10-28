@@ -52,8 +52,39 @@ func NewTestUser(t *testing.T, email, firstName, lastName string) *domain.User {
 	}
 }
 
+// NewTestUserEncx creates a UserEncx domain object with basic test data (plaintext fields only)
+func NewTestUserEncx(t *testing.T) *domain.UserEncx {
+	t.Helper()
+	return &domain.UserEncx{
+		ID:                  uuid.New(),
+		State:               domain.Unverified,
+		EmailEncrypted:      []byte("email_encrypted"),
+		EmailHash:           "email_hash",
+		PasswordHashSecure:  "password_hash_secure",
+		PictureEncrypted:    []byte("picture_encrypted"),
+		CreatedAtEncrypted:  []byte("created_at_encrypted"),
+		LoggedInAtEncrypted: []byte("logged_in_at_encrypted"),
+		RoleEncrypted:       []byte("role_encrypted"),
+		BirthDateEncrypted:  []byte("birthday_encrypted"),
+		LastNameEncrypted:   []byte("lastname_encrypted"),
+		FirstNameEncrypted:  []byte("firstname_encrypted"),
+		GenderEncrypted:     []byte("gender_encrypted"),
+		TelephoneHash:       "telephone_hash",
+		TelephoneEncrypted:  []byte("telephone_encrypted"),
+		PostalCodeEncrypted: []byte("postalcode_encrypted"),
+		CityEncrypted:       []byte("city_encrypted"),
+		Address1Encrypted:   []byte("address1_encrypted"),
+		Address2Encrypted:   []byte("address2_encrypted"),
+		GoogleIDEncrypted:   []byte("google_id_encrypted"),
+		AppleIDEncrypted:    []byte("apple_id_encrypted"),
+		DEKEncrypted:        []byte("dek_encrypted"),
+		KeyVersion:          1,
+		Metadata:            encx.EncryptionMetadata{},
+	}
+}
+
 // GetUserEncxByID retrieves a UserEncx by user ID for test verification using the new Encx approach
-func GetUserEnxByID(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pgxpool.Pool, crypto encx.CryptoService) (*domain.UserEncx, error) {
+func GetUserEnxByID(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pgxpool.Pool) (*domain.UserEncx, error) {
 	t.Helper()
 
 	var userEncx domain.UserEncx
@@ -151,7 +182,7 @@ func CheckUserEncxExistsByID(t *testing.T, ctx context.Context, pool *pgxpool.Po
 }
 
 // InsertUserEncx convenience function that inserts a UserEncx instance
-func InsertUserEncx(t *testing.T, ctx context.Context, userEncx *domain.UserEncx, pool *pgxpool.Pool, crypto encx.CryptoService) error {
+func InsertUserEncx(t *testing.T, ctx context.Context, userEncx *domain.UserEncx, pool *pgxpool.Pool) error {
 	t.Helper()
 
 	query := `
