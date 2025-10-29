@@ -18,8 +18,9 @@ func (r *SessionRepository) UpdateSessionCompletion(ctx context.Context, session
 		return errs.ClassifyRedisError("failed to get session TTL", err)
 	}
 
-	// If key doesn't exist, TTL returns -2
-	if ttl == -2*time.Second {
+	// If key doesn't exist, TTL returns -2 nanoseconds (not -2 seconds)
+	// Redis returns -2 for non-existent keys, go-redis returns this as time.Duration(-2)
+	if ttl == time.Duration(-2) {
 		return errs.ErrRepositoryNotFound
 	}
 

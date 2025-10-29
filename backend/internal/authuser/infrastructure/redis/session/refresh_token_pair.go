@@ -7,6 +7,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 	"github.com/hengadev/errsx"
 )
@@ -95,21 +96,6 @@ func (r *SessionRepository) RefreshTokenPair(ctx context.Context, oldRefreshToke
 			"cleanup_errors", refreshErrs,
 			"error_count", len(refreshErrs),
 			"result", "core_operation_succeeded")
-	}
-
-	return nil
-}
-
-// InvalidateTokenPair removes session, access and refresh tokens
-func (r *SessionRepository) InvalidateTokenPair(ctx context.Context, accessTokenHash, refreshTokenHash string, sessionID uuid.UUID) error {
-	accessTokenKey := session.FormatAccessTokenKey(accessTokenHash)
-	refreshTokenKey := session.FormatRefreshTokenKey(refreshTokenHash)
-	sessionKey := session.FormatSessionKey(sessionID.String())
-
-	// Remove all keys - don't fail if some don't exist
-	keys := []string{accessTokenKey, refreshTokenKey, sessionKey}
-	if err := r.client.Del(ctx, keys...).Err(); err != nil {
-		return errs.ClassifyRedisError("invalidate token pair", err)
 	}
 
 	return nil
