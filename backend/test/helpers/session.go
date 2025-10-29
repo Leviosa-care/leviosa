@@ -53,7 +53,7 @@ func ClearSessionsRedis(t *testing.T, ctx context.Context, client *redis.Client)
 }
 
 // NewTestSession creates a test session with reasonable defaults using real encryption
-// Returns both the original session and the processed SessionEncx for test usage
+// Returns original session for test usage
 func NewTestSession(t *testing.T, crypto encx.CryptoService) (*session.Session, error) {
 	t.Helper()
 
@@ -84,6 +84,26 @@ func NewTestSession(t *testing.T, crypto encx.CryptoService) (*session.Session, 
 	}
 
 	return s, nil
+}
+
+// NewTestSessionEncx creates a test session encx with mock defaults that does not use encryption.
+// Returns both the original session and the processed SessionEncx for test usage
+func NewTestSessionEncx(t *testing.T) *session.SessionEncx {
+	t.Helper()
+
+	s := &session.SessionEncx{
+		ID:                 uuid.New(),
+		UserIDEncrypted:    []byte("user_id_encrypted"),
+		UserIDHash:         "user_id_hash_basic",
+		RoleEncrypted:      []byte("role_encrypted"),
+		StateEncrypted:     []byte("state_active_encrypted"),
+		CreatedAtEncrypted: []byte("created_at_encrypted"),
+		ExpiresAtEncrypted: []byte("expires_at_encrypted"),
+		AccessTokenHash:    "access_token_hash_basic",
+		RefreshTokenHash:   "refresh_token_hash_basic",
+	}
+
+	return s
 }
 
 // // NewTestSession creates a test session with reasonable defaults using real encryption
@@ -161,17 +181,17 @@ func NewTestSession(t *testing.T, crypto encx.CryptoService) (*session.Session, 
 // }
 
 // EncodeSession marshals a session to JSON bytes for Redis storage
-func EncodeSession(t *testing.T, session *session.Session) []byte {
+func EncodeSession(t *testing.T, session *session.SessionEncx) []byte {
 	t.Helper()
 	data, err := json.Marshal(session)
 	require.NoError(t, err, "Failed to marshal session")
 	return data
 }
 
-// DecodeSession unmarshals JSON bytes back to a session
-func DecodeSession(t *testing.T, data []byte) *session.Session {
+// DecodeSessionEncx unmarshals JSON bytes back to a session
+func DecodeSessionEncx(t *testing.T, data []byte) *session.SessionEncx {
 	t.Helper()
-	var session session.Session
+	var session session.SessionEncx
 	err := json.Unmarshal(data, &session)
 	require.NoError(t, err, "Failed to unmarshal session")
 	return &session
@@ -235,7 +255,7 @@ func InsertSessionEncx(t *testing.T, ctx context.Context, client *redis.Client, 
 type SessionTestData struct {
 	SessionID   uuid.UUID
 	TokenHash   string
-	Session     *session.Session
+	Session     *session.SessionEncx
 	SessionData []byte
 }
 
@@ -321,7 +341,7 @@ func CreateSessionWithEncryption(t *testing.T, ctx context.Context, sessionInfo 
 }
 
 // GetSessionByID retrieves a session by ID, returns nil if not found
-func GetSessionByID(t *testing.T, ctx context.Context, sessionID uuid.UUID, client *redis.Client) *session.Session {
+func GetSessionByID(t *testing.T, ctx context.Context, sessionID uuid.UUID, client *redis.Client) *session.SessionEncx {
 	t.Helper()
 
 	sessionKey := session.FormatSessionKey(sessionID.String())
@@ -331,7 +351,27 @@ func GetSessionByID(t *testing.T, ctx context.Context, sessionID uuid.UUID, clie
 		return nil
 	}
 
-	return DecodeSession(t, data)
+	return DecodeSessionEncx(t, data)
+}
+
+// FindSessionByAccessTokenHash retrieves a session by its access token hash, returns nil if not found
+func FindSessionByAccessTokenHash(t *testing.T, ctx context.Context, accessTokenHash string, client *redis.Client) ([]byte, error) {
+	t.Helper()
+
+	sessionKey := session.FormatAccessTokenKey(accessTokenHash)
+	data, err := client.Get(ctx, sessionKey).Bytes()
+
+	return data, err
+}
+
+// FindSessionByRefreshTokenHash retrieves a session by its access token hash, returns nil if not found
+func FindSessionByRefreshTokenHash(t *testing.T, ctx context.Context, accessTokenHash string, client *redis.Client) ([]byte, error) {
+	t.Helper()
+
+	sessionKey := session.FormatRefreshTokenKey(accessTokenHash)
+	data, err := client.Get(ctx, sessionKey).Bytes()
+
+	return data, err
 }
 
 // ToCookieString generates a cookie string for the session access token
