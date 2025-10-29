@@ -16,7 +16,6 @@ import (
 
 var (
 	redisContainer *tu.RedisContainer
-	vaultContainer *tu.VaultContainer
 	testClient     *redis.Client
 	repo           ports.SessionRepository
 )

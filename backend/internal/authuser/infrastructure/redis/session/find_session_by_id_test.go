@@ -2,9 +2,11 @@ package sessionRepository_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
@@ -12,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestFindSessionByID make test-unit-session-test
+// make test-func TEST_NAME=TestFindSessionByID TEST_PATH=internal/authuser/infrastructure/redis/session/find_session_by_id_test.go
 
 func TestFindSessionByID(t *testing.T) {
 	ctx := context.Background()
@@ -21,28 +23,36 @@ func TestFindSessionByID(t *testing.T) {
 		// Clean state
 		td.ClearSessionsRedis(t, ctx, testClient)
 
-		// Create test session directly in Redis
-		session := td.CreateTestSessionWithCrypto(t, crypto)
+		// Create test baseSession directly in Redis
+		baseSession := td.NewTestSessionEncx(t)
+
 		ttl := 1 * time.Hour
-		td.InsertSessionDirectly(t, ctx, testClient, session, ttl)
+		td.InsertSessionEncx(t, ctx, testClient, baseSession, ttl)
 
 		// Find session by ID
-		sessionData, err := repo.FindSessionByID(ctx, session.ID.String())
-		require.NoError(t, err)
+		sessionData, err := repo.FindSessionByID(ctx, baseSession.ID)
+		assert.NoError(t, err)
+
+		var retrievedSessionEncx session.SessionEncx
+		err = json.Unmarshal(sessionData, &retrievedSessionEncx)
+		assert.NoError(t, err)
 
 		// Verify session data integrity
-		retrievedSession := td.DecodeSessionWithDecryption(t, sessionData, crypto)
-		assert.Equal(t, session.UserID, retrievedSession.UserID)
-		assert.Equal(t, session.Role, retrievedSession.Role)
-		assert.Equal(t, session.State, retrievedSession.State)
-		assert.Equal(t, session.TokenHash, retrievedSession.TokenHash)
+		assert.Equal(t, baseSession.UserIDHash, retrievedSessionEncx.UserIDHash)
+		assert.Equal(t, baseSession.UserIDEncrypted, retrievedSessionEncx.UserIDEncrypted)
+		assert.Equal(t, baseSession.RoleEncrypted, retrievedSessionEncx.RoleEncrypted)
+		assert.Equal(t, baseSession.StateEncrypted, retrievedSessionEncx.StateEncrypted)
+		assert.Equal(t, baseSession.CreatedAtEncrypted, retrievedSessionEncx.CreatedAtEncrypted)
+		assert.Equal(t, baseSession.ExpiresAtEncrypted, retrievedSessionEncx.ExpiresAtEncrypted)
+		assert.Equal(t, baseSession.AccessTokenHash, retrievedSessionEncx.AccessTokenHash)
+		assert.Equal(t, baseSession.RefreshTokenHash, retrievedSessionEncx.RefreshTokenHash)
 	})
 
 	t.Run("should return not found error for non-existent session", func(t *testing.T) {
 		// Clean state
 		td.ClearSessionsRedis(t, ctx, testClient)
 
-		nonExistentID := uuid.New().String()
+		nonExistentID := uuid.New()
 
 		// Try to find non-existent session
 		sessionData, err := repo.FindSessionByID(ctx, nonExistentID)
@@ -55,7 +65,7 @@ func TestFindSessionByID(t *testing.T) {
 		// Clean state
 		td.ClearSessionsRedis(t, ctx, testClient)
 
-		sessionID := uuid.New().String()
+		sessionID := uuid.New()
 
 		// Close Redis connection to simulate failure
 		testClient.Close()
@@ -74,14 +84,15 @@ func TestFindSessionByID(t *testing.T) {
 		td.ClearSessionsRedis(t, ctx, testClient)
 
 		sessionID := uuid.New()
-		sessionKey := "authuser:session:" + sessionID.String()
+		// sessionKey := "authuser:session:" + sessionID.String()
+		sessionKey := session.FormatSessionKey(sessionID.String())
 
 		// Insert empty data directly
 		err := testClient.Set(ctx, sessionKey, []byte{}, 1*time.Hour).Err()
 		require.NoError(t, err)
 
 		// Find session
-		sessionData, err := repo.FindSessionByID(ctx, sessionID.String())
+		sessionData, err := repo.FindSessionByID(ctx, sessionID)
 		require.NoError(t, err)
 		assert.Equal(t, []byte{}, sessionData)
 	})
@@ -89,14 +100,14 @@ func TestFindSessionByID(t *testing.T) {
 	t.Run("should find session near expiration", func(t *testing.T) {
 		// Clean state
 		td.ClearSessionsRedis(t, ctx, testClient)
+		baseSession := td.NewTestSessionEncx(t)
 
 		// Create session with short TTL
-		session := td.CreateTestSessionWithCrypto(t, crypto)
 		ttl := 200 * time.Millisecond
-		td.InsertSessionDirectly(t, ctx, testClient, session, ttl)
+		td.InsertSessionEncx(t, ctx, testClient, baseSession, ttl)
 
 		// Find session immediately (should exist)
-		sessionData, err := repo.FindSessionByID(ctx, session.ID.String())
+		sessionData, err := repo.FindSessionByID(ctx, baseSession.ID)
 		require.NoError(t, err)
 		assert.NotNil(t, sessionData)
 
@@ -104,7 +115,7 @@ func TestFindSessionByID(t *testing.T) {
 		time.Sleep(250 * time.Millisecond)
 
 		// Try to find expired session (should not exist)
-		expiredSessionData, err := repo.FindSessionByID(ctx, session.ID.String())
+		expiredSessionData, err := repo.FindSessionByID(ctx, baseSession.ID)
 		assert.Error(t, err)
 		assert.Nil(t, expiredSessionData)
 	})
@@ -113,49 +124,36 @@ func TestFindSessionByID(t *testing.T) {
 		// Clean state
 		td.ClearSessionsRedis(t, ctx, testClient)
 
+		const count = 3
+
 		// Create multiple sessions
-		sessions := make([]*td.SessionTestData, 3)
+		sessions := make([]*td.SessionTestData, count)
 		ttl := 1 * time.Hour
 
-		for i := range 3 {
-			session := td.CreateTestSessionWithCrypto(t, crypto)
-			td.InsertSessionDirectly(t, ctx, testClient, session, ttl)
+		for i := range count {
+			baseSession := td.NewTestSessionEncx(t)
+			td.InsertSessionEncx(t, ctx, testClient, baseSession, ttl)
 
 			sessions[i] = &td.SessionTestData{
-				SessionID:   session.ID,
-				TokenHash:   session.TokenHash,
-				Session:     session,
-				SessionData: td.EncodeSession(t, session),
+				SessionID:   baseSession.ID,
+				TokenHash:   baseSession.AccessTokenHash,
+				Session:     baseSession,
+				SessionData: td.EncodeSession(t, baseSession),
 			}
 		}
 
 		// Find each session and verify data
 		for i, sessionData := range sessions {
-			retrievedData, err := repo.FindSessionByID(ctx, sessionData.SessionID.String())
-			require.NoError(t, err, "Should find session %d", i)
+			retrievedData, err := repo.FindSessionByID(ctx, sessionData.SessionID)
+			assert.NoError(t, err, "Should find session %d", i)
 
-			retrievedSession := td.DecodeSessionWithDecryption(t, retrievedData, crypto)
-			assert.Equal(t, sessionData.Session.UserID, retrievedSession.UserID, "Session %d UserID should match", i)
-			assert.Equal(t, sessionData.Session.Role, retrievedSession.Role, "Session %d Role should match", i)
-			assert.Equal(t, sessionData.Session.State, retrievedSession.State, "Session %d State should match", i)
-		}
-	})
+			var retrievedSessionEncx session.SessionEncx
+			err = json.Unmarshal(retrievedData, &retrievedSessionEncx)
+			assert.NoError(t, err)
 
-	t.Run("should handle malformed session ID gracefully", func(t *testing.T) {
-		// Clean state
-		td.ClearSessionsRedis(t, ctx, testClient)
-
-		malformedIDs := []string{
-			"",
-			"not-a-uuid",
-			"12345",
-			"invalid-session-id-format",
-		}
-
-		for _, malformedID := range malformedIDs {
-			sessionData, err := repo.FindSessionByID(ctx, malformedID)
-			assert.Error(t, err, "Should return error for malformed ID: %s", malformedID)
-			assert.Nil(t, sessionData, "Should return nil data for malformed ID: %s", malformedID)
+			assert.Equal(t, sessionData.Session.UserIDEncrypted, retrievedSessionEncx.UserIDEncrypted, "Session %d UserID should match", i)
+			assert.Equal(t, sessionData.Session.RoleEncrypted, retrievedSessionEncx.RoleEncrypted, "Session %d Role should match", i)
+			assert.Equal(t, sessionData.Session.StateEncrypted, retrievedSessionEncx.StateEncrypted, "Session %d State should match", i)
 		}
 	})
 }
