@@ -3,28 +3,25 @@ package partnerRepository
 import (
 	"context"
 	"fmt"
-	"time"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
 )
 
-func (r *Repository) VerifyPartner(ctx context.Context, partnerID uuid.UUID, verifiedByUserID uuid.UUID) error {
-	// For simplicity, we're storing the verification time as encrypted bytes
-	// In a real implementation, you'd encrypt this using the same DEK as other fields
-	verifiedAt := time.Now()
-	verifiedAtBytes := []byte(verifiedAt.Format(time.RFC3339))
-
+// VerifyPartner updates partner's Stripe account status to reflect verification completion
+// In the new Partner domain, verification is handled through Stripe Connect account status
+// rather than separate verification fields
+func (r *Repository) VerifyPartner(ctx context.Context, userID uuid.UUID, verifiedByUserID uuid.UUID) error {
 	query := fmt.Sprintf(`
 		UPDATE %s.partners SET
-			is_verified = true,
-			verified_at_encrypted = $2,
-			verified_by_user_id = $3,
+			stripe_account_status = '%s',
+			stripe_onboarding_complete = true,
 			updated_at = NOW()
-		WHERE id = $1
-	`, r.schema)
+		WHERE user_id = $1
+	`, r.schema, domain.StripeAccountStatusActive)
 
-	result, err := r.pool.Exec(ctx, query, partnerID, verifiedAtBytes, verifiedByUserID)
+	result, err := r.pool.Exec(ctx, query, userID)
 	if err != nil {
 		return errs.ClassifyPgError("verify partner", err)
 	}

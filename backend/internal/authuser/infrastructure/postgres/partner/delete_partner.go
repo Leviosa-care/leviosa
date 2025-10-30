@@ -8,13 +8,14 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) DeletePartner(ctx context.Context, partnerID uuid.UUID) error {
+// DeletePartner deletes a partner by user ID (since partners are identified by user_id in the new domain)
+func (r *Repository) DeletePartner(ctx context.Context, userID uuid.UUID) error {
 	query := fmt.Sprintf(`
 		DELETE FROM %s.partners
-		WHERE id = $1
+		WHERE user_id = $1
 	`, r.schema)
 
-	result, err := r.pool.Exec(ctx, query, partnerID)
+	result, err := r.pool.Exec(ctx, query, userID)
 	if err != nil {
 		return errs.ClassifyPgError("delete partner", err)
 	}

@@ -12,8 +12,9 @@ import (
 func (r *Repository) GetAllPartners(ctx context.Context) ([]*domain.PartnerEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, user_id, bio_encrypted, experience_encrypted, certifications_encrypted,
-			is_verified, verified_at_encrypted, verified_by_user_id,
+			user_id, bio_encrypted, experience_encrypted, certifications_encrypted,
+			category_ids_encrypted, product_ids_encrypted,
+			stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			dek_encrypted, key_version, created_at, updated_at
 		FROM %s.partners
 		ORDER BY created_at DESC
@@ -29,14 +30,15 @@ func (r *Repository) GetAllPartners(ctx context.Context) ([]*domain.PartnerEncx,
 	for rows.Next() {
 		partner := &domain.PartnerEncx{}
 		err := rows.Scan(
-			&partner.ID,
 			&partner.UserID,
 			&partner.BioEncrypted,
 			&partner.ExperienceEncrypted,
 			&partner.CertificationsEncrypted,
-			&partner.IsVerified,
-			&partner.VerifiedAtEncrypted,
-			&partner.VerifiedByUserID,
+			&partner.CategoryIDsEncrypted,
+			&partner.ProductIDsEncrypted,
+			&partner.StripeConnectedAccountIDEncrypted,
+			&partner.StripeAccountStatus,
+			&partner.StripeOnboardingComplete,
 			&partner.DEKEncrypted,
 			&partner.KeyVersion,
 			&partner.CreatedAt,
@@ -50,6 +52,10 @@ func (r *Repository) GetAllPartners(ctx context.Context) ([]*domain.PartnerEncx,
 
 	if err := rows.Err(); err != nil {
 		return nil, errs.ClassifyPgError("iterate partners", err)
+	}
+
+	if len(partners) == 0 {
+		return []*domain.PartnerEncx{}, nil
 	}
 
 	return partners, nil
