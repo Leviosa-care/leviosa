@@ -78,22 +78,21 @@ CREATE TRIGGER update_users_updated_at
 
 -- Create partners table extending users with partner-specific data
 CREATE TABLE auth.partners (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
 
     -- Partner profile data (all encrypted for GDPR compliance)
     bio_encrypted BYTEA,                             -- Professional bio
     experience_encrypted BYTEA,                      -- Years of experience, background
-    certifications_encrypted BYTEA,                  -- JSON array of certifications
+    certifications_encrypted BYTEA,                  -- Encrypted array of certifications
 
-    -- Catalog associations (JSONB arrays of UUIDs)
-    category_ids JSONB DEFAULT '[]',                 -- Catalog category UUIDs this partner offers services for
-    product_ids JSONB DEFAULT '[]',                  -- Catalog product UUIDs this partner offers services for
+    -- Catalog associations (encrypted arrays of UUIDs)
+    category_ids_encrypted BYTEA,                    -- Encrypted catalog category UUIDs this partner offers services for
+    product_ids_encrypted BYTEA,                     -- Encrypted catalog product UUIDs this partner offers services for
 
-    -- Verification status
-    is_verified BOOLEAN NOT NULL DEFAULT FALSE,
-    verified_at_encrypted BYTEA,                     -- When verified (encrypted timestamp)
-    verified_by_user_id UUID REFERENCES auth.users(id), -- Admin who verified
+    -- Stripe Connect integration
+    stripe_connected_account_id_encrypted BYTEA,     -- Encrypted Stripe Connected Account ID
+    stripe_account_status VARCHAR(20) DEFAULT 'pending', -- Stripe account status (pending, active, restricted, disabled)
+    stripe_onboarding_complete BOOLEAN DEFAULT FALSE, -- Whether Stripe onboarding is complete
 
     -- Encryption metadata
     dek_encrypted BYTEA NOT NULL,
@@ -106,8 +105,8 @@ CREATE TABLE auth.partners (
 
 -- Indexes for partners table
 CREATE INDEX idx_partners_user_id ON auth.partners (user_id);
-CREATE INDEX idx_partners_is_verified ON auth.partners (is_verified);
-CREATE INDEX idx_partners_verified_by_user_id ON auth.partners (verified_by_user_id) WHERE verified_by_user_id IS NOT NULL;
+CREATE INDEX idx_partners_stripe_account_status ON auth.partners (stripe_account_status);
+CREATE INDEX idx_partners_stripe_onboarding_complete ON auth.partners (stripe_onboarding_complete);
 CREATE INDEX idx_partners_created_at ON auth.partners (created_at);
 
 CREATE TRIGGER update_partners_updated_at
