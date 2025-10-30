@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestGetUser make test-integration-user-test
+// make test-func TEST_NAME=TestGetUser TEST_PATH=test/integration/authuser/user/get_user_test.go
 
 func TestGetUser(t *testing.T) {
 	ctx := context.Background()
@@ -31,7 +31,7 @@ func TestGetUser(t *testing.T) {
 		testUser.State = domain.Active
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Act - make request without authentication
@@ -64,7 +64,7 @@ func TestGetUser(t *testing.T) {
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create a valid session for the user
@@ -140,7 +140,7 @@ func TestGetUser(t *testing.T) {
 		testUser.State = domain.Active
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create expired session (negative duration to ensure it's expired)

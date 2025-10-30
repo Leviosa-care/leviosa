@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestUpdateUser make test-integration-user-test
+// make test-func TEST_NAME=TestUpdateUser TEST_PATH=test/integration/authuser/user/update_user_test.go
 
 func TestUpdateUser(t *testing.T) {
 	ctx := context.Background()
@@ -35,7 +35,7 @@ func TestUpdateUser(t *testing.T) {
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		updateRequest := domain.UpdateUserRequest{
@@ -70,7 +70,8 @@ func TestUpdateUser(t *testing.T) {
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
 
-		td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
+		require.NoError(t, err)
 
 		// Create valid session
 		now := time.Now()
@@ -129,11 +130,11 @@ func TestUpdateUser(t *testing.T) {
 		assert.Equal(t, newAddress1, updatedUser.Address1)      // Updated field
 
 		// Verify data was persisted in database
-		retrievedUserEncx, err := td.GetUserEnxByID(t, ctx, testUser.ID, testPool, crypto)
-		require.NoError(t, err)
+		retrievedUserEncx, err := td.GetUserEnxByID(t, ctx, testUser.ID, testPool)
+		assert.NoError(t, err)
 
 		retrievedUser, err := domain.DecryptUserEncx(ctx, crypto, retrievedUserEncx)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.Equal(t, newFirstName, retrievedUser.FirstName)
 		assert.Equal(t, originalLastName, retrievedUser.LastName) // Should remain unchanged
@@ -153,7 +154,7 @@ func TestUpdateUser(t *testing.T) {
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create valid standardSession
@@ -194,7 +195,7 @@ func TestUpdateUser(t *testing.T) {
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create valid standardSession
@@ -236,7 +237,7 @@ func TestUpdateUser(t *testing.T) {
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create valid standardSession
@@ -277,7 +278,7 @@ func TestUpdateUser(t *testing.T) {
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create expired session
@@ -315,7 +316,7 @@ func TestUpdateUser(t *testing.T) {
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create valid session

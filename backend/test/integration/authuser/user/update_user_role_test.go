@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	"github.com/google/uuid"
@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestUpdateUserRole make test-integration-user-test
+// make test-func TEST_NAME=TestUpdateUserRole TEST_PATH=test/integration/authuser/user/update_user_role_test.go
 
 func TestUpdateUserRole(t *testing.T) {
 	ctx := context.Background()
@@ -36,7 +36,7 @@ func TestUpdateUserRole(t *testing.T) {
 		user.Role = identity.StandardStr
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Act - Update role to premium
@@ -53,11 +53,11 @@ func TestUpdateUserRole(t *testing.T) {
 		assert.Equal(t, "User role updated successfully", response["message"])
 
 		// Verify role updated in database
-		updatedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
-		require.NoError(t, err)
+		updatedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool)
+		assert.NoError(t, err)
 
 		updatedUser, err := domain.DecryptUserEncx(ctx, crypto, updatedUserEncx)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.Equal(t, domain.Active, updatedUser.State)
 		assert.Equal(t, identity.PremiumStr, updatedUser.Role)
@@ -77,7 +77,7 @@ func TestUpdateUserRole(t *testing.T) {
 		user.Role = identity.PremiumStr
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Act - Update role to partner
@@ -94,11 +94,11 @@ func TestUpdateUserRole(t *testing.T) {
 		assert.Equal(t, "User role updated successfully", response["message"])
 
 		// Verify role updated in database
-		updatedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
-		require.NoError(t, err)
+		updatedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool)
+		assert.NoError(t, err)
 
 		updatedUser, err := domain.DecryptUserEncx(ctx, crypto, updatedUserEncx)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.Equal(t, identity.PartnerStr, updatedUser.Role)
 	})
@@ -163,7 +163,7 @@ func TestUpdateUserRole(t *testing.T) {
 		user.Role = identity.StandardStr
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Act - Try to update with invalid role
@@ -176,11 +176,11 @@ func TestUpdateUserRole(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		// Verify role unchanged in database
-		unchangedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
-		require.NoError(t, err)
+		unchangedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool)
+		assert.NoError(t, err)
 
 		unchangedUser, err := domain.DecryptUserEncx(ctx, crypto, unchangedUserEncx)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.Equal(t, identity.StandardStr, unchangedUser.Role)
 	})
@@ -198,7 +198,7 @@ func TestUpdateUserRole(t *testing.T) {
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Act
@@ -225,7 +225,7 @@ func TestUpdateUserRole(t *testing.T) {
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Act - Try to update with empty role
@@ -238,11 +238,11 @@ func TestUpdateUserRole(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		// Verify role unchanged in database
-		unchangedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
-		require.NoError(t, err)
+		unchangedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool)
+		assert.NoError(t, err)
 
 		unchangedUser, err := domain.DecryptUserEncx(ctx, crypto, unchangedUserEncx)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.Equal(t, identity.StandardStr, unchangedUser.Role)
 	})
@@ -312,7 +312,7 @@ func TestUpdateUserRole(t *testing.T) {
 				userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 				require.NoError(t, err)
 
-				err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+				err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 				require.NoError(t, err)
 
 				// Act - Update role
@@ -325,11 +325,11 @@ func TestUpdateUserRole(t *testing.T) {
 				assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 				// Verify role updated in database
-				updatedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
-				require.NoError(t, err)
+				updatedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool)
+				assert.NoError(t, err)
 
 				updatedUser, err := domain.DecryptUserEncx(ctx, crypto, updatedUserEncx)
-				require.NoError(t, err)
+				assert.NoError(t, err)
 
 				assert.Equal(t, tc.toRole, updatedUser.Role)
 				assert.Equal(t, domain.Active, updatedUser.State) // State unchanged
@@ -351,7 +351,7 @@ func TestUpdateUserRole(t *testing.T) {
 		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Act - Update role of pending user
@@ -368,11 +368,11 @@ func TestUpdateUserRole(t *testing.T) {
 		assert.Equal(t, "User role updated successfully", response["message"])
 
 		// Verify role updated but state remains pending
-		updatedUserEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool, crypto)
-		require.NoError(t, err)
+		updatedUserEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool)
+		assert.NoError(t, err)
 
 		updatedUser, err := domain.DecryptUserEncx(ctx, crypto, updatedUserEncx)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.Equal(t, identity.StandardStr, updatedUser.Role)
 		assert.Equal(t, domain.Pending, updatedUser.State) // State unchanged
@@ -392,7 +392,7 @@ func TestUpdateUserRole(t *testing.T) {
 		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Act - Downgrade from administrator to standard
@@ -405,11 +405,11 @@ func TestUpdateUserRole(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify role downgraded in database
-		updatedUserEncx, err := td.GetUserEnxByID(t, ctx, adminUser.ID, testPool, crypto)
-		require.NoError(t, err)
+		updatedUserEncx, err := td.GetUserEnxByID(t, ctx, adminUser.ID, testPool)
+		assert.NoError(t, err)
 
 		updatedUser, err := domain.DecryptUserEncx(ctx, crypto, updatedUserEncx)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.Equal(t, identity.StandardStr, updatedUser.Role)
 		assert.Equal(t, domain.Active, updatedUser.State)

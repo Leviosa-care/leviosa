@@ -8,15 +8,15 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestGetAllUsers make test-integration-user-test
+// make test-func TEST_NAME=TestGetAllUsers TEST_PATH=test/integration/authuser/user/get_all_users_test.go
 
 func TestGetAllUsers(t *testing.T) {
 	ctx := context.Background()
@@ -62,7 +62,7 @@ func TestGetAllUsers(t *testing.T) {
 			userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 			require.NoError(t, err)
 
-			err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+			err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 			require.NoError(t, err)
 		}
 
@@ -127,7 +127,7 @@ func TestGetAllUsers(t *testing.T) {
 			userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 			require.NoError(t, err)
 
-			err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+			err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 			require.NoError(t, err)
 
 			time.Sleep(10 * time.Millisecond)
@@ -188,7 +188,7 @@ func TestGetAllUsers(t *testing.T) {
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Act
@@ -243,7 +243,7 @@ func TestGetAllUsers(t *testing.T) {
 		require.NoError(t, err)
 		// Leave optional fields empty
 
-		td.InsertUserEncx(t, ctx, minimalUserEncx, testPool, crypto)
+		td.InsertUserEncx(t, ctx, minimalUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Act
@@ -301,7 +301,7 @@ func TestGetAllUsers(t *testing.T) {
 			testUser.State = user.State
 			testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 			require.NoError(t, err)
-			err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+			err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 			require.NoError(t, err)
 		}
 
@@ -346,7 +346,7 @@ func TestGetAllUsers(t *testing.T) {
 			userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 			require.NoError(t, err)
 
-			err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+			err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 			require.NoError(t, err)
 		}
 
@@ -397,7 +397,7 @@ func TestGetAllUsers(t *testing.T) {
 			userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 			require.NoError(t, err)
 
-			err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+			err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 			require.NoError(t, err)
 		}
 
@@ -450,7 +450,7 @@ func TestGetAllUsers(t *testing.T) {
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Act without admin auth (this should fail if auth middleware is properly configured)

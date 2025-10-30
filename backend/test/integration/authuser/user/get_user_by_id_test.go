@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestGetUserByID make test-integration-user-test
+// make test-func TEST_NAME=TestGetUserByID TEST_PATH=test/integration/authuser/user/get_user_by_id_test.go
 
 func TestGetUserByID(t *testing.T) {
 	ctx := context.Background()
@@ -30,7 +30,7 @@ func TestGetUserByID(t *testing.T) {
 		targetUserEncx, err := domain.ProcessUserEncx(ctx, crypto, targetUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, targetUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, targetUserEncx, testPool)
 		require.NoError(t, err)
 
 		return targetUser.ID
@@ -66,7 +66,7 @@ func TestGetUserByID(t *testing.T) {
 		requestingUser.State = domain.Active
 		requestingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, requestingUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, requestingUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, requestingUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create session for standard user (non-admin)
@@ -116,7 +116,7 @@ func TestGetUserByID(t *testing.T) {
 		adminUser.State = domain.Active
 		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create admin session
@@ -179,7 +179,7 @@ func TestGetUserByID(t *testing.T) {
 		adminUser.State = domain.Active
 		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create admin session
@@ -237,7 +237,7 @@ func TestGetUserByID(t *testing.T) {
 		targetUser.Telephone = telephone
 		targetUserEncx, err := domain.ProcessUserEncx(ctx, crypto, targetUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, targetUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, targetUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create admin user
@@ -245,7 +245,7 @@ func TestGetUserByID(t *testing.T) {
 		adminUser.State = domain.Active
 		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create admin session
@@ -306,7 +306,7 @@ func TestGetUserByID(t *testing.T) {
 		adminUser.State = domain.Active
 		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
 		require.NoError(t, err)
-		td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		td.InsertUserEncx(t, ctx, adminUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create expired admin session

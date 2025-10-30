@@ -8,16 +8,16 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestApproveUser make test-integration-user-test
+// make test-func TEST_NAME=TestApproveUser TEST_PATH=test/integration/authuser/user/approve_user_test.go
 
 func TestApproveUser(t *testing.T) {
 	ctx := context.Background()
@@ -33,7 +33,7 @@ func TestApproveUser(t *testing.T) {
 		pendingUser := td.NewTestUser(t, "pending@example.com", "John", "Doe")
 		pendingUser.State = domain.Pending
 		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
-		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Prepare approval request
@@ -56,7 +56,7 @@ func TestApproveUser(t *testing.T) {
 		assert.Equal(t, "User approved successfully", response["message"])
 
 		// Verify user state in database
-		userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool, crypto)
+		userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool)
 		user, err := domain.DecryptUserEncx(ctx, crypto, userEncx)
 		require.NoError(t, err)
 		assert.Equal(t, domain.Active, user.State)
@@ -98,7 +98,8 @@ func TestApproveUser(t *testing.T) {
 		activeUser.State = domain.Active
 		activeUserEncx, err := domain.ProcessUserEncx(ctx, crypto, activeUser)
 		require.NoError(t, err)
-		td.InsertUserEncx(t, ctx, activeUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, activeUserEncx, testPool)
+		require.NoError(t, err)
 
 		// Prepare approval request
 		request := domain.ApproveUserRequest{
@@ -127,7 +128,8 @@ func TestApproveUser(t *testing.T) {
 		unverifiedUser.State = domain.Unverified
 		unverifiedUserEncx, err := domain.ProcessUserEncx(ctx, crypto, unverifiedUser)
 		require.NoError(t, err)
-		td.InsertUserEncx(t, ctx, unverifiedUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, unverifiedUserEncx, testPool)
+		require.NoError(t, err)
 
 		// Prepare approval request
 		request := domain.ApproveUserRequest{
@@ -145,8 +147,8 @@ func TestApproveUser(t *testing.T) {
 		assert.Equal(t, http.StatusConflict, resp.StatusCode) // User not in pending state
 
 		// Verify user state unchanged in database
-		user, err := td.GetUserEnxByID(t, ctx, unverifiedUser.ID, testPool, crypto)
-		require.NoError(t, err)
+		user, err := td.GetUserEnxByID(t, ctx, unverifiedUser.ID, testPool)
+		assert.NoError(t, err)
 		assert.Equal(t, domain.Unverified, user.State)
 	})
 
@@ -161,7 +163,8 @@ func TestApproveUser(t *testing.T) {
 		pendingUser.State = domain.Pending
 		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
 		require.NoError(t, err)
-		td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool)
+		require.NoError(t, err)
 
 		// Prepare approval request with invalid role
 		request := domain.ApproveUserRequest{
@@ -179,8 +182,8 @@ func TestApproveUser(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		// Verify user state unchanged in database
-		userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool, crypto)
-		require.NoError(t, err)
+		userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool)
+		assert.NoError(t, err)
 		assert.Equal(t, domain.Pending, userEncx.State)
 	})
 
@@ -258,7 +261,8 @@ func TestApproveUser(t *testing.T) {
 				pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
 				require.NoError(t, err)
 
-				td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
+				err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool)
+				require.NoError(t, err)
 
 				// Prepare approval request
 				request := domain.ApproveUserRequest{
@@ -276,8 +280,8 @@ func TestApproveUser(t *testing.T) {
 				assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 				// Verify userEncx state in database
-				userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool, crypto)
-				require.NoError(t, err)
+				userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool)
+				assert.NoError(t, err)
 				user, err := domain.DecryptUserEncx(ctx, crypto, userEncx)
 				assert.Equal(t, domain.Active, userEncx.State)
 				assert.Equal(t, tc.role, user.Role)

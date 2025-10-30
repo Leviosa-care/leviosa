@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestChangePassword make test-integration-user-test
+// make test-func TEST_NAME=TestChangePassword TEST_PATH=test/integration/authuser/user/change_password_test.go
 
 func TestChangePassword(t *testing.T) {
 	ctx := context.Background()
@@ -41,7 +41,7 @@ func TestChangePassword(t *testing.T) {
 		user.Password = oldPassword
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 
-		err = th.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = th.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create active session for the user
@@ -70,8 +70,8 @@ func TestChangePassword(t *testing.T) {
 		assert.Equal(t, "Password changed successfully", message)
 
 		// Verify password was changed in database
-		updatedUser, err := th.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
-		require.NoError(t, err)
+		updatedUser, err := th.GetUserEnxByID(t, ctx, user.ID, testPool)
+		assert.NoError(t, err)
 
 		// Verify old password no longer works by attempting to verify it
 		match, err := crypto.CompareSecureHashAndValue(ctx, oldPassword, updatedUser.PasswordHashSecure)
@@ -96,7 +96,7 @@ func TestChangePassword(t *testing.T) {
 		user.Password = actualPassword
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 
-		err = th.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = th.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create active session for the user
@@ -121,8 +121,8 @@ func TestChangePassword(t *testing.T) {
 		// Assert HTTP response
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-		retrievedUser, err := th.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
-		require.NoError(t, err)
+		retrievedUser, err := th.GetUserEnxByID(t, ctx, user.ID, testPool)
+		assert.NoError(t, err)
 
 		// Verify password was NOT changed in database
 		match, err := crypto.CompareSecureHashAndValue(ctx, actualPassword, retrievedUser.PasswordHashSecure)
@@ -141,7 +141,7 @@ func TestChangePassword(t *testing.T) {
 		user.Password = password
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 
-		err = th.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = th.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create active session for the user
@@ -195,7 +195,7 @@ func TestChangePassword(t *testing.T) {
 		user.Password = password
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 
-		err = th.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = th.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create active session for the user
@@ -231,7 +231,7 @@ func TestChangePassword(t *testing.T) {
 		user.Password = oldPassword
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 
-		err = th.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = th.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create active session for the user
@@ -270,7 +270,7 @@ func TestChangePassword(t *testing.T) {
 		user.Password = oldPassword
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 
-		err = th.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = th.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create active session for the user
@@ -338,7 +338,7 @@ func TestChangePassword(t *testing.T) {
 		user.Password = oldPassword
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 
-		err = th.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = th.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create session with standard role (required by middleware)
@@ -365,8 +365,8 @@ func TestChangePassword(t *testing.T) {
 		message := th.ParseChangePasswordResponse(t, resp)
 		assert.Equal(t, "Password changed successfully", message)
 
-		updatedUser, err := th.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
-		require.NoError(t, err)
+		updatedUser, err := th.GetUserEnxByID(t, ctx, user.ID, testPool)
+		assert.NoError(t, err)
 
 		// Verify old password no longer works by attempting to verify it
 		match, err := crypto.CompareSecureHashAndValue(ctx, oldPassword, updatedUser.PasswordHashSecure)

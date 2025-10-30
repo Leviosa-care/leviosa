@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestGetPendingUsers make test-integration-user-test
+// make test-func TEST_NAME=TestGetPendingUsers TEST_PATH=test/integration/authuser/user/get_pending_users_test.go
 
 func TestGetPendingUsers(t *testing.T) {
 	ctx := context.Background()
@@ -78,7 +78,7 @@ func TestGetPendingUsers(t *testing.T) {
 			userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 			require.NoError(t, err)
 
-			err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+			err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 			require.NoError(t, err)
 		}
 
@@ -136,7 +136,7 @@ func TestGetPendingUsers(t *testing.T) {
 			user.State = domain.Pending
 			userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 			require.NoError(t, err)
-			err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+			err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 			require.NoError(t, err)
 			time.Sleep(10 * time.Millisecond)
 		}
@@ -196,7 +196,7 @@ func TestGetPendingUsers(t *testing.T) {
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Act
@@ -244,7 +244,7 @@ func TestGetPendingUsers(t *testing.T) {
 		minimalUserEncx, err := domain.ProcessUserEncx(ctx, crypto, minimalUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, minimalUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, minimalUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Act
@@ -284,7 +284,7 @@ func TestGetPendingUsers(t *testing.T) {
 			user.State = domain.Pending
 			userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 			require.NoError(t, err)
-			err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+			err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 			require.NoError(t, err)
 		}
 
@@ -330,14 +330,14 @@ func TestGetPendingUsers(t *testing.T) {
 		pendingUser.State = domain.Pending
 		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool)
 		require.NoError(t, err)
 
 		unverifiedUser := td.NewTestUser(t, "unverified@example.com", "Unverified", "User")
 		unverifiedUser.State = domain.Unverified
 		unverifiedUserEncx, err := domain.ProcessUserEncx(ctx, crypto, unverifiedUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, unverifiedUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, unverifiedUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Act
@@ -369,7 +369,7 @@ func TestGetPendingUsers(t *testing.T) {
 			user.State = domain.Pending
 			userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 			require.NoError(t, err)
-			err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+			err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 			require.NoError(t, err)
 		}
 
