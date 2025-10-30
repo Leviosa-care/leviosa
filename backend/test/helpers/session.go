@@ -180,8 +180,16 @@ func NewTestSessionEncx(t *testing.T) *session.SessionEncx {
 // 	return sess, sessionEncx, nil
 // }
 
-// EncodeSession marshals a session to JSON bytes for Redis storage
-func EncodeSession(t *testing.T, session *session.SessionEncx) []byte {
+// EncodeSessionEncx marshals a SessionEncx to JSON bytes for Redis storage
+func EncodeSessionEncx(t *testing.T, session *session.SessionEncx) []byte {
+	t.Helper()
+	data, err := json.Marshal(session)
+	require.NoError(t, err, "Failed to marshal session")
+	return data
+}
+
+// EncodeSession marshals a non-encrypted session to JSON bytes for Redis storage
+func EncodeSession(t *testing.T, session *session.Session) []byte {
 	t.Helper()
 	data, err := json.Marshal(session)
 	require.NoError(t, err, "Failed to marshal session")
@@ -352,6 +360,41 @@ func GetSessionByID(t *testing.T, ctx context.Context, sessionID uuid.UUID, clie
 	}
 
 	return DecodeSessionEncx(t, data)
+}
+
+// DecodeSession unmarshals JSON bytes back to a session (non-encrypted version)
+func DecodeSession(t *testing.T, data []byte) *session.Session {
+	t.Helper()
+
+	var session session.Session
+	err := json.Unmarshal(data, &session)
+	require.NoError(t, err, "Failed to decode session")
+
+	return &session
+}
+
+// GetSessionByIDNonEncrypted retrieves a session by ID from Redis (non-encrypted version)
+func GetSessionByIDNonEncrypted(t *testing.T, ctx context.Context, sessionID uuid.UUID, client *redis.Client) *session.Session {
+	t.Helper()
+
+	sessionKey := session.FormatSessionKey(sessionID.String())
+	data, err := client.Get(ctx, sessionKey).Bytes()
+	if err != nil {
+		return nil
+	}
+
+	return DecodeSession(t, data)
+}
+
+// SessionTestDataNonEncrypted holds test data for non-encrypted session operations
+type SessionTestDataNonEncrypted struct {
+	Session     *session.Session
+	RawData     []byte
+	AccessToken string
+	RefreshToken string
+	UserID      string
+	Email       string
+	Role        string
 }
 
 // FindSessionByAccessTokenHash retrieves a session by its access token hash, returns nil if not found
