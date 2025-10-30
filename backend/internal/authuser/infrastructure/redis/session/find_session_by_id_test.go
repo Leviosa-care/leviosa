@@ -138,7 +138,7 @@ func TestFindSessionByID(t *testing.T) {
 				SessionID:   baseSession.ID,
 				TokenHash:   baseSession.AccessTokenHash,
 				Session:     baseSession,
-				SessionData: td.EncodeSession(t, baseSession),
+				SessionData: td.EncodeSessionEncx(t, baseSession),
 			}
 		}
 

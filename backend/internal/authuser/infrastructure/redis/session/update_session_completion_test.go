@@ -37,7 +37,7 @@ func TestUpdateSessionCompletion(t *testing.T) {
 		updatedSession := td.NewTestSessionEncx(t)
 		updatedSession.ID = baseSession.ID // Keep same ID
 		updatedSession.UserIDHash = "updated_user_hash"
-		sessionEncoded := td.EncodeSession(t, updatedSession)
+		sessionEncoded := td.EncodeSessionEncx(t, updatedSession)
 
 		err := repo.UpdateSessionCompletion(ctx, baseSession.ID, sessionEncoded)
 		assert.NoError(t, err)
@@ -99,7 +99,7 @@ func TestUpdateSessionCompletion(t *testing.T) {
 		updatedSession.UserIDHash = baseSession.UserIDHash
 		updatedSession.AccessTokenHash = baseSession.AccessTokenHash
 		updatedSession.RefreshTokenHash = baseSession.RefreshTokenHash
-		sessionEncoded := td.EncodeSession(t, updatedSession)
+		sessionEncoded := td.EncodeSessionEncx(t, updatedSession)
 
 		err := repo.UpdateSessionCompletion(ctx, baseSession.ID, sessionEncoded)
 		assert.NoError(t, err)
@@ -126,7 +126,7 @@ func TestUpdateSessionCompletion(t *testing.T) {
 			updatedSession := td.NewTestSessionEncx(t)
 			updatedSession.ID = baseSession.ID
 			updatedSession.UserIDHash = "user_hash_" + string(rune('a'+i))
-			sessionEncoded := td.EncodeSession(t, updatedSession)
+			sessionEncoded := td.EncodeSessionEncx(t, updatedSession)
 
 			err := repo.UpdateSessionCompletion(ctx, baseSession.ID, sessionEncoded)
 			require.NoError(t, err, "Update %d should succeed", i+1)
@@ -162,7 +162,7 @@ func TestUpdateSessionCompletion(t *testing.T) {
 			AccessTokenHash:    "new_access_token_hash",
 			RefreshTokenHash:   "new_refresh_token_hash",
 		}
-		sessionEncoded := td.EncodeSession(t, updatedSession)
+		sessionEncoded := td.EncodeSessionEncx(t, updatedSession)
 
 		err := repo.UpdateSessionCompletion(ctx, baseSession.ID, sessionEncoded)
 		assert.NoError(t, err)
@@ -202,7 +202,7 @@ func TestUpdateSessionCompletion(t *testing.T) {
 			largeData[i] = byte(i % 256)
 		}
 		updatedSession.UserIDEncrypted = largeData
-		sessionEncoded := td.EncodeSession(t, updatedSession)
+		sessionEncoded := td.EncodeSessionEncx(t, updatedSession)
 
 		err := repo.UpdateSessionCompletion(ctx, baseSession.ID, sessionEncoded)
 		assert.NoError(t, err)
@@ -271,7 +271,7 @@ func TestUpdateSessionCompletion(t *testing.T) {
 		updatedSession := td.NewTestSessionEncx(t)
 		updatedSession.ID = baseSession.ID
 		updatedSession.UserIDHash = "updated_near_expiration"
-		sessionEncoded := td.EncodeSession(t, updatedSession)
+		sessionEncoded := td.EncodeSessionEncx(t, updatedSession)
 
 		err := repo.UpdateSessionCompletion(ctx, baseSession.ID, sessionEncoded)
 		assert.NoError(t, err)

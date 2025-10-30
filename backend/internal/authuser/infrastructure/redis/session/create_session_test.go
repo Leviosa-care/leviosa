@@ -23,7 +23,7 @@ func TestCreateSession(t *testing.T) {
 
 		// Create test session
 		baseSession := td.NewTestSessionEncx(t)
-		sessionData := td.EncodeSession(t, baseSession)
+		sessionData := td.EncodeSessionEncx(t, baseSession)
 		accessTokenHash := "access_token_hash_123"
 		baseSession.AccessTokenHash = accessTokenHash
 		refreshTokenHash := "refresh_token_hash_456"
@@ -78,7 +78,7 @@ func TestCreateSession(t *testing.T) {
 		firstRefreshToken := "first_refresh_token"
 		baseSession.RefreshTokenHash = firstRefreshToken
 
-		sessionData := td.EncodeSession(t, baseSession)
+		sessionData := td.EncodeSessionEncx(t, baseSession)
 
 		err := repo.CreateSession(ctx, baseSession.ID, firstAccessToken, firstRefreshToken, baseSession.UserIDHash, sessionData, time.Hour, 24*time.Hour)
 		assert.NoError(t, err)
@@ -90,7 +90,7 @@ func TestCreateSession(t *testing.T) {
 		secondRefreshToken := "second_refresh_token"
 		baseSession.RefreshTokenHash = secondRefreshToken
 
-		newSessionData := td.EncodeSession(t, baseSession)
+		newSessionData := td.EncodeSessionEncx(t, baseSession)
 
 		err = repo.CreateSession(ctx, baseSession.ID, secondAccessToken, secondRefreshToken, baseSession.UserIDHash, newSessionData, time.Hour, 24*time.Hour)
 		assert.NoError(t, err)
@@ -129,7 +129,7 @@ func TestCreateSession(t *testing.T) {
 		refreshTokenHash := "refresh_token_rollback_test"
 		baseSession.RefreshTokenHash = refreshTokenHash
 
-		sessionData := td.EncodeSession(t, baseSession)
+		sessionData := td.EncodeSessionEncx(t, baseSession)
 
 		// First, create the token pair successfully
 		err := repo.CreateSession(ctx, baseSession.ID, accessTokenHash, refreshTokenHash, baseSession.UserIDHash, sessionData, time.Hour, 24*time.Hour)
@@ -144,7 +144,7 @@ func TestCreateSession(t *testing.T) {
 		newRefreshToken := "new_refresh_token"
 		baseSession.RefreshTokenHash = newRefreshToken
 
-		newSessionData := td.EncodeSession(t, baseSession)
+		newSessionData := td.EncodeSessionEncx(t, baseSession)
 
 		err = repo.CreateSession(ctx, baseSession.ID, newAccessToken, newRefreshToken, baseSession.UserIDHash, newSessionData, time.Hour, 24*time.Hour)
 		assert.Error(t, err)
@@ -178,7 +178,7 @@ func TestCreateSession(t *testing.T) {
 		refreshTokenHash := "zero_ttl_refresh_token"
 		baseSession.RefreshTokenHash = refreshTokenHash
 
-		sessionData := td.EncodeSession(t, baseSession)
+		sessionData := td.EncodeSessionEncx(t, baseSession)
 
 		// Create token pair with zero TTL (should use Redis default behavior)
 		err := repo.CreateSession(ctx, baseSession.ID, accessTokenHash, refreshTokenHash, baseSession.UserIDHash, sessionData, 0, 0)
@@ -206,7 +206,7 @@ func TestCreateSession(t *testing.T) {
 		refreshTokenHash := "short_ttl_refresh_token"
 		baseSession.RefreshTokenHash = refreshTokenHash
 
-		sessionData := td.EncodeSession(t, baseSession)
+		sessionData := td.EncodeSessionEncx(t, baseSession)
 		shortTTL := 50 * time.Millisecond
 
 		// Create token pair with very short TTL
@@ -240,7 +240,7 @@ func TestCreateSession(t *testing.T) {
 		refreshTokenHash := "refresh-token_hash.with:special@chars+789/012="
 		baseSession.RefreshTokenHash = refreshTokenHash
 
-		sessionData := td.EncodeSession(t, baseSession)
+		sessionData := td.EncodeSessionEncx(t, baseSession)
 
 		// Create token pair with special characters
 		err := repo.CreateSession(ctx, baseSession.ID, accessTokenHash, refreshTokenHash, baseSession.UserIDHash, sessionData, time.Hour, 24*time.Hour)
@@ -267,7 +267,7 @@ func TestCreateSession(t *testing.T) {
 		refreshTokenHash := "large_data_refresh_token"
 		baseSession.RefreshTokenHash = refreshTokenHash
 
-		sessionData := td.EncodeSession(t, baseSession)
+		sessionData := td.EncodeSessionEncx(t, baseSession)
 
 		// Add extra data to make it larger
 		largeSessionData := make([]byte, len(sessionData)+10000)
@@ -300,7 +300,7 @@ func TestCreateSession(t *testing.T) {
 		refreshTokenHash := "connection_error_refresh_token"
 		baseSession.RefreshTokenHash = refreshTokenHash
 
-		sessionData := td.EncodeSession(t, baseSession)
+		sessionData := td.EncodeSessionEncx(t, baseSession)
 
 		// Try to create token pair with closed connection
 		err := repo.CreateSession(ctx, baseSession.ID, accessTokenHash, refreshTokenHash, baseSession.UserIDHash, sessionData, time.Hour, 24*time.Hour)

@@ -75,7 +75,7 @@ func TestInvalidateTokenPair(t *testing.T) {
 
 		// Create only baseSession data and access token (no refresh token)
 		baseSession := td.NewTestSessionEncx(t)
-		sessionData := td.EncodeSession(t, baseSession)
+		sessionData := td.EncodeSessionEncx(t, baseSession)
 		accessTokenHash := "partial_state_access_token"
 		refreshTokenHash := "partial_state_refresh_token"
 

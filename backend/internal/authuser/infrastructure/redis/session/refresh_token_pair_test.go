@@ -41,7 +41,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		// Update session with new token hashes for test
 		baseSession.AccessTokenHash = newAccessTokenHash
 		baseSession.RefreshTokenHash = newRefreshTokenHash
-		updatedSessionData := td.EncodeSession(t, baseSession)
+		updatedSessionData := td.EncodeSessionEncx(t, baseSession)
 
 		err := repo.RefreshTokenPair(ctx, refreshTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, accessTTL, refreshTTL)
 		assert.NoError(t, err)
@@ -101,7 +101,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		// Update session with new token hashes for test
 		baseSession.AccessTokenHash = newAccessTokenHash
 		baseSession.RefreshTokenHash = newRefreshTokenHash
-		updatedSessionData := td.EncodeSession(t, baseSession)
+		updatedSessionData := td.EncodeSessionEncx(t, baseSession)
 
 		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, accessTTL, refreshTTL)
 		assert.NoError(t, err)
@@ -153,7 +153,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		// Update session with new token hashes for test
 		baseSession.AccessTokenHash = newAccessTokenHash
 		baseSession.RefreshTokenHash = newRefreshTokenHash
-		updatedSessionData := td.EncodeSession(t, baseSession)
+		updatedSessionData := td.EncodeSessionEncx(t, baseSession)
 
 		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, time.Hour, 24*time.Hour)
 		assert.Error(t, err)
@@ -194,7 +194,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		// Update session with new token hashes for test
 		baseSession.AccessTokenHash = newAccessTokenHash
 		baseSession.RefreshTokenHash = newRefreshTokenHash
-		updatedSessionData := td.EncodeSession(t, baseSession)
+		updatedSessionData := td.EncodeSessionEncx(t, baseSession)
 
 		err := repo.RefreshTokenPair(ctx, refreshTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, newTTL, longTTL)
 		assert.NoError(t, err)
@@ -225,7 +225,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		// Update session with new token hashes for test
 		baseSession.AccessTokenHash = newAccessTokenHash
 		baseSession.RefreshTokenHash = newRefreshTokenHash
-		updatedSessionData := td.EncodeSession(t, baseSession)
+		updatedSessionData := td.EncodeSessionEncx(t, baseSession)
 
 		err := repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, time.Hour, 24*time.Hour)
 		assert.NoError(t, err)
