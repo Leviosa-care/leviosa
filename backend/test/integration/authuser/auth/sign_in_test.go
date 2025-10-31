@@ -7,16 +7,15 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
+	authEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
+	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
-	authEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
-
-	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestSignIn make test-integration-auth-test
+// make test-func TEST_NAME=TestSignIn TEST_PATH=test/integration/authuser/auth/sign_in_test.go
 
 func TestSignIn(t *testing.T) {
 	ctx := context.Background()
@@ -38,7 +37,7 @@ func TestSignIn(t *testing.T) {
 		require.NoError(t, err)
 
 		// Insert the user into database
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create sign-in request
@@ -135,7 +134,7 @@ func TestSignIn(t *testing.T) {
 		require.NoError(t, err)
 
 		// Insert the user into database
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create sign-in request with wrong password
@@ -166,7 +165,7 @@ func TestSignIn(t *testing.T) {
 		require.NoError(t, err)
 
 		// Insert the user into database
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create sign-in request
@@ -197,7 +196,7 @@ func TestSignIn(t *testing.T) {
 		require.NoError(t, err)
 
 		// Insert the user into database
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create sign-in request

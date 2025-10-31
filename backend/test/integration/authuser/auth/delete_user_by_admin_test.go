@@ -7,17 +7,17 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
-
 	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestDeleteUserByAdmin make test-integration-auth-test
+// make test-func TEST_NAME=TestDeleteUserByAdmin TEST_PATH=test/integration/authuser/auth/delete_user_by_admin_test.go
 
 func TestDeleteUserByAdmin(t *testing.T) {
 	ctx := context.Background()
@@ -34,7 +34,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		testUserEncx, err := domain.ProcessUserEncx(ctx, crypto, testUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, testUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Act - make request without authentication
@@ -47,10 +47,10 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 		// Verify user still exists
-		existingUserEncx, err := td.GetUserEnxByID(t, ctx, testUser.ID, testPool, crypto)
+		existingUserEncx, err := td.GetUserEnxByID(t, ctx, testUser.ID, testPool)
 		require.NoError(t, err)
 
-		existingUser, err := td.GetUserEnxByID(t, ctx, existingUserEncx.ID, testPool, crypto)
+		existingUser, err := td.GetUserEnxByID(t, ctx, existingUserEncx.ID, testPool)
 		require.NoError(t, err)
 
 		assert.NotNil(t, existingUser)
@@ -68,7 +68,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		standardUserEncx, err := domain.ProcessUserEncx(ctx, crypto, standardUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, standardUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, standardUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create session for standard user
@@ -87,7 +87,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		targetUserEncx, err := domain.ProcessUserEncx(ctx, crypto, targetUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, targetUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, targetUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Act - make request with standard user token
@@ -100,7 +100,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 
 		// Verify target user still exists
-		existingUserEncx, err := td.GetUserEnxByID(t, ctx, targetUser.ID, testPool, crypto)
+		existingUserEncx, err := td.GetUserEnxByID(t, ctx, targetUser.ID, testPool)
 		require.NoError(t, err)
 
 		existingUser, err := domain.DecryptUserEncx(ctx, crypto, existingUserEncx)
@@ -121,7 +121,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create session for admin user
@@ -162,7 +162,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create session for admin user
@@ -198,7 +198,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create session for admin user
@@ -217,7 +217,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		targetUserEncx, err := domain.ProcessUserEncx(ctx, crypto, targetUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, targetUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, targetUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create sessions for target user
@@ -246,7 +246,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		assert.Equal(t, "User deleted successfully", message)
 
 		// Verify user is deleted from database
-		deletedUserEncx, err := td.GetUserEnxByID(t, ctx, targetUser.ID, testPool, crypto)
+		deletedUserEncx, err := td.GetUserEnxByID(t, ctx, targetUser.ID, testPool)
 		require.Error(t, err)
 		assert.Equal(t, *deletedUserEncx, domain.UserEncx{})
 
@@ -259,7 +259,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		assert.Error(t, err)
 
 		// Verify admin user still exists
-		existingAdminEncx, err := td.GetUserEnxByID(t, ctx, adminUser.ID, testPool, crypto)
+		existingAdminEncx, err := td.GetUserEnxByID(t, ctx, adminUser.ID, testPool)
 		require.NoError(t, err)
 
 		existingAdmin, err := domain.DecryptUserEncx(ctx, crypto, existingAdminEncx)
@@ -280,7 +280,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create session for admin user
@@ -300,7 +300,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		targetUserEncx, err := domain.ProcessUserEncx(ctx, crypto, targetUser)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, targetUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, targetUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Act - delete user with Stripe customer
@@ -313,7 +313,7 @@ func TestDeleteUserByAdmin(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify user is deleted
-		deletedUserEncx, err := td.GetUserEnxByID(t, ctx, targetUser.ID, testPool, crypto)
+		deletedUserEncx, err := td.GetUserEnxByID(t, ctx, targetUser.ID, testPool)
 		assert.Error(t, err)
 		assert.Equal(t, *deletedUserEncx, domain.UserEncx{})
 	})

@@ -8,16 +8,15 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
+	authEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/hengadev/encx"
 
-	authEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
-
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestRequestPasswordReset make test-integration-auth-test
+// make test-func TEST_NAME=TestRequestPasswordReset TEST_PATH=test/integration/authuser/auth/request_password_reset_test.go:w
 
 func TestRequestPasswordReset(t *testing.T) {
 	ctx := context.Background()
@@ -41,7 +40,7 @@ func TestRequestPasswordReset(t *testing.T) {
 		user := td.NewTestUser(t, existingEmail, "John", "DOE")
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Test password reset request
@@ -75,8 +74,8 @@ func TestRequestPasswordReset(t *testing.T) {
 		delivery := td.WaitForOTPMessage(t, msgs, 2*time.Second)
 
 		// Get OTP from Redis to verify the code
-		otpEncx, err := td.GetOTPEncxByEmailHash(t, ctx, emailHash, redisClient, crypto)
-		require.NoError(t, err)
+		otpEncx, err := td.GetOTPEncxByEmailHash(t, ctx, emailHash, redisClient)
+		assert.NoError(t, err)
 
 		otp, err := domain.DecryptOTPEncx(ctx, crypto, otpEncx)
 		require.NoError(t, err)
@@ -203,7 +202,7 @@ func TestRequestPasswordReset(t *testing.T) {
 		user := td.NewTestUser(t, existingEmail, "Rate", "Limited")
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Send multiple password reset requests rapidly
@@ -271,7 +270,7 @@ func TestRequestPasswordReset(t *testing.T) {
 		user := td.NewTestUser(t, existingEmail, "Content", "Type")
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create request without Content-Type header

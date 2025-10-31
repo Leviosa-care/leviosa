@@ -2,36 +2,23 @@ package auth_test
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
-	aggregatorHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
-	sessionRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/redis/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	sessionRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/redis/session"
+	aggregatorHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
 	session "github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// generateStrongPassword creates a cryptographically secure password for testing
-// that won't be flagged by pwned password validation
-func generateStrongPassword(t *testing.T) string {
-	t.Helper()
-	bytes := make([]byte, 16) // 32 character hex string
-	_, err := rand.Read(bytes)
-	require.NoError(t, err)
-	return fmt.Sprintf("TestPass_%s_2024!", hex.EncodeToString(bytes))
-}
-
-// TEST=TestConfirmPasswordReset make test-integration-auth-test
+// make test-func TEST_NAME=TestConfirmPasswordReset TEST_PATH=test/integration/authuser/auth/confirm_password_reset_test.go
 
 func TestConfirmPasswordReset(t *testing.T) {
 	ctx := context.Background()
@@ -44,8 +31,8 @@ func TestConfirmPasswordReset(t *testing.T) {
 		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "resetconfirm@example.com"
-		oldPassword := generateStrongPassword(t)
-		newPassword := generateStrongPassword(t)
+		oldPassword := td.GenerateStrongPassword(t)
+		newPassword := td.GenerateStrongPassword(t)
 
 		// Insert user with old password
 		user := td.NewTestUser(t, existingEmail, "Reset", "Confirm")
@@ -53,7 +40,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 		user.State = domain.Active
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Generate a reset token and store reset session directly
@@ -138,7 +125,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 		// Clean state
 		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
-		newPassword := generateStrongPassword(t)
+		newPassword := td.GenerateStrongPassword(t)
 
 		// Try to confirm with invalid token
 		confirmRequest := domain.ConfirmPasswordResetRequest{
@@ -166,7 +153,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 		user := td.NewTestUser(t, existingEmail, "Reset", "Confirm")
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Generate a reset token and store with very short TTL to simulate expiration
@@ -193,7 +180,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 			Value: resetToken,
 		}
 
-		newPassword := generateStrongPassword(t)
+		newPassword := td.GenerateStrongPassword(t)
 
 		// Step 3: Try to confirm with expired token
 		confirmRequest := domain.ConfirmPasswordResetRequest{
@@ -221,7 +208,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 		user := td.NewTestUser(t, existingEmail, "Reset", "Confirm")
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Generate a reset token and store reset session directly
@@ -275,12 +262,12 @@ func TestConfirmPasswordReset(t *testing.T) {
 		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "tokenbody@example.com"
-		newPassword := generateStrongPassword(t)
+		newPassword := td.GenerateStrongPassword(t)
 
 		user := td.NewTestUser(t, existingEmail, "Token", "Body")
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Generate a reset token and store reset session directly
@@ -317,7 +304,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 		// Clean state
 		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
-		newPassword := generateStrongPassword(t)
+		newPassword := td.GenerateStrongPassword(t)
 
 		// Try to confirm without token
 		confirmRequest := domain.ConfirmPasswordResetRequest{
@@ -341,12 +328,12 @@ func TestConfirmPasswordReset(t *testing.T) {
 		td.ClearAllTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "concurrent@example.com"
-		newPassword := generateStrongPassword(t)
+		newPassword := td.GenerateStrongPassword(t)
 
 		user := td.NewTestUser(t, existingEmail, "Concurrent", "User")
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Generate a reset token and store reset session directly

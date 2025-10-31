@@ -7,27 +7,19 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
-
 	authEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
-
 	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func newPendingUser(email string) *domain.User {
-	return &domain.User{
-		ID:    uuid.New(),
-		Email: email,
-		State: domain.Unverified,
-	}
-}
-
-// TEST=TestCompleteUser make test-integration-auth-test
+// make test-func TEST_NAME=TestCompleteUser TEST_PATH=test/integration/authuser/auth/complete_user_test.go
 
 func TestCompleteUser(t *testing.T) {
 	ctx := context.Background()
@@ -58,11 +50,10 @@ func TestCompleteUser(t *testing.T) {
 		pendingUser := newPendingUser(validEmail)
 		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create a pending session for this specific user
-		// pendingSession := td.CreateTestPendingSessionWithUserIDAndCrypto(t, pendingUser.ID, crypto)
 		pendingSession, err := td.NewTestSession(t, crypto)
 		pendingSession.UserID = pendingUser.ID
 		pendingSession.State = session.SessionPending
@@ -84,7 +75,7 @@ func TestCompleteUser(t *testing.T) {
 		assert.Equal(t, "User registration completed successfully", message)
 
 		// Verify user was created in database
-		userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool, crypto)
+		userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool)
 		require.NoError(t, err)
 
 		user, err := domain.DecryptUserEncx(ctx, crypto, userEncx)
@@ -395,7 +386,7 @@ func TestCompleteUser(t *testing.T) {
 		pendingUser := newPendingUser(validEmail)
 		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create a pending session
@@ -428,7 +419,7 @@ func TestCompleteUser(t *testing.T) {
 		assert.Equal(t, "User registration completed successfully", message)
 
 		// Verify user was created in database
-		userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool, crypto)
+		userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool)
 		require.NoError(t, err)
 		user, err := domain.DecryptUserEncx(ctx, crypto, userEncx)
 		require.NoError(t, err)
@@ -514,7 +505,7 @@ func TestCompleteUser(t *testing.T) {
 		pendingUser := newPendingUser("test@example.com")
 		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create a pending session
@@ -565,7 +556,7 @@ func TestCompleteUser(t *testing.T) {
 		message := td.ParseCompleteUserResponse(t, resp)
 		assert.Equal(t, "User registration completed successfully", message)
 
-		userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool, crypto)
+		userEncx, err := td.GetUserEnxByID(t, ctx, pendingUser.ID, testPool)
 		require.NoError(t, err)
 		user, err := domain.DecryptUserEncx(ctx, crypto, userEncx)
 		require.NoError(t, err)
@@ -600,4 +591,16 @@ func verifyCompletedUserFields(t *testing.T, userID uuid.UUID, expectedUser *dom
 	assert.Equal(t, expectedUser.Address1, actualUser.Address1)
 	assert.Equal(t, expectedUser.Address2, actualUser.Address2)
 	assert.NotEmpty(t, actualUser.StripeCustomerID)
+}
+
+func newPendingUser(email string) *domain.User {
+	now := time.Now()
+	return &domain.User{
+		ID:         uuid.New(),
+		Email:      email,
+		State:      domain.Unverified,
+		CreatedAt:  now,
+		LoggedInAt: now,
+		Role:       identity.Standard.String(),
+	}
 }

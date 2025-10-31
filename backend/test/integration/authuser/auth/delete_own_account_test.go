@@ -7,16 +7,16 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestDeleteOwnAccount make test-integration-auth-test
+// make test-func TEST_NAME=TestDeleteOwnAccount TEST_PATH=test/integration/authuser/auth/delete_own_account_test.go
 
 func TestDeleteOwnAccount(t *testing.T) {
 	ctx := context.Background()
@@ -44,7 +44,7 @@ func TestDeleteOwnAccount(t *testing.T) {
 		guestUser.Role = identity.GuestStr
 		guestUserEncx, err := domain.ProcessUserEncx(ctx, crypto, guestUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, guestUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, guestUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create session for guest user
@@ -66,7 +66,7 @@ func TestDeleteOwnAccount(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 
 		// Verify user still exists
-		existingUserEncx, err := td.GetUserEnxByID(t, ctx, guestUser.ID, testPool, crypto)
+		existingUserEncx, err := td.GetUserEnxByID(t, ctx, guestUser.ID, testPool)
 		require.NoError(t, err)
 		existingUser, err := domain.DecryptUserEncx(ctx, crypto, existingUserEncx)
 		require.NoError(t, err)
@@ -84,7 +84,7 @@ func TestDeleteOwnAccount(t *testing.T) {
 		user.State = domain.Active
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create session for user
@@ -124,7 +124,7 @@ func TestDeleteOwnAccount(t *testing.T) {
 		assert.Equal(t, "Account deleted successfully", message)
 
 		// Verify user is deleted from database
-		deletedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
+		deletedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool)
 		assert.Error(t, err)
 		assert.Equal(t, *deletedUserEncx, domain.UserEncx{})
 
@@ -152,7 +152,7 @@ func TestDeleteOwnAccount(t *testing.T) {
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create session for premium user
@@ -174,7 +174,7 @@ func TestDeleteOwnAccount(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify user is deleted
-		deletedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
+		deletedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool)
 		assert.Error(t, err, "Should get 'no row found' type of error")
 		assert.Equal(t, *deletedUserEncx, domain.UserEncx{})
 	})
@@ -192,7 +192,7 @@ func TestDeleteOwnAccount(t *testing.T) {
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Create session for user
@@ -214,7 +214,7 @@ func TestDeleteOwnAccount(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify user is deleted (Stripe deletion handled internally)
-		deletedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool, crypto)
+		deletedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool)
 		assert.Error(t, err)
 
 		assert.Equal(t, *deletedUserEncx, domain.UserEncx{})

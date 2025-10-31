@@ -7,19 +7,19 @@ import (
 	"testing"
 	"time"
 
-	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
+
 	"github.com/google/uuid"
 	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestRefreshSession make test-integration-auth-test
+// make test-func TEST_NAME=TestRefreshSession TEST_PATH=test/integration/authuser/auth/refresh_session_test.go
 
 func TestRefreshSession(t *testing.T) {
 	ctx := context.Background()

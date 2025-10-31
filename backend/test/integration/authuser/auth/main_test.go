@@ -12,19 +12,19 @@ import (
 	"testing"
 	"time"
 
-	authHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
-	partnerRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/postgres/partner"
-	userRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/postgres/user"
-	authRabbitMQ "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/rabbitmq"
-	otpRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/redis/otp"
-	sessionRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/redis/session"
-	authPayment "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/stripe"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/application/aggregator"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/application/catalog"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/application/otp"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/application/partner"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/application/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/application/user"
+	partnerRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/postgres/partner"
+	userRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/postgres/user"
+	authRabbitMQ "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/rabbitmq"
+	otpRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/redis/otp"
+	sessionRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/redis/session"
+	authPayment "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/stripe"
+	aggregatorHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/ports"
 
 	authsession "github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
@@ -52,14 +52,14 @@ var (
 	redisClient     *redis.Client
 	crypto          encx.CryptoService
 	userRepo        ports.UserRepository
-	catalogCache    ports.CatalogCache
+	catalogCache    *catalog.CatalogCache
 	otpRepo         ports.OTPRepository
 	sessionRepo     ports.SessionRepository
 	vaultSetup      *tu.ServiceVaultSetup // Enhanced Vault setup with per-service keys
 	authCtx         *tu.AuthTestContext   // Authentication context for user/session tests
 	authSessionRepo authsession.SessionRepository
 	service         ports.AuthAggregatorService
-	authHandler     authHandler.Handler
+	authHandler     aggregatorHandler.Handler
 	testServerURL   string           // Global variable to hold the URL of the running test server
 	testServer      *http.Server     // To allow graceful shutdown
 	testMQConn      *amqp.Connection // RabbitMQ connection for test verification
@@ -254,7 +254,7 @@ func TestMain(m *testing.M) {
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
 
-	authHandler = authHandler.New(service, authmw)
+	authHandler = aggregatorHandler.New(service, authmw)
 
 	// Set required environment variables for logger middleware
 	os.Setenv("CLIENT_IP_HEADER", "X-Forwarded-For")

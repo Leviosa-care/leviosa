@@ -24,9 +24,9 @@ func ClearUsersTable(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
 	require.NoError(t, err)
 }
 
-// generateStrongPassword creates a cryptographically secure password for testing
+// GenerateStrongPassword creates a cryptographically secure password for testing
 // that won't be flagged by pwned password validation
-func generateStrongPassword(t *testing.T) string {
+func GenerateStrongPassword(t *testing.T) string {
 	t.Helper()
 	bytes := make([]byte, 16) // 32 character hex string
 	_, err := rand.Read(bytes)
@@ -38,13 +38,12 @@ func generateStrongPassword(t *testing.T) string {
 func NewTestUser(t *testing.T, email, firstName, lastName string) *domain.User {
 	t.Helper()
 	return &domain.User{
-		ID:        uuid.New(),
-		State:     domain.Unverified,
-		Email:     email,
-		FirstName: firstName,
-		LastName:  lastName,
-		// Password:   "qPDAR0.4Z8{vpCO]",
-		Password:   generateStrongPassword(t),
+		ID:         uuid.New(),
+		State:      domain.Unverified,
+		Email:      email,
+		FirstName:  firstName,
+		LastName:   lastName,
+		Password:   GenerateStrongPassword(t),
 		Telephone:  "0612345678",
 		Role:       identity.Standard.String(),
 		CreatedAt:  time.Now(),

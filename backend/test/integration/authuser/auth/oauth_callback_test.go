@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestOAuthCallback_GoogleWithNextcloudTesting_NewUser make test-integration-auth-test
+// make test-func TEST_NAME=TestOAuthCallback_GoogleWithNextcloudTesting_NewUser TEST_PATH=test/integration/authuser/auth/oauth_callback_test.go
 
 func TestOAuthCallback_GoogleWithNextcloudTesting_NewUser(t *testing.T) {
 	ctx := context.Background()
@@ -64,7 +64,7 @@ func TestOAuthCallback_GoogleWithNextcloudTesting_NewUser(t *testing.T) {
 	})
 }
 
-// TEST=TestOAuthCallback_GoogleWithNextcloudTesting_ExistingUser make test-integration-auth-test
+// make test-func TEST_NAME=TestOAuthCallback_GoogleWithNextcloudTesting_ExistingUser TEST_PATH=test/integration/authuser/auth/oauth_callback_test.go
 
 func TestOAuthCallback_GoogleWithNextcloudTesting_ExistingUser(t *testing.T) {
 	ctx := context.Background()
@@ -90,7 +90,7 @@ func TestOAuthCallback_GoogleWithNextcloudTesting_ExistingUser(t *testing.T) {
 		existingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, existingUser)
 		require.NoError(t, err)
 
-		err = th.InsertUserEncx(t, ctx, existingUserEncx, testPool, crypto)
+		err = th.InsertUserEncx(t, ctx, existingUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Verify user was inserted
@@ -121,7 +121,7 @@ func TestOAuthCallback_GoogleWithNextcloudTesting_ExistingUser(t *testing.T) {
 	})
 }
 
-// TEST=TestOAuthCallback_GoogleWithNextcloudTesting_LinkExistingEmail make test-integration-auth-test
+// make test-func TEST_NAME=TestOAuthCallback_GoogleWithNextcloudTesting_LinkExistingEmail TEST_PATH=test/integration/authuser/auth/oauth_callback_test.go
 
 func TestOAuthCallback_GoogleWithNextcloudTesting_LinkExistingEmail(t *testing.T) {
 	ctx := context.Background()
@@ -146,7 +146,7 @@ func TestOAuthCallback_GoogleWithNextcloudTesting_LinkExistingEmail(t *testing.T
 		existingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, existingUser)
 		require.NoError(t, err)
 
-		err = th.InsertUserEncx(t, ctx, existingUserEncx, testPool, crypto)
+		err = th.InsertUserEncx(t, ctx, existingUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Verify user was inserted
@@ -177,7 +177,7 @@ func TestOAuthCallback_GoogleWithNextcloudTesting_LinkExistingEmail(t *testing.T
 	})
 }
 
-// TEST=TestOAuthCallback_ErrorHandling make test-integration-auth-test
+// make test-func TEST_NAME=TestOAuthCallback_ErrorHandling TEST_PATH=test/integration/authuser/auth/oauth_callback_test.go
 
 func TestOAuthCallback_ErrorHandling(t *testing.T) {
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -236,9 +236,8 @@ func TestOAuthCallback_ErrorHandling(t *testing.T) {
 	})
 }
 
-// TEST=TestOAuthCallback_ResponseFormat make test-integration-auth-test
+// make test-func TEST_NAME=TestOAuthCallback_ResponseFormat TEST_PATH=test/integration/authuser/auth/oauth_callback_test.go
 
-// TestOAuthCallback_ResponseFormat tests the structure of successful OAuth callback responses
 func TestOAuthCallback_ResponseFormat(t *testing.T) {
 	// This test verifies the expected response format for OAuth callbacks
 	// In a real implementation, this would test with valid OAuth tokens

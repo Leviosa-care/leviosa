@@ -11,19 +11,19 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	authEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
-
 	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+
 	"github.com/google/uuid"
 	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestValidateOTPCreatePendingUser make test-integration-auth-test
+// make test-func TEST_NAME=TestValidateOTPCreatePendingUser TEST_PATH=test/integration/authuser/auth/validate_otp_create_pending_user_test.go
 
 func TestValidateOTPCreatePendingUser(t *testing.T) {
 	ctx := context.Background()
@@ -69,7 +69,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 				break
 			}
 		}
-		require.NotNil(t, accessTokenCookie, "Access token cookie should be set")
+		assert.NotNil(t, accessTokenCookie, "Access token cookie should be set")
 
 		// Verify cookie attributes
 		assert.True(t, accessTokenCookie.HttpOnly, "Cookie should be HttpOnly")
@@ -86,7 +86,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 				break
 			}
 		}
-		require.NotNil(t, refreshTokenCookie, "Refresh token cookie should be set")
+		assert.NotNil(t, refreshTokenCookie, "Refresh token cookie should be set")
 
 		// Verify refresh cookie attributes
 		assert.True(t, refreshTokenCookie.HttpOnly, "Refresh cookie should be HttpOnly")
@@ -97,20 +97,20 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 		// Verify session exists in Redis using raw Redis queries
 		accessTokenBytes, err := encx.SerializeValue(accessTokenCookie.Value)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		accessTokenHash := crypto.HashBasic(ctx, accessTokenBytes)
 		accessTokenKey := session.FormatAccessTokenKey(accessTokenHash)
 		accessSessionIDStr, err := redisClient.Get(ctx, accessTokenKey).Result()
-		require.NoError(t, err, "Token mapping should exist in Redis")
-		require.NoError(t, uuid.Validate(accessSessionIDStr))
+		assert.NoError(t, err, "Token mapping should exist in Redis")
+		assert.NoError(t, uuid.Validate(accessSessionIDStr))
 
 		// Verify refresh token exists in Redis
 		refreshTokenBytes, err := encx.SerializeValue(refreshTokenCookie.Value)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		refreshTokenHash := crypto.HashBasic(ctx, refreshTokenBytes)
 		refreshTokenKey := session.FormatRefreshTokenKey(refreshTokenHash)
 		refreshSessionIDStr, err := redisClient.Get(ctx, refreshTokenKey).Result()
-		require.NoError(t, err, "Refresh token mapping should exist in Redis")
+		assert.NoError(t, err, "Refresh token mapping should exist in Redis")
 
 		// Verify that access and refresh tokens store the same session ID value in Redis
 		assert.Equal(t, accessSessionIDStr, refreshSessionIDStr, "Refresh token should map to same session")
@@ -119,17 +119,17 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 		sessionKey := session.FormatSessionKey(accessSessionIDStr)
 		// sessionBytes, err := redisClient.Get(ctx, sessionKey).Result()
 		sessionBytes, err := redisClient.Get(ctx, sessionKey).Bytes()
-		require.NoError(t, err, "Session data should exist in Redis")
+		assert.NoError(t, err, "Session data should exist in Redis")
 		assert.NotEmpty(t, sessionBytes, "Session data should not be empty")
 
 		// Verify session data integrity by decrypting
 		var sessionEncx session.SessionEncx
 		err = json.Unmarshal(sessionBytes, &sessionEncx)
-		require.NoError(t, err, "Failed to unmarshal SessionEncx")
+		assert.NoError(t, err, "Failed to unmarshal SessionEncx")
 
 		// Decrypt the SessionEncx to get the original session
 		s, err := session.DecryptSessionEncx(ctx, crypto, &sessionEncx)
-		require.NoError(t, err, "Failed to decrypt session")
+		assert.NoError(t, err, "Failed to decrypt session")
 
 		assert.Equal(t, session.SessionPending, s.State, "Session should be pending")
 		assert.NotEmpty(t, s.UserID, "Session should have user ID")
@@ -144,7 +144,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 		// Verify OTP was consumed (should be deleted)
 		emailBytes, err := encx.SerializeValue(email)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		emailHash := crypto.HashBasic(ctx, emailBytes)
 		exists := td.CheckOTPExists(t, ctx, emailHash, redisClient)
 		assert.False(t, exists, "OTP should be consumed and deleted")
@@ -498,7 +498,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 		user := td.NewTestUser(t, email, "Existing", "User")
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// TODO: I need a session with that user ID in it, that is how I get the session

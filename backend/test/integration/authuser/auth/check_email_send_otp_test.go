@@ -8,16 +8,15 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
-
 	authEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestCheckEmailSendOTP make test-integration-auth-test
+// make test-func TEST_NAME=TestCheckEmailSendOTP TEST_PATH=test/integration/authuser/auth/check_email_send_otp_test.go
 
 func TestCheckEmailSendOTP(t *testing.T) {
 	ctx := context.Background()
@@ -68,7 +67,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		delivery := td.WaitForOTPMessage(t, msgs, 2*time.Second)
 
 		// Get OTP from Redis to verify the code
-		otpEncx, err := td.GetOTPEncxByEmailHash(t, ctx, emailHash, redisClient, crypto)
+		otpEncx, err := td.GetOTPEncxByEmailHash(t, ctx, emailHash, redisClient)
 		assert.NoError(t, err)
 		otp, err := domain.DecryptOTPEncx(ctx, crypto, otpEncx)
 		assert.NoError(t, err)
@@ -86,7 +85,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		user := td.NewTestUser(t, existingEmail, "John", "Doe")
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Test with existing email

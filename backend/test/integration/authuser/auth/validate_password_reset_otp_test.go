@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestValidatePasswordResetOTP make test-integration-auth-test
+// make test-func TEST_NAME=TestValidatePasswordResetOTP TEST_PATH=test/integration/authuser/auth/validate_password_reset_otp_test.go
 
 func TestValidatePasswordResetOTP(t *testing.T) {
 	ctx := context.Background()
@@ -35,7 +35,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Directly create and insert OTP for testing (no HTTP request needed)
@@ -105,7 +105,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Try to validate OTP without requesting one first
@@ -142,7 +142,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Directly create and insert OTP for testing
@@ -235,7 +235,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Directly create and insert an expired OTP for testing
@@ -280,7 +280,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 		userEncx, err := domain.ProcessUserEncx(ctx, crypto, user)
 		require.NoError(t, err)
 
-		err = td.InsertUserEncx(t, ctx, userEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
 		require.NoError(t, err)
 
 		// Directly create and insert OTP for testing
