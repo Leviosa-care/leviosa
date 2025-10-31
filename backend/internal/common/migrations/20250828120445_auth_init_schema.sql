@@ -42,7 +42,7 @@ CREATE TABLE auth.users (
     stripe_customer_id_encrypted BYTEA,
     
     -- Timestamps (encrypted for activity pattern protection)
-    created_at_encrypted BYTEA NOT NULL,
+    created_at_encrypted BYTEA,
     logged_in_at_encrypted BYTEA,
     
     -- Encryption metadata
@@ -83,7 +83,7 @@ CREATE TABLE auth.partners (
     -- Partner profile data (all encrypted for GDPR compliance)
     bio_encrypted BYTEA,                             -- Professional bio
     experience_encrypted BYTEA,                      -- Years of experience, background
-    certifications_encrypted BYTEA,                  -- Encrypted array of certifications
+    -- certifications_encrypted BYTEA,                  -- Encrypted array of certifications - REMOVED
 
     -- Catalog associations (encrypted arrays of UUIDs)
     category_ids_encrypted BYTEA,                    -- Encrypted catalog category UUIDs this partner offers services for
