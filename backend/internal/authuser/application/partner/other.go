@@ -2,7 +2,6 @@ package partner
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
@@ -16,51 +15,35 @@ import (
 // Partner registration is now handled via /auth/complete/partner endpoint.
 
 // GetPartnerByID retrieves a partner by ID with their associated user information.
-func (s *PartnerService) GetPartnerByID(ctx context.Context, partnerID uuid.UUID) (*domain.CompletePartnerResponse, error) {
+func (s *PartnerService) GetPartnerByID(ctx context.Context, partnerID uuid.UUID) (*domain.PartnerResponse, error) {
 	// Get encrypted partner from repository
-	partnerEncx, err := s.partnerRepo.GetPartnerByID(ctx, partnerID)
+	partnerEncx, err := s.partnerRepo.GetPartnerByUserID(ctx, partnerID)
 	if err != nil {
 		return nil, fmt.Errorf("get partner by ID from repository: %w", err)
 	}
 
 	// Decrypt partner
-	partner, err := domain.ProcessPartnerEncx(ctx, s.crypto, partnerEncx)
+	partner, err := domain.DecryptPartnerEncx(ctx, s.crypto, partnerEncx)
 	if err != nil {
-		return nil, errs.NewNotEncryptedErr("partner", err)
-	}
-
-	// Get associated user
-	userEncx, err := s.userRepo.GetUserByID(ctx, partner.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("get user by ID: %w", err)
-	}
-
-	// Decrypt user
-	user, err := domain.ProcessUserEncx(ctx, s.crypto, userEncx)
-	if err != nil {
-		return nil, errs.NewNotEncryptedErr("user", err)
+		return nil, errs.NewNotDecryptedErr("partner", err)
 	}
 
 	// Build complete response with user info
-	return &domain.CompletePartnerResponse{
-		ID:               partner.ID,
-		UserID:           partner.UserID,
-		Bio:              partner.Bio,
-		Experience:       partner.Experience,
-		Certifications:   partner.Certifications,
-		CategoryIDs:      partner.CategoryIDs,
-		ProductIDs:       partner.ProductIDs,
-		IsVerified:       partner.IsVerified,
-		VerifiedAt:       partner.VerifiedAt,
-		VerifiedByUserID: partner.VerifiedByUserID,
-		CreatedAt:        partner.CreatedAt,
-		UpdatedAt:        partner.UpdatedAt,
-		User:             user.ToResponse(),
+	// return partner, nil
+	return &domain.PartnerResponse{
+		UserID:     partner.UserID,
+		Bio:        partner.Bio,
+		Experience: partner.Experience,
+		// Certifications: partner.Certifications,
+		CategoryIDs: partner.CategoryIDs,
+		ProductIDs:  partner.ProductIDs,
+		CreatedAt:   partner.CreatedAt,
+		UpdatedAt:   partner.UpdatedAt,
 	}, nil
 }
 
 // GetPartnerByUserID retrieves a partner by user ID with their associated user information.
-func (s *PartnerService) GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*domain.CompletePartnerResponse, error) {
+func (s *PartnerService) GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*domain.PartnerResponse, error) {
 	// Get encrypted partner from repository
 	partnerEncx, err := s.partnerRepo.GetPartnerByUserID(ctx, userID)
 	if err != nil {
@@ -68,83 +51,51 @@ func (s *PartnerService) GetPartnerByUserID(ctx context.Context, userID uuid.UUI
 	}
 
 	// Decrypt partner
-	partner, err := domain.ProcessPartnerEncx(ctx, s.crypto, partnerEncx)
+	partner, err := domain.DecryptPartnerEncx(ctx, s.crypto, partnerEncx)
 	if err != nil {
-		return nil, errs.NewNotEncryptedErr("partner", err)
-	}
-
-	// Get associated user
-	userEncx, err := s.userRepo.GetUserByID(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("get user by ID: %w", err)
-	}
-
-	// Decrypt user
-	user, err := domain.ProcessUserEncx(ctx, s.crypto, userEncx)
-	if err != nil {
-		return nil, errs.NewNotEncryptedErr("user", err)
+		return nil, errs.NewNotDecryptedErr("partner", err)
 	}
 
 	// Build complete response with user info
-	return &domain.CompletePartnerResponse{
-		ID:               partner.ID,
-		UserID:           partner.UserID,
-		Bio:              partner.Bio,
-		Experience:       partner.Experience,
-		Certifications:   partner.Certifications,
-		CategoryIDs:      partner.CategoryIDs,
-		ProductIDs:       partner.ProductIDs,
-		IsVerified:       partner.IsVerified,
-		VerifiedAt:       partner.VerifiedAt,
-		VerifiedByUserID: partner.VerifiedByUserID,
-		CreatedAt:        partner.CreatedAt,
-		UpdatedAt:        partner.UpdatedAt,
-		User:             user.ToResponse(),
+	return &domain.PartnerResponse{
+		UserID:     partner.UserID,
+		Bio:        partner.Bio,
+		Experience: partner.Experience,
+		// Certifications: partner.Certifications,
+		CategoryIDs: partner.CategoryIDs,
+		ProductIDs:  partner.ProductIDs,
+		CreatedAt:   partner.CreatedAt,
+		UpdatedAt:   partner.UpdatedAt,
 	}, nil
 }
 
 // GetAllPartners retrieves all partners with their associated user information.
 func (s *PartnerService) GetAllPartners(ctx context.Context) (*domain.GetPartnersResponse, error) {
-	// Get all partners with users from repository (optimized JOIN query)
-	partnersEncx, err := s.partnerRepo.GetPartnersWithUsers(ctx)
+	// Get all partners from repository
+	partnersEncx, err := s.partnerRepo.GetAllPartners(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get partners with users from repository: %w", err)
 	}
 
 	// Decrypt partners and build response
-	partners := make([]domain.CompletePartnerResponse, 0, len(partnersEncx))
+	partners := make([]domain.PartnerResponse, 0, len(partnersEncx))
 	for _, partnerEncx := range partnersEncx {
 		// Decrypt partner
-		partner, err := domain.ProcessPartnerEncx(ctx, s.crypto, partnerEncx)
+		partner, err := domain.DecryptPartnerEncx(ctx, s.crypto, partnerEncx)
 		if err != nil {
-			return nil, errs.NewNotEncryptedErr("partner", err)
-		}
-
-		// Decrypt user
-		if partnerEncx.User == nil {
-			return nil, fmt.Errorf("user data missing for partner %s", partnerEncx.ID)
-		}
-
-		user, err := domain.ProcessUserEncx(ctx, s.crypto, partnerEncx.User)
-		if err != nil {
-			return nil, errs.NewNotEncryptedErr("user", err)
+			return nil, errs.NewNotDecryptedErr("partner", err)
 		}
 
 		// Build complete partner response
-		partners = append(partners, domain.CompletePartnerResponse{
-			ID:               partner.ID,
-			UserID:           partner.UserID,
-			Bio:              partner.Bio,
-			Experience:       partner.Experience,
-			Certifications:   partner.Certifications,
-			CategoryIDs:      partner.CategoryIDs,
-			ProductIDs:       partner.ProductIDs,
-			IsVerified:       partner.IsVerified,
-			VerifiedAt:       partner.VerifiedAt,
-			VerifiedByUserID: partner.VerifiedByUserID,
-			CreatedAt:        partner.CreatedAt,
-			UpdatedAt:        partner.UpdatedAt,
-			User:             user.ToResponse(),
+		partners = append(partners, domain.PartnerResponse{
+			UserID:     partner.UserID,
+			Bio:        partner.Bio,
+			Experience: partner.Experience,
+			// Certifications: partner.Certifications,
+			CategoryIDs: partner.CategoryIDs,
+			ProductIDs:  partner.ProductIDs,
+			CreatedAt:   partner.CreatedAt,
+			UpdatedAt:   partner.UpdatedAt,
 		})
 	}
 
@@ -163,15 +114,15 @@ func (s *PartnerService) UpdatePartner(ctx context.Context, partnerID uuid.UUID,
 	}
 
 	// Get existing partner
-	partnerEncx, err := s.partnerRepo.GetPartnerByID(ctx, partnerID)
+	partnerEncx, err := s.partnerRepo.GetPartnerByUserID(ctx, partnerID)
 	if err != nil {
 		return nil, fmt.Errorf("get partner by ID: %w", err)
 	}
 
 	// Decrypt partner
-	partner, err := domain.ProcessPartnerEncx(ctx, s.crypto, partnerEncx)
+	partner, err := domain.DecryptPartnerEncx(ctx, s.crypto, partnerEncx)
 	if err != nil {
-		return nil, errs.NewNotEncryptedErr("partner", err)
+		return nil, errs.NewNotDecryptedErr("partner", err)
 	}
 
 	// Update only provided fields
@@ -181,9 +132,9 @@ func (s *PartnerService) UpdatePartner(ctx context.Context, partnerID uuid.UUID,
 	if request.Experience != nil {
 		partner.Experience = *request.Experience
 	}
-	if request.Certifications != nil {
-		partner.Certifications = *request.Certifications
-	}
+	// if request.Certifications != nil {
+	//	partner.Certifications = *request.Certifications
+	// }
 
 	// Re-encrypt partner with updated fields
 	updatedPartnerEncx, err := domain.ProcessPartnerEncx(ctx, s.crypto, partner)
@@ -198,18 +149,14 @@ func (s *PartnerService) UpdatePartner(ctx context.Context, partnerID uuid.UUID,
 
 	// Return updated partner response
 	return &domain.PartnerResponse{
-		ID:               partner.ID,
-		UserID:           partner.UserID,
-		Bio:              partner.Bio,
-		Experience:       partner.Experience,
-		Certifications:   partner.Certifications,
-		CategoryIDs:      partner.CategoryIDs,
-		ProductIDs:       partner.ProductIDs,
-		IsVerified:       partner.IsVerified,
-		VerifiedAt:       partner.VerifiedAt,
-		VerifiedByUserID: partner.VerifiedByUserID,
-		CreatedAt:        partner.CreatedAt,
-		UpdatedAt:        partner.UpdatedAt,
+		UserID:     partner.UserID,
+		Bio:        partner.Bio,
+		Experience: partner.Experience,
+		// Certifications: partner.Certifications,
+		CategoryIDs: partner.CategoryIDs,
+		ProductIDs:  partner.ProductIDs,
+		CreatedAt:   partner.CreatedAt,
+		UpdatedAt:   partner.UpdatedAt,
 	}, nil
 }
 
@@ -217,7 +164,7 @@ func (s *PartnerService) UpdatePartner(ctx context.Context, partnerID uuid.UUID,
 // This is an admin-only operation that removes the partner profile but does NOT delete the user account.
 func (s *PartnerService) DeletePartner(ctx context.Context, partnerID uuid.UUID) error {
 	// Verify partner exists
-	_, err := s.partnerRepo.GetPartnerByID(ctx, partnerID)
+	_, err := s.partnerRepo.GetPartnerByUserID(ctx, partnerID)
 	if err != nil {
 		return fmt.Errorf("get partner by ID: %w", err)
 	}
@@ -238,41 +185,36 @@ func (s *PartnerService) DeletePartner(ctx context.Context, partnerID uuid.UUID)
 // - Updates user.Role = "partner"
 // - Updates user.State = "active"
 func (s *PartnerService) VerifyPartner(ctx context.Context, partnerID uuid.UUID, verifiedByUserID uuid.UUID) (*domain.PartnerResponse, error) {
-	// 1. Get partner to verify it exists
-	partnerEncx, err := s.partnerRepo.GetPartnerByID(ctx, partnerID)
+	// Get partner to verify it exists
+	partnerEncx, err := s.partnerRepo.GetPartnerByUserID(ctx, partnerID)
 	if err != nil {
 		return nil, fmt.Errorf("get partner by ID: %w", err)
 	}
 
 	// Decrypt partner to check if already verified
-	partner, err := domain.ProcessPartnerEncx(ctx, s.crypto, partnerEncx)
+	partner, err := domain.DecryptPartnerEncx(ctx, s.crypto, partnerEncx)
 	if err != nil {
-		return nil, errs.NewNotEncryptedErr("partner during verification check", err)
+		return nil, errs.NewNotDecryptedErr("partner during verification check", err)
 	}
 
-	// Check if already verified
-	if partner.IsVerified {
-		return nil, errs.NewConflictErr(errors.New("partner is already verified"))
-	}
-
-	// 2. Update partner verification status in repository
+	// Update partner verification status in repository
 	if err := s.partnerRepo.VerifyPartner(ctx, partnerID, verifiedByUserID); err != nil {
 		return nil, fmt.Errorf("verify partner in repository: %w", err)
 	}
 
-	// 3. Get user associated with the partner
+	// Get user associated with the partner
 	userEncx, err := s.userRepo.GetUserByID(ctx, partner.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("get user by ID: %w", err)
 	}
 
 	// Decrypt user for modification
-	user, err := domain.ProcessUserEncx(ctx, s.crypto, userEncx)
+	user, err := domain.DecryptUserEncx(ctx, s.crypto, userEncx)
 	if err != nil {
-		return nil, errs.NewNotEncryptedErr("user during partner verification", err)
+		return nil, errs.NewNotDecryptedErr("user during partner verification", err)
 	}
 
-	// 4. Update user role and state
+	// Update user role and state
 	user.Role = identity.PartnerStr
 	user.State = domain.Active
 
@@ -282,37 +224,32 @@ func (s *PartnerService) VerifyPartner(ctx context.Context, partnerID uuid.UUID,
 		return nil, errs.NewNotEncryptedErr("user during role update", err)
 	}
 
-	// 5. Save updated user
+	// Save updated user
 	if err := s.userRepo.UpdateUser(ctx, updatedUserEncx); err != nil {
 		return nil, fmt.Errorf("update user role and state: %w", err)
 	}
 
-	// 6. Get updated partner with all fields
-	updatedPartnerEncx, err := s.partnerRepo.GetPartnerByID(ctx, partnerID)
+	// Get updated partner with all fields
+	updatedPartnerEncx, err := s.partnerRepo.GetPartnerByUserID(ctx, partnerID)
 	if err != nil {
 		return nil, fmt.Errorf("get updated partner: %w", err)
 	}
 
 	// Decrypt updated partner for response
-	updatedPartner, err := domain.ProcessPartnerEncx(ctx, s.crypto, updatedPartnerEncx)
+	updatedPartner, err := domain.DecryptPartnerEncx(ctx, s.crypto, updatedPartnerEncx)
 	if err != nil {
 		return nil, errs.NewNotEncryptedErr("partner after verification", err)
 	}
 
 	// 7. Return partner response
 	return &domain.PartnerResponse{
-		ID:               updatedPartner.ID,
-		UserID:           updatedPartner.UserID,
-		Bio:              updatedPartner.Bio,
-		Experience:       updatedPartner.Experience,
-		Certifications:   updatedPartner.Certifications,
-		CategoryIDs:      updatedPartner.CategoryIDs,
-		ProductIDs:       updatedPartner.ProductIDs,
-		IsVerified:       updatedPartner.IsVerified,
-		VerifiedAt:       updatedPartner.VerifiedAt,
-		VerifiedByUserID: updatedPartner.VerifiedByUserID,
-		CreatedAt:        updatedPartner.CreatedAt,
-		UpdatedAt:        updatedPartner.UpdatedAt,
+		UserID:      updatedPartner.UserID,
+		Bio:         updatedPartner.Bio,
+		Experience:  updatedPartner.Experience,
+		CategoryIDs: updatedPartner.CategoryIDs,
+		ProductIDs:  updatedPartner.ProductIDs,
+		CreatedAt:   updatedPartner.CreatedAt,
+		UpdatedAt:   updatedPartner.UpdatedAt,
 	}, nil
 }
 
@@ -327,5 +264,9 @@ func (s *PartnerService) UpdateCategories(ctx context.Context, categories []stri
 	return nil
 }
 func (s *PartnerService) UpdateProducts(ctx context.Context, products []string) error {
+	return nil
+}
+
+func (s *PartnerService) ValidatePartnerProducts(ctx context.Context, productIDs []uuid.UUID) error {
 	return nil
 }

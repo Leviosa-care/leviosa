@@ -48,15 +48,16 @@ func (s *AuthAggregatorService) CompletePartner(ctx context.Context, sessionInfo
 	}
 
 	// Create partner profile (IsVerified=false, requires admin approval)
-	if err := s.partner.CreatePartner(
+	_, err := s.partner.CreatePartner(
 		ctx,
 		sessionInfo.UserID,
 		request.Bio,
 		request.Experience,
-		request.Certifications,
+		// request.Certifications,
 		request.CategoryIDs,
 		request.ProductIDs,
-	); err != nil {
+	)
+	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrInvalidValue):
 			return err // Pass through validation errors (invalid catalog IDs)

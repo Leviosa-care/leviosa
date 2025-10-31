@@ -43,7 +43,7 @@ func TestUpdatePartner(t *testing.T) {
 			UserID:         partnerUser.ID,
 			Bio:            "Original bio",
 			Experience:     "Original experience",
-			Certifications: []string{"Original Cert"},
+			// Certifications: []string{"Original Cert"},
 			CategoryIDs:    []uuid.UUID{},
 			ProductIDs:     []uuid.UUID{},
 			IsVerified:     true,
@@ -60,7 +60,7 @@ func TestUpdatePartner(t *testing.T) {
 		updateRequest := domain.UpdatePartnerRequest{
 			Bio:            &updatedBio,
 			Experience:     &updatedExperience,
-			Certifications: &updatedCerts,
+			// Certifications: &updatedCerts,
 		}
 
 		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest)
@@ -105,7 +105,7 @@ func TestUpdatePartner(t *testing.T) {
 			UserID:         partnerUser.ID,
 			Bio:            "Original bio",
 			Experience:     "Original experience",
-			Certifications: []string{"Original Cert"},
+			// Certifications: []string{"Original Cert"},
 			CategoryIDs:    []uuid.UUID{},
 			ProductIDs:     []uuid.UUID{},
 			IsVerified:     true,
@@ -157,7 +157,7 @@ func TestUpdatePartner(t *testing.T) {
 			UserID:         partnerUser.ID,
 			Bio:            "Original bio",
 			Experience:     "Original experience",
-			Certifications: []string{"Cert 1", "Cert 2"},
+			// Certifications: []string{"Cert 1", "Cert 2"},
 			CategoryIDs:    []uuid.UUID{},
 			ProductIDs:     []uuid.UUID{},
 			IsVerified:     true,
@@ -382,7 +382,7 @@ func TestUpdatePartner(t *testing.T) {
 		testPartner := &domain.Partner{
 			ID:             uuid.New(),
 			UserID:         partnerUser.ID,
-			Certifications: []string{"Cert 1"},
+			// Certifications: []string{"Cert 1"},
 			IsVerified:     true,
 		}
 		td.InsertPartner(t, ctx, testPartner, testPool, crypto)
@@ -396,7 +396,7 @@ func TestUpdatePartner(t *testing.T) {
 		}
 
 		updateRequest := domain.UpdatePartnerRequest{
-			Certifications: &invalidCerts,
+			// Certifications: &invalidCerts,
 		}
 
 		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest)
@@ -427,7 +427,7 @@ func TestUpdatePartner(t *testing.T) {
 		testPartner := &domain.Partner{
 			ID:             uuid.New(),
 			UserID:         partnerUser.ID,
-			Certifications: []string{"Valid Cert"},
+			// Certifications: []string{"Valid Cert"},
 			IsVerified:     true,
 		}
 		td.InsertPartner(t, ctx, testPartner, testPool, crypto)
@@ -437,7 +437,7 @@ func TestUpdatePartner(t *testing.T) {
 		// Act - certifications array contains empty string
 		invalidCerts := []string{"Valid Cert", "", "Another Cert"}
 		updateRequest := domain.UpdatePartnerRequest{
-			Certifications: &invalidCerts,
+			// Certifications: &invalidCerts,
 		}
 
 		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest)

@@ -43,7 +43,7 @@ func TestGetPartnerByID(t *testing.T) {
 			UserID:         testUser.ID,
 			Bio:            "Experienced healthcare professional",
 			Experience:     "10 years in home care",
-			Certifications: []string{"CPR Certified", "First Aid"},
+			// Certifications: []string{"CPR Certified", "First Aid"},
 			CategoryIDs:    []uuid.UUID{},
 			ProductIDs:     []uuid.UUID{},
 			IsVerified:     true,

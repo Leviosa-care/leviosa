@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -33,21 +33,19 @@ func TestGetPartnerByUserID(t *testing.T) {
 		partnerUser.Role = identity.PartnerStr
 		partnerUserEncx, err := domain.ProcessUserEncx(ctx, crypto, partnerUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create partner profile
-		testPartner := &domain.Partner{
-			ID:             uuid.New(),
-			UserID:         partnerUser.ID,
-			Bio:            "My bio",
-			Experience:     "My experience",
-			Certifications: []string{"My Cert"},
-			CategoryIDs:    []uuid.UUID{},
-			ProductIDs:     []uuid.UUID{},
-			IsVerified:     true,
+		testPartner := &domain.PartnerEncx{
+			UserID:     partnerUser.ID,
+			Bio:        "My bio",
+			Experience: "My experience",
+			// Certifications: []string{"My Cert"},
+			CategoryIDs: []uuid.UUID{},
+			ProductIDs:  []uuid.UUID{},
 		}
-		td.InsertPartner(t, ctx, testPartner, testPool, crypto)
+		td.InsertPartnerEncx(t, ctx, testPartner, testPool)
 
 		// Create session for partner user
 		accessToken := tu.SetupSessionForUser(t, ctx, authCtx, partnerUser.ID, identity.Partner)
@@ -83,14 +81,14 @@ func TestGetPartnerByUserID(t *testing.T) {
 		require.NoError(t, err)
 
 		testPartner := &domain.Partner{
-			ID:             uuid.New(),
-			UserID:         partnerUser.ID,
-			Bio:            "Test bio",
-			Experience:     "Test experience",
-			Certifications: []string{"Test Cert"},
-			CategoryIDs:    []uuid.UUID{},
-			ProductIDs:     []uuid.UUID{},
-			IsVerified:     true,
+			ID:         uuid.New(),
+			UserID:     partnerUser.ID,
+			Bio:        "Test bio",
+			Experience: "Test experience",
+			// Certifications: []string{"Test Cert"},
+			CategoryIDs: []uuid.UUID{},
+			ProductIDs:  []uuid.UUID{},
+			IsVerified:  true,
 		}
 		td.InsertPartner(t, ctx, testPartner, testPool, crypto)
 
@@ -121,9 +119,9 @@ func TestGetPartnerByUserID(t *testing.T) {
 		require.NoError(t, err)
 
 		testPartner1 := &domain.Partner{
-			ID:      uuid.New(),
-			UserID:  partner1.ID,
-			Bio:     "Partner 1 bio",
+			ID:         uuid.New(),
+			UserID:     partner1.ID,
+			Bio:        "Partner 1 bio",
 			IsVerified: true,
 		}
 		td.InsertPartner(t, ctx, testPartner1, testPool, crypto)
@@ -140,9 +138,9 @@ func TestGetPartnerByUserID(t *testing.T) {
 		require.NoError(t, err)
 
 		testPartner2 := &domain.Partner{
-			ID:      uuid.New(),
-			UserID:  partner2.ID,
-			Bio:     "Partner 2 bio",
+			ID:         uuid.New(),
+			UserID:     partner2.ID,
+			Bio:        "Partner 2 bio",
 			IsVerified: true,
 		}
 		td.InsertPartner(t, ctx, testPartner2, testPool, crypto)
@@ -199,9 +197,9 @@ func TestGetPartnerByUserID(t *testing.T) {
 		require.NoError(t, err)
 
 		testPartner := &domain.Partner{
-			ID:      uuid.New(),
-			UserID:  partnerUser.ID,
-			Bio:     "Test bio",
+			ID:         uuid.New(),
+			UserID:     partnerUser.ID,
+			Bio:        "Test bio",
 			IsVerified: true,
 		}
 		td.InsertPartner(t, ctx, testPartner, testPool, crypto)

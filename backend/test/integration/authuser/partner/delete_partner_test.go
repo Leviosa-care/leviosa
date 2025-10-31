@@ -43,7 +43,7 @@ func TestDeletePartner(t *testing.T) {
 			UserID:         testUser.ID,
 			Bio:            "Test bio",
 			Experience:     "Test experience",
-			Certifications: []string{"Cert1"},
+			// Certifications: []string{"Cert1"},
 			CategoryIDs:    []uuid.UUID{},
 			ProductIDs:     []uuid.UUID{},
 			IsVerified:     true,

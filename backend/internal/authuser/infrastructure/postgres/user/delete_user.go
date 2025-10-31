@@ -27,4 +27,3 @@ func (r *Repository) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 
 	return nil
 }
-

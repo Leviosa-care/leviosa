@@ -11,6 +11,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
+	"github.com/google/uuid"
 )
 
 func (h *handler) CreatePartner(w http.ResponseWriter, r *http.Request) {
@@ -44,8 +45,26 @@ func (h *handler) CreatePartner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID, err := uuid.Parse(request.UserID)
+	if err != nil {
+		logger.WarnContext(ctx, "Handler: Invalid JSON request body, user ID wrong formatted",
+			"error", err,
+			"operation", "create_partner",
+			"method", r.Method,
+			"path", r.URL.Path)
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
 	// Call service to create partner
-	partner, err := h.svc.CreatePartner(ctx, request.UserID, &request)
+	partner, err := h.svc.CreatePartner(ctx,
+		userID,
+		request.Bio,
+		request.Experience,
+		// request.Certifications,
+		request.CategoryIDs,
+		request.ProductIDs,
+	)
 	if err != nil {
 		// Log with specific error context based on error type
 		var logLevel string
@@ -126,9 +145,7 @@ func (h *handler) CreatePartner(w http.ResponseWriter, r *http.Request) {
 		"method", r.Method,
 		"path", r.URL.Path,
 		"status_code", http.StatusCreated,
-		"partner_id", partner.ID,
-		"user_id", partner.User.ID)
+		"user_id", partner.UserID)
 
 	httpx.RespondWithJSON(w, partner, http.StatusCreated)
 }
-

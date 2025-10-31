@@ -14,14 +14,13 @@ func (r *Repository) UpdatePartner(ctx context.Context, partner *domain.PartnerE
 		UPDATE %s.partners SET
 			bio_encrypted = $2,
 			experience_encrypted = $3,
-			certifications_encrypted = $4,
-			category_ids_encrypted = $5,
-			product_ids_encrypted = $6,
-			stripe_connected_account_id_encrypted = $7,
-			stripe_account_status = $8,
-			stripe_onboarding_complete = $9,
-			dek_encrypted = $10,
-			key_version = $11,
+			category_ids_encrypted = $4,
+			product_ids_encrypted = $5,
+			stripe_connected_account_id_encrypted = $6,
+			stripe_account_status = $7,
+			stripe_onboarding_complete = $8,
+			dek_encrypted = $9,
+			key_version = $10,
 			updated_at = NOW()
 		WHERE user_id = $1
 	`, r.schema)
@@ -30,7 +29,6 @@ func (r *Repository) UpdatePartner(ctx context.Context, partner *domain.PartnerE
 		partner.UserID,
 		partner.BioEncrypted,
 		partner.ExperienceEncrypted,
-		partner.CertificationsEncrypted,
 		partner.CategoryIDsEncrypted,
 		partner.ProductIDsEncrypted,
 		partner.StripeConnectedAccountIDEncrypted,

@@ -35,10 +35,10 @@ func NewTestPartner(t *testing.T, userID uuid.UUID) *domain.Partner {
 	productIDs := []uuid.UUID{uuid.New(), uuid.New(), uuid.New()}
 
 	return &domain.Partner{
-		UserID:                   userID,
-		Bio:                      "Test partner bio with relevant experience and qualifications",
-		Experience:               "5+ years of professional experience in relevant field",
-		Certifications:           []string{"Certification 1", "Certification 2", "Advanced Certification"},
+		UserID:     userID,
+		Bio:        "Test partner bio with relevant experience and qualifications",
+		Experience: "5+ years of professional experience in relevant field",
+		// Certifications:           []string{"Certification 1", "Certification 2", "Advanced Certification"},
 		CreatedAt:                time.Now(),
 		UpdatedAt:                time.Now(),
 		CategoryIDs:              categoryIDs,
@@ -58,10 +58,10 @@ func NewTestPartnerEncx(t *testing.T) *domain.PartnerEncx {
 	userEncx := NewTestUserEncx(t)
 
 	return &domain.PartnerEncx{
-		UserID:                            userEncx.ID,
-		BioEncrypted:                      []byte("bio encrypted"),
-		ExperienceEncrypted:               []byte("experience encrypted"),
-		CertificationsEncrypted:           []byte("certifications encrypted"),
+		UserID:              userEncx.ID,
+		BioEncrypted:        []byte("bio encrypted"),
+		ExperienceEncrypted: []byte("experience encrypted"),
+		// CertificationsEncrypted:           []byte("certifications encrypted"),
 		CategoryIDsEncrypted:              []byte("category_ids_encrypted"),
 		ProductIDsEncrypted:               []byte("product_ids_encrypted"),
 		StripeConnectedAccountIDEncrypted: []byte("stripe_connected_account_id_encrypted"),
@@ -81,10 +81,10 @@ func NewTestPartnerEncxWithUserID(t *testing.T, userID uuid.UUID) *domain.Partne
 	now := time.Now()
 
 	return &domain.PartnerEncx{
-		UserID:                            userID,
-		BioEncrypted:                      []byte("bio encrypted"),
-		ExperienceEncrypted:               []byte("experience encrypted"),
-		CertificationsEncrypted:           []byte("certifications encrypted"),
+		UserID:              userID,
+		BioEncrypted:        []byte("bio encrypted"),
+		ExperienceEncrypted: []byte("experience encrypted"),
+		// CertificationsEncrypted:           []byte("certifications encrypted"),
 		CategoryIDsEncrypted:              []byte("category_ids_encrypted"),
 		ProductIDsEncrypted:               []byte("product_ids_encrypted"),
 		StripeConnectedAccountIDEncrypted: []byte("stripe_connected_account_id_encrypted"),
@@ -136,17 +136,17 @@ func InsertPartnerEncx(t *testing.T, ctx context.Context, partnerEncx *domain.Pa
 
 	query := `
 		INSERT INTO auth.partners (
-			user_id, bio_encrypted, experience_encrypted, certifications_encrypted,
+			user_id, bio_encrypted, experience_encrypted,
 			category_ids_encrypted, product_ids_encrypted,
 			stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			dek_encrypted, key_version, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 		)`
 
 	_, err := pool.Exec(ctx, query,
 		partnerEncx.UserID,
-		partnerEncx.BioEncrypted, partnerEncx.ExperienceEncrypted, partnerEncx.CertificationsEncrypted,
+		partnerEncx.BioEncrypted, partnerEncx.ExperienceEncrypted,
 		partnerEncx.CategoryIDsEncrypted, partnerEncx.ProductIDsEncrypted,
 		partnerEncx.StripeConnectedAccountIDEncrypted, partnerEncx.StripeAccountStatus, partnerEncx.StripeOnboardingComplete,
 		partnerEncx.DEKEncrypted, partnerEncx.KeyVersion,
@@ -161,7 +161,7 @@ func GetPartnerEncxByUserID(t *testing.T, ctx context.Context, userID uuid.UUID,
 
 	var partnerEncx domain.PartnerEncx
 	query := `
-		SELECT user_id, bio_encrypted, experience_encrypted, certifications_encrypted,
+		SELECT user_id, bio_encrypted, experience_encrypted,
 			   category_ids_encrypted, product_ids_encrypted,
 			   stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			   dek_encrypted, key_version, created_at, updated_at
@@ -170,7 +170,7 @@ func GetPartnerEncxByUserID(t *testing.T, ctx context.Context, userID uuid.UUID,
 
 	err := pool.QueryRow(ctx, query, userID).Scan(
 		&partnerEncx.UserID,
-		&partnerEncx.BioEncrypted, &partnerEncx.ExperienceEncrypted, &partnerEncx.CertificationsEncrypted,
+		&partnerEncx.BioEncrypted, &partnerEncx.ExperienceEncrypted,
 		&partnerEncx.CategoryIDsEncrypted, &partnerEncx.ProductIDsEncrypted,
 		&partnerEncx.StripeConnectedAccountIDEncrypted, &partnerEncx.StripeAccountStatus, &partnerEncx.StripeOnboardingComplete,
 		&partnerEncx.DEKEncrypted, &partnerEncx.KeyVersion,

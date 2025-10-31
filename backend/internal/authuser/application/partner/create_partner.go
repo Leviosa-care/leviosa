@@ -2,6 +2,7 @@ package partner
 
 import (
 	"context"
+	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 
@@ -19,7 +20,7 @@ import (
 //   - userID: The UUID of the existing user
 //   - bio: Partner bio/description (optional)
 //   - experience: Partner experience description (optional)
-//   - certifications: List of certifications (optional)
+//   - certifications: List of certifications (optional) - REMOVED
 //   - categoryIDs: List of catalog category UUIDs the partner offers services for
 //   - productIDs: List of catalog product UUIDs the partner offers services for
 //
@@ -27,36 +28,40 @@ import (
 //   - Catalog validation fails (invalid category/product IDs)
 //   - Database operation fails
 //   - Encryption fails
-func (s *PartnerService) CreatePartner(ctx context.Context, userID uuid.UUID, bio, experience string, certifications []string, categoryIDs, productIDs []uuid.UUID) error {
+func (s *PartnerService) CreatePartner(ctx context.Context, userID uuid.UUID, bio, experience string, categoryIDs, productIDs []uuid.UUID) (*domain.Partner, error) {
 	// Validate catalog IDs against cache
 	if err := s.verifyCatalogIDs(categoryIDs, productIDs); err != nil {
-		return errs.NewInvalidValueErr(err.Error())
+		return nil, errs.NewInvalidValueErr(err.Error())
 	}
+
+	now := time.Now()
 
 	// Create partner entity
 	partner := &domain.Partner{
-		ID:             uuid.New(),
-		UserID:         userID,
-		Bio:            bio,
-		Experience:     experience,
-		Certifications: certifications,
-		CategoryIDs:    categoryIDs,
-		ProductIDs:     productIDs,
-		IsVerified:     false, // Partners start unverified, admin must verify
+		UserID:     userID,
+		Bio:        bio,
+		Experience: experience,
+		// Certifications: certifications,
+		CategoryIDs: categoryIDs,
+		ProductIDs:  productIDs,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
+
+	// TODO: do the stripe related account creation operations
 
 	// Encrypt partner data
 	partnerEncx, err := domain.ProcessPartnerEncx(ctx, s.crypto, partner)
 	if err != nil {
-		return errs.NewNotEncryptedErr("partner during creation", err)
+		return nil, errs.NewNotEncryptedErr("partner during creation", err)
 	}
 
 	// Create partner in database
 	if err := s.partnerRepo.CreatePartner(ctx, partnerEncx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return partner, nil
 }
 
 // verifyCatalogIDs validates that all provided category and product IDs exist in the catalog cache.

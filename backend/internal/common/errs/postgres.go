@@ -29,7 +29,6 @@ func ClassifyPgError(operation string, err error) error {
 		case "23503": // Foreign key violation
 			repoErr = fmt.Errorf("%w: %w", ErrForeignKeyViolation, pgErr)
 		case "23502": // Not null violation
-			println("HERE GETTING THE RIGHT ERROR VALUE")
 			repoErr = fmt.Errorf("%w: %w", ErrNotNullViolation, pgErr)
 		case "23514": // Check violation
 			repoErr = fmt.Errorf("%w: %w", ErrCheckViolation, pgErr)

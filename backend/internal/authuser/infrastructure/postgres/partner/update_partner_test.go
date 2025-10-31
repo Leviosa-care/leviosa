@@ -265,7 +265,7 @@ func TestUpdatePartner(t *testing.T) {
 			UserID:                            userID,
 			BioEncrypted:                      []byte(""),
 			ExperienceEncrypted:               []byte(""),
-			CertificationsEncrypted:           []byte(""),
+			// CertificationsEncrypted:           []byte(""),
 			CategoryIDsEncrypted:              []byte(""),
 			ProductIDsEncrypted:               []byte(""),
 			StripeConnectedAccountIDEncrypted: []byte(""),

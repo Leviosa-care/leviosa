@@ -5,67 +5,30 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	"github.com/google/uuid"
 	"github.com/hengadev/errsx"
 )
 
 type PartnerResponse struct {
-	ID               uuid.UUID                `json:"id"`
-	UserID           uuid.UUID                `json:"user_id"`
-	Bio              string                   `json:"bio"`
-	Experience       string                   `json:"experience"`
-	Certifications   []string                 `json:"certifications"`
-	CategoryIDs      []uuid.UUID              `json:"category_ids,omitempty"`
-	ProductIDs       []uuid.UUID              `json:"product_ids,omitempty"`
-	IsVerified       bool                     `json:"is_verified"`
-	VerifiedAt       *time.Time               `json:"verified_at,omitempty"`
-	VerifiedByUserID *uuid.UUID               `json:"verified_by_user_id,omitempty"`
-	CreatedAt        time.Time                `json:"created_at"`
-	UpdatedAt        time.Time                `json:"updated_at"`
-	User             *UserResponse            `json:"user,omitempty"`
-	Specializations  []SpecializationResponse `json:"specializations,omitempty"`
-}
-
-type CompletePartnerResponse struct {
-	ID               uuid.UUID                `json:"id"`
-	UserID           uuid.UUID                `json:"user_id"`
-	Bio              string                   `json:"bio"`
-	Experience       string                   `json:"experience"`
-	Certifications   []string                 `json:"certifications"`
-	CategoryIDs      []uuid.UUID              `json:"category_ids,omitempty"`
-	ProductIDs       []uuid.UUID              `json:"product_ids,omitempty"`
-	IsVerified       bool                     `json:"is_verified"`
-	VerifiedAt       *time.Time               `json:"verified_at,omitempty"`
-	VerifiedByUserID *uuid.UUID               `json:"verified_by_user_id,omitempty"`
-	CreatedAt        time.Time                `json:"created_at"`
-	UpdatedAt        time.Time                `json:"updated_at"`
-	User             *UserResponse            `json:"user"`
-	Specializations  []SpecializationResponse `json:"specializations"`
+	UserID         uuid.UUID   `json:"user_id"`
+	Bio            string      `json:"bio"`
+	Experience     string      `json:"experience"`
+	// Certifications []string    `json:"certifications"`
+	CategoryIDs    []uuid.UUID `json:"category_ids,omitempty"`
+	ProductIDs     []uuid.UUID `json:"product_ids,omitempty"`
+	CreatedAt      time.Time   `json:"created_at"`
+	UpdatedAt      time.Time   `json:"updated_at"`
 }
 
 // NOTE: This DTO is deprecated. Partner registration now uses CompletePartnerRequest via /auth/complete/partner
 // Keeping this for potential future admin-initiated partner creation, but it's currently unused.
 type CreatePartnerRequest struct {
-	UserID         string      `json:"user_id"`          // ID of existing user to create partner profile for
+	UserID         string      `json:"user_id"` // ID of existing user to create partner profile for
 	Bio            string      `json:"bio,omitempty"`
 	Experience     string      `json:"experience,omitempty"`
-	Certifications []string    `json:"certifications,omitempty"`
+	// Certifications []string    `json:"certifications,omitempty"`
 	CategoryIDs    []uuid.UUID `json:"category_ids,omitempty"`
 	ProductIDs     []uuid.UUID `json:"product_ids,omitempty"`
-
-	// User fields (for ToUser method - deprecated, will be removed)
-	Email      string `json:"email,omitempty"`
-	Password   string `json:"password,omitempty"`
-	FirstName  string `json:"first_name,omitempty"`
-	LastName   string `json:"last_name,omitempty"`
-	Telephone  string `json:"telephone,omitempty"`
-	BirthDate  string `json:"birthdate,omitempty"` // ISO format
-	Gender     string `json:"gender,omitempty"`
-	PostalCode string `json:"postal_code,omitempty"`
-	City       string `json:"city,omitempty"`
-	Address1   string `json:"address1,omitempty"`
-	Address2   string `json:"address2,omitempty"`
 }
 
 func (r *CreatePartnerRequest) Valid(ctx context.Context) error {
@@ -89,18 +52,18 @@ func (r *CreatePartnerRequest) Valid(ctx context.Context) error {
 		errs.Set("experience", "experience must be 2000 characters or less")
 	}
 
-	if len(r.Certifications) > 20 {
-		errs.Set("certifications", "maximum 20 certifications allowed")
-	}
+	// if len(r.Certifications) > 20 {
+	//	errs.Set("certifications", "maximum 20 certifications allowed")
+	// }
 
-	for _, cert := range r.Certifications {
-		cert = strings.TrimSpace(cert)
-		if cert == "" {
-			errs.Set("certifications", "certification cannot be empty")
-		} else if len(cert) > 200 {
-			errs.Set("certifications", "each certification must be 200 characters or less")
-		}
-	}
+	// for _, cert := range r.Certifications {
+	//	cert = strings.TrimSpace(cert)
+	//	if cert == "" {
+	//		errs.Set("certifications", "certification cannot be empty")
+	//	} else if len(cert) > 200 {
+	//		errs.Set("certifications", "each certification must be 200 characters or less")
+	//	}
+	// }
 
 	return errs.AsError()
 }
@@ -213,56 +176,53 @@ func (r *CreatePartnerRequest) Valid(ctx context.Context) error {
 // 	return errs.AsError()
 // }
 
-// TODO: that thing should be deleted
-func (r *CreatePartnerRequest) ToUser() (*User, error) {
-	birthDate, err := time.Parse("2006-01-02", r.BirthDate)
-	if err != nil {
-		return nil, err
-	}
-
-	return &User{
-		ID:         uuid.New(),
-		State:      Unverified,
-		Email:      strings.TrimSpace(r.Email),
-		Password:   r.Password,
-		FirstName:  strings.TrimSpace(r.FirstName),
-		LastName:   strings.TrimSpace(r.LastName),
-		Telephone:  strings.TrimSpace(r.Telephone),
-		BirthDate:  birthDate,
-		Gender:     strings.TrimSpace(r.Gender),
-		PostalCode: strings.TrimSpace(r.PostalCode),
-		City:       strings.TrimSpace(r.City),
-		Address1:   strings.TrimSpace(r.Address1),
-		Address2:   strings.TrimSpace(r.Address2),
-		Role:       identity.PartnerStr,
-	}, nil
-}
+// func (r *CreatePartnerRequest) ToUser() (*User, error) {
+// 	birthDate, err := time.Parse("2006-01-02", r.BirthDate)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	return &User{
+// 		ID:         uuid.New(),
+// 		State:      Unverified,
+// 		Email:      strings.TrimSpace(r.Email),
+// 		Password:   r.Password,
+// 		FirstName:  strings.TrimSpace(r.FirstName),
+// 		LastName:   strings.TrimSpace(r.LastName),
+// 		Telephone:  strings.TrimSpace(r.Telephone),
+// 		BirthDate:  birthDate,
+// 		Gender:     strings.TrimSpace(r.Gender),
+// 		PostalCode: strings.TrimSpace(r.PostalCode),
+// 		City:       strings.TrimSpace(r.City),
+// 		Address1:   strings.TrimSpace(r.Address1),
+// 		Address2:   strings.TrimSpace(r.Address2),
+// 		Role:       identity.PartnerStr,
+// 	}, nil
+// }
 
 func (r *CreatePartnerRequest) ToPartner(userID uuid.UUID) *Partner {
 	// Clean certifications
-	cleanCertifications := make([]string, 0, len(r.Certifications))
-	for _, cert := range r.Certifications {
-		if clean := strings.TrimSpace(cert); clean != "" {
-			cleanCertifications = append(cleanCertifications, clean)
-		}
-	}
+	// cleanCertifications := make([]string, 0, len(r.Certifications))
+	// for _, cert := range r.Certifications {
+	//	if clean := strings.TrimSpace(cert); clean != "" {
+	//		cleanCertifications = append(cleanCertifications, clean)
+	//	}
+	// }
 
 	return &Partner{
-		ID:             uuid.New(),
 		UserID:         userID,
 		Bio:            strings.TrimSpace(r.Bio),
 		Experience:     strings.TrimSpace(r.Experience),
-		Certifications: cleanCertifications,
+		// Certifications: cleanCertifications,
 		CategoryIDs:    r.CategoryIDs,
 		ProductIDs:     r.ProductIDs,
-		IsVerified:     false, // Partners start unverified
 	}
 }
 
 type UpdatePartnerRequest struct {
 	Bio            *string   `json:"bio,omitempty"`
 	Experience     *string   `json:"experience,omitempty"`
-	Certifications *[]string `json:"certifications,omitempty"`
+	// Certifications *[]string `json:"certifications,omitempty"`
 }
 
 func (r *UpdatePartnerRequest) Valid(ctx context.Context) error {
@@ -285,20 +245,20 @@ func (r *UpdatePartnerRequest) Valid(ctx context.Context) error {
 	}
 
 	// Certifications validation if provided
-	if r.Certifications != nil {
-		if len(*r.Certifications) > 20 {
-			errs.Set("certifications", "maximum 20 certifications allowed")
-		}
-
-		for _, cert := range *r.Certifications {
-			cert = strings.TrimSpace(cert)
-			if cert == "" {
-				errs.Set("certifications", "certification cannot be empty")
-			} else if len(cert) > 200 {
-				errs.Set("certifications", "each certification must be 200 characters or less")
-			}
-		}
-	}
+	// if r.Certifications != nil {
+	//	if len(*r.Certifications) > 20 {
+	//		errs.Set("certifications", "maximum 20 certifications allowed")
+	//	}
+	//
+	//	for _, cert := range *r.Certifications {
+	//		cert = strings.TrimSpace(cert)
+	//		if cert == "" {
+	//			errs.Set("certifications", "certification cannot be empty")
+	//		} else if len(cert) > 200 {
+	//			errs.Set("certifications", "each certification must be 200 characters or less")
+	//		}
+	//	}
+	// }
 
 	return errs.AsError()
 }
@@ -318,10 +278,6 @@ func (r *VerifyPartnerRequest) Valid(ctx context.Context) error {
 }
 
 type GetPartnersResponse struct {
-	Partners []CompletePartnerResponse `json:"partners"`
-	Total    int                       `json:"total"`
-}
-
-type GetPartnerSpecializationsResponse struct {
-	Specializations []SpecializationResponse `json:"specializations"`
+	Partners []PartnerResponse `json:"partners"`
+	Total    int               `json:"total"`
 }

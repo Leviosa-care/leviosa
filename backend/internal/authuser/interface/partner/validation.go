@@ -2,22 +2,12 @@ package partnerHandler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
+	"github.com/google/uuid"
 )
-
-// ValidateSpecializationsRequest represents the request body for validating specializations
-type ValidateSpecializationsRequest struct {
-	SpecializationIDs []string `json:"specialization_ids"`
-}
-
-// ValidateSpecializationsResponse represents the response for validating specializations
-type ValidateSpecializationsResponse struct {
-	Valid bool   `json:"valid"`
-	Error string `json:"error,omitempty"`
-}
 
 // ValidateProductsRequest represents the request body for validating products
 type ValidateProductsRequest struct {
@@ -30,61 +20,16 @@ type ValidateProductsResponse struct {
 	Error string `json:"error,omitempty"`
 }
 
-// ValidatePartnerSpecializations validates that all specialization IDs exist in the catalog cache
-func (h *handler) ValidatePartnerSpecializations(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		httpx.RespondWithError(w, http.StatusMethodNotAllowed, httpx.ErrMethodNotAllowed)
-		return
-	}
-
-	var req ValidateSpecializationsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httpx.RespondWithError(w, http.StatusBadRequest, httpx.ErrJSONDecoding)
-		return
-	}
-
-	// Convert string IDs to UUIDs
-	specializationIDs := make([]uuid.UUID, 0, len(req.SpecializationIDs))
-	for _, idStr := range req.SpecializationIDs {
-		id, err := uuid.Parse(idStr)
-		if err != nil {
-			response := ValidateSpecializationsResponse{
-				Valid: false,
-				Error: "invalid specialization ID format: " + idStr,
-			}
-			httpx.RespondWithJSON(w, http.StatusBadRequest, response)
-			return
-		}
-		specializationIDs = append(specializationIDs, id)
-	}
-
-	// Validate specializations through the service
-	if err := h.svc.ValidatePartnerSpecializations(r.Context(), specializationIDs); err != nil {
-		response := ValidateSpecializationsResponse{
-			Valid: false,
-			Error: err.Error(),
-		}
-		httpx.RespondWithJSON(w, http.StatusBadRequest, response)
-		return
-	}
-
-	// All validations passed
-	response := ValidateSpecializationsResponse{
-		Valid: true,
-	}
-	httpx.RespondWithJSON(w, http.StatusOK, response)
-}
-
 // ValidatePartnerProducts validates that all product IDs exist in the catalog cache
 func (h *handler) ValidatePartnerProducts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		httpx.RespondWithError(w, http.StatusMethodNotAllowed, httpx.ErrMethodNotAllowed)
+		httpx.RespondWithError(w, errors.New(""), http.StatusMethodNotAllowed)
 		return
 	}
 
 	var req ValidateProductsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httpx.RespondWithError(w, http.StatusBadRequest, httpx.ErrJSONDecoding)
+		httpx.RespondWithError(w, errors.New(""), http.StatusBadRequest)
 		return
 	}
 
@@ -97,7 +42,7 @@ func (h *handler) ValidatePartnerProducts(w http.ResponseWriter, r *http.Request
 				Valid: false,
 				Error: "invalid product ID format: " + idStr,
 			}
-			httpx.RespondWithJSON(w, http.StatusBadRequest, response)
+			httpx.RespondWithJSON(w, errors.New(response.Error), http.StatusBadRequest)
 			return
 		}
 		productIDs = append(productIDs, id)
@@ -109,7 +54,7 @@ func (h *handler) ValidatePartnerProducts(w http.ResponseWriter, r *http.Request
 			Valid: false,
 			Error: err.Error(),
 		}
-		httpx.RespondWithJSON(w, http.StatusBadRequest, response)
+		httpx.RespondWithJSON(w, errors.New(response.Error), http.StatusBadRequest)
 		return
 	}
 
@@ -117,5 +62,6 @@ func (h *handler) ValidatePartnerProducts(w http.ResponseWriter, r *http.Request
 	response := ValidateProductsResponse{
 		Valid: true,
 	}
-	httpx.RespondWithJSON(w, http.StatusOK, response)
+	httpx.RespondWithJSON(w, errors.New(response.Error), http.StatusOK)
 }
+

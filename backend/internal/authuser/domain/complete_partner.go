@@ -25,11 +25,11 @@ type CompletePartnerRequest struct {
 	Address2   string      `json:"address2"`
 
 	// Partner-specific fields
-	Bio            string      `json:"bio,omitempty"`
-	Experience     string      `json:"experience,omitempty"`
-	Certifications []string    `json:"certifications,omitempty"`
-	CategoryIDs    []uuid.UUID `json:"category_ids,omitempty"`
-	ProductIDs     []uuid.UUID `json:"product_ids,omitempty"`
+	Bio        string `json:"bio,omitempty"`
+	Experience string `json:"experience,omitempty"`
+	// Certifications []string    `json:"certifications,omitempty"`
+	CategoryIDs []uuid.UUID `json:"category_ids,omitempty"`
+	ProductIDs  []uuid.UUID `json:"product_ids,omitempty"`
 }
 
 // Valid validates the complete partner request including both user and partner fields.
@@ -65,16 +65,16 @@ func (r *CompletePartnerRequest) Valid(ctx context.Context) error {
 	}
 
 	// Validate certifications array
-	for _, cert := range r.Certifications {
-		if len(cert) > 200 {
-			errs.Set("certifications", "each certification must be 200 characters or less")
-			break
-		}
-		if cert == "" {
-			errs.Set("certifications", "certifications cannot contain empty values")
-			break
-		}
-	}
+	// for _, cert := range r.Certifications {
+	//	if len(cert) > 200 {
+	//		errs.Set("certifications", "each certification must be 200 characters or less")
+	//		break
+	//	}
+	//	if cert == "" {
+	//		errs.Set("certifications", "certifications cannot contain empty values")
+	//		break
+	//	}
+	// }
 
 	// Validate UUID arrays (nil UUIDs not allowed)
 	for _, categoryID := range r.CategoryIDs {

@@ -9,7 +9,6 @@ import (
 
 func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	RequireAdmin := h.authmw.RequireAdmin
-	RequireStandard := h.authmw.RequireMinimumRole(identity.Standard)
 	RequirePartner := h.authmw.RequireMinimumRole(identity.Partner)
 
 	// NOTE: Partner registration has moved to /auth/complete/partner (self-service during user registration)
@@ -34,21 +33,7 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Verify partner credentials (admin only)
 	router.HandleFunc("POST "+VerifyPartnerEndpoint, RequireAdmin(mw.EnableCORS(h.VerifyPartner)))
 
-	// Partner specialization management
-	// Add specialization to partner (admin only)
-	router.HandleFunc("POST "+AddPartnerSpecializationEndpoint, RequireAdmin(mw.EnableCORS(h.AddPartnerSpecialization)))
-
-	// Remove specialization from partner (admin only)
-	router.HandleFunc("DELETE "+RemovePartnerSpecializationEndpoint, RequireAdmin(mw.EnableCORS(h.RemovePartnerSpecialization)))
-
-	// Get partner specializations (any authenticated user can view)
-	router.HandleFunc("GET "+GetPartnerSpecializationsEndpoint, RequireStandard(mw.EnableCORS(h.GetPartnerSpecializations)))
-
 	// Catalog validation endpoints
-	// Validate specializations exist in catalog (admin only)
-	router.HandleFunc("POST "+ValidatePartnerSpecializationsEndpoint, RequireAdmin(mw.EnableCORS(h.ValidatePartnerSpecializations)))
-
 	// Validate products exist in catalog (admin only)
 	router.HandleFunc("POST "+ValidatePartnerProductsEndpoint, RequireAdmin(mw.EnableCORS(h.ValidatePartnerProducts)))
 }
-

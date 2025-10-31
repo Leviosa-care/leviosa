@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +47,7 @@ func TestGetAllPartners(t *testing.T) {
 				UserID:         testUser.ID,
 				Bio:            "Bio for partner " + string(rune('A'+i)),
 				Experience:     "Experience " + string(rune('A'+i)),
-				Certifications: []string{"Cert " + string(rune('A'+i))},
+				// Certifications: []string{"Cert " + string(rune('A'+i))},
 				CategoryIDs:    []uuid.UUID{},
 				ProductIDs:     []uuid.UUID{},
 				IsVerified:     i%2 == 0, // Alternate verified status
@@ -151,7 +151,7 @@ func TestGetAllPartners(t *testing.T) {
 			UserID:         testUser.ID,
 			Bio:            "Test bio",
 			Experience:     "Test experience",
-			Certifications: []string{"Cert1"},
+			// Certifications: []string{"Cert1"},
 			CategoryIDs:    []uuid.UUID{},
 			ProductIDs:     []uuid.UUID{},
 			IsVerified:     true,

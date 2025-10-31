@@ -16,10 +16,6 @@ type Handler interface {
 	UpdatePartner(w http.ResponseWriter, r *http.Request)
 	DeletePartner(w http.ResponseWriter, r *http.Request)
 	VerifyPartner(w http.ResponseWriter, r *http.Request)
-	AddPartnerSpecialization(w http.ResponseWriter, r *http.Request)
-	RemovePartnerSpecialization(w http.ResponseWriter, r *http.Request)
-	GetPartnerSpecializations(w http.ResponseWriter, r *http.Request)
-	ValidatePartnerSpecializations(w http.ResponseWriter, r *http.Request)
 	ValidatePartnerProducts(w http.ResponseWriter, r *http.Request)
 }
 
@@ -31,3 +27,4 @@ type handler struct {
 func New(svc ports.PartnerService, authmw auth.AuthMiddleware) Handler {
 	return &handler{svc: svc, authmw: authmw}
 }
+

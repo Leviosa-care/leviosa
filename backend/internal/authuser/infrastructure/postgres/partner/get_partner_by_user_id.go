@@ -13,7 +13,7 @@ import (
 func (r *Repository) GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*domain.PartnerEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			user_id, bio_encrypted, experience_encrypted, certifications_encrypted,
+			user_id, bio_encrypted, experience_encrypted, 
 			category_ids_encrypted, product_ids_encrypted,
 			stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			dek_encrypted, key_version, created_at, updated_at
@@ -26,7 +26,6 @@ func (r *Repository) GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (
 		&partner.UserID,
 		&partner.BioEncrypted,
 		&partner.ExperienceEncrypted,
-		&partner.CertificationsEncrypted,
 		&partner.CategoryIDsEncrypted,
 		&partner.ProductIDsEncrypted,
 		&partner.StripeConnectedAccountIDEncrypted,
@@ -43,4 +42,3 @@ func (r *Repository) GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (
 
 	return partner, nil
 }
-
