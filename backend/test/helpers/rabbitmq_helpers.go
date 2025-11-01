@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -131,4 +132,107 @@ func PurgeOTPQueue(t *testing.T, ch *amqp.Channel) {
 
 	_, err := ch.QueuePurge("test_otp_notifications", false)
 	require.NoError(t, err, "Failed to purge OTP test queue")
+}
+
+// Settings-specific RabbitMQ helpers
+
+// RabbitMQMessage represents a consumed message for verification
+type RabbitMQMessage struct {
+	Key   string      `json:"key"`
+	Value interface{} `json:"value"`
+}
+
+// GetRabbitMQChannel gets a RabbitMQ channel from connection
+func GetRabbitMQChannel(t *testing.T, conn *amqp.Connection) *amqp.Channel {
+	t.Helper()
+
+	ch, err := conn.Channel()
+	require.NoError(t, err, "Failed to open RabbitMQ channel")
+	return ch
+}
+
+// PurgeSettingsQueues clears all messages from the test settings queues
+func PurgeSettingsQueues(t *testing.T, ch *amqp.Channel) {
+	t.Helper()
+
+	queues := []string{mq.NotificationSettingsQueueName, mq.OTPSettingsQueueName}
+
+	for _, queue := range queues {
+		_, err := ch.QueuePurge(queue, false)
+		require.NoError(t, err, "Failed to purge settings test queue: "+queue)
+	}
+}
+
+// VerifySettingsUpdateMessage consumes and verifies a settings update message
+func VerifySettingsUpdateMessage(t *testing.T, ch *amqp.Channel, expectedKey, expectedValue interface{}) {
+	t.Helper()
+
+	// Check both queues since settings updates are published to both
+	queues := []string{mq.NotificationSettingsQueueName, mq.OTPSettingsQueueName}
+
+	for _, queueName := range queues {
+		msg, err := ConsumeSettingsMessage(t, ch, queueName, 2*time.Second)
+		require.NoError(t, err, "Failed to consume message from queue %s", queueName)
+		require.NotNil(t, msg, "No message received from queue %s", queueName)
+
+		assert.Equal(t, expectedKey, msg.Key, "Message key mismatch in queue %s", queueName)
+
+		// Handle type conversion for numeric values - JSON unmarshaling converts numbers to float64
+		if expectedInt, ok := expectedValue.(int); ok {
+			if actualFloat, ok := msg.Value.(float64); ok {
+				assert.Equal(t, float64(expectedInt), actualFloat, "Message value mismatch in queue %s", queueName)
+			} else {
+				assert.Equal(t, expectedValue, msg.Value, "Message value mismatch in queue %s", queueName)
+			}
+		} else {
+			assert.Equal(t, expectedValue, msg.Value, "Message value mismatch in queue %s", queueName)
+		}
+	}
+}
+
+// VerifyNoSettingsUpdateMessage verifies that no unexpected messages are in the queues
+func VerifyNoSettingsUpdateMessage(t *testing.T, ch *amqp.Channel) {
+	t.Helper()
+
+	queues := []string{mq.NotificationSettingsQueueName, mq.OTPSettingsQueueName}
+
+	for _, queueName := range queues {
+		msg, err := ConsumeSettingsMessage(t, ch, queueName, 100*time.Millisecond)
+		// We expect an error (timeout) when no messages are present
+		if err == nil {
+			t.Errorf("Unexpected message found in queue %s: key=%s, value=%v",
+				queueName, msg.Key, msg.Value)
+		}
+	}
+}
+
+// ConsumeSettingsMessage consumes one message from a settings queue with timeout
+func ConsumeSettingsMessage(t *testing.T, ch *amqp.Channel, queueName string, timeout time.Duration) (*RabbitMQMessage, error) {
+	t.Helper()
+
+	// Consume from the queue
+	msgs, err := ch.Consume(
+		queueName,
+		"",    // consumer tag
+		true,  // auto-ack
+		false, // exclusive
+		false, // no-local
+		false, // no-wait
+		nil,   // args
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to consume from queue %s: %w", queueName, err)
+	}
+
+	// Wait for message with timeout
+	select {
+	case msg := <-msgs:
+		var payload RabbitMQMessage
+		if err := json.Unmarshal(msg.Body, &payload); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal message: %w", err)
+		}
+		return &payload, nil
+	case <-time.After(timeout):
+		return nil, fmt.Errorf("timeout waiting for message in queue %s after %v", queueName, timeout)
+	}
 }
