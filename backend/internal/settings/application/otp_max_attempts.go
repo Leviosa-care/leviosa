@@ -35,9 +35,11 @@ func (s *SettingsService) SetOTPMaxAttempts(ctx context.Context, request *domain
 		return nil, err
 	}
 
-	if err := s.PublishSettingUpdate(ctx, settings.OTPMaxAttempts, request.MaxAttempts); err != nil {
-		return nil, err
-	}
+	// COMMENTED OUT: Event publishing disabled - other modules will access settings via interface
+	// See CLAUDE.local.md for details on the new architecture pattern
+	// if err := s.publisher.PublishSettingUpdate(ctx, settings.OTPMaxAttempts, request.MaxAttempts); err != nil {
+	// 	return nil, err
+	// }
 
 	return &domain.SetOTPMaxAttemptsResponse{Success: true}, nil
 }

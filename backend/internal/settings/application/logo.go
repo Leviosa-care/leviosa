@@ -7,7 +7,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/settings/domain"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings"
+	// "github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings" // Commented out: only used in commented-out RabbitMQ code
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/hengadev/errsx"
 )
@@ -40,9 +40,11 @@ func (s *SettingsService) SetCompanyLogo(ctx context.Context, file io.Reader, fi
 		return nil, errs.NewExternalServiceErr(err, "get company logo")
 	}
 
-	if err := s.PublishSettingUpdate(ctx, settings.CompanyLogo, imageKey); err != nil {
-		return nil, err
-	}
+	// COMMENTED OUT: Event publishing disabled - other modules will access settings via interface
+	// See CLAUDE.local.md for details on the new architecture pattern
+	// if err := s.publisher.PublishSettingUpdate(ctx, settings.CompanyLogo, imageKey); err != nil {
+	// 	return nil, err
+	// }
 
 	return &domain.SetCompanyLogoResponse{Success: true}, nil
 }

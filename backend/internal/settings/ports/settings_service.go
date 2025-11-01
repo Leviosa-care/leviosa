@@ -32,6 +32,7 @@ type SettingsService interface {
 	SetOTPMaxAttempts(ctx context.Context, request *domain.SetOTPMaxAttemptsRequest) (*domain.SetOTPMaxAttemptsResponse, error)
 	SetAccessTokenDuration(ctx context.Context, request *domain.SetAccessTokenDurationRequest) (*domain.SetAccessTokenDurationResponse, error)
 	SetRefreshTokenDuration(ctx context.Context, request *domain.SetRefreshTokenDurationRequest) (*domain.SetRefreshTokenDurationResponse, error)
-	// publishers
-	PublishSettingUpdate(ctx context.Context, key string, value any) error
+	// COMMENTED OUT: Event publishing is now an internal implementation detail
+	// External modules should access settings via this interface's getter methods
+	// PublishSettingUpdate(ctx context.Context, key string, value any) error
 }

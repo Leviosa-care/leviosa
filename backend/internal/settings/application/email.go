@@ -36,9 +36,11 @@ func (s *SettingsService) SetCompanyEmail(ctx context.Context, request *domain.S
 		return nil, err
 	}
 
-	if err := s.PublishSettingUpdate(ctx, settings.CompanyEmail, request.Email); err != nil {
-		return nil, err
-	}
+	// COMMENTED OUT: Event publishing disabled - other modules will access settings via interface
+	// See CLAUDE.local.md for details on the new architecture pattern
+	// if err := s.publisher.PublishSettingUpdate(ctx, settings.CompanyEmail, request.Email); err != nil {
+	// 	return nil, err
+	// }
 
 	return &domain.SetCompanyEmailResponse{Success: true}, nil
 }

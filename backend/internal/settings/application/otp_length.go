@@ -35,9 +35,11 @@ func (s *SettingsService) SetOTPLength(ctx context.Context, request *domain.SetO
 		return nil, err
 	}
 
-	if err := s.PublishSettingUpdate(ctx, settings.OTPLength, request.Length); err != nil {
-		return nil, err
-	}
+	// COMMENTED OUT: Event publishing disabled - other modules will access settings via interface
+	// See CLAUDE.local.md for details on the new architecture pattern
+	// if err := s.publisher.PublishSettingUpdate(ctx, settings.OTPLength, request.Length); err != nil {
+	// 	return nil, err
+	// }
 
 	return &domain.SetOTPLengthResponse{Success: true}, nil
 }

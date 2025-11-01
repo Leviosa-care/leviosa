@@ -35,9 +35,11 @@ func (s *SettingsService) SetCompanyLegalAddress(ctx context.Context, request *d
 		return nil, err
 	}
 
-	if err := s.PublishSettingUpdate(ctx, settings.CompanyLegalAddress, request.Address); err != nil {
-		return nil, err
-	}
+	// COMMENTED OUT: Event publishing disabled - other modules will access settings via interface
+	// See CLAUDE.local.md for details on the new architecture pattern
+	// if err := s.publisher.PublishSettingUpdate(ctx, settings.CompanyLegalAddress, request.Address); err != nil {
+	// 	return nil, err
+	// }
 
 	return &domain.SetCompanyLegalAddressResponse{Success: true}, nil
 }

@@ -35,9 +35,11 @@ func (s *SettingsService) SetCompanyName(ctx context.Context, request *domain.Se
 		return nil, err
 	}
 
-	if err := s.PublishSettingUpdate(ctx, settings.CompanyName, request.Name); err != nil {
-		return nil, err
-	}
+	// COMMENTED OUT: Event publishing disabled - other modules will access settings via interface
+	// See CLAUDE.local.md for details on the new architecture pattern
+	// if err := s.publisher.PublishSettingUpdate(ctx, settings.CompanyName, request.Name); err != nil {
+	// 	return nil, err
+	// }
 
 	return &domain.SetCompanyNameResponse{Success: true}, nil
 }
