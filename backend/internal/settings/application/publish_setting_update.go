@@ -1,5 +1,11 @@
 package settings
 
+// COMMENTED OUT: This method has been replaced by the EventPublisher interface pattern.
+// The RabbitMQ-specific logic has been moved to internal/settings/infrastructure/rabbitmq/publisher.go
+// The service now uses ports.EventPublisher interface, allowing for RabbitMQ or NoOp implementations.
+// See CLAUDE.local.md for details on why event publishing is disabled.
+
+/*
 import (
 	"context"
 	"encoding/json"
@@ -45,3 +51,4 @@ func (s *SettingsService) PublishSettingUpdate(ctx context.Context, key string, 
 	log.Printf("Published settings update: key=%s, value=%v", key, value)
 	return nil
 }
+*/
