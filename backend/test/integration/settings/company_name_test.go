@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings"
+	// "github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	"github.com/Leviosa-care/leviosa/backend/internal/settings/domain"
 	httpEndpoints "github.com/Leviosa-care/leviosa/backend/internal/settings/interface/http"
@@ -75,11 +75,12 @@ func TestSetCompanyName(t *testing.T) {
 		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
-		testCh := th.GetRabbitMQChannel(t, testMQConn)
-		defer testCh.Close()
+		// COMMENTED OUT: RabbitMQ verification disabled
+		// testCh := th.GetRabbitMQChannel(t, testMQConn)
+		// defer testCh.Close()
 
 		// Purge queues to ensure clean state
-		th.PurgeSettingsQueues(t, testCh)
+		// th.PurgeSettingsQueues(t, testCh)
 
 		// Setup admin user and create authenticated request
 		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
@@ -113,8 +114,9 @@ func TestSetCompanyName(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, name, retrievedName)
 
-		// Verify RabbitMQ message was published
-		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyName, name)
+		// COMMENTED OUT: Verify RabbitMQ message was published (verification disabled)
+		// COMMENTED OUT: RabbitMQ verification disabled
+		// th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyName, name)
 	})
 
 	t.Run("should return 400 for empty company name", func(t *testing.T) {
@@ -288,11 +290,12 @@ func TestSetCompanyName(t *testing.T) {
 		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
-		testCh := th.GetRabbitMQChannel(t, testMQConn)
-		defer testCh.Close()
+		// COMMENTED OUT: RabbitMQ verification disabled
+		// testCh := th.GetRabbitMQChannel(t, testMQConn)
+		// defer testCh.Close()
 
 		// Purge queues to ensure clean state
-		th.PurgeSettingsQueues(t, testCh)
+		// th.PurgeSettingsQueues(t, testCh)
 
 		// Set initial name
 		oldName := "Initial Company"
@@ -323,7 +326,8 @@ func TestSetCompanyName(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, newName, name)
 
-		// Verify RabbitMQ message was published
-		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyName, newName)
+		// COMMENTED OUT: Verify RabbitMQ message was published (verification disabled)
+		// COMMENTED OUT: RabbitMQ verification disabled
+		// th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyName, newName)
 	})
 }

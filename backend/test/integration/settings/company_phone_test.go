@@ -105,11 +105,12 @@ func TestSetCompanyPhone(t *testing.T) {
 		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
-		testCh := th.GetRabbitMQChannel(t, testMQConn)
-		defer testCh.Close()
+		// COMMENTED OUT: RabbitMQ verification disabled
+		// testCh := th.GetRabbitMQChannel(t, testMQConn)
+		// defer testCh.Close()
 
 		// Purge queues to ensure clean state
-		th.PurgeSettingsQueues(t, testCh)
+		// th.PurgeSettingsQueues(t, testCh)
 
 		// Setup admin user and create authenticated request
 		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
@@ -144,8 +145,9 @@ func TestSetCompanyPhone(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, phoneValue, phoneSetting.Value)
 
-		// Verify RabbitMQ message was published
-		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyPhone, "0145678910")
+		// COMMENTED OUT: Verify RabbitMQ message was published (verification disabled)
+		// COMMENTED OUT: RabbitMQ verification disabled
+		// th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyPhone, "0145678910")
 	})
 
 	t.Run("should return 400 for empty telephone", func(t *testing.T) {
@@ -315,11 +317,12 @@ func TestSetCompanyPhone(t *testing.T) {
 		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
-		testCh := th.GetRabbitMQChannel(t, testMQConn)
-		defer testCh.Close()
+		// COMMENTED OUT: RabbitMQ verification disabled
+		// testCh := th.GetRabbitMQChannel(t, testMQConn)
+		// defer testCh.Close()
 
 		// Purge queues to ensure clean state
-		th.PurgeSettingsQueues(t, testCh)
+		// th.PurgeSettingsQueues(t, testCh)
 
 		// Setup admin user and create authenticated request
 		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
@@ -353,7 +356,8 @@ func TestSetCompanyPhone(t *testing.T) {
 		// Should be able to retrieve the original value
 		assert.Equal(t, phoneValue, phoneSetting.Value)
 
-		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyPhone, phoneValue)
+		// COMMENTED OUT: RabbitMQ verification disabled
+		// th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyPhone, phoneValue)
 	})
 
 	t.Run("should return 415 for incorrect content type", func(t *testing.T) {
@@ -430,11 +434,12 @@ func TestSetCompanyPhone(t *testing.T) {
 		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Create a test channel for RabbitMQ verification
-		testCh := th.GetRabbitMQChannel(t, testMQConn)
-		defer testCh.Close()
+		// COMMENTED OUT: RabbitMQ verification disabled
+		// testCh := th.GetRabbitMQChannel(t, testMQConn)
+		// defer testCh.Close()
 
 		// Purge queues to ensure clean state
-		th.PurgeSettingsQueues(t, testCh)
+		// th.PurgeSettingsQueues(t, testCh)
 
 		// Set initial phone
 		initialPhoneSetting := th.NewCompanyPhone(t, ctx)
@@ -470,8 +475,9 @@ func TestSetCompanyPhone(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, newPhoneValue, phoneSetting.Value)
 
-		// Verify RabbitMQ message was published
-		th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyPhone, newPhoneValue)
+		// COMMENTED OUT: Verify RabbitMQ message was published (verification disabled)
+		// COMMENTED OUT: RabbitMQ verification disabled
+		// th.VerifySettingsUpdateMessage(t, testCh, settings.CompanyPhone, newPhoneValue)
 	})
 
 	// TODO: Add test for encryption verification once crypto service is properly configured

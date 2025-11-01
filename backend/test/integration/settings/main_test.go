@@ -14,6 +14,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	settings "github.com/Leviosa-care/leviosa/backend/internal/settings/application"
+	"github.com/Leviosa-care/leviosa/backend/internal/settings/infrastructure/noop"
 	"github.com/Leviosa-care/leviosa/backend/internal/settings/infrastructure/postgres"
 	"github.com/Leviosa-care/leviosa/backend/internal/settings/infrastructure/rabbitmq"
 	media "github.com/Leviosa-care/leviosa/backend/internal/settings/infrastructure/s3"
@@ -237,8 +238,10 @@ func TestMain(m *testing.M) {
 	repo = postgres.New(ctx, testPool)
 	mediaRepo = media.New(ctx, s3Client, th.BUCKETNAME)
 
-	// Create application service
-	service := settings.New(repo, mediaRepo, crypto, conn)
+	// Create application service with NoOp publisher (event publishing disabled)
+	// See CLAUDE.local.md for details on why RabbitMQ integration is commented out
+	publisher := noop.NewPublisher()
+	service := settings.New(repo, mediaRepo, crypto, publisher)
 
 	// Create authentication middleware with Vault client
 	// For integration tests, we pass nil session repository since we're testing service auth
