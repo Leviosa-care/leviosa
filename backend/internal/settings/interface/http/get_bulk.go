@@ -7,12 +7,24 @@ import (
 	"strings"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 	"github.com/hengadev/errsx"
 )
 
 func (h *handler) BulkSettingsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	logger.InfoContext(ctx, "Handler: Processing get bulk settings request",
+		"operation", "get_bulk_settings",
+		"method", r.Method,
+		"path", r.URL.Path)
 
 	keysParam := r.URL.Query().Get("keys")
 	if keysParam == "" {
@@ -134,12 +146,23 @@ func (h *handler) BulkSettingsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !errs.IsEmpty() {
+		logger.InfoContext(ctx, "Handler: Get bulk settings completed with partial errors",
+			"operation", "get_bulk_settings",
+			"status_code", http.StatusMultiStatus,
+			"success_count", len(response),
+			"error_count", len(errs))
+
 		httpx.RespondWithJSON(w, map[string]any{
 			"data":   response,
 			"errors": errs,
 		}, http.StatusMultiStatus)
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Get bulk settings completed",
+		"operation", "get_bulk_settings",
+		"status_code", http.StatusOK,
+		"settings_count", len(response))
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }
