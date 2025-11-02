@@ -4,20 +4,31 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 )
 
 func (h *handler) ModifyCategory(w http.ResponseWriter, r *http.Request) {
+	// TODO: this an admin only request
+
 	ctx := r.Context()
 
-	// TODO: this an admin only request
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	logger.InfoContext(ctx, "Handler: Processing modify category",
+		"operation", "modify_category",
+		"method", r.Method,
+		"path", r.URL.Path)
 
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) != 4 || parts[0] != "" || parts[1] != "admin" || parts[2] != "categories" {
@@ -34,7 +45,11 @@ func (h *handler) ModifyCategory(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields() // Prevent clients from sending unexpected fields
 	if err := decoder.Decode(&req); err != nil {
-		log.Printf("Handler: Error decoding JSON body: %v", err)
+		logger.ErrorContext(ctx, "Handler: modify category failed",
+			"operation", "modify_category",
+			"error_context", "invalid JSON request body",
+			"status_code", http.StatusBadRequest,
+			"error", err)
 		httpx.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("invalid request body: %v", err)), http.StatusBadRequest)
 		return
 	}
@@ -69,14 +84,28 @@ func (h *handler) ModifyCategory(w http.ResponseWriter, r *http.Request) {
 			httpx.RespondWithError(w, errors.New("external service error during category update"), http.StatusServiceUnavailable)
 
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during category update: %v", err)
+			logger.ErrorContext(ctx, "Handler: modify category failed",
+				"operation", "modify_category",
+				"error_context", "internal server error during category update",
+				"status_code", http.StatusInternalServerError,
+				"error", err)
 			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 
 		default:
-			log.Printf("Handler: Unhandled error from service during category update: %v", err)
+			logger.ErrorContext(ctx, "Handler: modify category failed",
+				"operation", "modify_category",
+				"error_context", "unexpected error from service during category update",
+				"status_code", http.StatusInternalServerError,
+				"error", err)
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: modify category completed",
+		"operation", "modify_category",
+		"category_id", categoryID,
+		"status_code", http.StatusOK)
+
 	w.WriteHeader(http.StatusNoContent)
 }
