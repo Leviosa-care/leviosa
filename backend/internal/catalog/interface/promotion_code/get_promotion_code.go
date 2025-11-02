@@ -2,16 +2,23 @@ package promotionCodeHandler
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 )
 
 func (h *handler) GetPromotionCodeByID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	logger.Info("Handler: Processing get_promotion_code", "promotion_code_id", "")
 
 	promotionCodeID := strings.TrimPrefix(r.URL.Path, "/admin/promotion-codes/")
 	if promotionCodeID == "" || strings.Contains(promotionCodeID, "/") {
@@ -27,20 +34,22 @@ func (h *handler) GetPromotionCodeByID(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, errs.ErrDomainNotFound):
 			httpx.RespondWithError(w, err, http.StatusNotFound)
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during promotion code retrieval: %v", err)
+			logger.Error("Handler: Internal server error during promotion code retrieval", "error", err)
 			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 		default:
-			log.Printf("Handler: Unhandled error from service during promotion code retrieval: %v", err)
+			logger.Error("Handler: Unhandled error from service during promotion code retrieval", "error", err)
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
 
+	logger.Info("Handler: Promotion code retrieval successful", "promotion_code_id", promotionCodeID)
 	httpx.RespondWithJSON(w, promotionCode, http.StatusOK)
 }
 
 func (h *handler) GetPromotionCodeByCode(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
 
 	// Extract code from URL path
 	urlPath := r.URL.Path
@@ -64,58 +73,64 @@ func (h *handler) GetPromotionCodeByCode(w http.ResponseWriter, r *http.Request)
 		case errors.Is(err, errs.ErrDomainNotFound):
 			httpx.RespondWithError(w, err, http.StatusNotFound)
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during promotion code retrieval: %v", err)
+			logger.Error("Handler: Internal server error during promotion code retrieval", "error", err)
 			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 		default:
-			log.Printf("Handler: Unhandled error from service during promotion code retrieval: %v", err)
+			logger.Error("Handler: Unhandled error from service during promotion code retrieval", "error", err)
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
 
+	logger.Info("Handler: Promotion code retrieval by code successful", "promotion_code", code)
 	httpx.RespondWithJSON(w, promotionCode, http.StatusOK)
 }
 
 func (h *handler) GetAllPromotionCodes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
 
 	promotionCodes, err := h.svc.GetAllPromotionCodes(ctx)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during promotion codes retrieval: %v", err)
+			logger.Error("Handler: Internal server error during promotion codes retrieval", "error", err)
 			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 		default:
-			log.Printf("Handler: Unhandled error from service during promotion codes retrieval: %v", err)
+			logger.Error("Handler: Unhandled error from service during promotion codes retrieval", "error", err)
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
 
+	logger.Info("Handler: All promotion codes retrieval successful")
 	httpx.RespondWithJSON(w, promotionCodes, http.StatusOK)
 }
 
 func (h *handler) GetActivePromotionCodes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
 
 	promotionCodes, err := h.svc.GetActivePromotionCodes(ctx)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during active promotion codes retrieval: %v", err)
+			logger.Error("Handler: Internal server error during active promotion codes retrieval", "error", err)
 			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 		default:
-			log.Printf("Handler: Unhandled error from service during active promotion codes retrieval: %v", err)
+			logger.Error("Handler: Unhandled error from service during active promotion codes retrieval", "error", err)
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
 
+	logger.Info("Handler: Active promotion codes retrieval successful")
 	httpx.RespondWithJSON(w, promotionCodes, http.StatusOK)
 }
 
 func (h *handler) GetPromotionCodeWithCoupon(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
 
 	code := strings.TrimPrefix(r.URL.Path, "/promotion-codes/code/")
 	if code == "" || strings.Contains(code, "/") {
@@ -131,14 +146,15 @@ func (h *handler) GetPromotionCodeWithCoupon(w http.ResponseWriter, r *http.Requ
 		case errors.Is(err, errs.ErrDomainNotFound):
 			httpx.RespondWithError(w, err, http.StatusNotFound)
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during promotion code with coupon retrieval: %v", err)
+			logger.Error("Handler: Internal server error during promotion code with coupon retrieval", "error", err)
 			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 		default:
-			log.Printf("Handler: Unhandled error from service during promotion code with coupon retrieval: %v", err)
+			logger.Error("Handler: Unhandled error from service during promotion code with coupon retrieval", "error", err)
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
 
+	logger.Info("Handler: Promotion code with coupon retrieval successful", "promotion_code", code)
 	httpx.RespondWithJSON(w, promotionCodeWithCoupon, http.StatusOK)
 }

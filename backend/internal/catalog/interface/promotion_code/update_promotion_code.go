@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -12,6 +11,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 )
 
 func (h *handler) UpdatePromotionCode(w http.ResponseWriter, r *http.Request) {
@@ -21,6 +21,13 @@ func (h *handler) UpdatePromotionCode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	logger.Info("Handler: Processing update_promotion_code", "promotion_code_id", "")
 
 	promotionCodeID := strings.TrimPrefix(r.URL.Path, "/admin/promotion-codes/")
 	if promotionCodeID == "" || strings.Contains(promotionCodeID, "/") {
@@ -32,12 +39,12 @@ func (h *handler) UpdatePromotionCode(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&updateRequest); err != nil {
-		log.Printf("Handler: Error decoding JSON body: %v", err)
+		logger.Error("Handler: Error decoding JSON body", "error", err)
 		httpx.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("invalid request body: %v", err)), http.StatusBadRequest)
 		return
 	}
 
-	err := h.svc.UpdatePromotionCode(ctx, promotionCodeID, &updateRequest)
+	err = h.svc.UpdatePromotionCode(ctx, promotionCodeID, &updateRequest)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrInvalidValue):
@@ -45,15 +52,16 @@ func (h *handler) UpdatePromotionCode(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, errs.ErrDomainNotFound):
 			httpx.RespondWithError(w, err, http.StatusNotFound)
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during promotion code update: %v", err)
+			logger.Error("Handler: Internal server error during promotion code update", "error", err)
 			httpx.RespondWithError(w, errors.New("internal server error occurred"), http.StatusInternalServerError)
 		default:
-			log.Printf("Handler: Unhandled error from service during promotion code update: %v", err)
+			logger.Error("Handler: Unhandled error from service during promotion code update", "error", err)
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
 
+	logger.Info("Handler: Promotion code update successful", "promotion_code_id", promotionCodeID)
 	httpx.RespondWithJSON(
 		w,
 		struct {
@@ -63,11 +71,12 @@ func (h *handler) UpdatePromotionCode(w http.ResponseWriter, r *http.Request) {
 		},
 		http.StatusOK,
 	)
-	log.Printf("Handler: Promotion code update successful. ID: %s", promotionCodeID)
 }
 
 func (h *handler) DeactivatePromotionCode(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	logger.Info("Handler: Processing deactivate_promotion_code", "promotion_code_id", "")
 
 	// Extract ID from URL path like /admin/promotion-codes/{id}/deactivate
 	urlPath := r.URL.Path
@@ -83,7 +92,7 @@ func (h *handler) DeactivatePromotionCode(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err := h.svc.DeactivatePromotionCode(ctx, promotionCodeID)
+	err = h.svc.DeactivatePromotionCode(ctx, promotionCodeID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrInvalidValue):
@@ -91,15 +100,16 @@ func (h *handler) DeactivatePromotionCode(w http.ResponseWriter, r *http.Request
 		case errors.Is(err, errs.ErrDomainNotFound):
 			httpx.RespondWithError(w, err, http.StatusNotFound)
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during promotion code deactivation: %v", err)
+			logger.Error("Handler: Internal server error during promotion code deactivation", "error", err)
 			httpx.RespondWithError(w, errors.New("internal server error occurred"), http.StatusInternalServerError)
 		default:
-			log.Printf("Handler: Unhandled error from service during promotion code deactivation: %v", err)
+			logger.Error("Handler: Unhandled error from service during promotion code deactivation", "error", err)
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
 
+	logger.Info("Handler: Promotion code deactivation successful", "promotion_code_id", promotionCodeID)
 	httpx.RespondWithJSON(
 		w,
 		struct {
@@ -109,5 +119,4 @@ func (h *handler) DeactivatePromotionCode(w http.ResponseWriter, r *http.Request
 		},
 		http.StatusOK,
 	)
-	log.Printf("Handler: Promotion code deactivation successful. ID: %s", promotionCodeID)
 }
