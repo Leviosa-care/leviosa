@@ -2,16 +2,27 @@ package productHandler
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 )
 
 func (h *handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	logger.InfoContext(ctx, "Handler: Processing remove product",
+		"operation", "remove_product",
+		"method", r.Method,
+		"path", r.URL.Path)
 
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) != 4 || parts[0] != "" || parts[1] != "admin" || parts[2] != "products" {
@@ -33,15 +44,27 @@ func (h *handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, errs.ErrExternalService):
 			httpx.RespondWithError(w, errors.New("failed to delete product images due to external service issue"), http.StatusServiceUnavailable)
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during product deletion: %v", err)
+			logger.ErrorContext(ctx, "Handler: remove product failed",
+				"operation", "remove_product",
+				"error_context", "internal server error during product deletion",
+				"status_code", http.StatusInternalServerError,
+				"error", err)
 			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
 		default:
-			log.Printf("Handler: Unhandled error from service during product deletion: %v", err)
+			logger.ErrorContext(ctx, "Handler: remove product failed",
+				"operation", "remove_product",
+				"error_context", "unexpected error from service during product deletion",
+				"status_code", http.StatusInternalServerError,
+				"error", err)
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: remove product completed",
+		"operation", "remove_product",
+		"product_id", productID,
+		"status_code", http.StatusOK)
+
 	w.WriteHeader(http.StatusNoContent)
-	log.Println("Handler: Product removed successfully.")
 }
