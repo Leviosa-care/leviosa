@@ -19,6 +19,11 @@ func (h *handler) GetOTPLength(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing get OTP length request",
+		"operation", "get_otp_length",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	response, err := h.svc.GetOTPLength(ctx)
 	if err != nil {
 		switch {
@@ -35,6 +40,10 @@ func (h *handler) GetOTPLength(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Get OTP length completed",
+		"operation", "get_otp_length",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

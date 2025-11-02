@@ -27,6 +27,11 @@ func (h *handler) SetOTPLength(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing set OTP length request",
+		"operation", "set_otp_length",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	var request domain.SetOTPLengthRequest
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -50,6 +55,10 @@ func (h *handler) SetOTPLength(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Set OTP length completed",
+		"operation", "set_otp_length",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

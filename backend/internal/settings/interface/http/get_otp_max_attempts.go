@@ -19,6 +19,11 @@ func (h *handler) GetOTPMaxAttempts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing get OTP max attempts request",
+		"operation", "get_otp_max_attempts",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	response, err := h.svc.GetOTPMaxAttempts(ctx)
 	if err != nil {
 		switch {
@@ -35,6 +40,10 @@ func (h *handler) GetOTPMaxAttempts(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Get OTP max attempts completed",
+		"operation", "get_otp_max_attempts",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

@@ -27,6 +27,11 @@ func (h *handler) SetOTPDuration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing set OTP duration request",
+		"operation", "set_otp_duration",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	var request domain.SetOTPDurationRequest
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -50,6 +55,10 @@ func (h *handler) SetOTPDuration(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Set OTP duration completed",
+		"operation", "set_otp_duration",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

@@ -19,6 +19,11 @@ func (h *handler) GetOTPDuration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing get OTP duration request",
+		"operation", "get_otp_duration",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	response, err := h.svc.GetOTPDuration(ctx)
 	if err != nil {
 		switch {
@@ -35,6 +40,10 @@ func (h *handler) GetOTPDuration(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Get OTP duration completed",
+		"operation", "get_otp_duration",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

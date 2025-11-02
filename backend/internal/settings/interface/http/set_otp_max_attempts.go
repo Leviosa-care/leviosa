@@ -27,6 +27,11 @@ func (h *handler) SetOTPMaxAttempts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing set OTP max attempts request",
+		"operation", "set_otp_max_attempts",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	var request domain.SetOTPMaxAttemptsRequest
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -50,6 +55,10 @@ func (h *handler) SetOTPMaxAttempts(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Set OTP max attempts completed",
+		"operation", "set_otp_max_attempts",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }
