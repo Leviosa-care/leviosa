@@ -368,11 +368,11 @@ test-unit-current: ## Run unit tests for current mixed architecture (internal/ +
 		echo "Testing internal/catalog..."; \
 		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(SERVICES_ROOT)/catalog/... || true; \
 	fi
-	# Test standalone services (current reality)
-	@if [ -d "settings" ]; then \
-		echo "Testing standalone settings..."; \
-		cd settings && go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./... && cd .. || true; \
+	@if [ -d "$(SERVICES_ROOT)/settings" ]; then \
+		echo "Testing internal/settings..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(SERVICES_ROOT)/settings/... || true; \
 	fi
+	# Test standalone services (current reality)
 	@if [ -d "booking" ]; then \
 		echo "Testing standalone booking..."; \
 		cd booking && go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./... && cd .. || true; \
