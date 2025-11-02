@@ -64,4 +64,3 @@ func (s *UserService) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 
 	return nil
 }
-

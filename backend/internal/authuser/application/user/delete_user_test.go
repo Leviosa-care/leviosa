@@ -21,12 +21,12 @@ type MockUserRepository struct {
 	mock.Mock
 }
 
-func (m *MockUserRepository) GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
+func (m *MockUserRepository) GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.UserEncx, error) {
 	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.User), args.Error(1)
+	return args.Get(0).(*domain.UserEncx), args.Error(1)
 }
 
 func (m *MockUserRepository) DeleteUser(ctx context.Context, userID uuid.UUID) error {
@@ -40,32 +40,52 @@ func (m *MockUserRepository) ExistsByEmailHash(ctx context.Context, emailHash st
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *MockUserRepository) GetUserByEmailHash(ctx context.Context, emailHash string) (*domain.User, error) {
+func (m *MockUserRepository) GetUserByEmailHash(ctx context.Context, emailHash string) (*domain.UserEncx, error) {
 	args := m.Called(ctx, emailHash)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.User), args.Error(1)
+	return args.Get(0).(*domain.UserEncx), args.Error(1)
 }
 
-func (m *MockUserRepository) GetPendingUsers(ctx context.Context) ([]*domain.User, error) {
+func (m *MockUserRepository) GetPendingUsers(ctx context.Context) ([]*domain.UserEncx, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*domain.User), args.Error(1)
+	return args.Get(0).([]*domain.UserEncx), args.Error(1)
 }
 
-func (m *MockUserRepository) GetAllUsers(ctx context.Context) ([]*domain.User, error) {
+func (m *MockUserRepository) GetAllUsers(ctx context.Context) ([]*domain.UserEncx, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*domain.User), args.Error(1)
+	return args.Get(0).([]*domain.UserEncx), args.Error(1)
 }
 
-func (m *MockUserRepository) CreateUser(ctx context.Context, user *domain.User) error {
+func (m *MockUserRepository) CreateUser(ctx context.Context, user *domain.UserEncx) error {
 	args := m.Called(ctx, user)
 	return args.Error(0)
 }
 
-func (m *MockUserRepository) UpdateUser(ctx context.Context, user *domain.User) error {
+func (m *MockUserRepository) UpdateUser(ctx context.Context, user *domain.UserEncx) error {
 	args := m.Called(ctx, user)
 	return args.Error(0)
+}
+
+func (m *MockUserRepository) ExistsByAppleID(ctx context.Context, appleID string) (bool, error) {
+	args := m.Called(ctx, appleID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockUserRepository) ExistsByGoogleID(ctx context.Context, googleID string) (bool, error) {
+	args := m.Called(ctx, googleID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockUserRepository) GetUserByAppleID(ctx context.Context, appleID string) (*domain.UserEncx, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(*domain.UserEncx), args.Error(1)
+}
+
+func (m *MockUserRepository) GetUserByGoogleID(ctx context.Context, googleID string) (*domain.UserEncx, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(*domain.UserEncx), args.Error(1)
 }
 
 type MockCryptoService struct {
@@ -232,7 +252,7 @@ func TestDeleteUser(t *testing.T) {
 		mockRepo.On("GetUserByID", ctx, userID).Return(testUser, nil)
 		mockCrypto.On("DecryptStruct", ctx, testUser).Return(nil)
 		mockStripe.On("DeleteCustomer", ctx, stripeCustomerID).Return(nil, errs.ErrInvalidValue) // Stripe customer not found
-		mockRepo.On("DeleteUser", ctx, userID).Return(nil) // Should still delete user
+		mockRepo.On("DeleteUser", ctx, userID).Return(nil)                                       // Should still delete user
 
 		service := userService.New(mockRepo, mockCrypto, mockStripe)
 
@@ -339,3 +359,4 @@ func TestDeleteUser(t *testing.T) {
 		mockRepo.AssertNotCalled(t, "DeleteUser")
 	})
 }
+

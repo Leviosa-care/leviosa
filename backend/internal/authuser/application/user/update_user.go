@@ -127,4 +127,3 @@ func (s *UserService) UpdateUser(ctx context.Context, userID uuid.UUID, request 
 	response := user.ToResponse()
 	return response, nil
 }
-
