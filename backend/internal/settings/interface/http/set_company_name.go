@@ -27,6 +27,11 @@ func (h *handler) SetCompanyName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing set company name",
+		"operation", "set_company_name",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	var request domain.SetCompanyNameRequest
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -50,6 +55,10 @@ func (h *handler) SetCompanyName(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Set company name completed",
+		"operation", "set_company_name",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

@@ -27,6 +27,11 @@ func (h *handler) SetCompanyEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing set company email",
+		"operation", "set_company_email",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	var request domain.SetCompanyEmailRequest
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -50,6 +55,10 @@ func (h *handler) SetCompanyEmail(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Set company email completed",
+		"operation", "set_company_email",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

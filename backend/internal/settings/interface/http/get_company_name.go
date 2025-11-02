@@ -19,6 +19,11 @@ func (h *handler) GetCompanyName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing get company name",
+		"operation", "get_company_name",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	response, err := h.svc.GetCompanyName(ctx)
 	if err != nil {
 		switch {
@@ -35,6 +40,10 @@ func (h *handler) GetCompanyName(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Get company name completed",
+		"operation", "get_company_name",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

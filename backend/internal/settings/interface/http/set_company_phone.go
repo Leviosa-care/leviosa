@@ -27,6 +27,11 @@ func (h *handler) SetCompanyPhone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing set company phone",
+		"operation", "set_company_phone",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	var request domain.SetCompanyTelephoneRequest
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -50,6 +55,10 @@ func (h *handler) SetCompanyPhone(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Set company phone completed",
+		"operation", "set_company_phone",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

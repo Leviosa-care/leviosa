@@ -19,6 +19,11 @@ func (h *handler) GetCompanyPhone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing get company phone",
+		"operation", "get_company_phone",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	response, err := h.svc.GetCompanyTelephone(ctx)
 	if err != nil {
 		switch {
@@ -35,6 +40,10 @@ func (h *handler) GetCompanyPhone(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Get company phone completed",
+		"operation", "get_company_phone",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }
