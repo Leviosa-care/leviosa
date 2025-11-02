@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 )
@@ -21,11 +21,26 @@ func (h *handler) CreateCoupon(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	logger.InfoContext(ctx, "Handler: Processing create coupon",
+		"operation", "create_coupon",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	var coupon domain.CreateCouponRequest
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&coupon); err != nil {
-		log.Printf("Handler: Error decoding JSON body: %v", err)
+		logger.ErrorContext(ctx, "Handler: create coupon failed",
+			"operation", "create_coupon",
+			"error_context", "invalid JSON request body",
+			"status_code", http.StatusBadRequest,
+			"error", err)
 		httpx.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("invalid request body: %v", err)), http.StatusBadRequest)
 		return
 	}
@@ -42,14 +57,27 @@ func (h *handler) CreateCoupon(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, errs.ErrDomainNotCreated):
 			httpx.RespondWithError(w, errors.New("failed to create coupon due to an unprocessable entity"), http.StatusUnprocessableEntity)
 		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			log.Printf("Handler: Internal server error during coupon creation: %v", err)
+			logger.ErrorContext(ctx, "Handler: create coupon failed",
+				"operation", "create_coupon",
+				"error_context", "internal server error during coupon creation",
+				"status_code", http.StatusInternalServerError,
+				"error", err)
 			httpx.RespondWithError(w, errors.New("internal server error occurred"), http.StatusInternalServerError)
 		default:
-			log.Printf("Handler: Unhandled error from service during coupon creation: %v", err)
+			logger.ErrorContext(ctx, "Handler: create coupon failed",
+				"operation", "create_coupon",
+				"error_context", "unhandled error from service during coupon creation",
+				"status_code", http.StatusInternalServerError,
+				"error", err)
 			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: create coupon completed",
+		"operation", "create_coupon",
+		"coupon_id", couponID,
+		"status_code", http.StatusCreated)
 
 	httpx.RespondWithJSON(
 		w,
@@ -62,6 +90,5 @@ func (h *handler) CreateCoupon(w http.ResponseWriter, r *http.Request) {
 		},
 		http.StatusCreated,
 	)
-	log.Printf("Handler: Coupon creation successful. ID: %s", couponID)
 }
 
