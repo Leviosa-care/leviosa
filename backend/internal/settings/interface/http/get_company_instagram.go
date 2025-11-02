@@ -19,6 +19,11 @@ func (h *handler) GetCompanyInstagram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing get company instagram request",
+		"operation", "get_company_instagram",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	response, err := h.svc.GetCompanyInstagram(ctx)
 	if err != nil {
 		switch {
@@ -35,6 +40,10 @@ func (h *handler) GetCompanyInstagram(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Get company instagram completed",
+		"operation", "get_company_instagram",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

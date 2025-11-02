@@ -19,6 +19,11 @@ func (h *handler) SetCompanyLogo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing set company logo request",
+		"operation", "set_company_logo",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	const maxFormMemory = 32 << 20            // 32 MB
 	err = r.ParseMultipartForm(maxFormMemory) // 32 MB max memory buffer
 	if err != nil {
@@ -60,6 +65,9 @@ func (h *handler) SetCompanyLogo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Set company logo completed",
+		"operation", "set_company_logo",
+		"status_code", http.StatusCreated)
+
 	w.WriteHeader(http.StatusCreated)
-	logger.InfoContext(ctx, fmt.Sprintf("Handler: Image created successfully."))
 }

@@ -19,6 +19,11 @@ func (h *handler) GetCompanyLogo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing get company logo request",
+		"operation", "get_company_logo",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	response, err := h.svc.GetCompanyLogo(ctx)
 	if err != nil {
 		switch {
@@ -35,6 +40,10 @@ func (h *handler) GetCompanyLogo(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Get company logo completed",
+		"operation", "get_company_logo",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

@@ -19,6 +19,11 @@ func (h *handler) GetCompanyAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing get company address request",
+		"operation", "get_company_address",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	response, err := h.svc.GetCompanyLegalAddress(ctx)
 	if err != nil {
 		switch {
@@ -35,6 +40,10 @@ func (h *handler) GetCompanyAddress(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Get company legal address completed",
+		"operation", "get_company_address",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

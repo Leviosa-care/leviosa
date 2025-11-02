@@ -27,6 +27,11 @@ func (h *handler) SetCompanyAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing set company address request",
+		"operation", "set_company_address",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	var request domain.SetCompanyLegalAddressRequest
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -50,6 +55,10 @@ func (h *handler) SetCompanyAddress(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Set company legal address completed",
+		"operation", "set_company_address",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }

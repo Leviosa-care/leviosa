@@ -27,6 +27,11 @@ func (h *handler) SetCompanyInstagram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.InfoContext(ctx, "Handler: Processing set company instagram request",
+		"operation", "set_company_instagram",
+		"method", r.Method,
+		"path", r.URL.Path)
+
 	var request domain.SetCompanyInstagramRequest
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -50,6 +55,10 @@ func (h *handler) SetCompanyInstagram(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	logger.InfoContext(ctx, "Handler: Set company instagram completed",
+		"operation", "set_company_instagram",
+		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }
