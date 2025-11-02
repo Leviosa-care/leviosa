@@ -31,7 +31,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 	t.Run("should successfully validate OTP and create pending user", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		email := "newuser@example.com"
 
@@ -164,7 +164,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 	t.Run("should return unauthorized for invalid OTP code", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		email := "invalidcode@example.com"
 
@@ -239,7 +239,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 	t.Run("should return not found when OTP does not exist", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		email := "nonotp@example.com"
 
@@ -302,7 +302,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 	t.Run("should return gone when OTP is expired", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		email := "expired@example.com"
 
@@ -377,7 +377,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 	t.Run("should return too many requests when max attempts exceeded", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		email := "maxattempts@example.com"
 
@@ -450,7 +450,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 	t.Run("should return bad request for invalid email format", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Test with invalid email format
 		request := domain.ValidateOTPRequest{
@@ -470,7 +470,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 	t.Run("should return bad request for invalid OTP format", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Test with invalid OTP code format
 		request := domain.ValidateOTPRequest{
@@ -490,7 +490,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 	t.Run("should succeed when user already exists (race condition handling)", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		email := "existing@example.com"
 
@@ -589,7 +589,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 	t.Run("should handle concurrent validation attempts", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		email := "concurrent@example.com"
 
@@ -687,7 +687,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 	t.Run("should handle malformed JSON request", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create malformed JSON request
 		malformedJSON := `{"email": "test@example.com", "invalid_field": true}`
@@ -713,7 +713,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 
 	t.Run("should verify pending session characteristics and completion workflow", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		email := "completiontest@example.com"
 

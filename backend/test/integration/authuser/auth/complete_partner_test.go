@@ -7,22 +7,20 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
-
 	authEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
-
 	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestCompletePartner make test-integration-auth-test
+// TODO: handle the category IDs and product IDs thing
 
-// TODO: change the path for the tests before
-// make test-func TEST_NAME=TestCompletePartner TEST_PATH=test/integration/authuser/infrastructure/postgres/user/create_user_test.go
+// make test-func TEST_NAME=TestCompletePartner TEST_PATH=test/integration/authuser/auth/complete_partner_test.go
 
 func TestCompletePartner(t *testing.T) {
 	ctx := context.Background()
@@ -41,21 +39,20 @@ func TestCompletePartner(t *testing.T) {
 			Gender: domain.GenderWoman,
 		},
 		Telephone:  "0687654321",
-		PostalCode: "75002",
+		PostalCode: "75001",
 		City:       "Paris",
-		Address1:   "456 Avenue de Partner",
-		Address2:   "Suite 5",
+		Address1:   "123 Rue de Rivoli",
+		Address2:   "Ap 4B",
 		// Partner fields
-		Bio:            "Experienced healthcare professional with 10 years of experience",
-		Experience:     "10 years in home healthcare services",
-		Certifications: []string{"First Aid Certification", "CPR Certified"},
-		CategoryIDs:    []uuid.UUID{}, // Will be populated with valid IDs in tests
-		ProductIDs:     []uuid.UUID{}, // Will be populated with valid IDs in tests
+		Bio:         "Experienced healthcare professional with 10 years of experience",
+		Experience:  "10 years in home healthcare services",
+		CategoryIDs: []uuid.UUID{}, // Will be populated with valid IDs in tests
+		ProductIDs:  []uuid.UUID{}, // Will be populated with valid IDs in tests
 	}
 
 	t.Run("should successfully complete partner registration with pending session", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create pending user
 		pendingUser := newPendingUser(validEmail)
@@ -110,7 +107,6 @@ func TestCompletePartner(t *testing.T) {
 		assert.Equal(t, pendingUser.ID, partner.UserID)
 		assert.Equal(t, request.Bio, partner.Bio)
 		assert.Equal(t, request.Experience, partner.Experience)
-		assert.Equal(t, request.Certifications, partner.Certifications)
 		assert.ElementsMatch(t, request.CategoryIDs, partner.CategoryIDs)
 		assert.ElementsMatch(t, request.ProductIDs, partner.ProductIDs)
 		// assert.Nil(t, partner.VerifiedByUserID)
@@ -122,7 +118,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should return 401 when session cookie is missing", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Populate with valid catalog IDs
 		validCategoryIDs, validProductIDs := getValidCatalogIDsFromCache(t)
@@ -145,7 +141,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should return 409 when session is already active", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create an active session
 		activeSession, err := td.NewTestSession(t, crypto)
@@ -174,7 +170,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should return 400 for invalid JSON request body", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		pendingSession, err := td.NewTestSession(t, crypto)
@@ -215,7 +211,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should return 400 for invalid password", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		pendingSession, err := td.NewTestSession(t, crypto)
@@ -246,7 +242,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should return 400 for invalid category IDs", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create pending user
 		pendingUser := newPendingUser(validEmail)
@@ -286,7 +282,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should return 400 for invalid product IDs", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create pending user
 		pendingUser := newPendingUser(validEmail)
@@ -327,7 +323,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should return 400 for missing required partner fields", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		pendingSession, err := td.NewTestSession(t, crypto)
@@ -357,7 +353,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should successfully complete partner registration with minimal partner data", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create pending user
 		pendingUser := newPendingUser("minimal-partner@example.com")
@@ -386,15 +382,14 @@ func TestCompletePartner(t *testing.T) {
 			Gender: domain.GenderInput{
 				Gender: domain.GenderPreferNotToSay,
 			},
-			Telephone:      "0612345678",
-			PostalCode:     "75001",
-			City:           "Paris",
-			Address1:       "123 Rue de Test",
-			Bio:            "", // Optional
-			Experience:     "", // Optional
-			Certifications: []string{},
-			CategoryIDs:    []uuid.UUID{}, // Empty is valid
-			ProductIDs:     []uuid.UUID{}, // Empty is valid
+			Telephone:   "0612345678",
+			PostalCode:  "75001",
+			City:        "Paris",
+			Address1:    "123 Rue de Rivoli",
+			Bio:         "",            // Optional
+			Experience:  "",            // Optional
+			CategoryIDs: []uuid.UUID{}, // Empty is valid
+			ProductIDs:  []uuid.UUID{}, // Empty is valid
 		}
 
 		// Make HTTP request

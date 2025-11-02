@@ -17,4 +17,5 @@ type SessionRepository interface {
 	RemoveSessionByID(ctx context.Context, sessionID uuid.UUID) error
 	StoreResetSession(ctx context.Context, tokenHash, userEmail string, ttl time.Duration) error
 	ValidateResetSession(ctx context.Context, tokenHash string) (string, error)
+	InvalidateTokenPair(ctx context.Context, accessTokenHash, refreshTokenHash string, sessionID uuid.UUID) error
 }

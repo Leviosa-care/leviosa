@@ -40,4 +40,3 @@ func (s *Service) GetCache() ports.CatalogCache {
 func (s *Service) GetCacheUpdater() ports.CatalogCacheUpdater {
 	return s.cache
 }
-

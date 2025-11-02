@@ -155,4 +155,3 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	httpx.RespondWithJSON(w, updatedUser, http.StatusOK)
 }
-

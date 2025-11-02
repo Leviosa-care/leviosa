@@ -82,4 +82,3 @@ func TestServiceVaultPaths(t *testing.T) {
 		}
 	}
 }
-

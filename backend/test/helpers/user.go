@@ -204,20 +204,3 @@ func InsertUserEncx(t *testing.T, ctx context.Context, userEncx *domain.UserEncx
 
 	return err
 }
-
-// // NewTestUserWithPassword creates a User domain object with a specific password
-// func NewTestUserWithPassword(t *testing.T, email, firstName, lastName, password string) *domain.User {
-// 	t.Helper()
-// 	return &domain.User{
-// 		ID:         uuid.New(),
-// 		State:      domain.Active,
-// 		Email:      email,
-// 		FirstName:  firstName,
-// 		LastName:   lastName,
-// 		Password:   password,
-// 		Telephone:  "0612345678",
-// 		Role:       identity.Standard.String(),
-// 		CreatedAt:  time.Now(),
-// 		LoggedInAt: time.Now(),
-// 	}
-// }

@@ -188,4 +188,3 @@ func (c *CatalogCache) DeleteProduct(ctx context.Context, productID uuid.UUID) e
 	delete(c.products, productID)
 	return nil
 }
-

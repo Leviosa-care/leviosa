@@ -7,7 +7,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/application/catalog"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/ports"
 
-	authRabbitMQ "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/rabbitmq"
+	// authRabbitMQ "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/rabbitmq"
 	"github.com/hengadev/encx"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -58,11 +58,11 @@ func New(
 		return nil, fmt.Errorf("failed to load catalog data: %w", err)
 	}
 
-	// Start RabbitMQ consumer for real-time catalog updates
-	consumer := authRabbitMQ.NewCatalogConsumer(conn, catalogCache)
-	if err := consumer.Start(ctx); err != nil {
-		return nil, fmt.Errorf("failed to start catalog consumer: %w", err)
-	}
+	// TODO: Start RabbitMQ consumer for real-time catalog updates when catalog service is implemented
+	// consumer := authRabbitMQ.NewCatalogConsumer(conn, catalogCache)
+	// if err := consumer.Start(ctx); err != nil {
+	// 	return nil, fmt.Errorf("failed to start catalog consumer: %w", err)
+	// }
 
 	return partnerService, nil
 }

@@ -27,7 +27,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should successfully validate password reset OTP and return reset token", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "reset@example.com"
 		user := td.NewTestUser(t, existingEmail, "Reset", "User")
@@ -96,7 +96,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should return not found when OTP does not exist", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "noopt@example.com"
 		// td.InsertTestUser(t, ctx, existingEmail, "No", "OTP", testPool, crypto)
@@ -132,7 +132,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should return unauthorized for wrong OTP code", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "wrongcode@example.com"
 		// td.InsertTestUser(t, ctx, existingEmail, "Wrong", "Code", testPool, crypto)
@@ -184,7 +184,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should return bad request for invalid email format", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Test with invalid email
 		validateRequest := domain.ValidatePasswordResetOTPRequest{
@@ -205,7 +205,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should return bad request for invalid OTP code format", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Test with invalid OTP code (non-numeric)
 		validateRequest := domain.ValidatePasswordResetOTPRequest{
@@ -226,7 +226,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should return gone for expired OTP", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "expired@example.com"
 		// td.InsertTestUser(t, ctx, existingEmail, "Expired", "OTP", testPool, crypto)
@@ -271,7 +271,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should handle concurrent OTP validation attempts", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "concurrent@example.com"
 		// td.InsertTestUser(t, ctx, existingEmail, "Concurrent", "User", testPool, crypto)
@@ -348,7 +348,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should handle malformed JSON request", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create request with malformed JSON
 		req, err := http.NewRequestWithContext(
@@ -373,7 +373,7 @@ func TestValidatePasswordResetOTP(t *testing.T) {
 
 	t.Run("should return bad request for empty fields", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Test with empty email and code
 		validateRequest := domain.ValidatePasswordResetOTPRequest{

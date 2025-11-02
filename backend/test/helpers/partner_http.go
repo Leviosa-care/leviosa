@@ -99,3 +99,4 @@ func NewVerifyPartnerRequest(t *testing.T, ctx context.Context, serverURL string
 
 	return req
 }
+

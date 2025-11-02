@@ -13,13 +13,11 @@ import (
 	otpSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/otp"
 	partnerSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/partner"
 	sessionSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/session"
-	specializationSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/specialization"
 	userSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/user"
 
 	authuserPorts "github.com/Leviosa-care/leviosa/backend/internal/authuser/ports"
 
 	partnerRepo "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/postgres/partner"
-	specializationRepo "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/postgres/specialization"
 	userRepo "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/postgres/user"
 	otpRepo "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/redis/otp"
 	sessionRepo "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/redis/session"
@@ -70,20 +68,19 @@ type Container struct {
 	Config *Config
 
 	// Infrastructure
-	DB         *pgxpool.Pool
+	DB          *pgxpool.Pool
 	RedisClient *redis.Client
-	RabbitMQ   *amqp.Connection
-	S3Client   *s3.Client
-	Crypto     encx.CryptoService
-	StripeAPI  *stripeClient.API
+	RabbitMQ    *amqp.Connection
+	S3Client    *s3.Client
+	Crypto      encx.CryptoService
+	StripeAPI   *stripeClient.API
 
 	// Authuser Repositories
-	UserRepo           authuserPorts.UserRepository
-	PartnerRepo        authuserPorts.PartnerRepository
-	SpecializationRepo authuserPorts.SpecializationRepository
-	OTPRepo            authuserPorts.OTPRepository
-	SessionRepo        authuserPorts.SessionRepository
-	StripeAdapter      authuserPorts.StripeService
+	UserRepo      authuserPorts.UserRepository
+	PartnerRepo   authuserPorts.PartnerRepository
+	OTPRepo       authuserPorts.OTPRepository
+	SessionRepo   authuserPorts.SessionRepository
+	StripeAdapter authuserPorts.StripeService
 
 	// Catalog Repositories
 	CategoryRepo      catalogPorts.CategoryRepository
@@ -97,23 +94,22 @@ type Container struct {
 	StripeCatalog     catalogPorts.StripeService
 
 	// Authuser Services
-	UserService           *userSvc.Service
-	PartnerService        *partnerSvc.PartnerService
-	SpecializationService *specializationSvc.Service
-	OTPService            *otpSvc.Service
-	SessionService        *sessionSvc.Service
-	OAuthService          *oauthSvc.Service
-	CatalogService        *catalogSvc.CatalogService
-	AuthAggregator        *authuserAgg.Service
+	UserService    *userSvc.UserService
+	PartnerService *partnerSvc.PartnerService
+	OTPService     *otpSvc.OTPService
+	SessionService *sessionSvc.SessionService
+	OAuthService   *oauthSvc.Service
+	CatalogService *catalogSvc.Service
+	AuthAggregator *authuserAgg.AuthAggregatorService
 
 	// Catalog Services
-	CategoryService      *categorySvc.Service
-	ProductService       *productSvc.Service
-	PriceService         *priceSvc.Service
-	ImageService         *imageSvc.Service
-	CouponService        *couponSvc.Service
-	PromotionCodeService *promotionCodeSvc.Service
-	CatalogAggregator    *catalogAgg.Service
+	CategoryService      *categorySvc.CategoryService
+	ProductService       *productSvc.ProductService
+	PriceService         *priceSvc.PriceService
+	ImageService         *imageSvc.ImageService
+	CouponService        *couponSvc.CouponService
+	PromotionCodeService *promotionCodeSvc.PromotionCodeService
+	CatalogAggregator    *catalogAgg.ProductAggregatorService
 }
 
 // NewContainer creates and wires all dependencies
@@ -253,22 +249,21 @@ func (c *Container) runMigrations(ctx context.Context) error {
 
 func (c *Container) setupRepositories(ctx context.Context) {
 	// Authuser repositories
-	c.UserRepo = userRepo.NewRepository(ctx, c.DB, c.Crypto)
-	c.PartnerRepo = partnerRepo.NewRepository(ctx, c.DB, c.Crypto)
-	c.SpecializationRepo = specializationRepo.NewRepository(ctx, c.DB, c.Crypto)
-	c.OTPRepo = otpRepo.NewRepository(c.RedisClient)
-	c.SessionRepo = sessionRepo.NewRepository(c.RedisClient)
+	c.UserRepo = userRepo.New(ctx, c.DB)
+	c.PartnerRepo = partnerRepo.New(ctx, c.DB)
+	c.OTPRepo = otpRepo.New(c.RedisClient)
+	c.SessionRepo = sessionRepo.New(c.RedisClient)
 	c.StripeAdapter = stripeAdapter.NewService(c.StripeAPI)
 
 	// Catalog repositories
-	c.CategoryRepo = categoryRepo.NewRepository(ctx, c.DB, c.Crypto)
-	c.ProductRepo = productRepo.NewRepository(ctx, c.DB, c.Crypto)
-	c.PriceRepo = priceRepo.NewRepository(ctx, c.DB, c.Crypto)
-	c.ImageRepo = imageRepo.NewRepository(ctx, c.DB, c.Crypto)
-	c.CouponRepo = couponRepo.NewRepository(ctx, c.DB, c.Crypto)
-	c.PromotionCodeRepo = promotionCodeRepo.NewRepository(ctx, c.DB, c.Crypto)
-	c.SharedRepo = sharedRepo.NewRepository(ctx, c.DB)
-	c.ImageMedia = imageMedia.NewRepository(c.S3Client, c.Config.S3BucketName)
+	c.CategoryRepo = categoryRepo.New(ctx, c.DB)
+	c.ProductRepo = productRepo.New(ctx, c.DB)
+	c.PriceRepo = priceRepo.New(ctx, c.DB)
+	c.ImageRepo = imageRepo.New(ctx, c.DB)
+	c.CouponRepo = couponRepo.New(ctx, c.DB)
+	c.PromotionCodeRepo = promotionCodeRepo.New(ctx, c.DB)
+	c.SharedRepo = sharedRepo.New(ctx, c.DB)
+	c.ImageMedia = imageMedia.New(ctx, c.S3Client, c.Config.S3BucketName)
 	c.StripeCatalog = stripeCatalog.NewService(c.StripeAPI)
 }
 
@@ -283,8 +278,6 @@ func (c *Container) setupServices(ctx context.Context) error {
 		c.SessionService,
 		c.Crypto,
 	)
-
-	c.SpecializationService = specializationSvc.New(c.SpecializationRepo)
 
 	// Catalog service for authuser (cross-module dependency)
 	c.CatalogService = catalogSvc.New(

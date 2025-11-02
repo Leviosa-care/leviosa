@@ -26,7 +26,7 @@ func TestSignIn(t *testing.T) {
 
 	t.Run("should successfully sign in with valid credentials", func(t *testing.T) {
 		// Clear all test data
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create an active user with the test password
 		user := td.NewTestUser(t, validEmail, "John", "Doe")
@@ -104,7 +104,7 @@ func TestSignIn(t *testing.T) {
 
 	t.Run("should fail with invalid email", func(t *testing.T) {
 		// Clear all test data
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create sign-in request with non-existent email
 		request := domain.SignInRequest{
@@ -123,7 +123,7 @@ func TestSignIn(t *testing.T) {
 
 	t.Run("should fail with invalid password", func(t *testing.T) {
 		// Clear all test data
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create an active user with the test password
 		user := td.NewTestUser(t, validEmail, "John", "Doe")
@@ -154,7 +154,7 @@ func TestSignIn(t *testing.T) {
 
 	t.Run("should fail with inactive user account", func(t *testing.T) {
 		// Clear all test data
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending user (not yet activated)
 		user := td.NewTestUser(t, validEmail, "John", "Doe")
@@ -185,7 +185,7 @@ func TestSignIn(t *testing.T) {
 
 	t.Run("should fail with unverified user account", func(t *testing.T) {
 		// Clear all test data
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create an unverified user
 		user := td.NewTestUser(t, validEmail, "John", "Doe")

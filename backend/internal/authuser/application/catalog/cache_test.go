@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 )
 
 func TestCatalogCache_UpsertCategory(t *testing.T) {
@@ -96,17 +96,17 @@ func TestCatalogCache_UpsertProduct(t *testing.T) {
 
 	t.Run("should insert published product", func(t *testing.T) {
 		product := &domain.CachedProduct{
-			ID:                 uuid.New(),
-			Name:               "Test Product",
-			Description:        "Test Description",
-			CategoryID:         uuid.New(),
-			Duration:           60,
-			Status:             "published",
-			Availability:       "available",
-			BufferTime:         15,
-			CancellationHours:  24,
-			StripeProductID:    "prod_test123",
-			Metadata:           map[string]any{"key": "value"},
+			ID:                uuid.New(),
+			Name:              "Test Product",
+			Description:       "Test Description",
+			CategoryID:        uuid.New(),
+			Duration:          60,
+			Status:            "published",
+			Availability:      "available",
+			BufferTime:        15,
+			CancellationHours: 24,
+			StripeProductID:   "prod_test123",
+			Metadata:          map[string]any{"key": "value"},
 		}
 
 		err := cache.UpsertProduct(ctx, product)
@@ -122,17 +122,17 @@ func TestCatalogCache_UpsertProduct(t *testing.T) {
 
 	t.Run("should not store unpublished product", func(t *testing.T) {
 		product := &domain.CachedProduct{
-			ID:                 uuid.New(),
-			Name:               "Unpublished Product",
-			Description:        "Test Description",
-			CategoryID:         uuid.New(),
-			Duration:           60,
-			Status:             "draft",
-			Availability:       "available",
-			BufferTime:         15,
-			CancellationHours:  24,
-			StripeProductID:    "prod_test123",
-			Metadata:           map[string]any{"key": "value"},
+			ID:                uuid.New(),
+			Name:              "Unpublished Product",
+			Description:       "Test Description",
+			CategoryID:        uuid.New(),
+			Duration:          60,
+			Status:            "draft",
+			Availability:      "available",
+			BufferTime:        15,
+			CancellationHours: 24,
+			StripeProductID:   "prod_test123",
+			Metadata:          map[string]any{"key": "value"},
 		}
 
 		err := cache.UpsertProduct(ctx, product)
@@ -146,17 +146,17 @@ func TestCatalogCache_UpsertProduct(t *testing.T) {
 	t.Run("should update existing product", func(t *testing.T) {
 		productID := uuid.New()
 		original := &domain.CachedProduct{
-			ID:                 productID,
-			Name:               "Original Product",
-			Description:        "Original Description",
-			CategoryID:         uuid.New(),
-			Duration:           60,
-			Status:             "published",
-			Availability:       "available",
-			BufferTime:         15,
-			CancellationHours:  24,
-			StripeProductID:    "prod_original",
-			Metadata:           map[string]any{"key": "original"},
+			ID:                productID,
+			Name:              "Original Product",
+			Description:       "Original Description",
+			CategoryID:        uuid.New(),
+			Duration:          60,
+			Status:            "published",
+			Availability:      "available",
+			BufferTime:        15,
+			CancellationHours: 24,
+			StripeProductID:   "prod_original",
+			Metadata:          map[string]any{"key": "original"},
 		}
 
 		// Insert original
@@ -165,17 +165,17 @@ func TestCatalogCache_UpsertProduct(t *testing.T) {
 
 		// Update with new data
 		updated := &domain.CachedProduct{
-			ID:                 productID,
-			Name:               "Updated Product",
-			Description:        "Updated Description",
-			CategoryID:         uuid.New(),
-			Duration:           90,
-			Status:             "published",
-			Availability:       "limited",
-			BufferTime:         30,
-			CancellationHours:  48,
-			StripeProductID:    "prod_updated",
-			Metadata:           map[string]any{"key": "updated"},
+			ID:                productID,
+			Name:              "Updated Product",
+			Description:       "Updated Description",
+			CategoryID:        uuid.New(),
+			Duration:          90,
+			Status:            "published",
+			Availability:      "limited",
+			BufferTime:        30,
+			CancellationHours: 48,
+			StripeProductID:   "prod_updated",
+			Metadata:          map[string]any{"key": "updated"},
 		}
 
 		err = cache.UpsertProduct(ctx, updated)
@@ -440,3 +440,4 @@ func TestCatalogCache_ValidationMethods(t *testing.T) {
 		assert.False(t, cache.IsValidProduct(uuid.New()))
 	})
 }
+

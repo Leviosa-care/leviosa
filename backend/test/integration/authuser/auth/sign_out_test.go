@@ -23,7 +23,7 @@ func TestSignOut(t *testing.T) {
 
 	t.Run("should successfully sign out with valid session", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create active user
@@ -93,7 +93,7 @@ func TestSignOut(t *testing.T) {
 
 	t.Run("should handle double sign-out gracefully", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create active user
@@ -135,7 +135,7 @@ func TestSignOut(t *testing.T) {
 
 	t.Run("should fail with guest role (below minimum required role)", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create active user
@@ -168,7 +168,7 @@ func TestSignOut(t *testing.T) {
 
 	t.Run("should work with administrator role", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.ClearSessionsRedis(t, ctx, redisClient)
 
 		// Create active user

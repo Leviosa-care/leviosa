@@ -8,18 +8,17 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-
+	authDomain "github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 	authEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
 	userEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/user"
-
 	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 // NewCheckEmailSendOTPRequest creates an HTTP request for email verification with OTP
-func NewCheckEmailSendOTPRequest(t *testing.T, ctx context.Context, baseURL string, request domain.CheckEmailAvailabilityRequest) *http.Request {
+func NewCheckEmailSendOTPRequest(t *testing.T, ctx context.Context, baseURL string, request authDomain.CheckEmailAvailabilityRequest) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -38,7 +37,7 @@ func NewCheckEmailSendOTPRequest(t *testing.T, ctx context.Context, baseURL stri
 }
 
 // NewSignInRequest creates an HTTP request for user sign-in
-func NewSignInRequest(t *testing.T, ctx context.Context, baseURL string, request domain.SignInRequest) *http.Request {
+func NewSignInRequest(t *testing.T, ctx context.Context, baseURL string, request authDomain.SignInRequest) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -173,7 +172,7 @@ func ParseErrorResponse(t *testing.T, resp *http.Response) (string, int) {
 }
 
 // NewValidateOTPCreatePendingUserRequest creates an HTTP request for OTP validation with user creation
-func NewValidateOTPCreatePendingUserRequest(t *testing.T, ctx context.Context, baseURL string, request domain.ValidateOTPRequest) *http.Request {
+func NewValidateOTPCreatePendingUserRequest(t *testing.T, ctx context.Context, baseURL string, request authDomain.ValidateOTPRequest) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -208,7 +207,7 @@ func ParseValidateOTPCreatePendingUserResponse(t *testing.T, resp *http.Response
 }
 
 // NewCompleteUserRequest creates an HTTP request for completing user registration
-func NewCompleteUserRequest(t *testing.T, ctx context.Context, baseURL string, request domain.CompleteUserRequest, accessToken string) *http.Request {
+func NewCompleteUserRequest(t *testing.T, ctx context.Context, baseURL string, request authDomain.CompleteUserRequest, accessToken string) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -275,10 +274,10 @@ func NewGetPendingUsersRequest(t *testing.T, ctx context.Context, baseURL string
 }
 
 // ParseGetPendingUsersResponse parses the HTTP response for get pending users request
-func ParseGetPendingUsersResponse(t *testing.T, resp *http.Response) []*domain.UserResponse {
+func ParseGetPendingUsersResponse(t *testing.T, resp *http.Response) []*authDomain.UserResponse {
 	t.Helper()
 
-	var users []*domain.UserResponse
+	var users []*authDomain.UserResponse
 	decoder := json.NewDecoder(resp.Body)
 	err := decoder.Decode(&users)
 	require.NoError(t, err, "Failed to decode get pending users response")
@@ -326,10 +325,10 @@ func NewGetAllUsersRequestWithoutAuth(t *testing.T, ctx context.Context, baseURL
 }
 
 // ParseGetAllUsersResponse parses the HTTP response for get all users request
-func ParseGetAllUsersResponse(t *testing.T, resp *http.Response) []*domain.UserResponse {
+func ParseGetAllUsersResponse(t *testing.T, resp *http.Response) []*authDomain.UserResponse {
 	t.Helper()
 
-	var users []*domain.UserResponse
+	var users []*authDomain.UserResponse
 	decoder := json.NewDecoder(resp.Body)
 	err := decoder.Decode(&users)
 	require.NoError(t, err, "Failed to decode get all users response")
@@ -393,10 +392,10 @@ func NewGetUserRequestWithMockAuth(t *testing.T, ctx context.Context, baseURL st
 }
 
 // ParseGetUserResponse parses the HTTP response for get user request
-func ParseGetUserResponse(t *testing.T, resp *http.Response) *domain.UserResponse {
+func ParseGetUserResponse(t *testing.T, resp *http.Response) *authDomain.UserResponse {
 	t.Helper()
 
-	var user *domain.UserResponse
+	var user *authDomain.UserResponse
 	decoder := json.NewDecoder(resp.Body)
 	err := decoder.Decode(&user)
 	require.NoError(t, err, "Failed to decode get user response")
@@ -405,7 +404,7 @@ func ParseGetUserResponse(t *testing.T, resp *http.Response) *domain.UserRespons
 }
 
 // NewApproveUserRequest creates an HTTP request for approving a user
-func NewApproveUserRequest(t *testing.T, ctx context.Context, baseURL string, request domain.ApproveUserRequest, accessToken string) *http.Request {
+func NewApproveUserRequest(t *testing.T, ctx context.Context, baseURL string, request authDomain.ApproveUserRequest, accessToken string) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -492,9 +491,7 @@ func NewUpdateUserRoleRequest(t *testing.T, ctx context.Context, baseURL string,
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
 
-	req.Header.Set("Content-Type", "application/json")
-
-	// Add session cookie if provided
+	// Add authentication cookie if access token is provided
 	if accessToken != "" {
 		cookie := &http.Cookie{
 			Name:  ck.AccessTokenCookieName,
@@ -502,6 +499,7 @@ func NewUpdateUserRoleRequest(t *testing.T, ctx context.Context, baseURL string,
 		}
 		req.AddCookie(cookie)
 	}
+
 	return req
 }
 
@@ -731,10 +729,10 @@ func NewGetUserByIDRequestWithoutAuth(t *testing.T, ctx context.Context, baseURL
 }
 
 // ParseGetUserByIDResponse parses the HTTP response for get user by ID request
-func ParseGetUserByIDResponse(t *testing.T, resp *http.Response) *domain.UserResponse {
+func ParseGetUserByIDResponse(t *testing.T, resp *http.Response) *authDomain.UserResponse {
 	t.Helper()
 
-	var user *domain.UserResponse
+	var user *authDomain.UserResponse
 	decoder := json.NewDecoder(resp.Body)
 	err := decoder.Decode(&user)
 	require.NoError(t, err, "Failed to decode get user by ID response")
@@ -743,7 +741,7 @@ func ParseGetUserByIDResponse(t *testing.T, resp *http.Response) *domain.UserRes
 }
 
 // NewUpdateUserRequest creates an HTTP request for updating user profile without authentication
-func NewUpdateUserRequest(t *testing.T, ctx context.Context, baseURL string, request domain.UpdateUserRequest) *http.Request {
+func NewUpdateUserRequest(t *testing.T, ctx context.Context, baseURL string, request authDomain.UpdateUserRequest) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -762,7 +760,7 @@ func NewUpdateUserRequest(t *testing.T, ctx context.Context, baseURL string, req
 }
 
 // NewUpdateUserRequestWithAuth creates an HTTP request for updating user profile with authentication
-func NewUpdateUserRequestWithAuth(t *testing.T, ctx context.Context, baseURL string, request domain.UpdateUserRequest, accessToken string) *http.Request {
+func NewUpdateUserRequestWithAuth(t *testing.T, ctx context.Context, baseURL string, request authDomain.UpdateUserRequest, accessToken string) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -789,10 +787,10 @@ func NewUpdateUserRequestWithAuth(t *testing.T, ctx context.Context, baseURL str
 }
 
 // ParseUpdateUserResponse parses the HTTP response for update user request
-func ParseUpdateUserResponse(t *testing.T, resp *http.Response) *domain.UserResponse {
+func ParseUpdateUserResponse(t *testing.T, resp *http.Response) *authDomain.UserResponse {
 	t.Helper()
 
-	var user *domain.UserResponse
+	var user *authDomain.UserResponse
 	decoder := json.NewDecoder(resp.Body)
 	err := decoder.Decode(&user)
 	require.NoError(t, err, "Failed to decode update user response")
@@ -801,7 +799,7 @@ func ParseUpdateUserResponse(t *testing.T, resp *http.Response) *domain.UserResp
 }
 
 // NewChangePasswordRequest creates an HTTP request for changing password
-func NewChangePasswordRequest(t *testing.T, ctx context.Context, baseURL string, request domain.ChangePasswordRequest, accessToken string) *http.Request {
+func NewChangePasswordRequest(t *testing.T, ctx context.Context, baseURL string, request authDomain.ChangePasswordRequest, accessToken string) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -830,7 +828,7 @@ func NewChangePasswordRequest(t *testing.T, ctx context.Context, baseURL string,
 }
 
 // NewChangePasswordRequestWithoutAuth creates an HTTP request for changing password without authentication
-func NewChangePasswordRequestWithoutAuth(t *testing.T, ctx context.Context, baseURL string, request domain.ChangePasswordRequest) *http.Request {
+func NewChangePasswordRequestWithoutAuth(t *testing.T, ctx context.Context, baseURL string, request authDomain.ChangePasswordRequest) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -864,7 +862,7 @@ func ParseChangePasswordResponse(t *testing.T, resp *http.Response) string {
 }
 
 // NewRequestPasswordResetRequest creates an HTTP request for password reset
-func NewRequestPasswordResetRequest(t *testing.T, ctx context.Context, baseURL string, request domain.RequestPasswordResetRequest) *http.Request {
+func NewRequestPasswordResetRequest(t *testing.T, ctx context.Context, baseURL string, request authDomain.RequestPasswordResetRequest) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -908,7 +906,7 @@ func AddAuthCookie(req *http.Request, accessToken string) {
 }
 
 // NewValidatePasswordResetOTPRequest creates an HTTP request for password reset OTP validation
-func NewValidatePasswordResetOTPRequest(t *testing.T, ctx context.Context, baseURL string, request domain.ValidatePasswordResetOTPRequest) *http.Request {
+func NewValidatePasswordResetOTPRequest(t *testing.T, ctx context.Context, baseURL string, request authDomain.ValidatePasswordResetOTPRequest) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -957,7 +955,7 @@ func GetPasswordResetTokenCookie(t *testing.T, resp *http.Response) *http.Cookie
 }
 
 // NewConfirmPasswordResetRequest creates an HTTP request for password reset confirmation
-func NewConfirmPasswordResetRequest(t *testing.T, ctx context.Context, baseURL string, request domain.ConfirmPasswordResetRequest) *http.Request {
+func NewConfirmPasswordResetRequest(t *testing.T, ctx context.Context, baseURL string, request authDomain.ConfirmPasswordResetRequest) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)
@@ -976,7 +974,7 @@ func NewConfirmPasswordResetRequest(t *testing.T, ctx context.Context, baseURL s
 }
 
 // NewConfirmPasswordResetRequestWithCookie creates an HTTP request with password reset token cookie
-func NewConfirmPasswordResetRequestWithCookie(t *testing.T, ctx context.Context, baseURL string, request domain.ConfirmPasswordResetRequest, resetTokenCookie *http.Cookie) *http.Request {
+func NewConfirmPasswordResetRequestWithCookie(t *testing.T, ctx context.Context, baseURL string, request authDomain.ConfirmPasswordResetRequest, resetTokenCookie *http.Cookie) *http.Request {
 	t.Helper()
 
 	req := NewConfirmPasswordResetRequest(t, ctx, baseURL, request)
@@ -1006,7 +1004,7 @@ func ParseConfirmPasswordResetResponse(t *testing.T, resp *http.Response) (messa
 }
 
 // NewCompletePartnerRequest creates an HTTP request for completing partner registration
-func NewCompletePartnerRequest(t *testing.T, ctx context.Context, baseURL string, request domain.CompletePartnerRequest, accessToken string) *http.Request {
+func NewCompletePartnerRequest(t *testing.T, ctx context.Context, baseURL string, request authDomain.CompletePartnerRequest, accessToken string) *http.Request {
 	t.Helper()
 
 	jsonData, err := json.Marshal(request)

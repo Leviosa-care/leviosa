@@ -32,24 +32,24 @@ func NewServiceClient(config ServiceClientConfig) (*ServiceClient, error) {
 	if config.ServiceName == "" {
 		return nil, fmt.Errorf("service name is required")
 	}
-	
+
 	if !services.IsValidService(config.ServiceName) {
 		return nil, fmt.Errorf("invalid service name: %s", config.ServiceName)
 	}
-	
+
 	if config.APIKey == "" {
 		return nil, fmt.Errorf("API key is required for service %s", config.ServiceName)
 	}
-	
+
 	if config.BaseURL == "" {
 		return nil, fmt.Errorf("base URL is required")
 	}
-	
+
 	timeout := config.Timeout
 	if timeout == 0 {
 		timeout = 30 * time.Second // Default timeout
 	}
-	
+
 	return &ServiceClient{
 		httpClient: &http.Client{
 			Timeout: timeout,
@@ -65,11 +65,11 @@ func (sc *ServiceClient) Do(req *http.Request) (*http.Response, error) {
 	// Add service authentication headers
 	req.Header.Set(services.ServiceNameHeader, sc.serviceName)
 	req.Header.Set(services.ServiceKeyHeader, sc.apiKey)
-	
+
 	// Add standard headers for service-to-service communication
 	req.Header.Set("User-Agent", fmt.Sprintf("service-%s/1.0", sc.serviceName))
 	req.Header.Set("Accept", "application/json")
-	
+
 	return sc.httpClient.Do(req)
 }
 
@@ -85,7 +85,7 @@ func (sc *ServiceClient) Get(ctx context.Context, path string) (*http.Response, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GET request: %w", err)
 	}
-	
+
 	req = req.WithContext(ctx)
 	return sc.Do(req)
 }
@@ -96,7 +96,7 @@ func (sc *ServiceClient) Post(ctx context.Context, path string, body interface{}
 	if err != nil {
 		return nil, fmt.Errorf("failed to create POST request: %w", err)
 	}
-	
+
 	req = req.WithContext(ctx)
 	return sc.Do(req)
 }
@@ -107,7 +107,7 @@ func (sc *ServiceClient) Put(ctx context.Context, path string, body interface{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PUT request: %w", err)
 	}
-	
+
 	req = req.WithContext(ctx)
 	return sc.Do(req)
 }
@@ -118,7 +118,7 @@ func (sc *ServiceClient) Delete(ctx context.Context, path string) (*http.Respons
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DELETE request: %w", err)
 	}
-	
+
 	req = req.WithContext(ctx)
 	return sc.Do(req)
 }
@@ -137,22 +137,22 @@ func (sc *ServiceClient) GetBaseURL() string {
 func NewJSONRequest(method, url string, body interface{}) (*http.Request, error) {
 	var reqBody []byte
 	var err error
-	
+
 	if body != nil {
 		reqBody, err = json.Marshal(body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal request body: %w", err)
 		}
 	}
-	
+
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
-	
+
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	
+
 	return req, nil
 }

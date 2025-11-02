@@ -33,15 +33,15 @@ type SessionInfo struct {
 }
 
 type Session struct {
-	ID          uuid.UUID     `json:"-"`
-	UserID      uuid.UUID     `json:"-" encx:"encrypt,hash_basic"`
-	Role        identity.Role `json:"-" encx:"encrypt"`
-	State       SessionState  `json:"-" encx:"encrypt"`
-	CreatedAt   time.Time     `json:"-" encx:"encrypt"`
-	ExpiresAt   time.Time     `json:"-" encx:"encrypt"`
-	CompletedAt *time.Time    `json:"-" encx:"encrypt"`
-	AccessToken string        `json:"-" encx:"hash_basic"`
-	RefreshToken string       `json:"-" encx:"hash_basic"`
+	ID           uuid.UUID     `json:"-"`
+	UserID       uuid.UUID     `json:"-" encx:"encrypt,hash_basic"`
+	Role         identity.Role `json:"-" encx:"encrypt"`
+	State        SessionState  `json:"-" encx:"encrypt"`
+	CreatedAt    time.Time     `json:"-" encx:"encrypt"`
+	ExpiresAt    time.Time     `json:"-" encx:"encrypt"`
+	CompletedAt  *time.Time    `json:"-" encx:"encrypt"`
+	AccessToken  string        `json:"-" encx:"hash_basic"`
+	RefreshToken string        `json:"-" encx:"hash_basic"`
 }
 
 func (s *Session) Valid(ctx context.Context) error {

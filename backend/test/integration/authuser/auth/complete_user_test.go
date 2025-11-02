@@ -45,7 +45,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should successfully complete user registration with pending session", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		pendingUser := newPendingUser(validEmail)
 		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
@@ -96,7 +96,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 401 when session cookie is missing", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Make HTTP request without session token
 		req := td.NewCompleteUserRequest(t, ctx, testServerURL, validRequest, "")
@@ -113,7 +113,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 401 when session cookie is empty", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Make HTTP request with empty session token
 		req := td.NewCompleteUserRequest(t, ctx, testServerURL, validRequest, "")
@@ -130,7 +130,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 401 when session does not exist", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Make HTTP request with non-existent session randomToken
 		randomToken, err := session.GenerateToken()
@@ -146,7 +146,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 401 when session is expired", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create an expired session
 		// expiredSession := td.CreateTestPendingSessionWithCrypto(t, crypto)
@@ -173,7 +173,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 409 when session is already active", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create an active session
 		// activeSession := td.CreateTestSessionWithCrypto(t, crypto)
@@ -197,7 +197,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 400 for invalid JSON request body", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		// pendingSession := td.CreateTestPendingSessionWithCrypto(t, crypto)
@@ -239,7 +239,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 400 for invalid password", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		// pendingSession := td.CreateTestPendingSessionWithCrypto(t, crypto)
@@ -267,7 +267,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 400 for invalid birth date (future)", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		// pendingSession := td.CreateTestPendingSessionWithCrypto(t, crypto)
@@ -295,7 +295,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 400 for invalid birth date (too young)", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		// pendingSession := td.CreateTestPendingSessionWithCrypto(t, crypto)
@@ -323,7 +323,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 400 for invalid phone number", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		// pendingSession := td.CreateTestPendingSessionWithCrypto(t, crypto)
@@ -351,7 +351,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 400 for invalid gender", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		// pendingSession := td.CreateTestPendingSessionWithCrypto(t, crypto)
@@ -381,7 +381,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should successfully complete user registration with custom gender", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		pendingUser := newPendingUser(validEmail)
 		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
@@ -438,7 +438,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 400 for custom gender without customGender field", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		// pendingSession := td.CreateTestPendingSessionWithCrypto(t, crypto)
@@ -468,7 +468,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should return 400 for missing required fields", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		// pendingSession := td.CreateTestPendingSessionWithCrypto(t, crypto)
@@ -499,7 +499,7 @@ func TestCompleteUser(t *testing.T) {
 
 	t.Run("should successfully complete user registration with minimal valid data", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create an unverified user first
 		pendingUser := newPendingUser("test@example.com")

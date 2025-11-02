@@ -33,7 +33,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should successfully request password reset for registered email", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		existingEmail := "user@example.com"
@@ -86,7 +86,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should return not found when email is not registered", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test with non-existent email
@@ -122,7 +122,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should return bad request for invalid email format", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test with invalid email
@@ -158,7 +158,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should return bad request for empty email", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test with empty email
@@ -194,7 +194,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should handle OTP rate limiting properly", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		existingEmail := "ratelimit@example.com"
@@ -237,7 +237,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should handle malformed JSON request", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create request with malformed JSON
 		req, err := http.NewRequestWithContext(
@@ -262,7 +262,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("should handle missing content-type header", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "contenttype@example.com"
 		// td.InsertTestUser(t, ctx, existingEmail, "Content", "Type", testPool, crypto)
@@ -301,7 +301,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 	t.Run("edge case: very long email address", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Create a very long but technically valid email

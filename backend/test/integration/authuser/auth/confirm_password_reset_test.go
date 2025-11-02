@@ -28,7 +28,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should successfully confirm password reset with valid token", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "resetconfirm@example.com"
 		oldPassword := td.GenerateStrongPassword(t)
@@ -123,7 +123,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should return not found for invalid reset token", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		newPassword := td.GenerateStrongPassword(t)
 
@@ -146,7 +146,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should return not found for expired reset token", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "expired@example.com"
 
@@ -201,7 +201,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should return bad request for invalid password format", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "weakpass@example.com"
 
@@ -259,7 +259,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should handle token in request body instead of cookie", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "tokenbody@example.com"
 		newPassword := td.GenerateStrongPassword(t)
@@ -302,7 +302,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should return bad request for missing token", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		newPassword := td.GenerateStrongPassword(t)
 
@@ -325,7 +325,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should handle concurrent confirmation attempts", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		existingEmail := "concurrent@example.com"
 		newPassword := td.GenerateStrongPassword(t)
@@ -404,7 +404,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 
 	t.Run("should handle malformed JSON request", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 
 		// Create request with malformed JSON
 		req, err := http.NewRequestWithContext(

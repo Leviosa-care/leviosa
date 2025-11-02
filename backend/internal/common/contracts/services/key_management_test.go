@@ -11,18 +11,18 @@ import (
 func TestGenerateServiceKey(t *testing.T) {
 	// We can test key generation without Vault
 	skm := &ServiceKeyManager{} // No Vault client needed for key generation
-	
+
 	key, err := skm.GenerateServiceKey()
 	require.NoError(t, err)
-	
+
 	// Test key properties
 	assert.NotEmpty(t, key, "Generated key should not be empty")
 	assert.Greater(t, len(key), 40, "Generated key should be sufficiently long")
-	
+
 	// Test that key is valid base64
 	_, err = base64.URLEncoding.DecodeString(key)
 	assert.NoError(t, err, "Generated key should be valid base64")
-	
+
 	// Test uniqueness - generate multiple keys
 	keys := make(map[string]bool)
 	for i := 0; i < 100; i++ {
@@ -47,7 +47,7 @@ func TestServiceKeyValidation(t *testing.T) {
 		{"Invalid service", "invalid-service", false},
 		{"Empty service name", "", false},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test the IsValidService function directly
@@ -68,7 +68,7 @@ func TestKeyManagementVaultPaths(t *testing.T) {
 		{Settings, "secret/data/services/settings/api-key"},
 		{Notification, "secret/data/services/notification/api-key"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.service, func(t *testing.T) {
 			path := ServiceAPIKeyPath(tt.service)
@@ -80,13 +80,14 @@ func TestKeyManagementVaultPaths(t *testing.T) {
 func TestAllServicesConstant(t *testing.T) {
 	// Ensure our key management covers all defined services
 	allServices := AllServices()
-	
+
 	// Test that we have the expected services
 	expectedServices := []string{"authuser", "catalog", "settings", "notification"}
 	assert.ElementsMatch(t, expectedServices, allServices)
-	
+
 	// Test that each service is valid
 	for _, service := range allServices {
 		assert.True(t, IsValidService(service), "All services from AllServices() should be valid")
 	}
 }
+

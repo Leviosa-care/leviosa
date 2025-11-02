@@ -33,7 +33,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should successfully request email verification for available email", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test with valid, available email
@@ -78,7 +78,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should return conflict when email is already registered", func(t *testing.T) {
 		// Clean state and insert existing user
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		existingEmail := "existing@example.com"
@@ -115,7 +115,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should return rate limit when OTP already exists", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		email := "ratelimit@example.com"
@@ -148,7 +148,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should return bad request for invalid email", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test with invalid email
@@ -176,7 +176,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should return bad request for empty email", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test with empty email
@@ -200,7 +200,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should handle malformed JSON request", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Create malformed JSON request
@@ -230,7 +230,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 
 	t.Run("should successfully handle concurrent requests for different emails", func(t *testing.T) {
 		// Clean state
-		td.ClearAllTestData(t, ctx, testPool, redisClient)
+		td.ClearAuthTestData(t, ctx, testPool, redisClient)
 		td.PurgeOTPQueue(t, ch)
 
 		// Test concurrent requests

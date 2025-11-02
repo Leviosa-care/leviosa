@@ -10,7 +10,6 @@ import (
 	// Authuser HTTP handlers
 	authHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
 	partnerHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/partner"
-	specializationHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/specialization"
 	userHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/user"
 
 	// Catalog HTTP handlers
@@ -22,6 +21,7 @@ import (
 	promotionCodeHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/promotion_code"
 
 	// Common
+	"github.com/Leviosa-care/leviosa/backend/internal/common/envmode"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware"
 )
@@ -97,86 +97,81 @@ func (s *Server) setupRoutes(mux *http.ServeMux) {
 	s.setupCatalogRoutes(mux)
 }
 
-func (s *Server) setupAuthuserRoutes(mux *http.ServeMux) {
+func (s *Server) setupAuthuserRoutes(router *http.ServeMux) {
 	// Auth handler
-	authH := authHandler.NewHandler(
+	authH := authHandler.New(
 		s.container.AuthAggregator,
 		s.container.Crypto,
 	)
-	authHandler.RegisterRoutes(mux, authH)
+	authH.RegisterRoutes(router)
 
 	// User handler
-	userH := userHandler.NewHandler(
+	userH := userHandler.New(
 		s.container.UserService,
 		s.container.Crypto,
 	)
-	userHandler.RegisterRoutes(mux, userH)
+	userH.RegisterRoutes(router)
 
 	// Partner handler
-	partnerH := partnerHandler.NewHandler(
+	partnerH := partnerHandler.New(
 		s.container.PartnerService,
 		s.container.Crypto,
 	)
-	partnerHandler.RegisterRoutes(mux, partnerH)
-
-	// Specialization handler
-	specializationH := specializationHandler.NewHandler(
-		s.container.SpecializationService,
-		s.container.Crypto,
-	)
-	specializationHandler.RegisterRoutes(mux, specializationH)
+	partnerH.RegisterRoutes(router)
 }
 
-func (s *Server) setupCatalogRoutes(mux *http.ServeMux) {
+func (s *Server) setupCatalogRoutes(router *http.ServeMux) {
 	// Category handler
-	categoryH := categoryHandler.NewHandler(
+	categoryH := categoryHandler.New(
 		s.container.CatalogAggregator,
+		&s.container.ImageService,
 		s.container.Crypto,
 	)
-	categoryHandler.RegisterRoutes(mux, categoryH)
+	categoryH.RegisterRoutes(router)
 
 	// Product handler
-	productH := productHandler.NewHandler(
+	productH := productHandler.New(
 		s.container.CatalogAggregator,
 		s.container.Crypto,
 	)
-	productHandler.RegisterRoutes(mux, productH)
+	productH.RegisterRoutes(router)
 
 	// Price handler
-	priceH := priceHandler.NewHandler(
+	priceH := priceHandler.New(
 		s.container.CatalogAggregator,
 		s.container.Crypto,
 	)
-	priceHandler.RegisterRoutes(mux, priceH)
+	priceH.RegisterRoutes(router)
 
 	// Image handler
-	imageH := imageHandler.NewHandler(
+	imageH := imageHandler.New(
 		s.container.ImageService,
 		s.container.Crypto,
 	)
-	imageHandler.RegisterRoutes(mux, imageH)
+	imageH.RegisterRoutes(router)
 
 	// Coupon handler
-	couponH := couponHandler.NewHandler(
+	couponH := couponHandler.New(
 		s.container.CatalogAggregator,
 		s.container.Crypto,
 	)
-	couponHandler.RegisterRoutes(mux, couponH)
+	couponH.RegisterRoutes(router)
 
 	// Promotion code handler
-	promotionCodeH := promotionCodeHandler.NewHandler(
+	promotionCodeH := promotionCodeHandler.New(
 		s.container.CatalogAggregator,
 		s.container.Crypto,
 	)
-	promotionCodeHandler.RegisterRoutes(mux, promotionCodeH)
+	promotionCodeH.RegisterRoutes(router)
 }
 
-func (s *Server) applyMiddleware(handler http.Handler) http.Handler {
+// func (s *Server) applyMiddleware(handler http.Handler) http.Handler {
+func (s *Server) applyMiddleware(handler middleware.Handler) middleware.Handler {
 	// CORS middleware
-	handler = httpx.EnableCORS(handler)
+	handler = middleware.EnableCORS(handler)
 
 	// Logging middleware
-	handler = middleware.Logger(s.logger)(handler)
+	handler = middleware.AttachLogger(envmode.Prod, s.logger)(handler)
 
 	// Recovery middleware
 	handler = middleware.Recovery(s.logger)(handler)

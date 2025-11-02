@@ -84,7 +84,7 @@ func (s *SessionService) CreateSession(ctx context.Context, request *domain.Crea
 	}
 
 	return &domain.CreateSessionResponse{
-		RefreshToken:       sess.RefreshToken,  // These are still accessible from the original session
+		RefreshToken:       sess.RefreshToken, // These are still accessible from the original session
 		AccessToken:        sess.AccessToken,
 		AccessTokenExpiry:  accessExpiry,
 		RefreshTokenExpiry: refreshExpiry,
