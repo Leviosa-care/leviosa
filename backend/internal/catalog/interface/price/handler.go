@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/ports"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
 )
 
 type Handler interface {
@@ -15,11 +16,13 @@ type Handler interface {
 }
 
 type handler struct {
-	svc ports.PriceService
+	svc    ports.PriceService
+	authmw auth.AuthMiddleware
 }
 
-func New(services ports.PriceService) *handler {
+func New(services ports.PriceService, authmw auth.AuthMiddleware) Handler {
 	return &handler{
-		svc: services,
+		svc:    services,
+		authmw: authmw,
 	}
 }
