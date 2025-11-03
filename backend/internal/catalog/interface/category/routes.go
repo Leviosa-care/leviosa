@@ -7,11 +7,30 @@ import (
 )
 
 func (h *handler) RegisterRoutes(router *http.ServeMux) {
-	router.HandleFunc("GET /categories", mw.EnableCORS(h.GetAllPublishedCategories))
-	router.HandleFunc("GET /categories/{id}", mw.EnableCORS(h.GetCategoryByID))
-	router.HandleFunc("GET /categories/", mw.EnableCORS(h.GetCategoryByID)) // just to fit router strict path matching
-	router.HandleFunc("GET /admin/categories", mw.EnableCORS(h.GetAdminAllCategories))
-	router.HandleFunc("POST /admin/categories", mw.EnableCORS(h.CreateCategory))
-	router.HandleFunc("PATCH /admin/categories/{id}", mw.EnableCORS(h.ModifyCategory))
-	router.HandleFunc("DELETE /admin/categories/{id}", mw.EnableCORS(h.RemoveCategory))
+	RequireAdmin := h.authmw.RequireAdmin
+
+	// === Public Endpoints (no authentication required) ===
+
+	// Retrieves all published categories visible to the public
+	router.HandleFunc("GET "+GetAllPublishedCategoriesEndpoint, mw.EnableCORS(h.GetAllPublishedCategories))
+
+	// Retrieves a specific category by ID (public access)
+	router.HandleFunc("GET "+GetCategoryByIDEndpoint, mw.EnableCORS(h.GetCategoryByID))
+
+	// Workaround for strict path matching
+	router.HandleFunc("GET "+CategoriesBasePath+"/", mw.EnableCORS(h.GetCategoryByID))
+
+	// === Admin-Only Endpoints ===
+
+	// Retrieves all categories including unpublished/draft categories (admin only)
+	router.HandleFunc("GET "+GetAdminAllCategoriesEndpoint, RequireAdmin(mw.EnableCORS(h.GetAdminAllCategories)))
+
+	// Creates a new category (admin only)
+	router.HandleFunc("POST "+CreateCategoryEndpoint, RequireAdmin(mw.EnableCORS(h.CreateCategory)))
+
+	// Modifies an existing category by ID (admin only)
+	router.HandleFunc("PATCH "+ModifyCategoryEndpoint, RequireAdmin(mw.EnableCORS(h.ModifyCategory)))
+
+	// Removes a category by ID (admin only)
+	router.HandleFunc("DELETE "+RemoveCategoryEndpoint, RequireAdmin(mw.EnableCORS(h.RemoveCategory)))
 }
