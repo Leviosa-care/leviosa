@@ -10,20 +10,15 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// Helper function to create a new HTTP request for the CreateCategory handler.
-func newCreateCategoryRequest(t *testing.T, ctx context.Context, jsonBody []byte) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/categories", bytes.NewReader(jsonBody))
-	require.NoError(t, err)
-	return req
-}
+// make test-func TEST_NAME=TestCreateCategory TEST_PATH=test/integration/catalog/category/create_category_test.go
 
 func TestCreateCategory(t *testing.T) {
 	ctx := context.Background()
@@ -63,7 +58,7 @@ func TestCreateCategory(t *testing.T) {
 		// Post-conditions: Verify the category exists in the database
 		createdID, _ := uuid.Parse(respBody.ID)
 		cat, getErr := td.GetCategoryByID(t, ctx, createdID, testPool)
-		require.NoError(t, getErr, "Failed to retrieve the newly created category from the database")
+		assert.NoError(t, getErr, "Failed to retrieve the newly created category from the database")
 		assert.Equal(t, strings.ToLower(requestBody.Name), cat.Name)
 		assert.Equal(t, requestBody.Description, cat.Description)
 		assert.Equal(t, domain.Draft, cat.Status)
@@ -193,4 +188,11 @@ func TestCreateCategory(t *testing.T) {
 		assert.Contains(t, respBody.Error, "invalid request body")
 		assert.Contains(t, respBody.Error, "unknown field \"unknown_field\"")
 	})
+}
+
+// Helper function to create a new HTTP request for the CreateCategory handler.
+func newCreateCategoryRequest(t *testing.T, ctx context.Context, jsonBody []byte) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/categories", bytes.NewReader(jsonBody))
+	require.NoError(t, err)
+	return req
 }

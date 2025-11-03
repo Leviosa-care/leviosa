@@ -19,6 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-func TEST_NAME=TestSetActiveImage TEST_PATH=test/integration/catalog/image/set_active_image_test.go
+
 func TestSetActiveImage(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -58,8 +60,8 @@ func TestSetActiveImage(t *testing.T) {
 		insertImageIntoDB(t, ctx, newActiveImage)
 
 		// Pre-conditions
-		assert.True(t, td.GetImageStatus(t, ctx, activeImageID, testPool), "Old image should be active initially")
-		assert.False(t, td.GetImageStatus(t, ctx, newActiveImageID, testPool), "New image should be inactive initially")
+		require.True(t, td.GetImageStatus(t, ctx, activeImageID, testPool), "Old image should be active initially")
+		require.False(t, td.GetImageStatus(t, ctx, newActiveImageID, testPool), "New image should be inactive initially")
 
 		requestBody := domain.ImageModifierRequest{
 			ImageID:    newActiveImageID.String(),
@@ -104,7 +106,7 @@ func TestSetActiveImage(t *testing.T) {
 		insertImageIntoDB(t, ctx, mockImage)
 
 		// Pre-condition
-		assert.False(t, td.GetImageStatus(t, ctx, imageID, testPool), "Image should be inactive initially")
+		require.False(t, td.GetImageStatus(t, ctx, imageID, testPool), "Image should be inactive initially")
 
 		requestBody := domain.ImageModifierRequest{
 			ImageID:    imageID.String(),

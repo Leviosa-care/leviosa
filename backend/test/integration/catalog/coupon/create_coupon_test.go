@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-func TEST_NAME=TestCreateCoupon TEST_PATH=test/integration/catalog/coupon/create_coupon_test.go
+
 func TestCreateCoupon(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -58,7 +60,7 @@ func TestCreateCoupon(t *testing.T) {
 		require.NoError(t, err)
 
 		coupon, err := td.GetCouponByID(t, ctx, couponID, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, "25% Off Coupon", coupon.Name)
 		assert.Equal(t, 25.0, *coupon.PercentOff)
 		assert.Nil(t, coupon.AmountOff)
@@ -101,10 +103,10 @@ func TestCreateCoupon(t *testing.T) {
 
 		// Verify the coupon was created in the database
 		couponID, err := uuid.Parse(response.ID)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		coupon, err := td.GetCouponByID(t, ctx, couponID, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, "$5 Off Coupon", coupon.Name)
 		assert.Nil(t, coupon.PercentOff)
 		assert.Equal(t, 500, *coupon.AmountOff)
@@ -147,10 +149,10 @@ func TestCreateCoupon(t *testing.T) {
 
 		// Verify the coupon was created in the database
 		couponID, err := uuid.Parse(response.ID)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		coupon, err := td.GetCouponByID(t, ctx, couponID, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, "15% Off for 6 Months", coupon.Name)
 		assert.Equal(t, 15.0, *coupon.PercentOff)
 		assert.Equal(t, domain.CouponDurationRepeating, coupon.Duration)
@@ -303,4 +305,3 @@ func TestCreateCoupon(t *testing.T) {
 		assert.Equal(t, http.StatusUnsupportedMediaType, resp.StatusCode)
 	})
 }
-

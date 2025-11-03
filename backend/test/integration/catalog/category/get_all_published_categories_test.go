@@ -14,12 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// newGetAllPublishedCategoriesRequest creates a new HTTP request for the public handler.
-func newGetAllPublishedCategoriesRequest(t *testing.T, ctx context.Context) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/categories", nil)
-	require.NoError(t, err)
-	return req
-}
+// make test-func TEST_NAME=TestGetAllPublishedCategories TEST_PATH=test/integration/catalog/category/get_all_published_categories_test.go
 
 func TestGetAllPublishedCategories(t *testing.T) {
 	ctx := context.Background()
@@ -72,7 +67,7 @@ func TestGetAllPublishedCategories(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Post-conditions: Verify the response content
-		require.Len(t, response, 2, "Expected 2 published categories in the response")
+		assert.Len(t, response, 2, "Expected 2 published categories in the response")
 
 		// The categories should be ordered by name ASC
 		assert.Equal(t, publishedCat1.Name, response[0].Category.Name)
@@ -132,4 +127,11 @@ func TestGetAllPublishedCategories(t *testing.T) {
 		assert.NotNil(t, categories, "Expected an empty but non-nil slice")
 		assert.Len(t, categories, 0, "Expected 0 categories in the response")
 	})
+}
+
+// newGetAllPublishedCategoriesRequest creates a new HTTP request for the public handler.
+func newGetAllPublishedCategoriesRequest(t *testing.T, ctx context.Context) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/categories", nil)
+	require.NoError(t, err)
+	return req
 }

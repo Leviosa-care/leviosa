@@ -12,7 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUpdatePrice_Integration(t *testing.T) {
+// make test-func TEST_NAME=TestUpdatePrice TEST_PATH=test/integration/catalog/price/update_price_test.go
+
+func TestUpdatePrice(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should update price successfully with valid data", func(t *testing.T) {
@@ -50,7 +52,7 @@ func TestUpdatePrice_Integration(t *testing.T) {
 
 		var updatedPrice domain.Price
 		err = json.Unmarshal(body, &updatedPrice)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify updated fields
 		assert.Equal(t, createdPriceID, updatedPrice.ID.String())
@@ -89,7 +91,7 @@ func TestUpdatePrice_Integration(t *testing.T) {
 
 		var updatedPrice domain.Price
 		err = json.Unmarshal(body, &updatedPrice)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.False(t, updatedPrice.IsActive)
 		// Nickname is not part of Price domain model
@@ -123,7 +125,7 @@ func TestUpdatePrice_Integration(t *testing.T) {
 
 		var updatedPrice domain.Price
 		err = json.Unmarshal(body, &updatedPrice)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Nickname is not returned in Price domain model
 		assert.Equal(t, true, updatedPrice.IsActive) // Should remain unchanged
@@ -160,7 +162,7 @@ func TestUpdatePrice_Integration(t *testing.T) {
 
 		var updatedPrice domain.Price
 		err = json.Unmarshal(body, &updatedPrice)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Note: Metadata verification depends on how it's stored and returned
 		// This test assumes metadata is properly handled in the domain/service layers
@@ -279,7 +281,7 @@ func TestUpdatePrice_Integration(t *testing.T) {
 
 		var updatedPrice domain.Price
 		err = json.Unmarshal(body, &updatedPrice)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.True(t, updatedPrice.IsActive)
 
@@ -315,7 +317,7 @@ func TestUpdatePrice_Integration(t *testing.T) {
 
 		var updatedPrice domain.Price
 		err = json.Unmarshal(body, &updatedPrice)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.False(t, updatedPrice.IsActive)
 	})
 }

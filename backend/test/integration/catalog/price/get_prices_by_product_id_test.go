@@ -14,7 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetPricesByProductID_Integration(t *testing.T) {
+// make test-func TEST_NAME=TestGetPricesByProductID TEST_PATH=test/integration/catalog/price/get_prices_by_product_id_test.go
+
+func TestGetPricesByProductID(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should get all prices for a product successfully", func(t *testing.T) {
@@ -51,10 +53,10 @@ func TestGetPricesByProductID_Integration(t *testing.T) {
 
 		var prices []*domain.Price
 		err := json.Unmarshal(body, &prices)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify we got both prices
-		require.Len(t, prices, 2)
+		assert.Len(t, prices, 2)
 
 		// Sort prices by amount for consistent comparison
 		if prices[0].Amount > prices[1].Amount {
@@ -89,7 +91,7 @@ func TestGetPricesByProductID_Integration(t *testing.T) {
 
 		var prices []*domain.Price
 		err := json.Unmarshal(body, &prices)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.Empty(t, prices)
 	})
@@ -143,8 +145,8 @@ func TestGetPricesByProductID_Integration(t *testing.T) {
 		assertSuccessResponse(t, createResp2, 201)
 
 		var price1, price2 domain.Price
-		require.NoError(t, json.Unmarshal(createBody1, &price1))
-		require.NoError(t, json.Unmarshal(createBody2, &price2))
+		assert.NoError(t, json.Unmarshal(createBody1, &price1))
+		assert.NoError(t, json.Unmarshal(createBody2, &price2))
 
 		// Deactivate second price
 		updateRequest := &domain.UpdatePriceRequest{
@@ -161,9 +163,9 @@ func TestGetPricesByProductID_Integration(t *testing.T) {
 
 		var prices []*domain.Price
 		err := json.Unmarshal(body, &prices)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
-		require.Len(t, prices, 2)
+		assert.Len(t, prices, 2)
 
 		// Find active and inactive prices
 		var activePrice, inactivePrice *domain.Price
@@ -175,8 +177,8 @@ func TestGetPricesByProductID_Integration(t *testing.T) {
 			}
 		}
 
-		require.NotNil(t, activePrice, "Should have found active price")
-		require.NotNil(t, inactivePrice, "Should have found inactive price")
+		assert.NotNil(t, activePrice, "Should have found active price")
+		assert.NotNil(t, inactivePrice, "Should have found inactive price")
 
 		assert.Equal(t, 1000, activePrice.Amount)
 		assert.Equal(t, 2000, inactivePrice.Amount)
@@ -199,7 +201,7 @@ func TestGetPricesByProductID_Integration(t *testing.T) {
 			assertSuccessResponse(t, createResp, 201)
 
 			err := json.Unmarshal(createBody, &prices[i])
-			require.NoError(t, err)
+			assert.NoError(t, err)
 
 			// Small delay to ensure different creation times
 			time.Sleep(1 * time.Millisecond)
@@ -212,9 +214,9 @@ func TestGetPricesByProductID_Integration(t *testing.T) {
 
 			var retrievedPrices []*domain.Price
 			err := json.Unmarshal(body, &retrievedPrices)
-			require.NoError(t, err)
+			assert.NoError(t, err)
 
-			require.Len(t, retrievedPrices, 3)
+			assert.Len(t, retrievedPrices, 3)
 
 			// Prices should be ordered consistently (likely by creation time)
 			for i := 1; i < len(retrievedPrices); i++ {
@@ -249,9 +251,9 @@ func TestGetPricesByProductID_Integration(t *testing.T) {
 
 		var prices []*domain.Price
 		err := json.Unmarshal(body, &prices)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
-		require.Len(t, prices, 1)
+		assert.Len(t, prices, 1)
 		assert.Equal(t, createdPriceID, prices[0].ID.String())
 		assert.Equal(t, 5000, prices[0].Amount)
 		// Nickname is not returned in Price domain model

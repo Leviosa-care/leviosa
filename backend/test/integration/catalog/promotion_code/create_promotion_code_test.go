@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-func TEST_NAME=TestCreatePromotionCode TEST_PATH=test/integration/catalog/promotion_code/create_promotion_code_test.go
+
 func TestCreatePromotionCode(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -58,10 +60,10 @@ func TestCreatePromotionCode(t *testing.T) {
 
 		// Verify the promotion code was actually created in the database
 		promotionCodeID, err := uuid.Parse(response.ID)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		promotionCode, err := td.GetPromotionCodeByID(t, ctx, promotionCodeID, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, "TESTCODE20", promotionCode.Code)
 		assert.Equal(t, testCoupon.ID, promotionCode.CouponID)
 		assert.True(t, promotionCode.Active)
@@ -113,10 +115,10 @@ func TestCreatePromotionCode(t *testing.T) {
 
 		// Verify the promotion code with restrictions was created
 		promotionCodeID, err := uuid.Parse(response.ID)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		promotionCode, err := td.GetPromotionCodeByID(t, ctx, promotionCodeID, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, "EXPIRY20", promotionCode.Code)
 		assert.True(t, promotionCode.FirstTimeTransaction)
 		assert.Equal(t, 1000, *promotionCode.MinimumAmount)

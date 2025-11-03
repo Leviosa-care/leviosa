@@ -8,20 +8,15 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// newGetCategoryByIDRequest creates a new HTTP request for the GetCategoryByID handler.
-func newGetCategoryByIDRequest(t *testing.T, ctx context.Context, categoryID string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/categories/"+categoryID, nil)
-	require.NoError(t, err)
-	return req
-}
+// make test-func TEST_NAME=TestGetCategoryByID TEST_PATH=test/integration/catalog/category/get_category_by_id_test.go
 
 func TestGetCategoryByID(t *testing.T) {
 	ctx := context.Background()
@@ -120,4 +115,11 @@ func TestGetCategoryByID(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
 	})
+}
+
+// newGetCategoryByIDRequest creates a new HTTP request for the GetCategoryByID handler.
+func newGetCategoryByIDRequest(t *testing.T, ctx context.Context, categoryID string) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/categories/"+categoryID, nil)
+	require.NoError(t, err)
+	return req
 }

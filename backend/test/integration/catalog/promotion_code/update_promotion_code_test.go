@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-func TEST_NAME=TestUpdatePromotionCode TEST_PATH=test/integration/catalog/promotion_code/update_promotion_code_test.go
+
 func TestUpdatePromotionCode(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -57,7 +59,7 @@ func TestUpdatePromotionCode(t *testing.T) {
 
 		// Verify the update in database
 		updatedPromoCode, err := td.GetPromotionCodeByID(t, ctx, testPromoCode.ID, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, "true", updatedPromoCode.Metadata["updated"])
 		assert.Equal(t, "false", updatedPromoCode.Metadata["test"])
 		assert.Equal(t, "Updated promotion code", updatedPromoCode.Metadata["description"])
@@ -106,6 +108,8 @@ func TestUpdatePromotionCode(t *testing.T) {
 		assert.Equal(t, http.StatusUnsupportedMediaType, resp.StatusCode)
 	})
 }
+
+// make test-func TEST_NAME=TestDeactivatePromotionCode TEST_PATH=test/integration/catalog/promotion_code/update_promotion_code_test.go
 
 func TestDeactivatePromotionCode(t *testing.T) {
 	ctx := context.Background()
@@ -164,6 +168,8 @@ func TestDeactivatePromotionCode(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 }
+
+// make test-func TEST_NAME=TestDeletePromotionCode TEST_PATH=test/integration/catalog/promotion_code/update_promotion_code_test.go
 
 func TestDeletePromotionCode(t *testing.T) {
 	ctx := context.Background()
@@ -224,6 +230,8 @@ func TestDeletePromotionCode(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 }
+
+// make test-func TEST_NAME=TestPromotionCodeBusinessLogic TEST_PATH=test/integration/catalog/promotion_code/update_promotion_code_test.go
 
 func TestPromotionCodeBusinessLogic(t *testing.T) {
 	ctx := context.Background()
@@ -309,7 +317,6 @@ func TestPromotionCodeBusinessLogic(t *testing.T) {
 		// Create test coupon and promotion code with future expiry
 		testCoupon := td.NewValidPercentOffCoupon("Test Coupon")
 		td.InsertCoupon(t, ctx, testPool, testCoupon)
-
 		futureExpiry := time.Now().Add(30 * 24 * time.Hour) // 30 days from now
 		testPromoCode := td.NewValidPromotionCodeWithExpiry("FUTURE20", testCoupon.ID, futureExpiry, 10)
 		td.InsertPromotionCode(t, ctx, testPool, testPromoCode)
@@ -337,4 +344,3 @@ func TestPromotionCodeBusinessLogic(t *testing.T) {
 		assert.Equal(t, "FUTURE20", response.PromotionCode.PromotionCode.Code)
 	})
 }
-

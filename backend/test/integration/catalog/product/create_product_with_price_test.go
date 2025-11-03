@@ -10,21 +10,15 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// Helper function to create a new HTTP request for the CreateCategory handler.
-func newCreateProductWithPriceRequest(t *testing.T, ctx context.Context, jsonBody []byte) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/products", bytes.NewReader(jsonBody))
-	require.NoError(t, err)
-	return req
-}
-
+// make test-func TEST_NAME=TestCreateProductWithPrice TEST_PATH=test/integration/catalog/product/create_product_with_price_test.go
 func TestCreateProductWithPrice(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -107,7 +101,7 @@ func TestCreateProductWithPrice(t *testing.T) {
 
 		invalidBody := `{"product": {"product_name": "Test"}, "price": "invalid"}`
 		req, err := http.NewRequestWithContext(ctx, "POST", testServerURL+"/admin/products", strings.NewReader(invalidBody))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		req.Header.Set("Content-Type", "application/json")
 
@@ -181,4 +175,11 @@ func TestCreateProductWithPrice(t *testing.T) {
 		json.NewDecoder(res.Body).Decode(&response)
 		assert.Contains(t, response["error"], errs.ErrDomainNotFound.Error())
 	})
+}
+
+// Helper function to create a new HTTP request for the CreateCategory handler.
+func newCreateProductWithPriceRequest(t *testing.T, ctx context.Context, jsonBody []byte) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/products", bytes.NewReader(jsonBody))
+	require.NoError(t, err)
+	return req
 }

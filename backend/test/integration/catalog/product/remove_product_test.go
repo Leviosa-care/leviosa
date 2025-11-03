@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-func TEST_NAME=TestRemoveProduct_Integration TEST_PATH=test/integration/catalog/product/remove_product_test.go
+
 func TestRemoveProduct_Integration(t *testing.T) {
 	ctx := context.Background()
 
@@ -309,6 +311,8 @@ func TestRemoveProduct_Integration(t *testing.T) {
 	})
 }
 
+// make test-func TEST_NAME=TestRemoveProduct_HTTPMethod TEST_PATH=test/integration/catalog/product/remove_product_test.go
+
 // Test for HTTP method validation (if your router supports it)
 func TestRemoveProduct_HTTPMethod(t *testing.T) {
 	ctx := context.Background()
@@ -351,6 +355,8 @@ func TestRemoveProduct_HTTPMethod(t *testing.T) {
 		})
 	}
 }
+
+// make test-func TEST_NAME=TestRemoveProduct_ConcurrentDeletion TEST_PATH=test/integration/catalog/product/remove_product_test.go
 
 // Test concurrent deletion attempts
 func TestRemoveProduct_ConcurrentDeletion(t *testing.T) {

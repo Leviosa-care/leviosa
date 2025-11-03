@@ -21,6 +21,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-func TEST_NAME=TestRemoveImage TEST_PATH=test/integration/catalog/image/remove_image_test.go
+
 func TestRemoveImage(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -47,11 +49,11 @@ func TestRemoveImage(t *testing.T) {
 			Bucket: aws.String(td.BUCKETNAME), Key: aws.String(s3Key), Body: bytes.NewReader([]byte("dummy content")),
 			ContentLength: aws.Int64(int64(len("dummy content"))), ContentType: aws.String("image/jpeg"),
 		})
-		assert.NoError(t, err, "Failed to upload dummy S3 file for setup")
+		require.NoError(t, err, "Failed to upload dummy S3 file for setup")
 
 		// Pre-conditions
-		assert.True(t, imageExistsInDB(t, ctx, imageID), "Image should exist in DB before deletion")
-		assert.True(t, fileExistsInS3(t, ctx, s3Key), "File should exist in S3 before deletion")
+		require.True(t, imageExistsInDB(t, ctx, imageID), "Image should exist in DB before deletion")
+		require.True(t, fileExistsInS3(t, ctx, s3Key), "File should exist in S3 before deletion")
 
 		requestBody := domain.ImageModifierRequest{
 			ImageID:    imageID.String(),
@@ -211,7 +213,7 @@ func TestRemoveImage(t *testing.T) {
 			Key:    aws.String(s3Key), Body: bytes.NewReader([]byte("dummy content")),
 			ContentLength: aws.Int64(int64(len("dummy content"))), ContentType: aws.String("image/jpeg"),
 		})
-		assert.NoError(t, err, "Failed to upload dummy S3 file for setup")
+		require.NoError(t, err, "Failed to upload dummy S3 file for setup")
 
 		requestBody := domain.ImageModifierRequest{
 			ImageID:    imageID.String(),

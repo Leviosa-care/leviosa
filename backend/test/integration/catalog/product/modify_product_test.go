@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-func TEST_NAME=TestModifyProduct_Success_UpdateName TEST_PATH=test/integration/catalog/product/modify_product_test.go
+
 func TestModifyProduct_Success_UpdateName(t *testing.T) {
 	ctx := context.Background()
 
@@ -56,10 +58,12 @@ func TestModifyProduct_Success_UpdateName(t *testing.T) {
 
 	// Verify database update
 	updatedProduct, err := td.GetProductByID(t, ctx, product.ID, testPool)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, newName, updatedProduct.Name)
 	assert.Equal(t, product.Description, updatedProduct.Description) // Should remain unchanged
 }
+
+// make test-func TEST_NAME=TestModifyProduct_Success_UpdateDescription TEST_PATH=test/integration/catalog/product/modify_product_test.go
 
 func TestModifyProduct_Success_UpdateDescription(t *testing.T) {
 	ctx := context.Background()
@@ -100,10 +104,12 @@ func TestModifyProduct_Success_UpdateDescription(t *testing.T) {
 
 	// Verify database update
 	updatedProduct, err := td.GetProductByID(t, ctx, product.ID, testPool)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, newDescription, updatedProduct.Description)
 	assert.Equal(t, product.Name, updatedProduct.Name) // Should remain unchanged
 }
+
+// make test-func TEST_NAME=TestModifyProduct_Success_UpdateStatus TEST_PATH=test/integration/catalog/product/modify_product_test.go
 
 func TestModifyProduct_Success_UpdateStatus(t *testing.T) {
 	ctx := context.Background()
@@ -137,7 +143,7 @@ func TestModifyProduct_Success_UpdateStatus(t *testing.T) {
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	defer resp.Body.Close()
 
 	// Assert response
@@ -145,9 +151,11 @@ func TestModifyProduct_Success_UpdateStatus(t *testing.T) {
 
 	// Verify database update
 	updatedProduct, err := td.GetProductByID(t, ctx, product.ID, testPool)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, newStatus, updatedProduct.Status)
 }
+
+// make test-func TEST_NAME=TestModifyProduct_Success_UpdateMetadata TEST_PATH=test/integration/catalog/product/modify_product_test.go
 
 func TestModifyProduct_Success_UpdateMetadata(t *testing.T) {
 	ctx := context.Background()
@@ -193,9 +201,11 @@ func TestModifyProduct_Success_UpdateMetadata(t *testing.T) {
 
 	// Verify database update
 	updatedProduct, err := td.GetProductByID(t, ctx, product.ID, testPool)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, newMetadata, updatedProduct.Metadata)
 }
+
+// make test-func TEST_NAME=TestModifyProduct_Success_UpdateMultipleFields TEST_PATH=test/integration/catalog/product/modify_product_test.go
 
 func TestModifyProduct_Success_UpdateMultipleFields(t *testing.T) {
 	ctx := context.Background()
@@ -244,12 +254,14 @@ func TestModifyProduct_Success_UpdateMultipleFields(t *testing.T) {
 
 	// Verify all database updates
 	updatedProduct, err := td.GetProductByID(t, ctx, product.ID, testPool)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, newName, updatedProduct.Name)
 	assert.Equal(t, newDescription, updatedProduct.Description)
 	assert.Equal(t, newStatus, updatedProduct.Status)
 	assert.Equal(t, newMetadata, updatedProduct.Metadata)
 }
+
+// make test-func TEST_NAME=TestModifyProduct_InvalidURLPath TEST_PATH=test/integration/catalog/product/modify_product_test.go
 
 func TestModifyProduct_InvalidURLPath(t *testing.T) {
 	testCases := []struct {
@@ -308,6 +320,8 @@ func TestModifyProduct_InvalidURLPath(t *testing.T) {
 	}
 }
 
+// make test-func TEST_NAME=TestModifyProduct_InvalidRequestBody TEST_PATH=test/integration/catalog/product/modify_product_test.go
+
 func TestModifyProduct_InvalidRequestBody(t *testing.T) {
 	ctx := context.Background()
 
@@ -365,11 +379,13 @@ func TestModifyProduct_InvalidRequestBody(t *testing.T) {
 
 			var errorResp map[string]string
 			err = json.NewDecoder(resp.Body).Decode(&errorResp)
-			require.NoError(t, err)
+			assert.NoError(t, err)
 			assert.Contains(t, errorResp["error"], tc.expectedMsg)
 		})
 	}
 }
+
+// make test-func TEST_NAME=TestModifyProduct_InvalidProductID TEST_PATH=test/integration/catalog/product/modify_product_test.go
 
 func TestModifyProduct_InvalidProductID(t *testing.T) {
 	testCases := []struct {
@@ -424,6 +440,8 @@ func TestModifyProduct_InvalidProductID(t *testing.T) {
 	}
 }
 
+// make test-func TEST_NAME=TestModifyProduct_ProductNotFound TEST_PATH=test/integration/catalog/product/modify_product_test.go
+
 func TestModifyProduct_ProductNotFound(t *testing.T) {
 	ctx := context.Background()
 
@@ -456,6 +474,8 @@ func TestModifyProduct_ProductNotFound(t *testing.T) {
 	// The exact status code depends on how your service maps the error
 	assert.True(t, resp.StatusCode == http.StatusNotFound || resp.StatusCode >= 400)
 }
+
+// make test-func TEST_NAME=TestModifyProduct_HTTPMethods TEST_PATH=test/integration/catalog/product/modify_product_test.go
 
 func TestModifyProduct_HTTPMethods(t *testing.T) {
 	ctx := context.Background()
@@ -504,6 +524,8 @@ func TestModifyProduct_HTTPMethods(t *testing.T) {
 		})
 	}
 }
+
+// make test-func TEST_NAME=TestModifyProduct_ContentTypeValidation TEST_PATH=test/integration/catalog/product/modify_product_test.go
 
 func TestModifyProduct_ContentTypeValidation(t *testing.T) {
 	ctx := context.Background()

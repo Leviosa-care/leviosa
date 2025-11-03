@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-func TEST_NAME=TestUpdateCoupon TEST_PATH=test/integration/catalog/coupon/update_coupon_test.go
+
 func TestUpdateCoupon(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -50,7 +52,7 @@ func TestUpdateCoupon(t *testing.T) {
 
 		// Verify the update in database
 		updatedCoupon, err := td.GetCouponByID(t, ctx, testCoupon.ID, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, "Updated Coupon Name", updatedCoupon.Name)
 		// Verify other fields remain unchanged
 		assert.Equal(t, testCoupon.StripeCouponID, updatedCoupon.StripeCouponID)
@@ -87,7 +89,7 @@ func TestUpdateCoupon(t *testing.T) {
 
 		// Verify the metadata update in database
 		updatedCoupon, err := td.GetCouponByID(t, ctx, testCoupon.ID, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, "true", updatedCoupon.Metadata["updated"])
 		assert.Equal(t, "false", updatedCoupon.Metadata["test"]) // Should replace original
 		assert.Equal(t, "Updated coupon metadata", updatedCoupon.Metadata["description"])
@@ -124,7 +126,7 @@ func TestUpdateCoupon(t *testing.T) {
 
 		// Verify both updates in database
 		updatedCoupon, err := td.GetCouponByID(t, ctx, testCoupon.ID, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, "Combined Updated Name", updatedCoupon.Name)
 		assert.Equal(t, "true", updatedCoupon.Metadata["updated"])
 		assert.Equal(t, "combined_update", updatedCoupon.Metadata["type"])

@@ -20,6 +20,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-func TEST_NAME=TestUploadImage TEST_PATH=test/integration/catalog/image/upload_image_test.go
+
 func TestUploadImage(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -63,9 +65,7 @@ func TestUploadImage(t *testing.T) {
 		assert.Equal(t, 1, count)
 
 		key, err := image.CreateParentImagePrefix(parentID, imageID, domain.CategoryType, "image/jpeg")
-		require.NoError(t, err)
-
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		_, err = s3Client.GetObject(ctx, &s3.GetObjectInput{
 			Bucket: aws.String(td.BUCKETNAME),
 			Key:    aws.String(key),
@@ -114,7 +114,7 @@ func TestUploadImage(t *testing.T) {
 		assert.Equal(t, 1, count)
 
 		key, err := image.CreateParentImagePrefix(parentID, imageID, product_type, "image/jpeg")
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify the file was uploaded to S3 with the correct key format for a product
 		_, err = s3Client.GetObject(ctx, &s3.GetObjectInput{

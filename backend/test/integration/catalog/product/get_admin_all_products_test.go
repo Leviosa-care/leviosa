@@ -15,7 +15,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetAdminAllProducts_Integration(t *testing.T) {
+// make test-func TEST_NAME=TestGetAdminAllProducts TEST_PATH=test/integration/catalog/product/get_admin_all_products_test.go
+
+func TestGetAdminAllProducts(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
@@ -98,7 +100,7 @@ func TestGetAdminAllProducts_Integration(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			validateFunc: func(t *testing.T, products []*domain.ProductAggregator) {
-				require.Len(t, products, 2, "Expected 2 products")
+				assert.Len(t, products, 2, "Expected 2 products")
 
 				// Verify products are sorted by created_at DESC (newest first)
 				assert.True(t, products[0].Product.CreatedAt.After(products[1].Product.CreatedAt) ||
@@ -113,13 +115,13 @@ func TestGetAdminAllProducts_Integration(t *testing.T) {
 						break
 					}
 				}
-				require.NotNil(t, laptopProduct, "Laptop product should exist")
+				assert.NotNil(t, laptopProduct, "Laptop product should exist")
 
 				// Verify laptop has 2 prices
 				assert.Len(t, laptopProduct.Prices, 2, "Laptop should have 2 prices")
 
 				// Verify laptop has image
-				require.NotNil(t, laptopProduct.Image, "Laptop should have an image")
+				assert.NotNil(t, laptopProduct.Image, "Laptop should have an image")
 				assert.Equal(t, "Laptop Image", laptopProduct.Image.Title)
 				assert.True(t, laptopProduct.Image.IsActive)
 
@@ -131,14 +133,14 @@ func TestGetAdminAllProducts_Integration(t *testing.T) {
 						break
 					}
 				}
-				require.NotNil(t, mouseProduct, "Mouse product should exist")
+				assert.NotNil(t, mouseProduct, "Mouse product should exist")
 
 				// Verify mouse has 1 price
 				assert.Len(t, mouseProduct.Prices, 1, "Mouse should have 1 price")
 				assert.Equal(t, int(2999), mouseProduct.Prices[0].Amount)
 
 				// Verify mouse has image
-				require.NotNil(t, mouseProduct.Image, "Mouse should have an image")
+				assert.NotNil(t, mouseProduct.Image, "Mouse should have an image")
 				assert.Equal(t, "Mouse Image", mouseProduct.Image.Title)
 			},
 		},
@@ -161,7 +163,7 @@ func TestGetAdminAllProducts_Integration(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			validateFunc: func(t *testing.T, products []*domain.ProductAggregator) {
-				require.Len(t, products, 1, "Expected 1 product")
+				assert.Len(t, products, 1, "Expected 1 product")
 
 				product := products[0]
 				assert.Equal(t, "Programming Book", product.Product.Name)
@@ -196,7 +198,7 @@ func TestGetAdminAllProducts_Integration(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			validateFunc: func(t *testing.T, products []*domain.ProductAggregator) {
-				require.Len(t, products, 1, "Expected 1 product")
+				assert.Len(t, products, 1, "Expected 1 product")
 
 				product := products[0]
 				assert.Equal(t, "T-Shirt", product.Product.Name)
@@ -261,7 +263,7 @@ func TestGetAdminAllProducts_Integration(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			validateFunc: func(t *testing.T, products []*domain.ProductAggregator) {
-				require.Len(t, products, 4, "Expected 4 products")
+				assert.Len(t, products, 4, "Expected 4 products")
 
 				// Verify ordering (newest first)
 				expectedOrder := []string{"Smartphone", "Dictionary", "Tablet", "Novel"}
@@ -317,7 +319,7 @@ func TestGetAdminAllProducts_Integration(t *testing.T) {
 				// Parse response
 				var products []*domain.ProductAggregator
 				err = json.NewDecoder(resp.Body).Decode(&products)
-				require.NoError(t, err, "Failed to decode response")
+				assert.NoError(t, err, "Failed to decode response")
 
 				// Run validation
 				tt.validateFunc(t, products)
@@ -354,9 +356,9 @@ func TestGetAdminAllProducts_ResponseFormat(t *testing.T) {
 	// Verify response structure
 	var products []*domain.ProductAggregator
 	err = json.NewDecoder(resp.Body).Decode(&products)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
-	require.Len(t, products, 1)
+	assert.Len(t, products, 1)
 
 	// Verify all expected fields are present
 	assert.NotEmpty(t, products[0].Product.ID)

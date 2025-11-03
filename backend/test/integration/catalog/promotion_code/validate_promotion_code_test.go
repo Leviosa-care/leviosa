@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// make test-func TEST_NAME=TestValidatePromotionCode TEST_PATH=test/integration/catalog/promotion_code/validate_promotion_code_test.go
+
 func TestValidatePromotionCode(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}

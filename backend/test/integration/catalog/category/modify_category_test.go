@@ -9,20 +9,15 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// newModifyCategoryRequest creates a new HTTP request for the ModifyCategory handler.
-func newModifyCategoryRequest(t *testing.T, ctx context.Context, categoryID string, jsonBody []byte) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, testServerURL+"/admin/categories/"+categoryID, bytes.NewReader(jsonBody))
-	require.NoError(t, err)
-	return req
-}
+// make test-func TEST_NAME=TestModifyCategory TEST_PATH=test/integration/catalog/category/modify_category_test.go
 
 func TestModifyCategory(t *testing.T) {
 	ctx := context.Background()
@@ -54,7 +49,7 @@ func TestModifyCategory(t *testing.T) {
 
 		// Post-conditions: Verify the category was updated in the database
 		updatedCategory, getErr := td.GetCategoryByID(t, ctx, existingCategory.ID, testPool)
-		require.NoError(t, getErr, "Failed to retrieve the updated category from the database")
+		assert.NoError(t, getErr, "Failed to retrieve the updated category from the database")
 		assert.Equal(t, updatedName, updatedCategory.Name)
 		assert.Equal(t, updatedDescription, updatedCategory.Description)
 	})
@@ -193,4 +188,11 @@ func TestModifyCategory(t *testing.T) {
 		assert.Contains(t, respBody.Error, "invalid request body")
 		assert.Contains(t, respBody.Error, "unknown field")
 	})
+}
+
+// newModifyCategoryRequest creates a new HTTP request for the ModifyCategory handler.
+func newModifyCategoryRequest(t *testing.T, ctx context.Context, categoryID string, jsonBody []byte) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, testServerURL+"/admin/categories/"+categoryID, bytes.NewReader(jsonBody))
+	require.NoError(t, err)
+	return req
 }

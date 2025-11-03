@@ -12,7 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreatePrice_Integration(t *testing.T) {
+// make test-func TEST_NAME=TestCreatePrice TEST_PATH=test/integration/catalog/price/create_price_test.go
+
+func TestCreatePrice(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should create price successfully with valid data", func(t *testing.T) {
@@ -28,7 +30,7 @@ func TestCreatePrice_Integration(t *testing.T) {
 
 		var createdPriceID string
 		err := json.Unmarshal(body, &createdPriceID)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.NotEmpty(t, createdPriceID)
 
 		// Get the created price to verify full structure
@@ -37,7 +39,7 @@ func TestCreatePrice_Integration(t *testing.T) {
 
 		var createdPrice domain.Price
 		err = json.Unmarshal(getBody, &createdPrice)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify response structure
 		assert.Equal(t, createdPriceID, createdPrice.ID.String())
@@ -125,7 +127,7 @@ func TestCreatePrice_Integration(t *testing.T) {
 
 		var createdPriceID string
 		err := json.Unmarshal(body, &createdPriceID)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.NotEmpty(t, createdPriceID)
 
 		// Verify the created price has Stripe ID
@@ -133,7 +135,7 @@ func TestCreatePrice_Integration(t *testing.T) {
 		assertSuccessResponse(t, getResp, 200)
 		var createdPrice domain.Price
 		err = json.Unmarshal(getBody, &createdPrice)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.NotEmpty(t, createdPrice.StripePriceID)
 	})
 
@@ -151,7 +153,7 @@ func TestCreatePrice_Integration(t *testing.T) {
 
 		var priceID1 string
 		err := json.Unmarshal(body1, &priceID1)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Create second price
 		request2 := td.NewValidCreatePriceRequest()
@@ -163,20 +165,20 @@ func TestCreatePrice_Integration(t *testing.T) {
 
 		var priceID2 string
 		err = json.Unmarshal(body2, &priceID2)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Get both prices to verify structure
 		getResp1, getBody1 := getPriceViaAPI(t, priceID1)
 		assertSuccessResponse(t, getResp1, 200)
 		var price1 domain.Price
 		err = json.Unmarshal(getBody1, &price1)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		getResp2, getBody2 := getPriceViaAPI(t, priceID2)
 		assertSuccessResponse(t, getResp2, 200)
 		var price2 domain.Price
 		err = json.Unmarshal(getBody2, &price2)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Assert both prices exist and are different
 		assert.NotEqual(t, price1.ID, price2.ID)

@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// make test-func TEST_NAME=TestGetPromotionCodeByID TEST_PATH=test/integration/catalog/promotion_code/get_promotion_code_test.go
+
 func TestGetPromotionCodeByID(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -66,6 +68,8 @@ func TestGetPromotionCodeByID(t *testing.T) {
 	})
 }
 
+// make test-func TEST_NAME=TestGetPromotionCodeByCode TEST_PATH=test/integration/catalog/promotion_code/get_promotion_code_test.go
+
 func TestGetPromotionCodeByCode(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -108,6 +112,8 @@ func TestGetPromotionCodeByCode(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 }
+
+// make test-func TEST_NAME=TestGetPromotionCodeWithCoupon TEST_PATH=test/integration/catalog/promotion_code/get_promotion_code_test.go
 
 func TestGetPromotionCodeWithCoupon(t *testing.T) {
 	ctx := context.Background()
@@ -157,6 +163,8 @@ func TestGetPromotionCodeWithCoupon(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 }
+
+// make test-func TEST_NAME=TestGetAllPromotionCodes TEST_PATH=test/integration/catalog/promotion_code/get_promotion_code_test.go
 
 func TestGetAllPromotionCodes(t *testing.T) {
 	ctx := context.Background()
@@ -220,6 +228,8 @@ func TestGetAllPromotionCodes(t *testing.T) {
 		assert.Len(t, response, 0)
 	})
 }
+
+// make test-func TEST_NAME=TestGetActivePromotionCodes TEST_PATH=test/integration/catalog/promotion_code/get_promotion_code_test.go
 
 func TestGetActivePromotionCodes(t *testing.T) {
 	ctx := context.Background()
@@ -288,4 +298,3 @@ func TestGetActivePromotionCodes(t *testing.T) {
 		assert.Len(t, response, 0)
 	})
 }
-

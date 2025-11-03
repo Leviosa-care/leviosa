@@ -7,19 +7,14 @@ import (
 	"testing"
 	"time"
 
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
-// newRemoveCategoryRequest creates a new HTTP request for the RemoveCategory handler.
-func newRemoveCategoryRequest(t *testing.T, ctx context.Context, categoryID string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, testServerURL+"/admin/categories/"+categoryID, nil)
-	assert.NoError(t, err)
-	return req
-}
+// make test-func TEST_NAME=TestRemoveCategory TEST_PATH=test/integration/catalog/category/remove_category_test.go
 
 func TestRemoveCategory(t *testing.T) {
 	ctx := context.Background()
@@ -127,4 +122,11 @@ func TestRemoveCategory(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Contains(t, respBody.Error, "parent ID must be a valid UUID")
 	})
+}
+
+// newRemoveCategoryRequest creates a new HTTP request for the RemoveCategory handler.
+func newRemoveCategoryRequest(t *testing.T, ctx context.Context, categoryID string) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, testServerURL+"/admin/categories/"+categoryID, nil)
+	assert.NoError(t, err)
+	return req
 }

@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-func TEST_NAME=TestGetAllPublishedProducts_Integration TEST_PATH=test/integration/catalog/product/get_all_published_products_test.go
+
 func TestGetAllPublishedProducts_Integration(t *testing.T) {
 	ctx := context.Background()
 
@@ -172,13 +174,13 @@ func TestGetAllPublishedProducts_Integration(t *testing.T) {
 						break
 					}
 				}
-				require.NotNil(t, laptopProduct, "Published Laptop should exist")
+				assert.NotNil(t, laptopProduct, "Published Laptop should exist")
 
 				// Verify laptop has 2 prices
 				assert.Len(t, laptopProduct.Prices, 2, "Laptop should have 2 prices")
 
 				// Verify laptop has image
-				require.NotNil(t, laptopProduct.Image, "Laptop should have an image")
+				assert.NotNil(t, laptopProduct.Image, "Laptop should have an image")
 				assert.Equal(t, "Published Laptop Image", laptopProduct.Image.Title)
 				assert.True(t, laptopProduct.Image.IsActive)
 
@@ -190,14 +192,14 @@ func TestGetAllPublishedProducts_Integration(t *testing.T) {
 						break
 					}
 				}
-				require.NotNil(t, mouseProduct, "Published Mouse should exist")
+				assert.NotNil(t, mouseProduct, "Published Mouse should exist")
 
 				// Verify mouse has 1 price
 				assert.Len(t, mouseProduct.Prices, 1, "Mouse should have 1 price")
 				assert.Equal(t, int(2999), mouseProduct.Prices[0].Amount)
 
 				// Verify mouse has image
-				require.NotNil(t, mouseProduct.Image, "Mouse should have an image")
+				assert.NotNil(t, mouseProduct.Image, "Mouse should have an image")
 				assert.Equal(t, "Published Mouse Image", mouseProduct.Image.Title)
 			},
 		},
@@ -227,7 +229,7 @@ func TestGetAllPublishedProducts_Integration(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			validateFunc: func(t *testing.T, products []*domain.ProductAggregator) {
-				require.Len(t, products, 1, "Expected 1 published product")
+				assert.Len(t, products, 1, "Expected 1 published product")
 
 				product := products[0]
 				assert.Equal(t, "Published Programming Book", product.Product.Name)
@@ -264,7 +266,7 @@ func TestGetAllPublishedProducts_Integration(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			validateFunc: func(t *testing.T, products []*domain.ProductAggregator) {
-				require.Len(t, products, 1, "Expected 1 published product")
+				assert.Len(t, products, 1, "Expected 1 published product")
 
 				product := products[0]
 				assert.Equal(t, "Published T-Shirt", product.Product.Name)
@@ -348,7 +350,7 @@ func TestGetAllPublishedProducts_Integration(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			validateFunc: func(t *testing.T, products []*domain.ProductAggregator) {
-				require.Len(t, products, 4, "Expected 4 published products only")
+				assert.Len(t, products, 4, "Expected 4 published products only")
 
 				// Verify all returned products are published
 				for _, p := range products {
@@ -426,7 +428,7 @@ func TestGetAllPublishedProducts_Integration(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			validateFunc: func(t *testing.T, products []*domain.ProductAggregator) {
-				require.Len(t, products, 1, "Expected only 1 published product")
+				assert.Len(t, products, 1, "Expected only 1 published product")
 
 				product := products[0]
 				assert.Equal(t, "Published Product", product.Product.Name)
@@ -453,7 +455,7 @@ func TestGetAllPublishedProducts_Integration(t *testing.T) {
 				// Parse response
 				var products []*domain.ProductAggregator
 				err = json.NewDecoder(resp.Body).Decode(&products)
-				require.NoError(t, err, "Failed to decode response")
+				assert.NoError(t, err, "Failed to decode response")
 
 				// Run validation
 				tt.validateFunc(t, products)
@@ -461,6 +463,8 @@ func TestGetAllPublishedProducts_Integration(t *testing.T) {
 		})
 	}
 }
+
+// make test-func TEST_NAME=TestGetAllPublishedProducts_ResponseFormat TEST_PATH=test/integration/catalog/product/get_all_published_products_test.go
 
 func TestGetAllPublishedProducts_ResponseFormat(t *testing.T) {
 	ctx := context.Background()
@@ -492,9 +496,9 @@ func TestGetAllPublishedProducts_ResponseFormat(t *testing.T) {
 	// Verify response structure
 	var products []*domain.ProductAggregator
 	err = json.NewDecoder(resp.Body).Decode(&products)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
-	require.Len(t, products, 1)
+	assert.Len(t, products, 1)
 
 	// Verify all expected fields are present
 	assert.NotEmpty(t, products[0].Product.ID)
@@ -505,6 +509,8 @@ func TestGetAllPublishedProducts_ResponseFormat(t *testing.T) {
 	assert.Empty(t, products[0].Prices) // Should be empty slice, not nil
 	// Image can be nil if no active images exist
 }
+
+// make test-func TEST_NAME=TestGetAllPublishedProducts_ErrorScenarios TEST_PATH=test/integration/catalog/product/get_all_published_products_test.go
 
 func TestGetAllPublishedProducts_ErrorScenarios(t *testing.T) {
 	ctx := context.Background()
@@ -552,7 +558,7 @@ func TestGetAllPublishedProducts_ErrorScenarios(t *testing.T) {
 
 		var products []*domain.ProductAggregator
 		err = json.NewDecoder(resp.Body).Decode(&products)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.Empty(t, products, "Should return empty list when no published products exist")
 	})

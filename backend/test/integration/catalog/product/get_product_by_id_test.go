@@ -9,13 +9,15 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// make test-func TEST_NAME=TestGetProductByID_Success TEST_PATH=test/integration/catalog/product/get_product_by_id_test.go
 
 func TestGetProductByID_Success(t *testing.T) {
 	ctx := context.Background()
@@ -68,7 +70,7 @@ func TestGetProductByID_Success(t *testing.T) {
 
 	var result domain.ProductAggregator
 	err = json.NewDecoder(resp.Body).Decode(&result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	// Verify product data
 	assert.Equal(t, product.ID, result.Product.ID)
@@ -80,14 +82,14 @@ func TestGetProductByID_Success(t *testing.T) {
 	assert.Equal(t, category.Name, result.Product.Category.Name)
 
 	// Verify image data
-	require.NotNil(t, result.Image)
+	assert.NotNil(t, result.Image)
 	assert.Equal(t, image.ID, result.Image.ID)
 	assert.Equal(t, product.ID, result.Image.ParentID)
 	assert.Equal(t, domain.ProductType, result.Image.ParentType)
 	assert.True(t, result.Image.IsActive)
 
 	// Verify prices data
-	require.Len(t, result.Prices, 2)
+	assert.Len(t, result.Prices, 2)
 	priceIDs := []uuid.UUID{result.Prices[0].ID, result.Prices[1].ID}
 	assert.Contains(t, priceIDs, price1.ID)
 	assert.Contains(t, priceIDs, price2.ID)
@@ -98,6 +100,8 @@ func TestGetProductByID_Success(t *testing.T) {
 		assert.Equal(t, product.ID, price.ProductID)
 	}
 }
+
+// make test-func TEST_NAME=TestGetProductByID_SuccessWithoutImage TEST_PATH=test/integration/catalog/product/get_product_by_id_test.go
 
 func TestGetProductByID_SuccessWithoutImage(t *testing.T) {
 	ctx := context.Background()
@@ -131,7 +135,7 @@ func TestGetProductByID_SuccessWithoutImage(t *testing.T) {
 
 	var result domain.ProductAggregator
 	err = json.NewDecoder(resp.Body).Decode(&result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	// Verify product data is still present
 	assert.Equal(t, product.ID, result.Product.ID)
@@ -141,9 +145,11 @@ func TestGetProductByID_SuccessWithoutImage(t *testing.T) {
 	assert.Nil(t, result.Image)
 
 	// Verify prices are still present
-	require.Len(t, result.Prices, 1)
+	assert.Len(t, result.Prices, 1)
 	assert.Equal(t, price.ID, result.Prices[0].ID)
 }
+
+// make test-func TEST_NAME=TestGetProductByID_SuccessWithInactiveImage TEST_PATH=test/integration/catalog/product/get_product_by_id_test.go
 
 func TestGetProductByID_SuccessWithInactiveImage(t *testing.T) {
 	ctx := context.Background()
@@ -183,15 +189,17 @@ func TestGetProductByID_SuccessWithInactiveImage(t *testing.T) {
 
 	var result domain.ProductAggregator
 	err = json.NewDecoder(resp.Body).Decode(&result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	// Verify image is nil because it's inactive
 	assert.Nil(t, result.Image)
 
 	// Verify other data is present
 	assert.Equal(t, product.ID, result.Product.ID)
-	require.Len(t, result.Prices, 1)
+	assert.Len(t, result.Prices, 1)
 }
+
+// make test-func TEST_NAME=TestGetProductByID_InvalidProductID TEST_PATH=test/integration/catalog/product/get_product_by_id_test.go
 
 func TestGetProductByID_InvalidProductID(t *testing.T) {
 	testCases := []struct {
@@ -234,13 +242,15 @@ func TestGetProductByID_InvalidProductID(t *testing.T) {
 					Error string `json:"error"`
 				}
 				err = json.NewDecoder(resp.Body).Decode(&errorResp)
-				require.NoError(t, err)
+				assert.NoError(t, err)
 
 				assert.Contains(t, errorResp.Error, tc.expectedError)
 			}
 		})
 	}
 }
+
+// make test-func TEST_NAME=TestGetProductByID_ProductNotFound TEST_PATH=test/integration/catalog/product/get_product_by_id_test.go
 
 func TestGetProductByID_ProductNotFound(t *testing.T) {
 	ctx := context.Background()
@@ -265,10 +275,12 @@ func TestGetProductByID_ProductNotFound(t *testing.T) {
 
 	var errorResp map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&errorResp)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	assert.Contains(t, errorResp["error"].(string), fmt.Sprintf("product with ID %s", nonExistentID))
 }
+
+// make test-func TEST_NAME=TestGetProductByID_CategoryForeignKeyConstraint TEST_PATH=test/integration/catalog/product/get_product_by_id_test.go
 
 func TestGetProductByID_CategoryForeignKeyConstraint(t *testing.T) {
 	ctx := context.Background()
@@ -302,9 +314,11 @@ func TestGetProductByID_CategoryForeignKeyConstraint(t *testing.T) {
 	)
 
 	// Should fail with foreign key violation
-	require.Error(t, err)
+	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "foreign key")
 }
+
+// make test-func TEST_NAME=TestGetProductByID_WithMultiplePrices TEST_PATH=test/integration/catalog/product/get_product_by_id_test.go
 
 func TestGetProductByID_WithMultiplePrices(t *testing.T) {
 	ctx := context.Background()
@@ -356,10 +370,10 @@ func TestGetProductByID_WithMultiplePrices(t *testing.T) {
 
 	var result domain.ProductAggregator
 	err = json.NewDecoder(resp.Body).Decode(&result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	// Should only return active prices
-	require.Len(t, result.Prices, 2)
+	assert.Len(t, result.Prices, 2)
 
 	// Verify all returned prices are active
 	for _, price := range result.Prices {
@@ -370,6 +384,8 @@ func TestGetProductByID_WithMultiplePrices(t *testing.T) {
 	// Verify prices are ordered by creation date (newest first)
 	assert.True(t, result.Prices[0].CreatedAt.After(result.Prices[1].CreatedAt))
 }
+
+// make test-func TEST_NAME=TestGetProductByID_WithNoPrices TEST_PATH=test/integration/catalog/product/get_product_by_id_test.go
 
 func TestGetProductByID_WithNoPrices(t *testing.T) {
 	ctx := context.Background()
@@ -398,7 +414,7 @@ func TestGetProductByID_WithNoPrices(t *testing.T) {
 
 	var result domain.ProductAggregator
 	err = json.NewDecoder(resp.Body).Decode(&result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	// Should have product data but empty prices array
 	assert.Equal(t, product.ID, result.Product.ID)
@@ -406,6 +422,8 @@ func TestGetProductByID_WithNoPrices(t *testing.T) {
 	assert.Nil(t, result.Image)
 	assert.Empty(t, result.Prices) // Empty slice, not nil
 }
+
+// make test-func TEST_NAME=TestGetProductByID_HTTPMethodNotAllowed TEST_PATH=test/integration/catalog/product/get_product_by_id_test.go
 
 func TestGetProductByID_HTTPMethodNotAllowed(t *testing.T) {
 	ctx := context.Background()

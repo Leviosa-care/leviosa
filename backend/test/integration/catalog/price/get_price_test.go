@@ -8,11 +8,14 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetPrice_Integration(t *testing.T) {
+// make test-func TEST_NAME=TestGetPrice TEST_PATH=test/integration/catalog/price/get_price_test.go
+
+func TestGetPrice(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should get price successfully with valid ID", func(t *testing.T) {
@@ -36,7 +39,7 @@ func TestGetPrice_Integration(t *testing.T) {
 
 		var retrievedPrice domain.Price
 		err = json.Unmarshal(body, &retrievedPrice)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify response structure
 		assert.Equal(t, createdPriceID, retrievedPrice.ID.String())
@@ -102,7 +105,7 @@ func TestGetPrice_Integration(t *testing.T) {
 
 		var retrievedPrice domain.Price
 		err = json.Unmarshal(body, &retrievedPrice)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify specific fields
 		assert.Equal(t, 1500, retrievedPrice.Amount)
@@ -111,7 +114,9 @@ func TestGetPrice_Integration(t *testing.T) {
 		assert.True(t, retrievedPrice.IsActive)
 
 		// Verify against database record
-		dbPrice := td.GetPriceByID(t, ctx, createdPrice.ID, testPool)
+		priceID, err := uuid.Parse(createdPriceID)
+		assert.NoError(t, err)
+		dbPrice := td.GetPriceByID(t, ctx, priceID, testPool)
 		assert.Equal(t, retrievedPrice.Amount, dbPrice.Amount)
 		assert.Equal(t, retrievedPrice.Currency, dbPrice.Currency)
 		assert.Equal(t, string(retrievedPrice.Interval), string(dbPrice.Interval))
@@ -146,7 +151,7 @@ func TestGetPrice_Integration(t *testing.T) {
 
 		var retrievedPrice domain.Price
 		err = json.Unmarshal(body, &retrievedPrice)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify it's inactive
 		assert.False(t, retrievedPrice.IsActive)
