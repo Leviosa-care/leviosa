@@ -3,14 +3,31 @@ package productHandler
 import (
 	"net/http"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware"
+	mw "github.com/Leviosa-care/leviosa/backend/internal/common/middleware"
 )
 
 func (h *handler) RegisterRoutes(router *http.ServeMux) {
-	router.HandleFunc("GET /products", middleware.EnableCORS(h.GetAllPublishedProducts))
-	router.HandleFunc("GET /products/{id}", middleware.EnableCORS(h.GetProductByID))
-	router.HandleFunc("GET /admin/products", middleware.EnableCORS(h.GetAdminAllProducts))
-	router.HandleFunc("POST /admin/products", middleware.EnableCORS(h.CreateProductWithPrice))
-	router.HandleFunc("PATCH /admin/products/{id}", middleware.EnableCORS(h.ModifyProduct))
-	router.HandleFunc("DELETE /admin/products/{id}", middleware.EnableCORS(h.RemoveProduct))
+	RequireAdmin := h.authmw.RequireAdmin
+
+	// === Public Endpoints (no authentication required) ===
+
+	// Retrieves all published products visible to the public
+	router.HandleFunc("GET "+GetAllPublishedProductsEndpoint, mw.EnableCORS(h.GetAllPublishedProducts))
+
+	// Retrieves a specific product by ID (public access)
+	router.HandleFunc("GET "+GetProductByIDEndpoint, mw.EnableCORS(h.GetProductByID))
+
+	// === Admin-Only Endpoints ===
+
+	// Retrieves all products including unpublished/draft products (admin only)
+	router.HandleFunc("GET "+GetAdminAllProductsEndpoint, RequireAdmin(mw.EnableCORS(h.GetAdminAllProducts)))
+
+	// Creates a new product with price (admin only)
+	router.HandleFunc("POST "+CreateProductWithPriceEndpoint, RequireAdmin(mw.EnableCORS(h.CreateProductWithPrice)))
+
+	// Modifies an existing product by ID (admin only)
+	router.HandleFunc("PATCH "+ModifyProductEndpoint, RequireAdmin(mw.EnableCORS(h.ModifyProduct)))
+
+	// Removes a product by ID (admin only)
+	router.HandleFunc("DELETE "+RemoveProductEndpoint, RequireAdmin(mw.EnableCORS(h.RemoveProduct)))
 }
