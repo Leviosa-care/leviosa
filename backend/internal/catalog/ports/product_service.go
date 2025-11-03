@@ -7,10 +7,18 @@ import (
 )
 
 type ProductService interface {
-	CreateProduct(ctx context.Context, p *domain.CreateProductRequest) (string, error)
-	GetProductByID(ctx context.Context, productID string) (*domain.ProductRes, error)
+	PrivateProductService
+	PublicProductService
+}
+
+type PublicProductService interface {
+	GetProductByID(ctx context.Context, ID string) (*domain.ProductRes, error)
 	GetAllPublishedProducts(ctx context.Context) ([]*domain.ProductRes, error)
 	GetAllProducts(ctx context.Context) ([]*domain.ProductRes, error)
-	UpdateProduct(ctx context.Context, productID string, p *domain.UpdateProductRequest) error
+}
+
+type PrivateProductService interface {
+	CreateProduct(ctx context.Context, request *domain.CreateProductRequest) (string, error)
+	UpdateProduct(ctx context.Context, productID string, request *domain.UpdateProductRequest) error
 	RemoveProduct(ctx context.Context, ID string) error
 }
