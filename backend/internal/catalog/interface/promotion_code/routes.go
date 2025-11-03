@@ -3,21 +3,43 @@ package promotionCodeHandler
 import (
 	"net/http"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware"
+	mw "github.com/Leviosa-care/leviosa/backend/internal/common/middleware"
 )
 
 func (h *handler) RegisterRoutes(router *http.ServeMux) {
-	// Public routes for promotion code validation and lookup
-	router.HandleFunc("POST /promotion-codes/validate", middleware.EnableCORS(h.ValidatePromotionCode))
-	router.HandleFunc("GET /promotion-codes/code/{code}", middleware.EnableCORS(h.GetPromotionCodeWithCoupon))
+	RequireAdmin := h.authmw.RequireAdmin
 
-	// Admin routes for promotion code management
-	router.HandleFunc("GET /admin/promotion-codes", middleware.EnableCORS(h.GetAllPromotionCodes))
-	router.HandleFunc("GET /admin/promotion-codes/active", middleware.EnableCORS(h.GetActivePromotionCodes))
-	router.HandleFunc("GET /admin/promotion-codes/{id}", middleware.EnableCORS(h.GetPromotionCodeByID))
-	router.HandleFunc("GET /admin/promotion-codes/code/{code}", middleware.EnableCORS(h.GetPromotionCodeByCode))
-	router.HandleFunc("POST /admin/promotion-codes", middleware.EnableCORS(h.CreatePromotionCode))
-	router.HandleFunc("PATCH /admin/promotion-codes/{id}", middleware.EnableCORS(h.UpdatePromotionCode))
-	router.HandleFunc("POST /admin/promotion-codes/{id}/deactivate", middleware.EnableCORS(h.DeactivatePromotionCode))
-	router.HandleFunc("DELETE /admin/promotion-codes/{id}", middleware.EnableCORS(h.DeletePromotionCode))
+	// === Public Endpoints (no authentication required) ===
+
+	// Validate promotion code during checkout (public access)
+	router.HandleFunc("POST "+ValidatePromotionCodeEndpoint, mw.EnableCORS(h.ValidatePromotionCode))
+
+	// Get promotion code with associated coupon by code (public access)
+	router.HandleFunc("GET "+GetPromotionCodeWithCouponEndpoint, mw.EnableCORS(h.GetPromotionCodeWithCoupon))
+
+	// === Admin-Only Endpoints ===
+
+	// Get all promotion codes (admin only)
+	router.HandleFunc("GET "+GetAllPromotionCodesEndpoint, RequireAdmin(mw.EnableCORS(h.GetAllPromotionCodes)))
+
+	// Get active promotion codes (admin only)
+	router.HandleFunc("GET "+GetActivePromotionCodesEndpoint, RequireAdmin(mw.EnableCORS(h.GetActivePromotionCodes)))
+
+	// Get promotion code by ID (admin only)
+	router.HandleFunc("GET "+GetPromotionCodeByIDEndpoint, RequireAdmin(mw.EnableCORS(h.GetPromotionCodeByID)))
+
+	// Get promotion code by code string (admin only)
+	router.HandleFunc("GET "+GetPromotionCodeByCodeEndpoint, RequireAdmin(mw.EnableCORS(h.GetPromotionCodeByCode)))
+
+	// Create promotion code (admin only)
+	router.HandleFunc("POST "+CreatePromotionCodeEndpoint, RequireAdmin(mw.EnableCORS(h.CreatePromotionCode)))
+
+	// Update promotion code (admin only)
+	router.HandleFunc("PATCH "+UpdatePromotionCodeEndpoint, RequireAdmin(mw.EnableCORS(h.UpdatePromotionCode)))
+
+	// Deactivate promotion code (admin only)
+	router.HandleFunc("POST "+DeactivatePromotionCodeEndpoint, RequireAdmin(mw.EnableCORS(h.DeactivatePromotionCode)))
+
+	// Delete promotion code (admin only)
+	router.HandleFunc("DELETE "+DeletePromotionCodeEndpoint, RequireAdmin(mw.EnableCORS(h.DeletePromotionCode)))
 }
