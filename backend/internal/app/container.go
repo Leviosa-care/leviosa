@@ -47,11 +47,15 @@ import (
 	// Common
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
 
+	// Middleware
+	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
+
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/hashicorp/vault/api"
 	"github.com/hengadev/encx"
 	hashicorpkeys "github.com/hengadev/encx/providers/keys/hashicorp"
 	hashicorpsecrets "github.com/hengadev/encx/providers/secrets/hashicorp"
@@ -74,6 +78,8 @@ type Container struct {
 	S3Client    *s3.Client
 	Crypto      encx.CryptoService
 	StripeAPI   *stripeClient.API
+	VaultClient *api.Client
+	AuthMw      auth.AuthMiddleware
 
 	// Authuser Repositories
 	UserRepo      authuserPorts.UserRepository
@@ -199,6 +205,14 @@ func (c *Container) setupInfrastructure(ctx context.Context) error {
 	c.S3Client = s3.NewFromConfig(awsCfg, s3Options)
 
 	// Vault & Encryption
+	vaultConfig := api.DefaultConfig()
+	vaultConfig.Address = c.Config.VaultAddr
+	c.VaultClient, err = api.NewClient(vaultConfig)
+	if err != nil {
+		return fmt.Errorf("create vault client: %w", err)
+	}
+	c.VaultClient.SetToken(c.Config.VaultToken)
+
 	keyProvider, err := hashicorpkeys.New(hashicorpkeys.Config{
 		Address: c.Config.VaultAddr,
 		Token:   c.Config.VaultToken,
@@ -272,6 +286,9 @@ func (c *Container) setupServices(ctx context.Context) error {
 	c.OTPService = otpSvc.New(c.OTPRepo, nil) // RabbitMQ consumer setup would go here if enabled
 
 	c.SessionService = sessionSvc.New(c.SessionRepo)
+
+	// Initialize AuthMiddleware (needs SessionRepo, Crypto, and VaultClient)
+	c.AuthMw = auth.NewSessionAuthMiddleware(c.SessionRepo, c.Crypto, c.VaultClient)
 
 	c.UserService = userSvc.New(
 		c.UserRepo,
