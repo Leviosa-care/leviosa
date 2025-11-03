@@ -101,21 +101,21 @@ func (s *Server) setupAuthuserRoutes(router *http.ServeMux) {
 	// Auth handler
 	authH := authHandler.New(
 		s.container.AuthAggregator,
-		s.container.Crypto,
+		s.container.AuthMw,
 	)
 	authH.RegisterRoutes(router)
 
 	// User handler
 	userH := userHandler.New(
 		s.container.UserService,
-		s.container.Crypto,
+		s.container.AuthMw,
 	)
 	userH.RegisterRoutes(router)
 
 	// Partner handler
 	partnerH := partnerHandler.New(
 		s.container.PartnerService,
-		s.container.Crypto,
+		s.container.AuthMw,
 	)
 	partnerH.RegisterRoutes(router)
 }
@@ -123,44 +123,46 @@ func (s *Server) setupAuthuserRoutes(router *http.ServeMux) {
 func (s *Server) setupCatalogRoutes(router *http.ServeMux) {
 	// Category handler
 	categoryH := categoryHandler.New(
-		s.container.CatalogAggregator,
+		s.container.CategoryService,
 		&s.container.ImageService,
-		s.container.Crypto,
+		s.container.CatalogAggregator,
+		s.container.AuthMw,
 	)
 	categoryH.RegisterRoutes(router)
 
 	// Product handler
 	productH := productHandler.New(
+		s.container.ProductService,
 		s.container.CatalogAggregator,
-		s.container.Crypto,
+		s.container.AuthMw,
 	)
 	productH.RegisterRoutes(router)
 
 	// Price handler
 	priceH := priceHandler.New(
-		s.container.CatalogAggregator,
-		s.container.Crypto,
+		s.container.PriceService,
+		s.container.AuthMw,
 	)
 	priceH.RegisterRoutes(router)
 
 	// Image handler
 	imageH := imageHandler.New(
 		s.container.ImageService,
-		s.container.Crypto,
+		s.container.AuthMw,
 	)
 	imageH.RegisterRoutes(router)
 
 	// Coupon handler
 	couponH := couponHandler.New(
-		s.container.CatalogAggregator,
-		s.container.Crypto,
+		s.container.CouponService,
+		s.container.AuthMw,
 	)
 	couponH.RegisterRoutes(router)
 
 	// Promotion code handler
 	promotionCodeH := promotionCodeHandler.New(
-		s.container.CatalogAggregator,
-		s.container.Crypto,
+		s.container.PromotionCodeService,
+		s.container.AuthMw,
 	)
 	promotionCodeH.RegisterRoutes(router)
 }
