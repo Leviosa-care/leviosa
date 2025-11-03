@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	priceHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/price"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/stretchr/testify/require"
@@ -46,6 +47,11 @@ func makeRequest(t *testing.T, method, endpoint string, body interface{}) (*http
 	return resp, responseBody
 }
 
+// buildEndpointWithID replaces the {id} placeholder with the actual ID
+func buildEndpointWithID(template, id string) string {
+	return strings.Replace(template, "{id}", id, 1)
+}
+
 // setupTestProduct creates a product for price testing and returns its ID
 func setupTestProduct(t *testing.T, ctx context.Context) string {
 	t.Helper()
@@ -71,28 +77,28 @@ func setupTestProduct(t *testing.T, ctx context.Context) string {
 // createPriceViaAPI is a helper to create a price through the HTTP API
 func createPriceViaAPI(t *testing.T, productID string, request *domain.CreatePriceRequest) (*http.Response, []byte) {
 	t.Helper()
-	endpoint := fmt.Sprintf("/admin/products/%s/prices", productID)
+	endpoint := buildEndpointWithID(priceHandler.CreatePriceEndpoint, productID)
 	return makeRequest(t, "POST", endpoint, request)
 }
 
 // getPriceViaAPI is a helper to get a price through the HTTP API
 func getPriceViaAPI(t *testing.T, priceID string) (*http.Response, []byte) {
 	t.Helper()
-	endpoint := fmt.Sprintf("/admin/prices/%s", priceID)
+	endpoint := buildEndpointWithID(priceHandler.GetPriceEndpoint, priceID)
 	return makeRequest(t, "GET", endpoint, nil)
 }
 
 // getPricesByProductIDViaAPI is a helper to get prices by product ID through the HTTP API
 func getPricesByProductIDViaAPI(t *testing.T, productID string) (*http.Response, []byte) {
 	t.Helper()
-	endpoint := fmt.Sprintf("/admin/products/%s/prices", productID)
+	endpoint := buildEndpointWithID(priceHandler.GetPricesByProductIDEndpoint, productID)
 	return makeRequest(t, "GET", endpoint, nil)
 }
 
 // updatePriceViaAPI is a helper to update a price through the HTTP API
 func updatePriceViaAPI(t *testing.T, priceID string, request *domain.UpdatePriceRequest) (*http.Response, []byte) {
 	t.Helper()
-	endpoint := fmt.Sprintf("/admin/prices/%s", priceID)
+	endpoint := buildEndpointWithID(priceHandler.UpdatePriceEndpoint, priceID)
 	return makeRequest(t, "PATCH", endpoint, request)
 }
 
