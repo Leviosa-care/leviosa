@@ -10,6 +10,8 @@ import (
 type PartnerRepository interface {
 	GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*domain.PartnerEncx, error)
 	GetAllPartners(ctx context.Context) ([]*domain.PartnerEncx, error)
+	GetAllPartnersByCategory(ctx context.Context, categoryID uuid.UUID) ([]*domain.PartnerEncx, error)
+	GetAllPartnersByCategories(ctx context.Context, categoryIDs []uuid.UUID) ([]*domain.PartnerEncx, error)
 	CreatePartner(ctx context.Context, partner *domain.PartnerEncx) error
 	UpdatePartner(ctx context.Context, partner *domain.PartnerEncx) error
 	DeletePartner(ctx context.Context, userID uuid.UUID) error
