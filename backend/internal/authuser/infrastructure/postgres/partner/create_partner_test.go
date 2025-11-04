@@ -169,8 +169,8 @@ func TestCreatePartner(t *testing.T) {
 		userID := td.CreateTestUserForPartnerWithUniqueEmail(t, ctx, testPool, "")
 		partnerEncx := td.NewTestPartnerEncx(t)
 		partnerEncx.UserID = userID
-		partnerEncx.BioEncrypted = []byte(longBio)
-		partnerEncx.ExperienceEncrypted = []byte(longExperience)
+		partnerEncx.Bio = longBio
+		partnerEncx.Experience = longExperience
 
 		// Act
 		err := repo.CreatePartner(ctx, partnerEncx)

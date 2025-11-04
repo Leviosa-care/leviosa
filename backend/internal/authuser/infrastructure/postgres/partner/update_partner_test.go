@@ -37,19 +37,17 @@ func TestUpdatePartner(t *testing.T) {
 		require.NoError(t, err)
 
 		// Update partner data
-		bioEncrypted := []byte("Updated professional bio with more details")
-		experienceEncrypted := []byte("Updated experience: 10+ years in specialized field")
-		certificationsEncrypted := []byte("Updated certifications: Advanced Cert 1, Expert Cert 2")
-		categoryIDsEncrypted := []byte("updated_category_ids_encrypted")
-		productIDsEncrypted := []byte("updated_product_ids_encrypted")
+		bio := "Updated professional bio with more details"
+		experience := "Updated experience: 10+ years in specialized field"
+		categoryIDsEncrypted := []uuid.UUID{uuid.New()}
+		productIDsEncrypted := []uuid.UUID{uuid.New()}
 		stripeConnectedAccountIDEncrypted := []byte("acct_updated123456789")
 		dekEncrypted := []byte("updated_dek_encrypted")
 
-		partnerEncx.BioEncrypted = bioEncrypted
-		partnerEncx.ExperienceEncrypted = experienceEncrypted
-		partnerEncx.CertificationsEncrypted = certificationsEncrypted
-		partnerEncx.CategoryIDsEncrypted = categoryIDsEncrypted
-		partnerEncx.ProductIDsEncrypted = productIDsEncrypted
+		partnerEncx.Bio = bio
+		partnerEncx.Experience = experience
+		partnerEncx.CategoryIDs = categoryIDsEncrypted
+		partnerEncx.ProductIDs = productIDsEncrypted
 		partnerEncx.StripeConnectedAccountIDEncrypted = stripeConnectedAccountIDEncrypted
 		partnerEncx.StripeAccountStatus = domain.StripeAccountStatusActive
 		partnerEncx.StripeOnboardingComplete = true
@@ -69,11 +67,10 @@ func TestUpdatePartner(t *testing.T) {
 
 		// Verify data was updated
 		assert.Equal(t, userID, updatedPartner.UserID)
-		assert.Equal(t, bioEncrypted, updatedPartner.BioEncrypted)
-		assert.Equal(t, experienceEncrypted, updatedPartner.ExperienceEncrypted)
-		assert.Equal(t, certificationsEncrypted, updatedPartner.CertificationsEncrypted)
-		assert.Equal(t, categoryIDsEncrypted, updatedPartner.CategoryIDsEncrypted)
-		assert.Equal(t, productIDsEncrypted, updatedPartner.ProductIDsEncrypted)
+		assert.Equal(t, bio, updatedPartner.Bio)
+		assert.Equal(t, experience, updatedPartner.Experience)
+		assert.Equal(t, categoryIDsEncrypted, updatedPartner.CategoryIDs)
+		assert.Equal(t, productIDsEncrypted, updatedPartner.ProductIDs)
 		assert.Equal(t, stripeConnectedAccountIDEncrypted, updatedPartner.StripeConnectedAccountIDEncrypted)
 		assert.Equal(t, domain.StripeAccountStatusActive, updatedPartner.StripeAccountStatus)
 		assert.True(t, updatedPartner.StripeOnboardingComplete)
@@ -180,9 +177,8 @@ func TestUpdatePartner(t *testing.T) {
 		require.NoError(t, err)
 
 		// Update partner to empty optional encrypted fields
-		partnerEncx.BioEncrypted = []byte("")
-		partnerEncx.ExperienceEncrypted = []byte("")
-		partnerEncx.CertificationsEncrypted = []byte("")
+		partnerEncx.Bio = ""
+		partnerEncx.Experience = ""
 		partnerEncx.StripeConnectedAccountIDEncrypted = []byte("")
 
 		// Act
@@ -195,9 +191,8 @@ func TestUpdatePartner(t *testing.T) {
 		updatedPartner, err := td.GetPartnerEncxByUserID(t, ctx, userID, testPool)
 		require.NoError(t, err)
 
-		assert.Empty(t, updatedPartner.BioEncrypted)
-		assert.Empty(t, updatedPartner.ExperienceEncrypted)
-		assert.Empty(t, updatedPartner.CertificationsEncrypted)
+		assert.Empty(t, updatedPartner.Bio)
+		assert.Empty(t, updatedPartner.Experience)
 		assert.Empty(t, updatedPartner.StripeConnectedAccountIDEncrypted)
 
 		// Non-encrypted fields should still be preserved
@@ -222,16 +217,15 @@ func TestUpdatePartner(t *testing.T) {
 		for i := range longBio {
 			longBio = longBio[:i] + "a" + longBio[i+1:]
 		}
-		partnerEncx.BioEncrypted = []byte(longBio)
+		partnerEncx.Bio = longBio
 
 		longExperience := string(make([]byte, 3000))
 		for i := range longExperience {
 			longExperience = longExperience[:i] + "b" + longExperience[i+1:]
 		}
-		partnerEncx.ExperienceEncrypted = []byte(longExperience)
+		partnerEncx.Experience = longExperience
 
-		manyCertifications := []byte("Certification 1, Certification 2, Certification 3, Certification 4, Certification 5")
-		partnerEncx.CertificationsEncrypted = manyCertifications
+		// manyCertifications := []byte("Certification 1, Certification 2, Certification 3, Certification 4, Certification 5")
 
 		// Act
 		err = repo.UpdatePartner(ctx, partnerEncx)
@@ -243,9 +237,8 @@ func TestUpdatePartner(t *testing.T) {
 		updatedPartner, err := td.GetPartnerEncxByUserID(t, ctx, userID, testPool)
 		require.NoError(t, err)
 
-		assert.Greater(t, len(updatedPartner.BioEncrypted), 1500, "Bio should be large")
-		assert.Greater(t, len(updatedPartner.ExperienceEncrypted), 2000, "Experience should be large")
-		assert.Equal(t, manyCertifications, updatedPartner.CertificationsEncrypted)
+		assert.Greater(t, len(updatedPartner.Bio), 1500, "Bio should be large")
+		assert.Greater(t, len(updatedPartner.Experience), 2000, "Experience should be large")
 	})
 
 	t.Run("should handle database connection errors", func(t *testing.T) {
@@ -262,12 +255,12 @@ func TestUpdatePartner(t *testing.T) {
 
 		// Start with minimal partner
 		minimalPartner := &domain.PartnerEncx{
-			UserID:                            userID,
-			BioEncrypted:                      []byte(""),
-			ExperienceEncrypted:               []byte(""),
+			UserID:     userID,
+			Bio:        "",
+			Experience: "",
 			// CertificationsEncrypted:           []byte(""),
-			CategoryIDsEncrypted:              []byte(""),
-			ProductIDsEncrypted:               []byte(""),
+			CategoryIDs:                       []uuid.UUID{uuid.New()},
+			ProductIDs:                        []uuid.UUID{uuid.New()},
 			StripeConnectedAccountIDEncrypted: []byte(""),
 			StripeAccountStatus:               domain.StripeAccountStatusPending,
 			StripeOnboardingComplete:          false,
@@ -279,18 +272,16 @@ func TestUpdatePartner(t *testing.T) {
 		require.NoError(t, err)
 
 		// Update with complete partner information
-		bio := []byte("Experienced healthcare professional with 15+ years of practice")
-		experience := []byte("Specialized in patient care and medical consultation")
-		certifications := []byte("MD, Board Certified, Advanced Life Support")
-		categories := []byte("category_uuid_1,category_uuid_2")
-		products := []byte("product_uuid_1,product_uuid_2,product_uuid_3")
+		bio := "Experienced healthcare professional with 15+ years of practice"
+		experience := "Specialized in patient care and medical consultation"
+		categories := []uuid.UUID{uuid.New()}
+		products := []uuid.UUID{uuid.New()}
 		stripeAccount := []byte("acct_complete_partner_123456789")
 
-		minimalPartner.BioEncrypted = bio
-		minimalPartner.ExperienceEncrypted = experience
-		minimalPartner.CertificationsEncrypted = certifications
-		minimalPartner.CategoryIDsEncrypted = categories
-		minimalPartner.ProductIDsEncrypted = products
+		minimalPartner.Bio = bio
+		minimalPartner.Experience = experience
+		minimalPartner.CategoryIDs = categories
+		minimalPartner.ProductIDs = products
 		minimalPartner.StripeConnectedAccountIDEncrypted = stripeAccount
 		minimalPartner.StripeAccountStatus = domain.StripeAccountStatusActive
 		minimalPartner.StripeOnboardingComplete = true
@@ -307,11 +298,10 @@ func TestUpdatePartner(t *testing.T) {
 		completePartner, err := td.GetPartnerEncxByUserID(t, ctx, userID, testPool)
 		require.NoError(t, err)
 
-		assert.Equal(t, bio, completePartner.BioEncrypted)
-		assert.Equal(t, experience, completePartner.ExperienceEncrypted)
-		assert.Equal(t, certifications, completePartner.CertificationsEncrypted)
-		assert.Equal(t, categories, completePartner.CategoryIDsEncrypted)
-		assert.Equal(t, products, completePartner.ProductIDsEncrypted)
+		assert.Equal(t, bio, completePartner.Bio)
+		assert.Equal(t, experience, completePartner.Experience)
+		assert.Equal(t, categories, completePartner.CategoryIDs)
+		assert.Equal(t, products, completePartner.ProductIDs)
 		assert.Equal(t, stripeAccount, completePartner.StripeConnectedAccountIDEncrypted)
 		assert.Equal(t, domain.StripeAccountStatusActive, completePartner.StripeAccountStatus)
 		assert.True(t, completePartner.StripeOnboardingComplete)

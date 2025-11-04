@@ -254,12 +254,12 @@ func TestVerifyPartner(t *testing.T) {
 
 		// Create a partner with minimal data (all encrypted fields empty)
 		minimalPartner := &domain.PartnerEncx{
-			UserID:                            userID,
-			BioEncrypted:                      []byte(""),
-			ExperienceEncrypted:               []byte(""),
+			UserID:     userID,
+			Bio:        "",
+			Experience: "",
 			// CertificationsEncrypted:           []byte(""),
-			CategoryIDsEncrypted:              []byte(""),
-			ProductIDsEncrypted:               []byte(""),
+			CategoryIDs:                       []uuid.UUID{uuid.New()},
+			ProductIDs:                        []uuid.UUID{uuid.New()},
 			StripeConnectedAccountIDEncrypted: []byte(""),
 			StripeAccountStatus:               domain.StripeAccountStatusPending,
 			StripeOnboardingComplete:          false,
@@ -286,9 +286,8 @@ func TestVerifyPartner(t *testing.T) {
 		assert.True(t, updatedPartner.StripeOnboardingComplete)
 
 		// Verify other fields remain unchanged (minimal)
-		assert.Equal(t, []byte(""), updatedPartner.BioEncrypted)
-		assert.Equal(t, []byte(""), updatedPartner.ExperienceEncrypted)
-		assert.Equal(t, []byte(""), updatedPartner.CertificationsEncrypted)
+		assert.Equal(t, "", updatedPartner.Bio)
+		assert.Equal(t, "", updatedPartner.Experience)
 	})
 
 	t.Run("should handle verification of partners with maximal encrypted data", func(t *testing.T) {
@@ -307,13 +306,13 @@ func TestVerifyPartner(t *testing.T) {
 		for i := range longBio {
 			longBio = longBio[:i] + "a" + longBio[i+1:]
 		}
-		partnerEncx.BioEncrypted = []byte(longBio)
+		partnerEncx.Bio = longBio
 
 		longExperience := string(make([]byte, 2000))
 		for i := range longExperience {
 			longExperience = longExperience[:i] + "b" + longExperience[i+1:]
 		}
-		partnerEncx.ExperienceEncrypted = []byte(longExperience)
+		partnerEncx.Experience = longExperience
 
 		partnerEncx.StripeConnectedAccountIDEncrypted = []byte("acct_test123456789abcdef")
 
@@ -333,8 +332,8 @@ func TestVerifyPartner(t *testing.T) {
 		assert.True(t, updatedPartner.StripeOnboardingComplete)
 
 		// Verify large encrypted fields are preserved
-		assert.Greater(t, len(updatedPartner.BioEncrypted), 500, "Bio should be large")
-		assert.Greater(t, len(updatedPartner.ExperienceEncrypted), 1000, "Experience should be large")
+		assert.Greater(t, len(updatedPartner.Bio), 500, "Bio should be large")
+		assert.Greater(t, len(updatedPartner.Experience), 1000, "Experience should be large")
 		assert.Equal(t, partnerEncx.StripeConnectedAccountIDEncrypted, updatedPartner.StripeConnectedAccountIDEncrypted)
 	})
 
@@ -386,14 +385,14 @@ func TestVerifyPartner(t *testing.T) {
 		verifiedByUserID := td.CreateTestUserForPartnerWithUniqueEmail(t, ctx, testPool, "admin")
 
 		// Create partner with specific values
-		originalBio := []byte("Original bio content")
-		originalExperience := []byte("Original experience content")
+		originalBio := "Original bio content"
+		originalExperience := "Original experience content"
 		originalStripeAccountID := []byte("acct_original123456789")
 
 		partnerEncx := td.NewTestPartnerEncx(t)
 		partnerEncx.UserID = userID
-		partnerEncx.BioEncrypted = originalBio
-		partnerEncx.ExperienceEncrypted = originalExperience
+		partnerEncx.Bio = originalBio
+		partnerEncx.Experience = originalExperience
 		partnerEncx.StripeConnectedAccountIDEncrypted = originalStripeAccountID
 		partnerEncx.StripeAccountStatus = domain.StripeAccountStatusPending
 		partnerEncx.StripeOnboardingComplete = false
@@ -421,8 +420,8 @@ func TestVerifyPartner(t *testing.T) {
 		assert.True(t, updatedPartner.StripeOnboardingComplete)
 
 		// Verify other fields are unchanged
-		assert.Equal(t, originalBio, updatedPartner.BioEncrypted, "Bio should remain unchanged")
-		assert.Equal(t, originalExperience, updatedPartner.ExperienceEncrypted, "Experience should remain unchanged")
+		assert.Equal(t, originalBio, updatedPartner.Bio, "Bio should remain unchanged")
+		assert.Equal(t, originalExperience, updatedPartner.Experience, "Experience should remain unchanged")
 		assert.Equal(t, originalStripeAccountID, updatedPartner.StripeConnectedAccountIDEncrypted, "Stripe account ID should remain unchanged")
 		assert.Equal(t, originalPartner.DEKEncrypted, updatedPartner.DEKEncrypted, "DEK should remain unchanged")
 		assert.Equal(t, originalPartner.KeyVersion, updatedPartner.KeyVersion, "Key version should remain unchanged")

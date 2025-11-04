@@ -17,4 +17,3 @@ type Repository struct {
 func New(ctx context.Context, pool *pgxpool.Pool) ports.PartnerRepository {
 	return &Repository{pool: pool, schema: "auth"}
 }
-

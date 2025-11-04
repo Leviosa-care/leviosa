@@ -30,6 +30,8 @@ func TestGetPartnerByUserID(t *testing.T) {
 		// Create a partner with the user ID
 		partnerEncx := td.NewTestPartnerEncx(t)
 		partnerEncx.UserID = userID
+		partnerEncx.CategoryIDs = []uuid.UUID{uuid.New()}
+		partnerEncx.ProductIDs = []uuid.UUID{uuid.New()}
 		partnerEncx.StripeAccountStatus = domain.StripeAccountStatusActive
 		partnerEncx.StripeOnboardingComplete = true
 
@@ -47,11 +49,10 @@ func TestGetPartnerByUserID(t *testing.T) {
 		assert.True(t, retrievedPartnerEncx.StripeOnboardingComplete)
 
 		// Verify encrypted fields are populated
-		assert.NotEmpty(t, retrievedPartnerEncx.BioEncrypted)
-		assert.NotEmpty(t, retrievedPartnerEncx.ExperienceEncrypted)
-		assert.NotEmpty(t, retrievedPartnerEncx.CertificationsEncrypted)
-		assert.NotEmpty(t, retrievedPartnerEncx.CategoryIDsEncrypted)
-		assert.NotEmpty(t, retrievedPartnerEncx.ProductIDsEncrypted)
+		assert.NotEmpty(t, retrievedPartnerEncx.Bio)
+		assert.NotEmpty(t, retrievedPartnerEncx.Experience)
+		assert.NotEmpty(t, retrievedPartnerEncx.CategoryIDs)
+		assert.NotEmpty(t, retrievedPartnerEncx.ProductIDs)
 		assert.NotEmpty(t, retrievedPartnerEncx.StripeConnectedAccountIDEncrypted)
 		assert.NotEmpty(t, retrievedPartnerEncx.DEKEncrypted)
 		assert.Greater(t, retrievedPartnerEncx.KeyVersion, 0)
@@ -132,11 +133,10 @@ func TestGetPartnerByUserID(t *testing.T) {
 		partnerEncx := td.NewTestPartnerEncx(t)
 		partnerEncx.UserID = userID
 		// Set all encrypted fields to empty bytes
-		partnerEncx.BioEncrypted = []byte("")
-		partnerEncx.ExperienceEncrypted = []byte("")
-		partnerEncx.CertificationsEncrypted = []byte("")
-		partnerEncx.CategoryIDsEncrypted = []byte("")
-		partnerEncx.ProductIDsEncrypted = []byte("")
+		partnerEncx.Bio = ""
+		partnerEncx.Experience = ""
+		partnerEncx.CategoryIDs = []uuid.UUID{}
+		partnerEncx.ProductIDs = []uuid.UUID{}
 		partnerEncx.StripeConnectedAccountIDEncrypted = []byte("")
 
 		err := td.InsertPartnerEncx(t, ctx, partnerEncx, testPool)
@@ -151,11 +151,10 @@ func TestGetPartnerByUserID(t *testing.T) {
 		assert.Equal(t, userID, retrievedPartnerEncx.UserID)
 
 		// Verify encrypted fields are empty (or nil for database representation)
-		assert.Equal(t, 0, len(retrievedPartnerEncx.BioEncrypted))
-		assert.Equal(t, 0, len(retrievedPartnerEncx.ExperienceEncrypted))
-		assert.Equal(t, 0, len(retrievedPartnerEncx.CertificationsEncrypted))
-		assert.Equal(t, 0, len(retrievedPartnerEncx.CategoryIDsEncrypted))
-		assert.Equal(t, 0, len(retrievedPartnerEncx.ProductIDsEncrypted))
+		assert.Equal(t, 0, len(retrievedPartnerEncx.Bio))
+		assert.Equal(t, 0, len(retrievedPartnerEncx.Experience))
+		assert.Equal(t, 0, len(retrievedPartnerEncx.CategoryIDs))
+		assert.Equal(t, 0, len(retrievedPartnerEncx.ProductIDs))
 		assert.Equal(t, 0, len(retrievedPartnerEncx.StripeConnectedAccountIDEncrypted))
 
 		// Non-encrypted fields should still be populated
@@ -177,13 +176,13 @@ func TestGetPartnerByUserID(t *testing.T) {
 		for i := range longBio {
 			longBio = longBio[:i] + "a" + longBio[i+1:]
 		}
-		partnerEncx.BioEncrypted = []byte(longBio)
+		partnerEncx.Bio = longBio
 
 		longExperience := string(make([]byte, 2000))
 		for i := range longExperience {
 			longExperience = longExperience[:i] + "b" + longExperience[i+1:]
 		}
-		partnerEncx.ExperienceEncrypted = []byte(longExperience)
+		partnerEncx.Experience = longExperience
 
 		partnerEncx.StripeConnectedAccountIDEncrypted = []byte("acct_test123456789abcdef")
 
@@ -199,8 +198,8 @@ func TestGetPartnerByUserID(t *testing.T) {
 		assert.Equal(t, userID, retrievedPartnerEncx.UserID)
 
 		// Verify large encrypted fields are preserved
-		assert.Greater(t, len(retrievedPartnerEncx.BioEncrypted), 500, "Bio should be large")
-		assert.Greater(t, len(retrievedPartnerEncx.ExperienceEncrypted), 1000, "Experience should be large")
+		assert.Greater(t, len(retrievedPartnerEncx.Bio), 500, "Bio should be large")
+		assert.Greater(t, len(retrievedPartnerEncx.Experience), 1000, "Experience should be large")
 		assert.Equal(t, partnerEncx.StripeConnectedAccountIDEncrypted, retrievedPartnerEncx.StripeConnectedAccountIDEncrypted)
 	})
 

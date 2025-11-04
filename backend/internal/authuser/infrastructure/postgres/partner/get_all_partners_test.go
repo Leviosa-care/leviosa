@@ -28,6 +28,8 @@ func TestGetAllPartners(t *testing.T) {
 			partner.UserID = userID
 			partner.StripeAccountStatus = stripeStatus
 			partner.StripeOnboardingComplete = onboardingComplete
+			partner.CategoryIDs = []uuid.UUID{uuid.New()}
+			partner.ProductIDs = []uuid.UUID{uuid.New()}
 
 			err := td.InsertPartnerEncx(t, ctx, partner, testPool)
 			require.NoError(t, err)
@@ -77,11 +79,10 @@ func TestGetAllPartners(t *testing.T) {
 
 		// Verify encrypted fields are populated (not decrypted at repository layer)
 		for _, partner := range allPartners {
-			assert.NotEmpty(t, partner.BioEncrypted)
-			assert.NotEmpty(t, partner.ExperienceEncrypted)
-			assert.NotEmpty(t, partner.CertificationsEncrypted)
-			assert.NotEmpty(t, partner.CategoryIDsEncrypted)
-			assert.NotEmpty(t, partner.ProductIDsEncrypted)
+			assert.NotEmpty(t, partner.Bio)
+			assert.NotEmpty(t, partner.Experience)
+			assert.NotEmpty(t, partner.CategoryIDs)
+			assert.NotEmpty(t, partner.ProductIDs)
 			assert.NotEmpty(t, partner.StripeConnectedAccountIDEncrypted)
 			assert.NotEmpty(t, partner.DEKEncrypted)
 			assert.Greater(t, partner.KeyVersion, 0)
@@ -189,11 +190,10 @@ func TestGetAllPartners(t *testing.T) {
 		minimalUserID := td.CreateTestUserForPartnerWithUniqueEmail(t, ctx, testPool, "minimal")
 		minimalPartner := td.NewTestPartnerEncx(t)
 		minimalPartner.UserID = minimalUserID
-		minimalPartner.BioEncrypted = []byte("")
-		minimalPartner.ExperienceEncrypted = []byte("")
-		minimalPartner.CertificationsEncrypted = []byte("")
-		minimalPartner.CategoryIDsEncrypted = []byte("")
-		minimalPartner.ProductIDsEncrypted = []byte("")
+		minimalPartner.Bio = ""
+		minimalPartner.Experience = ""
+		minimalPartner.CategoryIDs = []uuid.UUID{uuid.New()}
+		minimalPartner.ProductIDs = []uuid.UUID{uuid.New()}
 		minimalPartner.StripeConnectedAccountIDEncrypted = []byte("")
 
 		err := td.InsertPartnerEncx(t, ctx, minimalPartner, testPool)
@@ -208,13 +208,13 @@ func TestGetAllPartners(t *testing.T) {
 		for i := range longBio {
 			longBio = longBio[:i] + "a" + longBio[i+1:]
 		}
-		maximalPartner.BioEncrypted = []byte(longBio)
+		maximalPartner.Bio = longBio
 
 		longExperience := string(make([]byte, 2000))
 		for i := range longExperience {
 			longExperience = longExperience[:i] + "b" + longExperience[i+1:]
 		}
-		maximalPartner.ExperienceEncrypted = []byte(longExperience)
+		maximalPartner.Experience = longExperience
 
 		err = td.InsertPartnerEncx(t, ctx, maximalPartner, testPool)
 		require.NoError(t, err)
@@ -240,10 +240,10 @@ func TestGetAllPartners(t *testing.T) {
 		assert.NotNil(t, maximalFound, "Maximal partner should be found")
 
 		// Verify encrypted field sizes
-		assert.Equal(t, 0, len(minimalFound.BioEncrypted), "Minimal partner should have empty bio")
-		assert.Equal(t, 0, len(minimalFound.ExperienceEncrypted), "Minimal partner should have empty experience")
-		assert.Greater(t, len(maximalFound.BioEncrypted), 500, "Maximal partner should have large bio")
-		assert.Greater(t, len(maximalFound.ExperienceEncrypted), 1000, "Maximal partner should have large experience")
+		assert.Equal(t, 0, len(minimalFound.Bio), "Minimal partner should have empty bio")
+		assert.Equal(t, 0, len(minimalFound.Experience), "Minimal partner should have empty experience")
+		assert.Greater(t, len(maximalFound.Bio), 500, "Maximal partner should have large bio")
+		assert.Greater(t, len(maximalFound.Experience), 1000, "Maximal partner should have large experience")
 	})
 
 	t.Run("should handle large number of partners", func(t *testing.T) {
@@ -333,11 +333,10 @@ func TestGetAllPartners(t *testing.T) {
 		assert.Equal(t, originalPartner.StripeAccountStatus, retrievedPartner.StripeAccountStatus)
 		assert.Equal(t, originalPartner.StripeOnboardingComplete, retrievedPartner.StripeOnboardingComplete)
 		assert.Equal(t, originalPartner.StripeConnectedAccountIDEncrypted, retrievedPartner.StripeConnectedAccountIDEncrypted)
-		assert.Equal(t, originalPartner.BioEncrypted, retrievedPartner.BioEncrypted)
-		assert.Equal(t, originalPartner.ExperienceEncrypted, retrievedPartner.ExperienceEncrypted)
-		assert.Equal(t, originalPartner.CertificationsEncrypted, retrievedPartner.CertificationsEncrypted)
-		assert.Equal(t, originalPartner.CategoryIDsEncrypted, retrievedPartner.CategoryIDsEncrypted)
-		assert.Equal(t, originalPartner.ProductIDsEncrypted, retrievedPartner.ProductIDsEncrypted)
+		assert.Equal(t, originalPartner.Bio, retrievedPartner.Bio)
+		assert.Equal(t, originalPartner.Experience, retrievedPartner.Experience)
+		assert.Equal(t, originalPartner.CategoryIDs, retrievedPartner.CategoryIDs)
+		assert.Equal(t, originalPartner.ProductIDs, retrievedPartner.ProductIDs)
 		assert.Equal(t, originalPartner.DEKEncrypted, retrievedPartner.DEKEncrypted)
 		assert.Equal(t, originalPartner.KeyVersion, retrievedPartner.KeyVersion)
 
