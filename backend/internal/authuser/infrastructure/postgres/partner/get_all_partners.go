@@ -12,8 +12,8 @@ import (
 func (r *Repository) GetAllPartners(ctx context.Context) ([]*domain.PartnerEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			user_id, bio_encrypted, experience_encrypted, 
-			category_ids_encrypted, product_ids_encrypted,
+			user_id, bio, experience,
+			category_ids, product_ids,
 			stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			dek_encrypted, key_version, created_at, updated_at
 		FROM %s.partners
@@ -31,10 +31,10 @@ func (r *Repository) GetAllPartners(ctx context.Context) ([]*domain.PartnerEncx,
 		partner := &domain.PartnerEncx{}
 		err := rows.Scan(
 			&partner.UserID,
-			&partner.BioEncrypted,
-			&partner.ExperienceEncrypted,
-			&partner.CategoryIDsEncrypted,
-			&partner.ProductIDsEncrypted,
+			&partner.Bio,
+			&partner.Experience,
+			&partner.CategoryIDs,
+			&partner.ProductIDs,
 			&partner.StripeConnectedAccountIDEncrypted,
 			&partner.StripeAccountStatus,
 			&partner.StripeOnboardingComplete,

@@ -12,7 +12,7 @@
     "core/testutils/auth.go": "eca9dddc8ffa168f64c66e62c683a1fe71f77aaa2701f6b73096fd7d0ac34ffb",
     "internal/authuser/domain/new_partner.go": "f19094c51f0f696c648316f3242d0dc5d3ec85588252508170f3b5e3ab6f0702",
     "internal/authuser/domain/otp.go": "02a5de85ae25df565b0975d214fdbb217363826ff0561482f0675623f84417f8",
-    "internal/authuser/domain/partner.go": "5e73b112901810c1fa32df61e2cc98c45efd733e9a196921292792409c102086",
+    "internal/authuser/domain/partner.go": "918e4e1b81af3cc5e790281ee86874590660bbe2a684ea5741fd2b8f09f7216e",
     "internal/authuser/domain/user.go": "ec584c6040771885531d72ad366227cc0cff1ef242a93f70373867d1d5cf8b9b",
     "internal/common/auth/session/session.go": "4cd32a4d2ba139b2431cc9b756d6789cfcefbd63854c6e05e913bc9624d503ae",
     "internal/common/testutils/auth.go": "3ac1065e8ee85316b98f963e63d2e0c04a13390eaedd48ba043b45b23bbf203f",
@@ -21,6 +21,7 @@
     "internal/domain/otp/otp.go": "3ff5750d51c17659a64be405e17dd782e190794e00c84f719d6093774452aa3e",
     "internal/domain/settings/setting.go": "ba3f5532d239af1cd0f30290388044c604577d24bf44ef624f5f50e7da287176",
     "internal/domain/user/models/user.go": "dcc8011fd069ccb42042f91bd99dce2c0fee5157f57084d12039a51cfc6789d3",
+    "internal/settings/domain/settings.go": "602bb237f54605ef13df693cd807cc120624a2f712dbd046702b3d60b7357716",
     "settings/internal/domain/settings.go": "602bb237f54605ef13df693cd807cc120624a2f712dbd046702b3d60b7357716"
   },
   "ConfigHash": "",
@@ -87,8 +88,8 @@
     },
     "internal/authuser/domain/partner_encx.go": {
       "SourceFile": "internal/authuser/domain/partner.go",
-      "SourceHash": "5e73b112901810c1fa32df61e2cc98c45efd733e9a196921292792409c102086",
-      "GeneratedTime": "2025-10-31T13:37:47.904590993+01:00"
+      "SourceHash": "918e4e1b81af3cc5e790281ee86874590660bbe2a684ea5741fd2b8f09f7216e",
+      "GeneratedTime": "2025-11-04T09:25:39.927017152+01:00"
     },
     "internal/authuser/domain/user_encx.go": {
       "SourceFile": "internal/authuser/domain/user.go",
@@ -98,12 +99,12 @@
     "internal/common/auth/session/session_encx.go": {
       "SourceFile": "internal/common/auth/session/session.go",
       "SourceHash": "4cd32a4d2ba139b2431cc9b756d6789cfcefbd63854c6e05e913bc9624d503ae",
-      "GeneratedTime": "2025-10-29T23:21:24.317102876+01:00"
+      "GeneratedTime": "2025-11-04T09:25:40.138855328+01:00"
     },
     "internal/common/testutils/auth_encx.go": {
       "SourceFile": "internal/common/testutils/auth.go",
       "SourceHash": "3ac1065e8ee85316b98f963e63d2e0c04a13390eaedd48ba043b45b23bbf203f",
-      "GeneratedTime": "2025-10-29T23:21:24.359102001+01:00"
+      "GeneratedTime": "2025-11-04T09:25:40.18017508+01:00"
     },
     "internal/domain/event/models/event_encx.go": {
       "SourceFile": "internal/domain/event/models/event.go",
@@ -130,11 +131,16 @@
       "SourceHash": "dcc8011fd069ccb42042f91bd99dce2c0fee5157f57084d12039a51cfc6789d3",
       "GeneratedTime": "2025-10-09T09:36:00.021848035+02:00"
     },
+    "internal/settings/domain/settings_encx.go": {
+      "SourceFile": "internal/settings/domain/settings.go",
+      "SourceHash": "602bb237f54605ef13df693cd807cc120624a2f712dbd046702b3d60b7357716",
+      "GeneratedTime": "2025-11-04T09:25:40.1892036+01:00"
+    },
     "settings/internal/domain/settings_encx.go": {
       "SourceFile": "settings/internal/domain/settings.go",
       "SourceHash": "602bb237f54605ef13df693cd807cc120624a2f712dbd046702b3d60b7357716",
       "GeneratedTime": "2025-10-29T23:21:24.406899642+01:00"
     }
   },
-  "LastGenerated": "2025-10-31T13:37:47.907452087+01:00"
+  "LastGenerated": "2025-11-04T09:25:40.189204411+01:00"
 }

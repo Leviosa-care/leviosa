@@ -12,10 +12,10 @@ import (
 func (r *Repository) UpdatePartner(ctx context.Context, partner *domain.PartnerEncx) error {
 	query := fmt.Sprintf(`
 		UPDATE %s.partners SET
-			bio_encrypted = $2,
-			experience_encrypted = $3,
-			category_ids_encrypted = $4,
-			product_ids_encrypted = $5,
+			bio = $2,
+			experience = $3,
+			category_ids = $4,
+			product_ids = $5,
 			stripe_connected_account_id_encrypted = $6,
 			stripe_account_status = $7,
 			stripe_onboarding_complete = $8,
@@ -27,10 +27,10 @@ func (r *Repository) UpdatePartner(ctx context.Context, partner *domain.PartnerE
 
 	result, err := r.pool.Exec(ctx, query,
 		partner.UserID,
-		partner.BioEncrypted,
-		partner.ExperienceEncrypted,
-		partner.CategoryIDsEncrypted,
-		partner.ProductIDsEncrypted,
+		partner.Bio,
+		partner.Experience,
+		partner.CategoryIDs,
+		partner.ProductIDs,
 		partner.StripeConnectedAccountIDEncrypted,
 		partner.StripeAccountStatus,
 		partner.StripeOnboardingComplete,

@@ -80,21 +80,21 @@ CREATE TRIGGER update_users_updated_at
 CREATE TABLE auth.partners (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
 
-    -- Partner profile data (all encrypted for GDPR compliance)
-    bio_encrypted BYTEA,                             -- Professional bio
-    experience_encrypted BYTEA,                      -- Years of experience, background
+    -- Partner profile data (public information displayed to clients)
+    bio TEXT,                                        -- Professional bio (public)
+    experience TEXT,                                 -- Years of experience, background (public)
     -- certifications_encrypted BYTEA,                  -- Encrypted array of certifications - REMOVED
 
-    -- Catalog associations (encrypted arrays of UUIDs)
-    category_ids_encrypted BYTEA,                    -- Encrypted catalog category UUIDs this partner offers services for
-    product_ids_encrypted BYTEA,                     -- Encrypted catalog product UUIDs this partner offers services for
+    -- Catalog associations (business metadata, not personal data)
+    category_ids UUID[],                             -- Catalog category UUIDs this partner offers services for
+    product_ids UUID[],                              -- Catalog product UUIDs this partner offers services for
 
-    -- Stripe Connect integration
+    -- Stripe Connect integration (sensitive financial data remains encrypted)
     stripe_connected_account_id_encrypted BYTEA,     -- Encrypted Stripe Connected Account ID
     stripe_account_status VARCHAR(20) DEFAULT 'pending', -- Stripe account status (pending, active, restricted, disabled)
     stripe_onboarding_complete BOOLEAN DEFAULT FALSE, -- Whether Stripe onboarding is complete
 
-    -- Encryption metadata
+    -- Encryption metadata (only needed for Stripe account ID)
     dek_encrypted BYTEA NOT NULL,
     key_version INTEGER NOT NULL DEFAULT 1,
 

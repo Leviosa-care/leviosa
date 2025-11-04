@@ -11,8 +11,8 @@ import (
 func (r *Repository) CreatePartner(ctx context.Context, partner *domain.PartnerEncx) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s.partners (
-			user_id, bio_encrypted, experience_encrypted,
-			category_ids_encrypted, product_ids_encrypted,
+			user_id, bio, experience,
+			category_ids, product_ids,
 			stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			dek_encrypted, key_version, created_at, updated_at
 		) VALUES (
@@ -22,10 +22,10 @@ func (r *Repository) CreatePartner(ctx context.Context, partner *domain.PartnerE
 
 	if _, err := r.pool.Exec(ctx, query,
 		partner.UserID,
-		partner.BioEncrypted,
-		partner.ExperienceEncrypted,
-		partner.CategoryIDsEncrypted,
-		partner.ProductIDsEncrypted,
+		partner.Bio,
+		partner.Experience,
+		partner.CategoryIDs,
+		partner.ProductIDs,
 		partner.StripeConnectedAccountIDEncrypted,
 		partner.StripeAccountStatus,
 		partner.StripeOnboardingComplete,
