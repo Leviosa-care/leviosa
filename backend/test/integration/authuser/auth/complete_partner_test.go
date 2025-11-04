@@ -8,19 +8,28 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 	authEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
+	catalogDomain "github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
 	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TODO: handle the category IDs and product IDs thing
-
 // make test-func TEST_NAME=TestCompletePartner TEST_PATH=test/integration/authuser/auth/complete_partner_test.go
+
+// clearAllTestData clears all test data from auth and catalog tables
+func clearAllTestData(t *testing.T, ctx context.Context, pool *pgxpool.Pool, redisClient *redis.Client) {
+	t.Helper()
+	td.ClearAuthTestData(t, ctx, pool, redisClient)
+	td.ClearCategoriesTable(t, ctx, pool)
+	td.ClearProductsTable(t, ctx, pool)
+}
 
 func TestCompletePartner(t *testing.T) {
 	ctx := context.Background()
@@ -52,7 +61,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should successfully complete partner registration with pending session", func(t *testing.T) {
 		// Clean state
-		td.ClearAuthTestData(t, ctx, testPool, redisClient)
+		clearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create pending user
 		pendingUser := newPendingUser(validEmail)
@@ -72,8 +81,8 @@ func TestCompletePartner(t *testing.T) {
 
 		td.InsertSessionEncx(t, ctx, redisClient, pendingSessionEncx, time.Hour)
 
-		// Populate with valid catalog IDs from cache
-		validCategoryIDs, validProductIDs := getValidCatalogIDsFromCache(t)
+		// Populate with valid catalog IDs from services
+		validCategoryIDs, validProductIDs := getValidCatalogIDsFromServices(t, ctx)
 		request := validRequest
 		request.CategoryIDs = validCategoryIDs
 		request.ProductIDs = validProductIDs
@@ -118,10 +127,10 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should return 401 when session cookie is missing", func(t *testing.T) {
 		// Clean state
-		td.ClearAuthTestData(t, ctx, testPool, redisClient)
+		clearAllTestData(t, ctx, testPool, redisClient)
 
 		// Populate with valid catalog IDs
-		validCategoryIDs, validProductIDs := getValidCatalogIDsFromCache(t)
+		validCategoryIDs, validProductIDs := getValidCatalogIDsFromServices(t, ctx)
 		request := validRequest
 		request.CategoryIDs = validCategoryIDs
 		request.ProductIDs = validProductIDs
@@ -141,7 +150,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should return 409 when session is already active", func(t *testing.T) {
 		// Clean state
-		td.ClearAuthTestData(t, ctx, testPool, redisClient)
+		clearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create an active session
 		activeSession, err := td.NewTestSession(t, crypto)
@@ -153,7 +162,7 @@ func TestCompletePartner(t *testing.T) {
 		td.InsertSessionEncx(t, ctx, redisClient, sessionEncx, time.Hour)
 
 		// Populate with valid catalog IDs
-		validCategoryIDs, validProductIDs := getValidCatalogIDsFromCache(t)
+		validCategoryIDs, validProductIDs := getValidCatalogIDsFromServices(t, ctx)
 		request := validRequest
 		request.CategoryIDs = validCategoryIDs
 		request.ProductIDs = validProductIDs
@@ -170,7 +179,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should return 400 for invalid JSON request body", func(t *testing.T) {
 		// Clean state
-		td.ClearAuthTestData(t, ctx, testPool, redisClient)
+		clearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		pendingSession, err := td.NewTestSession(t, crypto)
@@ -211,7 +220,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should return 400 for invalid password", func(t *testing.T) {
 		// Clean state
-		td.ClearAuthTestData(t, ctx, testPool, redisClient)
+		clearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		pendingSession, err := td.NewTestSession(t, crypto)
@@ -224,7 +233,7 @@ func TestCompletePartner(t *testing.T) {
 		td.InsertSessionEncx(t, ctx, redisClient, pendingSessionEncx, time.Hour)
 
 		// Populate with valid catalog IDs
-		validCategoryIDs, validProductIDs := getValidCatalogIDsFromCache(t)
+		validCategoryIDs, validProductIDs := getValidCatalogIDsFromServices(t, ctx)
 		request := validRequest
 		request.CategoryIDs = validCategoryIDs
 		request.ProductIDs = validProductIDs
@@ -240,9 +249,9 @@ func TestCompletePartner(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
-	t.Run("should return 400 for invalid category IDs", func(t *testing.T) {
+	t.Run("should filter out invalid category IDs and create partner successfully", func(t *testing.T) {
 		// Clean state
-		td.ClearAuthTestData(t, ctx, testPool, redisClient)
+		clearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create pending user
 		pendingUser := newPendingUser(validEmail)
@@ -262,7 +271,8 @@ func TestCompletePartner(t *testing.T) {
 
 		td.InsertSessionEncx(t, ctx, redisClient, pendingSessionEncx, time.Hour)
 
-		// Use invalid category ID (non-existent in catalog cache)
+		// Use invalid category ID (non-existent in catalog)
+		_, _ = getValidCatalogIDsFromServices(t, ctx)
 		request := validRequest
 		request.CategoryIDs = []uuid.UUID{uuid.New()} // Random UUID not in catalog
 		request.ProductIDs = []uuid.UUID{}
@@ -273,16 +283,24 @@ func TestCompletePartner(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		// Assert HTTP response
-		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		errorMsg, statusCode := td.ParseErrorResponse(t, resp)
-		assert.Equal(t, http.StatusBadRequest, statusCode)
-		assert.Contains(t, errorMsg, "invalid category")
+		// Assert HTTP response - should succeed with invalid IDs filtered out
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		message := td.ParseCompletePartnerResponse(t, resp)
+		assert.Equal(t, "Partner registration completed successfully. Awaiting admin approval.", message)
+
+		// Verify partner was created with empty category IDs (invalid ones filtered out)
+		partnerEncx, err := td.GetPartnerEncxByUserID(t, ctx, pendingUser.ID, testPool)
+		require.NoError(t, err)
+		partner, err := domain.DecryptPartnerEncx(ctx, crypto, partnerEncx)
+		require.NoError(t, err)
+		assert.Equal(t, pendingUser.ID, partner.UserID)
+		assert.Empty(t, partner.CategoryIDs, "Invalid category IDs should be filtered out")
+		assert.Empty(t, partner.ProductIDs)
 	})
 
-	t.Run("should return 400 for invalid product IDs", func(t *testing.T) {
+	t.Run("should filter out invalid product IDs and create partner with valid categories", func(t *testing.T) {
 		// Clean state
-		td.ClearAuthTestData(t, ctx, testPool, redisClient)
+		clearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create pending user
 		pendingUser := newPendingUser(validEmail)
@@ -303,7 +321,7 @@ func TestCompletePartner(t *testing.T) {
 		td.InsertSessionEncx(t, ctx, redisClient, pendingSessionEncx, time.Hour)
 
 		// Use valid category but invalid product ID
-		validCategoryIDs, _ := getValidCatalogIDsFromCache(t)
+		validCategoryIDs, _ := getValidCatalogIDsFromServices(t, ctx)
 		request := validRequest
 		request.CategoryIDs = validCategoryIDs
 		request.ProductIDs = []uuid.UUID{uuid.New()} // Random UUID not in catalog
@@ -314,16 +332,77 @@ func TestCompletePartner(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		// Assert HTTP response
-		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		errorMsg, statusCode := td.ParseErrorResponse(t, resp)
-		assert.Equal(t, http.StatusBadRequest, statusCode)
-		assert.Contains(t, errorMsg, "invalid product")
+		// Assert HTTP response - should succeed with invalid product IDs filtered out
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		message := td.ParseCompletePartnerResponse(t, resp)
+		assert.Equal(t, "Partner registration completed successfully. Awaiting admin approval.", message)
+
+		// Verify partner was created with valid categories but empty products
+		partnerEncx, err := td.GetPartnerEncxByUserID(t, ctx, pendingUser.ID, testPool)
+		require.NoError(t, err)
+		partner, err := domain.DecryptPartnerEncx(ctx, crypto, partnerEncx)
+		require.NoError(t, err)
+		assert.Equal(t, pendingUser.ID, partner.UserID)
+		assert.ElementsMatch(t, validCategoryIDs, partner.CategoryIDs, "Valid category IDs should be preserved")
+		assert.Empty(t, partner.ProductIDs, "Invalid product IDs should be filtered out")
+	})
+
+	t.Run("should filter out invalid IDs and keep only valid ones when mixed", func(t *testing.T) {
+		// Clean state
+		clearAllTestData(t, ctx, testPool, redisClient)
+
+		// Create pending user
+		pendingUser := newPendingUser("mixed-ids@example.com")
+		pendingUserEncx, err := domain.ProcessUserEncx(ctx, crypto, pendingUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, pendingUserEncx, testPool)
+		require.NoError(t, err)
+
+		// Create a pending session
+		pendingSession, err := td.NewTestSession(t, crypto)
+		require.NoError(t, err)
+		pendingSession.UserID = pendingUser.ID
+		pendingSession.State = session.SessionPending
+
+		pendingSessionEncx, err := session.ProcessSessionEncx(ctx, crypto, pendingSession)
+		require.NoError(t, err)
+
+		td.InsertSessionEncx(t, ctx, redisClient, pendingSessionEncx, time.Hour)
+
+		// Get valid IDs from catalog
+		validCategoryIDs, validProductIDs := getValidCatalogIDsFromServices(t, ctx)
+
+		// Mix valid and invalid IDs
+		request := validRequest
+		request.CategoryIDs = append(validCategoryIDs, uuid.New(), uuid.New()) // 1 valid + 2 invalid
+		request.ProductIDs = append(validProductIDs, uuid.New())               // 1 valid + 1 invalid
+
+		// Make HTTP request
+		req := td.NewCompletePartnerRequest(t, ctx, testServerURL, request, pendingSession.AccessToken)
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		// Assert HTTP response - should succeed
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		message := td.ParseCompletePartnerResponse(t, resp)
+		assert.Equal(t, "Partner registration completed successfully. Awaiting admin approval.", message)
+
+		// Verify partner was created with only valid IDs
+		partnerEncx, err := td.GetPartnerEncxByUserID(t, ctx, pendingUser.ID, testPool)
+		require.NoError(t, err)
+		partner, err := domain.DecryptPartnerEncx(ctx, crypto, partnerEncx)
+		require.NoError(t, err)
+		assert.Equal(t, pendingUser.ID, partner.UserID)
+		assert.ElementsMatch(t, validCategoryIDs, partner.CategoryIDs, "Should only contain valid category IDs")
+		assert.ElementsMatch(t, validProductIDs, partner.ProductIDs, "Should only contain valid product IDs")
+		assert.Len(t, partner.CategoryIDs, 1, "Should have filtered out 2 invalid category IDs")
+		assert.Len(t, partner.ProductIDs, 1, "Should have filtered out 1 invalid product ID")
 	})
 
 	t.Run("should return 400 for missing required partner fields", func(t *testing.T) {
 		// Clean state
-		td.ClearAuthTestData(t, ctx, testPool, redisClient)
+		clearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create a pending session
 		pendingSession, err := td.NewTestSession(t, crypto)
@@ -353,7 +432,7 @@ func TestCompletePartner(t *testing.T) {
 
 	t.Run("should successfully complete partner registration with minimal partner data", func(t *testing.T) {
 		// Clean state
-		td.ClearAuthTestData(t, ctx, testPool, redisClient)
+		clearAllTestData(t, ctx, testPool, redisClient)
 
 		// Create pending user
 		pendingUser := newPendingUser("minimal-partner@example.com")
@@ -410,26 +489,24 @@ func TestCompletePartner(t *testing.T) {
 	})
 }
 
-// getValidCatalogIDsFromCache retrieves valid category and product IDs from the catalog cache.
-// This ensures tests use real catalog data that's available in the system.
-func getValidCatalogIDsFromCache(t *testing.T) (categoryIDs []uuid.UUID, productIDs []uuid.UUID) {
+// getValidCatalogIDsFromServices retrieves valid category and product IDs by creating test data.
+// This ensures tests have real catalog data to validate against.
+func getValidCatalogIDsFromServices(t *testing.T, ctx context.Context) (categoryIDs []uuid.UUID, productIDs []uuid.UUID) {
 	t.Helper()
 
-	// Get categories from catalog cache
-	categories := catalogCache.ListCategories()
-	// require.NoError(t, err)
-	if len(categories) > 0 {
-		// Take first category ID for testing
-		categoryIDs = []uuid.UUID{categories[0].ID}
-	}
+	// Create a published category for testing
+	testCategory := td.NewValidCategory("Test Partner Category")
+	testCategory.Status = catalogDomain.Published // Set to Published for partner validation
+	td.InsertCategory(t, ctx, testCategory, testPool)
 
-	// Get products from catalog cache
-	products := catalogCache.ListProducts()
-	// require.NoError(t, err)
-	if len(products) > 0 {
-		// Take first product ID for testing
-		productIDs = []uuid.UUID{products[0].ID}
-	}
+	// Create a published product for testing
+	testProduct := td.NewValidProduct("Test Partner Product", testCategory.ID)
+	testProduct.Status = catalogDomain.Published // Set to Published for partner validation
+	td.InsertProduct(t, ctx, testPool, testProduct)
+
+	// Return the IDs for testing
+	categoryIDs = []uuid.UUID{testCategory.ID}
+	productIDs = []uuid.UUID{testProduct.ID}
 
 	return categoryIDs, productIDs
 }

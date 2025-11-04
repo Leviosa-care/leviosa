@@ -2,13 +2,15 @@ package partner
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-
+	catalogDomain "github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
-	"github.com/hengadev/errsx"
+	"golang.org/x/sync/errgroup"
 )
 
 // CreatePartner creates a new partner profile for an existing user during registration.
@@ -24,26 +26,31 @@ import (
 //   - categoryIDs: List of catalog category UUIDs the partner offers services for
 //   - productIDs: List of catalog product UUIDs the partner offers services for
 //
+// Behavior:
+//   - Invalid category/product IDs are silently filtered out
+//   - Only valid IDs that exist in published catalog are stored
+//   - Empty arrays are allowed (partner has no products/categories initially)
+//
 // Returns error if:
-//   - Catalog validation fails (invalid category/product IDs)
+//   - Catalog service call fails
 //   - Database operation fails
 //   - Encryption fails
 func (s *PartnerService) CreatePartner(ctx context.Context, userID uuid.UUID, bio, experience string, categoryIDs, productIDs []uuid.UUID) (*domain.Partner, error) {
-	// Validate catalog IDs against cache
-	if err := s.verifyCatalogIDs(categoryIDs, productIDs); err != nil {
+	// Filter catalog IDs to only include valid published items
+	validCategoryIDs, validProductIDs, err := s.verifyCatalogIDs(ctx, categoryIDs, productIDs)
+	if err != nil {
 		return nil, errs.NewInvalidValueErr(err.Error())
 	}
 
 	now := time.Now()
 
-	// Create partner entity
+	// Create partner entity with filtered valid IDs
 	partner := &domain.Partner{
-		UserID:     userID,
-		Bio:        bio,
-		Experience: experience,
-		// Certifications: certifications,
-		CategoryIDs: categoryIDs,
-		ProductIDs:  productIDs,
+		UserID:      userID,
+		Bio:         bio,
+		Experience:  experience,
+		CategoryIDs: validCategoryIDs,
+		ProductIDs:  validProductIDs,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
@@ -64,36 +71,77 @@ func (s *PartnerService) CreatePartner(ctx context.Context, userID uuid.UUID, bi
 	return partner, nil
 }
 
-// verifyCatalogIDs validates that all provided category and product IDs exist in the catalog cache.
+// verifyCatalogIDs filters provided category and product IDs to only include those that exist in the published catalog.
 //
 // This ensures partners can only be associated with published catalog items that are currently available.
-// The catalog cache is kept up-to-date via RabbitMQ events, so this validation reflects real-time catalog state.
-func (s *PartnerService) verifyCatalogIDs(categoryIDs, productIDs []uuid.UUID) error {
-	var errs errsx.Map
+// Invalid IDs are silently filtered out rather than causing errors.
+//
+// Returns:
+//   - validCategoryIDs: Subset of input categoryIDs that exist in published catalog
+//   - validProductIDs: Subset of input productIDs that exist in published catalog
+//   - error: Only if catalog service calls fail
+func (s *PartnerService) verifyCatalogIDs(ctx context.Context, categoryIDs, productIDs []uuid.UUID) ([]uuid.UUID, []uuid.UUID, error) {
+	var (
+		retrievedCategories []*catalogDomain.Category
+		retrievedProducts   []*catalogDomain.ProductRes
+	)
 
-	// Validate all category IDs exist in catalog cache
-	for _, categoryID := range categoryIDs {
-		if categoryID == uuid.Nil {
-			errs.Set("category_ids", "category ID cannot be nil")
-			continue
+	g, ctx := errgroup.WithContext(ctx)
+
+	// Fetch categories concurrently
+	g.Go(func() error {
+		cats, err := s.categoryService.GetAllPublishedCategories(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to fetch published categories: %w", err)
 		}
+		retrievedCategories = cats
+		return nil
+	})
 
-		if !s.catalogCache.IsValidCategory(categoryID) {
-			errs.Set("category_ids", "category ID "+categoryID.String()+" does not exist or is not published")
+	// Fetch products concurrently
+	g.Go(func() error {
+		prods, err := s.productService.GetAllPublishedProducts(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to fetch published products: %w", err)
+		}
+		retrievedProducts = prods
+		return nil
+	})
+
+	// Wait for both goroutines to finish
+	if err := g.Wait(); err != nil {
+		return nil, nil, err
+	}
+
+	// Build category set and filter valid IDs
+	var validCategoryIDs []uuid.UUID
+	if len(categoryIDs) > 0 && len(retrievedCategories) > 0 {
+		categorySet := make(map[uuid.UUID]struct{}, len(retrievedCategories))
+		for _, c := range retrievedCategories {
+			categorySet[c.ID] = struct{}{}
+		}
+		validCategoryIDs = make([]uuid.UUID, 0, len(categoryIDs))
+		for _, id := range categoryIDs {
+			if _, exists := categorySet[id]; exists {
+				validCategoryIDs = append(validCategoryIDs, id)
+			}
 		}
 	}
 
-	// Validate all product IDs exist in catalog cache
-	for _, productID := range productIDs {
-		if productID == uuid.Nil {
-			errs.Set("product_ids", "product ID cannot be nil")
-			continue
+	// Build product set and filter valid IDs
+	var validProductIDs []uuid.UUID
+	if len(productIDs) > 0 && len(retrievedProducts) > 0 {
+		productSet := make(map[uuid.UUID]struct{}, len(retrievedProducts))
+		for _, p := range retrievedProducts {
+			productSet[p.ID] = struct{}{}
 		}
-
-		if !s.catalogCache.IsValidProduct(productID) {
-			errs.Set("product_ids", "product ID "+productID.String()+" does not exist or is not published")
+		validProductIDs = make([]uuid.UUID, 0, len(productIDs))
+		for _, id := range productIDs {
+			if _, exists := productSet[id]; exists {
+				validProductIDs = append(validProductIDs, id)
+			}
 		}
 	}
 
-	return errs.AsError()
+	return validCategoryIDs, validProductIDs, nil
 }
