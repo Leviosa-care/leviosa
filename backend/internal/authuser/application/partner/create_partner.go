@@ -46,6 +46,7 @@ func (s *PartnerService) CreatePartner(ctx context.Context, userID uuid.UUID, bi
 
 	// Create partner entity with filtered valid IDs
 	partner := &domain.Partner{
+		ID:          uuid.New(),
 		UserID:      userID,
 		Bio:         bio,
 		Experience:  experience,

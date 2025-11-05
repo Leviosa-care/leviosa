@@ -78,7 +78,8 @@ CREATE TRIGGER update_users_updated_at
 
 -- Create partners table extending users with partner-specific data
 CREATE TABLE auth.partners (
-    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
 
     -- Partner profile data (public information displayed to clients)
     bio TEXT,                                        -- Professional bio (public)
@@ -104,6 +105,7 @@ CREATE TABLE auth.partners (
 );
 
 -- Indexes for partners table
+CREATE INDEX idx_partners_id ON auth.partners (id);
 CREATE INDEX idx_partners_user_id ON auth.partners (user_id);
 CREATE INDEX idx_partners_stripe_account_status ON auth.partners (stripe_account_status);
 CREATE INDEX idx_partners_stripe_onboarding_complete ON auth.partners (stripe_onboarding_complete);

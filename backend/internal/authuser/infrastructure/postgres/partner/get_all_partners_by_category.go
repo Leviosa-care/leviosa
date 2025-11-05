@@ -15,7 +15,7 @@ import (
 func (r *Repository) GetAllPartnersByCategory(ctx context.Context, categoryID uuid.UUID) ([]*domain.PartnerEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			user_id, bio, experience,
+			id, user_id, bio, experience,
 			category_ids, product_ids,
 			created_at, updated_at
 		FROM %s.partners
@@ -33,6 +33,7 @@ func (r *Repository) GetAllPartnersByCategory(ctx context.Context, categoryID uu
 	for rows.Next() {
 		partner := &domain.PartnerEncx{}
 		err := rows.Scan(
+			&partner.ID,
 			&partner.UserID,
 			&partner.Bio,
 			&partner.Experience,

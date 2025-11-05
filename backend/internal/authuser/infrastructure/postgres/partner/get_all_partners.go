@@ -12,7 +12,7 @@ import (
 func (r *Repository) GetAllPartners(ctx context.Context) ([]*domain.PartnerEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			user_id, bio, experience,
+			id, user_id, bio, experience,
 			category_ids, product_ids,
 			stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			dek_encrypted, key_version, created_at, updated_at
@@ -30,6 +30,7 @@ func (r *Repository) GetAllPartners(ctx context.Context) ([]*domain.PartnerEncx,
 	for rows.Next() {
 		partner := &domain.PartnerEncx{}
 		err := rows.Scan(
+			&partner.ID,
 			&partner.UserID,
 			&partner.Bio,
 			&partner.Experience,

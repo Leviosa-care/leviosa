@@ -22,11 +22,11 @@ func (r *Repository) UpdatePartner(ctx context.Context, partner *domain.PartnerE
 			dek_encrypted = $9,
 			key_version = $10,
 			updated_at = NOW()
-		WHERE user_id = $1
+		WHERE id = $1
 	`, r.schema)
 
 	result, err := r.pool.Exec(ctx, query,
-		partner.UserID,
+		partner.ID,
 		partner.Bio,
 		partner.Experience,
 		partner.CategoryIDs,

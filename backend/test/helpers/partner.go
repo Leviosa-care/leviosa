@@ -35,6 +35,7 @@ func NewTestPartner(t *testing.T, userID uuid.UUID) *domain.Partner {
 	productIDs := []uuid.UUID{uuid.New(), uuid.New(), uuid.New()}
 
 	return &domain.Partner{
+		ID:         uuid.New(),
 		UserID:     userID,
 		Bio:        "Test partner bio with relevant experience and qualifications",
 		Experience: "5+ years of professional experience in relevant field",
@@ -58,12 +59,13 @@ func NewTestPartnerEncx(t *testing.T) *domain.PartnerEncx {
 	userEncx := NewTestUserEncx(t)
 
 	return &domain.PartnerEncx{
-		UserID:              userEncx.ID,
-		BioEncrypted:        []byte("bio encrypted"),
-		ExperienceEncrypted: []byte("experience encrypted"),
+		ID:         uuid.New(),
+		UserID:     userEncx.ID,
+		Bio:        "bio",
+		Experience: "experience",
 		// CertificationsEncrypted:           []byte("certifications encrypted"),
-		CategoryIDsEncrypted:              []byte("category_ids_encrypted"),
-		ProductIDsEncrypted:               []byte("product_ids_encrypted"),
+		CategoryIDs:                       nil,
+		ProductIDs:                        nil,
 		StripeConnectedAccountIDEncrypted: []byte("stripe_connected_account_id_encrypted"),
 		StripeAccountStatus:               domain.StripeAccountStatusPending,
 		StripeOnboardingComplete:          false,
@@ -81,12 +83,13 @@ func NewTestPartnerEncxWithUserID(t *testing.T, userID uuid.UUID) *domain.Partne
 	now := time.Now()
 
 	return &domain.PartnerEncx{
-		UserID:              userID,
-		BioEncrypted:        []byte("bio encrypted"),
-		ExperienceEncrypted: []byte("experience encrypted"),
+		ID:         uuid.New(),
+		UserID:     userID,
+		Bio:        "bio",
+		Experience: "experience",
 		// CertificationsEncrypted:           []byte("certifications encrypted"),
-		CategoryIDsEncrypted:              []byte("category_ids_encrypted"),
-		ProductIDsEncrypted:               []byte("product_ids_encrypted"),
+		CategoryIDs:                       nil,
+		ProductIDs:                        nil,
 		StripeConnectedAccountIDEncrypted: []byte("stripe_connected_account_id_encrypted"),
 		StripeAccountStatus:               domain.StripeAccountStatusPending,
 		StripeOnboardingComplete:          false,
@@ -136,18 +139,19 @@ func InsertPartnerEncx(t *testing.T, ctx context.Context, partnerEncx *domain.Pa
 
 	query := `
 		INSERT INTO auth.partners (
-			user_id, bio_encrypted, experience_encrypted,
-			category_ids_encrypted, product_ids_encrypted,
+			id, user_id, bio, experience,
+			category_ids, product_ids,
 			stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			dek_encrypted, key_version, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
 		)`
 
 	_, err := pool.Exec(ctx, query,
+		partnerEncx.ID,
 		partnerEncx.UserID,
-		partnerEncx.BioEncrypted, partnerEncx.ExperienceEncrypted,
-		partnerEncx.CategoryIDsEncrypted, partnerEncx.ProductIDsEncrypted,
+		partnerEncx.Bio, partnerEncx.Experience,
+		partnerEncx.CategoryIDs, partnerEncx.ProductIDs,
 		partnerEncx.StripeConnectedAccountIDEncrypted, partnerEncx.StripeAccountStatus, partnerEncx.StripeOnboardingComplete,
 		partnerEncx.DEKEncrypted, partnerEncx.KeyVersion,
 		partnerEncx.CreatedAt, partnerEncx.UpdatedAt,
@@ -161,17 +165,17 @@ func GetPartnerEncxByUserID(t *testing.T, ctx context.Context, userID uuid.UUID,
 
 	var partnerEncx domain.PartnerEncx
 	query := `
-		SELECT user_id, bio_encrypted, experience_encrypted,
-			   category_ids_encrypted, product_ids_encrypted,
+		SELECT id, bio, experience,
+			   category_ids, product_ids,
 			   stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			   dek_encrypted, key_version, created_at, updated_at
 		FROM auth.partners
 		WHERE user_id = $1`
 
 	err := pool.QueryRow(ctx, query, userID).Scan(
-		&partnerEncx.UserID,
-		&partnerEncx.BioEncrypted, &partnerEncx.ExperienceEncrypted,
-		&partnerEncx.CategoryIDsEncrypted, &partnerEncx.ProductIDsEncrypted,
+		&partnerEncx.ID,
+		&partnerEncx.Bio, &partnerEncx.Experience,
+		&partnerEncx.CategoryIDs, &partnerEncx.ProductIDs,
 		&partnerEncx.StripeConnectedAccountIDEncrypted, &partnerEncx.StripeAccountStatus, &partnerEncx.StripeOnboardingComplete,
 		&partnerEncx.DEKEncrypted, &partnerEncx.KeyVersion,
 		&partnerEncx.CreatedAt, &partnerEncx.UpdatedAt,
@@ -179,6 +183,38 @@ func GetPartnerEncxByUserID(t *testing.T, ctx context.Context, userID uuid.UUID,
 	if err != nil {
 		return nil, err
 	}
+
+	partnerEncx.UserID = userID
+
+	return &partnerEncx, nil
+}
+
+// GetPartnerEncxByID retrieves a partner by user ID directly from the database using the new Encx approach
+func GetPartnerEncxByID(t *testing.T, ctx context.Context, ID uuid.UUID, pool *pgxpool.Pool) (*domain.PartnerEncx, error) {
+	t.Helper()
+
+	var partnerEncx domain.PartnerEncx
+	query := `
+		SELECT id, user_id, bio, experience,
+			   category_ids, product_ids,
+			   stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
+			   dek_encrypted, key_version, created_at, updated_at
+		FROM auth.partners
+		WHERE id = $1`
+
+	err := pool.QueryRow(ctx, query, ID).Scan(
+		&partnerEncx.ID, &partnerEncx.UserID,
+		&partnerEncx.Bio, &partnerEncx.Experience,
+		&partnerEncx.CategoryIDs, &partnerEncx.ProductIDs,
+		&partnerEncx.StripeConnectedAccountIDEncrypted, &partnerEncx.StripeAccountStatus, &partnerEncx.StripeOnboardingComplete,
+		&partnerEncx.DEKEncrypted, &partnerEncx.KeyVersion,
+		&partnerEncx.CreatedAt, &partnerEncx.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	partnerEncx.ID = ID
 
 	return &partnerEncx, nil
 }
