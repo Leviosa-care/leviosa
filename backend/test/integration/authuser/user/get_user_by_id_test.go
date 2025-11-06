@@ -243,6 +243,7 @@ func TestGetUserByID(t *testing.T) {
 		// Create admin user
 		adminUser := td.NewTestUser(t, "admin@example.com", "Administrator", "User")
 		adminUser.State = domain.Active
+		adminUser.Role = identity.Administrator.String()
 		adminUserEncx, err := domain.ProcessUserEncx(ctx, crypto, adminUser)
 		require.NoError(t, err)
 		err = td.InsertUserEncx(t, ctx, adminUserEncx, testPool)
