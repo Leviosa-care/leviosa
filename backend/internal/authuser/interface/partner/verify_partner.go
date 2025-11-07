@@ -68,6 +68,10 @@ func (h *handler) VerifyPartner(w http.ResponseWriter, r *http.Request) {
 			logLevel = "warn"
 			errorContext = "partner not found"
 			statusCode = http.StatusNotFound
+		case errors.Is(err, errs.ErrConflict):
+			logLevel = "warn"
+			errorContext = "partner already verified"
+			statusCode = http.StatusConflict
 		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
 			logLevel = "error"
 			errorContext = "database connection failure"
@@ -139,4 +143,3 @@ func (h *handler) VerifyPartner(w http.ResponseWriter, r *http.Request) {
 
 	httpx.RespondWithJSON(w, partner, http.StatusOK)
 }
-
