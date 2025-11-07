@@ -145,3 +145,39 @@ func NewGetAllPartnersByCategoryRequestWithInvalidID(t *testing.T, ctx context.C
 
 	return req
 }
+
+// NewGetAllPartnersByCategoriesRequest creates an HTTP request for getting all partners by multiple category IDs
+func NewGetAllPartnersByCategoriesRequest(t *testing.T, ctx context.Context, serverURL string, categoryIDs []uuid.UUID) *http.Request {
+	t.Helper()
+
+	url := fmt.Sprintf("%s%s", serverURL, partnerEndpoints.PartnersBasePath+partnerEndpoints.CategoryPath)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Add category_id query parameters
+	q := req.URL.Query()
+	for _, categoryID := range categoryIDs {
+		q.Add("category_id", categoryID.String())
+	}
+	req.URL.RawQuery = q.Encode()
+
+	return req
+}
+
+// NewGetAllPartnersByCategoriesRequestWithStrings creates an HTTP request with string category IDs for testing
+func NewGetAllPartnersByCategoriesRequestWithStrings(t *testing.T, ctx context.Context, serverURL string, categoryIDs []string) *http.Request {
+	t.Helper()
+
+	url := fmt.Sprintf("%s%s", serverURL, partnerEndpoints.PartnersBasePath+partnerEndpoints.CategoryPath)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Add category_id query parameters
+	q := req.URL.Query()
+	for _, categoryID := range categoryIDs {
+		q.Add("category_id", categoryID)
+	}
+	req.URL.RawQuery = q.Encode()
+
+	return req
+}
