@@ -66,7 +66,7 @@ func NewGetAllPartnersRequest(t *testing.T, ctx context.Context, serverURL strin
 }
 
 // NewUpdatePartnerRequest creates an HTTP request for updating a partner
-func NewUpdatePartnerRequest(t *testing.T, ctx context.Context, serverURL string, partnerID uuid.UUID, request domain.UpdatePartnerRequest) *http.Request {
+func NewUpdatePartnerRequest(t *testing.T, ctx context.Context, serverURL string, partnerID uuid.UUID, request domain.UpdatePartnerRequest, accessToken string) *http.Request {
 	t.Helper()
 
 	body, err := json.Marshal(request)
@@ -77,6 +77,16 @@ func NewUpdatePartnerRequest(t *testing.T, ctx context.Context, serverURL string
 	require.NoError(t, err, "Failed to create HTTP request")
 
 	req.Header.Set("Content-Type", "application/json")
+
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+
 	return req
 }
 
