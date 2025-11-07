@@ -27,6 +27,16 @@ import (
 	aggregatorHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/ports"
 
+	// Catalog services for partner validation
+	catalogApp "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/category"
+	catalogProductApp "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/product"
+	categoryRepository "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/category"
+	productRepository "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/product"
+	sharedRepository "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/shared"
+	pricePayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/price"
+	productPayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/product"
+	catalogPorts "github.com/Leviosa-care/leviosa/backend/internal/catalog/ports"
+
 	authsession "github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	mq "github.com/Leviosa-care/leviosa/backend/internal/common/contracts/rabbitmq"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/services"
@@ -63,6 +73,10 @@ var (
 	testServerURL   string           // Global variable to hold the URL of the running test server
 	testServer      *http.Server     // To allow graceful shutdown
 	testMQConn      *amqp.Connection // RabbitMQ connection for test verification
+
+	// Catalog services for partner validation
+	categoryService catalogPorts.PublicCategoryService
+	productService  catalogPorts.PublicProductService
 )
 
 func TestMain(m *testing.M) {
@@ -216,8 +230,6 @@ func TestMain(m *testing.M) {
 
 	payment := authPayment.NewService("sk_test_123456789012345678901234", stripeContainer.URL)
 
-	ctx = context.WithValue(ctx, ctxutil.LoggerKey, testLogger)
-
 	// Setup RabbitMQ exchanges and queues needed for settings and OTP notifications
 	if err := setupAllRabbitMQQueues(ctx, ch); err != nil {
 		log.Fatalf("Failed to setup RabbitMQ queues: %v", err)
@@ -228,10 +240,20 @@ func TestMain(m *testing.M) {
 	userService := user.New(userRepo, crypto, payment)
 
 	catalogCache = catalog.NewCatalogCache()
-	catalogService, err := catalog.New(ctx, catalogCache, testMQConn)
-	if err != nil {
-		log.Fatalf("Failed to create catalog service: %v", err)
-	}
+	// Note: Old catalog service creation removed as it's no longer needed by partner service
+
+	// Initialize catalog repositories and services for partner validation
+	sharedRepo := sharedRepository.New(ctx, testPool)
+	categoryRepo := categoryRepository.New(ctx, testPool)
+	productRepo := productRepository.New(ctx, testPool)
+
+	// Create Stripe services for catalog (needed by ProductService)
+	catalogStripeService := productPayment.NewProduct("sk_test_123456789012345678901234", stripeContainer.URL)
+	catalogPriceStripeService := pricePayment.NewPrice("sk_test_123456789012345678901234", stripeContainer.URL)
+
+	// Initialize catalog services
+	categoryService = catalogApp.New(categoryRepo, sharedRepo)
+	productService = catalogProductApp.New(productRepo, sharedRepo, catalogStripeService, catalogPriceStripeService)
 
 	otpRepo = otpRepository.New(redisClient)
 	otpService, err := otp.New(ctx, otpRepo, crypto, testMQConn)
@@ -242,9 +264,9 @@ func TestMain(m *testing.M) {
 	sessionRepo = sessionRepository.New(redisClient)
 	sessionService := session.New(ctx, sessionRepo, crypto)
 
-	// Create partner repository and service
+	// Create partner repository and service with new catalog services
 	partnerRepo := partnerRepository.New(ctx, testPool)
-	partnerService, err := partner.New(ctx, partnerRepo, userRepo, catalogService, testMQConn, crypto, payment)
+	partnerService, err := partner.New(ctx, partnerRepo, userRepo, productService, categoryService, crypto, payment)
 	if err != nil {
 		log.Fatalf("Failed to create partner service: %v", err)
 	}
