@@ -25,6 +25,9 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Get partners by category
 	router.HandleFunc("GET "+GetPartnersByCategoryEndpoint, mw.EnableCORS(h.GetAllPartnersByCategory))
 
+	// Get partners by categories
+	router.HandleFunc("GET "+GetPartnersByCategoriesEndpoint, mw.EnableCORS(h.GetAllPartnersByCategories))
+
 	// TODO:
 
 	// Update partner profile (partner can update their own, admin can update any)

@@ -13,6 +13,7 @@ type Handler interface {
 	GetPartnerMe(w http.ResponseWriter, r *http.Request)
 	GetAllPartners(w http.ResponseWriter, r *http.Request)
 	GetAllPartnersByCategory(w http.ResponseWriter, r *http.Request)
+	GetAllPartnersByCategories(w http.ResponseWriter, r *http.Request)
 	UpdatePartner(w http.ResponseWriter, r *http.Request)
 	DeletePartner(w http.ResponseWriter, r *http.Request)
 	VerifyPartner(w http.ResponseWriter, r *http.Request)
