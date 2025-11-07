@@ -139,3 +139,4 @@ func (h *handler) VerifyPartner(w http.ResponseWriter, r *http.Request) {
 
 	httpx.RespondWithJSON(w, partner, http.StatusOK)
 }
+
