@@ -7,8 +7,11 @@ const (
 
 	// === Partner Resource Paths ===
 
-	// Partner identification
-	UserPath = "/user"
+	// Partner category
+	CategoryPath = "/categories"
+
+	// Partner profile
+	MePath = "/me"
 
 	// Partner verification
 	VerifyPath = "/verify"
@@ -17,29 +20,40 @@ const (
 	ValidatePath = "/validate"
 
 	// === Public Partner Endpoints ===
-	// (None - all partner management requires authentication)
+
+	// Get partner by ID
+	GetPartnerByIDEndpoint = PartnersBasePath + "/{id}"
+
+	// Get partner by category
+	GetPartnersByCategoryEndpoint = PartnersBasePath + CategoryPath + "/{id}"
+
+	// Get partner by categories
+	GetPartnersByCategoriesEndpoint = PartnersBasePath + CategoryPath
 
 	// === Authenticated Partner Endpoints ===
 
-	// Update partner profile (partner can update their own, admin can update any)
-	UpdatePartnerEndpoint = PartnersBasePath + "/{id}"
+	// Get authenticated partner's own profile
+	GetPartnerMeEndpoint = PartnersBasePath + MePath
+
+	// Delete authenticated partner's own profile
+	DeletePartnerMeEndpoint = PartnersBasePath + MePath
+
+	// Update authenticated partner's own profile
+	UpdatePartnerMeEndpoint = PartnersBasePath + MePath
 
 	// === Admin-Only Endpoints ===
 
-	// Create partner
-	CreatePartnerEndpoint = PartnersBasePath
-
-	// Get partner by ID
-	GetPartnerByIDEndpoint = AdminPartnersBasePath + "/{id}"
-
-	// Get partner by user ID
-	GetPartnerByUserIDEndpoint = AdminPartnersBasePath + UserPath + "/{userID}"
+	// // Create partner
+	// CreatePartnerEndpoint = PartnersBasePath
 
 	// Get all partners
 	GetAllPartnersEndpoint = AdminPartnersBasePath
 
 	// Delete partner
 	DeletePartnerEndpoint = AdminPartnersBasePath + "/{id}"
+
+	// Update partner profile (partner can update their own, admin can update any)
+	UpdatePartnerEndpoint = PartnersBasePath + "/{id}"
 
 	// Verify partner credentials
 	VerifyPartnerEndpoint = AdminPartnersBasePath + "/{id}" + VerifyPath

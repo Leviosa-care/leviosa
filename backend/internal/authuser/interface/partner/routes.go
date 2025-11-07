@@ -11,18 +11,21 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	RequireAdmin := h.authmw.RequireAdmin
 	RequirePartner := h.authmw.RequireMinimumRole(identity.Partner)
 
-	// NOTE: Partner registration has moved to /auth/complete/partner (self-service during user registration)
-	// This admin-only endpoint for creating partners is disabled until we implement a use case for it
-	// router.HandleFunc("POST "+CreatePartnerEndpoint, RequireAdmin(mw.EnableCORS(h.CreatePartner)))
+	// NOTE: done
 
-	// Get partner by ID (admin only)
-	router.HandleFunc("GET "+GetPartnerByIDEndpoint, RequireAdmin(mw.EnableCORS(h.GetPartnerByID)))
+	// Get partner by ID
+	router.HandleFunc("GET "+GetPartnerByIDEndpoint, mw.EnableCORS(h.GetPartnerByID))
 
-	// Get partner by user ID (admin only)
-	router.HandleFunc("GET "+GetPartnerByUserIDEndpoint, RequireAdmin(mw.EnableCORS(h.GetPartnerByUserID)))
+	// Get authenticated partner's own profile
+	router.HandleFunc("GET "+GetPartnerMeEndpoint, RequirePartner(mw.EnableCORS(h.GetPartnerMe)))
 
-	// Get all partners (admin only)
-	router.HandleFunc("GET "+GetAllPartnersEndpoint, RequireAdmin(mw.EnableCORS(h.GetAllPartners)))
+	// Get all partners
+	router.HandleFunc("GET "+GetAllPartnersEndpoint, mw.EnableCORS(h.GetAllPartners))
+
+	// Get partners by category
+	router.HandleFunc("GET "+GetPartnersByCategoryEndpoint, mw.EnableCORS(h.GetAllPartnersByCategory))
+
+	// TODO:
 
 	// Update partner profile (partner can update their own, admin can update any)
 	router.HandleFunc("PUT "+UpdatePartnerEndpoint, RequirePartner(mw.EnableCORS(h.UpdatePartner)))
@@ -30,10 +33,9 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Delete partner (admin only)
 	router.HandleFunc("DELETE "+DeletePartnerEndpoint, RequireAdmin(mw.EnableCORS(h.DeletePartner)))
 
+	// // Delete partner's own profile
+	// router.HandleFunc("DELETE "+DeletePartnerEndpoint, RequirePartner(mw.EnableCORS(h.DeletePartnerMe)))
+
 	// Verify partner credentials (admin only)
 	router.HandleFunc("POST "+VerifyPartnerEndpoint, RequireAdmin(mw.EnableCORS(h.VerifyPartner)))
-
-	// Catalog validation endpoints
-	// Validate products exist in catalog (admin only)
-	router.HandleFunc("POST "+ValidatePartnerProductsEndpoint, RequireAdmin(mw.EnableCORS(h.ValidatePartnerProducts)))
 }
