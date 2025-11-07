@@ -12,24 +12,28 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/authuser/application/catalog"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/application/partner"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/application/user"
 	partnerRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/postgres/partner"
 	userRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/postgres/user"
-	authRabbitMQ "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/rabbitmq"
 	sessionRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/redis/session"
 	authPayment "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/stripe"
 	partnerHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/partner"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/ports"
+	catalogCategory "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/category"
+	catalogProduct "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/product"
+	categoryRepository "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/category"
+	productRepository "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/product"
+	sharedRepository "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/shared"
+	pricePayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/price"
+	productPayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/product"
+	catalogPorts "github.com/Leviosa-care/leviosa/backend/internal/catalog/ports"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
-	mq "github.com/Leviosa-care/leviosa/backend/internal/common/contracts/rabbitmq"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/services"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/envmode"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/logger"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/messaging/rabbitmq"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
@@ -37,7 +41,6 @@ import (
 	"github.com/hengadev/encx"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -49,18 +52,20 @@ var (
 	crypto          encx.CryptoService
 	userRepo        ports.UserRepository
 	partnerRepo     ports.PartnerRepository
-	catalogCache    ports.CatalogCache
+	productRepo     catalogPorts.ProductRepository
+	categoryRepo    catalogPorts.CategoryRepository
+	sharedRepo      catalogPorts.SharedRepository
 	vaultSetup      *tu.ServiceVaultSetup // Enhanced Vault setup with per-service keys
 	authCtx         *tu.AuthTestContext   // Authentication context for user/session tests
 	authSessionRepo session.SessionRepository
 	sessionRepo     ports.SessionRepository
 	userSvc         ports.UserService
 	partnerSvc      ports.PartnerService
-	catalogSvc      ports.CatalogService
+	categorySvc     catalogPorts.CategoryService
+	productSvc      catalogPorts.ProductService
 	handler         partnerHandler.Handler
 	testServerURL   string           // Global variable to hold the URL of the running test server
 	testServer      *http.Server     // To allow graceful shutdown
-	testMQConn      *amqp.Connection // RabbitMQ connection for test verification
 )
 
 func TestMain(m *testing.M) {
@@ -149,28 +154,6 @@ func TestMain(m *testing.M) {
 	}
 	log.Println("Redis client connected successfully.")
 
-	// Setup RabbitMQ
-	rabbit, err := tu.SetupRabbitMQ(ctx, nil)
-	if err != nil {
-		log.Fatalf("Failed to setup RabbitMQ: %v", err)
-	}
-	defer tu.TeardownRabbitMQ(ctx, nil, rabbit)
-
-	ch, conn, err := rabbit.NewChannel()
-	if err != nil {
-		log.Fatalf("Failed to create channel: %v", err)
-	}
-	defer conn.Close()
-	defer ch.Close()
-
-	// Store connection for test verification
-	testMQConn = conn
-
-	// Setup RabbitMQ exchanges and queues needed for catalog
-	if err := setupCatalogQueues(ch); err != nil {
-		log.Fatalf("Failed to setup catalog queues: %v", err)
-	}
-
 	// stripe container
 	stripeContainer, err := tu.SetupStripeMock(ctx, nil)
 	if err != nil {
@@ -225,15 +208,31 @@ func TestMain(m *testing.M) {
 
 	partnerRepo = partnerRepository.New(ctx, testPool)
 
-	// Initialize catalog service with cache
-	catalogCache = catalog.NewCatalogCache()
-	catalogSvc, err = catalog.New(ctx, catalogCache, testMQConn)
-	if err != nil {
-		log.Fatalf("Failed to create catalog service: %v", err)
-	}
+	// Initialize catalog infrastructure
+	sharedRepo = sharedRepository.New(ctx, testPool)
+	categoryRepo = categoryRepository.New(ctx, testPool)
+	productRepo = productRepository.New(ctx, testPool)
+
+	// Initialize catalog services
+	categorySvc = catalogCategory.New(categoryRepo, sharedRepo)
+
+	// Initialize Stripe payment gateways for catalog
+	catalogStripeProduct := productPayment.NewProduct("sk_test_123456789012345678901234", stripeContainer.URL)
+	catalogStripePrice := pricePayment.NewPrice("sk_test_123456789012345678901234", stripeContainer.URL)
+
+	// Initialize product service with Stripe dependencies
+	productSvc = catalogProduct.New(productRepo, sharedRepo, catalogStripeProduct, catalogStripePrice)
 
 	// Initialize partner service (includes catalog consumer)
-	partnerSvc, err = partner.New(ctx, partnerRepo, userRepo, catalogSvc, testMQConn, crypto, payment)
+	partnerSvc, err = partner.New(
+		ctx,
+		partnerRepo,
+		userRepo,
+		productSvc,
+		categorySvc,
+		crypto,
+		payment,
+	)
 	if err != nil {
 		log.Fatalf("Failed to create partner service: %v", err)
 	}
@@ -288,38 +287,4 @@ func TestMain(m *testing.M) {
 
 	// Exit with test result code
 	os.Exit(code)
-}
-
-// setupCatalogQueues sets up the RabbitMQ exchanges and queues needed for catalog integration
-func setupCatalogQueues(ch *amqp.Channel) error {
-	log.Println("Setting up catalog queues...")
-
-	// Declare catalog exchange
-	if err := rabbitmq.DeclareExchange(ch, mq.CatalogExchangeName, "topic"); err != nil {
-		return fmt.Errorf("declare catalog exchange: %w", err)
-	}
-
-	// Declare catalog queue for partner service
-	if err := rabbitmq.DeclareQueue(ch, mq.CatalogQueueName); err != nil {
-		return fmt.Errorf("declare catalog queue: %w", err)
-	}
-
-	// Bind catalog queue to exchange with all routing keys
-	routingKeys := []string{
-		mq.CategoryCreatedRoutingKey,
-		mq.CategoryUpdatedRoutingKey,
-		mq.CategoryDeletedRoutingKey,
-		mq.ProductCreatedRoutingKey,
-		mq.ProductUpdatedRoutingKey,
-		mq.ProductDeletedRoutingKey,
-	}
-
-	for _, key := range routingKeys {
-		if err := rabbitmq.BindQueue(ch, mq.CatalogQueueName, key, mq.CatalogExchangeName); err != nil {
-			return fmt.Errorf("bind catalog queue with key %s: %w", key, err)
-		}
-	}
-
-	log.Println("Catalog queues setup completed")
-	return nil
 }

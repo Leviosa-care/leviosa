@@ -213,8 +213,8 @@ func GetPartnerEncxByID(t *testing.T, ctx context.Context, ID uuid.UUID, pool *p
 	if err != nil {
 		return nil, err
 	}
-
-	partnerEncx.ID = ID
+	//
+	// partnerEncx.ID = ID
 
 	return &partnerEncx, nil
 }
