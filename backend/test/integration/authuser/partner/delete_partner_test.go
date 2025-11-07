@@ -52,7 +52,7 @@ func TestDeletePartner(t *testing.T) {
 		resp, err := client.Do(req)
 
 		// Assert HTTP response
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
@@ -62,9 +62,9 @@ func TestDeletePartner(t *testing.T) {
 
 		// Verify user still exists
 		userEncx, err := td.GetUserEnxByID(t, ctx, testUser.ID, testPool)
-		require.NoError(t, err, "User should still exist after partner deletion")
+		assert.NoError(t, err, "User should still exist after partner deletion")
 		user, err := domain.DecryptUserEncx(ctx, crypto, userEncx)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, testUser.ID, user.ID)
 		assert.Equal(t, testUser.Email, user.Email)
 	})
@@ -83,7 +83,7 @@ func TestDeletePartner(t *testing.T) {
 		resp, err := client.Do(req)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
@@ -123,7 +123,7 @@ func TestDeletePartner(t *testing.T) {
 
 		// Verify partner still exists
 		exists, err := td.CheckPartnerExistsByUserID(t, ctx, partnerUser.ID, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.True(t, exists, "Partner should still exist after failed delete")
 	})
 
@@ -158,7 +158,7 @@ func TestDeletePartner(t *testing.T) {
 
 		// Verify partner still exists
 		exists, err := td.CheckPartnerExistsByUserID(t, ctx, testUser.ID, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.True(t, exists, "Partner should still exist after unauthorized delete attempt")
 	})
 
@@ -187,7 +187,7 @@ func TestDeletePartner(t *testing.T) {
 		resp, err := client.Do(req)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
@@ -233,13 +233,13 @@ func TestDeletePartner(t *testing.T) {
 		resp, err := client.Do(req)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
 		// Verify count decreased by 1
 		finalCount, err := td.CountPartners(t, ctx, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, 2, finalCount)
 
 		// Verify deleted partner doesn't exist
@@ -290,7 +290,7 @@ func TestDeletePartner(t *testing.T) {
 		resp, err := client.Do(req)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
@@ -300,9 +300,9 @@ func TestDeletePartner(t *testing.T) {
 
 		// Verify user still exists with all data intact
 		retrievedUserEncx, err := td.GetUserEnxByID(t, ctx, testUser.ID, testPool)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		retrievedUser, err := domain.DecryptUserEncx(ctx, crypto, retrievedUserEncx)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, testUser.Email, retrievedUser.Email)
 		assert.Equal(t, testUser.FirstName, retrievedUser.FirstName)
 		assert.Equal(t, testUser.LastName, retrievedUser.LastName)
