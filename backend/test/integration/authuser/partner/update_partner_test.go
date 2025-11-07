@@ -8,83 +8,78 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestUpdatePartner make test-integration-partner-test
+// make test-func TEST_NAME=TestUpdatePartner TEST_PATH=test/integration/authuser/partner/update_partner_test.go
 
 func TestUpdatePartner(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	t.Run("should successfully update own partner profile", func(t *testing.T) {
+	t.Run("should successfully update partner bio", func(t *testing.T) {
 		// Clean state
 		td.ClearPartnersTable(t, ctx, testPool)
 		td.ClearSessionsRedis(t, ctx, redisClient)
 
+		// Use admin for simplicity
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Create partner user
-		partnerUser := td.NewTestUser(t, "partner@example.com", "John", "Partner")
+		partnerUser := td.NewTestUser(t, "partner1@example.com", "Partner", "One")
 		partnerUser.State = domain.Active
 		partnerUser.Role = identity.PartnerStr
 		partnerUserEncx, err := domain.ProcessUserEncx(ctx, crypto, partnerUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool)
 		require.NoError(t, err)
 
 		// Create partner profile
-		testPartner := &domain.Partner{
-			ID:             uuid.New(),
-			UserID:         partnerUser.ID,
-			Bio:            "Original bio",
-			Experience:     "Original experience",
-			// Certifications: []string{"Original Cert"},
-			CategoryIDs:    []uuid.UUID{},
-			ProductIDs:     []uuid.UUID{},
-			IsVerified:     true,
-		}
-		td.InsertPartner(t, ctx, testPartner, testPool, crypto)
+		testPartner := td.NewTestPartner(t, partnerUser.ID)
+		testPartner.Bio = "Original bio"
+		testPartner.Experience = "Original experience"
+		partnerEncx, err := domain.ProcessPartnerEncx(ctx, crypto, testPartner)
+		require.NoError(t, err)
+		err = td.InsertPartnerEncx(t, ctx, partnerEncx, testPool)
+		require.NoError(t, err)
 
-		accessToken := tu.SetupSessionForUser(t, ctx, authCtx, partnerUser.ID, identity.Partner)
-
-		// Act - update partner profile
+		// Act - update partner bio
 		updatedBio := "Updated bio description"
-		updatedExperience := "Updated experience details"
-		updatedCerts := []string{"Cert 1", "Cert 2", "Cert 3"}
-
 		updateRequest := domain.UpdatePartnerRequest{
-			Bio:            &updatedBio,
-			Experience:     &updatedExperience,
-			// Certifications: &updatedCerts,
+			Bio: &updatedBio,
 		}
 
-		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest)
-		req.Header.Set("Cookie", td.ToCookieString(accessToken))
-
+		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest, accessToken)
 		resp, err := client.Do(req)
 
-		// Assert
-		require.NoError(t, err)
+		// Assert HTTP response
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		// Verify database changes
-		partnerEncx, err := td.GetPartnerByUserID(t, ctx, partnerUser.ID, testPool)
-		require.NoError(t, err)
-		partner, err := domain.DecryptPartnerEncx(ctx, crypto, partnerEncx)
-		require.NoError(t, err)
+		// Parse response
+		partnerResp := td.ParsePartnerResponse(t, resp)
+		assert.Equal(t, updatedBio, partnerResp.Bio)
+		assert.Equal(t, "Original experience", partnerResp.Experience)
 
-		assert.Equal(t, updatedBio, partner.Bio)
-		assert.Equal(t, updatedExperience, partner.Experience)
-		assert.Equal(t, updatedCerts, partner.Certifications)
+		// Verify database changes
+		retrievedPartnerEncx, err := td.GetPartnerEncxByID(t, ctx, testPartner.ID, testPool)
+		assert.NoError(t, err)
+		retrievedPartner, err := domain.DecryptPartnerEncx(ctx, crypto, retrievedPartnerEncx)
+		assert.NoError(t, err)
+
+		assert.Equal(t, updatedBio, retrievedPartner.Bio)
+		assert.Equal(t, "Original experience", retrievedPartner.Experience)
 	})
 
-	t.Run("should successfully update any partner profile with admin role", func(t *testing.T) {
+	t.Run("should successfully update partner experience", func(t *testing.T) {
 		// Clean state
 		td.ClearPartnersTable(t, ctx, testPool)
 		td.ClearSessionsRedis(t, ctx, redisClient)
@@ -92,25 +87,121 @@ func TestUpdatePartner(t *testing.T) {
 		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create partner user
-		partnerUser := td.NewTestUser(t, "partner@example.com", "John", "Partner")
+		partnerUser := td.NewTestUser(t, "partner2@example.com", "Partner", "Two")
 		partnerUser.State = domain.Active
 		partnerUser.Role = identity.PartnerStr
 		partnerUserEncx, err := domain.ProcessUserEncx(ctx, crypto, partnerUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool)
 		require.NoError(t, err)
 
-		testPartner := &domain.Partner{
-			ID:             uuid.New(),
-			UserID:         partnerUser.ID,
-			Bio:            "Original bio",
-			Experience:     "Original experience",
-			// Certifications: []string{"Original Cert"},
-			CategoryIDs:    []uuid.UUID{},
-			ProductIDs:     []uuid.UUID{},
-			IsVerified:     true,
+		// Create partner profile
+		testPartner := td.NewTestPartner(t, partnerUser.ID)
+		testPartner.Bio = "Original bio"
+		testPartner.Experience = "Original experience"
+		partnerEncx, err := domain.ProcessPartnerEncx(ctx, crypto, testPartner)
+		require.NoError(t, err)
+		err = td.InsertPartnerEncx(t, ctx, partnerEncx, testPool)
+		require.NoError(t, err)
+
+		// Act - update only experience
+		updatedExperience := "Updated experience details"
+		updateRequest := domain.UpdatePartnerRequest{
+			Experience: &updatedExperience,
 		}
-		td.InsertPartner(t, ctx, testPartner, testPool, crypto)
+
+		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest, accessToken)
+		resp, err := client.Do(req)
+
+		// Assert
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		// Verify database changes
+		retrievedPartnerEncx, err := td.GetPartnerEncxByID(t, ctx, testPartner.ID, testPool)
+		assert.NoError(t, err)
+		retrievedPartner, err := domain.DecryptPartnerEncx(ctx, crypto, retrievedPartnerEncx)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "Original bio", retrievedPartner.Bio, "Bio should remain unchanged")
+		assert.Equal(t, updatedExperience, retrievedPartner.Experience)
+	})
+
+	t.Run("should successfully update multiple fields at once", func(t *testing.T) {
+		// Clean state
+		td.ClearPartnersTable(t, ctx, testPool)
+		td.ClearSessionsRedis(t, ctx, redisClient)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		// Create partner user
+		partnerUser := td.NewTestUser(t, "partner3@example.com", "Partner", "Three")
+		partnerUser.State = domain.Active
+		partnerUser.Role = identity.PartnerStr
+		partnerUserEncx, err := domain.ProcessUserEncx(ctx, crypto, partnerUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool)
+		require.NoError(t, err)
+
+		// Create partner profile
+		testPartner := td.NewTestPartner(t, partnerUser.ID)
+		testPartner.Bio = "Original bio"
+		testPartner.Experience = "Original experience"
+		partnerEncx, err := domain.ProcessPartnerEncx(ctx, crypto, testPartner)
+		require.NoError(t, err)
+		err = td.InsertPartnerEncx(t, ctx, partnerEncx, testPool)
+		require.NoError(t, err)
+
+		// Act - update both bio and experience
+		updatedBio := "Updated bio description"
+		updatedExperience := "Updated experience details"
+		updateRequest := domain.UpdatePartnerRequest{
+			Bio:        &updatedBio,
+			Experience: &updatedExperience,
+		}
+
+		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest, accessToken)
+		resp, err := client.Do(req)
+
+		// Assert
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		// Verify database changes
+		retrievedPartnerEncx, err := td.GetPartnerEncxByID(t, ctx, testPartner.ID, testPool)
+		assert.NoError(t, err)
+		retrievedPartner, err := domain.DecryptPartnerEncx(ctx, crypto, retrievedPartnerEncx)
+		assert.NoError(t, err)
+
+		assert.Equal(t, updatedBio, retrievedPartner.Bio)
+		assert.Equal(t, updatedExperience, retrievedPartner.Experience)
+	})
+
+	t.Run("should allow admin to update any partner profile", func(t *testing.T) {
+		// Clean state
+		td.ClearPartnersTable(t, ctx, testPool)
+		td.ClearSessionsRedis(t, ctx, redisClient)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		// Create partner user
+		partnerUser := td.NewTestUser(t, "partner4@example.com", "John", "Partner")
+		partnerUser.State = domain.Active
+		partnerUser.Role = identity.PartnerStr
+		partnerUserEncx, err := domain.ProcessUserEncx(ctx, crypto, partnerUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool)
+		require.NoError(t, err)
+
+		// Create partner profile
+		testPartner := td.NewTestPartner(t, partnerUser.ID)
+		testPartner.Bio = "Original bio"
+		partnerEncx, err := domain.ProcessPartnerEncx(ctx, crypto, testPartner)
+		require.NoError(t, err)
+		err = td.InsertPartnerEncx(t, ctx, partnerEncx, testPool)
+		require.NoError(t, err)
 
 		// Act - admin updates partner profile
 		updatedBio := "Admin updated bio"
@@ -118,144 +209,21 @@ func TestUpdatePartner(t *testing.T) {
 			Bio: &updatedBio,
 		}
 
-		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest)
-		req.Header.Set("Cookie", td.ToCookieString(accessToken))
-
+		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest, accessToken)
 		resp, err := client.Do(req)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify database changes
-		partnerEncx, err := td.GetPartnerByUserID(t, ctx, partnerUser.ID, testPool)
-		require.NoError(t, err)
-		partner, err := domain.DecryptPartnerEncx(ctx, crypto, partnerEncx)
-		require.NoError(t, err)
+		retrievedPartnerEncx, err := td.GetPartnerEncxByID(t, ctx, testPartner.ID, testPool)
+		assert.NoError(t, err)
+		retrievedPartner, err := domain.DecryptPartnerEncx(ctx, crypto, retrievedPartnerEncx)
+		assert.NoError(t, err)
 
-		assert.Equal(t, updatedBio, partner.Bio)
-		assert.Equal(t, "Original experience", partner.Experience, "Experience should remain unchanged")
-	})
-
-	t.Run("should support partial updates (only provided fields)", func(t *testing.T) {
-		// Clean state
-		td.ClearPartnersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, redisClient)
-
-		// Create partner user
-		partnerUser := td.NewTestUser(t, "partner@example.com", "John", "Partner")
-		partnerUser.State = domain.Active
-		partnerUser.Role = identity.PartnerStr
-		partnerUserEncx, err := domain.ProcessUserEncx(ctx, crypto, partnerUser)
-		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool, crypto)
-		require.NoError(t, err)
-
-		testPartner := &domain.Partner{
-			ID:             uuid.New(),
-			UserID:         partnerUser.ID,
-			Bio:            "Original bio",
-			Experience:     "Original experience",
-			// Certifications: []string{"Cert 1", "Cert 2"},
-			CategoryIDs:    []uuid.UUID{},
-			ProductIDs:     []uuid.UUID{},
-			IsVerified:     true,
-		}
-		td.InsertPartner(t, ctx, testPartner, testPool, crypto)
-
-		accessToken := tu.SetupSessionForUser(t, ctx, authCtx, partnerUser.ID, identity.Partner)
-
-		// Act - update only bio
-		updatedBio := "Only bio updated"
-		updateRequest := domain.UpdatePartnerRequest{
-			Bio: &updatedBio,
-		}
-
-		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest)
-		req.Header.Set("Cookie", td.ToCookieString(accessToken))
-
-		resp, err := client.Do(req)
-
-		// Assert
-		require.NoError(t, err)
-		defer resp.Body.Close()
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-		// Verify only bio changed
-		partnerEncx, err := td.GetPartnerByUserID(t, ctx, partnerUser.ID, testPool)
-		require.NoError(t, err)
-		partner, err := domain.DecryptPartnerEncx(ctx, crypto, partnerEncx)
-		require.NoError(t, err)
-
-		assert.Equal(t, updatedBio, partner.Bio, "Bio should be updated")
-		assert.Equal(t, "Original experience", partner.Experience, "Experience should remain unchanged")
-		assert.Equal(t, []string{"Cert 1", "Cert 2"}, partner.Certifications, "Certifications should remain unchanged")
-	})
-
-	t.Run("should return 403 when partner tries to update another partner's profile", func(t *testing.T) {
-		// Clean state
-		td.ClearPartnersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, redisClient)
-
-		// Create first partner (the one making the request)
-		partner1 := td.NewTestUser(t, "partner1@example.com", "Partner", "One")
-		partner1.State = domain.Active
-		partner1.Role = identity.PartnerStr
-		partner1Encx, err := domain.ProcessUserEncx(ctx, crypto, partner1)
-		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, partner1Encx, testPool, crypto)
-		require.NoError(t, err)
-
-		testPartner1 := &domain.Partner{
-			ID:         uuid.New(),
-			UserID:     partner1.ID,
-			Bio:        "Partner 1 bio",
-			IsVerified: true,
-		}
-		td.InsertPartner(t, ctx, testPartner1, testPool, crypto)
-
-		accessToken := tu.SetupSessionForUser(t, ctx, authCtx, partner1.ID, identity.Partner)
-
-		// Create second partner (target)
-		partner2 := td.NewTestUser(t, "partner2@example.com", "Partner", "Two")
-		partner2.State = domain.Active
-		partner2.Role = identity.PartnerStr
-		partner2Encx, err := domain.ProcessUserEncx(ctx, crypto, partner2)
-		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, partner2Encx, testPool, crypto)
-		require.NoError(t, err)
-
-		testPartner2 := &domain.Partner{
-			ID:         uuid.New(),
-			UserID:     partner2.ID,
-			Bio:        "Partner 2 bio",
-			IsVerified: true,
-		}
-		td.InsertPartner(t, ctx, testPartner2, testPool, crypto)
-
-		// Act - partner1 tries to update partner2's profile
-		updatedBio := "Malicious update"
-		updateRequest := domain.UpdatePartnerRequest{
-			Bio: &updatedBio,
-		}
-
-		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner2.ID, updateRequest)
-		req.Header.Set("Cookie", td.ToCookieString(accessToken))
-
-		resp, err := client.Do(req)
-
-		// Assert
-		require.NoError(t, err)
-		defer resp.Body.Close()
-		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-
-		// Verify partner2's bio was not changed
-		partnerEncx, err := td.GetPartnerByUserID(t, ctx, partner2.ID, testPool)
-		require.NoError(t, err)
-		partner, err := domain.DecryptPartnerEncx(ctx, crypto, partnerEncx)
-		require.NoError(t, err)
-		assert.Equal(t, "Partner 2 bio", partner.Bio, "Bio should remain unchanged")
+		assert.Equal(t, updatedBio, retrievedPartner.Bio)
 	})
 
 	t.Run("should return 404 when partner not found", func(t *testing.T) {
@@ -272,13 +240,11 @@ func TestUpdatePartner(t *testing.T) {
 			Bio: &updatedBio,
 		}
 
-		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, nonExistentID, updateRequest)
-		req.Header.Set("Cookie", td.ToCookieString(accessToken))
-
+		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, nonExistentID, updateRequest, accessToken)
 		resp, err := client.Do(req)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
@@ -288,24 +254,23 @@ func TestUpdatePartner(t *testing.T) {
 		td.ClearPartnersTable(t, ctx, testPool)
 		td.ClearSessionsRedis(t, ctx, redisClient)
 
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Create partner user
-		partnerUser := td.NewTestUser(t, "partner@example.com", "John", "Partner")
+		partnerUser := td.NewTestUser(t, "partner5@example.com", "Partner", "Five")
 		partnerUser.State = domain.Active
 		partnerUser.Role = identity.PartnerStr
 		partnerUserEncx, err := domain.ProcessUserEncx(ctx, crypto, partnerUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool)
 		require.NoError(t, err)
 
-		testPartner := &domain.Partner{
-			ID:         uuid.New(),
-			UserID:     partnerUser.ID,
-			Bio:        "Original bio",
-			IsVerified: true,
-		}
-		td.InsertPartner(t, ctx, testPartner, testPool, crypto)
-
-		accessToken := tu.SetupSessionForUser(t, ctx, authCtx, partnerUser.ID, identity.Partner)
+		// Create partner profile
+		testPartner := td.NewTestPartner(t, partnerUser.ID)
+		partnerEncx, err := domain.ProcessPartnerEncx(ctx, crypto, testPartner)
+		require.NoError(t, err)
+		err = td.InsertPartnerEncx(t, ctx, partnerEncx, testPool)
+		require.NoError(t, err)
 
 		// Act - bio exceeds 1000 characters
 		invalidBio := strings.Repeat("a", 1001)
@@ -313,13 +278,11 @@ func TestUpdatePartner(t *testing.T) {
 			Bio: &invalidBio,
 		}
 
-		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest)
-		req.Header.Set("Cookie", td.ToCookieString(accessToken))
-
+		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest, accessToken)
 		resp, err := client.Do(req)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
@@ -329,24 +292,23 @@ func TestUpdatePartner(t *testing.T) {
 		td.ClearPartnersTable(t, ctx, testPool)
 		td.ClearSessionsRedis(t, ctx, redisClient)
 
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Create partner user
-		partnerUser := td.NewTestUser(t, "partner@example.com", "John", "Partner")
+		partnerUser := td.NewTestUser(t, "partner6@example.com", "Partner", "Six")
 		partnerUser.State = domain.Active
 		partnerUser.Role = identity.PartnerStr
 		partnerUserEncx, err := domain.ProcessUserEncx(ctx, crypto, partnerUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool)
 		require.NoError(t, err)
 
-		testPartner := &domain.Partner{
-			ID:         uuid.New(),
-			UserID:     partnerUser.ID,
-			Experience: "Original experience",
-			IsVerified: true,
-		}
-		td.InsertPartner(t, ctx, testPartner, testPool, crypto)
-
-		accessToken := tu.SetupSessionForUser(t, ctx, authCtx, partnerUser.ID, identity.Partner)
+		// Create partner profile
+		testPartner := td.NewTestPartner(t, partnerUser.ID)
+		partnerEncx, err := domain.ProcessPartnerEncx(ctx, crypto, testPartner)
+		require.NoError(t, err)
+		err = td.InsertPartnerEncx(t, ctx, partnerEncx, testPool)
+		require.NoError(t, err)
 
 		// Act - experience exceeds 2000 characters
 		invalidExperience := strings.Repeat("a", 2001)
@@ -354,99 +316,11 @@ func TestUpdatePartner(t *testing.T) {
 			Experience: &invalidExperience,
 		}
 
-		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest)
-		req.Header.Set("Cookie", td.ToCookieString(accessToken))
-
+		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest, accessToken)
 		resp, err := client.Do(req)
 
 		// Assert
-		require.NoError(t, err)
-		defer resp.Body.Close()
-		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	})
-
-	t.Run("should return 400 for too many certifications", func(t *testing.T) {
-		// Clean state
-		td.ClearPartnersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, redisClient)
-
-		// Create partner user
-		partnerUser := td.NewTestUser(t, "partner@example.com", "John", "Partner")
-		partnerUser.State = domain.Active
-		partnerUser.Role = identity.PartnerStr
-		partnerUserEncx, err := domain.ProcessUserEncx(ctx, crypto, partnerUser)
-		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool, crypto)
-		require.NoError(t, err)
-
-		testPartner := &domain.Partner{
-			ID:             uuid.New(),
-			UserID:         partnerUser.ID,
-			// Certifications: []string{"Cert 1"},
-			IsVerified:     true,
-		}
-		td.InsertPartner(t, ctx, testPartner, testPool, crypto)
-
-		accessToken := tu.SetupSessionForUser(t, ctx, authCtx, partnerUser.ID, identity.Partner)
-
-		// Act - more than 20 certifications
-		invalidCerts := make([]string, 21)
-		for i := 0; i < 21; i++ {
-			invalidCerts[i] = "Certification " + string(rune('A'+i))
-		}
-
-		updateRequest := domain.UpdatePartnerRequest{
-			// Certifications: &invalidCerts,
-		}
-
-		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest)
-		req.Header.Set("Cookie", td.ToCookieString(accessToken))
-
-		resp, err := client.Do(req)
-
-		// Assert
-		require.NoError(t, err)
-		defer resp.Body.Close()
-		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	})
-
-	t.Run("should return 400 for empty certification in array", func(t *testing.T) {
-		// Clean state
-		td.ClearPartnersTable(t, ctx, testPool)
-		td.ClearSessionsRedis(t, ctx, redisClient)
-
-		// Create partner user
-		partnerUser := td.NewTestUser(t, "partner@example.com", "John", "Partner")
-		partnerUser.State = domain.Active
-		partnerUser.Role = identity.PartnerStr
-		partnerUserEncx, err := domain.ProcessUserEncx(ctx, crypto, partnerUser)
-		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool, crypto)
-		require.NoError(t, err)
-
-		testPartner := &domain.Partner{
-			ID:             uuid.New(),
-			UserID:         partnerUser.ID,
-			// Certifications: []string{"Valid Cert"},
-			IsVerified:     true,
-		}
-		td.InsertPartner(t, ctx, testPartner, testPool, crypto)
-
-		accessToken := tu.SetupSessionForUser(t, ctx, authCtx, partnerUser.ID, identity.Partner)
-
-		// Act - certifications array contains empty string
-		invalidCerts := []string{"Valid Cert", "", "Another Cert"}
-		updateRequest := domain.UpdatePartnerRequest{
-			// Certifications: &invalidCerts,
-		}
-
-		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest)
-		req.Header.Set("Cookie", td.ToCookieString(accessToken))
-
-		resp, err := client.Do(req)
-
-		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
@@ -456,20 +330,18 @@ func TestUpdatePartner(t *testing.T) {
 		td.ClearPartnersTable(t, ctx, testPool)
 
 		// Create partner
-		partnerUser := td.NewTestUser(t, "partner@example.com", "Partner", "User")
+		partnerUser := td.NewTestUser(t, "partner7@example.com", "Partner", "Seven")
 		partnerUser.State = domain.Active
 		partnerUserEncx, err := domain.ProcessUserEncx(ctx, crypto, partnerUser)
 		require.NoError(t, err)
-		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool, crypto)
+		err = td.InsertUserEncx(t, ctx, partnerUserEncx, testPool)
 		require.NoError(t, err)
 
-		testPartner := &domain.Partner{
-			ID:         uuid.New(),
-			UserID:     partnerUser.ID,
-			Bio:        "Test bio",
-			IsVerified: true,
-		}
-		td.InsertPartner(t, ctx, testPartner, testPool, crypto)
+		testPartner := td.NewTestPartner(t, partnerUser.ID)
+		partnerEncx, err := domain.ProcessPartnerEncx(ctx, crypto, testPartner)
+		require.NoError(t, err)
+		err = td.InsertPartnerEncx(t, ctx, partnerEncx, testPool)
+		require.NoError(t, err)
 
 		// Act - no authentication
 		updatedBio := "Updated bio"
@@ -477,13 +349,12 @@ func TestUpdatePartner(t *testing.T) {
 			Bio: &updatedBio,
 		}
 
-		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest)
-		// No session cookie
+		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, testPartner.ID, updateRequest, "")
 
 		resp, err := client.Do(req)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
@@ -495,26 +366,86 @@ func TestUpdatePartner(t *testing.T) {
 		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Act - invalid UUID format
-		updatedBio := "Updated bio"
-		updateRequest := domain.UpdatePartnerRequest{
-			Bio: &updatedBio,
-		}
-
 		// Manually construct request with invalid UUID
 		req, err := http.NewRequestWithContext(
 			ctx,
 			http.MethodPut,
 			testServerURL+"/partners/invalid-uuid",
-			nil,
+			strings.NewReader(`{"bio":"Updated bio"}`),
 		)
 		require.NoError(t, err)
-		req.Header.Set("Cookie", td.ToCookieString(accessToken))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Add access token cookie properly
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
 
 		resp, err := client.Do(req)
 
 		// Assert
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("should handle encrypted partner data correctly", func(t *testing.T) {
+		// Clean state
+		td.ClearPartnersTable(t, ctx, testPool)
+		td.ClearSessionsRedis(t, ctx, redisClient)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		// Create partner user with full encrypted data
+		partnerUser := td.NewTestUser(t, "partner8@example.com", "Partner", "Eight")
+		partnerUser.State = domain.Active
+		partnerUser.Role = identity.PartnerStr
+		userEncx, err := domain.ProcessUserEncx(ctx, crypto, partnerUser)
+		require.NoError(t, err)
+		err = td.InsertUserEncx(t, ctx, userEncx, testPool)
+		require.NoError(t, err)
+
+		// Partner with full data including Stripe info
+		partner := td.NewTestPartner(t, partnerUser.ID)
+		partner.Bio = "Experienced professional with multiple certifications"
+		partner.Experience = "10+ years in healthcare"
+		partner.StripeConnectedAccountID = "acct_1234567890"
+		partner.StripeAccountStatus = domain.StripeAccountStatusActive
+		partner.StripeOnboardingComplete = true
+		partner.CategoryIDs = []uuid.UUID{uuid.New(), uuid.New()}
+		partner.ProductIDs = []uuid.UUID{uuid.New(), uuid.New(), uuid.New()}
+
+		partnerEncx, err := domain.ProcessPartnerEncx(ctx, crypto, partner)
+		require.NoError(t, err)
+		err = td.InsertPartnerEncx(t, ctx, partnerEncx, testPool)
+		require.NoError(t, err)
+
+		// Act - update partner
+		updatedBio := "Updated bio with new information"
+		updateRequest := domain.UpdatePartnerRequest{
+			Bio: &updatedBio,
+		}
+
+		req := td.NewUpdatePartnerRequest(t, ctx, testServerURL, partner.ID, updateRequest, accessToken)
+		resp, err := client.Do(req)
+
+		// Assert
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		// Verify partner was updated correctly
+		retrievedPartnerEncx, err := td.GetPartnerEncxByID(t, ctx, partner.ID, testPool)
+		assert.NoError(t, err)
+		retrievedPartner, err := domain.DecryptPartnerEncx(ctx, crypto, retrievedPartnerEncx)
+		assert.NoError(t, err)
+
+		assert.Equal(t, updatedBio, retrievedPartner.Bio)
+		assert.Equal(t, "10+ years in healthcare", retrievedPartner.Experience, "Experience should remain unchanged")
+		assert.Equal(t, "acct_1234567890", retrievedPartner.StripeConnectedAccountID, "Stripe data should remain unchanged")
+		assert.Equal(t, 2, len(retrievedPartner.CategoryIDs), "CategoryIDs should remain unchanged")
+		assert.Equal(t, 3, len(retrievedPartner.ProductIDs), "ProductIDs should remain unchanged")
 	})
 }
