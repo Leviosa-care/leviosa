@@ -18,7 +18,8 @@ func (r *Repository) GetAllPartnersByCategories(ctx context.Context, categoryIDs
 		SELECT
 			id, user_id, bio, experience,
 			category_ids, product_ids,
-			created_at, updated_at
+			stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
+			dek_encrypted, key_version, created_at, updated_at
 		FROM %s.partners
 		WHERE category_ids && $1::uuid[]
 		ORDER BY created_at DESC
@@ -40,6 +41,11 @@ func (r *Repository) GetAllPartnersByCategories(ctx context.Context, categoryIDs
 			&partner.Experience,
 			&partner.CategoryIDs,
 			&partner.ProductIDs,
+			&partner.StripeConnectedAccountIDEncrypted,
+			&partner.StripeAccountStatus,
+			&partner.StripeOnboardingComplete,
+			&partner.DEKEncrypted,
+			&partner.KeyVersion,
 			&partner.CreatedAt,
 			&partner.UpdatedAt,
 		)
