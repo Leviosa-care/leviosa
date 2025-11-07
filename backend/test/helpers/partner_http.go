@@ -123,3 +123,25 @@ func ParsePartnersListResponse(t *testing.T, resp *http.Response) []*domain.Part
 
 	return partners
 }
+
+// NewGetAllPartnersByCategoryRequest creates an HTTP request for getting all partners by category ID
+func NewGetAllPartnersByCategoryRequest(t *testing.T, ctx context.Context, serverURL string, categoryID uuid.UUID) *http.Request {
+	t.Helper()
+
+	url := fmt.Sprintf("%s%s/%s", serverURL, partnerEndpoints.PartnersBasePath+partnerEndpoints.CategoryPath, categoryID.String())
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	return req
+}
+
+// NewGetAllPartnersByCategoryRequestWithInvalidID creates an HTTP request with an invalid category ID for testing error handling
+func NewGetAllPartnersByCategoryRequestWithInvalidID(t *testing.T, ctx context.Context, serverURL string, invalidID string) *http.Request {
+	t.Helper()
+
+	url := fmt.Sprintf("%s%s/%s", serverURL, partnerEndpoints.PartnersBasePath+partnerEndpoints.CategoryPath, invalidID)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	return req
+}
