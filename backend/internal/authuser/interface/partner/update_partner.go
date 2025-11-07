@@ -106,7 +106,7 @@ func (h *handler) UpdatePartner(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, errs.ErrInvalidValue):
 			logLevel = "error"
 			errorContext = "encryption failure"
-			statusCode = http.StatusInternalServerError
+			statusCode = http.StatusBadRequest
 		case errors.Is(err, errs.ErrDatabase):
 			logLevel = "error"
 			errorContext = "general database error"
