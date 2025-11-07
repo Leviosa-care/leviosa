@@ -9,45 +9,47 @@ import (
 	"testing"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-
 	partnerEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/partner"
+	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
-// NewCreatePartnerRequest creates an HTTP request for creating a partner
-func NewCreatePartnerRequest(t *testing.T, ctx context.Context, serverURL string, request domain.CreatePartnerRequest) *http.Request {
-	t.Helper()
-
-	body, err := json.Marshal(request)
-	require.NoError(t, err, "Failed to marshal create partner request")
-
-	req, err := http.NewRequestWithContext(ctx, "POST", serverURL+partnerEndpoints.CreatePartnerEndpoint, bytes.NewReader(body))
-	require.NoError(t, err, "Failed to create HTTP request")
-
-	req.Header.Set("Content-Type", "application/json")
-	return req
-}
-
 // NewGetPartnerByIDRequest creates an HTTP request for getting a partner by ID
 func NewGetPartnerByIDRequest(t *testing.T, ctx context.Context, serverURL string, partnerID uuid.UUID) *http.Request {
 	t.Helper()
 
-	url := fmt.Sprintf("%s/admin/partners/%s", serverURL, partnerID.String())
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	url := fmt.Sprintf("%s%s/%s", serverURL, partnerEndpoints.PartnersBasePath, partnerID.String())
+	println("the URL is :", url)
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		url,
+		nil,
+	)
+
 	require.NoError(t, err, "Failed to create HTTP request")
 
 	return req
 }
 
-// NewGetPartnerByUserIDRequest creates an HTTP request for getting a partner by user ID
-func NewGetPartnerByUserIDRequest(t *testing.T, ctx context.Context, serverURL string, userID uuid.UUID) *http.Request {
+// NewGetPartnerMeRequest creates an HTTP request for getting authenticated partner's own profile
+func NewGetPartnerMeRequest(t *testing.T, ctx context.Context, serverURL string, accessToken string) *http.Request {
 	t.Helper()
 
-	url := fmt.Sprintf("%s/admin/partners/user/%s", serverURL, userID.String())
+	url := fmt.Sprintf("%s%s", serverURL, partnerEndpoints.GetPartnerMeEndpoint)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
 
 	return req
 }
@@ -100,3 +102,24 @@ func NewVerifyPartnerRequest(t *testing.T, ctx context.Context, serverURL string
 	return req
 }
 
+// ParsePartnerResponse parses a single partner from HTTP response body
+func ParsePartnerResponse(t *testing.T, resp *http.Response) *domain.PartnerResponse {
+	t.Helper()
+
+	var partner domain.PartnerResponse
+	err := json.NewDecoder(resp.Body).Decode(&partner)
+	require.NoError(t, err, "Failed to parse partner response")
+
+	return &partner
+}
+
+// ParsePartnersListResponse parses a list of partners from HTTP response body
+func ParsePartnersListResponse(t *testing.T, resp *http.Response) []*domain.PartnerResponse {
+	t.Helper()
+
+	var partners []*domain.PartnerResponse
+	err := json.NewDecoder(resp.Body).Decode(&partners)
+	require.NoError(t, err, "Failed to parse partners list response")
+
+	return partners
+}

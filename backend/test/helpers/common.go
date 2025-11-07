@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -78,4 +79,19 @@ func ClearS3Bucket(t *testing.T, ctx context.Context, s3Client *s3.Client) {
 			t.Fatalf("Failed to delete objects from bucket %s: %v", BUCKETNAME, err)
 		}
 	}
+}
+
+// CreateContextWithTimeout creates a context with a specific timeout duration
+// Useful for testing timeout scenarios
+func CreateContextWithTimeout(parent context.Context, duration time.Duration) context.Context {
+	ctx, _ := context.WithTimeout(parent, duration)
+	return ctx
+}
+
+// CreateCancelledContext creates a pre-cancelled context
+// Useful for testing request cancellation scenarios
+func CreateCancelledContext() context.Context {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Immediately cancel
+	return ctx
 }
