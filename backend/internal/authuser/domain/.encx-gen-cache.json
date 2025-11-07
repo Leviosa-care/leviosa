@@ -1,0 +1,26 @@
+{
+  "SourceHashes": {
+    "otp.go": "02a5de85ae25df565b0975d214fdbb217363826ff0561482f0675623f84417f8",
+    "partner.go": "ea1bafb267a1c53013b79586fdf52ab71424cd001c85a35ff8fccf59791c5a5a",
+    "user.go": "ec584c6040771885531d72ad366227cc0cff1ef242a93f70373867d1d5cf8b9b"
+  },
+  "ConfigHash": "",
+  "GeneratedFiles": {
+    "otp_encx.go": {
+      "SourceFile": "otp.go",
+      "SourceHash": "02a5de85ae25df565b0975d214fdbb217363826ff0561482f0675623f84417f8",
+      "GeneratedTime": "2025-11-05T10:23:10.769900399+01:00"
+    },
+    "partner_encx.go": {
+      "SourceFile": "partner.go",
+      "SourceHash": "ea1bafb267a1c53013b79586fdf52ab71424cd001c85a35ff8fccf59791c5a5a",
+      "GeneratedTime": "2025-11-05T10:23:10.770509951+01:00"
+    },
+    "user_encx.go": {
+      "SourceFile": "user.go",
+      "SourceHash": "ec584c6040771885531d72ad366227cc0cff1ef242a93f70373867d1d5cf8b9b",
+      "GeneratedTime": "2025-11-05T10:23:10.771971694+01:00"
+    }
+  },
+  "LastGenerated": "2025-11-05T10:23:10.771971865+01:00"
+}

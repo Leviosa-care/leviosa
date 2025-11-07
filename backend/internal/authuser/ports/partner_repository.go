@@ -8,6 +8,7 @@ import (
 )
 
 type PartnerRepository interface {
+	GetPartnerByID(ctx context.Context, partnerID uuid.UUID) (*domain.PartnerEncx, error)
 	GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*domain.PartnerEncx, error)
 	GetAllPartners(ctx context.Context) ([]*domain.PartnerEncx, error)
 	GetAllPartnersByCategory(ctx context.Context, categoryID uuid.UUID) ([]*domain.PartnerEncx, error)

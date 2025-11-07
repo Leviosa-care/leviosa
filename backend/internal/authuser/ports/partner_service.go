@@ -8,6 +8,7 @@ import (
 )
 
 type PartnerService interface {
+	GetPartnerByID(ctx context.Context, partnerID uuid.UUID) (*domain.PartnerResponse, error)
 	GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*domain.PartnerResponse, error)
 	GetAllPartners(ctx context.Context) ([]*domain.PartnerResponse, error)
 	GetAllPartnersByCategory(ctx context.Context, categoryID string) ([]*domain.PartnerResponse, error) // fetch the cache to get the cate
