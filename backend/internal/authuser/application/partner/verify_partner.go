@@ -2,6 +2,7 @@ package partner
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
@@ -19,9 +20,20 @@ import (
 // - Updates user.State = "active"
 func (s *PartnerService) VerifyPartner(ctx context.Context, partnerID uuid.UUID, verifiedByUserID uuid.UUID) (*domain.PartnerResponse, error) {
 	// Get partner to verify it exists
-	partnerEncx, err := s.partnerRepo.GetPartnerByUserID(ctx, partnerID)
+	partnerEncx, err := s.partnerRepo.GetPartnerByID(ctx, partnerID)
 	if err != nil {
-		return nil, fmt.Errorf("get partner by ID: %w", err)
+		switch {
+		case errors.Is(err, errs.ErrRepositoryNotFound):
+			return nil, errs.NewNotFoundErr(err, "partner")
+		case errors.Is(err, errs.ErrConnectionFailure):
+			return nil, fmt.Errorf("get partner by ID - database connection failed: %w", err)
+		case errors.Is(err, errs.ErrContext):
+			return nil, err
+		case errors.Is(err, errs.ErrDatabase):
+			return nil, fmt.Errorf("get partner by ID - database error: %w", err)
+		default:
+			return nil, fmt.Errorf("get partner by ID: %w", err)
+		}
 	}
 
 	// Decrypt partner to check if already verified
@@ -30,15 +42,44 @@ func (s *PartnerService) VerifyPartner(ctx context.Context, partnerID uuid.UUID,
 		return nil, errs.NewNotDecryptedErr("partner during verification check", err)
 	}
 
-	// Update partner verification status in repository
-	if err := s.partnerRepo.VerifyPartner(ctx, partnerID, verifiedByUserID); err != nil {
-		return nil, fmt.Errorf("verify partner in repository: %w", err)
+	// Check if partner is already verified
+	if partner.StripeAccountStatus == domain.StripeAccountStatusActive && partner.StripeOnboardingComplete {
+		return nil, errs.NewConflictErr(fmt.Errorf("partner is already verified"))
+	}
+
+	// Update partner verification status in repository (uses user_id, not partner_id)
+	if err := s.partnerRepo.VerifyPartner(ctx, partner.UserID, verifiedByUserID); err != nil {
+		switch {
+		case errors.Is(err, errs.ErrRepositoryNotFound):
+			return nil, errs.NewNotFoundErr(err, "partner")
+		case errors.Is(err, errs.ErrRepositoryNotUpdated):
+			return nil, fmt.Errorf("verify partner in repository failed: %w", err)
+		case errors.Is(err, errs.ErrConnectionFailure):
+			return nil, fmt.Errorf("verify partner - database connection failed: %w", err)
+		case errors.Is(err, errs.ErrContext):
+			return nil, err
+		case errors.Is(err, errs.ErrDatabase):
+			return nil, fmt.Errorf("verify partner - database error: %w", err)
+		default:
+			return nil, fmt.Errorf("verify partner in repository: %w", err)
+		}
 	}
 
 	// Get user associated with the partner
 	userEncx, err := s.userRepo.GetUserByID(ctx, partner.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("get user by ID: %w", err)
+		switch {
+		case errors.Is(err, errs.ErrRepositoryNotFound):
+			return nil, errs.NewNotFoundErr(err, "user")
+		case errors.Is(err, errs.ErrConnectionFailure):
+			return nil, fmt.Errorf("get user by ID - database connection failed: %w", err)
+		case errors.Is(err, errs.ErrContext):
+			return nil, err
+		case errors.Is(err, errs.ErrDatabase):
+			return nil, fmt.Errorf("get user by ID - database error: %w", err)
+		default:
+			return nil, fmt.Errorf("get user by ID: %w", err)
+		}
 	}
 
 	// Decrypt user for modification
@@ -59,23 +100,48 @@ func (s *PartnerService) VerifyPartner(ctx context.Context, partnerID uuid.UUID,
 
 	// Save updated user
 	if err := s.userRepo.UpdateUser(ctx, updatedUserEncx); err != nil {
-		return nil, fmt.Errorf("update user role and state: %w", err)
+		switch {
+		case errors.Is(err, errs.ErrRepositoryNotFound):
+			return nil, errs.NewNotFoundErr(err, "user")
+		case errors.Is(err, errs.ErrRepositoryNotUpdated):
+			return nil, fmt.Errorf("update user role and state failed: %w", err)
+		case errors.Is(err, errs.ErrConnectionFailure):
+			return nil, fmt.Errorf("update user - database connection failed: %w", err)
+		case errors.Is(err, errs.ErrContext):
+			return nil, err
+		case errors.Is(err, errs.ErrDatabase):
+			return nil, fmt.Errorf("update user - database error: %w", err)
+		default:
+			return nil, fmt.Errorf("update user role and state: %w", err)
+		}
 	}
 
 	// Get updated partner with all fields
-	updatedPartnerEncx, err := s.partnerRepo.GetPartnerByUserID(ctx, partnerID)
+	updatedPartnerEncx, err := s.partnerRepo.GetPartnerByID(ctx, partnerID)
 	if err != nil {
-		return nil, fmt.Errorf("get updated partner: %w", err)
+		switch {
+		case errors.Is(err, errs.ErrRepositoryNotFound):
+			return nil, errs.NewNotFoundErr(err, "partner")
+		case errors.Is(err, errs.ErrConnectionFailure):
+			return nil, fmt.Errorf("get updated partner - database connection failed: %w", err)
+		case errors.Is(err, errs.ErrContext):
+			return nil, err
+		case errors.Is(err, errs.ErrDatabase):
+			return nil, fmt.Errorf("get updated partner - database error: %w", err)
+		default:
+			return nil, fmt.Errorf("get updated partner: %w", err)
+		}
 	}
 
 	// Decrypt updated partner for response
 	updatedPartner, err := domain.DecryptPartnerEncx(ctx, s.crypto, updatedPartnerEncx)
 	if err != nil {
-		return nil, errs.NewNotEncryptedErr("partner after verification", err)
+		return nil, errs.NewNotDecryptedErr("partner after verification", err)
 	}
 
-	// 7. Return partner response
+	// Return partner response
 	return &domain.PartnerResponse{
+		ID:          updatedPartner.ID,
 		UserID:      updatedPartner.UserID,
 		Bio:         updatedPartner.Bio,
 		Experience:  updatedPartner.Experience,
