@@ -111,12 +111,21 @@ func NewDeletePartnerRequest(t *testing.T, ctx context.Context, serverURL string
 }
 
 // NewVerifyPartnerRequest creates an HTTP request for verifying a partner
-func NewVerifyPartnerRequest(t *testing.T, ctx context.Context, serverURL string, partnerID uuid.UUID) *http.Request {
+func NewVerifyPartnerRequest(t *testing.T, ctx context.Context, serverURL string, partnerID uuid.UUID, accessToken string) *http.Request {
 	t.Helper()
 
 	url := fmt.Sprintf("%s/admin/partners/%s/verify", serverURL, partnerID.String())
 	req, err := http.NewRequestWithContext(ctx, "POST", url, nil)
 	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
 
 	return req
 }
