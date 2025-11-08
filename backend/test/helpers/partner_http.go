@@ -209,3 +209,25 @@ func NewGetAllPartnersByCategoriesRequestWithStrings(t *testing.T, ctx context.C
 
 	return req
 }
+
+// NewGetAllPartnersByProductRequest creates an HTTP request for getting all partners by product ID
+func NewGetAllPartnersByProductRequest(t *testing.T, ctx context.Context, serverURL string, productID uuid.UUID) *http.Request {
+	t.Helper()
+
+	url := fmt.Sprintf("%s%s/%s", serverURL, partnerEndpoints.PartnersBasePath+partnerEndpoints.ProductPath, productID.String())
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	return req
+}
+
+// NewGetAllPartnersByProductRequestWithInvalidID creates an HTTP request with an invalid product ID for testing error handling
+func NewGetAllPartnersByProductRequestWithInvalidID(t *testing.T, ctx context.Context, serverURL string, invalidID string) *http.Request {
+	t.Helper()
+
+	url := fmt.Sprintf("%s%s/%s", serverURL, partnerEndpoints.PartnersBasePath+partnerEndpoints.ProductPath, invalidID)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	return req
+}
