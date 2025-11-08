@@ -14,6 +14,7 @@ type PartnerService interface {
 	GetAllPartnersByCategory(ctx context.Context, categoryID string) ([]*domain.PartnerResponse, error) // fetch the cache to get the cate
 	GetAllPartnersByCategories(ctx context.Context, categoryIDs []string) ([]*domain.PartnerResponse, error)
 	GetAllPartnersByProduct(ctx context.Context, productID string) ([]*domain.PartnerResponse, error) // fetch the cache to get the cate
+	GetAllPartnersByProducts(ctx context.Context, productIDs []string) ([]*domain.PartnerResponse, error)
 	CreatePartner(ctx context.Context, userID uuid.UUID, bio, experience string, categoryIDs, productIDs []uuid.UUID) (*domain.Partner, error)
 	UpdatePartner(ctx context.Context, partnerID uuid.UUID, request *domain.UpdatePartnerRequest) (*domain.PartnerResponse, error)
 	DeletePartner(ctx context.Context, partnerID uuid.UUID) error
