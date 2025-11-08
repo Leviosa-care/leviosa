@@ -150,7 +150,7 @@ func TestGetPromotionCode(t *testing.T) {
 			FirstTimeTransaction: true,
 			MaxRedemptions:       &maxRedemptions,
 			Metadata: map[string]string{
-				"target": "new_customers",
+				"target":   "new_customers",
 				"discount": "30_percent",
 			},
 		}

@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"fmt"
 
 	catalogDomain "github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/ports"
@@ -102,10 +101,10 @@ func convertCategoryToCached(cat *catalogDomain.Category) CachedCategory {
 // convertProductToCached converts catalog ProductRes to CachedProduct.
 func convertProductToCached(prod *catalogDomain.ProductRes) CachedProduct {
 	return CachedProduct{
-		ID:                prod.ID,
-		Name:              prod.Name,
-		Description:       prod.Description,
-		CategoryID:        prod.CategoryID,
+		ID:          prod.ID,
+		Name:        prod.Name,
+		Description: prod.Description,
+		// CategoryID:        prod.CategoryID,
 		Duration:          prod.Duration,
 		Status:            string(prod.Status), // Convert PublishedStatus to string
 		Availability:      string(prod.Availability),

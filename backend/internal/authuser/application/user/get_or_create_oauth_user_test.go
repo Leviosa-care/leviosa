@@ -133,7 +133,7 @@ func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
 		mockRepo := &mockUserRepository{}
 		mockCrypto := &mockCryptoService{}
 		mockStripe := &mockStripeService{}
-		
+
 		userService := user.New(mockRepo, mockCrypto, mockStripe)
 
 		existingUser := &domain.User{
@@ -156,7 +156,7 @@ func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
 		assert.False(t, isNewUser)
 		assert.Equal(t, existingUser.ID, result.ID)
 		assert.Equal(t, existingUser.Email, result.Email)
-		
+
 		mockRepo.AssertExpectations(t)
 		mockCrypto.AssertExpectations(t)
 	})
@@ -165,21 +165,21 @@ func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
 		mockRepo := &mockUserRepository{}
 		mockCrypto := &mockCryptoService{}
 		mockStripe := &mockStripeService{}
-		
+
 		userService := user.New(mockRepo, mockCrypto, mockStripe)
 
 		// Mock that neither OAuth ID nor email exists
 		mockRepo.On("GetUserByGoogleID", ctx, "google456").Return(nil, errs.ErrRepositoryNotFound)
 		mockRepo.On("GetUserByEmailHash", ctx, "hashed_email").Return(nil, errs.ErrRepositoryNotFound)
-		
+
 		// Mock crypto operations
 		mockCrypto.On("HashBasic", ctx, []byte("new@example.com")).Return("hashed_email")
 		mockCrypto.On("ProcessStruct", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
 		mockCrypto.On("DecryptStruct", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
-		
+
 		// Mock user creation
 		mockRepo.On("CreateUser", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
-		
+
 		// Mock Stripe customer creation
 		mockStripeCustomer := &mockStripeCustomer{ID: "stripe_customer_123"}
 		mockStripe.On("CreateCustomer", ctx, mock.AnythingOfType("uuid.UUID"), "new@example.com", "Jane", "Smith").Return(mockStripeCustomer, nil)
@@ -192,7 +192,7 @@ func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
 		assert.Equal(t, "new@example.com", result.Email)
 		assert.Equal(t, "Jane", result.FirstName)
 		assert.Equal(t, "Smith", result.LastName)
-		
+
 		mockRepo.AssertExpectations(t)
 		mockCrypto.AssertExpectations(t)
 		mockStripe.AssertExpectations(t)
@@ -202,7 +202,7 @@ func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
 		mockRepo := &mockUserRepository{}
 		mockCrypto := &mockCryptoService{}
 		mockStripe := &mockStripeService{}
-		
+
 		userService := user.New(mockRepo, mockCrypto, mockStripe)
 
 		_, _, err := userService.GetOrCreateOAuthUser(ctx, "invalid_provider", "oauth123", "test@example.com", "John", "Doe")
@@ -215,7 +215,7 @@ func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
 		mockRepo := &mockUserRepository{}
 		mockCrypto := &mockCryptoService{}
 		mockStripe := &mockStripeService{}
-		
+
 		userService := user.New(mockRepo, mockCrypto, mockStripe)
 
 		// Test missing provider

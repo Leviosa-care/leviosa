@@ -6,15 +6,13 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware"
+	// "github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	// "github.com/Leviosa-care/leviosa/backend/internal/common/middleware"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // ExampleIntegrationTest demonstrates how to use the auth test utilities

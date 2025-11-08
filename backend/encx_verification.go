@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/hengadev/encx"
 	hashicorpkeys "github.com/hengadev/encx/providers/keys/hashicorp"
 	hashicorpsecrets "github.com/hengadev/encx/providers/secrets/hashicorp"
@@ -34,8 +33,8 @@ func main() {
 
 	// Create Config struct
 	cfg := encx.Config{
-		KEKAlias:    "test-kek",      // Use test encryption key
-		PepperAlias: "test-service",  // Use service name
+		KEKAlias:    "test-kek",     // Use test encryption key
+		PepperAlias: "test-service", // Use service name
 	}
 
 	// Create crypto service with v0.6.0 API
@@ -95,3 +94,4 @@ func main() {
 	fmt.Printf("   - Pepper Alias: %s\n", cfg.PepperAlias)
 	fmt.Printf("   - Test completed at: %s\n", time.Now().Format(time.RFC3339))
 }
+

@@ -12,7 +12,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // make test-func TEST_NAME=TestCreatePromotionCode TEST_PATH=test/integration/catalog/promotion_code/create_promotion_code_test.go

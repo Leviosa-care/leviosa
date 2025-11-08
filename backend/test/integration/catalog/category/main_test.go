@@ -165,7 +165,6 @@ func TestMain(m *testing.M) {
 	imageService := image.New(imageRepo, mediaRepo, sharedRepo)
 	categoryImagesService := aggregator.NewCategoryAggregatorService(categoryService, imageService)
 	handler = categoryHandler.New(categoryService, imageService, categoryImagesService)
-
 	router := http.NewServeMux()
 	handler.RegisterRoutes(router)
 

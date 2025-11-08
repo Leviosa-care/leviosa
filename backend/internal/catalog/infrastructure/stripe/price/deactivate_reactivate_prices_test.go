@@ -52,7 +52,7 @@ func TestDeactivatePrices(t *testing.T) {
 		for i := 0; i < 3; i++ {
 			createReq := domain.CreateStripePriceRequest{
 				ProductID: productID,
-				Amount:    1000 + (i * 100), // Different amounts
+				Amount:    int64(1000 + (i * 100)), // Different amounts
 				Currency:  "USD",
 				Interval:  "month",
 				Active:    true,
@@ -141,7 +141,7 @@ func TestReactivatePrices(t *testing.T) {
 		for i := 0; i < 3; i++ {
 			createReq := domain.CreateStripePriceRequest{
 				ProductID: productID,
-				Amount:    1500 + (i * 200), // Different amounts
+				Amount:    int64(1500 + (i * 200)), // Different amounts
 				Currency:  "USD",
 				Interval:  "month",
 				Active:    true,
@@ -199,7 +199,7 @@ func TestPriceActivationWorkflow(t *testing.T) {
 		for i := 0; i < 2; i++ {
 			createReq := domain.CreateStripePriceRequest{
 				ProductID: productID,
-				Amount:    1000 + (i * 500),
+				Amount:    int64(1000 + (i * 500)),
 				Currency:  "USD",
 				Interval:  "month",
 				Active:    true,
@@ -245,3 +245,4 @@ func TestPriceActivationWorkflow(t *testing.T) {
 		}
 	})
 }
+

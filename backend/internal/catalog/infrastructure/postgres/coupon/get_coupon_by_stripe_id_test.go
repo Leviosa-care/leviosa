@@ -15,7 +15,7 @@ func TestGetCouponByStripeID(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("successful retrieval by stripe ID", func(t *testing.T) {
-		testdata.ClearCouponsTable(t, ctx, testPool)
+		helpers.ClearCouponsTable(t, ctx, testPool)
 
 		// Insert test coupon
 		coupon := helpers.NewValidPercentOffCoupon("Test Stripe ID Coupon")
@@ -124,4 +124,3 @@ func TestGetCouponByStripeID(t *testing.T) {
 		assert.Equal(t, coupon.StripeCouponID, retrievedCoupon.StripeCouponID)
 	})
 }
-

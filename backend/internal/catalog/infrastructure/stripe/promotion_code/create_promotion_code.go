@@ -107,4 +107,3 @@ func mapStripePromotionCodeToDomainPromotionCode(stripePC *stripe.PromotionCode)
 
 	return domainPC
 }
-

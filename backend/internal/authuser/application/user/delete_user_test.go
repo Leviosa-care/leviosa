@@ -359,4 +359,3 @@ func TestDeleteUser(t *testing.T) {
 		mockRepo.AssertNotCalled(t, "DeleteUser")
 	})
 }
-

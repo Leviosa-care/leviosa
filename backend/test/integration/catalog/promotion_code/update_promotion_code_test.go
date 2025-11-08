@@ -11,7 +11,6 @@ import (
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // make test-func TEST_NAME=TestUpdatePromotionCode TEST_PATH=test/integration/catalog/promotion_code/update_promotion_code_test.go
