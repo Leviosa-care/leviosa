@@ -36,6 +36,9 @@ const (
 	// Get partner by product
 	GetPartnersByProductEndpoint = PartnersBasePath + ProductPath + "/{id}"
 
+	// Get partner by products
+	GetPartnersByProductsEndpoint = PartnersBasePath + ProductPath
+
 	// === Authenticated Partner Endpoints ===
 
 	// Get authenticated partner's own profile
