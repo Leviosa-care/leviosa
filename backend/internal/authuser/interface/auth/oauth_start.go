@@ -119,7 +119,9 @@ func (h *handler) OAuthStart(w http.ResponseWriter, r *http.Request) {
 		"operation", "oauth_start",
 		"method", r.Method,
 		"path", r.URL.Path,
-		"status_code", http.StatusOK)
+		"status_code", http.StatusFound,
+		"redirect_url", response.AuthorizationURL)
 
-	httpx.RespondWithJSON(w, response, http.StatusOK)
+	// Redirect to OAuth provider's authorization URL
+	http.Redirect(w, r, response.AuthorizationURL, http.StatusFound)
 }
