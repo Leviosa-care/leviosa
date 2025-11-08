@@ -10,6 +10,9 @@ const (
 	// Partner category
 	CategoryPath = "/categories"
 
+	// Partner product
+	ProductPath = "/products"
+
 	// Partner profile
 	MePath = "/me"
 
@@ -29,6 +32,9 @@ const (
 
 	// Get partner by categories
 	GetPartnersByCategoriesEndpoint = PartnersBasePath + CategoryPath
+
+	// Get partner by product
+	GetPartnersByProductEndpoint = PartnersBasePath + ProductPath + "/{id}"
 
 	// === Authenticated Partner Endpoints ===
 

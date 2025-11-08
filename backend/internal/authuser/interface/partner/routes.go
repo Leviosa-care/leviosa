@@ -28,6 +28,9 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Get partners by categories
 	router.HandleFunc("GET "+GetPartnersByCategoriesEndpoint, mw.EnableCORS(h.GetAllPartnersByCategories))
 
+	// Get partners by product
+	router.HandleFunc("GET "+GetPartnersByProductEndpoint, mw.EnableCORS(h.GetAllPartnersByProduct))
+
 	// Delete partner (admin only)
 	router.HandleFunc("DELETE "+DeletePartnerEndpoint, RequireAdmin(mw.EnableCORS(h.DeletePartner)))
 
