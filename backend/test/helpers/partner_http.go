@@ -231,3 +231,39 @@ func NewGetAllPartnersByProductRequestWithInvalidID(t *testing.T, ctx context.Co
 
 	return req
 }
+
+// NewGetAllPartnersByProductsRequest creates an HTTP request for getting all partners by multiple product IDs
+func NewGetAllPartnersByProductsRequest(t *testing.T, ctx context.Context, serverURL string, productIDs []uuid.UUID) *http.Request {
+	t.Helper()
+
+	url := fmt.Sprintf("%s%s", serverURL, partnerEndpoints.PartnersBasePath+partnerEndpoints.ProductPath)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Add product_id query parameters
+	q := req.URL.Query()
+	for _, productID := range productIDs {
+		q.Add("product_id", productID.String())
+	}
+	req.URL.RawQuery = q.Encode()
+
+	return req
+}
+
+// NewGetAllPartnersByProductsRequestWithStrings creates an HTTP request with string product IDs for testing
+func NewGetAllPartnersByProductsRequestWithStrings(t *testing.T, ctx context.Context, serverURL string, productIDs []string) *http.Request {
+	t.Helper()
+
+	url := fmt.Sprintf("%s%s", serverURL, partnerEndpoints.PartnersBasePath+partnerEndpoints.ProductPath)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	// Add product_id query parameters
+	q := req.URL.Query()
+	for _, productID := range productIDs {
+		q.Add("product_id", productID)
+	}
+	req.URL.RawQuery = q.Encode()
+
+	return req
+}
