@@ -331,6 +331,19 @@ func CreateMockOAuthTestUser(t *testing.T, mockServer *MockOAuthServer, id, emai
 	return code, userInfo
 }
 
+// NewOAuthStartRequest creates an HTTP request to start OAuth flow
+func NewOAuthStartRequest(t *testing.T, serverURL, provider string) *http.Request {
+	t.Helper()
+
+	startURL := serverURL + "/auth/oauth/" + provider
+
+	req, err := http.NewRequest("GET", startURL, nil)
+	if err != nil {
+		t.Fatalf("Failed to create OAuth start request: %v", err)
+	}
+	return req
+}
+
 // NewOAuthCallbackRequest creates an HTTP request to handle OAuth callback
 func NewOAuthCallbackRequest(t *testing.T, serverURL, provider, code, state string) *http.Request {
 	callbackURL := serverURL + "/auth/oauth/" + provider + "/callback"
