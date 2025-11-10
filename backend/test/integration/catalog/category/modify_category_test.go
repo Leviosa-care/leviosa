@@ -9,8 +9,13 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	categoryHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/category"
+	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -23,12 +28,16 @@ func TestModifyCategory(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	// Setup: Clear the table and insert a known category for successful tests
-	td.ClearCategoriesTable(t, ctx, testPool)
-	existingCategory := td.NewValidCategory("Original Name")
-	td.InsertCategory(t, ctx, existingCategory, testPool)
+	t.Run("should successfully modify a category's name and description with valid admin token", func(t *testing.T) {
+		// Setup: Clear the table and insert a known category for this test
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
-	t.Run("should successfully modify a category's name and description", func(t *testing.T) {
+		existingCategory := td.NewValidCategory("Original Name")
+		td.InsertCategory(t, ctx, existingCategory, testPool)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		updatedName := "Updated Category Name"
 		updatedDescription := "Updated description."
 
@@ -36,10 +45,8 @@ func TestModifyCategory(t *testing.T) {
 			Name:        &updatedName,
 			Description: &updatedDescription,
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newModifyCategoryRequest(t, ctx, existingCategory.ID.String(), jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewModifyCategoryRequest(t, ctx, testServerURL, existingCategory.ID.String(), requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -55,13 +62,16 @@ func TestModifyCategory(t *testing.T) {
 	})
 
 	t.Run("should return 404 Not Found if category ID does not exist", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		nonExistentID := uuid.New().String()
 		updatedName := "New Name"
 		requestBody := domain.UpdateCategoryRequest{Name: &updatedName}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newModifyCategoryRequest(t, ctx, nonExistentID, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewModifyCategoryRequest(t, ctx, testServerURL, nonExistentID, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -80,6 +90,7 @@ func TestModifyCategory(t *testing.T) {
 	t.Run("should return 409 Conflict if category name already exists", func(t *testing.T) {
 		// Clean and setup for this specific test
 		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		existingCat1 := td.NewValidCategory("Unique Category 1")
 		td.InsertCategory(t, ctx, existingCat1, testPool)
@@ -87,14 +98,14 @@ func TestModifyCategory(t *testing.T) {
 		existingCat2 := td.NewValidCategory("Unique Category 2")
 		td.InsertCategory(t, ctx, existingCat2, testPool)
 
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Attempt to update cat1's name to cat2's name
 		requestBody := domain.UpdateCategoryRequest{
 			Name: &existingCat2.Name,
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newModifyCategoryRequest(t, ctx, existingCat1.ID.String(), jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewModifyCategoryRequest(t, ctx, testServerURL, existingCat1.ID.String(), requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -111,12 +122,15 @@ func TestModifyCategory(t *testing.T) {
 	})
 
 	t.Run("should return 400 Bad Request for an invalid UUID in the URL", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		updatedName := "New Name"
 		requestBody := domain.UpdateCategoryRequest{Name: &updatedName}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newModifyCategoryRequest(t, ctx, "not-a-valid-uuid", jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewModifyCategoryRequest(t, ctx, testServerURL, "not-a-valid-uuid", requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -133,8 +147,17 @@ func TestModifyCategory(t *testing.T) {
 	})
 
 	t.Run("should return 400 Bad Request for an empty request body", func(t *testing.T) {
-		req := newModifyCategoryRequest(t, ctx, existingCategory.ID.String(), []byte("{}"))
-		req.Header.Set("Content-Type", "application/json")
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		existingCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, existingCategory, testPool)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		requestBody := domain.UpdateCategoryRequest{}
+
+		req := th.NewModifyCategoryRequest(t, ctx, testServerURL, existingCategory.ID.String(), requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -151,8 +174,27 @@ func TestModifyCategory(t *testing.T) {
 	})
 
 	t.Run("should return 400 Bad Request for invalid JSON body", func(t *testing.T) {
-		req := newModifyCategoryRequest(t, ctx, existingCategory.ID.String(), []byte(`{"name": 123}`))
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		existingCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, existingCategory, testPool)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		// Create request with invalid JSON by manually crafting the request body
+		jsonBody := []byte(`{"name": 123}`)
+
+		url := testServerURL + categoryHandler.AdminCategoriesBasePath + "/" + existingCategory.ID.String()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPatch, url, bytes.NewReader(jsonBody))
+		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
+
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -169,10 +211,27 @@ func TestModifyCategory(t *testing.T) {
 	})
 
 	t.Run("should return 400 Bad Request for unknown fields in request body", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		existingCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, existingCategory, testPool)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		// Create request with unknown field by manually crafting the request body
 		jsonBody := []byte(`{"unknown_field": "some_value"}`)
 
-		req := newModifyCategoryRequest(t, ctx, existingCategory.ID.String(), jsonBody)
+		url := testServerURL + categoryHandler.AdminCategoriesBasePath + "/" + existingCategory.ID.String()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPatch, url, bytes.NewReader(jsonBody))
+		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
+
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -188,11 +247,83 @@ func TestModifyCategory(t *testing.T) {
 		assert.Contains(t, respBody.Error, "invalid request body")
 		assert.Contains(t, respBody.Error, "unknown field")
 	})
-}
 
-// newModifyCategoryRequest creates a new HTTP request for the ModifyCategory handler.
-func newModifyCategoryRequest(t *testing.T, ctx context.Context, categoryID string, jsonBody []byte) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, testServerURL+"/admin/categories/"+categoryID, bytes.NewReader(jsonBody))
-	require.NoError(t, err)
-	return req
+	// Authentication test cases
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+
+		existingCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, existingCategory, testPool)
+
+		updatedName := "Updated Category Name"
+		requestBody := domain.UpdateCategoryRequest{Name: &updatedName}
+
+		req := th.NewModifyCategoryRequest(t, ctx, testServerURL, existingCategory.ID.String(), requestBody, "")
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		existingCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, existingCategory, testPool)
+
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		updatedName := "Updated Category Name"
+		requestBody := domain.UpdateCategoryRequest{Name: &updatedName}
+
+		req := th.NewModifyCategoryRequest(t, ctx, testServerURL, existingCategory.ID.String(), requestBody, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		existingCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, existingCategory, testPool)
+
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
+
+		updatedName := "Updated Category Name"
+		requestBody := domain.UpdateCategoryRequest{Name: &updatedName}
+
+		req := th.NewModifyCategoryRequest(t, ctx, testServerURL, existingCategory.ID.String(), requestBody, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+
+		existingCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, existingCategory, testPool)
+
+		updatedName := "Updated Category Name"
+		requestBody := domain.UpdateCategoryRequest{Name: &updatedName}
+
+		req := th.NewModifyCategoryRequest(t, ctx, testServerURL, existingCategory.ID.String(), requestBody, "invalid-token-12345")
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
 }

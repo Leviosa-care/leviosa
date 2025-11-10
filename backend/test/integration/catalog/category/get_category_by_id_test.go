@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	categoryHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/category"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
@@ -119,7 +120,8 @@ func TestGetCategoryByID(t *testing.T) {
 
 // newGetCategoryByIDRequest creates a new HTTP request for the GetCategoryByID handler.
 func newGetCategoryByIDRequest(t *testing.T, ctx context.Context, categoryID string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/categories/"+categoryID, nil)
+	url := testServerURL + categoryHandler.CategoriesBasePath + "/" + categoryID
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	require.NoError(t, err)
 	return req
 }

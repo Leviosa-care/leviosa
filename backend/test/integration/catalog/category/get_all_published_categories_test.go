@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	categoryHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/category"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/stretchr/testify/assert"
@@ -131,7 +132,8 @@ func TestGetAllPublishedCategories(t *testing.T) {
 
 // newGetAllPublishedCategoriesRequest creates a new HTTP request for the public handler.
 func newGetAllPublishedCategoriesRequest(t *testing.T, ctx context.Context) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/categories", nil)
+	url := testServerURL + categoryHandler.CategoriesBasePath
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	require.NoError(t, err)
 	return req
 }

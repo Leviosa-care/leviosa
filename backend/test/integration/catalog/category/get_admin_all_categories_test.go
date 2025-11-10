@@ -8,7 +8,10 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,9 +23,12 @@ func TestGetAdminAllCategories(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	t.Run("should successfully get all categories when they exist", func(t *testing.T) {
+	t.Run("should successfully get all categories with valid admin token", func(t *testing.T) {
 		// Clean the database to ensure isolation for this test
 		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Setup: Insert multiple categories
 		cat1 := td.NewValidCategory("Apple Products")
@@ -51,7 +57,7 @@ func TestGetAdminAllCategories(t *testing.T) {
 		img3.IsActive = false
 		td.InsertImage(t, ctx, img3, testPool)
 
-		req := newGetAllCategoriesRequest(t, ctx)
+		req := th.NewGetAdminAllCategoriesRequest(t, ctx, testServerURL, accessToken)
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
@@ -84,8 +90,11 @@ func TestGetAdminAllCategories(t *testing.T) {
 	t.Run("should return an empty array when no categories exist", func(t *testing.T) {
 		// Clean the database to ensure it is empty
 		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
-		req := newGetAllCategoriesRequest(t, ctx)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		req := th.NewGetAdminAllCategoriesRequest(t, ctx, testServerURL, accessToken)
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
@@ -100,11 +109,61 @@ func TestGetAdminAllCategories(t *testing.T) {
 		assert.NotNil(t, response, "Expected an empty but non-nil slice")
 		assert.Len(t, response, 0, "Expected 0 categories in the response")
 	})
-}
 
-// newGetAllCategoriesRequest creates a new HTTP request for the GetAdminAllCategories handler.
-func newGetAllCategoriesRequest(t *testing.T, ctx context.Context) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/admin/categories", nil)
-	require.NoError(t, err)
-	return req
+	// Add authentication test cases
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+
+		req := th.NewGetAdminAllCategoriesRequest(t, ctx, testServerURL, "") // Empty token
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Create expired admin session
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		req := th.NewGetAdminAllCategoriesRequest(t, ctx, testServerURL, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Create standard user (not admin)
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
+
+		req := th.NewGetAdminAllCategoriesRequest(t, ctx, testServerURL, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+
+		req := th.NewGetAdminAllCategoriesRequest(t, ctx, testServerURL, "invalid-token-12345")
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
 }

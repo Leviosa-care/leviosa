@@ -7,11 +7,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // make test-func TEST_NAME=TestRemoveCategory TEST_PATH=test/integration/catalog/category/remove_category_test.go
@@ -20,9 +24,12 @@ func TestRemoveCategory(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	t.Run("should successfully remove a category and its images", func(t *testing.T) {
+	t.Run("should successfully remove a category and its images with valid admin token", func(t *testing.T) {
 		// Clean the database and S3 bucket to ensure a fresh start
-		clearTables(t, ctx, testPool)
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Setup: Create a category
 		cat := td.NewValidCategory("Category to Remove")
@@ -39,7 +46,7 @@ func TestRemoveCategory(t *testing.T) {
 		// mocking the S3 service or pre-populating the bucket which is complex.
 		// We'll rely on the image service's internal tests to cover S3 deletion logic.
 
-		req := newRemoveCategoryRequest(t, ctx, cat.ID.String())
+		req := th.NewRemoveCategoryRequest(t, ctx, testServerURL, cat.ID.String(), accessToken)
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
@@ -61,11 +68,14 @@ func TestRemoveCategory(t *testing.T) {
 
 	t.Run("should return 404 when the category does not exist", func(t *testing.T) {
 		// Clean the database to ensure isolation
-		clearTables(t, ctx, testPool)
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		nonExistentID := uuid.New().String()
 
-		req := newRemoveCategoryRequest(t, ctx, nonExistentID)
+		req := th.NewRemoveCategoryRequest(t, ctx, testServerURL, nonExistentID, accessToken)
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
@@ -82,7 +92,10 @@ func TestRemoveCategory(t *testing.T) {
 
 	t.Run("should return 409 when the category still has associated products", func(t *testing.T) {
 		// Clean the database to ensure isolation
-		clearTables(t, ctx, testPool)
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Setup: Create a category
 		cat := td.NewValidCategory("Category with Products")
@@ -92,7 +105,7 @@ func TestRemoveCategory(t *testing.T) {
 		prod := td.NewValidProduct("Product in Category", cat.ID)
 		td.InsertProduct(t, ctx, testPool, prod)
 
-		req := newRemoveCategoryRequest(t, ctx, cat.ID.String())
+		req := th.NewRemoveCategoryRequest(t, ctx, testServerURL, cat.ID.String(), accessToken)
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
@@ -108,7 +121,12 @@ func TestRemoveCategory(t *testing.T) {
 	})
 
 	t.Run("should return 400 for an invalid category ID", func(t *testing.T) {
-		req := newRemoveCategoryRequest(t, ctx, "not-a-uuid")
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		req := th.NewRemoveCategoryRequest(t, ctx, testServerURL, "not-a-uuid", accessToken)
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
@@ -122,11 +140,71 @@ func TestRemoveCategory(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Contains(t, respBody.Error, "parent ID must be a valid UUID")
 	})
-}
 
-// newRemoveCategoryRequest creates a new HTTP request for the RemoveCategory handler.
-func newRemoveCategoryRequest(t *testing.T, ctx context.Context, categoryID string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, testServerURL+"/admin/categories/"+categoryID, nil)
-	assert.NoError(t, err)
-	return req
+	// Authentication test cases
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+
+		existingCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, existingCategory, testPool)
+
+		req := th.NewRemoveCategoryRequest(t, ctx, testServerURL, existingCategory.ID.String(), "")
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		existingCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, existingCategory, testPool)
+
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		req := th.NewRemoveCategoryRequest(t, ctx, testServerURL, existingCategory.ID.String(), accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		existingCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, existingCategory, testPool)
+
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
+
+		req := th.NewRemoveCategoryRequest(t, ctx, testServerURL, existingCategory.ID.String(), accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		td.ClearCategoriesTable(t, ctx, testPool)
+
+		existingCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, existingCategory, testPool)
+
+		req := th.NewRemoveCategoryRequest(t, ctx, testServerURL, existingCategory.ID.String(), "invalid-token-12345")
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
 }
