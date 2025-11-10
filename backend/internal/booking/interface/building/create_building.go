@@ -45,7 +45,7 @@ func (h *handler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call service to create building
-	building, err := h.svc.CreateBuilding(ctx, request.Name, request.Address, request.City, request.PostalCode, request.Country)
+	building, err := h.svc.CreateBuilding(ctx, &request)
 	if err != nil {
 		// Log with specific error context based on error type
 		var logLevel string
@@ -105,39 +105,6 @@ func (h *handler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set additional fields if provided
-	if request.Description != "" {
-		building.SetDescription(request.Description)
-	}
-	if request.Phone != "" || request.Email != "" {
-		building.SetContactInfo(request.Phone, request.Email)
-	}
-
-	// Update building with additional fields if any were set
-	if request.Description != "" || request.Phone != "" || request.Email != "" {
-		building, err = h.svc.UpdateBuilding(ctx, building.ID, building.Name, building.Address, building.City, building.PostalCode, building.Country, building.Description)
-		if err != nil {
-			logger.ErrorContext(ctx, "Handler: Failed to update building with additional fields",
-				"error", err,
-				"building_id", building.ID,
-				"operation", "create_building")
-			httpx.RespondWithError(w, err, http.StatusInternalServerError)
-			return
-		}
-
-		if request.Phone != "" || request.Email != "" {
-			building, err = h.svc.UpdateBuildingContactInfo(ctx, building.ID, request.Phone, request.Email)
-			if err != nil {
-				logger.ErrorContext(ctx, "Handler: Failed to update building contact info",
-					"error", err,
-					"building_id", building.ID,
-					"operation", "create_building")
-				httpx.RespondWithError(w, err, http.StatusInternalServerError)
-				return
-			}
-		}
-	}
-
 	// Convert to response DTO
 	response := domain.BuildingResponse{
 		ID:          building.ID,
@@ -149,9 +116,6 @@ func (h *handler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
 		Description: building.Description,
 		Phone:       building.Phone,
 		Email:       building.Email,
-		IsActive:    building.IsActive,
-		CreatedAt:   building.CreatedAt,
-		UpdatedAt:   building.UpdatedAt,
 	}
 
 	logger.InfoContext(ctx, "Handler: Building created successfully",

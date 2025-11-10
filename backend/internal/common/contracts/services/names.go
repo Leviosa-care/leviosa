@@ -4,6 +4,7 @@ package services
 const (
 	AuthUser     = "authuser"
 	Catalog      = "catalog"
+	Booking      = "booking"
 	Settings     = "settings"
 	Notification = "notification"
 )
@@ -13,6 +14,7 @@ func AllServices() []string {
 	return []string{
 		AuthUser,
 		Catalog,
+		Booking,
 		Settings,
 		Notification,
 	}
