@@ -11,7 +11,10 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/application/image"
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -26,8 +29,11 @@ import (
 func TestRemoveImage(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
-	t.Run("should successfully remove an existing image", func(t *testing.T) {
+	t.Run("should successfully remove an existing image with valid admin token", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		parentID := uuid.New()
 		createCategoryParent(t, ctx, parentID) // Ensure parent exists
@@ -60,10 +66,8 @@ func TestRemoveImage(t *testing.T) {
 			ParentID:   parentID.String(),
 			ParentType: string(domain.CategoryType),
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newRemoveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewRemoveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -78,16 +82,17 @@ func TestRemoveImage(t *testing.T) {
 
 	t.Run("should return 400 Bad Request if image_id is missing", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		requestBody := domain.ImageModifierRequest{
 			ImageID:    "", // Missing
 			ParentID:   uuid.New().String(),
 			ParentType: string(domain.ProductType),
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newRemoveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewRemoveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -104,16 +109,17 @@ func TestRemoveImage(t *testing.T) {
 
 	t.Run("should return 400 Bad Request if parent_id is missing", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		requestBody := domain.ImageModifierRequest{
 			ImageID:    uuid.New().String(),
 			ParentID:   "", // Missing
 			ParentType: string(domain.ProductType),
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newRemoveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewRemoveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -130,16 +136,17 @@ func TestRemoveImage(t *testing.T) {
 
 	t.Run("should return 400 Bad Request if parent_type is invalid", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		requestBody := domain.ImageModifierRequest{
 			ImageID:    uuid.New().String(),
 			ParentID:   uuid.New().String(),
 			ParentType: "invalid_type", // Invalid
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newRemoveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewRemoveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -156,6 +163,9 @@ func TestRemoveImage(t *testing.T) {
 
 	t.Run("should return 404 Not Found if image does not exist", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		parentID := uuid.New()
 		createCategoryParent(t, ctx, parentID) // Ensure parent exists
@@ -167,10 +177,8 @@ func TestRemoveImage(t *testing.T) {
 			ParentID:   parentID.String(),
 			ParentType: string(domain.CategoryType),
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newRemoveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewRemoveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -188,6 +196,9 @@ func TestRemoveImage(t *testing.T) {
 
 	t.Run("should return 400 Bad Request if image exists but parent_id mismatch", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		correctParentID := uuid.New()
 		mismatchedParentID := uuid.New()
@@ -220,10 +231,8 @@ func TestRemoveImage(t *testing.T) {
 			ParentID:   mismatchedParentID.String(), // Mismatch
 			ParentType: string(domain.CategoryType),
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newRemoveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewRemoveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -241,10 +250,84 @@ func TestRemoveImage(t *testing.T) {
 		assert.True(t, imageExistsInDB(t, ctx, imageID), "Image should NOT be deleted from DB on mismatch")
 		assert.True(t, fileExistsInS3(t, ctx, s3Key), "File should NOT be deleted from S3 on mismatch")
 	})
-}
 
-func newRemoveImageRequest(t *testing.T, ctx context.Context, jsonBody []byte) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, testServerURL+"/admin/images", bytes.NewReader(jsonBody))
-	require.NoError(t, err)
-	return req
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
+		clearDatabaseAndS3(t, ctx)
+
+		requestBody := domain.ImageModifierRequest{
+			ImageID:    uuid.New().String(),
+			ParentID:   uuid.New().String(),
+			ParentType: string(domain.CategoryType),
+		}
+
+		req := th.NewRemoveImageRequest(t, ctx, testServerURL, requestBody, "")
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Create expired admin session
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		requestBody := domain.ImageModifierRequest{
+			ImageID:    uuid.New().String(),
+			ParentID:   uuid.New().String(),
+			ParentType: string(domain.CategoryType),
+		}
+
+		req := th.NewRemoveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role", func(t *testing.T) {
+		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Create standard user (not admin)
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
+
+		requestBody := domain.ImageModifierRequest{
+			ImageID:    uuid.New().String(),
+			ParentID:   uuid.New().String(),
+			ParentType: string(domain.CategoryType),
+		}
+
+		req := th.NewRemoveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		clearDatabaseAndS3(t, ctx)
+
+		requestBody := domain.ImageModifierRequest{
+			ImageID:    uuid.New().String(),
+			ParentID:   uuid.New().String(),
+			ParentType: string(domain.CategoryType),
+		}
+
+		req := th.NewRemoveImageRequest(t, ctx, testServerURL, requestBody, "invalid-token-12345")
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
 }

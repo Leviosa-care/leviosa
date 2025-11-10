@@ -1,7 +1,6 @@
 package image_test
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,7 +10,10 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/application/image"
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
@@ -25,8 +27,11 @@ func TestSetActiveImage(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	t.Run("should successfully set an inactive image as active and deactivate old one", func(t *testing.T) {
+	t.Run("should successfully set an inactive image as active and deactivate old one with valid admin token", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		parentID := uuid.New()
 		createCategoryParent(t, ctx, parentID) // Ensure parent exists
@@ -68,10 +73,8 @@ func TestSetActiveImage(t *testing.T) {
 			ParentID:   parentID.String(),
 			ParentType: string(domain.CategoryType),
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newSetActiveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewSetActiveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -84,8 +87,11 @@ func TestSetActiveImage(t *testing.T) {
 		assert.False(t, td.GetImageStatus(t, ctx, activeImageID, testPool), "Old image should be inactive after request")
 	})
 
-	t.Run("should successfully set an inactive image as active when no other is active", func(t *testing.T) {
+	t.Run("should successfully set an inactive image as active when no other is active with valid admin token", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		parentID := uuid.New()
 		createCategoryParent(t, ctx, parentID) // Ensure parent exists
@@ -113,10 +119,8 @@ func TestSetActiveImage(t *testing.T) {
 			ParentID:   parentID.String(),
 			ParentType: string(domain.CategoryType),
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newSetActiveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewSetActiveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -130,16 +134,17 @@ func TestSetActiveImage(t *testing.T) {
 
 	t.Run("should return 400 Bad Request if image_id is missing", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		requestBody := domain.ImageModifierRequest{
 			ImageID:    "", // Missing
 			ParentID:   uuid.New().String(),
 			ParentType: string(domain.ProductType),
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newSetActiveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewSetActiveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -157,16 +162,17 @@ func TestSetActiveImage(t *testing.T) {
 
 	t.Run("should return 400 Bad Request if parent_id is missing", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		requestBody := domain.ImageModifierRequest{
 			ImageID:    uuid.New().String(),
 			ParentID:   "", // Missing
 			ParentType: string(domain.ProductType),
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newSetActiveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewSetActiveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -183,16 +189,17 @@ func TestSetActiveImage(t *testing.T) {
 
 	t.Run("should return 400 Bad Request if parent_type is invalid", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		requestBody := domain.ImageModifierRequest{
 			ImageID:    uuid.New().String(),
 			ParentID:   uuid.New().String(),
 			ParentType: "invalid_type", // Invalid
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newSetActiveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewSetActiveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -209,6 +216,9 @@ func TestSetActiveImage(t *testing.T) {
 
 	t.Run("should return 404 Not Found if image to activate does not exist", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		parentID := uuid.New()
 		createCategoryParent(t, ctx, parentID) // Ensure parent exists
@@ -220,10 +230,8 @@ func TestSetActiveImage(t *testing.T) {
 			ParentID:   parentID.String(),
 			ParentType: string(domain.CategoryType),
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newSetActiveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewSetActiveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -240,6 +248,9 @@ func TestSetActiveImage(t *testing.T) {
 
 	t.Run("should return 404 Not Found if parent for image does not exist", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		nonExistentParentID := uuid.New()
 		imageID := uuid.New()
@@ -257,10 +268,8 @@ func TestSetActiveImage(t *testing.T) {
 			ParentID:   nonExistentParentID.String(),
 			ParentType: string(domain.CategoryType),
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newSetActiveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewSetActiveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -277,6 +286,9 @@ func TestSetActiveImage(t *testing.T) {
 
 	t.Run("should return 404 Not Found if image exists but parent_id/parent_type mismatch", func(t *testing.T) {
 		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		correctParentID := uuid.New()
 		mismatchedParentID := uuid.New()
@@ -302,10 +314,8 @@ func TestSetActiveImage(t *testing.T) {
 			ParentID:   mismatchedParentID.String(), // Mismatch: trying to activate with wrong parent
 			ParentType: string(domain.CategoryType),
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newSetActiveImageRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewSetActiveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
@@ -323,10 +333,84 @@ func TestSetActiveImage(t *testing.T) {
 		// Verify image status hasn't changed
 		assert.False(t, td.GetImageStatus(t, ctx, imageID, testPool), "Image status should not change on mismatch")
 	})
-}
 
-func newSetActiveImageRequest(t *testing.T, ctx context.Context, jsonBody []byte) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/images/set-active", bytes.NewReader(jsonBody))
-	require.NoError(t, err)
-	return req
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
+		clearDatabaseAndS3(t, ctx)
+
+		requestBody := domain.ImageModifierRequest{
+			ImageID:    uuid.New().String(),
+			ParentID:   uuid.New().String(),
+			ParentType: string(domain.CategoryType),
+		}
+
+		req := th.NewSetActiveImageRequest(t, ctx, testServerURL, requestBody, "")
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Create expired admin session
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		requestBody := domain.ImageModifierRequest{
+			ImageID:    uuid.New().String(),
+			ParentID:   uuid.New().String(),
+			ParentType: string(domain.CategoryType),
+		}
+
+		req := th.NewSetActiveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role", func(t *testing.T) {
+		clearDatabaseAndS3(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Create standard user (not admin)
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
+
+		requestBody := domain.ImageModifierRequest{
+			ImageID:    uuid.New().String(),
+			ParentID:   uuid.New().String(),
+			ParentType: string(domain.CategoryType),
+		}
+
+		req := th.NewSetActiveImageRequest(t, ctx, testServerURL, requestBody, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		clearDatabaseAndS3(t, ctx)
+
+		requestBody := domain.ImageModifierRequest{
+			ImageID:    uuid.New().String(),
+			ParentID:   uuid.New().String(),
+			ParentType: string(domain.CategoryType),
+		}
+
+		req := th.NewSetActiveImageRequest(t, ctx, testServerURL, requestBody, "invalid-token-12345")
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
 }

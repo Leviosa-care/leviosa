@@ -18,10 +18,13 @@ import (
 	imageMedia "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/s3/image"
 	imageHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/image"
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/ports"
+	authsession "github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/services"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/envmode"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/logger"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -31,15 +34,20 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/hengadev/encx"
 	"github.com/pressly/goose/v3"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
 	pgContainer   *tu.PostgresContainer
 	testPool      *pgxpool.Pool
+	redisClient   *redis.Client
+	crypto        encx.CryptoService
 	s3Client      *s3.Client
 	repo          ports.ImageRepository
 	mediaRepo     ports.ImageMedia
+	authCtx       *tu.AuthTestContext
 	handler       imageHandler.Handler
 	testServerURL string       // Global variable to hold the URL of the running test server
 	testServer    *http.Server // To allow graceful shutdown
@@ -115,6 +123,61 @@ func TestMain(m *testing.M) {
 	}
 	log.Println("Migrations applied.")
 
+	// Redis container
+	redisContainer, err := tu.SetupRedis(ctx, nil)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to setup redis container: %v", err))
+	}
+	defer tu.TeardownRedis(ctx, nil, redisContainer)
+
+	// Redis client
+	log.Println("Creating Redis client...")
+	redisClient = redisContainer.NewClient()
+
+	// Test Redis connection
+	if err = redisClient.Ping(ctx).Err(); err != nil {
+		tu.TeardownRedis(ctx, nil, redisContainer)
+		panic(fmt.Sprintf("Failed to ping Redis: %v", err))
+	}
+	log.Println("Redis client connected successfully.")
+
+	// Setup enhanced Vault testcontainer with per-service encryption (GDPR compliant)
+	log.Println("Setting up enhanced Vault testcontainer with per-service keys...")
+	serviceNames := []string{services.Catalog} // Only catalog service for this test
+	vaultSetup, err := tu.SetupServiceVault(ctx, nil, serviceNames)
+	if err != nil {
+		log.Fatalf("Failed to setup service Vault container: %v", err)
+	}
+	defer tu.TeardownVault(ctx, nil, vaultSetup.VaultContainer)
+
+	// Set environment variables for Vault (for encx library)
+	os.Setenv("VAULT_ADDR", vaultSetup.VaultContainer.HTTPSEndpoint)
+	os.Setenv("VAULT_TOKEN", vaultSetup.VaultContainer.RootToken)
+
+	// Get service-specific crypto service (GDPR compliant)
+	var exists bool
+	crypto, exists = vaultSetup.GetServiceCrypto(services.Catalog)
+	if !exists {
+		log.Fatal("Catalog service crypto not found in vault setup")
+	}
+	if crypto == nil {
+		log.Fatal("Catalog crypto service is nil")
+	}
+	log.Printf("✓ Catalog service crypto initialized with per-service encryption key")
+
+	// Log vault setup details for debugging
+	log.Printf("✓ Vault setup complete:")
+	log.Printf("  - Services: %d", len(vaultSetup.CryptoServices))
+	log.Printf("  - API Keys: %d", len(vaultSetup.ServiceKeys))
+	log.Printf("  - GDPR compliant per-service encryption: enabled")
+
+	// Initialize AuthTestContext for user/session testing
+	authCtx = &tu.AuthTestContext{
+		Pool:   testPool,
+		Redis:  redisClient,
+		Crypto: crypto,
+	}
+
 	log.Println("Setting S3 testcontainer...")
 	// s3 container
 	localstackContainer, err := tu.SetupLocalstack(ctx, nil)
@@ -156,7 +219,10 @@ func TestMain(m *testing.M) {
 	mediaRepo = imageMedia.New(ctx, s3Client, td.BUCKETNAME)
 	service := image.New(repo, mediaRepo, sharedRepo)
 
-	handler = imageHandler.New(service)
+	authSessionRepo := authsession.NewRedisSessionRepository(redisClient)
+	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
+
+	handler = imageHandler.New(service, authmw)
 
 	router := http.NewServeMux()
 	handler.RegisterRoutes(router)
