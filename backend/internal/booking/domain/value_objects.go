@@ -23,3 +23,4 @@ type DateTime struct {
 func NewDateTime(t time.Time) DateTime {
 	return DateTime{t}
 }
+

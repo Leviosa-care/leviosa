@@ -28,34 +28,6 @@ type Building struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// NewBuilding creates a new Building with validated data
-func NewBuilding(name, address, city, postalCode, country string) (*Building, error) {
-	if name == "" {
-		return nil, ErrInvalidBuildingName
-	}
-	if address == "" {
-		return nil, ErrInvalidBuildingAddress
-	}
-	if city == "" {
-		return nil, ErrInvalidBuildingCity
-	}
-	if country == "" {
-		return nil, ErrInvalidBuildingCountry
-	}
-
-	return &Building{
-		ID:         uuid.New(),
-		Name:       name,
-		Address:    address,
-		City:       city,
-		PostalCode: postalCode,
-		Country:    country,
-		IsActive:   true,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
-	}, nil
-}
-
 // UpdateDetails updates the building's details
 func (b *Building) UpdateDetails(name, address, city, postalCode, country string) error {
 	if name == "" {
@@ -99,4 +71,3 @@ func (b *Building) Activate() {
 	b.IsActive = true
 	b.UpdatedAt = time.Now()
 }
-

@@ -21,10 +21,10 @@ var (
 
 // Room allocation errors
 var (
-	ErrInvalidPartnerID                      = errors.New("invalid partner ID")
-	ErrInvalidAllocationStartDate            = errors.New("allocation start date cannot be empty for dedicated allocations")
-	ErrInvalidAllocationEndDate              = errors.New("allocation end date must be after start date")
-	ErrCannotUpdateSharedAllocationPeriod    = errors.New("cannot update time period for shared allocations")
+	ErrInvalidPartnerID                   = errors.New("invalid partner ID")
+	ErrInvalidAllocationStartDate         = errors.New("allocation start date cannot be empty for dedicated allocations")
+	ErrInvalidAllocationEndDate           = errors.New("allocation end date must be after start date")
+	ErrCannotUpdateSharedAllocationPeriod = errors.New("cannot update time period for shared allocations")
 )
 
 // Availability errors
@@ -44,14 +44,15 @@ var (
 
 // Booking errors
 var (
-	ErrInvalidClientID                  = errors.New("invalid client ID")
-	ErrInvalidBookingPrice              = errors.New("booking price cannot be negative")
-	ErrCannotMarkRefundedAsPaid         = errors.New("cannot mark refunded payment as paid")
-	ErrCannotRefundUnpaidBooking        = errors.New("cannot refund unpaid booking")
-	ErrCannotCancelCompletedBooking     = errors.New("cannot cancel completed booking")
-	ErrBookingAlreadyCancelled          = errors.New("booking is already cancelled")
-	ErrCannotCompleteBooking            = errors.New("cannot complete cancelled booking")
-	ErrBookingAlreadyCompleted          = errors.New("booking is already completed")
-	ErrCannotMarkCancelledAsNoShow      = errors.New("cannot mark cancelled booking as no-show")
-	ErrCannotMarkCompletedAsNoShow      = errors.New("cannot mark completed booking as no-show")
+	ErrInvalidClientID              = errors.New("invalid client ID")
+	ErrInvalidBookingPrice          = errors.New("booking price cannot be negative")
+	ErrCannotMarkRefundedAsPaid     = errors.New("cannot mark refunded payment as paid")
+	ErrCannotRefundUnpaidBooking    = errors.New("cannot refund unpaid booking")
+	ErrCannotCancelCompletedBooking = errors.New("cannot cancel completed booking")
+	ErrBookingAlreadyCancelled      = errors.New("booking is already cancelled")
+	ErrCannotCompleteBooking        = errors.New("cannot complete cancelled booking")
+	ErrBookingAlreadyCompleted      = errors.New("booking is already completed")
+	ErrCannotMarkCancelledAsNoShow  = errors.New("cannot mark cancelled booking as no-show")
+	ErrCannotMarkCompletedAsNoShow  = errors.New("cannot mark completed booking as no-show")
 )
+

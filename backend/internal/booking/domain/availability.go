@@ -18,10 +18,10 @@ const (
 
 // RecurrencePattern defines how an availability repeats
 type RecurrencePattern struct {
-	Type      string `json:"type"`       // "daily", "weekly", "monthly"
-	Interval  int    `json:"interval"`   // Every N periods
-	Until     *time.Time `json:"until,omitempty"` // End date for recurrence
-	DaysOfWeek []int  `json:"days_of_week,omitempty"` // For weekly: 0=Sunday, 1=Monday, etc.
+	Type       string     `json:"type"`                   // "daily", "weekly", "monthly"
+	Interval   int        `json:"interval"`               // Every N periods
+	Until      *time.Time `json:"until,omitempty"`        // End date for recurrence
+	DaysOfWeek []int      `json:"days_of_week,omitempty"` // For weekly: 0=Sunday, 1=Monday, etc.
 }
 
 // Availability represents a time slot a partner offers for services
@@ -35,9 +35,9 @@ type Availability struct {
 	EndTime   time.Time `json:"end_time"`
 
 	// Service offering details
-	ServiceType       string             `json:"service_type,omitempty" encx:"encrypt"`
-	PriceCents        *int               `json:"price_cents,omitempty"`
-	MaxCapacity       int                `json:"max_capacity"`
+	ServiceType string `json:"service_type,omitempty" encx:"encrypt"`
+	PriceCents  *int   `json:"price_cents,omitempty"`
+	MaxCapacity int    `json:"max_capacity"`
 
 	// Availability metadata
 	Notes             string             `json:"notes,omitempty" encx:"encrypt"`
@@ -209,3 +209,4 @@ func validateRecurrencePattern(pattern RecurrencePattern) error {
 
 	return nil
 }
+

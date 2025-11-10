@@ -8,56 +8,52 @@ import (
 	"context"
 	"time"
 
-	"github.com/hengadev/errsx"
 	"github.com/hengadev/encx"
-	
+	"github.com/hengadev/errsx"
+
 	"github.com/google/uuid"
-	
 )
 
 // BookingEncx represents the encrypted version of Booking
 type BookingEncx struct {
-	
 	ID uuid.UUID `db:"id" json:"id"`
-	
+
 	AvailabilityID uuid.UUID `db:"availabilityid" json:"availabilityid"`
-	
+
 	ClientID uuid.UUID `db:"clientid" json:"clientid"`
-	
+
 	PartnerID uuid.UUID `db:"partnerid" json:"partnerid"`
-	
+
 	RoomID uuid.UUID `db:"roomid" json:"roomid"`
-	
+
 	TotalPriceCents int `db:"totalpricecents" json:"totalpricecents"`
-	
+
 	Currency string `db:"currency" json:"currency"`
-	
+
 	PaymentStatus PaymentStatus `db:"paymentstatus" json:"paymentstatus"`
-	
+
 	PaymentIntentID *string `db:"paymentintentid" json:"paymentintentid"`
-	
+
 	Status BookingStatus `db:"status" json:"status"`
-	
+
 	CancelledAt *time.Time `db:"cancelledat" json:"cancelledat"`
-	
+
 	CreatedAt time.Time `db:"createdat" json:"createdat"`
-	
+
 	UpdatedAt time.Time `db:"updatedat" json:"updatedat"`
-	
-	
+
 	ClientNotesEncrypted []byte `db:"clientnotes_encrypted" json:"clientnotes_encrypted"`
-	
+
 	PartnerNotesEncrypted []byte `db:"partnernotes_encrypted" json:"partnernotes_encrypted"`
-	
+
 	CancellationReasonEncrypted []byte `db:"cancellationreason_encrypted" json:"cancellationreason_encrypted"`
-	
 
 	// Essential encryption fields
-	DEKEncrypted  []byte `db:"dek_encrypted" json:"dek_encrypted"`
-	KeyVersion    int    `db:"key_version" json:"key_version"`
+	DEKEncrypted []byte `db:"dek_encrypted" json:"dek_encrypted"`
+	KeyVersion   int    `db:"key_version" json:"key_version"`
 
 	// Metadata
-	Metadata      encx.EncryptionMetadata `db:"metadata" json:"metadata"`
+	Metadata encx.EncryptionMetadata `db:"metadata" json:"metadata"`
 }
 
 // ProcessBookingEncx encrypts and hashes fields based on encx tags
@@ -74,33 +70,32 @@ func ProcessBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 	}
 
 	// Copy plain fields (non-encx fields)
-	
+
 	result.ID = source.ID
-	
+
 	result.AvailabilityID = source.AvailabilityID
-	
+
 	result.ClientID = source.ClientID
-	
+
 	result.PartnerID = source.PartnerID
-	
+
 	result.RoomID = source.RoomID
-	
+
 	result.TotalPriceCents = source.TotalPriceCents
-	
+
 	result.Currency = source.Currency
-	
+
 	result.PaymentStatus = source.PaymentStatus
-	
+
 	result.PaymentIntentID = source.PaymentIntentID
-	
+
 	result.Status = source.Status
-	
+
 	result.CancelledAt = source.CancelledAt
-	
+
 	result.CreatedAt = source.CreatedAt
-	
+
 	result.UpdatedAt = source.UpdatedAt
-	
 
 	// Generate DEK
 	dek, err := crypto.GenerateDEK()
@@ -109,8 +104,6 @@ func ProcessBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 		return result, errs.AsError()
 	}
 
-	
-	
 	// Process ClientNotes (encrypt)
 	ClientNotesBytes, err := encx.SerializeValue(source.ClientNotes)
 	if err != nil {
@@ -121,9 +114,7 @@ func ProcessBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 			errs.Set("ClientNotes encryption", err)
 		}
 	}
-	
-	
-	
+
 	// Process PartnerNotes (encrypt)
 	PartnerNotesBytes, err := encx.SerializeValue(source.PartnerNotes)
 	if err != nil {
@@ -134,9 +125,7 @@ func ProcessBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 			errs.Set("PartnerNotes encryption", err)
 		}
 	}
-	
-	
-	
+
 	// Process CancellationReason (encrypt)
 	CancellationReasonBytes, err := encx.SerializeValue(source.CancellationReason)
 	if err != nil {
@@ -147,8 +136,6 @@ func ProcessBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 			errs.Set("CancellationReason encryption", err)
 		}
 	}
-	
-	
 
 	// Encrypt and store DEK
 	result.DEKEncrypted, err = crypto.EncryptDEK(ctx, dek)
@@ -173,33 +160,32 @@ func DecryptBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 	result := &Booking{}
 
 	// Copy plain fields (non-encx fields)
-	
+
 	result.ID = source.ID
-	
+
 	result.AvailabilityID = source.AvailabilityID
-	
+
 	result.ClientID = source.ClientID
-	
+
 	result.PartnerID = source.PartnerID
-	
+
 	result.RoomID = source.RoomID
-	
+
 	result.TotalPriceCents = source.TotalPriceCents
-	
+
 	result.Currency = source.Currency
-	
+
 	result.PaymentStatus = source.PaymentStatus
-	
+
 	result.PaymentIntentID = source.PaymentIntentID
-	
+
 	result.Status = source.Status
-	
+
 	result.CancelledAt = source.CancelledAt
-	
+
 	result.CreatedAt = source.CreatedAt
-	
+
 	result.UpdatedAt = source.UpdatedAt
-	
 
 	// Decrypt DEK
 	dek, err := crypto.DecryptDEKWithVersion(ctx, source.DEKEncrypted, source.KeyVersion)
@@ -208,8 +194,6 @@ func DecryptBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 		return result, errs.AsError()
 	}
 
-	
-	
 	// Decrypt ClientNotes
 	if len(source.ClientNotesEncrypted) > 0 {
 		ClientNotesBytes, err := crypto.DecryptData(ctx, source.ClientNotesEncrypted, dek)
@@ -222,8 +206,7 @@ func DecryptBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 			}
 		}
 	}
-	
-	
+
 	// Decrypt PartnerNotes
 	if len(source.PartnerNotesEncrypted) > 0 {
 		PartnerNotesBytes, err := crypto.DecryptData(ctx, source.PartnerNotesEncrypted, dek)
@@ -236,8 +219,7 @@ func DecryptBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 			}
 		}
 	}
-	
-	
+
 	// Decrypt CancellationReason
 	if len(source.CancellationReasonEncrypted) > 0 {
 		CancellationReasonBytes, err := crypto.DecryptData(ctx, source.CancellationReasonEncrypted, dek)
@@ -250,7 +232,6 @@ func DecryptBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 			}
 		}
 	}
-	
 
 	return result, errs.AsError()
 }

@@ -8,48 +8,44 @@ import (
 	"context"
 	"time"
 
-	"github.com/hengadev/errsx"
 	"github.com/hengadev/encx"
-	
+	"github.com/hengadev/errsx"
+
 	"github.com/google/uuid"
-	
 )
 
 // BuildingEncx represents the encrypted version of Building
 type BuildingEncx struct {
-	
 	ID uuid.UUID `db:"id" json:"id"`
-	
+
 	IsActive bool `db:"isactive" json:"isactive"`
-	
+
 	CreatedAt time.Time `db:"createdat" json:"createdat"`
-	
+
 	UpdatedAt time.Time `db:"updatedat" json:"updatedat"`
-	
-	
+
 	NameEncrypted []byte `db:"name_encrypted" json:"name_encrypted"`
-	
+
 	AddressEncrypted []byte `db:"address_encrypted" json:"address_encrypted"`
-	
+
 	CityEncrypted []byte `db:"city_encrypted" json:"city_encrypted"`
-	
+
 	PostalCodeEncrypted []byte `db:"postalcode_encrypted" json:"postalcode_encrypted"`
-	
+
 	CountryEncrypted []byte `db:"country_encrypted" json:"country_encrypted"`
-	
+
 	DescriptionEncrypted []byte `db:"description_encrypted" json:"description_encrypted"`
-	
+
 	PhoneEncrypted []byte `db:"phone_encrypted" json:"phone_encrypted"`
-	
+
 	EmailEncrypted []byte `db:"email_encrypted" json:"email_encrypted"`
-	
 
 	// Essential encryption fields
-	DEKEncrypted  []byte `db:"dek_encrypted" json:"dek_encrypted"`
-	KeyVersion    int    `db:"key_version" json:"key_version"`
+	DEKEncrypted []byte `db:"dek_encrypted" json:"dek_encrypted"`
+	KeyVersion   int    `db:"key_version" json:"key_version"`
 
 	// Metadata
-	Metadata      encx.EncryptionMetadata `db:"metadata" json:"metadata"`
+	Metadata encx.EncryptionMetadata `db:"metadata" json:"metadata"`
 }
 
 // ProcessBuildingEncx encrypts and hashes fields based on encx tags
@@ -66,15 +62,14 @@ func ProcessBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 	}
 
 	// Copy plain fields (non-encx fields)
-	
+
 	result.ID = source.ID
-	
+
 	result.IsActive = source.IsActive
-	
+
 	result.CreatedAt = source.CreatedAt
-	
+
 	result.UpdatedAt = source.UpdatedAt
-	
 
 	// Generate DEK
 	dek, err := crypto.GenerateDEK()
@@ -83,8 +78,6 @@ func ProcessBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 		return result, errs.AsError()
 	}
 
-	
-	
 	// Process Name (encrypt)
 	NameBytes, err := encx.SerializeValue(source.Name)
 	if err != nil {
@@ -95,9 +88,7 @@ func ProcessBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			errs.Set("Name encryption", err)
 		}
 	}
-	
-	
-	
+
 	// Process Address (encrypt)
 	AddressBytes, err := encx.SerializeValue(source.Address)
 	if err != nil {
@@ -108,9 +99,7 @@ func ProcessBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			errs.Set("Address encryption", err)
 		}
 	}
-	
-	
-	
+
 	// Process City (encrypt)
 	CityBytes, err := encx.SerializeValue(source.City)
 	if err != nil {
@@ -121,9 +110,7 @@ func ProcessBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			errs.Set("City encryption", err)
 		}
 	}
-	
-	
-	
+
 	// Process PostalCode (encrypt)
 	PostalCodeBytes, err := encx.SerializeValue(source.PostalCode)
 	if err != nil {
@@ -134,9 +121,7 @@ func ProcessBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			errs.Set("PostalCode encryption", err)
 		}
 	}
-	
-	
-	
+
 	// Process Country (encrypt)
 	CountryBytes, err := encx.SerializeValue(source.Country)
 	if err != nil {
@@ -147,9 +132,7 @@ func ProcessBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			errs.Set("Country encryption", err)
 		}
 	}
-	
-	
-	
+
 	// Process Description (encrypt)
 	DescriptionBytes, err := encx.SerializeValue(source.Description)
 	if err != nil {
@@ -160,9 +143,7 @@ func ProcessBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			errs.Set("Description encryption", err)
 		}
 	}
-	
-	
-	
+
 	// Process Phone (encrypt)
 	PhoneBytes, err := encx.SerializeValue(source.Phone)
 	if err != nil {
@@ -173,9 +154,7 @@ func ProcessBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			errs.Set("Phone encryption", err)
 		}
 	}
-	
-	
-	
+
 	// Process Email (encrypt)
 	EmailBytes, err := encx.SerializeValue(source.Email)
 	if err != nil {
@@ -186,8 +165,6 @@ func ProcessBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			errs.Set("Email encryption", err)
 		}
 	}
-	
-	
 
 	// Encrypt and store DEK
 	result.DEKEncrypted, err = crypto.EncryptDEK(ctx, dek)
@@ -212,15 +189,14 @@ func DecryptBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 	result := &Building{}
 
 	// Copy plain fields (non-encx fields)
-	
+
 	result.ID = source.ID
-	
+
 	result.IsActive = source.IsActive
-	
+
 	result.CreatedAt = source.CreatedAt
-	
+
 	result.UpdatedAt = source.UpdatedAt
-	
 
 	// Decrypt DEK
 	dek, err := crypto.DecryptDEKWithVersion(ctx, source.DEKEncrypted, source.KeyVersion)
@@ -229,8 +205,6 @@ func DecryptBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 		return result, errs.AsError()
 	}
 
-	
-	
 	// Decrypt Name
 	if len(source.NameEncrypted) > 0 {
 		NameBytes, err := crypto.DecryptData(ctx, source.NameEncrypted, dek)
@@ -243,8 +217,7 @@ func DecryptBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Address
 	if len(source.AddressEncrypted) > 0 {
 		AddressBytes, err := crypto.DecryptData(ctx, source.AddressEncrypted, dek)
@@ -257,8 +230,7 @@ func DecryptBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			}
 		}
 	}
-	
-	
+
 	// Decrypt City
 	if len(source.CityEncrypted) > 0 {
 		CityBytes, err := crypto.DecryptData(ctx, source.CityEncrypted, dek)
@@ -271,8 +243,7 @@ func DecryptBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			}
 		}
 	}
-	
-	
+
 	// Decrypt PostalCode
 	if len(source.PostalCodeEncrypted) > 0 {
 		PostalCodeBytes, err := crypto.DecryptData(ctx, source.PostalCodeEncrypted, dek)
@@ -285,8 +256,7 @@ func DecryptBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Country
 	if len(source.CountryEncrypted) > 0 {
 		CountryBytes, err := crypto.DecryptData(ctx, source.CountryEncrypted, dek)
@@ -299,8 +269,7 @@ func DecryptBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Description
 	if len(source.DescriptionEncrypted) > 0 {
 		DescriptionBytes, err := crypto.DecryptData(ctx, source.DescriptionEncrypted, dek)
@@ -313,8 +282,7 @@ func DecryptBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Phone
 	if len(source.PhoneEncrypted) > 0 {
 		PhoneBytes, err := crypto.DecryptData(ctx, source.PhoneEncrypted, dek)
@@ -327,8 +295,7 @@ func DecryptBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Email
 	if len(source.EmailEncrypted) > 0 {
 		EmailBytes, err := crypto.DecryptData(ctx, source.EmailEncrypted, dek)
@@ -341,7 +308,6 @@ func DecryptBuildingEncx(ctx context.Context, crypto encx.CryptoService, source 
 			}
 		}
 	}
-	
 
 	return result, errs.AsError()
 }
