@@ -28,6 +28,21 @@ type Building struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+func (b *Building) ToResponse() *BuildingResponse {
+	return &BuildingResponse{
+		ID:          b.ID,
+		Name:        b.Name,
+		Address:     b.Address,
+		City:        b.City,
+		PostalCode:  b.PostalCode,
+		Country:     b.Country,
+		Description: b.Description,
+		Phone:       b.Phone,
+		Email:       b.Email,
+	}
+
+}
+
 // UpdateDetails updates the building's details
 func (b *Building) UpdateDetails(name, address, city, postalCode, country string) error {
 	if name == "" {
