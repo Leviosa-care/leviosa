@@ -40,3 +40,4 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Delete coupon (admin only)
 	router.HandleFunc("DELETE "+DeleteCouponEndpoint, RequireAdmin(mw.EnableCORS(h.DeleteCoupon)))
 }
+

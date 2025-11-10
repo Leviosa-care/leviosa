@@ -91,4 +91,3 @@ func (h *handler) CreateCoupon(w http.ResponseWriter, r *http.Request) {
 		http.StatusCreated,
 	)
 }
-

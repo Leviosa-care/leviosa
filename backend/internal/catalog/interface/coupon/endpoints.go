@@ -6,12 +6,12 @@ const (
 	AdminCouponsBasePath = "/admin/coupons"
 
 	// === Coupon Resource Paths ===
-	IDPath           = "/{id}"
-	ValidatePath     = "/validate"
-	ValidPath        = "/valid"
-	StripePath       = "/stripe"
-	StripeIDPath     = "/{stripeId}"
-	DeactivatePath   = "/deactivate"
+	IDPath         = "/{id}"
+	ValidatePath   = "/validate"
+	ValidPath      = "/valid"
+	StripePath     = "/stripe"
+	StripeIDPath   = "/{stripeId}"
+	DeactivatePath = "/deactivate"
 
 	// === Public Coupon Endpoints ===
 

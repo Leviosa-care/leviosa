@@ -59,6 +59,8 @@ func (h *handler) ModifyProduct(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.productService.UpdateProduct(ctx, productID, &req); err != nil {
 		switch {
+		case errors.Is(err, errs.ErrDomainNotFound):
+			httpx.RespondWithError(w, err, http.StatusNotFound)
 		case errors.Is(err, errs.ErrUnexpectedError):
 			httpx.RespondWithError(w, err, http.StatusInternalServerError)
 		case errors.Is(err, errs.ErrDomainNotUpdated):

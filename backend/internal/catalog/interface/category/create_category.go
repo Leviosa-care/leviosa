@@ -14,7 +14,6 @@ import (
 )
 
 func (h *handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
-	// TODO: that is admin only so use the context to check that
 	if r.Header.Get("Content-Type") != "application/json" {
 		httpx.RespondWithError(w, errors.New("unsupported media type: please send 'application/json'"), http.StatusUnsupportedMediaType)
 		return
@@ -42,7 +41,6 @@ func (h *handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 			"error_context", "invalid JSON request body",
 			"status_code", http.StatusBadRequest,
 			"error", err)
-		// TODO: Use a specific handler error or a generic bad request message.
 		httpx.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("invalid request body: %v", err)), http.StatusBadRequest)
 		return
 	}

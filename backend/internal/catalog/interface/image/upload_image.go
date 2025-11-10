@@ -8,9 +8,9 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/hengadev/errsx"
 )
 
@@ -24,7 +24,7 @@ func (h *handler) UploadImage(w http.ResponseWriter, r *http.Request) {
 
 	logger.Info("Handler: Processing upload_image", "image_id", "")
 
-	const maxFormMemory = 32 << 20             // 32 MB
+	const maxFormMemory = 32 << 20            // 32 MB
 	err = r.ParseMultipartForm(maxFormMemory) // 32 MB max memory buffer
 	if err != nil {
 		logger.Error("Handler: Error parsing multipart form", "error", err)
@@ -88,6 +88,7 @@ func (h *handler) UploadImage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrInvalidValue):
+			println("HERE IN THE ADD IMAGE BROTHER")
 			httpx.RespondWithError(w, err, http.StatusBadRequest)
 		case errors.Is(err, errs.ErrDomainNotFound):
 			httpx.RespondWithError(w, err, http.StatusNotFound)
