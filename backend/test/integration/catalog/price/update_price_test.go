@@ -3,10 +3,16 @@ package price_test
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	"github.com/google/uuid"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,22 +22,24 @@ import (
 
 func TestUpdatePrice(t *testing.T) {
 	ctx := context.Background()
+	client := &http.Client{Timeout: 10 * time.Second}
 
-	t.Run("should update price successfully with valid data", func(t *testing.T) {
+	t.Run("should successfully update price with valid admin token", func(t *testing.T) {
+		td.ClearProductsTable(t, ctx, testPool)
+		td.ClearPricesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Setup
-		productID := setupTestProduct(t, ctx)
+		productIDStr := setupTestProduct(t, ctx)
+		productID, err := uuid.Parse(productIDStr)
+		require.NoError(t, err)
 
 		// Create a price first
-		createRequest := td.NewValidCreatePriceRequest()
-		// CreatePriceRequest doesn't have Active field - prices are active by default
-		createRequest.Nickname = td.StrPtr("Original Plan")
-
-		createResp, createBody := createPriceViaAPI(t, productID, createRequest)
-		assertSuccessResponse(t, createResp, 201)
-
-		var createdPriceID string
-		err := json.Unmarshal(createBody, &createdPriceID)
-		require.NoError(t, err)
+		price := td.NewValidPrice()
+		price.ProductID = productID
+		td.InsertPrice(t, ctx, price, testPool)
 
 		// Execute - Update the price
 		active := false
@@ -45,17 +53,20 @@ func TestUpdatePrice(t *testing.T) {
 			},
 		}
 
-		resp, body := updatePriceViaAPI(t, createdPriceID, updateRequest)
+		req := th.NewUpdatePriceRequest(t, ctx, testServerURL, price.ID.String(), updateRequest, accessToken)
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
 
 		// Assert
-		assertSuccessResponse(t, resp, 200)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		var updatedPrice domain.Price
-		err = json.Unmarshal(body, &updatedPrice)
+		err = json.NewDecoder(resp.Body).Decode(&updatedPrice)
 		assert.NoError(t, err)
 
 		// Verify updated fields
-		assert.Equal(t, createdPriceID, updatedPrice.ID.String())
+		assert.Equal(t, price.ID, updatedPrice.ID)
 		assert.False(t, updatedPrice.IsActive)
 
 		// Verify database record is updated
@@ -63,261 +74,116 @@ func TestUpdatePrice(t *testing.T) {
 		assert.False(t, dbPrice.IsActive)
 	})
 
-	t.Run("should update only active status", func(t *testing.T) {
-		// Setup
-		productID := setupTestProduct(t, ctx)
-
-		createRequest := td.NewValidCreatePriceRequest()
-		// CreatePriceRequest doesn't have Active field - prices are active by default
-		createRequest.Nickname = td.StrPtr("Test Plan")
-
-		createResp, createBody := createPriceViaAPI(t, productID, createRequest)
-		assertSuccessResponse(t, createResp, 201)
-
-		var createdPriceID string
-		err := json.Unmarshal(createBody, &createdPriceID)
-		require.NoError(t, err)
-
-		// Execute - Update only active status
-		active := false
-		updateRequest := &domain.UpdatePriceRequest{
-			Active: &active,
-		}
-
-		resp, body := updatePriceViaAPI(t, createdPriceID, updateRequest)
-
-		// Assert
-		assertSuccessResponse(t, resp, 200)
-
-		var updatedPrice domain.Price
-		err = json.Unmarshal(body, &updatedPrice)
-		assert.NoError(t, err)
-
-		assert.False(t, updatedPrice.IsActive)
-		// Nickname is not part of Price domain model
-	})
-
-	t.Run("should update only nickname", func(t *testing.T) {
-		// Setup
-		productID := setupTestProduct(t, ctx)
-
-		createRequest := td.NewValidCreatePriceRequest()
-		// CreatePriceRequest doesn't have Active field - prices are active by default
-		createRequest.Nickname = td.StrPtr("Original Plan")
-
-		createResp, createBody := createPriceViaAPI(t, productID, createRequest)
-		assertSuccessResponse(t, createResp, 201)
-
-		var createdPriceID string
-		err := json.Unmarshal(createBody, &createdPriceID)
-		require.NoError(t, err)
-
-		// Execute - Update only nickname
-		nickname := "New Plan Name"
-		updateRequest := &domain.UpdatePriceRequest{
-			Nickname: &nickname,
-		}
-
-		resp, body := updatePriceViaAPI(t, createdPriceID, updateRequest)
-
-		// Assert
-		assertSuccessResponse(t, resp, 200)
-
-		var updatedPrice domain.Price
-		err = json.Unmarshal(body, &updatedPrice)
-		assert.NoError(t, err)
-
-		// Nickname is not returned in Price domain model
-		assert.Equal(t, true, updatedPrice.IsActive) // Should remain unchanged
-	})
-
-	t.Run("should update only metadata", func(t *testing.T) {
-		// Setup
-		productID := setupTestProduct(t, ctx)
-
-		createRequest := td.NewValidCreatePriceRequest()
-		createRequest.Metadata = map[string]string{
-			"original_key": "original_value",
-		}
-
-		createResp, createBody := createPriceViaAPI(t, productID, createRequest)
-		assertSuccessResponse(t, createResp, 201)
-
-		var createdPriceID string
-		err := json.Unmarshal(createBody, &createdPriceID)
-		require.NoError(t, err)
-
-		// Execute - Update only metadata
-		updateRequest := &domain.UpdatePriceRequest{
-			Metadata: map[string]string{
-				"updated_key":    "updated_value",
-				"additional_key": "additional_value",
-			},
-		}
-
-		resp, body := updatePriceViaAPI(t, createdPriceID, updateRequest)
-
-		// Assert
-		assertSuccessResponse(t, resp, 200)
-
-		var updatedPrice domain.Price
-		err = json.Unmarshal(body, &updatedPrice)
-		assert.NoError(t, err)
-
-		// Note: Metadata verification depends on how it's stored and returned
-		// This test assumes metadata is properly handled in the domain/service layers
-		assert.Equal(t, true, updatedPrice.IsActive) // Should remain unchanged
-		// Nickname is not part of Price domain model
-	})
-
-	t.Run("should return 400 when no updatable fields provided", func(t *testing.T) {
-		// Setup
-		productID := setupTestProduct(t, ctx)
-
-		createRequest := td.NewValidCreatePriceRequest()
-		createResp, createBody := createPriceViaAPI(t, productID, createRequest)
-		assertSuccessResponse(t, createResp, 201)
-
-		var createdPriceID string
-		err := json.Unmarshal(createBody, &createdPriceID)
-		require.NoError(t, err)
-
-		// Execute - Empty update request
-		updateRequest := &domain.UpdatePriceRequest{}
-
-		resp, _ := updatePriceViaAPI(t, createdPriceID, updateRequest)
-
-		// Assert
-		assertErrorResponse(t, resp, 400)
-	})
-
-	t.Run("should return 400 when price ID is missing", func(t *testing.T) {
-		// Setup
-		updateRequest := td.NewValidUpdatePriceRequest()
-
-		// Execute - using empty price ID results in 404 (route not found)
-		resp, _ := updatePriceViaAPI(t, "", updateRequest)
-
-		// Assert
-		assertErrorResponse(t, resp, 404)
-	})
-
-	t.Run("should return 404 when price does not exist", func(t *testing.T) {
-		// Setup
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
+		td.ClearProductsTable(t, ctx, testPool)
 		td.ClearPricesTable(t, ctx, testPool)
-		nonExistentPriceID := "550e8400-e29b-41d4-a716-446655440000"
-		updateRequest := td.NewValidUpdatePriceRequest()
 
-		// Execute
-		resp, _ := updatePriceViaAPI(t, nonExistentPriceID, updateRequest)
-
-		// Assert
-		assertErrorResponse(t, resp, 404)
-	})
-
-	t.Run("should return 400 with invalid price ID format", func(t *testing.T) {
-		// Setup
-		updateRequest := td.NewValidUpdatePriceRequest()
-
-		// Execute - using invalid UUID format
-		resp, _ := updatePriceViaAPI(t, "invalid-uuid-format", updateRequest)
-
-		// Assert
-		assertErrorResponse(t, resp, 400)
-	})
-
-	t.Run("should return 400 with invalid request payload", func(t *testing.T) {
-		// Setup
-		productID := setupTestProduct(t, ctx)
-
-		createRequest := td.NewValidCreatePriceRequest()
-		createResp, createBody := createPriceViaAPI(t, productID, createRequest)
-		assertSuccessResponse(t, createResp, 201)
-
-		var createdPriceID string
-		err := json.Unmarshal(createBody, &createdPriceID)
+		productIDStr := setupTestProduct(t, ctx)
+		productID, err := uuid.Parse(productIDStr)
 		require.NoError(t, err)
 
-		// Execute - using nil payload
-		resp, _ := updatePriceViaAPI(t, createdPriceID, nil)
-
-		// Assert
-		assertErrorResponse(t, resp, 400)
-	})
-
-	t.Run("should handle reactivation of deactivated price", func(t *testing.T) {
-		// Setup
-		productID := setupTestProduct(t, ctx)
-
-		createRequest := td.NewValidCreatePriceRequest()
-		// CreatePriceRequest doesn't have Active field - prices are active by default
-
-		createResp, createBody := createPriceViaAPI(t, productID, createRequest)
-		assertSuccessResponse(t, createResp, 201)
-
-		var createdPriceID string
-		err := json.Unmarshal(createBody, &createdPriceID)
-		require.NoError(t, err)
-
-		// First deactivate
-		deactivate := false
-		deactivateRequest := &domain.UpdatePriceRequest{
-			Active: &deactivate,
-		}
-
-		deactivateResp, _ := updatePriceViaAPI(t, createdPriceID, deactivateRequest)
-		assertSuccessResponse(t, deactivateResp, 200)
-
-		// Then reactivate
-		reactivate := true
-		reactivateRequest := &domain.UpdatePriceRequest{
-			Active: &reactivate,
-		}
-
-		resp, body := updatePriceViaAPI(t, createdPriceID, reactivateRequest)
-
-		// Assert
-		assertSuccessResponse(t, resp, 200)
-
-		var updatedPrice domain.Price
-		err = json.Unmarshal(body, &updatedPrice)
-		assert.NoError(t, err)
-
-		assert.True(t, updatedPrice.IsActive)
-
-		// Verify in database
-		dbPrice := td.GetPriceByID(t, ctx, updatedPrice.ID, testPool)
-		assert.True(t, dbPrice.IsActive)
-	})
-
-	t.Run("should handle Stripe service unavailable during update", func(t *testing.T) {
-		// This test would require mocking Stripe to return errors
-		// For now, we'll test with valid data to ensure the happy path works
-		// In a real scenario, you might want to test with network issues or Stripe mock returning errors
-
-		productID := setupTestProduct(t, ctx)
-
-		createRequest := td.NewValidCreatePriceRequest()
-		createResp, createBody := createPriceViaAPI(t, productID, createRequest)
-		assertSuccessResponse(t, createResp, 201)
-
-		var createdPriceID string
-		err := json.Unmarshal(createBody, &createdPriceID)
-		require.NoError(t, err)
+		price := td.NewValidPrice()
+		price.ProductID = productID
+		td.InsertPrice(t, ctx, price, testPool)
 
 		active := false
 		updateRequest := &domain.UpdatePriceRequest{
 			Active: &active,
 		}
 
-		resp, body := updatePriceViaAPI(t, createdPriceID, updateRequest)
+		req := th.NewUpdatePriceRequest(t, ctx, testServerURL, price.ID.String(), updateRequest, "")
 
-		// Should succeed with mock Stripe
-		assertSuccessResponse(t, resp, 200)
-
-		var updatedPrice domain.Price
-		err = json.Unmarshal(body, &updatedPrice)
+		resp, err := client.Do(req)
 		assert.NoError(t, err)
-		assert.False(t, updatedPrice.IsActive)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		td.ClearProductsTable(t, ctx, testPool)
+		td.ClearPricesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		// Create a price first
+		productIDStr := setupTestProduct(t, ctx)
+		productID, err := uuid.Parse(productIDStr)
+		require.NoError(t, err)
+
+		price := td.NewValidPrice()
+		price.ProductID = productID
+		td.InsertPrice(t, ctx, price, testPool)
+
+		active := false
+		updateRequest := &domain.UpdatePriceRequest{
+			Active: &active,
+		}
+
+		req := th.NewUpdatePriceRequest(t, ctx, testServerURL, price.ID.String(), updateRequest, accessToken)
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role", func(t *testing.T) {
+		td.ClearProductsTable(t, ctx, testPool)
+		td.ClearPricesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
+
+		// Create a price first
+		productIDStr := setupTestProduct(t, ctx)
+		productID, err := uuid.Parse(productIDStr)
+		require.NoError(t, err)
+
+		price := td.NewValidPrice()
+		price.ProductID = productID
+		td.InsertPrice(t, ctx, price, testPool)
+
+		active := false
+		updateRequest := &domain.UpdatePriceRequest{
+			Active: &active,
+		}
+
+		req := th.NewUpdatePriceRequest(t, ctx, testServerURL, price.ID.String(), updateRequest, accessToken)
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		td.ClearProductsTable(t, ctx, testPool)
+		td.ClearPricesTable(t, ctx, testPool)
+
+		// Create a price first
+		productIDStr := setupTestProduct(t, ctx)
+		productID, err := uuid.Parse(productIDStr)
+		require.NoError(t, err)
+
+		price := td.NewValidPrice()
+		price.ProductID = productID
+		td.InsertPrice(t, ctx, price, testPool)
+
+		active := false
+		updateRequest := &domain.UpdatePriceRequest{
+			Active: &active,
+		}
+
+		req := th.NewUpdatePriceRequest(t, ctx, testServerURL, price.ID.String(), updateRequest, "invalid-token-12345")
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 }

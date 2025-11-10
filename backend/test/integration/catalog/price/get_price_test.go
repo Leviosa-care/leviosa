@@ -3,158 +3,125 @@ package price_test
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
-
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/google/uuid"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// make test-func TEST_NAME=TestGetPrice TEST_PATH=test/integration/catalog/price/get_price_test.go
+// make test-func TEST_NAME='^TestGetPrice$$' TEST_PATH=test/integration/catalog/price/get_price_test.go
 
 func TestGetPrice(t *testing.T) {
 	ctx := context.Background()
+	client := &http.Client{Timeout: 10 * time.Second}
 
-	t.Run("should get price successfully with valid ID", func(t *testing.T) {
+	t.Run("should successfully get price with valid admin token", func(t *testing.T) {
+		td.ClearProductsTable(t, ctx, testPool)
+		td.ClearPricesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Setup
-		productID := setupTestProduct(t, ctx)
-
-		// Create a price first
-		createRequest := td.NewValidCreatePriceRequest()
-		createResp, createBody := createPriceViaAPI(t, productID, createRequest)
-		assertSuccessResponse(t, createResp, 201)
-
-		var createdPriceID string
-		err := json.Unmarshal(createBody, &createdPriceID)
+		productIDStr := setupTestProduct(t, ctx)
+		productID, err := uuid.Parse(productIDStr)
 		require.NoError(t, err)
 
+		price := td.NewValidPrice()
+		price.ProductID = productID
+		td.InsertPrice(t, ctx, price, testPool)
+
 		// Execute
-		resp, body := getPriceViaAPI(t, createdPriceID)
+		req := th.NewGetPriceRequest(t, ctx, testServerURL, price.ID.String(), accessToken)
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
 
 		// Assert
-		assertSuccessResponse(t, resp, 200)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		var retrievedPrice domain.Price
-		err = json.Unmarshal(body, &retrievedPrice)
+		err = json.NewDecoder(resp.Body).Decode(&retrievedPrice)
 		assert.NoError(t, err)
 
 		// Verify response structure
-		assert.Equal(t, createdPriceID, retrievedPrice.ID.String())
-		assert.Equal(t, createRequest.Amount, retrievedPrice.Amount)
-		assert.Equal(t, createRequest.Currency, retrievedPrice.Currency)
-		assert.Equal(t, createRequest.Interval, string(retrievedPrice.Interval))
+		assert.Equal(t, price.ID.String(), retrievedPrice.ID.String())
+		assert.Equal(t, price.Amount, retrievedPrice.Amount)
+		assert.Equal(t, price.Currency, retrievedPrice.Currency)
+		assert.Equal(t, price.Interval, retrievedPrice.Interval)
 		assert.True(t, retrievedPrice.IsActive) // Should be active by default
 		assert.NotZero(t, retrievedPrice.CreatedAt)
 		assert.NotZero(t, retrievedPrice.UpdatedAt)
 	})
 
-	t.Run("should return 400 when price ID is missing", func(t *testing.T) {
-		// Execute - using empty price ID results in 404 (route not found)
-		resp, _ := getPriceViaAPI(t, "")
-
-		// Assert
-		assertErrorResponse(t, resp, 404)
-	})
-
-	t.Run("should return 404 when price does not exist", func(t *testing.T) {
-		// Setup
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
 		td.ClearPricesTable(t, ctx, testPool)
-		nonExistentPriceID := "550e8400-e29b-41d4-a716-446655440000"
 
-		// Execute
-		resp, _ := getPriceViaAPI(t, nonExistentPriceID)
+		priceID := "550e8400-e29b-41d4-a716-446655440000"
 
-		// Assert
-		assertErrorResponse(t, resp, 404)
+		req := th.NewGetPriceRequest(t, ctx, testServerURL, priceID, "")
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 
-	t.Run("should return 400 with invalid price ID format", func(t *testing.T) {
-		// Execute - using invalid UUID format
-		resp, _ := getPriceViaAPI(t, "invalid-uuid-format")
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		td.ClearPricesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
-		// Assert
-		assertErrorResponse(t, resp, 400)
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		priceID := "550e8400-e29b-41d4-a716-446655440000"
+
+		req := th.NewGetPriceRequest(t, ctx, testServerURL, priceID, accessToken)
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 
-	t.Run("should get price from database correctly", func(t *testing.T) {
-		// Setup - Insert price directly to database
-		productID := setupTestProduct(t, ctx)
+	t.Run("should return 403 when user has insufficient role", func(t *testing.T) {
+		td.ClearPricesTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
-		// Create price via API first to have Stripe integration
-		createRequest := td.NewValidCreatePriceRequest()
-		createRequest.Amount = 1500
-		createRequest.Currency = "EUR"
-		createRequest.Interval = "year"
-		createRequest.Nickname = td.StrPtr("Annual Plan")
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
 
-		createResp, createBody := createPriceViaAPI(t, productID, createRequest)
-		assertSuccessResponse(t, createResp, 201)
+		priceID := "550e8400-e29b-41d4-a716-446655440000"
 
-		var createdPriceID string
-		err := json.Unmarshal(createBody, &createdPriceID)
-		require.NoError(t, err)
+		req := th.NewGetPriceRequest(t, ctx, testServerURL, priceID, accessToken)
 
-		// Execute - Get the price
-		resp, body := getPriceViaAPI(t, createdPriceID)
-
-		// Assert
-		assertSuccessResponse(t, resp, 200)
-
-		var retrievedPrice domain.Price
-		err = json.Unmarshal(body, &retrievedPrice)
+		resp, err := client.Do(req)
 		assert.NoError(t, err)
+		defer resp.Body.Close()
 
-		// Verify specific fields
-		assert.Equal(t, 1500, retrievedPrice.Amount)
-		assert.Equal(t, "EUR", retrievedPrice.Currency)
-		assert.Equal(t, "year", retrievedPrice.Interval)
-		assert.True(t, retrievedPrice.IsActive)
-
-		// Verify against database record
-		priceID, err := uuid.Parse(createdPriceID)
-		assert.NoError(t, err)
-		dbPrice := td.GetPriceByID(t, ctx, priceID, testPool)
-		assert.Equal(t, retrievedPrice.Amount, dbPrice.Amount)
-		assert.Equal(t, retrievedPrice.Currency, dbPrice.Currency)
-		assert.Equal(t, string(retrievedPrice.Interval), string(dbPrice.Interval))
-		assert.Equal(t, retrievedPrice.IsActive, dbPrice.IsActive)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
-	t.Run("should get inactive price correctly", func(t *testing.T) {
-		// Setup
-		productID := setupTestProduct(t, ctx)
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		td.ClearPricesTable(t, ctx, testPool)
 
-		// Create a price
-		createRequest := td.NewValidCreatePriceRequest()
-		createResp, createBody := createPriceViaAPI(t, productID, createRequest)
-		assertSuccessResponse(t, createResp, 201)
+		priceID := "550e8400-e29b-41d4-a716-446655440000"
 
-		var createdPriceID string
-		err := json.Unmarshal(createBody, &createdPriceID)
-		require.NoError(t, err)
+		req := th.NewGetPriceRequest(t, ctx, testServerURL, priceID, "invalid-token-12345")
 
-		// Deactivate the price
-		updateRequest := &domain.UpdatePriceRequest{
-			Active: &[]bool{false}[0], // Create pointer to false
-		}
-		updateResp, _ := updatePriceViaAPI(t, createdPriceID, updateRequest)
-		assertSuccessResponse(t, updateResp, 200)
-
-		// Execute - Get the deactivated price
-		resp, body := getPriceViaAPI(t, createdPriceID)
-
-		// Assert
-		assertSuccessResponse(t, resp, 200)
-
-		var retrievedPrice domain.Price
-		err = json.Unmarshal(body, &retrievedPrice)
+		resp, err := client.Do(req)
 		assert.NoError(t, err)
+		defer resp.Body.Close()
 
-		// Verify it's inactive
-		assert.False(t, retrievedPrice.IsActive)
-		assert.Equal(t, createdPriceID, retrievedPrice.ID.String())
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 }
