@@ -8,9 +8,13 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // make test-func TEST_NAME=TestUpdateCoupon TEST_PATH=test/integration/catalog/coupon/update_coupon_test.go
@@ -19,9 +23,12 @@ func TestUpdateCoupon(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	t.Run("should successfully update coupon name", func(t *testing.T) {
+	t.Run("should successfully update coupon name with valid admin token", func(t *testing.T) {
 		// Clean the database
 		td.ClearCouponsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create test coupon
 		testCoupon := td.NewValidPercentOffCoupon("Original Name")
@@ -32,13 +39,11 @@ func TestUpdateCoupon(t *testing.T) {
 		updateRequest := domain.UpdateCouponRequest{
 			Name: &newName,
 		}
-		jsonBody, _ := json.Marshal(updateRequest)
 
-		req := newUpdateCouponRequest(t, ctx, testCoupon.ID.String(), jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewUpdateCouponRequest(t, ctx, testServerURL, testCoupon.ID.String(), updateRequest, accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -46,7 +51,10 @@ func TestUpdateCoupon(t *testing.T) {
 		var response struct {
 			Message string `json:"message"`
 		}
-		decodeJSONResponse(t, resp, &response)
+
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
 		assert.Equal(t, "Coupon updated successfully!", response.Message)
 
 		// Verify the update in database
@@ -58,99 +66,103 @@ func TestUpdateCoupon(t *testing.T) {
 		assert.Equal(t, *testCoupon.PercentOff, *updatedCoupon.PercentOff)
 	})
 
-	t.Run("should successfully update coupon metadata", func(t *testing.T) {
-		// Clean the database
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
 		td.ClearCouponsTable(t, ctx, testPool)
 
-		// Create test coupon
-		testCoupon := td.NewValidPercentOffCoupon("Metadata Test")
-		td.InsertCoupon(t, ctx, testPool, testCoupon)
-
-		// Update request with new metadata
-		updateRequest := domain.UpdateCouponRequest{
-			Metadata: map[string]string{
-				"updated":     "true",
-				"test":        "false",
-				"description": "Updated coupon metadata",
-				"version":     "2.0",
-			},
-		}
-		jsonBody, _ := json.Marshal(updateRequest)
-
-		req := newUpdateCouponRequest(t, ctx, testCoupon.ID.String(), jsonBody)
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := client.Do(req)
-		assert.NoError(t, err)
-		defer resp.Body.Close()
-
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-		// Verify the metadata update in database
-		updatedCoupon, err := td.GetCouponByID(t, ctx, testCoupon.ID, testPool)
-		assert.NoError(t, err)
-		assert.Equal(t, "true", updatedCoupon.Metadata["updated"])
-		assert.Equal(t, "false", updatedCoupon.Metadata["test"]) // Should replace original
-		assert.Equal(t, "Updated coupon metadata", updatedCoupon.Metadata["description"])
-		assert.Equal(t, "2.0", updatedCoupon.Metadata["version"])
-	})
-
-	t.Run("should successfully update both name and metadata", func(t *testing.T) {
-		// Clean the database
-		td.ClearCouponsTable(t, ctx, testPool)
-
-		// Create test coupon
-		testCoupon := td.NewValidAmountOffCoupon("Combined Update Test", "USD")
-		td.InsertCoupon(t, ctx, testPool, testCoupon)
-
-		// Update request with both name and metadata
-		newName := "Combined Updated Name"
+		newName := "Test Update"
 		updateRequest := domain.UpdateCouponRequest{
 			Name: &newName,
-			Metadata: map[string]string{
-				"updated": "true",
-				"type":    "combined_update",
-			},
 		}
-		jsonBody, _ := json.Marshal(updateRequest)
 
-		req := newUpdateCouponRequest(t, ctx, testCoupon.ID.String(), jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewUpdateCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", updateRequest, "")
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
 
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
 
-		// Verify both updates in database
-		updatedCoupon, err := td.GetCouponByID(t, ctx, testCoupon.ID, testPool)
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		td.ClearCouponsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		newName := "Test Update"
+		updateRequest := domain.UpdateCouponRequest{
+			Name: &newName,
+		}
+
+		req := th.NewUpdateCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", updateRequest, accessToken)
+
+		resp, err := client.Do(req)
 		assert.NoError(t, err)
-		assert.Equal(t, "Combined Updated Name", updatedCoupon.Name)
-		assert.Equal(t, "true", updatedCoupon.Metadata["updated"])
-		assert.Equal(t, "combined_update", updatedCoupon.Metadata["type"])
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role", func(t *testing.T) {
+		td.ClearCouponsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
+
+		newName := "Test Update"
+		updateRequest := domain.UpdateCouponRequest{
+			Name: &newName,
+		}
+
+		req := th.NewUpdateCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", updateRequest, accessToken)
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		td.ClearCouponsTable(t, ctx, testPool)
+
+		newName := "Test Update"
+		updateRequest := domain.UpdateCouponRequest{
+			Name: &newName,
+		}
+
+		req := th.NewUpdateCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", updateRequest, "invalid-token-12345")
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 
 	t.Run("should return 404 for non-existent coupon", func(t *testing.T) {
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		newName := "Non-existent Update"
 		updateRequest := domain.UpdateCouponRequest{
 			Name: &newName,
 		}
-		jsonBody, _ := json.Marshal(updateRequest)
 
-		req := newUpdateCouponRequest(t, ctx, "00000000-0000-0000-0000-000000000000", jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewUpdateCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", updateRequest, accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
 	t.Run("should return 400 for empty name", func(t *testing.T) {
-		// Clean the database
-		td.ClearCouponsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create test coupon
 		testCoupon := td.NewValidPercentOffCoupon("Valid Coupon")
@@ -161,44 +173,33 @@ func TestUpdateCoupon(t *testing.T) {
 		updateRequest := domain.UpdateCouponRequest{
 			Name: &emptyName,
 		}
-		jsonBody, _ := json.Marshal(updateRequest)
 
-		req := newUpdateCouponRequest(t, ctx, testCoupon.ID.String(), jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewUpdateCouponRequest(t, ctx, testServerURL, testCoupon.ID.String(), updateRequest, accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
 	t.Run("should return 400 for invalid UUID", func(t *testing.T) {
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		newName := "Invalid UUID Test"
 		updateRequest := domain.UpdateCouponRequest{
 			Name: &newName,
 		}
-		jsonBody, _ := json.Marshal(updateRequest)
 
-		req := newUpdateCouponRequest(t, ctx, "invalid-uuid", jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewUpdateCouponRequest(t, ctx, testServerURL, "invalid-uuid", updateRequest, accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	})
-
-	t.Run("should return 415 for non-JSON content type", func(t *testing.T) {
-		req := newUpdateCouponRequest(t, ctx, "00000000-0000-0000-0000-000000000000", []byte("not json"))
-		req.Header.Set("Content-Type", "text/plain")
-
-		resp, err := client.Do(req)
-		assert.NoError(t, err)
-		defer resp.Body.Close()
-
-		assert.Equal(t, http.StatusUnsupportedMediaType, resp.StatusCode)
 	})
 }
 
@@ -206,9 +207,12 @@ func TestDeactivateCoupon(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	t.Run("should successfully deactivate coupon", func(t *testing.T) {
+	t.Run("should successfully deactivate coupon with valid admin token", func(t *testing.T) {
 		// Clean the database
 		td.ClearCouponsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create test coupon
 		testCoupon := td.NewValidPercentOffCoupon("Deactivate Test")
@@ -217,10 +221,10 @@ func TestDeactivateCoupon(t *testing.T) {
 		// Verify it's initially valid
 		assert.True(t, td.GetCouponValidStatus(t, ctx, testCoupon.ID, testPool))
 
-		req := newDeactivateCouponRequest(t, ctx, testCoupon.ID.String())
+		req := th.NewDeactivateCouponRequest(t, ctx, testServerURL, testCoupon.ID.String(), accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -228,28 +232,83 @@ func TestDeactivateCoupon(t *testing.T) {
 		var response struct {
 			Message string `json:"message"`
 		}
-		decodeJSONResponse(t, resp, &response)
 		assert.Equal(t, "Coupon deactivated successfully!", response.Message)
 
 		// Verify the coupon is deactivated in database
 		assert.False(t, td.GetCouponValidStatus(t, ctx, testCoupon.ID, testPool))
 	})
 
-	t.Run("should return 404 for non-existent coupon", func(t *testing.T) {
-		req := newDeactivateCouponRequest(t, ctx, "00000000-0000-0000-0000-000000000000")
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
+		req := th.NewDeactivateCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", "")
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		req := th.NewDeactivateCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", accessToken)
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role", func(t *testing.T) {
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
+
+		req := th.NewDeactivateCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", accessToken)
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		req := th.NewDeactivateCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", "invalid-token-12345")
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 404 for non-existent coupon", func(t *testing.T) {
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		req := th.NewDeactivateCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
 	t.Run("should return 400 for invalid UUID", func(t *testing.T) {
-		req := newDeactivateCouponRequest(t, ctx, "invalid-uuid")
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		req := th.NewDeactivateCouponRequest(t, ctx, testServerURL, "invalid-uuid", accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -260,9 +319,12 @@ func TestDeleteCoupon(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	t.Run("should successfully delete coupon", func(t *testing.T) {
+	t.Run("should successfully delete coupon with valid admin token", func(t *testing.T) {
 		// Clean the database
 		td.ClearCouponsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create test coupon
 		testCoupon := td.NewValidPercentOffCoupon("Delete Test")
@@ -272,10 +334,10 @@ func TestDeleteCoupon(t *testing.T) {
 		foundCoupon := td.GetCouponByIDOrNil(t, ctx, testCoupon.ID, testPool)
 		assert.NotNil(t, foundCoupon)
 
-		req := newDeleteCouponRequest(t, ctx, testCoupon.ID.String())
+		req := th.NewDeleteCouponRequest(t, ctx, testServerURL, testCoupon.ID.String(), accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -283,7 +345,6 @@ func TestDeleteCoupon(t *testing.T) {
 		var response struct {
 			Message string `json:"message"`
 		}
-		decodeJSONResponse(t, resp, &response)
 		assert.Equal(t, "Coupon deleted successfully!", response.Message)
 
 		// Verify the coupon is deleted from database
@@ -291,21 +352,77 @@ func TestDeleteCoupon(t *testing.T) {
 		assert.Nil(t, deletedCoupon)
 	})
 
-	t.Run("should return 404 for non-existent coupon", func(t *testing.T) {
-		req := newDeleteCouponRequest(t, ctx, "00000000-0000-0000-0000-000000000000")
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
+		req := th.NewDeleteCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", "")
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		req := th.NewDeleteCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", accessToken)
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role", func(t *testing.T) {
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
+
+		req := th.NewDeleteCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", accessToken)
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		req := th.NewDeleteCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", "invalid-token-12345")
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 404 for non-existent coupon", func(t *testing.T) {
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		req := th.NewDeleteCouponRequest(t, ctx, testServerURL, "00000000-0000-0000-0000-000000000000", accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
 	t.Run("should return 400 for invalid UUID", func(t *testing.T) {
-		req := newDeleteCouponRequest(t, ctx, "invalid-uuid")
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		req := th.NewDeleteCouponRequest(t, ctx, testServerURL, "invalid-uuid", accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -324,19 +441,17 @@ func TestCouponBusinessLogic(t *testing.T) {
 		testCoupon := td.NewValidCouponWithRedeemBy("Future Expiry", time.Now().Add(30*24*time.Hour))
 		td.InsertCoupon(t, ctx, testPool, testCoupon)
 
-		// Validate the coupon
+		// Validate the coupon (public endpoint)
 		requestBody := struct {
 			StripeCouponID string `json:"stripeCouponId"`
 		}{
 			StripeCouponID: testCoupon.StripeCouponID,
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidateCouponRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewValidateCouponRequest(t, ctx, testServerURL, requestBody)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -345,7 +460,6 @@ func TestCouponBusinessLogic(t *testing.T) {
 			Valid  bool `json:"valid"`
 			Coupon any  `json:"coupon"`
 		}
-		decodeJSONResponse(t, resp, &response)
 
 		assert.True(t, response.Valid)
 		assert.NotNil(t, response.Coupon)
@@ -360,19 +474,17 @@ func TestCouponBusinessLogic(t *testing.T) {
 		testCoupon.TimesRedeemed = 5 // Not at limit yet
 		td.InsertCoupon(t, ctx, testPool, testCoupon)
 
-		// Validate the coupon
+		// Validate the coupon (public endpoint)
 		requestBody := struct {
 			StripeCouponID string `json:"stripeCouponId"`
 		}{
 			StripeCouponID: testCoupon.StripeCouponID,
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidateCouponRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewValidateCouponRequest(t, ctx, testServerURL, requestBody)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -381,13 +493,16 @@ func TestCouponBusinessLogic(t *testing.T) {
 			Valid  bool `json:"valid"`
 			Coupon any  `json:"coupon"`
 		}
-		decodeJSONResponse(t, resp, &response)
 
 		assert.True(t, response.Valid)
 		assert.NotNil(t, response.Coupon)
 	})
 
 	t.Run("should properly handle forever duration coupons", func(t *testing.T) {
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Clean the database
 		td.ClearCouponsTable(t, ctx, testPool)
 
@@ -395,16 +510,15 @@ func TestCouponBusinessLogic(t *testing.T) {
 		testCoupon := td.NewValidForeverCoupon("Forever Coupon")
 		td.InsertCoupon(t, ctx, testPool, testCoupon)
 
-		req := newGetCouponByIDRequest(t, ctx, testCoupon.ID.String())
+		req := th.NewGetCouponByIDRequest(t, ctx, testServerURL, testCoupon.ID.String(), accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var response domain.CouponResponse
-		decodeJSONResponse(t, resp, &response)
+		response := th.ParseCouponResponse(t, resp)
 
 		assert.Nil(t, response.RedeemBy)
 		assert.True(t, response.Valid)

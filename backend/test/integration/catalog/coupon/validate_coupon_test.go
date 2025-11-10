@@ -9,7 +9,9 @@ import (
 
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // make test-func TEST_NAME=TestValidateCoupon TEST_PATH=test/integration/catalog/coupon/validate_coupon_test.go
@@ -31,9 +33,8 @@ func TestValidateCoupon(t *testing.T) {
 		}{
 			StripeCouponID: testCoupon.StripeCouponID,
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidateCouponRequest(t, ctx, jsonBody)
+		req := th.NewValidateCouponRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -46,7 +47,9 @@ func TestValidateCoupon(t *testing.T) {
 			Valid  bool        `json:"valid"`
 			Coupon interface{} `json:"coupon"`
 		}
-		decodeJSONResponse(t, resp, &response)
+		decoder := json.NewDecoder(resp.Body)
+		err = decoder.Decode(&response)
+		require.NoError(t, err)
 
 		assert.True(t, response.Valid)
 		assert.NotNil(t, response.Coupon)
@@ -61,9 +64,8 @@ func TestValidateCoupon(t *testing.T) {
 		}{
 			StripeCouponID: "coupon_nonexistent",
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidateCouponRequest(t, ctx, jsonBody)
+		req := th.NewValidateCouponRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -76,7 +78,9 @@ func TestValidateCoupon(t *testing.T) {
 			Valid  bool   `json:"valid"`
 			Reason string `json:"reason"`
 		}
-		decodeJSONResponse(t, resp, &response)
+		decoder := json.NewDecoder(resp.Body)
+		err = decoder.Decode(&response)
+		require.NoError(t, err)
 
 		assert.False(t, response.Valid)
 		assert.Equal(t, "coupon not found", response.Reason)
@@ -95,9 +99,8 @@ func TestValidateCoupon(t *testing.T) {
 		}{
 			StripeCouponID: testCoupon.StripeCouponID,
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidateCouponRequest(t, ctx, jsonBody)
+		req := th.NewValidateCouponRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -110,7 +113,9 @@ func TestValidateCoupon(t *testing.T) {
 			Valid  bool   `json:"valid"`
 			Reason string `json:"reason"`
 		}
-		decodeJSONResponse(t, resp, &response)
+		decoder := json.NewDecoder(resp.Body)
+		err = decoder.Decode(&response)
+		require.NoError(t, err)
 
 		assert.False(t, response.Valid)
 		assert.Contains(t, response.Reason, "coupon is not valid")
@@ -129,9 +134,8 @@ func TestValidateCoupon(t *testing.T) {
 		}{
 			StripeCouponID: testCoupon.StripeCouponID,
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidateCouponRequest(t, ctx, jsonBody)
+		req := th.NewValidateCouponRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -144,7 +148,9 @@ func TestValidateCoupon(t *testing.T) {
 			Valid  bool   `json:"valid"`
 			Reason string `json:"reason"`
 		}
-		decodeJSONResponse(t, resp, &response)
+		decoder := json.NewDecoder(resp.Body)
+		err = decoder.Decode(&response)
+		require.NoError(t, err)
 
 		assert.False(t, response.Valid)
 		assert.Contains(t, response.Reason, "coupon has expired")
@@ -165,9 +171,8 @@ func TestValidateCoupon(t *testing.T) {
 		}{
 			StripeCouponID: testCoupon.StripeCouponID,
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidateCouponRequest(t, ctx, jsonBody)
+		req := th.NewValidateCouponRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -180,7 +185,9 @@ func TestValidateCoupon(t *testing.T) {
 			Valid  bool   `json:"valid"`
 			Reason string `json:"reason"`
 		}
-		decodeJSONResponse(t, resp, &response)
+		decoder := json.NewDecoder(resp.Body)
+		err = decoder.Decode(&response)
+		require.NoError(t, err)
 
 		assert.False(t, response.Valid)
 		assert.Contains(t, response.Reason, "coupon has reached its redemption limit")
@@ -192,9 +199,8 @@ func TestValidateCoupon(t *testing.T) {
 		}{
 			StripeCouponID: "",
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidateCouponRequest(t, ctx, jsonBody)
+		req := th.NewValidateCouponRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -207,14 +213,16 @@ func TestValidateCoupon(t *testing.T) {
 			Valid  bool   `json:"valid"`
 			Reason string `json:"reason"`
 		}
-		decodeJSONResponse(t, resp, &response)
+		decoder := json.NewDecoder(resp.Body)
+		err = decoder.Decode(&response)
+		require.NoError(t, err)
 
 		assert.False(t, response.Valid)
 		assert.Contains(t, response.Reason, "stripe coupon ID cannot be empty")
 	})
 
 	t.Run("should return 400 for invalid request body", func(t *testing.T) {
-		req := newValidateCouponRequest(t, ctx, []byte("{invalid json"))
+		req := th.NewValidateCouponRequest(t, ctx, testServerURL, ("{invalid json"))
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -225,7 +233,7 @@ func TestValidateCoupon(t *testing.T) {
 	})
 
 	t.Run("should return 415 for non-JSON content type", func(t *testing.T) {
-		req := newValidateCouponRequest(t, ctx, []byte("not json"))
+		req := th.NewValidateCouponRequest(t, ctx, testServerURL, ("not json"))
 		req.Header.Set("Content-Type", "text/plain")
 
 		resp, err := client.Do(req)
