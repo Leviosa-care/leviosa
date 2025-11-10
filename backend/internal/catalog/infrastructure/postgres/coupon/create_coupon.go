@@ -1,8 +1,8 @@
 package couponRepository
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
 
@@ -11,11 +11,6 @@ import (
 )
 
 func (r *CouponRepository) CreateCoupon(ctx context.Context, coupon *domain.Coupon) (string, error) {
-	// Generate UUID if not provided
-	if coupon.ID == uuid.Nil {
-		coupon.ID = uuid.New()
-	}
-
 	query := fmt.Sprintf(`
 		INSERT INTO %s.coupons (
 			id, stripe_coupon_id, name, percent_off, amount_off, currency, 
@@ -51,3 +46,4 @@ func (r *CouponRepository) CreateCoupon(ctx context.Context, coupon *domain.Coup
 
 	return createdID.String(), nil
 }
+

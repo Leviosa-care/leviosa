@@ -17,3 +17,4 @@ type CouponRepository struct {
 func New(ctx context.Context, pool *pgxpool.Pool) ports.CouponRepository {
 	return &CouponRepository{pool: pool, schema: "catalog"}
 }
+

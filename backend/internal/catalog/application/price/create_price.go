@@ -58,7 +58,7 @@ func (s *PriceService) CreatePrice(ctx context.Context, productIDStr string, req
 		Nickname:  "",   // Set from request.Nickname if needed
 		Metadata:  request.Metadata,
 	}
-	
+
 	// Set optional fields if provided
 	if request.Nickname != nil {
 		stripeReq.Nickname = *request.Nickname
