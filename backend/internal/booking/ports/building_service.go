@@ -1,0 +1,35 @@
+package ports
+
+import (
+	"context"
+
+	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
+	"github.com/google/uuid"
+)
+
+// BuildingService defines the interface for building business logic
+type BuildingService interface {
+	// CreateBuilding creates a new building with validation
+	CreateBuilding(ctx context.Context, request *domain.CreateBuildingRequest) (*domain.Building, error)
+
+	// GetBuilding retrieves a building by ID
+	GetBuilding(ctx context.Context, id uuid.UUID) (*domain.Building, error)
+
+	// UpdateBuilding updates building details with validation
+	UpdateBuilding(ctx context.Context, id uuid.UUID, name, address, city, postalCode, country string) (*domain.Building, error)
+
+	// SetBuildingContactInfo sets optional contact information
+	SetBuildingContactInfo(ctx context.Context, id uuid.UUID, description, phone, email string) (*domain.Building, error)
+
+	// DeactivateBuilding marks a building as inactive
+	DeactivateBuilding(ctx context.Context, id uuid.UUID) error
+
+	// ActivateBuilding marks a building as active
+	ActivateBuilding(ctx context.Context, id uuid.UUID) error
+
+	// ListBuildings retrieves buildings with filtering
+	ListBuildings(ctx context.Context, filter BuildingFilter) ([]*domain.Building, error)
+
+	// GetBuildingCount returns total count with filtering
+	GetBuildingCount(ctx context.Context, filter BuildingFilter) (int, error)
+}
