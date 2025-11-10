@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
@@ -14,7 +15,8 @@ import (
 )
 
 func (h *handler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
 
 	logger, err := ctxutil.GetLoggerFromContext(ctx)
 	if err != nil {
@@ -59,7 +61,7 @@ func (h *handler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
 			statusCode = http.StatusBadRequest
 		case errors.Is(err, errs.ErrUniqueViolation):
 			logLevel = "warn"
-			errorContext = "building name already exists"
+			errorContext = "building with this name or address already exists"
 			statusCode = http.StatusConflict
 		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
 			logLevel = "error"
@@ -105,23 +107,10 @@ func (h *handler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert to response DTO
-	response := domain.BuildingResponse{
-		ID:          building.ID,
-		Name:        building.Name,
-		Address:     building.Address,
-		City:        building.City,
-		PostalCode:  building.PostalCode,
-		Country:     building.Country,
-		Description: building.Description,
-		Phone:       building.Phone,
-		Email:       building.Email,
-	}
-
 	logger.InfoContext(ctx, "Handler: Building created successfully",
 		"building_id", building.ID,
 		"building_name", building.Name,
 		"operation", "create_building")
 
-	httpx.RespondWithJSON(w, response, http.StatusCreated)
+	httpx.RespondWithJSON(w, building, http.StatusCreated)
 }
