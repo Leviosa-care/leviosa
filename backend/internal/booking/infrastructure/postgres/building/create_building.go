@@ -13,9 +13,10 @@ func (r *Repository) Create(ctx context.Context, building *domain.BuildingEncx) 
 		INSERT INTO %s.buildings (
 			id, name_encrypted, address_encrypted, city_encrypted,
 			postal_code_encrypted, country_encrypted, description_encrypted,
-			phone_encrypted, email_encrypted, is_active, created_at, updated_at
+			phone_encrypted, email_encrypted, dek_encrypted, key_version,
+			is_active, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
 		)
 	`, r.schema)
 
@@ -29,6 +30,8 @@ func (r *Repository) Create(ctx context.Context, building *domain.BuildingEncx) 
 		building.DescriptionEncrypted,
 		building.PhoneEncrypted,
 		building.EmailEncrypted,
+		building.DEKEncrypted,
+		building.KeyVersion,
 		building.IsActive,
 		building.CreatedAt,
 		building.UpdatedAt,

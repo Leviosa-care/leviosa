@@ -19,8 +19,10 @@ func (r *Repository) Update(ctx context.Context, building *domain.BuildingEncx) 
 			description_encrypted = $7,
 			phone_encrypted = $8,
 			email_encrypted = $9,
-			is_active = $10,
-			updated_at = $11
+			dek_encrypted = $10,
+			key_version = $11,
+			is_active = $12,
+			updated_at = $13
 		WHERE id = $1
 	`, r.schema)
 
@@ -34,6 +36,8 @@ func (r *Repository) Update(ctx context.Context, building *domain.BuildingEncx) 
 		building.DescriptionEncrypted,
 		building.PhoneEncrypted,
 		building.EmailEncrypted,
+		building.DEKEncrypted,
+		building.KeyVersion,
 		building.IsActive,
 		building.UpdatedAt,
 	)
