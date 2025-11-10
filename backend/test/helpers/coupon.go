@@ -172,7 +172,7 @@ func GetCouponByID(t *testing.T, ctx context.Context, couponID uuid.UUID, pool *
 		SELECT id, stripe_coupon_id, name, percent_off, amount_off, currency, 
 		       duration, duration_in_months, max_redemptions, times_redeemed, 
 		       valid, redeem_by, metadata, created_at, updated_at
-		FROM catalog.coupons 
+		FROM catalog.coupons
 		WHERE id = $1
 	`
 
