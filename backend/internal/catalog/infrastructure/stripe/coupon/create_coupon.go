@@ -95,4 +95,3 @@ func mapStripeCouponToDomainCoupon(stripeCoupon *stripe.Coupon) *domain.Coupon {
 
 	return domainCoupon
 }
-

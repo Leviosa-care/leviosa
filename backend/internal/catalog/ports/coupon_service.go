@@ -16,9 +16,10 @@ type CouponService interface {
 	UpdateCoupon(ctx context.Context, couponID string, req *domain.UpdateCouponRequest) error
 	DeactivateCoupon(ctx context.Context, couponID string) error
 	DeleteCoupon(ctx context.Context, couponID string) error
-	
+
 	// Business operations
 	ValidateCoupon(ctx context.Context, stripeCouponID string) (*domain.CouponResponse, error)
 	IncrementRedemptionCount(ctx context.Context, couponID string) error
 	CheckRedemptionLimit(ctx context.Context, couponID string) (bool, error)
 }
+

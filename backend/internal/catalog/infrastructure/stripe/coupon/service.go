@@ -24,3 +24,4 @@ func NewCoupon(apiKey, baseURL string) ports.CouponPaymentGateway {
 
 	return &service{sc}
 }
+
