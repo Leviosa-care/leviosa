@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-func TEST_NAME=TestCreateBuilding TEST_PATH=internal/booking/infrastructure/postgres/building/create_building_test.go
+
 func TestCreateBuilding(t *testing.T) {
 	ctx := context.Background()
 
