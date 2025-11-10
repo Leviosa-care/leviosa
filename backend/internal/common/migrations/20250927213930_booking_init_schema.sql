@@ -20,6 +20,10 @@ CREATE TABLE booking.buildings (
     phone_encrypted BYTEA,
     email_encrypted BYTEA,
 
+    -- Encryption metadata (required by encx)
+    dek_encrypted BYTEA NOT NULL,
+    key_version INTEGER NOT NULL DEFAULT 1,
+
     -- Administrative fields
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -42,6 +46,10 @@ CREATE TABLE booking.rooms (
 
     -- Pricing and availability
     hourly_rate_cents INTEGER, -- Optional base rate in cents
+
+    -- Encryption metadata (required by encx)
+    dek_encrypted BYTEA NOT NULL,
+    key_version INTEGER NOT NULL DEFAULT 1,
 
     -- Administrative fields
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -95,6 +103,10 @@ CREATE TABLE booking.availabilities (
     -- Status tracking
     status VARCHAR(20) NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'booked', 'cancelled', 'blocked')),
 
+    -- Encryption metadata (required by encx)
+    dek_encrypted BYTEA NOT NULL,
+    key_version INTEGER NOT NULL DEFAULT 1,
+
     -- Administrative fields
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -128,6 +140,10 @@ CREATE TABLE booking.bookings (
     status VARCHAR(20) NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'cancelled', 'completed', 'no_show')),
     cancelled_at TIMESTAMP WITH TIME ZONE,
     cancellation_reason_encrypted BYTEA,
+
+    -- Encryption metadata (required by encx)
+    dek_encrypted BYTEA NOT NULL,
+    key_version INTEGER NOT NULL DEFAULT 1,
 
     -- Administrative fields
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
