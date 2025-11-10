@@ -1,7 +1,6 @@
 package product_test
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -10,8 +9,13 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	productHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/product"
+	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -19,6 +23,7 @@ import (
 )
 
 // make test-func TEST_NAME=TestCreateProductWithPrice TEST_PATH=test/integration/catalog/product/create_product_with_price_test.go
+
 func TestCreateProductWithPrice(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -46,9 +51,13 @@ func TestCreateProductWithPrice(t *testing.T) {
 		Product: validProductRequest,
 		Price:   validPriceRequest,
 	}
+	_ = validRequest
 
-	t.Run("should successfully create a product and a price and persist to DB", func(t *testing.T) {
+	t.Run("should successfully create product with price with valid admin token", func(t *testing.T) {
 		clearTables(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Pre-requisite: Create a category in the database as the product depends on it.
 		parentCategory := td.NewValidCategory("Test Category")
@@ -56,11 +65,9 @@ func TestCreateProductWithPrice(t *testing.T) {
 
 		// Set the category ID in our request to the one we just created.
 		validRequest.Product.CategoryID = parentCategory.ID.String()
-		requestBody, _ := json.Marshal(validRequest)
 
 		// --- Make the HTTP Request ---
-		req := newCreateProductWithPriceRequest(t, ctx, requestBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewCreateProductWithPriceRequest(t, ctx, testServerURL, validRequest, accessToken)
 
 		client := &http.Client{}
 		res, err := client.Do(req)
@@ -99,15 +106,22 @@ func TestCreateProductWithPrice(t *testing.T) {
 	t.Run("should return 400 Bad Request for an invalid JSON body", func(t *testing.T) {
 		clearTables(t, ctx)
 
-		invalidBody := `{"product": {"product_name": "Test"}, "price": "invalid"}`
-		req, err := http.NewRequestWithContext(ctx, "POST", testServerURL+"/admin/products", strings.NewReader(invalidBody))
-		require.NoError(t, err)
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
+		invalidBody := `{"product": {"product_name": "Test"}, "price": "invalid"}`
+		req, err := http.NewRequestWithContext(ctx, "POST", testServerURL+productHandler.CreateProductWithPriceEndpoint, strings.NewReader(invalidBody))
+		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
+
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
 
 		client := &http.Client{}
 		res, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer res.Body.Close()
 
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
@@ -118,6 +132,8 @@ func TestCreateProductWithPrice(t *testing.T) {
 
 	t.Run("should return 400 Bad Request for invalid input data", func(t *testing.T) {
 		clearTables(t, ctx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Pre-requisite: Create a category
 		parentCategory := td.NewValidCategory("Test Category")
@@ -133,14 +149,12 @@ func TestCreateProductWithPrice(t *testing.T) {
 			},
 		}
 		invalidRequest.Product.CategoryID = parentCategory.ID.String()
-		requestBody, _ := json.Marshal(invalidRequest)
 
-		req := newCreateProductWithPriceRequest(t, ctx, requestBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewCreateProductWithPriceRequest(t, ctx, testServerURL, invalidRequest, accessToken)
 
 		client := &http.Client{}
 		res, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer res.Body.Close()
 
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
@@ -152,6 +166,8 @@ func TestCreateProductWithPrice(t *testing.T) {
 	t.Run("should return 404 Not Found if the category ID does not exist", func(t *testing.T) {
 		clearTables(t, ctx)
 
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		// Request with a non-existent category ID
 		requestWithBadCategory := domain.CreateProductWithPriceRequest{
 			Product: domain.CreateProductRequest{
@@ -160,14 +176,12 @@ func TestCreateProductWithPrice(t *testing.T) {
 			},
 			Price: validPriceRequest,
 		}
-		requestBody, _ := json.Marshal(requestWithBadCategory)
 
-		req := newCreateProductWithPriceRequest(t, ctx, requestBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewCreateProductWithPriceRequest(t, ctx, testServerURL, requestWithBadCategory, accessToken)
 
 		client := &http.Client{}
 		res, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer res.Body.Close()
 
 		assert.Equal(t, http.StatusNotFound, res.StatusCode)
@@ -175,11 +189,92 @@ func TestCreateProductWithPrice(t *testing.T) {
 		json.NewDecoder(res.Body).Decode(&response)
 		assert.Contains(t, response["error"], errs.ErrDomainNotFound.Error())
 	})
-}
 
-// Helper function to create a new HTTP request for the CreateCategory handler.
-func newCreateProductWithPriceRequest(t *testing.T, ctx context.Context, jsonBody []byte) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/admin/products", bytes.NewReader(jsonBody))
-	require.NoError(t, err)
-	return req
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
+		clearTables(t, ctx)
+
+		// Pre-requisite: Create a category in the database as the product depends on it.
+		parentCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, parentCategory, testPool)
+
+		// Set the category ID in our request to the one we just created.
+		validRequest.Product.CategoryID = parentCategory.ID.String()
+
+		req := th.NewCreateProductWithPriceRequest(t, ctx, testServerURL, validRequest, "")
+
+		client := &http.Client{}
+		res, err := client.Do(req)
+		require.NoError(t, err)
+		defer res.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+	})
+
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		clearTables(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Create expired admin session
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		// Pre-requisite: Create a category in the database as the product depends on it.
+		parentCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, parentCategory, testPool)
+
+		// Set the category ID in our request to the one we just created.
+		validRequest.Product.CategoryID = parentCategory.ID.String()
+
+		req := th.NewCreateProductWithPriceRequest(t, ctx, testServerURL, validRequest, accessToken)
+
+		client := &http.Client{}
+		res, err := client.Do(req)
+		require.NoError(t, err)
+		defer res.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role", func(t *testing.T) {
+		clearTables(t, ctx)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Create standard user (not admin)
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
+
+		// Pre-requisite: Create a category in the database as the product depends on it.
+		parentCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, parentCategory, testPool)
+
+		// Set the category ID in our request to the one we just created.
+		validRequest.Product.CategoryID = parentCategory.ID.String()
+
+		req := th.NewCreateProductWithPriceRequest(t, ctx, testServerURL, validRequest, accessToken)
+
+		client := &http.Client{}
+		res, err := client.Do(req)
+		require.NoError(t, err)
+		defer res.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		clearTables(t, ctx)
+
+		// Pre-requisite: Create a category in the database as the product depends on it.
+		parentCategory := td.NewValidCategory("Test Category")
+		td.InsertCategory(t, ctx, parentCategory, testPool)
+
+		// Set the category ID in our request to the one we just created.
+		validRequest.Product.CategoryID = parentCategory.ID.String()
+
+		req := th.NewCreateProductWithPriceRequest(t, ctx, testServerURL, validRequest, "invalid-token-12345")
+
+		client := &http.Client{}
+		res, err := client.Do(req)
+		require.NoError(t, err)
+		defer res.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+	})
 }

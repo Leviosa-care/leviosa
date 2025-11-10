@@ -4,13 +4,17 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 )
 
 // clearTables is a helper function to truncate relevant tables after each test
 // to ensure test isolation.
 func clearTables(t *testing.T, ctx context.Context) {
 	t.Helper()
-	_, err := testPool.Exec(ctx, "TRUNCATE TABLE catalog.prices, catalog.products, catalog.categories RESTART IDENTITY CASCADE;")
-	require.NoError(t, err)
+	td.ClearCategoriesTable(t, ctx, testPool)
+	td.ClearProductsTable(t, ctx, testPool)
+	td.ClearPricesTable(t, ctx, testPool)
+	td.ClearImagesTable(t, ctx, testPool)
+	tu.ClearAuthData(t, ctx, authCtx)
 }
