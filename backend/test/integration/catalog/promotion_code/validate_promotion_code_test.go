@@ -2,13 +2,13 @@ package promotionCode_test
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -36,9 +36,8 @@ func TestValidatePromotionCode(t *testing.T) {
 			OrderAmount:   &[]int{2000}[0], // $20.00
 			OrderCurrency: &[]string{"USD"}[0],
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidatePromotionCodeRequest(t, ctx, jsonBody)
+		req := th.NewValidatePromotionCodeRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -47,8 +46,8 @@ func TestValidatePromotionCode(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var response domain.ValidatePromotionCodeResponse
-		decodeJSONResponse(t, resp, &response)
+		// Parse response
+		response := th.ParseValidatePromotionCodeResponse(t, resp)
 
 		assert.True(t, response.Valid)
 		assert.NotNil(t, response.PromotionCode)
@@ -63,9 +62,8 @@ func TestValidatePromotionCode(t *testing.T) {
 		requestBody := domain.ValidatePromotionCodeRequest{
 			Code: "NONEXISTENT",
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidatePromotionCodeRequest(t, ctx, jsonBody)
+		req := th.NewValidatePromotionCodeRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -74,8 +72,8 @@ func TestValidatePromotionCode(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var response domain.ValidatePromotionCodeResponse
-		decodeJSONResponse(t, resp, &response)
+		// Parse response
+		response := th.ParseValidatePromotionCodeResponse(t, resp)
 
 		assert.False(t, response.Valid)
 		assert.Equal(t, "promotion code not found", response.Reason)
@@ -96,9 +94,8 @@ func TestValidatePromotionCode(t *testing.T) {
 		requestBody := domain.ValidatePromotionCodeRequest{
 			Code: "INACTIVE20",
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidatePromotionCodeRequest(t, ctx, jsonBody)
+		req := th.NewValidatePromotionCodeRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -107,8 +104,8 @@ func TestValidatePromotionCode(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var response domain.ValidatePromotionCodeResponse
-		decodeJSONResponse(t, resp, &response)
+		// Parse response
+		response := th.ParseValidatePromotionCodeResponse(t, resp)
 
 		assert.False(t, response.Valid)
 		assert.Equal(t, "promotion code is not active", response.Reason)
@@ -129,9 +126,8 @@ func TestValidatePromotionCode(t *testing.T) {
 		requestBody := domain.ValidatePromotionCodeRequest{
 			Code: "EXPIRED20",
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidatePromotionCodeRequest(t, ctx, jsonBody)
+		req := th.NewValidatePromotionCodeRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -140,8 +136,8 @@ func TestValidatePromotionCode(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var response domain.ValidatePromotionCodeResponse
-		decodeJSONResponse(t, resp, &response)
+		// Parse response
+		response := th.ParseValidatePromotionCodeResponse(t, resp)
 
 		assert.False(t, response.Valid)
 		assert.Equal(t, "promotion code has expired", response.Reason)
@@ -164,9 +160,8 @@ func TestValidatePromotionCode(t *testing.T) {
 		requestBody := domain.ValidatePromotionCodeRequest{
 			Code: "LIMITED20",
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidatePromotionCodeRequest(t, ctx, jsonBody)
+		req := th.NewValidatePromotionCodeRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -175,8 +170,8 @@ func TestValidatePromotionCode(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var response domain.ValidatePromotionCodeResponse
-		decodeJSONResponse(t, resp, &response)
+		// Parse response
+		response := th.ParseValidatePromotionCodeResponse(t, resp)
 
 		assert.False(t, response.Valid)
 		assert.Equal(t, "promotion code has reached its redemption limit", response.Reason)
@@ -199,9 +194,8 @@ func TestValidatePromotionCode(t *testing.T) {
 			OrderAmount:   &[]int{3000}[0], // $30.00 - below minimum
 			OrderCurrency: &[]string{"USD"}[0],
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidatePromotionCodeRequest(t, ctx, jsonBody)
+		req := th.NewValidatePromotionCodeRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -210,8 +204,8 @@ func TestValidatePromotionCode(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var response domain.ValidatePromotionCodeResponse
-		decodeJSONResponse(t, resp, &response)
+		// Parse response
+		response := th.ParseValidatePromotionCodeResponse(t, resp)
 
 		assert.False(t, response.Valid)
 		assert.Contains(t, response.Reason, "order amount must be at least 5000 USD")
@@ -234,9 +228,8 @@ func TestValidatePromotionCode(t *testing.T) {
 			OrderAmount:   &[]int{2000}[0],
 			OrderCurrency: &[]string{"GBP"}[0], // Not in allowed currencies
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newValidatePromotionCodeRequest(t, ctx, jsonBody)
+		req := th.NewValidatePromotionCodeRequest(t, ctx, testServerURL, requestBody)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -245,15 +238,15 @@ func TestValidatePromotionCode(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var response domain.ValidatePromotionCodeResponse
-		decodeJSONResponse(t, resp, &response)
+		// Parse response
+		response := th.ParseValidatePromotionCodeResponse(t, resp)
 
 		assert.False(t, response.Valid)
 		assert.Equal(t, "promotion code is not valid for currency GBP", response.Reason)
 	})
 
 	t.Run("should return 400 for invalid request body", func(t *testing.T) {
-		req := newValidatePromotionCodeRequest(t, ctx, []byte("{invalid json"))
+		req := th.NewValidatePromotionCodeRequest(t, ctx, testServerURL, ("{invalid json"))
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -264,7 +257,7 @@ func TestValidatePromotionCode(t *testing.T) {
 	})
 
 	t.Run("should return 415 for non-JSON content type", func(t *testing.T) {
-		req := newValidatePromotionCodeRequest(t, ctx, []byte("not json"))
+		req := th.NewValidatePromotionCodeRequest(t, ctx, testServerURL, ("not json"))
 		req.Header.Set("Content-Type", "text/plain")
 
 		resp, err := client.Do(req)

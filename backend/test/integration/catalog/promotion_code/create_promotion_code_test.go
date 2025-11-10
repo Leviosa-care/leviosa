@@ -8,10 +8,14 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
+	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // make test-func TEST_NAME=TestCreatePromotionCode TEST_PATH=test/integration/catalog/promotion_code/create_promotion_code_test.go
@@ -20,10 +24,12 @@ func TestCreatePromotionCode(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	t.Run("should successfully create a new promotion code", func(t *testing.T) {
+	t.Run("should successfully create promotion code with valid admin token", func(t *testing.T) {
 		// Clean the database to ensure isolation for this test
-		td.ClearPromotionCodesTable(t, ctx, testPool)
-		td.ClearCouponsTable(t, ctx, testPool)
+		clearTables(t, ctx)
+
+		// Setup admin user authentication
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create a test coupon first
 		testCoupon := td.NewValidPercentOffCoupon("Test Coupon")
@@ -36,13 +42,11 @@ func TestCreatePromotionCode(t *testing.T) {
 			FirstTimeTransaction: false,
 			Metadata:             map[string]string{"test": "true"},
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newCreatePromotionCodeRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewCreatePromotionCodeRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
@@ -51,7 +55,9 @@ func TestCreatePromotionCode(t *testing.T) {
 			ID      string `json:"id"`
 			Message string `json:"message"`
 		}
-		decodeJSONResponse(t, resp, &response)
+
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
 
 		// Validate response
 		assert.NotEmpty(t, response.ID)
@@ -73,8 +79,10 @@ func TestCreatePromotionCode(t *testing.T) {
 
 	t.Run("should create promotion code with expiry and restrictions", func(t *testing.T) {
 		// Clean the database
-		td.ClearPromotionCodesTable(t, ctx, testPool)
-		td.ClearCouponsTable(t, ctx, testPool)
+		clearTables(t, ctx)
+
+		// Setup admin user authentication
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create a test coupon first
 		testCoupon := td.NewValidPercentOffCoupon("Test Coupon")
@@ -85,9 +93,11 @@ func TestCreatePromotionCode(t *testing.T) {
 			CurrencyOptions: []string{"USD", "EUR"},
 		}
 
+		const code = "EXPIRY20"
+
 		requestBody := domain.CreatePromotionCodeRequest{
 			CouponID:              testCoupon.ID.String(),
-			Code:                  "EXPIRY20",
+			Code:                  code,
 			ExpiresAt:             &expiryTime,
 			FirstTimeTransaction:  true,
 			MinimumAmount:         &[]int{1000}[0], // $10.00
@@ -95,13 +105,11 @@ func TestCreatePromotionCode(t *testing.T) {
 			Restrictions:          &restrictions,
 			Metadata:              map[string]string{"test": "true", "type": "expiring"},
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newCreatePromotionCodeRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewCreatePromotionCodeRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
@@ -110,7 +118,9 @@ func TestCreatePromotionCode(t *testing.T) {
 			ID      string `json:"id"`
 			Message string `json:"message"`
 		}
-		decodeJSONResponse(t, resp, &response)
+
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
 
 		// Verify the promotion code with restrictions was created
 		promotionCodeID, err := uuid.Parse(response.ID)
@@ -118,7 +128,7 @@ func TestCreatePromotionCode(t *testing.T) {
 
 		promotionCode, err := td.GetPromotionCodeByID(t, ctx, promotionCodeID, testPool)
 		assert.NoError(t, err)
-		assert.Equal(t, "EXPIRY20", promotionCode.Code)
+		assert.Equal(t, code, promotionCode.Code)
 		assert.True(t, promotionCode.FirstTimeTransaction)
 		assert.Equal(t, 1000, *promotionCode.MinimumAmount)
 		assert.Equal(t, "USD", *promotionCode.MinimumAmountCurrency)
@@ -127,17 +137,19 @@ func TestCreatePromotionCode(t *testing.T) {
 	})
 
 	t.Run("should return 400 for invalid coupon ID", func(t *testing.T) {
+		clearTables(t, ctx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		requestBody := domain.CreatePromotionCodeRequest{
 			CouponID: "invalid-uuid",
 			Code:     "INVALIDCOUPON",
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newCreatePromotionCodeRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewCreatePromotionCodeRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -145,37 +157,38 @@ func TestCreatePromotionCode(t *testing.T) {
 
 	t.Run("should return 404 for non-existent coupon", func(t *testing.T) {
 		// Clean the database
-		td.ClearPromotionCodesTable(t, ctx, testPool)
-		td.ClearCouponsTable(t, ctx, testPool)
+		clearTables(t, ctx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		nonExistentCouponID := uuid.New()
 		requestBody := domain.CreatePromotionCodeRequest{
 			CouponID: nonExistentCouponID.String(),
 			Code:     "NONEXISTENT",
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newCreatePromotionCodeRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewCreatePromotionCodeRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
 	t.Run("should return 400 for missing required fields", func(t *testing.T) {
+		clearTables(t, ctx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
 		requestBody := domain.CreatePromotionCodeRequest{
 			// Missing required fields
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newCreatePromotionCodeRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewCreatePromotionCodeRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -183,8 +196,9 @@ func TestCreatePromotionCode(t *testing.T) {
 
 	t.Run("should return 409 for duplicate promotion code", func(t *testing.T) {
 		// Clean the database
-		td.ClearPromotionCodesTable(t, ctx, testPool)
-		td.ClearCouponsTable(t, ctx, testPool)
+		clearTables(t, ctx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Create a test coupon first
 		testCoupon := td.NewValidPercentOffCoupon("Test Coupon")
@@ -199,26 +213,102 @@ func TestCreatePromotionCode(t *testing.T) {
 			CouponID: testCoupon.ID.String(),
 			Code:     "DUPLICATE",
 		}
-		jsonBody, _ := json.Marshal(requestBody)
 
-		req := newCreatePromotionCodeRequest(t, ctx, jsonBody)
-		req.Header.Set("Content-Type", "application/json")
+		req := th.NewCreatePromotionCodeRequest(t, ctx, testServerURL, requestBody, accessToken)
 
 		resp, err := client.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	})
 
 	t.Run("should return 415 for non-JSON content type", func(t *testing.T) {
-		req := newCreatePromotionCodeRequest(t, ctx, []byte("not json"))
+		clearTables(t, ctx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		req := th.NewCreatePromotionCodeRequest(t, ctx, testServerURL, map[string]string{"test": "data"}, accessToken)
 		req.Header.Set("Content-Type", "text/plain")
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnsupportedMediaType, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
+		clearTables(t, ctx)
+
+		requestBody := domain.CreatePromotionCodeRequest{
+			CouponID: "00000000-0000-0000-0000-000000000000",
+			Code:     "TESTCODE",
+		}
+
+		req := th.NewCreatePromotionCodeRequest(t, ctx, testServerURL, requestBody, "")
 
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
 
-		assert.Equal(t, http.StatusUnsupportedMediaType, resp.StatusCode)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		clearTables(t, ctx)
+
+		// Create expired admin session
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		requestBody := domain.CreatePromotionCodeRequest{
+			CouponID: "00000000-0000-0000-0000-000000000000",
+			Code:     "TESTCODE",
+		}
+
+		req := th.NewCreatePromotionCodeRequest(t, ctx, testServerURL, requestBody, accessToken)
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role", func(t *testing.T) {
+		clearTables(t, ctx)
+
+		// Create standard user (not admin)
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
+
+		requestBody := domain.CreatePromotionCodeRequest{
+			CouponID: "00000000-0000-0000-0000-000000000000",
+			Code:     "TESTCODE",
+		}
+
+		req := th.NewCreatePromotionCodeRequest(t, ctx, testServerURL, requestBody, accessToken)
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		clearTables(t, ctx)
+
+		requestBody := domain.CreatePromotionCodeRequest{
+			CouponID: "00000000-0000-0000-0000-000000000000",
+			Code:     "TESTCODE",
+		}
+
+		req := th.NewCreatePromotionCodeRequest(t, ctx, testServerURL, requestBody, "invalid-token-12345")
+
+		resp, err := client.Do(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 }
