@@ -2,6 +2,14 @@
 
 ## Lists
 
+- [ ] create validation functions booking module DTOs:
+    - [ ] Building
+        - [ ] CreateBuildingRequest
+        - [ ] UpdateBuildingRequest
+
+- [ ] The nickname field in CreatePriceRequest is not used in the final stored Price and it should be if we want to be able to know what it corresponds to
+It is used when creating the stripe product but it should be stored in the database too
+- [ ] add the auth middleware in all catalog integration tests (main_test and the other tests)
 - [x] make the endpoints.go file for the catalog endpoints and use them in test
 - [x] add in the catalog part the middleware for authentication and modify the test to have that configured as well.
 - [x] In the DeleteUserByAdmin handler (and maybe others), the logger is missing. Check if all handlers have logging setup
