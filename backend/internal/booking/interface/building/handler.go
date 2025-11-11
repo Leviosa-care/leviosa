@@ -10,12 +10,10 @@ import (
 type Handler interface {
 	RegisterRoutes(router *http.ServeMux)
 	CreateBuilding(w http.ResponseWriter, r *http.Request)
-	GetBuilding(w http.ResponseWriter, r *http.Request)
+	GetBuildingByID(w http.ResponseWriter, r *http.Request)
 	GetAllBuildings(w http.ResponseWriter, r *http.Request)
 	UpdateBuilding(w http.ResponseWriter, r *http.Request)
-	UpdateBuildingContactInfo(w http.ResponseWriter, r *http.Request)
-	ActivateBuilding(w http.ResponseWriter, r *http.Request)
-	DeactivateBuilding(w http.ResponseWriter, r *http.Request)
+	GetBuildingCount(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
