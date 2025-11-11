@@ -47,6 +47,14 @@ type RoomFilter struct {
 	MinHourlyRate *int
 	MaxHourlyRate *int
 
+	// Searchable fields (plaintext - used by handler)
+	Name       *string
+	RoomNumber *string
+
+	// Searchable field hashes (used by repository for database queries)
+	NameHash       *string
+	RoomNumberHash *string
+
 	// Pagination
 	Limit  int
 	Offset int
