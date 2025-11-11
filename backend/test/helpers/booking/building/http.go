@@ -49,3 +49,36 @@ func NewGetBuildingByIDRequest(t *testing.T, ctx context.Context, serverURL stri
 
 	return req
 }
+
+// NewGetAllBuildingsRequest creates a request to get all buildings (public endpoint)
+// queryParams is optional - map of query parameters (e.g., {"is_active": "true", "limit": "10"})
+// accessToken is optional - if empty, no auth cookie is added (tests public access)
+func NewGetAllBuildingsRequest(t *testing.T, ctx context.Context, serverURL string, queryParams map[string]string, accessToken string) *http.Request {
+	url := serverURL + "/buildings"
+
+	// Add query parameters if provided
+	if len(queryParams) > 0 {
+		url += "?"
+		first := true
+		for key, value := range queryParams {
+			if !first {
+				url += "&"
+			}
+			url += key + "=" + value
+			first = false
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	require.NoError(t, err)
+
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+
+	return req
+}
