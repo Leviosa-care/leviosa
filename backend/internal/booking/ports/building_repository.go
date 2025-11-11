@@ -26,6 +26,9 @@ type BuildingRepository interface {
 
 	// Count returns the total number of buildings matching the filter
 	Count(ctx context.Context, filter BuildingFilter) (int, error)
+
+	// ExistsByNameOrAddress checks if a building with given name or address hash exists
+	ExistsByNameOrAddress(ctx context.Context, nameHash, addressHash string) (bool, error)
 }
 
 // BuildingFilter defines filtering options for building queries
