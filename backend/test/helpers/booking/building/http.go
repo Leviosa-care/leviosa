@@ -82,3 +82,24 @@ func NewGetAllBuildingsRequest(t *testing.T, ctx context.Context, serverURL stri
 
 	return req
 }
+
+// NewUpdateBuildingRequest creates a request to update a building (admin endpoint)
+// accessToken is optional - if empty, no auth cookie is added (for testing unauthorized access)
+func NewUpdateBuildingRequest(t *testing.T, ctx context.Context, serverURL string, buildingID string, requestBody interface{}, accessToken string) *http.Request {
+	jsonBody, err := json.Marshal(requestBody)
+	require.NoError(t, err)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, serverURL+"/buildings/"+buildingID, bytes.NewReader(jsonBody))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+
+	return req
+}
