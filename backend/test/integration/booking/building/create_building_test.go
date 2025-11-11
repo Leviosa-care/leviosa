@@ -1,7 +1,7 @@
 package building_test
 
 import (
-	// "bytes"
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
-	// ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
-	// "github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
-	// "github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/building"
 
@@ -25,6 +25,20 @@ func TestCreateBuilding(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
+	validBuilding := tb.NewTestBuilding(t)
+
+	validRequest := domain.CreateBuildingRequest{
+		Name:        validBuilding.Name,
+		Address:     validBuilding.Address,
+		City:        validBuilding.City,
+		PostalCode:  validBuilding.PostalCode,
+		Country:     validBuilding.Country,
+		Description: validBuilding.Description,
+		Phone:       validBuilding.Phone,
+		Email:       validBuilding.Email,
+		IsActive:    true,
+	}
+
 	t.Run("should successfully create a building with valid admin token", func(t *testing.T) {
 		// Clean test data
 		tb.ClearBuildingsTable(t, ctx, testPool)
@@ -34,17 +48,7 @@ func TestCreateBuilding(t *testing.T) {
 		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
 
 		// Prepare request
-		request := domain.CreateBuildingRequest{
-			Name:        "Test Building",
-			Address:     "123 Rue de Rivoli",
-			City:        "Paris",
-			PostalCode:  "75001",
-			Country:     "France",
-			Description: "A vague description of the building",
-			Phone:       "0612345678",
-			Email:       "building@example.com",
-			IsActive:    true,
-		}
+		request := validRequest
 
 		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
 
@@ -84,412 +88,335 @@ func TestCreateBuilding(t *testing.T) {
 		assert.True(t, building.IsActive)
 	})
 
-	//	t.Run("should successfully create inactive building", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//		defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	//		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
-	//
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "Inactive Building",
-	//			Address:    "456 Inactive Ave",
-	//			City:       "Inactive City",
-	//			PostalCode: "67890",
-	//			Country:    "Inactive Country",
-	//			IsActive:   false,
-	//		}
-	//
-	//		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
-	//
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		defer resp.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusCreated, resp.StatusCode)
-	//
-	//		var response domain.BuildingResponse
-	//		err = json.NewDecoder(resp.Body).Decode(&response)
-	//		require.NoError(t, err)
-	//
-	//		assert.False(t, response.IsActive)
-	//
-	//		// Verify in database
-	//		buildingEncx, err := tb.GetBuildingEncxByID(t, ctx, testPool, response.ID)
-	//		require.NoError(t, err)
-	//
-	//		building, err := domain.DecryptBuildingEncx(ctx, crypto, buildingEncx)
-	//		require.NoError(t, err)
-	//
-	//		assert.False(t, building.IsActive)
-	//	})
-	//
-	// // Validation tests
-	//
-	//	t.Run("should return 400 Bad Request for empty name", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//		defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	//		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
-	//
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "", // Empty name
-	//			Address:    "123 Test Street",
-	//			City:       "Test City",
-	//			PostalCode: "12345",
-	//			Country:    "Test Country",
-	//		}
-	//
-	//		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
-	//
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		defer resp.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	//
-	//		var respBody struct {
-	//			Error string `json:"error"`
-	//		}
-	//		err = json.NewDecoder(resp.Body).Decode(&respBody)
-	//		require.NoError(t, err)
-	//		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
-	//	})
-	//
-	//	t.Run("should return 400 Bad Request for empty address", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//		defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	//		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
-	//
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "Test Building",
-	//			Address:    "", // Empty address
-	//			City:       "Test City",
-	//			PostalCode: "12345",
-	//			Country:    "Test Country",
-	//		}
-	//
-	//		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
-	//
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		defer resp.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	//
-	//		var respBody struct {
-	//			Error string `json:"error"`
-	//		}
-	//		err = json.NewDecoder(resp.Body).Decode(&respBody)
-	//		require.NoError(t, err)
-	//		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
-	//	})
-	//
-	//	t.Run("should return 400 Bad Request for empty city", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//		defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	//		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
-	//
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "Test Building",
-	//			Address:    "123 Test Street",
-	//			City:       "", // Empty city
-	//			PostalCode: "12345",
-	//			Country:    "Test Country",
-	//		}
-	//
-	//		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
-	//
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		defer resp.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	//
-	//		var respBody struct {
-	//			Error string `json:"error"`
-	//		}
-	//		err = json.NewDecoder(resp.Body).Decode(&respBody)
-	//		require.NoError(t, err)
-	//		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
-	//	})
-	//
-	//	t.Run("should return 400 Bad Request for empty postal code", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//		defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	//		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
-	//
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "Test Building",
-	//			Address:    "123 Test Street",
-	//			City:       "Test City",
-	//			PostalCode: "", // Empty postal code
-	//			Country:    "Test Country",
-	//		}
-	//
-	//		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
-	//
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		defer resp.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	//
-	//		var respBody struct {
-	//			Error string `json:"error"`
-	//		}
-	//		err = json.NewDecoder(resp.Body).Decode(&respBody)
-	//		require.NoError(t, err)
-	//		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
-	//	})
-	//
-	//	t.Run("should return 400 Bad Request for empty country", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//		defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	//		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
-	//
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "Test Building",
-	//			Address:    "123 Test Street",
-	//			City:       "Test City",
-	//			PostalCode: "12345",
-	//			Country:    "", // Empty country
-	//		}
-	//
-	//		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
-	//
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		defer resp.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	//
-	//		var respBody struct {
-	//			Error string `json:"error"`
-	//		}
-	//		err = json.NewDecoder(resp.Body).Decode(&respBody)
-	//		require.NoError(t, err)
-	//		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
-	//	})
-	//
-	//	t.Run("should return 400 Bad Request for invalid JSON body", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//		defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	//		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
-	//
-	//		// Create malformed JSON
-	//		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/buildings", bytes.NewBuffer([]byte("{invalid json")))
-	//		require.NoError(t, err)
-	//		req.Header.Set("Content-Type", "application/json")
-	//
-	//		if accessToken != "" {
-	//			cookie := &http.Cookie{
-	//				Name:  ck.AccessTokenCookieName,
-	//				Value: accessToken,
-	//			}
-	//			req.AddCookie(cookie)
-	//		}
-	//
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		defer resp.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	//
-	//		var respBody struct {
-	//			Error string `json:"error"`
-	//		}
-	//		err = json.NewDecoder(resp.Body).Decode(&respBody)
-	//		require.NoError(t, err)
-	//		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
-	//	})
-	//
-	//	t.Run("should return 409 Conflict when building with same name or address already exists", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//		defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	//		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
-	//
-	//		// Create first building
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "Duplicate Building",
-	//			Address:    "123 Duplicate Street",
-	//			City:       "Duplicate City",
-	//			PostalCode: "11111",
-	//			Country:    "Duplicate Country",
-	//		}
-	//
-	//		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		resp.Body.Close()
-	//		require.Equal(t, http.StatusCreated, resp.StatusCode)
-	//
-	//		// Try to create duplicate
-	//		req2 := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
-	//		resp2, err := client.Do(req2)
-	//		require.NoError(t, err)
-	//		defer resp2.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusConflict, resp2.StatusCode)
-	//
-	//		var respBody struct {
-	//			Error string `json:"error"`
-	//		}
-	//		err = json.NewDecoder(resp2.Body).Decode(&respBody)
-	//		require.NoError(t, err)
-	//		assert.Contains(t, respBody.Error, errs.ErrAlreadyExists.Error())
-	//	})
-	//
-	// // Authentication and Authorization tests
-	//
-	//	t.Run("should return 401 when access token is missing", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "Test Building",
-	//			Address:    "123 Test Street",
-	//			City:       "Test City",
-	//			PostalCode: "12345",
-	//			Country:    "Test Country",
-	//		}
-	//
-	//		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, "") // Empty token
-	//
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		defer resp.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-	//	})
-	//
-	//	t.Run("should return 401 when session is expired", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//		defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	//		// Create expired admin session
-	//		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
-	//
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "Test Building",
-	//			Address:    "123 Test Street",
-	//			City:       "Test City",
-	//			PostalCode: "12345",
-	//			Country:    "Test Country",
-	//		}
-	//
-	//		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
-	//
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		defer resp.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-	//	})
-	//
-	//	t.Run("should return 403 when user has insufficient role (standard user)", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//		defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	//		// Create standard user (not admin)
-	//		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
-	//
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "Test Building",
-	//			Address:    "123 Test Street",
-	//			City:       "Test City",
-	//			PostalCode: "12345",
-	//			Country:    "Test Country",
-	//		}
-	//
-	//		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
-	//
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		defer resp.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-	//	})
-	//
-	//	t.Run("should return 403 when user has insufficient role (partner)", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//		defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	//		// Create partner user (not admin)
-	//		accessToken := tu.SetupUserWithRole(t, ctx, identity.Partner, authCtx)
-	//
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "Test Building",
-	//			Address:    "123 Test Street",
-	//			City:       "Test City",
-	//			PostalCode: "12345",
-	//			Country:    "Test Country",
-	//		}
-	//
-	//		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
-	//
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		defer resp.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-	//	})
-	//
-	//	t.Run("should return 401 when token is invalid", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "Test Building",
-	//			Address:    "123 Test Street",
-	//			City:       "Test City",
-	//			PostalCode: "12345",
-	//			Country:    "Test Country",
-	//		}
-	//
-	//		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, "invalid-token-12345")
-	//
-	//		resp, err := client.Do(req)
-	//		require.NoError(t, err)
-	//		defer resp.Body.Close()
-	//
-	//		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-	//	})
-	//
-	//	t.Run("should handle context timeout appropriately", func(t *testing.T) {
-	//		tb.ClearBuildingsTable(t, ctx, testPool)
-	//		defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	//		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
-	//
-	//		request := domain.CreateBuildingRequest{
-	//			Name:       "Timeout Building",
-	//			Address:    "123 Timeout Street",
-	//			City:       "Timeout City",
-	//			PostalCode: "99999",
-	//			Country:    "Timeout Country",
-	//		}
-	//
-	//		// Use a very short context timeout to potentially trigger timeout
-	//		shortCtx, cancel := context.WithTimeout(ctx, 1*time.Millisecond)
-	//		defer cancel()
-	//
-	//		time.Sleep(2 * time.Millisecond) // Ensure timeout has passed
-	//
-	//		req := tb.NewCreateBuildingRequest(t, shortCtx, testServerURL, request, accessToken)
-	//
-	//		resp, err := client.Do(req)
-	//		// Either the context timeout or a successful response (if operation was fast enough)
-	//		if err != nil {
-	//			// Context timeout on client side
-	//			assert.ErrorIs(t, err, context.DeadlineExceeded)
-	//		} else {
-	//			defer resp.Body.Close()
-	//			// If we got a response, it should be either success or timeout status
-	//			assert.True(t, resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusRequestTimeout)
-	//		}
-	//	})
+	t.Run("should successfully create inactive building", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		request := validRequest
+		request.IsActive = false
+
+		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+		var response domain.BuildingResponse
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		assert.False(t, response.IsActive)
+
+		// Verify in database
+		buildingEncx, err := tb.GetBuildingEncxByID(t, ctx, testPool, response.ID)
+		require.NoError(t, err)
+
+		building, err := domain.DecryptBuildingEncx(ctx, crypto, buildingEncx)
+		require.NoError(t, err)
+
+		assert.False(t, building.IsActive)
+	})
+
+	t.Run("should return 400 Bad Request for empty name", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		request := validRequest
+		request.Name = ""
+
+		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		var respBody struct {
+			Error string `json:"error"`
+		}
+		err = json.NewDecoder(resp.Body).Decode(&respBody)
+		require.NoError(t, err)
+		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
+	})
+
+	t.Run("should return 400 Bad Request for empty address", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		request := validRequest
+		request.Address = ""
+
+		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		var respBody struct {
+			Error string `json:"error"`
+		}
+		err = json.NewDecoder(resp.Body).Decode(&respBody)
+		require.NoError(t, err)
+		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
+	})
+
+	t.Run("should return 400 Bad Request for empty city", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		request := validRequest
+		request.City = ""
+
+		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		var respBody struct {
+			Error string `json:"error"`
+		}
+		err = json.NewDecoder(resp.Body).Decode(&respBody)
+		require.NoError(t, err)
+		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
+	})
+
+	t.Run("should return 400 Bad Request for empty postal code", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		request := validRequest
+		request.PostalCode = ""
+
+		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		var respBody struct {
+			Error string `json:"error"`
+		}
+		err = json.NewDecoder(resp.Body).Decode(&respBody)
+		require.NoError(t, err)
+		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
+	})
+
+	t.Run("should return 400 Bad Request for empty country", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		request := validRequest
+		request.Country = ""
+
+		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		var respBody struct {
+			Error string `json:"error"`
+		}
+		err = json.NewDecoder(resp.Body).Decode(&respBody)
+		require.NoError(t, err)
+		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
+	})
+
+	t.Run("should return 400 Bad Request for invalid JSON body", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		// Create malformed JSON
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testServerURL+"/buildings", bytes.NewBuffer([]byte("{invalid json")))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+
+		if accessToken != "" {
+			cookie := &http.Cookie{
+				Name:  ck.AccessTokenCookieName,
+				Value: accessToken,
+			}
+			req.AddCookie(cookie)
+		}
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		var respBody struct {
+			Error string `json:"error"`
+		}
+		err = json.NewDecoder(resp.Body).Decode(&respBody)
+		require.NoError(t, err)
+		assert.Contains(t, respBody.Error, errs.ErrInvalidValue.Error())
+	})
+
+	t.Run("should return 409 Conflict when building with same name or address already exists", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		// Create first building
+		request := validRequest
+
+		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		resp.Body.Close()
+		require.Equal(t, http.StatusCreated, resp.StatusCode)
+
+		// Try to create duplicate
+		req2 := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
+		resp2, err := client.Do(req2)
+		require.NoError(t, err)
+		defer resp2.Body.Close()
+
+		assert.Equal(t, http.StatusConflict, resp2.StatusCode)
+
+		var respBody struct {
+			Error string `json:"error"`
+		}
+		err = json.NewDecoder(resp2.Body).Decode(&respBody)
+		require.NoError(t, err)
+		assert.Contains(t, respBody.Error, errs.ErrAlreadyExists.Error())
+	})
+
+	t.Run("should return 401 when access token is missing", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+
+		request := validRequest
+
+		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, "") // Empty token
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when session is expired", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Create expired admin session
+		accessToken := tu.SetupExpiredUserWithRole(t, ctx, identity.Administrator, authCtx)
+
+		request := validRequest
+
+		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role (standard user)", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Create standard user (not admin)
+		accessToken := tu.SetupStandardUser(t, ctx, authCtx)
+
+		request := validRequest
+
+		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should return 403 when user has insufficient role (partner)", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Create partner user (not admin)
+		accessToken := tu.SetupUserWithRole(t, ctx, identity.Partner, authCtx)
+
+		request := validRequest
+
+		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+
+		request := validRequest
+
+		req := tb.NewCreateBuildingRequest(t, ctx, testServerURL, request, "invalid-token-12345")
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should handle context timeout appropriately", func(t *testing.T) {
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupAdminUser(t, ctx, authCtx)
+
+		request := validRequest
+
+		// Use a very short context timeout to potentially trigger timeout
+		shortCtx, cancel := context.WithTimeout(ctx, 1*time.Millisecond)
+		defer cancel()
+
+		time.Sleep(2 * time.Millisecond) // Ensure timeout has passed
+
+		req := tb.NewCreateBuildingRequest(t, shortCtx, testServerURL, request, accessToken)
+
+		resp, err := client.Do(req)
+		// Either the context timeout or a successful response (if operation was fast enough)
+		if err != nil {
+			// Context timeout on client side
+			assert.ErrorIs(t, err, context.DeadlineExceeded)
+		} else {
+			defer resp.Body.Close()
+			// If we got a response, it should be either success or timeout status
+			assert.True(t, resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusRequestTimeout)
+		}
+	})
 }
