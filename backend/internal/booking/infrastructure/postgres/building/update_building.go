@@ -8,7 +8,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
-func (r *Repository) Update(ctx context.Context, building *domain.BuildingEncx) error {
+func (r *Repository) Update(ctx context.Context, buildingEncx *domain.BuildingEncx) error {
 	query := fmt.Sprintf(`
 		UPDATE %s.buildings SET
 			name_encrypted = $2,
@@ -27,19 +27,19 @@ func (r *Repository) Update(ctx context.Context, building *domain.BuildingEncx) 
 	`, r.schema)
 
 	result, err := r.pool.Exec(ctx, query,
-		building.ID,
-		building.NameEncrypted,
-		building.AddressEncrypted,
-		building.CityEncrypted,
-		building.PostalCodeEncrypted,
-		building.CountryEncrypted,
-		building.DescriptionEncrypted,
-		building.PhoneEncrypted,
-		building.EmailEncrypted,
-		building.DEKEncrypted,
-		building.KeyVersion,
-		building.IsActive,
-		building.UpdatedAt,
+		buildingEncx.ID,
+		buildingEncx.NameEncrypted,
+		buildingEncx.AddressEncrypted,
+		buildingEncx.CityEncrypted,
+		buildingEncx.PostalCodeEncrypted,
+		buildingEncx.CountryEncrypted,
+		buildingEncx.DescriptionEncrypted,
+		buildingEncx.PhoneEncrypted,
+		buildingEncx.EmailEncrypted,
+		buildingEncx.DEKEncrypted,
+		buildingEncx.KeyVersion,
+		buildingEncx.IsActive,
+		buildingEncx.UpdatedAt,
 	)
 	if err != nil {
 		return errs.ClassifyPgError("update building", err)

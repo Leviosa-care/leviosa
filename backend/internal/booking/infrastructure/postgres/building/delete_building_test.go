@@ -5,63 +5,43 @@ import (
 	"testing"
 	"time"
 
+	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/building"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
+
+// make test-func TEST_NAME=TestDeleteBuilding TEST_PATH=internal/booking/infrastructure/postgres/building/delete_building_test.go
 
 func TestDeleteBuilding(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should successfully soft delete existing building", func(t *testing.T) {
 		// Clean up before test
-		clearBuildingsTable(t, ctx)
+		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		// Insert test building directly into database
-		buildingID := uuid.New()
-		now := time.Now()
-
-		_, err := testPool.Exec(ctx, `
-			INSERT INTO booking.buildings (
-				id, name_encrypted, address_encrypted, city_encrypted,
-				postal_code_encrypted, country_encrypted, description_encrypted,
-				phone_encrypted, email_encrypted, is_active, created_at, updated_at,
-				dek_encrypted, key_version, metadata
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-		`,
-			buildingID,
-			[]byte("encrypted_test_building_name"),
-			[]byte("encrypted_123_test_street"),
-			[]byte("encrypted_test_city"),
-			[]byte("encrypted_12345"),
-			[]byte("encrypted_test_country"),
-			[]byte("encrypted_test_description"),
-			[]byte("encrypted_+1234567890"),
-			[]byte("encrypted_test@example.com"),
-			true, // Active
-			now,
-			now,
-			[]byte("mock_dek_data"),
-			1,
-			`{"kek_alias":"test","encryption_time":12345}`,
-		)
+		buildingEncx := tb.NewTestBuildingEncx(t)
+		buildingEncx.IsActive = true
+		err := tb.InsertBuildingEncx(t, ctx, testPool, buildingEncx)
 		require.NoError(t, err)
 
 		// Verify building is initially active
 		var isActive bool
 		err = testPool.QueryRow(ctx,
 			"SELECT is_active FROM booking.buildings WHERE id = $1",
-			buildingID).Scan(&isActive)
+			buildingEncx.ID).Scan(&isActive)
 		require.NoError(t, err)
 		require.True(t, isActive)
 
 		// Test repository Delete method (soft delete)
-		err = repo.Delete(ctx, buildingID)
+		err = repo.Delete(ctx, buildingEncx.ID)
 		require.NoError(t, err)
 
 		// Verify building is now inactive (soft deleted)
 		err = testPool.QueryRow(ctx,
 			"SELECT is_active FROM booking.buildings WHERE id = $1",
-			buildingID).Scan(&isActive)
+			buildingEncx.ID).Scan(&isActive)
 		require.NoError(t, err)
 		require.False(t, isActive)
 
@@ -69,14 +49,14 @@ func TestDeleteBuilding(t *testing.T) {
 		var count int
 		err = testPool.QueryRow(ctx,
 			"SELECT COUNT(*) FROM booking.buildings WHERE id = $1",
-			buildingID).Scan(&count)
+			buildingEncx.ID).Scan(&count)
 		require.NoError(t, err)
 		require.Equal(t, 1, count)
 	})
 
 	t.Run("should return error when deleting non-existent building", func(t *testing.T) {
 		// Clean up before test
-		clearBuildingsTable(t, ctx)
+		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		// Try to delete non-existent building
 		nonExistentID := uuid.New()
@@ -86,7 +66,7 @@ func TestDeleteBuilding(t *testing.T) {
 
 	t.Run("should handle multiple soft deletes correctly", func(t *testing.T) {
 		// Clean up before test
-		clearBuildingsTable(t, ctx)
+		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		// Insert multiple test buildings
 		now := time.Now()
@@ -164,7 +144,7 @@ func TestDeleteBuilding(t *testing.T) {
 
 	t.Run("should update timestamp on soft delete", func(t *testing.T) {
 		// Clean up before test
-		clearBuildingsTable(t, ctx)
+		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		// Insert test building
 		buildingID := uuid.New()
