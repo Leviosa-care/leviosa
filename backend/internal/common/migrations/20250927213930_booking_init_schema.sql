@@ -12,8 +12,10 @@ CREATE TABLE booking.buildings (
     name_encrypted BYTEA NOT NULL,
     address_encrypted BYTEA NOT NULL,
     city_encrypted BYTEA NOT NULL,
+    city_hash TEXT NOT NULL,
     postal_code_encrypted BYTEA NOT NULL,
     country_encrypted BYTEA NOT NULL,
+    country_hash TEXT NOT NULL,
 
     -- Business information
     description_encrypted BYTEA,
@@ -31,6 +33,11 @@ CREATE TABLE booking.buildings (
 
     metadata JSONB -- Maps to 'Metadata map[string]any,omitempty'. JSONB for flexible key-value pairs. 'omitempty' implies NULLable.
 );
+
+-- Indexes for searchable fields (hash-based filtering)
+CREATE INDEX idx_buildings_city_hash ON booking.buildings(city_hash);
+CREATE INDEX idx_buildings_country_hash ON booking.buildings(country_hash);
+CREATE INDEX idx_buildings_is_active ON booking.buildings(is_active);
 
 -- Rooms: Individual treatment spaces within buildings
 CREATE TABLE booking.rooms (
