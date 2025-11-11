@@ -11,19 +11,22 @@ import (
 func (r *Repository) Create(ctx context.Context, buildingEncx *domain.BuildingEncx) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s.buildings (
-			id, name_encrypted, address_encrypted, city_encrypted, city_hash,
-			postal_code_encrypted, country_encrypted, country_hash,
-			description_encrypted, phone_encrypted, email_encrypted,
-			dek_encrypted, key_version, is_active, created_at, updated_at
+			id, name_encrypted, name_hash, address_encrypted, address_hash,
+			city_encrypted, city_hash, postal_code_encrypted,
+			country_encrypted, country_hash, description_encrypted,
+			phone_encrypted, email_encrypted, dek_encrypted, key_version,
+			is_active, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
 		)
 	`, r.schema)
 
 	_, err := r.pool.Exec(ctx, query,
 		buildingEncx.ID,
 		buildingEncx.NameEncrypted,
+		buildingEncx.NameHash,
 		buildingEncx.AddressEncrypted,
+		buildingEncx.AddressHash,
 		buildingEncx.CityEncrypted,
 		buildingEncx.CityHash,
 		buildingEncx.PostalCodeEncrypted,
