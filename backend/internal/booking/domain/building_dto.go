@@ -2,6 +2,8 @@ package domain
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/validation"
 
@@ -35,14 +37,35 @@ type CreateBuildingRequest struct {
 }
 
 func (r *CreateBuildingRequest) Valid(ctx context.Context) error {
-	// TODO: complete that validation function
 	var errs errsx.Map
 
-	if err := validation.ValidateEmail(r.Email); err != nil {
-		errs.Set("email", err)
+	// Required field validation
+	if strings.TrimSpace(r.Name) == "" {
+		errs.Set("name", fmt.Errorf("name is required"))
 	}
-	if err := validation.ValidatePhone(r.Phone); err != nil {
-		errs.Set("phone", err)
+	if strings.TrimSpace(r.Address) == "" {
+		errs.Set("address", fmt.Errorf("address is required"))
+	}
+	if strings.TrimSpace(r.City) == "" {
+		errs.Set("city", fmt.Errorf("city is required"))
+	}
+	if strings.TrimSpace(r.PostalCode) == "" {
+		errs.Set("postal_code", fmt.Errorf("postal code is required"))
+	}
+	if strings.TrimSpace(r.Country) == "" {
+		errs.Set("country", fmt.Errorf("country is required"))
+	}
+
+	// Optional field validation
+	if r.Email != "" {
+		if err := validation.ValidateEmail(r.Email); err != nil {
+			errs.Set("email", err)
+		}
+	}
+	if r.Phone != "" {
+		if err := validation.ValidatePhone(r.Phone); err != nil {
+			errs.Set("phone", err)
+		}
 	}
 
 	return errs.AsError()
