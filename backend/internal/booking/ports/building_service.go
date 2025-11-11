@@ -14,6 +14,9 @@ type BuildingService interface {
 
 	// GetBuilding retrieves a building by ID
 	GetBuildingByID(ctx context.Context, id uuid.UUID) (*domain.BuildingResponse, error)
+
+	// ListBuildings retrieves buildings with filtering
+	ListBuildings(ctx context.Context, filter BuildingFilter) ([]*domain.BuildingResponse, error)
 	//
 	// // UpdateBuilding updates building details with validation
 	// UpdateBuilding(ctx context.Context, id uuid.UUID, name, address, city, postalCode, country string) (*domain.Building, error)
@@ -26,9 +29,6 @@ type BuildingService interface {
 	//
 	// // ActivateBuilding marks a building as active
 	// ActivateBuilding(ctx context.Context, id uuid.UUID) error
-	//
-	// // ListBuildings retrieves buildings with filtering
-	// ListBuildings(ctx context.Context, filter BuildingFilter) ([]*domain.BuildingResponse, error)
 	//
 	// // GetBuildingCount returns total count with filtering
 	// GetBuildingCount(ctx context.Context, filter BuildingFilter) (int, error)
