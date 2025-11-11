@@ -13,9 +13,10 @@ import (
 func (r *Repository) List(ctx context.Context, filter ports.BuildingFilter) ([]*domain.BuildingEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, name_encrypted, address_encrypted, city_encrypted,
-			postal_code_encrypted, country_encrypted, description_encrypted,
-			phone_encrypted, email_encrypted, is_active, created_at, updated_at,
+			id, name_encrypted, address_encrypted, city_encrypted, city_hash,
+			postal_code_encrypted, country_encrypted, country_hash,
+			description_encrypted, phone_encrypted, email_encrypted,
+			is_active, created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM %s.buildings
 	`, r.schema)
@@ -28,6 +29,20 @@ func (r *Repository) List(ctx context.Context, filter ports.BuildingFilter) ([]*
 	if filter.IsActive != nil {
 		whereConditions = append(whereConditions, fmt.Sprintf("is_active = $%d", argIndex))
 		args = append(args, *filter.IsActive)
+		argIndex++
+	}
+
+	// Apply city filter using hash
+	if filter.CityHash != nil {
+		whereConditions = append(whereConditions, fmt.Sprintf("city_hash = $%d", argIndex))
+		args = append(args, *filter.CityHash)
+		argIndex++
+	}
+
+	// Apply country filter using hash
+	if filter.CountryHash != nil {
+		whereConditions = append(whereConditions, fmt.Sprintf("country_hash = $%d", argIndex))
+		args = append(args, *filter.CountryHash)
 		argIndex++
 	}
 
@@ -78,8 +93,10 @@ func (r *Repository) List(ctx context.Context, filter ports.BuildingFilter) ([]*
 			&buildingEncx.NameEncrypted,
 			&buildingEncx.AddressEncrypted,
 			&buildingEncx.CityEncrypted,
+			&buildingEncx.CityHash,
 			&buildingEncx.PostalCodeEncrypted,
 			&buildingEncx.CountryEncrypted,
+			&buildingEncx.CountryHash,
 			&buildingEncx.DescriptionEncrypted,
 			&buildingEncx.PhoneEncrypted,
 			&buildingEncx.EmailEncrypted,

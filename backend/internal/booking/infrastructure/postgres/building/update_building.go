@@ -14,15 +14,17 @@ func (r *Repository) Update(ctx context.Context, buildingEncx *domain.BuildingEn
 			name_encrypted = $2,
 			address_encrypted = $3,
 			city_encrypted = $4,
-			postal_code_encrypted = $5,
-			country_encrypted = $6,
-			description_encrypted = $7,
-			phone_encrypted = $8,
-			email_encrypted = $9,
-			dek_encrypted = $10,
-			key_version = $11,
-			is_active = $12,
-			updated_at = $13
+			city_hash = $5,
+			postal_code_encrypted = $6,
+			country_encrypted = $7,
+			country_hash = $8,
+			description_encrypted = $9,
+			phone_encrypted = $10,
+			email_encrypted = $11,
+			dek_encrypted = $12,
+			key_version = $13,
+			is_active = $14,
+			updated_at = $15
 		WHERE id = $1
 	`, r.schema)
 
@@ -31,8 +33,10 @@ func (r *Repository) Update(ctx context.Context, buildingEncx *domain.BuildingEn
 		buildingEncx.NameEncrypted,
 		buildingEncx.AddressEncrypted,
 		buildingEncx.CityEncrypted,
+		buildingEncx.CityHash,
 		buildingEncx.PostalCodeEncrypted,
 		buildingEncx.CountryEncrypted,
+		buildingEncx.CountryHash,
 		buildingEncx.DescriptionEncrypted,
 		buildingEncx.PhoneEncrypted,
 		buildingEncx.EmailEncrypted,

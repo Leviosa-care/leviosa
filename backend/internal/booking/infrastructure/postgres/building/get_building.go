@@ -12,9 +12,10 @@ import (
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.BuildingEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, name_encrypted, address_encrypted, city_encrypted,
-			postal_code_encrypted, country_encrypted, description_encrypted,
-			phone_encrypted, email_encrypted, is_active, created_at, updated_at,
+			id, name_encrypted, address_encrypted, city_encrypted, city_hash,
+			postal_code_encrypted, country_encrypted, country_hash,
+			description_encrypted, phone_encrypted, email_encrypted,
+			is_active, created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM %s.buildings
 		WHERE id = $1
@@ -26,8 +27,10 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Buildin
 		&buildingEncx.NameEncrypted,
 		&buildingEncx.AddressEncrypted,
 		&buildingEncx.CityEncrypted,
+		&buildingEncx.CityHash,
 		&buildingEncx.PostalCodeEncrypted,
 		&buildingEncx.CountryEncrypted,
+		&buildingEncx.CountryHash,
 		&buildingEncx.DescriptionEncrypted,
 		&buildingEncx.PhoneEncrypted,
 		&buildingEncx.EmailEncrypted,
