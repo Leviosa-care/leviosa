@@ -28,6 +28,25 @@ func NewTestBuilding(t *testing.T) *domain.Building {
 	}
 }
 
+// NewTestBuildingWithParams creates a test building with custom parameters
+func NewTestBuildingWithParams(t *testing.T, name, city, country string, isActive bool) *domain.Building {
+	now := time.Now()
+	return &domain.Building{
+		ID:          uuid.New(),
+		Name:        name,
+		Address:     "123 Test Street",
+		City:        city,
+		PostalCode:  "12345",
+		Country:     country,
+		Description: "Test building description",
+		Phone:       "+1234567890",
+		Email:       "test@example.com",
+		IsActive:    isActive,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+}
+
 func NewTestBuildingEncx(t *testing.T) *domain.BuildingEncx {
 	now := time.Now()
 	return &domain.BuildingEncx{
