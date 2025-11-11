@@ -16,8 +16,8 @@
     "internal/authuser/domain/user.go": "ec584c6040771885531d72ad366227cc0cff1ef242a93f70373867d1d5cf8b9b",
     "internal/booking/domain/availability.go": "e1dc177df9f1a40a000d67dcad28389691efd9ea5ed2db5874a4bfa04ba77991",
     "internal/booking/domain/booking.go": "af7895dcb6e39808d2279cce7f71ed72fcde61eedc5c4801cbe422d9ab0ecb97",
-    "internal/booking/domain/building.go": "8c46902b98cb9d2aab4c0cc24053c6e92128b8bdaf6b7fd125e464c0ace1afe3",
-    "internal/booking/domain/building_dto.go": "10f3d023a8ea50fbe891c8d9c9e0ac5bea7b4bab72d565a49fdcff82a2c2ec94",
+    "internal/booking/domain/building.go": "bd5a1c3f303c76dd47910763e91abc2c51f8c421c18bfd50450364874a1e2ff5",
+    "internal/booking/domain/building_dto.go": "b624e6ee2482b20482c21b295b13f5d0f74c5c005cc26aa5eb427c630f29b86e",
     "internal/booking/domain/room.go": "d099a5da4fe00a09fb8c2d39c730e3cad6b7275651cb3c0442903ef99f4d68d7",
     "internal/common/auth/session/session.go": "4cd32a4d2ba139b2431cc9b756d6789cfcefbd63854c6e05e913bc9624d503ae",
     "internal/common/testutils/auth.go": "3ac1065e8ee85316b98f963e63d2e0c04a13390eaedd48ba043b45b23bbf203f",
@@ -113,13 +113,13 @@
     },
     "internal/booking/domain/building_dto_encx.go": {
       "SourceFile": "internal/booking/domain/building_dto.go",
-      "SourceHash": "10f3d023a8ea50fbe891c8d9c9e0ac5bea7b4bab72d565a49fdcff82a2c2ec94",
-      "GeneratedTime": "2025-11-11T14:15:29.117182469+01:00"
+      "SourceHash": "b624e6ee2482b20482c21b295b13f5d0f74c5c005cc26aa5eb427c630f29b86e",
+      "GeneratedTime": "2025-11-11T17:06:01.751251164+01:00"
     },
     "internal/booking/domain/building_encx.go": {
       "SourceFile": "internal/booking/domain/building.go",
-      "SourceHash": "8c46902b98cb9d2aab4c0cc24053c6e92128b8bdaf6b7fd125e464c0ace1afe3",
-      "GeneratedTime": "2025-11-11T14:15:29.118418391+01:00"
+      "SourceHash": "bd5a1c3f303c76dd47910763e91abc2c51f8c421c18bfd50450364874a1e2ff5",
+      "GeneratedTime": "2025-11-11T17:06:01.752979021+01:00"
     },
     "internal/booking/domain/room_encx.go": {
       "SourceFile": "internal/booking/domain/room.go",
@@ -172,5 +172,5 @@
       "GeneratedTime": "2025-10-29T23:21:24.406899642+01:00"
     }
   },
-  "LastGenerated": "2025-11-11T14:15:29.483100779+01:00"
+  "LastGenerated": "2025-11-11T17:06:01.752979772+01:00"
 }
