@@ -33,9 +33,13 @@ type BuildingFilter struct {
 	// Active status filter
 	IsActive *bool
 
-	// Location filters
+	// Location filters (plaintext - used by handler)
 	City    *string
 	Country *string
+
+	// Location filter hashes (used by repository for database queries)
+	CityHash    *string
+	CountryHash *string
 
 	// Pagination
 	Limit  int
