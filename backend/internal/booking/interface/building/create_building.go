@@ -55,11 +55,11 @@ func (h *handler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
 		var statusCode int
 
 		switch {
-		case errors.Is(err, errs.ErrInvalidInput):
+		case errors.Is(err, errs.ErrInvalidValue):
 			logLevel = "warn"
 			errorContext = "invalid request validation"
 			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrUniqueViolation):
+		case errors.Is(err, errs.ErrAlreadyExists):
 			logLevel = "warn"
 			errorContext = "building with this name or address already exists"
 			statusCode = http.StatusConflict
