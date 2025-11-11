@@ -23,6 +23,18 @@ func (r *Repository) Count(ctx context.Context, filter ports.BuildingFilter) (in
 		argIndex++
 	}
 
+	if filter.CityHash != nil {
+		whereConditions = append(whereConditions, fmt.Sprintf("city_hash = $%d", argIndex))
+		args = append(args, *filter.CityHash)
+		argIndex++
+	}
+
+	if filter.CountryHash != nil {
+		whereConditions = append(whereConditions, fmt.Sprintf("country_hash = $%d", argIndex))
+		args = append(args, *filter.CountryHash)
+		argIndex++
+	}
+
 	// Add WHERE clause if we have conditions
 	if len(whereConditions) > 0 {
 		query += " WHERE " + strings.Join(whereConditions, " AND ")
