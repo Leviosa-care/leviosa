@@ -27,7 +27,9 @@ CREATE TABLE booking.buildings (
     -- Administrative fields
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+
+    metadata JSONB -- Maps to 'Metadata map[string]any,omitempty'. JSONB for flexible key-value pairs. 'omitempty' implies NULLable.
 );
 
 -- Rooms: Individual treatment spaces within buildings
@@ -54,7 +56,9 @@ CREATE TABLE booking.rooms (
     -- Administrative fields
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+
+    metadata JSONB -- Maps to 'Metadata map[string]any,omitempty'. JSONB for flexible key-value pairs. 'omitempty' implies NULLable.
 );
 
 -- Room allocations: Partner assignments to rooms (dedicated vs shared access)
@@ -74,6 +78,8 @@ CREATE TABLE booking.room_allocations (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+
+    metadata JSONB, -- Maps to 'Metadata map[string]any,omitempty'. JSONB for flexible key-value pairs. 'omitempty' implies NULLable.
 
     -- Constraints
     UNIQUE(room_id, partner_id, allocation_type),
@@ -111,6 +117,8 @@ CREATE TABLE booking.availabilities (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 
+    metadata JSONB, -- Maps to 'Metadata map[string]any,omitempty'. JSONB for flexible key-value pairs. 'omitempty' implies NULLable.
+
     -- Constraints
     CHECK (end_time > start_time),
     CHECK (start_time >= NOW()) -- Cannot create availability in the past
@@ -147,7 +155,9 @@ CREATE TABLE booking.bookings (
 
     -- Administrative fields
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+
+    metadata JSONB -- Maps to 'Metadata map[string]any,omitempty'. JSONB for flexible key-value pairs. 'omitempty' implies NULLable.
 );
 
 -- Create indexes for performance
