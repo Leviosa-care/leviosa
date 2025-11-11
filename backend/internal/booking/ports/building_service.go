@@ -20,16 +20,7 @@ type BuildingService interface {
 	//
 	// UpdateBuilding updates building details with validation
 	UpdateBuilding(ctx context.Context, request *domain.UpdateBuildingRequest) (*domain.BuildingResponse, error)
-	//
-	// // SetBuildingContactInfo sets optional contact information
-	// SetBuildingContactInfo(ctx context.Context, id uuid.UUID, description, phone, email string) (*domain.Building, error)
-	//
-	// // DeactivateBuilding marks a building as inactive
-	// DeactivateBuilding(ctx context.Context, id uuid.UUID) error
-	//
-	// // ActivateBuilding marks a building as active
-	// ActivateBuilding(ctx context.Context, id uuid.UUID) error
-	//
-	// // GetBuildingCount returns total count with filtering
-	// GetBuildingCount(ctx context.Context, filter BuildingFilter) (int, error)
+
+	// GetBuildingCount returns total count with filtering
+	GetBuildingCount(ctx context.Context, filter BuildingFilter) (int, error)
 }
