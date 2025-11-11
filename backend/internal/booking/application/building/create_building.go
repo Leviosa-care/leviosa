@@ -8,6 +8,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	"github.com/hengadev/encx"
 
 	"github.com/google/uuid"
 )
@@ -15,6 +16,40 @@ import (
 func (s *BuildingService) CreateBuilding(ctx context.Context, request *domain.CreateBuildingRequest) (*domain.BuildingResponse, error) {
 	if err := request.Valid(ctx); err != nil {
 		return nil, errs.NewInvalidValueErr(err.Error())
+	}
+
+	// Generate hashes for duplicate checking
+	nameBytes, err := encx.SerializeValue(request.Name)
+	if err != nil {
+		return nil, errs.NewInvalidValueErr(fmt.Sprintf("invalid name value: %v", err))
+	}
+	nameHash := s.crypto.HashBasic(ctx, nameBytes)
+
+	addressBytes, err := encx.SerializeValue(request.Address)
+	if err != nil {
+		return nil, errs.NewInvalidValueErr(fmt.Sprintf("invalid address value: %v", err))
+	}
+	addressHash := s.crypto.HashBasic(ctx, addressBytes)
+
+	// Check for duplicate name or address
+	exists, err := s.buildingRepo.ExistsByNameOrAddress(ctx, nameHash, addressHash)
+	if err != nil {
+		// Handle repository error
+		switch {
+		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
+			return nil, errs.NewUnexpectedError(fmt.Errorf("database connection error during duplicate check: %w", err))
+		case errors.Is(err, errs.ErrDBQuery):
+			return nil, errs.NewQueryFailedErr(fmt.Errorf("query failed during duplicate check: %w", err))
+		case errors.Is(err, errs.ErrDatabase):
+			return nil, errs.NewUnexpectedError(fmt.Errorf("database error during duplicate check: %w", err))
+		case errors.Is(err, errs.ErrContext):
+			return nil, errs.NewUnexpectedError(fmt.Errorf("context error during duplicate check: %w", err))
+		default:
+			return nil, errs.NewUnexpectedError(fmt.Errorf("unhandled error during duplicate check: %w", err))
+		}
+	}
+	if exists {
+		return nil, errs.NewAlreadyExistsError(errors.New("building with this name or address already exists"), "")
 	}
 
 	now := time.Now()
