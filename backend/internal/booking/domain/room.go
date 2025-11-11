@@ -12,9 +12,9 @@ type Room struct {
 	BuildingID uuid.UUID `json:"building_id"`
 
 	// Room identification (encrypted)
-	Name        string   `json:"name" encx:"encrypt"`
-	Description string   `json:"description,omitempty" encx:"encrypt"`
-	RoomNumber  string   `json:"room_number,omitempty" encx:"encrypt"`
+	Name        string `json:"name" encx:"encrypt,hash_basic"`
+	Description string `json:"description,omitempty" encx:"encrypt"`
+	RoomNumber  string `json:"room_number,omitempty" encx:"encrypt,hash_basic"`
 
 	// Room specifications
 	Capacity  int      `json:"capacity"`
