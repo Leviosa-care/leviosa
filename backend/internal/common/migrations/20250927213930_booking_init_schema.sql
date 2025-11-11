@@ -10,7 +10,9 @@ CREATE TABLE booking.buildings (
 
     -- Name and address (encrypted for GDPR compliance)
     name_encrypted BYTEA NOT NULL,
+    name_hash TEXT NOT NULL,
     address_encrypted BYTEA NOT NULL,
+    address_hash TEXT NOT NULL,
     city_encrypted BYTEA NOT NULL,
     city_hash TEXT NOT NULL,
     postal_code_encrypted BYTEA NOT NULL,
@@ -35,6 +37,8 @@ CREATE TABLE booking.buildings (
 );
 
 -- Indexes for searchable fields (hash-based filtering)
+CREATE INDEX idx_buildings_name_hash ON booking.buildings(name_hash);
+CREATE INDEX idx_buildings_address_hash ON booking.buildings(address_hash);
 CREATE INDEX idx_buildings_city_hash ON booking.buildings(city_hash);
 CREATE INDEX idx_buildings_country_hash ON booking.buildings(country_hash);
 CREATE INDEX idx_buildings_is_active ON booking.buildings(is_active);
