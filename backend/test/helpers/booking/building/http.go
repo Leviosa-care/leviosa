@@ -103,3 +103,36 @@ func NewUpdateBuildingRequest(t *testing.T, ctx context.Context, serverURL strin
 
 	return req
 }
+
+// NewGetBuildingCountRequest creates a request to get building count (public endpoint)
+// queryParams is optional - map of query parameters (e.g., {"is_active": "true", "city": "Paris"})
+// accessToken is optional - if empty, no auth cookie is added (tests public access)
+func NewGetBuildingCountRequest(t *testing.T, ctx context.Context, serverURL string, queryParams map[string]string, accessToken string) *http.Request {
+	url := serverURL + "/buildings/count"
+
+	// Add query parameters if provided
+	if len(queryParams) > 0 {
+		url += "?"
+		first := true
+		for key, value := range queryParams {
+			if !first {
+				url += "&"
+			}
+			url += key + "=" + value
+			first = false
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	require.NoError(t, err)
+
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+
+	return req
+}
