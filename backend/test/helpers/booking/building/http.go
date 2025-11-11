@@ -32,3 +32,20 @@ func NewCreateBuildingRequest(t *testing.T, ctx context.Context, serverURL strin
 
 	return req
 }
+
+// NewGetBuildingByIDRequest creates a request to get a building by ID (public endpoint)
+// accessToken is optional - if empty, no auth cookie is added (tests public access)
+func NewGetBuildingByIDRequest(t *testing.T, ctx context.Context, serverURL string, buildingID interface{}, accessToken string) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/buildings/"+buildingID.(string), nil)
+	require.NoError(t, err)
+
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+
+	return req
+}
