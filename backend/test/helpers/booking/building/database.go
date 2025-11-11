@@ -46,3 +46,32 @@ func GetBuildingEncxByID(t *testing.T, ctx context.Context, pool *pgxpool.Pool, 
 
 	return &buildingEncx, err
 }
+
+func InsertBuildingEncx(t *testing.T, ctx context.Context, pool *pgxpool.Pool, buildingEncx *domain.BuildingEncx) error {
+	t.Helper()
+	_, err := pool.Exec(ctx, `
+			INSERT INTO booking.buildings (
+				id, name_encrypted, address_encrypted, city_encrypted,
+				postal_code_encrypted, country_encrypted, description_encrypted,
+				phone_encrypted, email_encrypted, is_active, created_at, updated_at,
+				dek_encrypted, key_version, metadata
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+		`,
+		buildingEncx.ID,
+		buildingEncx.NameEncrypted,
+		buildingEncx.AddressEncrypted,
+		buildingEncx.CityEncrypted,
+		buildingEncx.PostalCodeEncrypted,
+		buildingEncx.CountryEncrypted,
+		buildingEncx.DescriptionEncrypted,
+		buildingEncx.PhoneEncrypted,
+		buildingEncx.EmailEncrypted,
+		buildingEncx.IsActive,
+		buildingEncx.CreatedAt,
+		buildingEncx.UpdatedAt,
+		buildingEncx.DEKEncrypted,
+		buildingEncx.KeyVersion,
+		buildingEncx.Metadata,
+	)
+	return err
+}

@@ -48,4 +48,3 @@ func NewTestBuildingEncx(t *testing.T) *domain.BuildingEncx {
 		Metadata:             encx.EncryptionMetadata{},
 	}
 }
-
