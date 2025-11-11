@@ -13,9 +13,9 @@ type Building struct {
 	// Name and address (encrypted for GDPR compliance)
 	Name       string `json:"name" encx:"encrypt"`
 	Address    string `json:"address" encx:"encrypt"`
-	City       string `json:"city" encx:"encrypt"`
+	City       string `json:"city" encx:"encrypt,hash_basic"`
 	PostalCode string `json:"postal_code" encx:"encrypt"`
-	Country    string `json:"country" encx:"encrypt"`
+	Country    string `json:"country" encx:"encrypt,hash_basic"`
 
 	// Business information
 	Description string `json:"description,omitempty" encx:"encrypt"`
@@ -39,6 +39,7 @@ func (b *Building) ToResponse() *BuildingResponse {
 		Description: b.Description,
 		Phone:       b.Phone,
 		Email:       b.Email,
+		IsActive:    b.IsActive,
 	}
 
 }
