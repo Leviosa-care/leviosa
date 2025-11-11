@@ -21,9 +21,10 @@ func GetBuildingEncxByID(t *testing.T, ctx context.Context, pool *pgxpool.Pool, 
 	t.Helper()
 
 	query := `
-		SELECT id, name_encrypted, address_encrypted, city_encrypted, city_hash,
-		       postal_code_encrypted, country_encrypted, country_hash,
-		       description_encrypted, phone_encrypted, email_encrypted,
+		SELECT id, name_encrypted, name_hash, address_encrypted, address_hash,
+		       city_encrypted, city_hash, postal_code_encrypted,
+		       country_encrypted, country_hash, description_encrypted,
+		       phone_encrypted, email_encrypted,
 		       dek_encrypted, key_version, is_active, created_at, updated_at
 		FROM booking.buildings
 		WHERE id = $1
@@ -33,7 +34,9 @@ func GetBuildingEncxByID(t *testing.T, ctx context.Context, pool *pgxpool.Pool, 
 	err := pool.QueryRow(ctx, query, buildingID).Scan(
 		&buildingEncx.ID,
 		&buildingEncx.NameEncrypted,
+		&buildingEncx.NameHash,
 		&buildingEncx.AddressEncrypted,
+		&buildingEncx.AddressHash,
 		&buildingEncx.CityEncrypted,
 		&buildingEncx.CityHash,
 		&buildingEncx.PostalCodeEncrypted,
@@ -56,16 +59,18 @@ func InsertBuildingEncx(t *testing.T, ctx context.Context, pool *pgxpool.Pool, b
 	t.Helper()
 	_, err := pool.Exec(ctx, `
 			INSERT INTO booking.buildings (
-				id, name_encrypted, address_encrypted, city_encrypted, city_hash,
-				postal_code_encrypted, country_encrypted, country_hash,
-				description_encrypted, phone_encrypted, email_encrypted,
-				is_active, created_at, updated_at,
+				id, name_encrypted, name_hash, address_encrypted, address_hash,
+				city_encrypted, city_hash, postal_code_encrypted,
+				country_encrypted, country_hash, description_encrypted,
+				phone_encrypted, email_encrypted, is_active, created_at, updated_at,
 				dek_encrypted, key_version, metadata
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
 		`,
 		buildingEncx.ID,
 		buildingEncx.NameEncrypted,
+		buildingEncx.NameHash,
 		buildingEncx.AddressEncrypted,
+		buildingEncx.AddressHash,
 		buildingEncx.CityEncrypted,
 		buildingEncx.CityHash,
 		buildingEncx.PostalCodeEncrypted,
