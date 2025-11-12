@@ -59,9 +59,6 @@ CREATE TABLE booking.rooms (
     capacity INTEGER NOT NULL DEFAULT 1 CHECK (capacity > 0),
     equipment_encrypted BYTEA, -- JSON array of equipment/amenities
 
-    -- Pricing and availability
-    hourly_rate_cents INTEGER, -- Optional base rate in cents
-
     -- Encryption metadata (required by encx)
     dek_encrypted BYTEA NOT NULL,
     key_version INTEGER NOT NULL DEFAULT 1,
