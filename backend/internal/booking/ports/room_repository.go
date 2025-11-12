@@ -10,25 +10,25 @@ import (
 // RoomRepository defines the interface for room data persistence
 type RoomRepository interface {
 	// Create stores a new room
-	Create(ctx context.Context, room *domain.Room) error
+	Create(ctx context.Context, room *domain.RoomEncx) error
 
 	// GetByID retrieves a room by its ID
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.Room, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.RoomEncx, error)
 
 	// Update modifies an existing room
-	Update(ctx context.Context, room *domain.Room) error
+	Update(ctx context.Context, room *domain.RoomEncx) error
 
 	// Delete removes a room (soft delete by marking inactive)
 	Delete(ctx context.Context, id uuid.UUID) error
 
 	// List retrieves rooms with optional filtering
-	List(ctx context.Context, filter RoomFilter) ([]*domain.Room, error)
+	List(ctx context.Context, filter RoomFilter) ([]*domain.RoomEncx, error)
 
 	// Count returns the total number of rooms matching the filter
 	Count(ctx context.Context, filter RoomFilter) (int, error)
 
 	// GetByBuildingID retrieves all rooms in a specific building
-	GetByBuildingID(ctx context.Context, buildingID uuid.UUID, activeOnly bool) ([]*domain.Room, error)
+	GetByBuildingID(ctx context.Context, buildingID uuid.UUID, activeOnly bool) ([]*domain.RoomEncx, error)
 }
 
 // RoomFilter defines filtering options for room queries

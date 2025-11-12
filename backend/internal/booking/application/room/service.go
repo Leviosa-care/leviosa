@@ -27,34 +27,6 @@ func New(roomRepo ports.RoomRepository, buildingRepo ports.BuildingRepository, c
 	}
 }
 
-func (s *RoomService) CreateRoom(ctx context.Context, buildingID uuid.UUID, name string, capacity int) (*domain.Room, error) {
-	// Verify building exists and is active
-	building, err := s.buildingRepo.GetByID(ctx, buildingID)
-	if err != nil {
-		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return nil, errs.ErrRepositoryNotFound
-		}
-		return nil, fmt.Errorf("verify building exists: %w", err)
-	}
-
-	if !building.IsActive {
-		return nil, fmt.Errorf("cannot create room in inactive building")
-	}
-
-	// Create domain entity with validation
-	room, err := domain.NewRoom(buildingID, name, capacity)
-	if err != nil {
-		return nil, fmt.Errorf("create room entity: %w", err)
-	}
-
-	// Persist to repository
-	if err := s.roomRepo.Create(ctx, room); err != nil {
-		return nil, fmt.Errorf("create room: %w", err)
-	}
-
-	return room, nil
-}
-
 func (s *RoomService) GetRoom(ctx context.Context, id uuid.UUID) (*domain.Room, error) {
 	room, err := s.roomRepo.GetByID(ctx, id)
 	if err != nil {
@@ -208,9 +180,43 @@ func (s *RoomService) ActivateRoom(ctx context.Context, id uuid.UUID) error {
 }
 
 func (s *RoomService) ListRooms(ctx context.Context, filter ports.RoomFilter) ([]*domain.Room, error) {
-	rooms, err := s.roomRepo.List(ctx, filter)
+	// Create modified filter with hashed values for searchable fields
+	repoFilter := filter
+
+	if filter.Name != nil {
+		nameBytes, err := encx.SerializeValue(*filter.Name)
+		if err != nil {
+			return nil, errs.NewInvalidValueErr(fmt.Sprintf("invalid name value: %v", err))
+		}
+		nameHash := s.crypto.HashBasic(ctx, nameBytes)
+		repoFilter.NameHash = &nameHash
+	}
+
+	if filter.RoomNumber != nil {
+		roomNumberBytes, err := encx.SerializeValue(*filter.RoomNumber)
+		if err != nil {
+			return nil, errs.NewInvalidValueErr(fmt.Sprintf("invalid room number value: %v", err))
+		}
+		roomNumberHash := s.crypto.HashBasic(ctx, roomNumberBytes)
+		repoFilter.RoomNumberHash = &roomNumberHash
+	}
+
+	rooms, err := s.roomRepo.List(ctx, repoFilter)
 	if err != nil {
-		return nil, fmt.Errorf("list rooms: %w", err)
+		switch {
+		case errors.Is(err, errs.ErrInvalidInput):
+			return nil, errs.NewInvalidValueErr(fmt.Sprintf("invalid filter parameters: %v", err))
+		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
+			return nil, errs.NewUnexpectedError(fmt.Errorf("database connection error during room list retrieval: %w", err))
+		case errors.Is(err, errs.ErrDBQuery):
+			return nil, errs.NewQueryFailedErr(fmt.Errorf("repository query failed for room list: %w", err))
+		case errors.Is(err, errs.ErrDatabase):
+			return nil, errs.NewUnexpectedError(fmt.Errorf("database error during room list retrieval: %w", err))
+		case errors.Is(err, errs.ErrContext):
+			return nil, errs.NewUnexpectedError(fmt.Errorf("context error during room list retrieval: %w", err))
+		default:
+			return nil, errs.NewUnexpectedError(fmt.Errorf("unhandled repository error during room list retrieval: %w", err))
+		}
 	}
 
 	return rooms, nil

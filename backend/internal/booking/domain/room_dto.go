@@ -24,10 +24,12 @@ type CreateRoomRequest struct {
 	BuildingID  uuid.UUID `json:"building_id" validate:"required"`
 	Name        string    `json:"name" validate:"required,min=1,max=255"`
 	Description string    `json:"description,omitempty" validate:"max=1000"`
+	RoomNumber  string    `json:"room_number,omitempty" encx:"encrypt"`
 	Capacity    int       `json:"capacity" validate:"required,min=1,max=50"`
 	Equipment   []string  `json:"equipment,omitempty"`
 	PriceCents  *int      `json:"price_cents,omitempty" validate:"omitempty,min=0"`
 	Currency    string    `json:"currency,omitempty" validate:"omitempty,len=3"`
+	IsActive    bool      `json:"is_active"`
 }
 
 func (r *CreateRoomRequest) Valid(ctx context.Context) error {
