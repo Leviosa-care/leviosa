@@ -153,6 +153,10 @@ github.com/hashicorp/vault/api v1.16.0 h1:nbEYGJiAPGzT9U4oWgaaB0g+Rj8E59QuHKyA5L
 github.com/hashicorp/vault/api v1.16.0/go.mod h1:KhuUhzOD8lDSk29AtzNjgAu2kxRA9jL9NAbkFlqvkBA=
 github.com/hengadev/encx v0.7.3 h1:4YrenPEdrVpZvMDwpjFS93uctxLn2bxHK/g1KR80NjQ=
 github.com/hengadev/encx v0.7.3/go.mod h1:EWOHd9fTy+riwK6DZbI9qqvHQoWglJ9rqSP/amwLaRc=
+github.com/hengadev/encx v0.8.2 h1:+Pka1c9liyK3chTE4a+TmJsM6GFr9Z/mxj5IT/fcGRs=
+github.com/hengadev/encx v0.8.2/go.mod h1:wfmqpqHR41lWdkRUJ2oMmuAXTq9iZLX9s7DYqkWgaEA=
+github.com/hengadev/encx v0.8.3 h1:vW9gmcbOt29xPYEGffodDM+N8XNSzfrksDTRk5Hv2XQ=
+github.com/hengadev/encx v0.8.3/go.mod h1:wfmqpqHR41lWdkRUJ2oMmuAXTq9iZLX9s7DYqkWgaEA=
 github.com/hengadev/errsx v1.2.0 h1:skAFeZ1K2p4XRm/QPxDPYWhwhcfQs24WJRo7u3JfSdw=
 github.com/hengadev/errsx v1.2.0/go.mod h1:pdDfbKMqwVro0kRlCfPhiASTcnXFXR7/d4WxqtuNaC8=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
