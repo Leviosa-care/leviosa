@@ -15,7 +15,7 @@ func (r *Repository) List(ctx context.Context, filter ports.RoomFilter) ([]*doma
 		SELECT
 			id, building_id, name_encrypted, name_hash, description_encrypted,
 			room_number_encrypted, room_number_hash, capacity, equipment_encrypted,
-			hourly_rate_cents, is_active, created_at, updated_at,
+			is_active, created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM %s.rooms
 	`, r.schema)
@@ -49,18 +49,6 @@ func (r *Repository) List(ctx context.Context, filter ports.RoomFilter) ([]*doma
 		argIndex++
 	}
 
-	if filter.MinHourlyRate != nil {
-		whereConditions = append(whereConditions, fmt.Sprintf("hourly_rate_cents >= $%d", argIndex))
-		args = append(args, *filter.MinHourlyRate)
-		argIndex++
-	}
-
-	if filter.MaxHourlyRate != nil {
-		whereConditions = append(whereConditions, fmt.Sprintf("hourly_rate_cents <= $%d", argIndex))
-		args = append(args, *filter.MaxHourlyRate)
-		argIndex++
-	}
-
 	// Apply name filter using hash
 	if filter.NameHash != nil {
 		whereConditions = append(whereConditions, fmt.Sprintf("name_hash = $%d", argIndex))
@@ -84,7 +72,7 @@ func (r *Repository) List(ctx context.Context, filter ports.RoomFilter) ([]*doma
 	orderBy := "created_at"
 	if filter.OrderBy != "" {
 		switch filter.OrderBy {
-		case "name", "created_at", "capacity", "hourly_rate_cents":
+		case "name", "created_at", "capacity":
 			orderBy = filter.OrderBy
 		}
 	}
@@ -127,7 +115,6 @@ func (r *Repository) List(ctx context.Context, filter ports.RoomFilter) ([]*doma
 			&roomEncx.RoomNumberHash,
 			&roomEncx.Capacity,
 			&roomEncx.EquipmentEncrypted,
-			&roomEncx.HourlyRateCents,
 			&roomEncx.IsActive,
 			&roomEncx.CreatedAt,
 			&roomEncx.UpdatedAt,

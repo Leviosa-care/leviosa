@@ -43,10 +43,6 @@ type RoomFilter struct {
 	MinCapacity *int
 	MaxCapacity *int
 
-	// Rate filter (in cents)
-	MinHourlyRate *int
-	MaxHourlyRate *int
-
 	// Searchable fields (plaintext - used by handler)
 	Name       *string
 	RoomNumber *string
@@ -60,6 +56,6 @@ type RoomFilter struct {
 	Offset int
 
 	// Sorting
-	OrderBy        string // "name", "created_at", "capacity", "hourly_rate_cents"
+	OrderBy        string // "name", "created_at", "capacity"
 	OrderDirection string // "asc", "desc"
 }

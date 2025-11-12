@@ -41,18 +41,6 @@ func (r *Repository) Count(ctx context.Context, filter ports.RoomFilter) (int, e
 		argIndex++
 	}
 
-	if filter.MinHourlyRate != nil {
-		whereConditions = append(whereConditions, fmt.Sprintf("hourly_rate_cents >= $%d", argIndex))
-		args = append(args, *filter.MinHourlyRate)
-		argIndex++
-	}
-
-	if filter.MaxHourlyRate != nil {
-		whereConditions = append(whereConditions, fmt.Sprintf("hourly_rate_cents <= $%d", argIndex))
-		args = append(args, *filter.MaxHourlyRate)
-		argIndex++
-	}
-
 	// Apply name filter using hash
 	if filter.NameHash != nil {
 		whereConditions = append(whereConditions, fmt.Sprintf("name_hash = $%d", argIndex))
