@@ -10,6 +10,10 @@ import (
 )
 
 func (s *BuildingService) UpdateBuilding(ctx context.Context, request *domain.UpdateBuildingRequest) (*domain.BuildingResponse, error) {
+	if err := request.Valid(ctx); err != nil {
+		return nil, errs.NewInvalidValueErr(err.Error())
+	}
+
 	// Get existing building
 	buildingEncx, err := s.buildingRepo.GetByID(ctx, request.ID)
 	if err != nil {
