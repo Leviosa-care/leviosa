@@ -85,7 +85,61 @@ type UpdateBuildingRequest struct {
 }
 
 func (r *UpdateBuildingRequest) Valid(ctx context.Context) error {
-	// TODO: complete that validation function
 	var errs errsx.Map
+
+	// ID validation (required)
+	if r.ID == uuid.Nil {
+		errs.Set("id", fmt.Errorf("building ID is required"))
+	}
+
+	// Name validation (only if provided)
+	if r.Name != nil {
+		if strings.TrimSpace(*r.Name) == "" {
+			errs.Set("name", fmt.Errorf("name cannot be empty"))
+		}
+	}
+
+	// Address validation (only if provided)
+	if r.Address != nil {
+		if strings.TrimSpace(*r.Address) == "" {
+			errs.Set("address", fmt.Errorf("address cannot be empty"))
+		}
+	}
+
+	// City validation (only if provided)
+	if r.City != nil {
+		if strings.TrimSpace(*r.City) == "" {
+			errs.Set("city", fmt.Errorf("city cannot be empty"))
+		}
+	}
+
+	// PostalCode validation (only if provided)
+	if r.PostalCode != nil {
+		if strings.TrimSpace(*r.PostalCode) == "" {
+			errs.Set("postal_code", fmt.Errorf("postal code cannot be empty"))
+		}
+	}
+
+	// Country validation (only if provided)
+	if r.Country != nil {
+		if strings.TrimSpace(*r.Country) == "" {
+			errs.Set("country", fmt.Errorf("country cannot be empty"))
+		}
+	}
+
+	// Email validation (only if provided and not empty)
+	if r.Email != nil && *r.Email != "" {
+		if err := validation.ValidateEmail(*r.Email); err != nil {
+			errs.Set("email", err)
+		}
+	}
+
+	// Phone validation (only if provided and not empty)
+	if r.Phone != nil && *r.Phone != "" {
+		if err := validation.ValidatePhone(*r.Phone); err != nil {
+			errs.Set("phone", err)
+		}
+	}
+
 	return errs.AsError()
 }
