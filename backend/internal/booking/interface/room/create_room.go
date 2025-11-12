@@ -45,7 +45,7 @@ func (h *handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call service to create room
-	room, err := h.svc.CreateRoom(ctx, request.BuildingID, request.Name, request.Description, request.Capacity)
+	room, err := h.svc.CreateRoom(ctx, &request)
 	if err != nil {
 		// Log with specific error context based on error type
 		var logLevel string
@@ -54,6 +54,10 @@ func (h *handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 
 		switch {
 		case errors.Is(err, errs.ErrInvalidInput):
+			logLevel = "warn"
+			errorContext = "invalid request validation"
+			statusCode = http.StatusBadRequest
+		case errors.Is(err, errs.ErrInvalidValue):
 			logLevel = "warn"
 			errorContext = "invalid request validation"
 			statusCode = http.StatusBadRequest
@@ -113,59 +117,11 @@ func (h *handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set additional fields if provided
-	if len(request.Equipment) > 0 {
-		room.SetEquipment(request.Equipment)
-	}
-	if request.PriceCents != nil && request.Currency != "" {
-		room.SetPricing(*request.PriceCents, request.Currency)
-	}
-
-	// Update room with additional fields if any were set
-	if len(request.Equipment) > 0 || request.PriceCents != nil {
-		room, err = h.svc.UpdateRoom(ctx, room.ID, room.Name, room.Description, room.Capacity, room.Equipment)
-		if err != nil {
-			logger.ErrorContext(ctx, "Handler: Failed to update room with additional fields",
-				"error", err,
-				"room_id", room.ID,
-				"operation", "create_room")
-			httpx.RespondWithError(w, err, http.StatusInternalServerError)
-			return
-		}
-
-		if request.PriceCents != nil && request.Currency != "" {
-			room, err = h.svc.UpdateRoomPricing(ctx, room.ID, request.PriceCents, request.Currency)
-			if err != nil {
-				logger.ErrorContext(ctx, "Handler: Failed to update room pricing",
-					"error", err,
-					"room_id", room.ID,
-					"operation", "create_room")
-				httpx.RespondWithError(w, err, http.StatusInternalServerError)
-				return
-			}
-		}
-	}
-
-	// Convert to response DTO
-	response := domain.RoomResponse{
-		ID:          room.ID,
-		BuildingID:  room.BuildingID,
-		Name:        room.Name,
-		Description: room.Description,
-		Capacity:    room.Capacity,
-		Equipment:   room.Equipment,
-		PriceCents:  room.PriceCents,
-		Currency:    room.Currency,
-		IsActive:    room.IsActive,
-		CreatedAt:   room.CreatedAt,
-		UpdatedAt:   room.UpdatedAt,
-	}
-
 	logger.InfoContext(ctx, "Handler: Room created successfully",
 		"room_id", room.ID,
 		"room_name", room.Name,
 		"building_id", room.BuildingID,
 		"operation", "create_room")
 
-	httpx.RespondWithJSON(w, response, http.StatusCreated)
+	httpx.RespondWithJSON(w, room, http.StatusCreated)
 }
