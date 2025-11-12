@@ -35,8 +35,8 @@ func NewCreateRoomRequest(t *testing.T, ctx context.Context, serverURL string, r
 
 // NewGetRoomByIDRequest creates a request to get a room by ID (public endpoint)
 // accessToken is optional - if empty, no auth cookie is added (tests public access)
-func NewGetRoomByIDRequest(t *testing.T, ctx context.Context, serverURL string, roomID interface{}, accessToken string) *http.Request {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/rooms/"+roomID.(string), nil)
+func NewGetRoomByIDRequest(t *testing.T, ctx context.Context, serverURL string, roomID string, accessToken string) *http.Request {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/rooms/"+roomID, nil)
 	require.NoError(t, err)
 
 	if accessToken != "" {
@@ -245,3 +245,4 @@ func NewClearRoomRateRequest(t *testing.T, ctx context.Context, serverURL string
 
 	return req
 }
+
