@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"testing"
 
 	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
@@ -54,22 +55,18 @@ func NewGetRoomByIDRequest(t *testing.T, ctx context.Context, serverURL string, 
 // queryParams is optional - map of query parameters (e.g., {"building_id": "uuid", "is_active": "true", "limit": "10"})
 // accessToken is optional - if empty, no auth cookie is added (tests public access)
 func NewListRoomsRequest(t *testing.T, ctx context.Context, serverURL string, queryParams map[string]string, accessToken string) *http.Request {
-	url := serverURL + "/rooms"
+	urlStr := serverURL + "/rooms"
 
 	// Add query parameters if provided
 	if len(queryParams) > 0 {
-		url += "?"
-		first := true
+		params := url.Values{}
 		for key, value := range queryParams {
-			if !first {
-				url += "&"
-			}
-			url += key + "=" + value
-			first = false
+			params.Add(key, value)
 		}
+		urlStr += "?" + params.Encode()
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
 	require.NoError(t, err)
 
 	if accessToken != "" {
@@ -125,22 +122,18 @@ func NewDeleteRoomRequest(t *testing.T, ctx context.Context, serverURL string, r
 // queryParams is optional - map of query parameters (e.g., {"building_id": "uuid", "is_active": "true", "name": "Consultation"})
 // accessToken is optional - if empty, no auth cookie is added (tests public access)
 func NewGetRoomCountRequest(t *testing.T, ctx context.Context, serverURL string, queryParams map[string]string, accessToken string) *http.Request {
-	url := serverURL + "/rooms/count"
+	urlStr := serverURL + "/rooms/count"
 
 	// Add query parameters if provided
 	if len(queryParams) > 0 {
-		url += "?"
-		first := true
+		params := url.Values{}
 		for key, value := range queryParams {
-			if !first {
-				url += "&"
-			}
-			url += key + "=" + value
-			first = false
+			params.Add(key, value)
 		}
+		urlStr += "?" + params.Encode()
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
 	require.NoError(t, err)
 
 	if accessToken != "" {
@@ -158,22 +151,18 @@ func NewGetRoomCountRequest(t *testing.T, ctx context.Context, serverURL string,
 // queryParams is optional - map of query parameters (e.g., {"active_only": "true"})
 // accessToken is optional - if empty, no auth cookie is added (tests public access)
 func NewGetRoomsByBuildingRequest(t *testing.T, ctx context.Context, serverURL string, buildingID interface{}, queryParams map[string]string, accessToken string) *http.Request {
-	url := serverURL + "/buildings/" + buildingID.(string) + "/rooms"
+	urlStr := serverURL + "/buildings/" + buildingID.(string) + "/rooms"
 
 	// Add query parameters if provided
 	if len(queryParams) > 0 {
-		url += "?"
-		first := true
+		params := url.Values{}
 		for key, value := range queryParams {
-			if !first {
-				url += "&"
-			}
-			url += key + "=" + value
-			first = false
+			params.Add(key, value)
 		}
+		urlStr += "?" + params.Encode()
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
 	require.NoError(t, err)
 
 	if accessToken != "" {
@@ -245,4 +234,3 @@ func NewClearRoomRateRequest(t *testing.T, ctx context.Context, serverURL string
 
 	return req
 }
-
