@@ -60,7 +60,7 @@ func InsertRoomEncx(t *testing.T, ctx context.Context, pool *pgxpool.Pool, roomE
 				room_number_encrypted, room_number_hash, capacity, equipment_encrypted,
 				is_active, created_at, updated_at,
 				dek_encrypted, key_version, metadata
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		`,
 		roomEncx.ID,
 		roomEncx.BuildingID,
