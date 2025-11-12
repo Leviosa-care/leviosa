@@ -7,12 +7,16 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-	"github.com/google/uuid"
 )
 
-func (s *RoomService) UpdateRoom(ctx context.Context, id uuid.UUID, name, description, roomNumber string, capacity int) (*domain.RoomResponse, error) {
+// func (s *RoomService) UpdateRoom(ctx context.Context, id uuid.UUID, name, description, roomNumber string, capacity int) (*domain.RoomResponse, error) {
+func (s *RoomService) UpdateRoom(ctx context.Context, request *domain.UpdateRoomRequest) (*domain.RoomResponse, error) {
+	if err := request.Valid(ctx); err != nil {
+		return nil, errs.NewInvalidValueErr(err.Error())
+	}
+
 	// Get existing room
-	roomEncx, err := s.roomRepo.GetByID(ctx, id)
+	roomEncx, err := s.roomRepo.GetByID(ctx, request.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
@@ -69,4 +73,3 @@ func (s *RoomService) UpdateRoom(ctx context.Context, id uuid.UUID, name, descri
 
 	return room.ToResponse(), nil
 }
-
