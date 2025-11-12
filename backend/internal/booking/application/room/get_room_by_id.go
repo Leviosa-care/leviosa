@@ -38,4 +38,3 @@ func (s *RoomService) GetRoom(ctx context.Context, id uuid.UUID) (*domain.RoomRe
 
 	return room.ToResponse(), nil
 }
-
