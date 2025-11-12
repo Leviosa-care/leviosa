@@ -19,3 +19,4 @@ func New(roomRepo ports.RoomRepository, buildingRepo ports.BuildingRepository, c
 		crypto:       crypto,
 	}
 }
+
