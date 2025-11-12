@@ -15,21 +15,11 @@ type RoomService interface {
 	// GetRoom retrieves a room by ID
 	GetRoom(ctx context.Context, id uuid.UUID) (*domain.RoomResponse, error)
 
-	//
-	// // UpdateRoom updates room details with validation
-	// UpdateRoom(ctx context.Context, id uuid.UUID, name, description, roomNumber string, capacity int) (*domain.RoomResponse, error)
-	//
-	// // SetRoomEquipment updates the room's equipment list
-	// SetRoomEquipment(ctx context.Context, id uuid.UUID, equipment []string) (*domain.RoomResponse, error)
-	//
-	// // DeactivateRoom marks a room as inactive
-	// DeactivateRoom(ctx context.Context, id uuid.UUID) error
-	//
-	// // ActivateRoom marks a room as active
-	// ActivateRoom(ctx context.Context, id uuid.UUID) error
-	//
-	// // ListRooms retrieves rooms with filtering
-	// ListRooms(ctx context.Context, filter RoomFilter) ([]*domain.Room, error)
+	// ListRooms retrieves rooms with filtering
+	ListRooms(ctx context.Context, filter RoomFilter) ([]*domain.RoomResponse, error)
+
+	// UpdateRoom updates room details with validation
+	UpdateRoom(ctx context.Context, request *domain.UpdateRoomRequest) (*domain.RoomResponse, error)
 	//
 	// // GetRoomsByBuilding retrieves all rooms in a building
 	// GetRoomsByBuilding(ctx context.Context, buildingID uuid.UUID, activeOnly bool) ([]*domain.RoomResponse, error)
