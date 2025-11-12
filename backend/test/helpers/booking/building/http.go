@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"testing"
 
 	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
@@ -54,22 +55,18 @@ func NewGetBuildingByIDRequest(t *testing.T, ctx context.Context, serverURL stri
 // queryParams is optional - map of query parameters (e.g., {"is_active": "true", "limit": "10"})
 // accessToken is optional - if empty, no auth cookie is added (tests public access)
 func NewGetAllBuildingsRequest(t *testing.T, ctx context.Context, serverURL string, queryParams map[string]string, accessToken string) *http.Request {
-	url := serverURL + "/buildings"
+	urlStr := serverURL + "/buildings"
 
 	// Add query parameters if provided
 	if len(queryParams) > 0 {
-		url += "?"
-		first := true
+		params := url.Values{}
 		for key, value := range queryParams {
-			if !first {
-				url += "&"
-			}
-			url += key + "=" + value
-			first = false
+			params.Add(key, value)
 		}
+		urlStr += "?" + params.Encode()
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
 	require.NoError(t, err)
 
 	if accessToken != "" {
@@ -108,22 +105,18 @@ func NewUpdateBuildingRequest(t *testing.T, ctx context.Context, serverURL strin
 // queryParams is optional - map of query parameters (e.g., {"is_active": "true", "city": "Paris"})
 // accessToken is optional - if empty, no auth cookie is added (tests public access)
 func NewGetBuildingCountRequest(t *testing.T, ctx context.Context, serverURL string, queryParams map[string]string, accessToken string) *http.Request {
-	url := serverURL + "/buildings/count"
+	urlStr := serverURL + "/buildings/count"
 
 	// Add query parameters if provided
 	if len(queryParams) > 0 {
-		url += "?"
-		first := true
+		params := url.Values{}
 		for key, value := range queryParams {
-			if !first {
-				url += "&"
-			}
-			url += key + "=" + value
-			first = false
+			params.Add(key, value)
 		}
+		urlStr += "?" + params.Encode()
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
 	require.NoError(t, err)
 
 	if accessToken != "" {
