@@ -50,8 +50,10 @@ CREATE TABLE booking.rooms (
 
     -- Room identification (encrypted)
     name_encrypted BYTEA NOT NULL,
+    name_hash TEXT NOT NULL,
     description_encrypted BYTEA,
     room_number_encrypted BYTEA,
+    room_number_hash TEXT,
 
     -- Room specifications
     capacity INTEGER NOT NULL DEFAULT 1 CHECK (capacity > 0),
@@ -174,6 +176,11 @@ CREATE TABLE booking.bookings (
 -- Create indexes for performance
 CREATE INDEX idx_buildings_active ON booking.buildings(is_active) WHERE is_active = TRUE;
 CREATE INDEX idx_rooms_building_active ON booking.rooms(building_id, is_active) WHERE is_active = TRUE;
+
+-- Indexes for searchable fields (hash-based filtering)
+CREATE INDEX idx_rooms_name_hash ON booking.rooms(name_hash);
+CREATE INDEX idx_rooms_room_number_hash ON booking.rooms(room_number_hash);
+
 CREATE INDEX idx_room_allocations_partner ON booking.room_allocations(partner_id, is_active) WHERE is_active = TRUE;
 CREATE INDEX idx_room_allocations_room ON booking.room_allocations(room_id, is_active) WHERE is_active = TRUE;
 CREATE INDEX idx_availabilities_partner_time ON booking.availabilities(partner_id, start_time, end_time);
