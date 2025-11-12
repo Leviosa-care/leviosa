@@ -23,7 +23,7 @@ func GetRoomEncxByID(t *testing.T, ctx context.Context, pool *pgxpool.Pool, room
 	query := `
 		SELECT id, building_id, name_encrypted, name_hash, description_encrypted,
 		       room_number_encrypted, room_number_hash, capacity, equipment_encrypted,
-		       hourly_rate_cents, is_active, created_at, updated_at,
+		       is_active, created_at, updated_at,
 		       dek_encrypted, key_version, metadata
 		FROM booking.rooms
 		WHERE id = $1
@@ -40,7 +40,6 @@ func GetRoomEncxByID(t *testing.T, ctx context.Context, pool *pgxpool.Pool, room
 		&roomEncx.RoomNumberHash,
 		&roomEncx.Capacity,
 		&roomEncx.EquipmentEncrypted,
-		&roomEncx.HourlyRateCents,
 		&roomEncx.IsActive,
 		&roomEncx.CreatedAt,
 		&roomEncx.UpdatedAt,
@@ -59,7 +58,7 @@ func InsertRoomEncx(t *testing.T, ctx context.Context, pool *pgxpool.Pool, roomE
 			INSERT INTO booking.rooms (
 				id, building_id, name_encrypted, name_hash, description_encrypted,
 				room_number_encrypted, room_number_hash, capacity, equipment_encrypted,
-				hourly_rate_cents, is_active, created_at, updated_at,
+				is_active, created_at, updated_at,
 				dek_encrypted, key_version, metadata
 			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 		`,
@@ -72,7 +71,6 @@ func InsertRoomEncx(t *testing.T, ctx context.Context, pool *pgxpool.Pool, roomE
 		roomEncx.RoomNumberHash,
 		roomEncx.Capacity,
 		roomEncx.EquipmentEncrypted,
-		roomEncx.HourlyRateCents,
 		roomEncx.IsActive,
 		roomEncx.CreatedAt,
 		roomEncx.UpdatedAt,
@@ -90,7 +88,7 @@ func GetRoomsByBuildingID(t *testing.T, ctx context.Context, pool *pgxpool.Pool,
 	query := `
 		SELECT id, building_id, name_encrypted, name_hash, description_encrypted,
 		       room_number_encrypted, room_number_hash, capacity, equipment_encrypted,
-		       hourly_rate_cents, is_active, created_at, updated_at,
+		       is_active, created_at, updated_at,
 		       dek_encrypted, key_version, metadata
 		FROM booking.rooms
 		WHERE building_id = $1
@@ -124,7 +122,6 @@ func GetRoomsByBuildingID(t *testing.T, ctx context.Context, pool *pgxpool.Pool,
 			&roomEncx.RoomNumberHash,
 			&roomEncx.Capacity,
 			&roomEncx.EquipmentEncrypted,
-			&roomEncx.HourlyRateCents,
 			&roomEncx.IsActive,
 			&roomEncx.CreatedAt,
 			&roomEncx.UpdatedAt,

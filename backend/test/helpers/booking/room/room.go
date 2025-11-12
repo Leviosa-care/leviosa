@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
-	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/google/uuid"
 	"github.com/hengadev/encx"
@@ -14,17 +13,16 @@ import (
 func NewTestRoom(t *testing.T) *domain.Room {
 	now := time.Now()
 	return &domain.Room{
-		ID:              uuid.New(),
-		BuildingID:      uuid.New(),
-		Name:            "Consultation Room A",
-		Description:     "Spacious consultation room with examination equipment",
-		RoomNumber:      "101",
-		Capacity:        1,
-		Equipment:       []string{"examination table", "chair", "sink", "cabinet"},
-		HourlyRateCents: th.IntPtr(5000), // 50.00 EUR in cents
-		IsActive:        true,
-		CreatedAt:       now,
-		UpdatedAt:       now,
+		ID:          uuid.New(),
+		BuildingID:  uuid.New(),
+		Name:        "Consultation Room A",
+		Description: "Spacious consultation room with examination equipment",
+		RoomNumber:  "101",
+		Capacity:    1,
+		Equipment:   []string{"examination table", "chair", "sink", "cabinet"},
+		IsActive:    true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 }
 
@@ -32,17 +30,16 @@ func NewTestRoom(t *testing.T) *domain.Room {
 func NewTestRoomWithParams(t *testing.T, buildingID uuid.UUID, name, roomNumber string, capacity int, hourlyRate int, isActive bool) *domain.Room {
 	now := time.Now()
 	return &domain.Room{
-		ID:              uuid.New(),
-		BuildingID:      buildingID,
-		Name:            name,
-		Description:     "Test room description",
-		RoomNumber:      roomNumber,
-		Capacity:        capacity,
-		Equipment:       []string{"basic equipment"},
-		HourlyRateCents: th.IntPtr(hourlyRate),
-		IsActive:        isActive,
-		CreatedAt:       now,
-		UpdatedAt:       now,
+		ID:          uuid.New(),
+		BuildingID:  buildingID,
+		Name:        name,
+		Description: "Test room description",
+		RoomNumber:  roomNumber,
+		Capacity:    capacity,
+		Equipment:   []string{"basic equipment"},
+		IsActive:    isActive,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 }
 
@@ -50,17 +47,16 @@ func NewTestRoomWithParams(t *testing.T, buildingID uuid.UUID, name, roomNumber 
 func NewTestRoomWithBuilding(t *testing.T, buildingID uuid.UUID) *domain.Room {
 	now := time.Now()
 	return &domain.Room{
-		ID:              uuid.New(),
-		BuildingID:      buildingID,
-		Name:            "Treatment Room B",
-		Description:     "Standard treatment room",
-		RoomNumber:      "201",
-		Capacity:        2,
-		Equipment:       []string{"treatment table", "lights", "storage"},
-		HourlyRateCents: th.IntPtr(7500), // 75.00 EUR in cents
-		IsActive:        true,
-		CreatedAt:       now,
-		UpdatedAt:       now,
+		ID:          uuid.New(),
+		BuildingID:  buildingID,
+		Name:        "Treatment Room B",
+		Description: "Standard treatment room",
+		RoomNumber:  "201",
+		Capacity:    2,
+		Equipment:   []string{"treatment table", "lights", "storage"},
+		IsActive:    true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 }
 
@@ -76,7 +72,6 @@ func NewTestRoomEncx(t *testing.T) *domain.RoomEncx {
 		RoomNumberHash:       "hashed_101",
 		Capacity:             1,
 		EquipmentEncrypted:   []byte(`["equipment1", "equipment2"]`),
-		HourlyRateCents:      &[]int{5000}[0],
 		IsActive:             true,
 		CreatedAt:            now,
 		UpdatedAt:            now,
@@ -89,7 +84,6 @@ func NewTestRoomEncx(t *testing.T) *domain.RoomEncx {
 // NewTestRoomEncxWithBuilding creates an encrypted test room with specific building ID
 func NewTestRoomEncxWithBuilding(t *testing.T, buildingID uuid.UUID) *domain.RoomEncx {
 	now := time.Now()
-	rate := 7500
 	return &domain.RoomEncx{
 		ID:                   uuid.New(),
 		BuildingID:           buildingID,
@@ -100,7 +94,6 @@ func NewTestRoomEncxWithBuilding(t *testing.T, buildingID uuid.UUID) *domain.Roo
 		RoomNumberHash:       "hashed_201",
 		Capacity:             2,
 		EquipmentEncrypted:   []byte(`["treatment table", "lights"]`),
-		HourlyRateCents:      &rate,
 		IsActive:             true,
 		CreatedAt:            now,
 		UpdatedAt:            now,
@@ -123,7 +116,6 @@ func NewInactiveTestRoomEncx(t *testing.T, buildingID uuid.UUID) *domain.RoomEnc
 		RoomNumberHash:       "hashed_999",
 		Capacity:             1,
 		EquipmentEncrypted:   []byte(`[]`),
-		HourlyRateCents:      nil, // No rate set
 		IsActive:             false,
 		CreatedAt:            now,
 		UpdatedAt:            now,
