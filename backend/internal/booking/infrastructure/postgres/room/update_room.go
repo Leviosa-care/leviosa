@@ -8,23 +8,20 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
-func (r *Repository) Update(ctx context.Context, room *domain.Room) error {
-	// Encrypt sensitive fields
-	if err := r.crypto.EncryptStruct(ctx, room); err != nil {
-		return fmt.Errorf("encrypt room data: %w", err)
-	}
-
+func (r *Repository) Update(ctx context.Context, room *domain.RoomEncx) error {
 	query := fmt.Sprintf(`
 		UPDATE %s.rooms SET
 			building_id = $2,
 			name_encrypted = $3,
-			description_encrypted = $4,
-			room_number_encrypted = $5,
-			capacity = $6,
-			equipment_encrypted = $7,
-			hourly_rate_cents = $8,
-			is_active = $9,
-			updated_at = $10
+			name_hash = $4,
+			description_encrypted = $5,
+			room_number_encrypted = $6,
+			room_number_hash = $7,
+			capacity = $8,
+			equipment_encrypted = $9,
+			hourly_rate_cents = $10,
+			is_active = $11,
+			updated_at = $12
 		WHERE id = $1
 	`, r.schema)
 
@@ -32,8 +29,10 @@ func (r *Repository) Update(ctx context.Context, room *domain.Room) error {
 		room.ID,
 		room.BuildingID,
 		room.NameEncrypted,
+		room.NameHash,
 		room.DescriptionEncrypted,
 		room.RoomNumberEncrypted,
+		room.RoomNumberHash,
 		room.Capacity,
 		room.EquipmentEncrypted,
 		room.HourlyRateCents,

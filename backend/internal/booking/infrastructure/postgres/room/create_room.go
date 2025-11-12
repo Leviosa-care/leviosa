@@ -8,19 +8,17 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
-func (r *Repository) Create(ctx context.Context, room *domain.Room) error {
+func (r *Repository) Create(ctx context.Context, room *domain.RoomEncx) error {
 	// Encrypt sensitive fields
-	if err := r.crypto.EncryptStruct(ctx, room); err != nil {
-		return fmt.Errorf("encrypt room data: %w", err)
-	}
 
 	query := fmt.Sprintf(`
 		INSERT INTO %s.rooms (
-			id, building_id, name_encrypted, description_encrypted,
-			room_number_encrypted, capacity, equipment_encrypted,
-			hourly_rate_cents, is_active, created_at, updated_at
+			id, building_id, name_encrypted, name_hash, description_encrypted,
+			room_number_encrypted, room_number_hash, capacity, equipment_encrypted,
+			hourly_rate_cents, is_active, created_at, updated_at,
+			dek_encrypted, key_version, metadata
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
 		)
 	`, r.schema)
 
@@ -28,14 +26,19 @@ func (r *Repository) Create(ctx context.Context, room *domain.Room) error {
 		room.ID,
 		room.BuildingID,
 		room.NameEncrypted,
+		room.NameHash,
 		room.DescriptionEncrypted,
 		room.RoomNumberEncrypted,
+		room.RoomNumberHash,
 		room.Capacity,
 		room.EquipmentEncrypted,
 		room.HourlyRateCents,
 		room.IsActive,
 		room.CreatedAt,
 		room.UpdatedAt,
+		room.DEKEncrypted,
+		room.KeyVersion,
+		room.Metadata,
 	)
 	if err != nil {
 		return errs.ClassifyPgError("create room", err)
