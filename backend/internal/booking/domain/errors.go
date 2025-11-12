@@ -15,7 +15,6 @@ var (
 var (
 	ErrInvalidRoomName     = errors.New("room name cannot be empty")
 	ErrInvalidRoomCapacity = errors.New("room capacity must be greater than 0")
-	ErrInvalidRoomRate     = errors.New("room rate cannot be negative")
 	ErrInvalidRoomID       = errors.New("invalid room ID")
 )
 

@@ -18,8 +18,8 @@
     "internal/booking/domain/booking.go": "af7895dcb6e39808d2279cce7f71ed72fcde61eedc5c4801cbe422d9ab0ecb97",
     "internal/booking/domain/building.go": "bd5a1c3f303c76dd47910763e91abc2c51f8c421c18bfd50450364874a1e2ff5",
     "internal/booking/domain/building_dto.go": "b624e6ee2482b20482c21b295b13f5d0f74c5c005cc26aa5eb427c630f29b86e",
-    "internal/booking/domain/room.go": "8e89d90efa610224d255b271359b342c8eb7dd6bb807ac73c5bce3b0b8310cac",
-    "internal/booking/domain/room_dto.go": "570a75d82dc11baf5ef4fb6e5ebd543fd92b8b1905a9da50858e66fe10beee5d",
+    "internal/booking/domain/room.go": "9b36c334dff6429f12f819af225fa299d870695c9c117d765697af88152cff20",
+    "internal/booking/domain/room_dto.go": "0fdbe03890589fc551bfa8ef7fc2c4e2fe6bc8b6e358b8a7e9dd5aca2b16a629",
     "internal/common/auth/session/session.go": "4cd32a4d2ba139b2431cc9b756d6789cfcefbd63854c6e05e913bc9624d503ae",
     "internal/common/testutils/auth.go": "3ac1065e8ee85316b98f963e63d2e0c04a13390eaedd48ba043b45b23bbf203f",
     "internal/domain/event/models/event.go": "1aec829e5f95d60ad1402c2d080ff982e4b2344a11508013f247cff89af466e5",
@@ -115,7 +115,7 @@
     "internal/booking/domain/building_dto_encx.go": {
       "SourceFile": "internal/booking/domain/building_dto.go",
       "SourceHash": "b624e6ee2482b20482c21b295b13f5d0f74c5c005cc26aa5eb427c630f29b86e",
-      "GeneratedTime": "2025-11-11T21:20:59.435043284+01:00"
+      "GeneratedTime": "2025-11-12T09:07:28.424080105+01:00"
     },
     "internal/booking/domain/building_encx.go": {
       "SourceFile": "internal/booking/domain/building.go",
@@ -124,13 +124,13 @@
     },
     "internal/booking/domain/room_dto_encx.go": {
       "SourceFile": "internal/booking/domain/room_dto.go",
-      "SourceHash": "570a75d82dc11baf5ef4fb6e5ebd543fd92b8b1905a9da50858e66fe10beee5d",
-      "GeneratedTime": "2025-11-11T21:20:59.436296257+01:00"
+      "SourceHash": "0fdbe03890589fc551bfa8ef7fc2c4e2fe6bc8b6e358b8a7e9dd5aca2b16a629",
+      "GeneratedTime": "2025-11-12T09:07:28.425962754+01:00"
     },
     "internal/booking/domain/room_encx.go": {
       "SourceFile": "internal/booking/domain/room.go",
-      "SourceHash": "8e89d90efa610224d255b271359b342c8eb7dd6bb807ac73c5bce3b0b8310cac",
-      "GeneratedTime": "2025-11-11T21:20:59.435575588+01:00"
+      "SourceHash": "9b36c334dff6429f12f819af225fa299d870695c9c117d765697af88152cff20",
+      "GeneratedTime": "2025-11-12T09:07:28.424884221+01:00"
     },
     "internal/common/auth/session/session_encx.go": {
       "SourceFile": "internal/common/auth/session/session.go",
@@ -178,5 +178,5 @@
       "GeneratedTime": "2025-10-29T23:21:24.406899642+01:00"
     }
   },
-  "LastGenerated": "2025-11-11T21:20:59.43630351+01:00"
+  "LastGenerated": "2025-11-12T09:07:28.425963516+01:00"
 }

@@ -20,36 +20,24 @@ type Room struct {
 	Capacity  int      `json:"capacity"`
 	Equipment []string `json:"equipment,omitempty" encx:"encrypt"`
 
-	// Pricing
-	HourlyRateCents *int `json:"hourly_rate_cents,omitempty"`
-
 	// Administrative fields
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// NewRoom creates a new Room with validated data
-func NewRoom(buildingID uuid.UUID, name string, capacity int) (*Room, error) {
-	if buildingID == uuid.Nil {
-		return nil, ErrInvalidBuildingID
+func (r *Room) ToResponse() *RoomResponse {
+	return &RoomResponse{
+		ID:          r.ID,
+		BuildingID:  r.BuildingID,
+		Name:        r.Name,
+		Description: r.Description,
+		Capacity:    r.Capacity,
+		Equipment:   r.Equipment,
+		// TODO: should I get that part ?
+		// Current: ,
+		IsActive: r.IsActive,
 	}
-	if name == "" {
-		return nil, ErrInvalidRoomName
-	}
-	if capacity <= 0 {
-		return nil, ErrInvalidRoomCapacity
-	}
-
-	return &Room{
-		ID:         uuid.New(),
-		BuildingID: buildingID,
-		Name:       name,
-		Capacity:   capacity,
-		IsActive:   true,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
-	}, nil
 }
 
 // UpdateDetails updates the room's basic information
@@ -73,22 +61,6 @@ func (r *Room) UpdateDetails(name, description, roomNumber string, capacity int)
 func (r *Room) SetEquipment(equipment []string) {
 	r.Equipment = make([]string, len(equipment))
 	copy(r.Equipment, equipment)
-	r.UpdatedAt = time.Now()
-}
-
-// SetHourlyRate sets the base hourly rate for the room
-func (r *Room) SetHourlyRate(rateCents int) error {
-	if rateCents < 0 {
-		return ErrInvalidRoomRate
-	}
-	r.HourlyRateCents = &rateCents
-	r.UpdatedAt = time.Now()
-	return nil
-}
-
-// ClearHourlyRate removes the base hourly rate
-func (r *Room) ClearHourlyRate() {
-	r.HourlyRateCents = nil
 	r.UpdatedAt = time.Now()
 }
 
