@@ -86,6 +86,9 @@ func (h *handler) UpdateRoom(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, errs.ErrInvalidInput):
 			statusCode = http.StatusBadRequest
 			errorContext = "invalid request validation"
+		case errors.Is(err, errs.ErrInvalidValue):
+			statusCode = http.StatusBadRequest
+			errorContext = "invalid request validation"
 		case errors.Is(err, errs.ErrUniqueViolation):
 			statusCode = http.StatusConflict
 			errorContext = "room name already exists in building"

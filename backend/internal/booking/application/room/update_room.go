@@ -42,9 +42,25 @@ func (s *RoomService) UpdateRoom(ctx context.Context, request *domain.UpdateRoom
 		return nil, errs.NewNotDecryptedErr("room", err)
 	}
 
-	// Update details with validation
-	if err := room.UpdateDetails(name, description, roomNumber, capacity); err != nil {
-		return nil, errs.NewInvalidValueErr(fmt.Sprintf("invalid room update data: %v", err))
+	if request.Name != nil {
+		room.Name = *request.Name
+	}
+
+	if request.Description != nil {
+		room.Description = *request.Description
+	}
+	if request.RoomNumber != nil {
+		room.RoomNumber = *request.RoomNumber
+	}
+	if request.Capacity != nil {
+		room.Capacity = *request.Capacity
+	}
+	if request.Equipment != nil {
+		room.Equipment = *request.Equipment
+	}
+
+	if request.IsActive != nil {
+		room.IsActive = *request.IsActive
 	}
 
 	// Re-encrypt updated room

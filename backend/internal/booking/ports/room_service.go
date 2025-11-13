@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
+
 	"github.com/google/uuid"
 )
 
@@ -21,6 +22,6 @@ type RoomService interface {
 	// UpdateRoom updates room details with validation
 	UpdateRoom(ctx context.Context, request *domain.UpdateRoomRequest) (*domain.RoomResponse, error)
 	//
-	// // GetRoomsByBuilding retrieves all rooms in a building
-	// GetRoomsByBuilding(ctx context.Context, buildingID uuid.UUID, activeOnly bool) ([]*domain.RoomResponse, error)
+	// GetRoomsByBuilding retrieves all rooms in a building
+	GetRoomsByBuilding(ctx context.Context, buildingID uuid.UUID, activeOnly bool) ([]*domain.RoomResponse, error)
 }
