@@ -32,11 +32,10 @@ func (r *Room) ToResponse() *RoomResponse {
 		BuildingID:  r.BuildingID,
 		Name:        r.Name,
 		Description: r.Description,
+		RoomNumber:  r.RoomNumber,
 		Capacity:    r.Capacity,
 		Equipment:   r.Equipment,
-		// TODO: should I get that part ?
-		// Current: ,
-		IsActive: r.IsActive,
+		IsActive:    r.IsActive,
 	}
 }
 
