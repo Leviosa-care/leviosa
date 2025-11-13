@@ -13,9 +13,10 @@ type RoomResponse struct {
 	ID          uuid.UUID `json:"id"`
 	BuildingID  uuid.UUID `json:"building_id"`
 	Name        string    `json:"name"`
-	Description string    `json:"description,omitempty"`
+	Description string    `json:"description"`
+	RoomNumber  string    `json:"room_number"`
 	Capacity    int       `json:"capacity"`
-	Equipment   []string  `json:"equipment,omitempty"`
+	Equipment   []string  `json:"equipment"`
 	IsActive    bool      `json:"is_active"`
 }
 
