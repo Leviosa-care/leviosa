@@ -88,7 +88,7 @@ func (r *CreateRoomRequest) Valid(ctx context.Context) error {
 
 type UpdateRoomRequest struct {
 	ID          uuid.UUID `json:"id"`
-	BuildingID  uuid.UUID `json:"building_id"`
+	BuildingID  *string   `json:"building_id"`
 	Name        *string   `json:"name"`
 	Description *string   `json:"description,omitempty"`
 	RoomNumber  *string   `json:"room_number,omitempty"`
@@ -106,8 +106,10 @@ func (r *UpdateRoomRequest) Valid(ctx context.Context) error {
 	}
 
 	// BuildingID validation (if not nil UUID, validate it)
-	if r.BuildingID != uuid.Nil {
-		// BuildingID is being updated, no additional validation needed for UUID
+	if r.BuildingID != nil {
+		if err := uuid.Validate(*r.BuildingID); err != nil {
+			errs.Set("building_id", err)
+		}
 	}
 
 	// Name validation (only if provided)
