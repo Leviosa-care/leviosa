@@ -20,7 +20,10 @@ func (r *Repository) Update(ctx context.Context, room *domain.RoomEncx) error {
 			capacity = $8,
 			equipment_encrypted = $9,
 			is_active = $10,
-			updated_at = $11
+			updated_at = $11,
+			dek_encrypted = $12,
+			key_version = $13,
+			metadata = $14
 		WHERE id = $1
 	`, r.schema)
 
@@ -36,6 +39,9 @@ func (r *Repository) Update(ctx context.Context, room *domain.RoomEncx) error {
 		room.EquipmentEncrypted,
 		room.IsActive,
 		room.UpdatedAt,
+		room.DEKEncrypted,
+		room.KeyVersion,
+		room.Metadata,
 	)
 	if err != nil {
 		return errs.ClassifyPgError("update room", err)
