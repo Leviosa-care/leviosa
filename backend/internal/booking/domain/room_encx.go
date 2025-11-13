@@ -8,48 +8,44 @@ import (
 	"context"
 	"time"
 
-	"github.com/hengadev/errsx"
 	"github.com/hengadev/encx"
-	
+	"github.com/hengadev/errsx"
+
 	"github.com/google/uuid"
-	
 )
 
 // RoomEncx represents the encrypted version of Room
 type RoomEncx struct {
-	
 	ID uuid.UUID `db:"id" json:"id"`
-	
+
 	BuildingID uuid.UUID `db:"buildingid" json:"buildingid"`
-	
+
 	Capacity int `db:"capacity" json:"capacity"`
-	
+
 	IsActive bool `db:"isactive" json:"isactive"`
-	
+
 	CreatedAt time.Time `db:"createdat" json:"createdat"`
-	
+
 	UpdatedAt time.Time `db:"updatedat" json:"updatedat"`
-	
-	
+
 	NameEncrypted []byte `db:"name_encrypted" json:"name_encrypted"`
-	
+
 	NameHash string `db:"name_hash" json:"name_hash"`
-	
+
 	DescriptionEncrypted []byte `db:"description_encrypted" json:"description_encrypted"`
-	
+
 	RoomNumberEncrypted []byte `db:"roomnumber_encrypted" json:"roomnumber_encrypted"`
-	
+
 	RoomNumberHash string `db:"roomnumber_hash" json:"roomnumber_hash"`
-	
+
 	EquipmentEncrypted []byte `db:"equipment_encrypted" json:"equipment_encrypted"`
-	
 
 	// Essential encryption fields
-	DEKEncrypted  []byte `db:"dek_encrypted" json:"dek_encrypted"`
-	KeyVersion    int    `db:"key_version" json:"key_version"`
+	DEKEncrypted []byte `db:"dek_encrypted" json:"dek_encrypted"`
+	KeyVersion   int    `db:"key_version" json:"key_version"`
 
 	// Metadata
-	Metadata      encx.EncryptionMetadata `db:"metadata" json:"metadata"`
+	Metadata encx.EncryptionMetadata `db:"metadata" json:"metadata"`
 }
 
 // ProcessRoomEncx encrypts and hashes fields based on encx tags
@@ -66,19 +62,18 @@ func ProcessRoomEncx(ctx context.Context, crypto encx.CryptoService, source *Roo
 	}
 
 	// Copy plain fields (non-encx fields)
-	
+
 	result.ID = source.ID
-	
+
 	result.BuildingID = source.BuildingID
-	
+
 	result.Capacity = source.Capacity
-	
+
 	result.IsActive = source.IsActive
-	
+
 	result.CreatedAt = source.CreatedAt
-	
+
 	result.UpdatedAt = source.UpdatedAt
-	
 
 	// Generate DEK
 	dek, err := crypto.GenerateDEK()
@@ -87,8 +82,6 @@ func ProcessRoomEncx(ctx context.Context, crypto encx.CryptoService, source *Roo
 		return result, errs.AsError()
 	}
 
-	
-	
 	// Process Name (encrypt + hash_basic)
 	NameBytes, err := encx.SerializeValue(source.Name)
 	if err != nil {
@@ -99,11 +92,9 @@ func ProcessRoomEncx(ctx context.Context, crypto encx.CryptoService, source *Roo
 			errs.Set("Name encryption", err)
 		}
 		result.NameHash = crypto.HashBasic(ctx, NameBytes)
-		
+
 	}
-	
-	
-	
+
 	// Process Description (encrypt)
 	DescriptionBytes, err := encx.SerializeValue(source.Description)
 	if err != nil {
@@ -114,9 +105,7 @@ func ProcessRoomEncx(ctx context.Context, crypto encx.CryptoService, source *Roo
 			errs.Set("Description encryption", err)
 		}
 	}
-	
-	
-	
+
 	// Process RoomNumber (encrypt + hash_basic)
 	RoomNumberBytes, err := encx.SerializeValue(source.RoomNumber)
 	if err != nil {
@@ -127,11 +116,9 @@ func ProcessRoomEncx(ctx context.Context, crypto encx.CryptoService, source *Roo
 			errs.Set("RoomNumber encryption", err)
 		}
 		result.RoomNumberHash = crypto.HashBasic(ctx, RoomNumberBytes)
-		
+
 	}
-	
-	
-	
+
 	// Process Equipment (encrypt)
 	EquipmentBytes, err := encx.SerializeValue(source.Equipment)
 	if err != nil {
@@ -142,8 +129,6 @@ func ProcessRoomEncx(ctx context.Context, crypto encx.CryptoService, source *Roo
 			errs.Set("Equipment encryption", err)
 		}
 	}
-	
-	
 
 	// Encrypt and store DEK
 	result.DEKEncrypted, err = crypto.EncryptDEK(ctx, dek)
@@ -168,19 +153,18 @@ func DecryptRoomEncx(ctx context.Context, crypto encx.CryptoService, source *Roo
 	result := &Room{}
 
 	// Copy plain fields (non-encx fields)
-	
+
 	result.ID = source.ID
-	
+
 	result.BuildingID = source.BuildingID
-	
+
 	result.Capacity = source.Capacity
-	
+
 	result.IsActive = source.IsActive
-	
+
 	result.CreatedAt = source.CreatedAt
-	
+
 	result.UpdatedAt = source.UpdatedAt
-	
 
 	// Decrypt DEK
 	dek, err := crypto.DecryptDEKWithVersion(ctx, source.DEKEncrypted, source.KeyVersion)
@@ -189,8 +173,6 @@ func DecryptRoomEncx(ctx context.Context, crypto encx.CryptoService, source *Roo
 		return result, errs.AsError()
 	}
 
-	
-	
 	// Decrypt Name
 	if len(source.NameEncrypted) > 0 {
 		NameBytes, err := crypto.DecryptData(ctx, source.NameEncrypted, dek)
@@ -203,8 +185,7 @@ func DecryptRoomEncx(ctx context.Context, crypto encx.CryptoService, source *Roo
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Description
 	if len(source.DescriptionEncrypted) > 0 {
 		DescriptionBytes, err := crypto.DecryptData(ctx, source.DescriptionEncrypted, dek)
@@ -217,8 +198,7 @@ func DecryptRoomEncx(ctx context.Context, crypto encx.CryptoService, source *Roo
 			}
 		}
 	}
-	
-	
+
 	// Decrypt RoomNumber
 	if len(source.RoomNumberEncrypted) > 0 {
 		RoomNumberBytes, err := crypto.DecryptData(ctx, source.RoomNumberEncrypted, dek)
@@ -231,8 +211,7 @@ func DecryptRoomEncx(ctx context.Context, crypto encx.CryptoService, source *Roo
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Equipment
 	if len(source.EquipmentEncrypted) > 0 {
 		EquipmentBytes, err := crypto.DecryptData(ctx, source.EquipmentEncrypted, dek)
@@ -245,7 +224,6 @@ func DecryptRoomEncx(ctx context.Context, crypto encx.CryptoService, source *Roo
 			}
 		}
 	}
-	
 
 	return result, errs.AsError()
 }
