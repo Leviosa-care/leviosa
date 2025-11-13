@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
+
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +19,7 @@ func ClearRoomsTable(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
 }
 
 // GetRoomEncxByID retrieves a room from the database by ID
-func GetRoomEncxByID(t *testing.T, ctx context.Context, pool *pgxpool.Pool, roomID interface{}) (*domain.RoomEncx, error) {
+func GetRoomEncxByID(t *testing.T, ctx context.Context, pool *pgxpool.Pool, roomID uuid.UUID) (*domain.RoomEncx, error) {
 	t.Helper()
 
 	query := `
