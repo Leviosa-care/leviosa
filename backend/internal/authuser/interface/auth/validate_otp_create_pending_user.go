@@ -16,6 +16,11 @@ import (
 )
 
 func (h *handler) ValidateOTPCreatePendingUser(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != "application/json" {
+		httpx.RespondWithError(w, errors.New("unsupported media type: please send 'application/json'"), http.StatusUnsupportedMediaType)
+		return
+	}
+
 	ctx := r.Context()
 
 	logger, err := ctxutil.GetLoggerFromContext(ctx)

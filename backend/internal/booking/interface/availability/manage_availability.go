@@ -202,6 +202,11 @@ func (h *handler) GetAvailableSlots(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) UpdateAvailability(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != "application/json" {
+		httpx.RespondWithError(w, errors.New("unsupported media type: please send 'application/json'"), http.StatusUnsupportedMediaType)
+		return
+	}
+
 	ctx := r.Context()
 
 	// Extract availability ID from URL path

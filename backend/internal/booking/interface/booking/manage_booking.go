@@ -17,6 +17,11 @@ import (
 )
 
 func (h *handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != "application/json" {
+		httpx.RespondWithError(w, errors.New("unsupported media type: please send 'application/json'"), http.StatusUnsupportedMediaType)
+		return
+	}
+
 	ctx := r.Context()
 
 	logger, err := ctxutil.GetLoggerFromContext(ctx)
@@ -217,6 +222,11 @@ func (h *handler) GetUpcomingBookings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) UpdateBookingNotes(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != "application/json" {
+		httpx.RespondWithError(w, errors.New("unsupported media type: please send 'application/json'"), http.StatusUnsupportedMediaType)
+		return
+	}
+
 	ctx := r.Context()
 
 	// Extract booking ID from URL path
@@ -280,6 +290,11 @@ func (h *handler) UpdateBookingNotes(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) CancelBooking(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != "application/json" {
+		httpx.RespondWithError(w, errors.New("unsupported media type: please send 'application/json'"), http.StatusUnsupportedMediaType)
+		return
+	}
+
 	ctx := r.Context()
 
 	// Extract booking ID from URL path

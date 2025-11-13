@@ -15,8 +15,8 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /rooms", RequireAdmin(mw.EnableCORS(h.CreateRoom)))
 	router.HandleFunc("GET /rooms/{id}", mw.EnableCORS(h.GetRoom))
 	router.HandleFunc("GET /rooms", mw.EnableCORS(h.GetAllRooms))
+	router.HandleFunc("PUT /rooms/{id}", RequireAdmin(mw.EnableCORS(h.UpdateRoom)))
 	// router.HandleFunc("GET /buildings/{buildingId}/rooms", RequirePartner(mw.EnableCORS(h.GetRoomsByBuilding)))
-	// router.HandleFunc("PUT /rooms/{id}", RequireAdmin(mw.EnableCORS(h.UpdateRoom)))
 	// router.HandleFunc("POST /rooms/{id}/activate", RequireAdmin(mw.EnableCORS(h.ActivateRoom)))
 	// router.HandleFunc("POST /rooms/{id}/deactivate", RequireAdmin(mw.EnableCORS(h.DeactivateRoom)))
 }

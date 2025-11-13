@@ -10,12 +10,10 @@ import (
 type Handler interface {
 	RegisterRoutes(router *http.ServeMux)
 	CreateRoom(w http.ResponseWriter, r *http.Request)
-	// GetRoom(w http.ResponseWriter, r *http.Request)
+	GetRoom(w http.ResponseWriter, r *http.Request)
+	GetAllRooms(w http.ResponseWriter, r *http.Request)
+	UpdateRoom(w http.ResponseWriter, r *http.Request)
 	// GetRoomsByBuilding(w http.ResponseWriter, r *http.Request)
-	// // GetAllRooms(w http.ResponseWriter, r *http.Request)
-	// UpdateRoom(w http.ResponseWriter, r *http.Request)
-	// ActivateRoom(w http.ResponseWriter, r *http.Request)
-	// DeactivateRoom(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {

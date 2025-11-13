@@ -16,6 +16,10 @@ import (
 
 func (h *handler) ModifyCategory(w http.ResponseWriter, r *http.Request) {
 	// TODO: this an admin only request
+	if r.Header.Get("Content-Type") != "application/json" {
+		httpx.RespondWithError(w, errors.New("unsupported media type: please send 'application/json'"), http.StatusUnsupportedMediaType)
+		return
+	}
 
 	ctx := r.Context()
 
