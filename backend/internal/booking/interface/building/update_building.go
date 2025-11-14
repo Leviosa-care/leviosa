@@ -85,30 +85,21 @@ func (h *handler) UpdateBuilding(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, errs.ErrInvalidValue):
 			statusCode = http.StatusBadRequest
 			errorContext = "invalid request validation"
-		case errors.Is(err, errs.ErrAlreadyExists):
+		case errors.Is(err, errs.ErrConflict):
 			statusCode = http.StatusConflict
-			errorContext = "building with this name or address already exists"
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			statusCode = http.StatusServiceUnavailable
-			errorContext = "database connection failure"
-		case errors.Is(err, errs.ErrResourceExhausted):
-			statusCode = http.StatusServiceUnavailable
-			errorContext = "database resource exhaustion"
-		case errors.Is(err, errs.ErrQueryCancelled), errors.Is(err, context.Canceled):
+			errorContext = "building conflict"
+		case errors.Is(err, errs.ErrNotEncrypted), errors.Is(err, errs.ErrNotDecrypted):
+			statusCode = http.StatusInternalServerError
+			errorContext = "encryption error"
+		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
+			statusCode = http.StatusInternalServerError
+			errorContext = "database operation failed"
+		case errors.Is(err, context.Canceled):
 			statusCode = http.StatusRequestTimeout
 			errorContext = "request cancelled"
 		case errors.Is(err, context.DeadlineExceeded):
 			statusCode = http.StatusRequestTimeout
 			errorContext = "request timeout"
-		case errors.Is(err, errs.ErrTransactionFailure), errors.Is(err, errs.ErrDeadlock):
-			statusCode = http.StatusServiceUnavailable
-			errorContext = "transaction conflict"
-		case errors.Is(err, errs.ErrNotDecrypted):
-			statusCode = http.StatusInternalServerError
-			errorContext = "decryption failure"
-		case errors.Is(err, errs.ErrNotEncrypted):
-			statusCode = http.StatusInternalServerError
-			errorContext = "encryption failure"
 		default:
 			statusCode = http.StatusInternalServerError
 			errorContext = "unexpected error"

@@ -64,19 +64,19 @@ func (h *handler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
 			logLevel = "warn"
 			errorContext = "invalid request validation"
 			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrAlreadyExists):
+		case errors.Is(err, errs.ErrConflict):
 			logLevel = "warn"
-			errorContext = "building with this name or address already exists"
+			errorContext = "building conflict"
 			statusCode = http.StatusConflict
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
+		case errors.Is(err, errs.ErrNotEncrypted), errors.Is(err, errs.ErrNotDecrypted):
 			logLevel = "error"
-			errorContext = "database connection failure"
-			statusCode = http.StatusServiceUnavailable
-		case errors.Is(err, errs.ErrResourceExhausted):
+			errorContext = "encryption error"
+			statusCode = http.StatusInternalServerError
+		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
 			logLevel = "error"
-			errorContext = "database resource exhaustion"
-			statusCode = http.StatusServiceUnavailable
-		case errors.Is(err, errs.ErrQueryCancelled), errors.Is(err, context.Canceled):
+			errorContext = "database operation failed"
+			statusCode = http.StatusInternalServerError
+		case errors.Is(err, context.Canceled):
 			logLevel = "warn"
 			errorContext = "request cancelled"
 			statusCode = http.StatusRequestTimeout
@@ -84,10 +84,6 @@ func (h *handler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
 			logLevel = "warn"
 			errorContext = "request timeout"
 			statusCode = http.StatusRequestTimeout
-		case errors.Is(err, errs.ErrTransactionFailure), errors.Is(err, errs.ErrDeadlock):
-			logLevel = "error"
-			errorContext = "transaction conflict"
-			statusCode = http.StatusServiceUnavailable
 		default:
 			logLevel = "error"
 			errorContext = "unexpected error"
