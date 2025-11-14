@@ -20,7 +20,7 @@ func (s *RoomService) UpdateRoom(ctx context.Context, request *domain.UpdateRoom
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.ErrRepositoryNotFound
+			return nil, errs.NewNotFoundErr(err, "room")
 		case errors.Is(err, errs.ErrInvalidInput):
 			return nil, errs.NewInvalidValueErr(fmt.Sprintf("invalid room ID for update: %v", err))
 		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
@@ -73,7 +73,7 @@ func (s *RoomService) UpdateRoom(ctx context.Context, request *domain.UpdateRoom
 	if err := s.roomRepo.Update(ctx, updatedRoomEncx); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.ErrRepositoryNotFound
+			return nil, errs.NewNotFoundErr(err, "room")
 		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
 			return nil, errs.NewUnexpectedError(fmt.Errorf("database connection error during room update: %w", err))
 		case errors.Is(err, errs.ErrDBQuery):

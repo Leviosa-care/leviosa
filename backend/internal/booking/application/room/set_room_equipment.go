@@ -47,7 +47,7 @@ func (s *RoomService) SetRoomEquipment(ctx context.Context, id uuid.UUID, equipm
 			logger.WarnContext(ctx, "Service: Room not found for equipment update",
 				"room_id", id,
 				"operation", "set_room_equipment")
-			return nil, errs.ErrRepositoryNotFound
+			return nil, errs.NewNotFoundErr(err, "room")
 		case errors.Is(err, errs.ErrInvalidInput):
 			return nil, errs.NewInvalidValueErr(fmt.Sprintf("invalid room ID for equipment update: %v", err))
 		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
@@ -93,7 +93,7 @@ func (s *RoomService) SetRoomEquipment(ctx context.Context, id uuid.UUID, equipm
 			logger.WarnContext(ctx, "Service: Room not found during equipment update",
 				"room_id", id,
 				"operation", "set_room_equipment")
-			return nil, errs.ErrRepositoryNotFound
+			return nil, errs.NewNotFoundErr(err, "room")
 		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
 			return nil, errs.NewUnexpectedError(fmt.Errorf("database connection error during room equipment update: %w", err))
 		case errors.Is(err, errs.ErrDBQuery):

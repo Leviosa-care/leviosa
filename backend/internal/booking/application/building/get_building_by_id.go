@@ -16,7 +16,7 @@ func (s *BuildingService) GetBuildingByID(ctx context.Context, id uuid.UUID) (*d
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.ErrRepositoryNotFound
+			return nil, errs.NewNotFoundErr(err, "building")
 		case errors.Is(err, errs.ErrInvalidInput):
 			return nil, errs.NewInvalidValueErr(fmt.Sprintf("invalid building ID: %v", err))
 		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):

@@ -15,7 +15,7 @@ func (s *RoomService) GetRoom(ctx context.Context, id uuid.UUID) (*domain.RoomRe
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.ErrRepositoryNotFound
+			return nil, errs.NewNotFoundErr(err, "room")
 		case errors.Is(err, errs.ErrInvalidInput):
 			return nil, errs.NewInvalidValueErr(fmt.Sprintf("invalid room ID: %v", err))
 		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):

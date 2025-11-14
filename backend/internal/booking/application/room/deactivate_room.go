@@ -29,7 +29,7 @@ func (s *RoomService) DeactivateRoom(ctx context.Context, id uuid.UUID) error {
 			logger.WarnContext(ctx, "Service: Room not found for deactivation",
 				"room_id", id,
 				"operation", "deactivate_room")
-			return errs.ErrRepositoryNotFound
+			return errs.NewNotFoundErr(err, "room")
 		case errors.Is(err, errs.ErrInvalidInput):
 			return errs.NewInvalidValueErr(fmt.Sprintf("invalid room ID for deactivation: %v", err))
 		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
@@ -97,7 +97,7 @@ func (s *RoomService) DeactivateRoom(ctx context.Context, id uuid.UUID) error {
 			logger.WarnContext(ctx, "Service: Room not found during deactivation",
 				"room_id", id,
 				"operation", "deactivate_room")
-			return errs.ErrRepositoryNotFound
+			return errs.NewNotFoundErr(err, "room")
 		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
 			return errs.NewUnexpectedError(fmt.Errorf("database connection error during room deactivation: %w", err))
 		case errors.Is(err, errs.ErrDBQuery):

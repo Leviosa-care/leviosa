@@ -22,7 +22,7 @@ func (s *RoomService) CreateRoom(ctx context.Context, request *domain.CreateRoom
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.ErrRepositoryNotFound
+			return nil, errs.NewNotFoundErr(err, "building")
 		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
 			return nil, errs.NewUnexpectedError(fmt.Errorf("database connection error while verifying building: %w", err))
 		case errors.Is(err, errs.ErrDBQuery):
