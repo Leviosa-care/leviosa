@@ -80,33 +80,27 @@ func (h *handler) UpdateRoom(w http.ResponseWriter, r *http.Request) {
 		var errorContext string
 
 		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
+		case errors.Is(err, errs.ErrDomainNotFound):
 			statusCode = http.StatusNotFound
 			errorContext = "room not found"
-		case errors.Is(err, errs.ErrInvalidInput):
-			statusCode = http.StatusBadRequest
-			errorContext = "invalid request validation"
 		case errors.Is(err, errs.ErrInvalidValue):
 			statusCode = http.StatusBadRequest
 			errorContext = "invalid request validation"
-		case errors.Is(err, errs.ErrUniqueViolation):
+		case errors.Is(err, errs.ErrConflict):
 			statusCode = http.StatusConflict
-			errorContext = "room name already exists in building"
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			statusCode = http.StatusServiceUnavailable
-			errorContext = "database connection failure"
-		case errors.Is(err, errs.ErrResourceExhausted):
-			statusCode = http.StatusServiceUnavailable
-			errorContext = "database resource exhaustion"
-		case errors.Is(err, errs.ErrQueryCancelled), errors.Is(err, context.Canceled):
+			errorContext = "room conflict"
+		case errors.Is(err, errs.ErrNotEncrypted), errors.Is(err, errs.ErrNotDecrypted):
+			statusCode = http.StatusInternalServerError
+			errorContext = "encryption error"
+		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
+			statusCode = http.StatusInternalServerError
+			errorContext = "database operation failed"
+		case errors.Is(err, context.Canceled):
 			statusCode = http.StatusRequestTimeout
 			errorContext = "request cancelled"
 		case errors.Is(err, context.DeadlineExceeded):
 			statusCode = http.StatusRequestTimeout
 			errorContext = "request timeout"
-		case errors.Is(err, errs.ErrTransactionFailure), errors.Is(err, errs.ErrDeadlock):
-			statusCode = http.StatusServiceUnavailable
-			errorContext = "transaction conflict"
 		default:
 			statusCode = http.StatusInternalServerError
 			errorContext = "unexpected error"
