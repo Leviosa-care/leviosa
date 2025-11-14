@@ -23,7 +23,6 @@ func (s *UserService) VerifyUserPassword(ctx context.Context, userID uuid.UUID, 
 		}
 	}
 
-	// Compare the provided password with the stored secure hash using encx
 	ok, err := s.crypto.CompareSecureHashAndValue(ctx, password, userEncx.PasswordHashSecure)
 	if err != nil {
 		return errs.NewUnexpectedError(err)

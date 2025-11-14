@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TEST=TestVerifyPartner make test-integration-partner-test
+// make test-func TEST_NAME=TestVerifyPartner TEST_PATH=test/integration/authuser/partner/verify_partner_test.go
 
 func TestVerifyPartner(t *testing.T) {
 	ctx := context.Background()

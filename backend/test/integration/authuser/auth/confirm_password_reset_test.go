@@ -96,8 +96,6 @@ func TestConfirmPasswordReset(t *testing.T) {
 		_, err = redisClient.Get(ctx, resetSessionKey).Result()
 		assert.Error(t, err, "Reset session should be consumed and no longer exist")
 
-		// NOTE: remove that part for the moment, because I do not need to assert it for now
-
 		// Verify password was actually changed by attempting sign in with new password
 		signInRequest := domain.SignInRequest{
 			Email:    existingEmail,

@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// make test-func TEST_NAME=TestRequestPasswordReset TEST_PATH=test/integration/authuser/auth/request_password_reset_test.go:w
+// make test-func TEST_NAME=TestRequestPasswordReset TEST_PATH=test/integration/authuser/auth/request_password_reset_test.go
 
 func TestRequestPasswordReset(t *testing.T) {
 	ctx := context.Background()
@@ -295,7 +295,7 @@ func TestRequestPasswordReset(t *testing.T) {
 			assert.Equal(t, "sent", status)
 		} else {
 			// If the server is strict about Content-Type, it might return 400
-			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+			assert.Equal(t, http.StatusUnsupportedMediaType, resp.StatusCode)
 		}
 	})
 

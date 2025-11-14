@@ -7,9 +7,8 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
-
 	userEndpoints "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/user"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
