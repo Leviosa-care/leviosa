@@ -154,7 +154,7 @@ func TestGetBuildingByID(t *testing.T) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Contains(t, respBody.Error, errs.ErrRepositoryNotFound.Error())
+		assert.Contains(t, respBody.Error, errs.ErrDomainNotFound.Error())
 	})
 
 	t.Run("should return 400 when building ID is invalid", func(t *testing.T) {

@@ -307,7 +307,7 @@ func TestCreateBuilding(t *testing.T) {
 		}
 		err = json.NewDecoder(resp2.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Contains(t, respBody.Error, errs.ErrAlreadyExists.Error())
+		assert.Contains(t, respBody.Error, errs.ErrConflict.Error())
 	})
 
 	t.Run("should return 401 when access token is missing", func(t *testing.T) {
