@@ -486,10 +486,12 @@ func NewUpdateUserRoleRequest(t *testing.T, ctx context.Context, baseURL string,
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPatch,
-		fmt.Sprintf("%s/admin/users/%s/role", baseURL, userID.String()),
+		fmt.Sprintf("%s%s/%s%s", baseURL, userEndpoints.AdminUsersBasePath, userID.String(), userEndpoints.RolePath),
 		bytes.NewBuffer(jsonData),
 	)
 	require.NoError(t, err, "Failed to create HTTP request")
+
+	req.Header.Add("Content-Type", "application/json")
 
 	// Add authentication cookie if access token is provided
 	if accessToken != "" {

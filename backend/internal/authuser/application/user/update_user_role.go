@@ -96,4 +96,3 @@ func (s *UserService) UpdateUserRole(ctx context.Context, request *domain.Update
 
 	return nil
 }
-

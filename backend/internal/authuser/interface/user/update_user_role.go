@@ -181,4 +181,3 @@ func (h *handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
 	// Return success response
 	httpx.RespondWithJSON(w, map[string]string{"message": "User role updated successfully"}, http.StatusOK)
 }
-

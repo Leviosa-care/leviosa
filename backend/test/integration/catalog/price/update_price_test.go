@@ -12,8 +12,8 @@ import (
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
-	"github.com/google/uuid"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

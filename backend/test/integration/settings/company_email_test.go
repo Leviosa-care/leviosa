@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	// "github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/validation"

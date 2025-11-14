@@ -23,15 +23,15 @@ const (
 	AdminUsersPath = "/users"
 
 	// Password reset paths
-	PasswordPath        = "/password"
-	ResetPath           = "/reset"
-	RequestPath         = "/request"
-	ValidatePath        = "/validate"
-	ConfirmPath         = "/confirm"
-	PasswordResetPath   = PasswordPath + ResetPath
-	RequestResetPath    = PasswordResetPath + RequestPath
-	ValidateResetPath   = PasswordResetPath + ValidatePath
-	ConfirmResetPath    = PasswordResetPath + ConfirmPath
+	PasswordPath      = "/password"
+	ResetPath         = "/reset"
+	RequestPath       = "/request"
+	ValidatePath      = "/validate"
+	ConfirmPath       = "/confirm"
+	PasswordResetPath = PasswordPath + ResetPath
+	RequestResetPath  = PasswordResetPath + RequestPath
+	ValidateResetPath = PasswordResetPath + ValidatePath
+	ConfirmResetPath  = PasswordResetPath + ConfirmPath
 
 	// OAuth paths
 	OAuthPath     = "/oauth"
@@ -41,7 +41,7 @@ const (
 	// === Public Authentication Endpoints ===
 
 	// Email and OTP verification
-	CheckEmailSendOTPEndpoint      = AuthBasePath + EmailPath
+	CheckEmailSendOTPEndpoint        = AuthBasePath + EmailPath
 	ValidateOTPCreatePendingEndpoint = AuthBasePath + OTPPath
 
 	// User login/logout
@@ -49,9 +49,9 @@ const (
 	SignOutEndpoint = AuthBasePath + LogoutPath
 
 	// Password reset flow
-	RequestPasswordResetEndpoint  = AuthBasePath + RequestResetPath
+	RequestPasswordResetEndpoint     = AuthBasePath + RequestResetPath
 	ValidatePasswordResetOTPEndpoint = AuthBasePath + ValidateResetPath
-	ConfirmPasswordResetEndpoint  = AuthBasePath + ConfirmResetPath
+	ConfirmPasswordResetEndpoint     = AuthBasePath + ConfirmResetPath
 
 	// OAuth endpoints
 	OAuthStartEndpoint    = AuthBasePath + OAuthPath + ProviderParam

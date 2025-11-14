@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// make test-func TEST_NAME=TestUpdateUser TEST_PATH=test/integration/authuser/user/update_user_test.go
+// make test-func TEST_NAME='^TestUpdateUser$$' TEST_PATH=test/integration/authuser/user/update_user_test.go
 
 func TestUpdateUser(t *testing.T) {
 	ctx := context.Background()
