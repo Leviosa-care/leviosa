@@ -30,7 +30,7 @@ func (s *RoomService) GetRoomsByBuilding(ctx context.Context, buildingID uuid.UU
 		}
 	}
 
-	var rooms []*domain.RoomResponse
+	rooms := []*domain.RoomResponse{}
 	for _, roomEncx := range roomsEncx {
 		room, err := domain.DecryptRoomEncx(ctx, s.crypto, roomEncx)
 		if err != nil {
