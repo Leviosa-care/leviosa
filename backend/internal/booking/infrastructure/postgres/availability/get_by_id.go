@@ -5,12 +5,11 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
-	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
 )
 
-func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Availability, error) {
+func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.AvailabilityEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, partner_id, room_id, start_time, end_time,
@@ -46,30 +45,5 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Availab
 		return nil, errs.ClassifyPgError("get availability by id", err)
 	}
 
-	// Decrypt sensitive fields using ENCX
-	availability, err := domain.DecryptAvailabilityEncx(ctx, r.crypto, availabilityEncx)
-	if err != nil {
-		return nil, fmt.Errorf("decrypt availability data: %w", err)
-	}
-
-	return availability, nil
-}
-
-func (r *Repository) GetByPartnerID(ctx context.Context, partnerID uuid.UUID, filter ports.AvailabilityFilter) ([]*domain.Availability, error) {
-	// Set partner filter
-	filter.PartnerID = &partnerID
-	return r.List(ctx, filter)
-}
-
-func (r *Repository) GetByRoomID(ctx context.Context, roomID uuid.UUID, filter ports.AvailabilityFilter) ([]*domain.Availability, error) {
-	// Set room filter
-	filter.RoomID = &roomID
-	return r.List(ctx, filter)
-}
-
-func (r *Repository) GetAvailableSlots(ctx context.Context, filter ports.AvailabilityFilter) ([]*domain.Availability, error) {
-	// Force available status filter
-	filter.Status = []domain.AvailabilityStatus{domain.AvailabilityStatusAvailable}
-	filter.AvailableOnly = true
-	return r.List(ctx, filter)
+	return availabilityEncx, nil
 }
