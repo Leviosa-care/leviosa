@@ -16,7 +16,7 @@ func (r *Repository) CheckConflict(ctx context.Context, partnerID uuid.UUID, sta
 		WHERE partner_id = $1
 		AND start_time < $2
 		AND end_time > $3
-		AND status IN ('available', 'booked')
+		AND status IN ('available', 'booked', 'blocked')
 	`, r.schema)
 
 	args := []interface{}{partnerID, endTime, startTime}
