@@ -209,4 +209,3 @@ func validateRecurrencePattern(pattern RecurrencePattern) error {
 
 	return nil
 }
-
