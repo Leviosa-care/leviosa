@@ -11,34 +11,34 @@ import (
 // AvailabilityRepository defines the interface for availability data persistence
 type AvailabilityRepository interface {
 	// Create stores a new availability
-	Create(ctx context.Context, availability *domain.Availability) error
+	Create(ctx context.Context, availability *domain.AvailabilityEncx) error
 
 	// GetByID retrieves an availability by its ID
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.Availability, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.AvailabilityEncx, error)
 
 	// Update modifies an existing availability
-	Update(ctx context.Context, availability *domain.Availability) error
+	Update(ctx context.Context, availability *domain.AvailabilityEncx) error
 
 	// Delete removes an availability
 	Delete(ctx context.Context, id uuid.UUID) error
 
 	// List retrieves availabilities with optional filtering
-	List(ctx context.Context, filter AvailabilityFilter) ([]*domain.Availability, error)
+	List(ctx context.Context, filter AvailabilityFilter) ([]*domain.AvailabilityEncx, error)
 
 	// GetByPartnerID retrieves all availabilities for a specific partner
-	GetByPartnerID(ctx context.Context, partnerID uuid.UUID, filter AvailabilityFilter) ([]*domain.Availability, error)
+	GetByPartnerID(ctx context.Context, partnerID uuid.UUID, filter AvailabilityFilter) ([]*domain.AvailabilityEncx, error)
 
 	// GetByRoomID retrieves all availabilities for a specific room
-	GetByRoomID(ctx context.Context, roomID uuid.UUID, filter AvailabilityFilter) ([]*domain.Availability, error)
+	GetByRoomID(ctx context.Context, roomID uuid.UUID, filter AvailabilityFilter) ([]*domain.AvailabilityEncx, error)
 
 	// GetAvailableSlots retrieves available slots within a time range
-	GetAvailableSlots(ctx context.Context, filter AvailabilityFilter) ([]*domain.Availability, error)
+	GetAvailableSlots(ctx context.Context, filter AvailabilityFilter) ([]*domain.AvailabilityEncx, error)
 
 	// CheckConflict checks if a new availability would conflict with existing ones for the same partner
 	CheckConflict(ctx context.Context, partnerID uuid.UUID, startTime, endTime time.Time, excludeID *uuid.UUID) (bool, error)
 
 	// GetRecurringAvailabilities retrieves recurring availabilities that need to be expanded
-	GetRecurringAvailabilities(ctx context.Context, until time.Time) ([]*domain.Availability, error)
+	GetRecurringAvailabilities(ctx context.Context, until time.Time) ([]*domain.AvailabilityEncx, error)
 }
 
 // AvailabilityFilter defines filtering options for availability queries
