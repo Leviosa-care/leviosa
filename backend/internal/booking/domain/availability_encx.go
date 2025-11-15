@@ -8,52 +8,48 @@ import (
 	"context"
 	"time"
 
-	"github.com/hengadev/errsx"
 	"github.com/hengadev/encx"
-	
+	"github.com/hengadev/errsx"
+
 	"github.com/google/uuid"
-	
 )
 
 // AvailabilityEncx represents the encrypted version of Availability
 type AvailabilityEncx struct {
-	
 	ID uuid.UUID `db:"id" json:"id"`
-	
+
 	PartnerID uuid.UUID `db:"partnerid" json:"partnerid"`
-	
+
 	RoomID uuid.UUID `db:"roomid" json:"roomid"`
-	
+
 	StartTime time.Time `db:"starttime" json:"starttime"`
-	
+
 	EndTime time.Time `db:"endtime" json:"endtime"`
-	
+
 	PriceCents *int `db:"pricecents" json:"pricecents"`
-	
+
 	MaxCapacity int `db:"maxcapacity" json:"maxcapacity"`
-	
+
 	IsRecurring bool `db:"isrecurring" json:"isrecurring"`
-	
+
 	Status AvailabilityStatus `db:"status" json:"status"`
-	
+
 	CreatedAt time.Time `db:"createdat" json:"createdat"`
-	
+
 	UpdatedAt time.Time `db:"updatedat" json:"updatedat"`
-	
-	
+
 	ServiceTypeEncrypted []byte `db:"servicetype_encrypted" json:"servicetype_encrypted"`
-	
+
 	NotesEncrypted []byte `db:"notes_encrypted" json:"notes_encrypted"`
-	
+
 	RecurrencePatternEncrypted []byte `db:"recurrencepattern_encrypted" json:"recurrencepattern_encrypted"`
-	
 
 	// Essential encryption fields
-	DEKEncrypted  []byte `db:"dek_encrypted" json:"dek_encrypted"`
-	KeyVersion    int    `db:"key_version" json:"key_version"`
+	DEKEncrypted []byte `db:"dek_encrypted" json:"dek_encrypted"`
+	KeyVersion   int    `db:"key_version" json:"key_version"`
 
 	// Metadata
-	Metadata      encx.EncryptionMetadata `db:"metadata" json:"metadata"`
+	Metadata encx.EncryptionMetadata `db:"metadata" json:"metadata"`
 }
 
 // ProcessAvailabilityEncx encrypts and hashes fields based on encx tags
@@ -70,29 +66,28 @@ func ProcessAvailabilityEncx(ctx context.Context, crypto encx.CryptoService, sou
 	}
 
 	// Copy plain fields (non-encx fields)
-	
+
 	result.ID = source.ID
-	
+
 	result.PartnerID = source.PartnerID
-	
+
 	result.RoomID = source.RoomID
-	
+
 	result.StartTime = source.StartTime
-	
+
 	result.EndTime = source.EndTime
-	
+
 	result.PriceCents = source.PriceCents
-	
+
 	result.MaxCapacity = source.MaxCapacity
-	
+
 	result.IsRecurring = source.IsRecurring
-	
+
 	result.Status = source.Status
-	
+
 	result.CreatedAt = source.CreatedAt
-	
+
 	result.UpdatedAt = source.UpdatedAt
-	
 
 	// Generate DEK
 	dek, err := crypto.GenerateDEK()
@@ -101,8 +96,6 @@ func ProcessAvailabilityEncx(ctx context.Context, crypto encx.CryptoService, sou
 		return result, errs.AsError()
 	}
 
-	
-	
 	// Process ServiceType (encrypt)
 	ServiceTypeBytes, err := encx.SerializeValue(source.ServiceType)
 	if err != nil {
@@ -113,9 +106,7 @@ func ProcessAvailabilityEncx(ctx context.Context, crypto encx.CryptoService, sou
 			errs.Set("ServiceType encryption", err)
 		}
 	}
-	
-	
-	
+
 	// Process Notes (encrypt)
 	NotesBytes, err := encx.SerializeValue(source.Notes)
 	if err != nil {
@@ -126,23 +117,19 @@ func ProcessAvailabilityEncx(ctx context.Context, crypto encx.CryptoService, sou
 			errs.Set("Notes encryption", err)
 		}
 	}
-	
-	
-	
+
 	// Process RecurrencePattern (encrypt)
 	if source.RecurrencePattern != nil {
-	RecurrencePatternBytes, err := encx.SerializeValue(source.RecurrencePattern)
-	if err != nil {
-		errs.Set("RecurrencePattern serialization", err)
-	} else {
-		result.RecurrencePatternEncrypted, err = crypto.EncryptData(ctx, RecurrencePatternBytes, dek)
+		RecurrencePatternBytes, err := encx.SerializeValue(source.RecurrencePattern)
 		if err != nil {
-			errs.Set("RecurrencePattern encryption", err)
+			errs.Set("RecurrencePattern serialization", err)
+		} else {
+			result.RecurrencePatternEncrypted, err = crypto.EncryptData(ctx, RecurrencePatternBytes, dek)
+			if err != nil {
+				errs.Set("RecurrencePattern encryption", err)
+			}
 		}
 	}
-	}
-	
-	
 
 	// Encrypt and store DEK
 	result.DEKEncrypted, err = crypto.EncryptDEK(ctx, dek)
@@ -167,29 +154,28 @@ func DecryptAvailabilityEncx(ctx context.Context, crypto encx.CryptoService, sou
 	result := &Availability{}
 
 	// Copy plain fields (non-encx fields)
-	
+
 	result.ID = source.ID
-	
+
 	result.PartnerID = source.PartnerID
-	
+
 	result.RoomID = source.RoomID
-	
+
 	result.StartTime = source.StartTime
-	
+
 	result.EndTime = source.EndTime
-	
+
 	result.PriceCents = source.PriceCents
-	
+
 	result.MaxCapacity = source.MaxCapacity
-	
+
 	result.IsRecurring = source.IsRecurring
-	
+
 	result.Status = source.Status
-	
+
 	result.CreatedAt = source.CreatedAt
-	
+
 	result.UpdatedAt = source.UpdatedAt
-	
 
 	// Decrypt DEK
 	dek, err := crypto.DecryptDEKWithVersion(ctx, source.DEKEncrypted, source.KeyVersion)
@@ -198,8 +184,6 @@ func DecryptAvailabilityEncx(ctx context.Context, crypto encx.CryptoService, sou
 		return result, errs.AsError()
 	}
 
-	
-	
 	// Decrypt ServiceType
 	if len(source.ServiceTypeEncrypted) > 0 {
 		ServiceTypeBytes, err := crypto.DecryptData(ctx, source.ServiceTypeEncrypted, dek)
@@ -212,8 +196,7 @@ func DecryptAvailabilityEncx(ctx context.Context, crypto encx.CryptoService, sou
 			}
 		}
 	}
-	
-	
+
 	// Decrypt Notes
 	if len(source.NotesEncrypted) > 0 {
 		NotesBytes, err := crypto.DecryptData(ctx, source.NotesEncrypted, dek)
@@ -226,8 +209,7 @@ func DecryptAvailabilityEncx(ctx context.Context, crypto encx.CryptoService, sou
 			}
 		}
 	}
-	
-	
+
 	// Decrypt RecurrencePattern
 	if len(source.RecurrencePatternEncrypted) > 0 {
 		RecurrencePatternBytes, err := crypto.DecryptData(ctx, source.RecurrencePatternEncrypted, dek)
@@ -240,7 +222,6 @@ func DecryptAvailabilityEncx(ctx context.Context, crypto encx.CryptoService, sou
 			}
 		}
 	}
-	
 
 	return result, errs.AsError()
 }
