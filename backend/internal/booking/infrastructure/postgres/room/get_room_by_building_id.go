@@ -26,7 +26,7 @@ func (r *Repository) GetByBuildingID(ctx context.Context, buildingID uuid.UUID, 
 		query += " AND is_active = true"
 	}
 
-	query += " ORDER BY name_encrypted ASC"
+	query += " ORDER BY created_at ASC"
 
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {

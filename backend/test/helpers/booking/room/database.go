@@ -103,7 +103,7 @@ func GetRoomsByBuildingID(t *testing.T, ctx context.Context, pool *pgxpool.Pool,
 		args = append(args, true)
 	}
 
-	query += " ORDER BY created_at"
+	query += " ORDER BY created_at ASC"
 
 	rows, err := pool.Query(ctx, query, args...)
 	if err != nil {
