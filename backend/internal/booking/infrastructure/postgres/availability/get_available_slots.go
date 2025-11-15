@@ -13,3 +13,4 @@ func (r *Repository) GetAvailableSlots(ctx context.Context, filter ports.Availab
 	filter.AvailableOnly = true
 	return r.List(ctx, filter)
 }
+
