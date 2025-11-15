@@ -8,21 +8,23 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
 func (s *AvailabilityService) CreateAvailability(ctx context.Context, partnerID, roomID uuid.UUID, startTime, endTime time.Time, maxCapacity int) (*domain.Availability, error) {
+	// NOTE: that thing is going to be done using the middleware
 	// Validate partner exists and is verified
-	isValidPartner, err := s.authUserClient.ValidatePartnerExists(ctx, partnerID)
-	if err != nil {
-		return nil, fmt.Errorf("validate partner: %w", err)
-	}
-	if !isValidPartner {
-		return nil, fmt.Errorf("partner not found or not verified")
-	}
+	// isValidPartner, err := s.authUserClient.ValidatePartnerExists(ctx, partnerID)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("validate partner: %w", err)
+	// }
+	// if !isValidPartner {
+	// 	return nil, fmt.Errorf("partner not found or not verified")
+	// }
 
-	// Verify room exists and is active
-	room, err := s.roomRepo.GetByID(ctx, roomID)
+	// Verify roomEncx exists and is active
+	roomEncx, err := s.roomRepo.GetByID(ctx, roomID)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return nil, fmt.Errorf("room not found: %w", errs.ErrRepositoryNotFound)
@@ -30,7 +32,7 @@ func (s *AvailabilityService) CreateAvailability(ctx context.Context, partnerID,
 		return nil, fmt.Errorf("verify room exists: %w", err)
 	}
 
-	if !room.IsActive {
+	if !roomEncx.IsActive {
 		return nil, fmt.Errorf("cannot create availability for inactive room")
 	}
 
@@ -63,8 +65,13 @@ func (s *AvailabilityService) CreateAvailability(ctx context.Context, partnerID,
 		return nil, fmt.Errorf("create availability entity: %w", err)
 	}
 
+	availabilityEncx, err := domain.ProcessAvailabilityEncx(ctx, s.crypto, availability)
+	if err != nil {
+		return nil, errs.NewNotEncryptedErr("availability", err)
+	}
+
 	// Persist to repository
-	if err := s.availabilityRepo.Create(ctx, availability); err != nil {
+	if err := s.availabilityRepo.Create(ctx, availabilityEncx); err != nil {
 		return nil, fmt.Errorf("create availability: %w", err)
 	}
 

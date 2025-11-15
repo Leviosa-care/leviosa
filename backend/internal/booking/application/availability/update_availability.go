@@ -13,12 +13,17 @@ import (
 
 func (s *AvailabilityService) UpdateAvailability(ctx context.Context, id uuid.UUID, startTime, endTime time.Time, serviceType string, priceCents *int, notes string) (*domain.Availability, error) {
 	// Get existing availability
-	availability, err := s.availabilityRepo.GetByID(ctx, id)
+	availabilityEncx, err := s.availabilityRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return nil, errs.ErrRepositoryNotFound
 		}
 		return nil, fmt.Errorf("get availability for update: %w", err)
+	}
+
+	availability, err := domain.DecryptAvailabilityEncx(ctx, s.crypto, availabilityEncx)
+	if err != nil {
+		return nil, errs.NewNotDecryptedErr("availability", err)
 	}
 
 	// Check if availability can be updated (not booked)
@@ -60,8 +65,13 @@ func (s *AvailabilityService) UpdateAvailability(ctx context.Context, id uuid.UU
 	// Update service details
 	availability.SetServiceDetails(serviceType, priceCents, notes)
 
+	updatedAvailabilityEncx, err := domain.ProcessAvailabilityEncx(ctx, s.crypto, availability)
+	if err != nil {
+		return nil, errs.NewNotEncryptedErr("availability", err)
+	}
+
 	// Persist changes
-	if err := s.availabilityRepo.Update(ctx, availability); err != nil {
+	if err := s.availabilityRepo.Update(ctx, updatedAvailabilityEncx); err != nil {
 		return nil, fmt.Errorf("update availability: %w", err)
 	}
 

@@ -23,16 +23,16 @@ type AuthUserClient interface {
 
 // PartnerInfo represents partner information from the authuser service
 type PartnerInfo struct {
-	ID               uuid.UUID `json:"id"`
-	UserID           uuid.UUID `json:"user_id"`
-	Bio              string    `json:"bio"`
-	Experience       string    `json:"experience"`
-	Certifications   []string  `json:"certifications"`
-	IsVerified       bool      `json:"is_verified"`
-	Email            string    `json:"email"`
-	FirstName        string    `json:"first_name"`
-	LastName         string    `json:"last_name"`
-	Telephone        string    `json:"telephone"`
+	ID             uuid.UUID `json:"id"`
+	UserID         uuid.UUID `json:"user_id"`
+	Bio            string    `json:"bio"`
+	Experience     string    `json:"experience"`
+	Certifications []string  `json:"certifications"`
+	IsVerified     bool      `json:"is_verified"`
+	Email          string    `json:"email"`
+	FirstName      string    `json:"first_name"`
+	LastName       string    `json:"last_name"`
+	Telephone      string    `json:"telephone"`
 }
 
 // SpecializationInfo represents specialization information from the authuser service
@@ -42,3 +42,4 @@ type SpecializationInfo struct {
 	Description string    `json:"description"`
 	IsActive    bool      `json:"is_active"`
 }
+

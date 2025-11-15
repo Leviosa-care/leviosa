@@ -7,10 +7,11 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
 func (s *AvailabilityService) GetAvailableSlots(ctx context.Context, filter ports.AvailabilityFilter) ([]*domain.Availability, error) {
-	availabilities, err := s.availabilityRepo.GetAvailableSlots(ctx, filter)
+	availabilitiesEncx, err := s.availabilityRepo.GetAvailableSlots(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("get available slots: %w", err)
 	}
@@ -19,8 +20,12 @@ func (s *AvailabilityService) GetAvailableSlots(ctx context.Context, filter port
 	var availableSlots []*domain.Availability
 	now := time.Now()
 
-	for _, availability := range availabilities {
-		if availability.IsAvailable() && availability.StartTime.After(now) {
+	for _, availabilityEncx := range availabilitiesEncx {
+		availability, err := domain.DecryptAvailabilityEncx(ctx, s.crypto, availabilityEncx)
+		if err != nil {
+			return nil, errs.NewNotDecryptedErr("availability", err)
+		}
+		if availability.IsAvailable() && availabilityEncx.StartTime.After(now) {
 			availableSlots = append(availableSlots, availability)
 		}
 	}

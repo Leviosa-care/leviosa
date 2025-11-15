@@ -11,12 +11,17 @@ import (
 )
 
 func (s *AvailabilityService) GetAvailability(ctx context.Context, id uuid.UUID) (*domain.Availability, error) {
-	availability, err := s.availabilityRepo.GetByID(ctx, id)
+	availabilityEncx, err := s.availabilityRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return nil, errs.ErrRepositoryNotFound
 		}
 		return nil, fmt.Errorf("get availability: %w", err)
+	}
+
+	availability, err := domain.DecryptAvailabilityEncx(ctx, s.crypto, availabilityEncx)
+	if err != nil {
+		return nil, errs.NewNotDecryptedErr("availability", err)
 	}
 
 	return availability, nil
