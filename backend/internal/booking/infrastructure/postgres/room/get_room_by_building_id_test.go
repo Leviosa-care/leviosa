@@ -207,4 +207,3 @@ func TestGetRoomByBuildingID(t *testing.T) {
 		require.Error(t, err)
 	})
 }
-
