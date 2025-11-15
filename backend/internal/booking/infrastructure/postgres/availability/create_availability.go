@@ -8,12 +8,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
-func (r *Repository) Create(ctx context.Context, availability *domain.Availability) error {
-	// Encrypt sensitive fields
-	if err := r.crypto.EncryptStruct(ctx, availability); err != nil {
-		return fmt.Errorf("encrypt availability data: %w", err)
-	}
-
+func (r *Repository) Create(ctx context.Context, availability *domain.AvailabilityEncx) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s.availabilities (
 			id, partner_id, room_id, start_time, end_time,

@@ -8,13 +8,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
-func (r *Repository) Update(ctx context.Context, availability *domain.Availability) error {
-	// Encrypt sensitive fields using ENCX
-	availabilityEncx, err := domain.ProcessAvailabilityEncx(ctx, r.crypto, availability)
-	if err != nil {
-		return fmt.Errorf("encrypt availability data: %w", err)
-	}
-
+func (r *Repository) Update(ctx context.Context, availabilityEncx *domain.AvailabilityEncx) error {
 	query := fmt.Sprintf(`
 		UPDATE %s.availabilities SET
 			partner_id = $2,
@@ -36,19 +30,19 @@ func (r *Repository) Update(ctx context.Context, availability *domain.Availabili
 	`, r.schema)
 
 	result, err := r.pool.Exec(ctx, query,
-		availability.ID,
-		availability.PartnerID,
-		availability.RoomID,
-		availability.StartTime,
-		availability.EndTime,
+		availabilityEncx.ID,
+		availabilityEncx.PartnerID,
+		availabilityEncx.RoomID,
+		availabilityEncx.StartTime,
+		availabilityEncx.EndTime,
 		availabilityEncx.ServiceTypeEncrypted,
-		availability.PriceCents,
-		availability.MaxCapacity,
+		availabilityEncx.PriceCents,
+		availabilityEncx.MaxCapacity,
 		availabilityEncx.NotesEncrypted,
-		availability.IsRecurring,
+		availabilityEncx.IsRecurring,
 		availabilityEncx.RecurrencePatternEncrypted,
-		availability.Status,
-		availability.UpdatedAt,
+		availabilityEncx.Status,
+		availabilityEncx.UpdatedAt,
 		availabilityEncx.DEKEncrypted,
 		availabilityEncx.KeyVersion,
 		availabilityEncx.Metadata,
@@ -64,3 +58,4 @@ func (r *Repository) Update(ctx context.Context, availability *domain.Availabili
 
 	return nil
 }
+
