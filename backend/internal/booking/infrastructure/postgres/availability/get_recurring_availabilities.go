@@ -9,7 +9,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
-func (r *Repository) GetRecurringAvailabilities(ctx context.Context, until time.Time) ([]*domain.Availability, error) {
+func (r *Repository) GetRecurringAvailabilities(ctx context.Context, until time.Time) ([]*domain.AvailabilityEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, partner_id, room_id, start_time, end_time,
@@ -30,7 +30,7 @@ func (r *Repository) GetRecurringAvailabilities(ctx context.Context, until time.
 	}
 	defer rows.Close()
 
-	var availabilities []*domain.Availability
+	var availabilitiesEncx []*domain.AvailabilityEncx
 	for rows.Next() {
 		availabilityEncx := &domain.AvailabilityEncx{}
 		err := rows.Scan(
@@ -56,18 +56,13 @@ func (r *Repository) GetRecurringAvailabilities(ctx context.Context, until time.
 			return nil, errs.ClassifyPgError("scan recurring availability row", err)
 		}
 
-		// Decrypt sensitive fields using ENCX
-		availability, err := domain.DecryptAvailabilityEncx(ctx, r.crypto, availabilityEncx)
-		if err != nil {
-			return nil, fmt.Errorf("decrypt availability data: %w", err)
-		}
-
-		availabilities = append(availabilities, availability)
+		availabilitiesEncx = append(availabilitiesEncx, availabilityEncx)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, errs.ClassifyPgError("iterate recurring availability rows", err)
 	}
 
-	return availabilities, nil
+	return availabilitiesEncx, nil
 }
+

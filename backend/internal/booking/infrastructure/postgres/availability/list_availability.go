@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
-func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) ([]*domain.Availability, error) {
+func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) ([]*domain.AvailabilityEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, partner_id, room_id, start_time, end_time,
@@ -110,7 +109,7 @@ func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) 
 	}
 	defer rows.Close()
 
-	var availabilities []*domain.Availability
+	var availabilities []*domain.AvailabilityEncx
 	for rows.Next() {
 		availabilityEncx := &domain.AvailabilityEncx{}
 		err := rows.Scan(
@@ -136,13 +135,7 @@ func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) 
 			return nil, errs.ClassifyPgError("scan availability row", err)
 		}
 
-		// Decrypt sensitive fields using ENCX
-		availability, err := domain.DecryptAvailabilityEncx(ctx, r.crypto, availabilityEncx)
-		if err != nil {
-			return nil, fmt.Errorf("decrypt availability data: %w", err)
-		}
-
-		availabilities = append(availabilities, availability)
+		availabilities = append(availabilities, availabilityEncx)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -151,3 +144,4 @@ func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) 
 
 	return availabilities, nil
 }
+
