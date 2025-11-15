@@ -58,4 +58,3 @@ func (r *Repository) Update(ctx context.Context, availabilityEncx *domain.Availa
 
 	return nil
 }
-

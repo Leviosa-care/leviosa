@@ -109,7 +109,7 @@ func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) 
 	}
 	defer rows.Close()
 
-	var availabilities []*domain.AvailabilityEncx
+	var availabilitiesEncx []*domain.AvailabilityEncx
 	for rows.Next() {
 		availabilityEncx := &domain.AvailabilityEncx{}
 		err := rows.Scan(
@@ -135,13 +135,12 @@ func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) 
 			return nil, errs.ClassifyPgError("scan availability row", err)
 		}
 
-		availabilities = append(availabilities, availabilityEncx)
+		availabilitiesEncx = append(availabilitiesEncx, availabilityEncx)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, errs.ClassifyPgError("iterate availability rows", err)
 	}
 
-	return availabilities, nil
+	return availabilitiesEncx, nil
 }
-
