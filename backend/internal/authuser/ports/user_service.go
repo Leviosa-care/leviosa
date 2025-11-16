@@ -25,4 +25,5 @@ type UserService interface {
 	GetOrCreateOAuthUser(ctx context.Context, provider, userID, email, firstName, lastName string) (*domain.UserResponse, bool, error)
 	GetUserByGoogleID(ctx context.Context, googleID string) (*domain.UserResponse, error)
 	GetUserByAppleID(ctx context.Context, appleID string) (*domain.UserResponse, error)
+	UpdateLastLoginTime(ctx context.Context, userID uuid.UUID) error
 }

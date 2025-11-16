@@ -53,8 +53,9 @@ func (s AuthAggregatorService) SignIn(ctx context.Context, request *domain.SignI
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
-	// TODO: Update user's LoggedInAt timestamp
-	// This would require a method to update last login time
+	if err := s.user.UpdateLastLoginTime(ctx, user.ID); err != nil {
+		return nil, wrappedErr(err)
+	}
 
 	return token, nil
 }
