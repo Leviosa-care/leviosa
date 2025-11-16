@@ -2,15 +2,14 @@ package product
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"strings"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
@@ -23,10 +22,7 @@ func (s *ProductService) CreateProduct(ctx context.Context, request *domain.Crea
 
 	_, err = s.sharedRepo.GetCategoryByID(ctx, categoryID)
 	if err != nil {
-		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return "", errs.NewNotFoundErr(err, "category with given ID not found")
-		}
-		return "", errs.NewUnexpectedError(fmt.Errorf("failed to retrieve existing category with ID %s: %w", request.CategoryID, err))
+		return "", fmt.Errorf("get category with given ID: %w", err)
 	}
 
 	product := &domain.Product{
@@ -67,7 +63,7 @@ func (s *ProductService) CreateProduct(ctx context.Context, request *domain.Crea
 		if rollbackErr := s.stripe.DeactivateProduct(ctx, stripeProduct.ID); rollbackErr != nil {
 			log.Printf("Service: Failed to rollback Stripe product %s. Data inconsistency detected! Rollback error: %v", stripeProduct.ID, rollbackErr)
 		}
-		return "", errs.NewUnexpectedError(fmt.Errorf("failed to create product: %w", err))
+		return "", fmt.Errorf("failed to create product: %w", err)
 	}
 	return productID, nil
 }

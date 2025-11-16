@@ -2,7 +2,6 @@ package product
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 
@@ -20,10 +19,7 @@ func (s *ProductService) UpdateProduct(ctx context.Context, productIDStr string,
 
 	existingProduct, err := s.sharedRepo.GetProductByID(ctx, productID)
 	if err != nil {
-		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return errs.NewNotFoundErr(err, "product")
-		}
-		return errs.NewUnexpectedError(fmt.Errorf("failed to retrieve existing product for update: %w", err))
+		return fmt.Errorf("get existing product for update: %w", err)
 	}
 
 	if err := product.Valid(ctx); err != nil {
@@ -60,16 +56,7 @@ func (s *ProductService) UpdateProduct(ctx context.Context, productIDStr string,
 		}
 
 		// Return the original database error, wrapped.
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return errs.NewNotFoundErr(err, "product")
-		case errors.Is(err, errs.ErrUniqueViolation):
-			return errs.NewConflictErr(err)
-		case errors.Is(err, errs.ErrInvalidInput):
-			return errs.NewInvalidValueErr(err.Error())
-		default:
-			return errs.NewUnexpectedError(fmt.Errorf("repository error during product update: %w", err))
-		}
+		return fmt.Errorf("update product: %w", err)
 	}
 
 	return nil

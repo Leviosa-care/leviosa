@@ -2,11 +2,11 @@ package product
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
@@ -18,10 +18,7 @@ func (s *ProductService) RemoveProduct(ctx context.Context, productIDStr string)
 
 	stripeProductID, stripePriceIDs, err := s.sharedRepo.GetStripeProductAndPriceIDs(ctx, productID)
 	if err != nil {
-		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return errs.NewNotFoundErr(err, fmt.Sprintf("stripe product and prices IDs for product with ID %s", productIDStr))
-		}
-		return errs.NewUnexpectedError(fmt.Errorf("failed to retrieve stripe product and prices IDs for product with ID %s: %w", productIDStr, err))
+		return fmt.Errorf("get stripe product and prices IDs for product with ID: %w", productIDStr)
 	}
 
 	if err := s.stripe.DeactivateProduct(ctx, stripeProductID); err != nil {
@@ -49,7 +46,7 @@ func (s *ProductService) RemoveProduct(ctx context.Context, productIDStr string)
 			log.Printf("Service: Failed to reactivate database prices for product %s. Data inconsistency detected! Rollback error: %v", stripeProductID, rollbackErr)
 		}
 
-		return errs.NewUnexpectedError(fmt.Errorf("failed to find product with ID for deletion %s: %w", productID, err))
+		return fmt.Errorf("delete product with ID %s: %w", productID, err)
 	}
 
 	return nil
