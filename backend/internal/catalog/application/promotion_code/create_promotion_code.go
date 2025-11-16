@@ -2,14 +2,13 @@ package promotionCode
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
@@ -26,12 +25,7 @@ func (s *PromotionCodeService) CreatePromotionCode(ctx context.Context, request 
 
 	_, err = s.couponRepo.GetCouponByID(ctx, couponID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return "", errs.NewNotFoundErr(err, "coupon not found")
-		default:
-			return "", errs.NewUnexpectedError(fmt.Errorf("failed to validate coupon: %w", err))
-		}
+		return "", fmt.Errorf("get coupon by ID: %w", err)
 	}
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
@@ -64,28 +58,8 @@ func (s *PromotionCodeService) CreatePromotionCode(ctx context.Context, request 
 
 	promotionCodeID, err := s.repo.CreatePromotionCode(ctx, promotionCode)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidInput):
-			return "", errs.NewInvalidValueErr(fmt.Sprintf("promotion code data: %v", err))
-		case errors.Is(err, errs.ErrUniqueViolation):
-			return "", errs.NewAlreadyExistsError(err, "promotion code with this code")
-		case errors.Is(err, errs.ErrNotNullViolation):
-			return "", errs.NewInvalidValueErr(fmt.Sprintf("missing required data for promotion code: %v", err))
-		case errors.Is(err, errs.ErrForeignKeyViolation):
-			return "", errs.NewInvalidValueErr(fmt.Sprintf("invalid coupon reference: %v", err))
-		case errors.Is(err, errs.ErrCheckViolation):
-			return "", errs.NewInvalidValueErr(fmt.Sprintf("promotion code data failed check constraint: %v", err))
-		case errors.Is(err, errs.ErrDBQuery):
-			return "", errs.NewQueryFailedErr(fmt.Errorf("repository query failed for promotion code: %w", err))
-		case errors.Is(err, errs.ErrDatabase):
-			return "", errs.NewUnexpectedError(fmt.Errorf("database connection error for promotion code: %w", err))
-		case errors.Is(err, errs.ErrContext):
-			return "", errs.NewUnexpectedError(fmt.Errorf("context error during promotion code creation: %w", err))
-		default:
-			return "", errs.NewUnexpectedError(fmt.Errorf("unhandled repository error during promotion code creation: %w", err))
-		}
+		return "", fmt.Errorf("create promotion code: %v", err)
 	}
 
 	return promotionCodeID, nil
 }
-
