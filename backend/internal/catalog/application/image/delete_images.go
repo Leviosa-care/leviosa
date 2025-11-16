@@ -7,8 +7,8 @@ import (
 	"log"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
@@ -47,7 +47,7 @@ func (s *ImageService) DeleteImages(ctx context.Context, parentIDStr string, par
 
 	images, err := s.repo.GetImagesByParentID(ctx, parentID, parentType)
 	if err != nil {
-		return errs.NewQueryFailedErr(fmt.Errorf("failed to retrieve images for deletion for parent %s %s: %w", parentType, parentID, err))
+		return fmt.Errorf("failed to retrieve images for deletion for parent %s %s: %w", parentType, parentID, err)
 	}
 
 	if len(images) == 0 {
@@ -59,7 +59,7 @@ func (s *ImageService) DeleteImages(ctx context.Context, parentIDStr string, par
 		if err := s.mediaRepo.DeleteFile(ctx, img.S3Key); err != nil {
 			log.Printf("Service: Failed to delete S3 file %s for image %s: %v", img.S3Key, img.ID, err)
 			// Return an external service error as S3 is the primary storage.
-			return errs.NewExternalServiceErr(err, fmt.Sprintf("failed to delete image file %s from S3", img.S3Key))
+			return fmt.Errorf("failed to delete image file %s from S3", img.S3Key)
 		}
 	}
 
@@ -68,7 +68,7 @@ func (s *ImageService) DeleteImages(ctx context.Context, parentIDStr string, par
 		// CRITICAL INCONSISTENCY: S3 files are gone, but DB records remain.
 		// Re-uploading files is not feasible here. Log a severe error.
 		log.Printf("Service: FATAL ERROR - Failed to delete DB image records for %s with ID %s after S3 deletion. Data inconsistency detected! DB error: %v", parentType, parentID, err)
-		return errs.NewUnexpectedError(fmt.Errorf("failed to delete image records from database for %s %s: %w", parentType, parentID, err))
+		return fmt.Errorf("failed to delete image records from database for %s %s: %w", parentType, parentID, err)
 	}
 
 	return nil

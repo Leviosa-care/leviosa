@@ -2,15 +2,14 @@ package image
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 	"github.com/hengadev/errsx"
 )
@@ -46,10 +45,7 @@ func (s *ImageService) AddImage(ctx context.Context, req *domain.CreateImageRequ
 		_, existingErr = s.sharedRepo.GetProductByID(ctx, parentID)
 	}
 	if existingErr != nil {
-		if errors.Is(existingErr, errs.ErrRepositoryNotFound) {
-			return "", errs.NewNotFoundErr(existingErr, fmt.Sprintf("%s with ID %s", req.ParentType, parentID))
-		}
-		return "", errs.NewUnexpectedError(fmt.Errorf("failed to retrieve %s with ID %s: %w", req.ParentType, parentID, existingErr))
+		return "", fmt.Errorf("failed to retrieve %s with ID %s: %w", req.ParentType, parentID, existingErr)
 	}
 
 	imageID := uuid.New()
@@ -94,7 +90,7 @@ func (s *ImageService) AddImage(ctx context.Context, req *domain.CreateImageRequ
 		if rollbackErr := s.mediaRepo.DeleteFile(ctx, imageKey); rollbackErr != nil {
 			log.Printf("Service: Failed to rollback S3 image creation for %s with ID %s. Data inconsistency detected! Rollback error: %v", req.ParentType, parentID, rollbackErr)
 		}
-		return "", errs.NewUnexpectedError(fmt.Errorf("create image in database: %w", err))
+		return "", fmt.Errorf("create image in database: %w", err)
 	}
 
 	if isActiveRequested {

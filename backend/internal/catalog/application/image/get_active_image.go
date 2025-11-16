@@ -2,12 +2,11 @@ package image
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
@@ -37,25 +36,12 @@ func (s *ImageService) GetActiveImage(ctx context.Context, parentIDStr string, p
 	}
 
 	if existingErr != nil {
-		if errors.Is(existingErr, errs.ErrRepositoryNotFound) {
-			return nil, errs.NewNotFoundErr(existingErr, fmt.Sprintf("%s with ID %s", parentType, parentID))
-		}
-		return nil, errs.NewUnexpectedError(fmt.Errorf("failed to retrieve %s with ID %s: %w", parentType, parentID, existingErr))
+		return nil, fmt.Errorf("failed to retrieve %s with ID %s: %w", parentType, parentID, existingErr)
 	}
 
 	image, err := s.repo.GetActiveImage(ctx, parentID, parentType)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			// This means no active image was found for the existing parent.
-			return nil, errs.NewNotFoundErr(err, fmt.Sprintf("active image for %s with ID %s", parentType, parentID))
-		case errors.Is(err, errs.ErrDBQuery), errors.Is(err, errs.ErrDatabase):
-			// General database query or connection issue.
-			return nil, errs.NewQueryFailedErr(fmt.Errorf("repository query failed to get active image: %w", err))
-		default:
-			// Catch any unhandled repository errors.
-			return nil, errs.NewUnexpectedError(fmt.Errorf("unhandled repository error during active image retrieval: %w", err))
-		}
+		fmt.Errorf("get active image: %w", err)
 	}
 
 	return image, nil
