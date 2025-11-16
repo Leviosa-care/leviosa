@@ -21,8 +21,8 @@ import (
 //   - operation: Human-readable operation description (e.g., "create user", "update settings")
 //
 // Behavior:
-//   - 4xx errors: Returns error message to client, no logging (client error)
-//   - 5xx errors: Logs error with full context, returns generic message to client (server error)
+//   - 4xx errors: Logs at WARN (security-relevant) or INFO (standard client errors), returns error message to client
+//   - 5xx errors: Logs at ERROR level with full context, returns generic message to client (server error)
 func RespondWithServiceError(w http.ResponseWriter, logger *slog.Logger, ctx context.Context, err error, operation string) {
 	if err == nil {
 		return
@@ -42,6 +42,25 @@ func RespondWithServiceError(w http.ResponseWriter, logger *slog.Logger, ctx con
 		// Return generic message to client (don't leak internal details)
 		RespondWithError(w, errors.New("an internal server error occurred"), statusCode)
 		return
+	}
+
+	// Log client errors (4xx) at appropriate levels based on severity
+	switch statusCode {
+	case http.StatusUnauthorized, http.StatusForbidden, http.StatusLocked, http.StatusTooManyRequests:
+		// Security-relevant errors - log at WARN level for monitoring
+		logger.WarnContext(ctx,
+			fmt.Sprintf("Handler: %s - authentication/authorization issue", operation),
+			"error", err.Error(),
+			"status_code", statusCode,
+		)
+
+	case http.StatusBadRequest, http.StatusNotFound, http.StatusRequestTimeout, http.StatusConflict:
+		// Standard client errors - log at INFO level for metrics/debugging
+		logger.InfoContext(ctx,
+			fmt.Sprintf("Handler: %s - client error", operation),
+			"error", err.Error(),
+			"status_code", statusCode,
+		)
 	}
 
 	// Client errors (4xx) - return error message as-is
