@@ -19,14 +19,7 @@ func (s *PriceService) GetPrice(ctx context.Context, priceID string) (*domain.Pr
 
 	p, err := s.repo.GetPrice(ctx, priceID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(err, "price")
-		case errors.Is(err, errs.ErrDBQuery):
-			return nil, errs.NewQueryFailedErr(fmt.Errorf("failed to get price from database: %w", err))
-		default:
-			return nil, errs.NewUnexpectedError(fmt.Errorf("unhandled error getting price: %w", err))
-		}
+		return nil, fmt.Errorf("get price: %w", err)
 	}
 
 	// Optionally, fetch from Stripe to confirm latest status if needed

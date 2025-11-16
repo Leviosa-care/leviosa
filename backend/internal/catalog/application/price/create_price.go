@@ -38,14 +38,7 @@ func (s *PriceService) CreatePrice(ctx context.Context, productIDStr string, req
 	// 3. Get Stripe Product ID for the given internal product ID.
 	stripeProductID, _, err := s.sharedRepo.GetStripeProductAndPriceIDs(ctx, productID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return "", errs.NewNotFoundErr(err, "product for price creation")
-		case errors.Is(err, errs.ErrDBQuery):
-			return "", errs.NewQueryFailedErr(fmt.Errorf("failed to get Stripe Product ID: %w", err))
-		default:
-			return "", errs.NewUnexpectedError(fmt.Errorf("unhandled error getting Stripe Product ID: %w", err))
-		}
+		return "", fmt.Errorf("get Stripe Product ID: %w", err)
 	}
 
 	// 4. Create Price in Stripe.

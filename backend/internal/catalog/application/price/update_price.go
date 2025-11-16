@@ -2,12 +2,11 @@ package price
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
@@ -20,14 +19,7 @@ func (s *PriceService) UpdatePrice(ctx context.Context, priceID string, input do
 	// 1. Get existing price from DB to get StripePriceID
 	existingPrice, err := s.repo.GetPrice(ctx, priceID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(err, "price")
-		case errors.Is(err, errs.ErrDBQuery):
-			return nil, errs.NewQueryFailedErr(fmt.Errorf("failed to get existing price: %w", err))
-		default:
-			return nil, errs.NewUnexpectedError(fmt.Errorf("unhandled error getting existing price: %w", err))
-		}
+		return nil, fmt.Errorf("get existing price: %w", err)
 	}
 
 	// 2. Prepare Stripe update request
@@ -55,24 +47,20 @@ func (s *PriceService) UpdatePrice(ctx context.Context, priceID string, input do
 	paymentPrice, err := s.stripe.UpdatePrice(ctx, existingPrice.StripePriceID, stripeUpdateReq)
 	_ = paymentPrice
 	if err != nil {
-		// If Stripe returns "no updatable fields", it's valid, but an error to us.
-		if errors.Is(err, fmt.Errorf("no updatable fields provided for price update")) { // Check for specific error string
-			return existingPrice, nil // No changes were meant to be made in Stripe. Return existing.
-		}
 		return nil, errs.NewExternalServiceErr(fmt.Errorf("failed to update price in Stripe: %w", err), "Stripe API")
 	}
 
 	// 4. Update in local database
 	// The `errs.UpdatePriceInput` is designed for local partial update.
 	if err := s.repo.UpdatePrice(ctx, priceID, &input); err != nil {
-		return nil, errs.NewQueryFailedErr(fmt.Errorf("failed to update price in database: %w", err))
+		return nil, fmt.Errorf("update price in database: %w", err)
 	}
 
 	// Re-fetch the updated price from DB or construct it from existing + input
 	updatedPrice, err := s.repo.GetPrice(ctx, priceID) // Simplest way to get latest state
 	if err != nil {
 		// This is a critical error after a successful update. Log it.
-		return nil, errs.NewUnexpectedError(fmt.Errorf("failed to retrieve updated price from DB: %w", err))
+		return nil, fmt.Errorf("retrieve updated price from DB: %w", err)
 	}
 
 	return updatedPrice, nil
