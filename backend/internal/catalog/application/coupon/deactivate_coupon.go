@@ -4,17 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
 )
 
-func (s *CouponService) UpdateCoupon(ctx context.Context, couponID string, req *domain.UpdateCouponRequest) error {
-	if err := req.Valid(ctx); err != nil {
-		return errs.NewInvalidValueErr(err.Error())
-	}
-
+func (s *CouponService) DeactivateCoupon(ctx context.Context, couponID string) error {
 	id, err := uuid.Parse(couponID)
 	if err != nil {
 		return errs.NewInvalidValueErr("invalid coupon ID format")
@@ -26,8 +20,8 @@ func (s *CouponService) UpdateCoupon(ctx context.Context, couponID string, req *
 		return fmt.Errorf("validate coupon: %w", err)
 	}
 
-	if err := s.repo.UpdateCoupon(ctx, id, req); err != nil {
-		return fmt.Errorf("update coupon: %w", err)
+	if err := s.repo.DeactivateCoupon(ctx, id); err != nil {
+		return fmt.Errorf("deactivate coupon: %w", err)
 	}
 
 	return nil

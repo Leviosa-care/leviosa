@@ -2,13 +2,12 @@ package coupon
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
@@ -19,12 +18,7 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, stripeCouponID strin
 
 	coupon, err := s.repo.GetCouponByStripeID(ctx, stripeCouponID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(err, "coupon not found")
-		default:
-			return nil, errs.NewUnexpectedError(fmt.Errorf("failed to get coupon: %w", err))
-		}
+		return nil, fmt.Errorf("get coupon: %w", err)
 	}
 
 	// Validate coupon rules
@@ -51,20 +45,8 @@ func (s *CouponService) IncrementRedemptionCount(ctx context.Context, couponID s
 		return errs.NewInvalidValueErr("invalid coupon ID format")
 	}
 
-	err = s.repo.IncrementRedemptionCount(ctx, id)
-	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return errs.NewNotFoundErr(err, "coupon not found")
-		case errors.Is(err, errs.ErrDBQuery):
-			return errs.NewQueryFailedErr(fmt.Errorf("repository query failed for redemption count increment: %w", err))
-		case errors.Is(err, errs.ErrDatabase):
-			return errs.NewUnexpectedError(fmt.Errorf("database connection error for redemption count increment: %w", err))
-		case errors.Is(err, errs.ErrContext):
-			return errs.NewUnexpectedError(fmt.Errorf("context error during redemption count increment: %w", err))
-		default:
-			return errs.NewUnexpectedError(fmt.Errorf("unhandled repository error during redemption count increment: %w", err))
-		}
+	if err := s.repo.IncrementRedemptionCount(ctx, id); err != nil {
+		return fmt.Errorf("increment redemption count: %w", err)
 	}
 
 	return nil
@@ -78,12 +60,7 @@ func (s *CouponService) CheckRedemptionLimit(ctx context.Context, couponID strin
 
 	coupon, err := s.repo.GetCouponByID(ctx, id)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return false, errs.NewNotFoundErr(err, "coupon not found")
-		default:
-			return false, errs.NewUnexpectedError(fmt.Errorf("failed to get coupon: %w", err))
-		}
+		return false, fmt.Errorf("get coupon: %w", err)
 	}
 
 	// Check if there's a redemption limit
