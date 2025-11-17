@@ -2,7 +2,6 @@ package partner
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
@@ -21,30 +20,7 @@ func (s *PartnerService) GetAllPartnersByProduct(ctx context.Context, productID 
 	// Get all partners from repository for the given product
 	partnersEncx, err := s.partnerRepo.GetAllPartnersByProduct(ctx, productUUID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrConnectionFailure):
-			return nil, fmt.Errorf("get partners by product - database connection failure: %w", err)
-		case errors.Is(err, errs.ErrTooManyConnections):
-			return nil, fmt.Errorf("get partners by product - too many database connections: %w", err)
-		case errors.Is(err, errs.ErrResourceExhausted):
-			return nil, fmt.Errorf("get partners by product - database resources exhausted: %w", err)
-		case errors.Is(err, errs.ErrQueryCancelled):
-			return nil, fmt.Errorf("get partners by product - query cancelled: %w", err)
-		case errors.Is(err, errs.ErrTransactionFailure):
-			return nil, fmt.Errorf("get partners by product - transaction failure: %w", err)
-		case errors.Is(err, errs.ErrDeadlock):
-			return nil, fmt.Errorf("get partners by product - database deadlock: %w", err)
-		case errors.Is(err, errs.ErrPermissionDenied):
-			return nil, fmt.Errorf("get partners by product - permission denied: %w", err)
-		case errors.Is(err, errs.ErrInvalidInput):
-			return nil, fmt.Errorf("get partners by product - invalid input: %w", err)
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, fmt.Errorf("get partners by product - database error: %w", err)
-		case errors.Is(err, errs.ErrContext):
-			return nil, fmt.Errorf("get partners by product - context error: %w", err)
-		default:
-			return nil, fmt.Errorf("get partners by product - unexpected error: %w", err)
-		}
+		return nil, fmt.Errorf("get partners by product: %w", err)
 	}
 
 	// Decrypt partners and build response

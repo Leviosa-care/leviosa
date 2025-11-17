@@ -3,14 +3,13 @@ package session
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-
 	authsession "github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
@@ -18,18 +17,7 @@ func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID
 	// Find session by refresh token
 	sessionData, err := s.repo.FindSessionByID(ctx, sessionID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(fmt.Errorf("session not found during refresh: %w", err), "session")
-		case errors.Is(err, errs.ErrDBQuery):
-			return nil, errs.NewQueryFailedErr(fmt.Errorf("repository query failed during refresh: %w", err))
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("database connection error during refresh: %w", err))
-		case errors.Is(err, errs.ErrContext):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("context error during refresh: %w", err))
-		default:
-			return nil, errs.NewUnexpectedError(fmt.Errorf("unhandled repository error during refresh: %w", err))
-		}
+		return nil, fmt.Errorf("find session by ID for refresh: %w", err)
 	}
 
 	// Decode session as SessionEncx
@@ -89,26 +77,15 @@ func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID
 	// Perform token rotation - replace old tokens with new ones
 	if err := s.repo.RefreshTokenPair(
 		ctx,
-		sessionEncx.RefreshTokenHash,         // oldRefreshTokenHash
-		updatedSessionEncx.AccessTokenHash,   // newAccessTokenHash
-		updatedSessionEncx.RefreshTokenHash,  // newRefreshTokenHash
-		session.ID,                           // sessionID (uuid.UUID)
-		updatedSessionData,                   // updatedSessionData
+		sessionEncx.RefreshTokenHash,        // oldRefreshTokenHash
+		updatedSessionEncx.AccessTokenHash,  // newAccessTokenHash
+		updatedSessionEncx.RefreshTokenHash, // newRefreshTokenHash
+		session.ID,                          // sessionID (uuid.UUID)
+		updatedSessionData,                  // updatedSessionData
 		accessDuration,
 		refreshDuration,
 	); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(fmt.Errorf("session not found during token rotation: %w", err), "session")
-		case errors.Is(err, errs.ErrDBQuery):
-			return nil, errs.NewQueryFailedErr(fmt.Errorf("repository query failed during token rotation: %w", err))
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("database connection error during token rotation: %w", err))
-		case errors.Is(err, errs.ErrContext):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("context error during token rotation: %w", err))
-		default:
-			return nil, errs.NewUnexpectedError(fmt.Errorf("unhandled repository error during token rotation: %w", err))
-		}
+		return nil, fmt.Errorf("refresh token pair: %w", err)
 	}
 
 	return &domain.RefreshSessionResponse{

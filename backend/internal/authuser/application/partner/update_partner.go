@@ -2,11 +2,11 @@ package partner
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
@@ -21,18 +21,7 @@ func (s *PartnerService) UpdatePartner(ctx context.Context, partnerID uuid.UUID,
 	// Get existing partner
 	partnerEncx, err := s.partnerRepo.GetPartnerByID(ctx, partnerID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(err, "partner")
-		case errors.Is(err, errs.ErrConnectionFailure):
-			return nil, fmt.Errorf("get partner by ID - database connection failed: %w", err)
-		case errors.Is(err, errs.ErrContext):
-			return nil, err
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, fmt.Errorf("get partner by ID - database error: %w", err)
-		default:
-			return nil, fmt.Errorf("get partner by ID: %w", err)
-		}
+		return nil, fmt.Errorf("get partner by ID: %w", err)
 	}
 
 	// Decrypt partner
@@ -60,20 +49,7 @@ func (s *PartnerService) UpdatePartner(ctx context.Context, partnerID uuid.UUID,
 
 	// Save updated partner
 	if err := s.partnerRepo.UpdatePartner(ctx, updatedPartnerEncx); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(err, "partner")
-		case errors.Is(err, errs.ErrRepositoryNotUpdated):
-			return nil, fmt.Errorf("update partner in repository failed: %w", err)
-		case errors.Is(err, errs.ErrConnectionFailure):
-			return nil, fmt.Errorf("update partner - database connection failed: %w", err)
-		case errors.Is(err, errs.ErrContext):
-			return nil, err
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, fmt.Errorf("update partner - database error: %w", err)
-		default:
-			return nil, fmt.Errorf("update partner in repository: %w", err)
-		}
+		return nil, fmt.Errorf("update partner: %w", err)
 	}
 
 	// Return updated partner response

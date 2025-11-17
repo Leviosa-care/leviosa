@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
@@ -19,45 +18,18 @@ func (s *AuthAggregatorService) CompleteUser(ctx context.Context, sessionInfo *s
 
 	// Complete the user information
 	if err := s.user.CompleteUser(ctx, sessionInfo.UserID, request); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			return err // Pass through validation errors
-		case errors.Is(err, errs.ErrDomainNotFound):
-			return err // Pass through not found errors (user doesn't exist)
-		case errors.Is(err, errs.ErrConflict):
-			return err // Pass through conflict errors (user already completed or wrong state)
-		case errors.Is(err, errs.ErrExternalService):
-			return err // Pass through external service errors (database issues)
-		default:
-			return errs.NewInternalErr(err) // Wrap unexpected errors
-		}
+		return err
 	}
 
 	// User completed successfully - mark completion timestamp in session
 	completedAt := time.Now()
 	if err := s.session.UpdateSessionCompletion(ctx, sessionInfo.ID, &completedAt); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			return err // Pass through validation errors
-		case errors.Is(err, errs.ErrDomainNotFound):
-			return err // Pass through not found errors
-		case errors.Is(err, errs.ErrExternalService):
-			return err // Pass through external service errors
-		default:
-			return errs.NewInternalErr(err) // Wrap unexpected errors
-		}
+		return err
 	}
 
 	// Remove sessions to force re-authentication after admin approval
 	if err := s.session.RevokeAllUserSessions(ctx, sessionInfo.UserID); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrDomainNotFound):
-			// Session already removed - this is acceptable
-		case errors.Is(err, errs.ErrExternalService):
-			return err // Pass through external service errors
-		default:
-			return errs.NewInternalErr(err) // Wrap unexpected errors
-		}
+		return err
 	}
 
 	return nil

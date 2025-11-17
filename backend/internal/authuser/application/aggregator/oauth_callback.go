@@ -53,7 +53,7 @@ func (s *AuthAggregatorService) OAuthCallback(ctx context.Context, w http.Respon
 		if errors.Is(err, errs.ErrInvalidValue) {
 			return nil, errs.NewInvalidValueErr("invalid OAuth user data")
 		}
-		return nil, fmt.Errorf("failed to get or create OAuth user: %w", err)
+		return nil, err
 	}
 
 	// Check if user is in active state (not pending or unverified)
@@ -82,7 +82,7 @@ func (s *AuthAggregatorService) OAuthCallback(ctx context.Context, w http.Respon
 		if errors.Is(err, errs.ErrInvalidValue) {
 			return nil, errs.NewInvalidValueErr("invalid session data")
 		}
-		return nil, fmt.Errorf("failed to create session: %w", err)
+		return nil, err
 	}
 
 	return &domain.OAuthCallbackResponse{

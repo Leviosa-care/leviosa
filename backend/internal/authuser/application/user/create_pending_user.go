@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/validation"
+
 	"github.com/google/uuid"
 	"github.com/hengadev/encx"
 )
@@ -27,37 +27,26 @@ func (s *UserService) CreatePendingUser(ctx context.Context, email string) (uuid
 	// Check if user already exists
 	existingUserEncx, err := s.repo.GetUserByEmailHash(ctx, emailHash)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			// User doesn't exist, proceed with creation
+		// Only branch on ErrRepositoryNotFound - it triggers different business logic
+		if errors.Is(err, errs.ErrRepositoryNotFound) {
+			// User doesn't exist, CREATE ONE
 			user := newPendingUser(email)
 
-			// Encrypt the user data using the new generated function
 			userEncx, err := domain.ProcessUserEncx(ctx, s.crypto, user)
 			if err != nil {
-				return uuid.Nil, errs.NewInternalErr(fmt.Errorf("failed to encrypt user data: %w", err))
+				return uuid.Nil, fmt.Errorf("encrypt user data: %w", err)
 			}
 
 			// Create user in database
 			if err := s.repo.CreateUser(ctx, userEncx); err != nil {
-				switch {
-				case errors.Is(err, errs.ErrUniqueViolation):
-					return uuid.Nil, errs.NewConflictErr(errors.New("user already exists"))
-				case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-					return uuid.Nil, errs.NewExternalServiceErr(err, "database unavailable")
-				case errors.Is(err, errs.ErrInvalidInput):
-					return uuid.Nil, errs.NewInvalidValueErr("invalid user data")
-				default:
-					return uuid.Nil, errs.NewInternalErr(fmt.Errorf("failed to create user: %w", err))
-				}
+				return uuid.Nil, fmt.Errorf("create user: %w", err)
 			}
 
 			return userEncx.ID, nil
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			return uuid.Nil, errs.NewExternalServiceErr(err, "database unavailable")
-		default:
-			return uuid.Nil, errs.NewInternalErr(fmt.Errorf("failed to check user existence: %w", err))
 		}
+
+		// All other errors - just wrap and return
+		return uuid.Nil, fmt.Errorf("check user existence: %w", err)
 	}
 
 	// User already exists, return the existing user's ID with conflict error

@@ -12,54 +12,33 @@ func (s *AuthAggregatorService) DeleteUserByAdmin(ctx context.Context, userID uu
 	// Get user first to retrieve email for OTP cleanup
 	userResponse, err := s.user.GetUserByID(ctx, userID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrDomainNotFound):
-			return err // Pass through - user doesn't exist
-		case errors.Is(err, errs.ErrExternalService):
-			return err // Pass through external service errors
-		default:
-			return errs.NewUnexpectedError(err) // Wrap unexpected errors
-		}
+		return err
 	}
 
 	// 1. Revoke all user sessions (Redis cleanup)
 	if err := s.session.RevokeAllUserSessions(ctx, userID); err != nil {
 		switch {
-		case errors.Is(err, errs.ErrDomainNotFound):
+		case errors.Is(err, errs.ErrRepositoryNotFound):
 			// No sessions to revoke - this is acceptable
-		case errors.Is(err, errs.ErrExternalService):
-			return err // Pass through external service errors
 		default:
-			return errs.NewUnexpectedError(err) // Wrap unexpected errors
+			return err
 		}
 	}
 
 	// 2. Cancel/invalidate any pending OTPs for this user
 	if err := s.otp.CancelOTP(ctx, userResponse.Email); err != nil {
 		switch {
-		case errors.Is(err, errs.ErrDomainNotFound):
+		case errors.Is(err, errs.ErrRepositoryNotFound):
 			// No OTP to cancel - this is acceptable
-		case errors.Is(err, errs.ErrExternalService):
-			return err // Pass through external service errors
 		default:
-			return errs.NewUnexpectedError(err) // Wrap unexpected errors
+			return err
 		}
 	}
 
 	// 3. Delete the user record (this coordinates Stripe customer deletion automatically)
 	if err := s.user.DeleteUser(ctx, userID); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrDomainNotFound):
-			return err // Pass through - user doesn't exist
-		case errors.Is(err, errs.ErrInvalidValue):
-			return err // Pass through validation errors
-		case errors.Is(err, errs.ErrExternalService):
-			return err // Pass through external service errors
-		default:
-			return errs.NewUnexpectedError(err) // Wrap unexpected errors
-		}
+		return err
 	}
 
 	return nil
 }
-

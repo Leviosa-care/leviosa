@@ -98,16 +98,7 @@ func (s *OTPService) ValidateOTP(ctx context.Context, request *domain.ValidateOT
 
 // handleRepositoryError centralizes repository error handling
 func (s *OTPService) handleRepositoryError(err error, operation string) error {
-	switch {
-	case errors.Is(err, errs.ErrRepositoryNotFound):
-		return errs.NewNotFoundErr(err, "OTP")
-	case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-		return errs.NewExternalServiceErr(err, "database unavailable")
-	case errors.Is(err, errs.ErrInvalidInput):
-		return errs.NewInvalidValueErr("invalid OTP data")
-	default:
-		return errs.NewInternalErr(fmt.Errorf("failed to %s: %w", operation, err))
-	}
+	return fmt.Errorf("%s OTP: %w", operation, err)
 }
 
 // cleanupOTP performs OTP cleanup and returns error if already consumed by concurrent request

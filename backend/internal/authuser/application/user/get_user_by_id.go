@@ -2,11 +2,11 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
@@ -14,41 +14,7 @@ func (s *UserService) GetUserByID(ctx context.Context, userID uuid.UUID) (*domai
 	// Get user from repository
 	userEncx, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			// User not found
-			return nil, errs.NewNotFoundErr(err, "user by ID")
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			// Database connection issues
-			return nil, errs.NewExternalServiceErr(err, "database unavailable")
-		case errors.Is(err, errs.ErrQueryCancelled):
-			// Query was cancelled
-			return nil, fmt.Errorf("get user by ID cancelled: %w", err)
-		case errors.Is(err, errs.ErrTransactionFailure), errors.Is(err, errs.ErrDeadlock):
-			// Transaction/serialization failure
-			return nil, errs.NewExternalServiceErr(err, "database transaction failed")
-		case errors.Is(err, errs.ErrResourceExhausted):
-			// Database resources exhausted
-			return nil, errs.NewExternalServiceErr(err, "database resources exhausted")
-		case errors.Is(err, errs.ErrPermissionDenied):
-			// Database permission issues
-			return nil, errs.NewInternalErr(fmt.Errorf("database permission denied: %w", err))
-		case errors.Is(err, errs.ErrDatabase):
-			// General database error
-			return nil, errs.NewInternalErr(fmt.Errorf("database error: %w", err))
-		case errors.Is(err, errs.ErrInvalidInput):
-			// Invalid user ID format
-			return nil, errs.NewInvalidValueErr("invalid user ID format")
-		case errors.Is(err, context.Canceled):
-			// Request was cancelled
-			return nil, fmt.Errorf("get user by ID cancelled: %w", err)
-		case errors.Is(err, context.DeadlineExceeded):
-			// Request timed out
-			return nil, fmt.Errorf("get user by ID timeout: %w", err)
-		default:
-			// Any unhandled error - wrap with operation context
-			return nil, errs.NewInternalErr(fmt.Errorf("failed to get user by ID: %w", err))
-		}
+		return nil, fmt.Errorf("get user by ID: %w", err)
 	}
 
 	// Decrypt user data using the new generated function

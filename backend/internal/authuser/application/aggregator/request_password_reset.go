@@ -3,10 +3,8 @@ package aggregator
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
@@ -19,23 +17,7 @@ func (s *AuthAggregatorService) RequestPasswordReset(ctx context.Context, reques
 		Email: request.Email,
 	})
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			// Email validation failed
-			return fmt.Errorf("check email availability: %w", err)
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections), errors.Is(err, errs.ErrQueryCancelled), errors.Is(err, errs.ErrTransactionFailure), errors.Is(err, errs.ErrDeadlock), errors.Is(err, errs.ErrResourceExhausted), errors.Is(err, errs.ErrPermissionDenied), errors.Is(err, errs.ErrDatabase):
-			// Database infrastructure errors
-			return fmt.Errorf("check email availability: %w", err)
-		case errors.Is(err, context.Canceled):
-			// Request was cancelled
-			return fmt.Errorf("check email availability cancelled: %w", err)
-		case errors.Is(err, context.DeadlineExceeded):
-			// Request timed out
-			return fmt.Errorf("check email availability timeout: %w", err)
-		default:
-			// Any unhandled error - wrap with operation context
-			return fmt.Errorf("check email availability: %w", err)
-		}
+		return err
 	}
 
 	if available {
@@ -43,24 +25,7 @@ func (s *AuthAggregatorService) RequestPasswordReset(ctx context.Context, reques
 	}
 
 	if err := s.otp.RequestOTP(ctx, request.Email); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue), errors.Is(err, errs.ErrRateLimit):
-			// Invalid parameters or rate limiting
-			return fmt.Errorf("request OTP: %w", err)
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections), errors.Is(err, errs.ErrQueryCancelled), errors.Is(err, errs.ErrTransactionFailure), errors.Is(err, errs.ErrResourceExhausted), errors.Is(err, errs.ErrExternalService):
-			// Infrastructure and external service errors
-			return fmt.Errorf("request OTP: %w", err)
-		case errors.Is(err, context.Canceled):
-			// Request was cancelled
-			return fmt.Errorf("request OTP cancelled: %w", err)
-		case errors.Is(err, context.DeadlineExceeded):
-			// Request timed out
-			return fmt.Errorf("request OTP timeout: %w", err)
-		default:
-			// Any unhandled error - wrap with operation context
-			return fmt.Errorf("request OTP: %w", err)
-		}
+		return err
 	}
 	return nil
 }
-

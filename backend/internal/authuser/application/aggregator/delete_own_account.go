@@ -12,52 +12,32 @@ func (s *AuthAggregatorService) DeleteOwnAccount(ctx context.Context, sessionInf
 	// Get user details for cleanup operations (email for OTP cleanup)
 	userResponse, err := s.user.GetUserByID(ctx, sessionInfo.UserID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrDomainNotFound):
-			return err // Pass through - user doesn't exist
-		case errors.Is(err, errs.ErrExternalService):
-			return err // Pass through external service errors
-		default:
-			return errs.NewUnexpectedError(err) // Wrap unexpected errors
-		}
+		return err
 	}
 
 	// 1. Revoke all user sessions (Redis cleanup) - including current session
 	if err := s.session.RevokeAllUserSessions(ctx, sessionInfo.UserID); err != nil {
 		switch {
-		case errors.Is(err, errs.ErrDomainNotFound):
+		case errors.Is(err, errs.ErrRepositoryNotFound):
 			// No sessions to revoke - this is acceptable
-		case errors.Is(err, errs.ErrExternalService):
-			return err // Pass through external service errors
 		default:
-			return errs.NewUnexpectedError(err) // Wrap unexpected errors
+			return err
 		}
 	}
 
 	// 2. Cancel/invalidate any pending OTPs for this user
 	if err := s.otp.CancelOTP(ctx, userResponse.Email); err != nil {
 		switch {
-		case errors.Is(err, errs.ErrDomainNotFound):
+		case errors.Is(err, errs.ErrRepositoryNotFound):
 			// No OTP to cancel - this is acceptable
-		case errors.Is(err, errs.ErrExternalService):
-			return err // Pass through external service errors
 		default:
-			return errs.NewUnexpectedError(err) // Wrap unexpected errors
+			return err
 		}
 	}
 
 	// 3. Delete the user record (this coordinates Stripe customer deletion automatically)
 	if err := s.user.DeleteUser(ctx, sessionInfo.UserID); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrDomainNotFound):
-			return err // Pass through - user doesn't exist
-		case errors.Is(err, errs.ErrInvalidValue):
-			return err // Pass through validation errors
-		case errors.Is(err, errs.ErrExternalService):
-			return err // Pass through external service errors
-		default:
-			return errs.NewUnexpectedError(err) // Wrap unexpected errors
-		}
+		return err
 	}
 
 	return nil

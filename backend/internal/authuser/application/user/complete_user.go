@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
@@ -20,14 +19,7 @@ func (s *UserService) CompleteUser(ctx context.Context, userID uuid.UUID, reques
 	// Get the existing pending user
 	userEncx, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return errs.NewNotFoundErr(err, "user")
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			return errs.NewExternalServiceErr(err, "database unavailable")
-		default:
-			return errs.NewInternalErr(fmt.Errorf("failed to get user: %w", err))
-		}
+		return fmt.Errorf("failed to get user: %w", err)
 	}
 
 	// Decrypt the user data using the new generated function
@@ -44,16 +36,7 @@ func (s *UserService) CompleteUser(ctx context.Context, userID uuid.UUID, reques
 	// Create Stripe customer for the user
 	stripeCustomer, err := s.stripe.CreateCustomer(ctx, userID, user.Email, request.FirstName, request.LastName)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			return errs.NewInvalidValueErr(fmt.Sprintf("stripe customer creation failed: %s", err.Error()))
-		case errors.Is(err, errs.ErrPermissionDenied):
-			return errs.NewPermissionErr(fmt.Sprintf("stripe customer creation failed: %s", err.Error()))
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrResourceExhausted):
-			return errs.NewExternalServiceErr(err, "stripe service unavailable")
-		default:
-			return errs.NewInternalErr(fmt.Errorf("failed to create stripe customer: %w", err))
-		}
+		return fmt.Errorf("failed to create stripe customer: %w", err)
 	}
 
 	// Update user with new information
@@ -84,16 +67,7 @@ func (s *UserService) CompleteUser(ctx context.Context, userID uuid.UUID, reques
 
 	// Update user in repository
 	if err := s.repo.UpdateUser(ctx, updatedUserEncx); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return errs.NewNotFoundErr(err, "user")
-		case errors.Is(err, errs.ErrConflict):
-			return errs.NewConflictErr(fmt.Errorf("%w: user already completed", err))
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			return errs.NewExternalServiceErr(err, "database unavailable")
-		default:
-			return errs.NewInternalErr(fmt.Errorf("failed to update user: %w", err))
-		}
+		return fmt.Errorf("failed to update user: %w", err)
 	}
 
 	return nil

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
+
 	"github.com/google/uuid"
 )
 

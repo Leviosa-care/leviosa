@@ -206,7 +206,6 @@ func TestGenerateOTP(t *testing.T) {
 	})
 }
 
-
 func TestGenerateOTP_EdgeCases(t *testing.T) {
 	s := &OTPService{
 		cache: NewMockOTPCache(6, 15, 3),
@@ -250,4 +249,3 @@ func TestGenerateOTP_EdgeCases(t *testing.T) {
 		assert.Equal(t, expectedExpiry, otp.ExpiresAt)
 	})
 }
-

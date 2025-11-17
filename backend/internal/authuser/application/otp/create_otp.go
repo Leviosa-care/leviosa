@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
@@ -65,14 +66,7 @@ func (s *OTPService) CreateOTP(ctx context.Context, email string) error {
 
 	ttl := time.Duration(defaultOTPDuration) * time.Minute
 	if err := s.repo.SaveOTP(ctx, otpEncx.EmailHash, otpData, ttl); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrContext):
-			return err // Pass through context errors
-		case errors.Is(err, errs.ErrDBQuery):
-			return errs.NewUnexpectedError(err) // Connection/network issues
-		default:
-			return errs.NewNotCreatedErr(err, "OTP")
-		}
+		return fmt.Errorf("save OTP: %w", err)
 	}
 
 	if err := s.PublishOTPUpdate(

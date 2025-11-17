@@ -9,12 +9,14 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/validation"
+
 	"github.com/hengadev/encx"
 )
 
 func (s *OTPService) RequestOTP(ctx context.Context, email string) error {
-	if email == "" {
-		return errs.NewInvalidValueErr("email is required")
+	if err := validation.ValidateEmail(email); err != nil {
+		return errs.NewInvalidValueErr(err.Error())
 	}
 
 	emailBytes, err := encx.SerializeValue(email)
@@ -29,30 +31,8 @@ func (s *OTPService) RequestOTP(ctx context.Context, email string) error {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
 			// No existing OTP found - continue to create new one
-		case errors.Is(err, errs.ErrConnectionFailure):
-			// Redis connection issues
-			return fmt.Errorf("get existing OTP: %w", err)
-		case errors.Is(err, errs.ErrTooManyConnections):
-			// Redis connection pool exhausted
-			return fmt.Errorf("get existing OTP: %w", err)
-		case errors.Is(err, errs.ErrQueryCancelled):
-			// Redis operation timeout
-			return fmt.Errorf("get existing OTP: %w", err)
-		case errors.Is(err, errs.ErrResourceExhausted):
-			// Redis memory issues
-			return fmt.Errorf("get existing OTP: %w", err)
-		case errors.Is(err, errs.ErrDatabase):
-			// General Redis error
-			return fmt.Errorf("get existing OTP: %w", err)
-		case errors.Is(err, context.Canceled):
-			// Request was cancelled
-			return fmt.Errorf("get existing OTP cancelled: %w", err)
-		case errors.Is(err, context.DeadlineExceeded):
-			// Request timed out
-			return fmt.Errorf("get existing OTP timeout: %w", err)
 		default:
-			// Any unhandled error - wrap with operation context
-			return fmt.Errorf("get existing OTP: %w", err)
+			return fmt.Errorf("retrieve OTP: %w", err)
 		}
 	} else {
 		// OTP exists, check if still valid
@@ -91,38 +71,7 @@ func (s *OTPService) RequestOTP(ctx context.Context, email string) error {
 	ttl := time.Duration(defaultOTPDuration) * time.Minute
 
 	if err := s.repo.SaveOTP(ctx, otpEncx.EmailHash, otpData, ttl); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrConnectionFailure):
-			// Redis connection issues
-			return fmt.Errorf("save OTP: %w", err)
-		case errors.Is(err, errs.ErrTooManyConnections):
-			// Redis connection pool exhausted
-			return fmt.Errorf("save OTP: %w", err)
-		case errors.Is(err, errs.ErrQueryCancelled):
-			// Redis operation timeout
-			return fmt.Errorf("save OTP: %w", err)
-		case errors.Is(err, errs.ErrTransactionFailure):
-			// Redis transaction failed
-			return fmt.Errorf("save OTP: %w", err)
-		case errors.Is(err, errs.ErrResourceExhausted):
-			// Redis memory issues
-			return fmt.Errorf("save OTP: %w", err)
-		case errors.Is(err, errs.ErrPermissionDenied):
-			// Redis authentication issues
-			return fmt.Errorf("save OTP: %w", err)
-		case errors.Is(err, errs.ErrDatabase):
-			// General Redis error
-			return fmt.Errorf("save OTP: %w", err)
-		case errors.Is(err, context.Canceled):
-			// Request was cancelled
-			return fmt.Errorf("save OTP cancelled: %w", err)
-		case errors.Is(err, context.DeadlineExceeded):
-			// Request timed out
-			return fmt.Errorf("save OTP timeout: %w", err)
-		default:
-			// Any unhandled error - wrap with operation context
-			return fmt.Errorf("save OTP: %w", err)
-		}
+		return fmt.Errorf("save OTP: %w", err)
 	}
 
 	if err := s.PublishOTPUpdate(

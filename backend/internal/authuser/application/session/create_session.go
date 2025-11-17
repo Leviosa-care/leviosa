@@ -3,7 +3,6 @@ package session
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
@@ -69,18 +68,7 @@ func (s *SessionService) CreateSession(ctx context.Context, request *domain.Crea
 	refreshExpiry := now.Add(refreshDuration)
 
 	if err := s.repo.CreateSession(ctx, sessionEncx.ID, sessionEncx.AccessTokenHash, sessionEncx.RefreshTokenHash, sessionEncx.UserIDHash, sessionEncoded, accessDuration, refreshDuration); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(fmt.Errorf("session not found during session creation: %w", err), "session")
-		case errors.Is(err, errs.ErrDBQuery):
-			return nil, errs.NewQueryFailedErr(fmt.Errorf("repository query failed during session creation: %w", err))
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("database connection error during session creation: %w", err))
-		case errors.Is(err, errs.ErrContext):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("context error during session creation: %w", err))
-		default:
-			return nil, errs.NewUnexpectedError(fmt.Errorf("unhandled repository error during session creation: %w", err))
-		}
+		return nil, fmt.Errorf("create session: %w", err)
 	}
 
 	return &domain.CreateSessionResponse{

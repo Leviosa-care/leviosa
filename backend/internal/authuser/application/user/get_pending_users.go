@@ -13,47 +13,11 @@ func (s *UserService) GetPendingUsers(ctx context.Context) ([]*domain.UserRespon
 	// Get pending users from repository
 	usersEncx, err := s.repo.GetPendingUsers(ctx)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
+		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			// No pending users found - return empty list
 			return []*domain.UserResponse{}, nil
-		case errors.Is(err, errs.ErrConnectionFailure):
-			// Database connection issues
-			return nil, fmt.Errorf("get pending users: %w", err)
-		case errors.Is(err, errs.ErrTooManyConnections):
-			// Connection pool exhausted
-			return nil, fmt.Errorf("get pending users: %w", err)
-		case errors.Is(err, errs.ErrQueryCancelled):
-			// Query was cancelled
-			return nil, fmt.Errorf("get pending users: %w", err)
-		case errors.Is(err, errs.ErrTransactionFailure):
-			// Transaction/serialization failure
-			return nil, fmt.Errorf("get pending users: %w", err)
-		case errors.Is(err, errs.ErrDeadlock):
-			// Database deadlock
-			return nil, fmt.Errorf("get pending users: %w", err)
-		case errors.Is(err, errs.ErrResourceExhausted):
-			// Database resources exhausted
-			return nil, fmt.Errorf("get pending users: %w", err)
-		case errors.Is(err, errs.ErrPermissionDenied):
-			// Database permission issues
-			return nil, fmt.Errorf("get pending users: %w", err)
-		case errors.Is(err, errs.ErrDatabase):
-			// General database error
-			return nil, fmt.Errorf("get pending users: %w", err)
-		case errors.Is(err, errs.ErrInvalidInput):
-			// Malformed query or invalid data
-			return nil, fmt.Errorf("get pending users: %w", err)
-		case errors.Is(err, context.Canceled):
-			// Request was cancelled
-			return nil, fmt.Errorf("get pending users cancelled: %w", err)
-		case errors.Is(err, context.DeadlineExceeded):
-			// Request timed out
-			return nil, fmt.Errorf("get pending users timeout: %w", err)
-		default:
-			// Any unhandled error - wrap with operation context
-			return nil, fmt.Errorf("get pending users: %w", err)
 		}
+		return nil, fmt.Errorf("get pending users: %w", err)
 	}
 
 	// Decrypt and convert each user to UserResponse

@@ -3,12 +3,12 @@ package session
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
@@ -16,16 +16,7 @@ func (s *SessionService) UpdateSessionCompletion(ctx context.Context, sessionID 
 	// First get the current session to update it
 	sessionData, err := s.repo.FindSessionByID(ctx, sessionID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return errs.NewNotFoundErr(fmt.Errorf("session not found: %w", err), "session")
-		case errors.Is(err, errs.ErrDBQuery):
-			return errs.NewQueryFailedErr(fmt.Errorf("repository query failed: %w", err))
-		case errors.Is(err, errs.ErrDatabase):
-			return errs.NewExternalServiceErr(err, "database connection error")
-		default:
-			return errs.NewUnexpectedError(fmt.Errorf("unhandled repository error: %w", err))
-		}
+		return fmt.Errorf("find session by ID for completion update: %w", err)
 	}
 
 	var sessionEncx *session.SessionEncx
@@ -43,7 +34,6 @@ func (s *SessionService) UpdateSessionCompletion(ctx context.Context, sessionID 
 	sess.CompletedAt = completedAt
 
 	// Encrypt updated session using the new generated function
-	// BUG: This is the part that is causing the issue since we have *time.Time
 	updatedSessionEncx, err := session.ProcessSessionEncx(ctx, s.crypto, sess)
 	if err != nil {
 		return errs.NewNotEncryptedErr("session during completion update", err)
@@ -56,16 +46,7 @@ func (s *SessionService) UpdateSessionCompletion(ctx context.Context, sessionID 
 
 	// Update the session in the repository
 	if err := s.repo.UpdateSessionCompletion(ctx, sessionID, updatedSessionData); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return errs.NewNotFoundErr(fmt.Errorf("session not found during update: %w", err), "session")
-		case errors.Is(err, errs.ErrDBQuery):
-			return errs.NewQueryFailedErr(fmt.Errorf("repository query failed during update: %w", err))
-		case errors.Is(err, errs.ErrDatabase):
-			return errs.NewExternalServiceErr(err, "database connection error during update")
-		default:
-			return errs.NewUnexpectedError(fmt.Errorf("unhandled repository error during update: %w", err))
-		}
+		return fmt.Errorf("update session completion: %w", err)
 	}
 
 	return nil

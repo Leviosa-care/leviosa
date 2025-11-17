@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
@@ -22,7 +21,7 @@ func (s AuthAggregatorService) SignIn(ctx context.Context, request *domain.SignI
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return nil, errs.NewUnauthorizedErr("invalid credentials")
 		}
-		return nil, fmt.Errorf("failed to retrieve user by email: %w", err)
+		return nil, err
 	}
 
 	// Check if user is in active state (not pending or unverified)
@@ -35,7 +34,7 @@ func (s AuthAggregatorService) SignIn(ctx context.Context, request *domain.SignI
 		if errors.Is(err, errs.ErrInvalidValue) {
 			return nil, errs.NewUnauthorizedErr("invalid credentials")
 		}
-		return nil, fmt.Errorf("failed to verify user password: %w", err)
+		return nil, err
 	}
 
 	// Convert role
@@ -50,11 +49,10 @@ func (s AuthAggregatorService) SignIn(ctx context.Context, request *domain.SignI
 		Role:   role,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
 	if err := s.user.UpdateLastLoginTime(ctx, user.ID); err != nil {
-		return nil, wrappedErr(err)
+		return nil, err
 	}
 
 	return token, nil

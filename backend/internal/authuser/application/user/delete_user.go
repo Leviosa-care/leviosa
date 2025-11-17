@@ -14,14 +14,7 @@ func (s *UserService) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 	// 1. Get user first to retrieve encrypted Stripe customer ID
 	userEncx, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return errs.NewNotFoundErr(err, "user")
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			return errs.NewExternalServiceErr(err, "database unavailable")
-		default:
-			return errs.NewUnexpectedError(fmt.Errorf("failed to get user: %w", err))
-		}
+		return fmt.Errorf("get user by ID: %w", err)
 	}
 
 	// 2. Decrypt user data to access Stripe customer ID
@@ -52,14 +45,7 @@ func (s *UserService) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 
 	// 4. Delete user from database
 	if err := s.repo.DeleteUser(ctx, userID); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return errs.NewNotFoundErr(err, "user")
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			return errs.NewExternalServiceErr(err, "database unavailable")
-		default:
-			return errs.NewUnexpectedError(fmt.Errorf("failed to delete user: %w", err))
-		}
+		return fmt.Errorf("delete user: %w", err)
 	}
 
 	return nil

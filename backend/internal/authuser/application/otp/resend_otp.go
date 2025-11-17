@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 
@@ -27,12 +28,7 @@ func (s *OTPService) ResendOTP(ctx context.Context, email string) error {
 	// Check if existing OTP exists
 	marshaledOTP, err := s.repo.GetOTP(ctx, emailHash)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return errs.NewNotFoundErr(err, "OTP")
-		default:
-			return errs.NewUnexpectedError(err)
-		}
+		return fmt.Errorf("get existing OTP: %w", err)
 	}
 
 	// Deserialize and decrypt existing OTP using the new generated function
