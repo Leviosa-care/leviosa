@@ -13,6 +13,10 @@ import (
 )
 
 func (s *AvailabilityService) CreateAvailability(ctx context.Context, request *domain.CreateAvailabilityRequest) (*domain.Availability, error) {
+	if err := request.Valid(ctx); err != nil {
+		return nil, errs.NewInvalidValueErr(err.Error())
+	}
+
 	// Verify roomEncx exists and is active
 	roomEncx, err := s.roomRepo.GetByID(ctx, roomID)
 	if err != nil {
