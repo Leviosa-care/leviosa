@@ -15,10 +15,7 @@ func (s *AvailabilityService) UpdateAvailability(ctx context.Context, id uuid.UU
 	// Get existing availability
 	availabilityEncx, err := s.availabilityRepo.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return nil, errs.ErrRepositoryNotFound
-		}
-		return nil, fmt.Errorf("get availability for update: %w", err)
+		return nil, fmt.Errorf("get availability by ID for update: %w", err)
 	}
 
 	availability, err := domain.DecryptAvailabilityEncx(ctx, s.crypto, availabilityEncx)

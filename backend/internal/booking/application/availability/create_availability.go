@@ -26,10 +26,7 @@ func (s *AvailabilityService) CreateAvailability(ctx context.Context, partnerID,
 	// Verify roomEncx exists and is active
 	roomEncx, err := s.roomRepo.GetByID(ctx, roomID)
 	if err != nil {
-		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return nil, fmt.Errorf("room not found: %w", errs.ErrRepositoryNotFound)
-		}
-		return nil, fmt.Errorf("verify room exists: %w", err)
+		return nil, fmt.Errorf("get room by ID to verify existence: %w", err)
 	}
 
 	if !roomEncx.IsActive {
@@ -39,9 +36,6 @@ func (s *AvailabilityService) CreateAvailability(ctx context.Context, partnerID,
 	// Check partner has access to the room at the specified time
 	hasAccess, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, partnerID, roomID, startTime)
 	if err != nil {
-		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return nil, fmt.Errorf("partner does not have allocation for this room")
-		}
 		return nil, fmt.Errorf("check partner room access: %w", err)
 	}
 

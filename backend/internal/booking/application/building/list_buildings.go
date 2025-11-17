@@ -2,12 +2,12 @@ package building
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/hengadev/encx"
 )
 
@@ -35,20 +35,7 @@ func (s *BuildingService) ListBuildings(ctx context.Context, filter ports.Buildi
 
 	buildingsEncx, err := s.buildingRepo.List(ctx, repoFilter)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidInput):
-			return nil, errs.NewInvalidValueErr(fmt.Sprintf("invalid filter parameters: %v", err))
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("database connection error during building list retrieval: %w", err))
-		case errors.Is(err, errs.ErrDBQuery):
-			return nil, errs.NewQueryFailedErr(fmt.Errorf("repository query failed for building list: %w", err))
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("database error during building list retrieval: %w", err))
-		case errors.Is(err, errs.ErrContext):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("context error during building list retrieval: %w", err))
-		default:
-			return nil, errs.NewUnexpectedError(fmt.Errorf("unhandled repository error during building list retrieval: %w", err))
-		}
+		return nil, fmt.Errorf("list buildings: %w", err)
 	}
 
 	var buildings []*domain.BuildingResponse

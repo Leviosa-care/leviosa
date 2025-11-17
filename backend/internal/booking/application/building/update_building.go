@@ -2,7 +2,6 @@ package building
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
@@ -17,20 +16,7 @@ func (s *BuildingService) UpdateBuilding(ctx context.Context, request *domain.Up
 	// Get existing building
 	buildingEncx, err := s.buildingRepo.GetByID(ctx, request.ID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(err, "building")
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("database connection error during building retrieval: %w", err))
-		case errors.Is(err, errs.ErrDBQuery):
-			return nil, errs.NewQueryFailedErr(fmt.Errorf("query failed during building retrieval: %w", err))
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("database error during building retrieval: %w", err))
-		case errors.Is(err, errs.ErrContext):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("context error during building retrieval: %w", err))
-		default:
-			return nil, errs.NewUnexpectedError(fmt.Errorf("unhandled error during building retrieval: %w", err))
-		}
+		return nil, fmt.Errorf("get building by ID: %w", err)
 	}
 
 	building, err := domain.DecryptBuildingEncx(ctx, s.crypto, buildingEncx)
@@ -81,28 +67,7 @@ func (s *BuildingService) UpdateBuilding(ctx context.Context, request *domain.Up
 
 	// Persist changes
 	if err := s.buildingRepo.Update(ctx, buildingEncx); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(err, "building")
-		case errors.Is(err, errs.ErrInvalidInput):
-			return nil, errs.NewInvalidValueErr(fmt.Sprintf("building data: %v", err))
-		case errors.Is(err, errs.ErrUniqueViolation):
-			return nil, errs.NewAlreadyExistsError(err, "building with this name or address")
-		case errors.Is(err, errs.ErrNotNullViolation):
-			return nil, errs.NewInvalidValueErr(fmt.Sprintf("missing required data for building: %v", err))
-		case errors.Is(err, errs.ErrForeignKeyViolation):
-			return nil, errs.NewInvalidValueErr(fmt.Sprintf("invalid foreign key for building: %v", err))
-		case errors.Is(err, errs.ErrCheckViolation):
-			return nil, errs.NewInvalidValueErr(fmt.Sprintf("building data failed check constraint: %v", err))
-		case errors.Is(err, errs.ErrDBQuery):
-			return nil, errs.NewQueryFailedErr(fmt.Errorf("repository query failed for building: %w", err))
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("database connection error for building: %w", err))
-		case errors.Is(err, errs.ErrContext):
-			return nil, errs.NewUnexpectedError(fmt.Errorf("context error during building update: %w", err))
-		default:
-			return nil, errs.NewUnexpectedError(fmt.Errorf("unhandled repository error during building update: %w", err))
-		}
+		return nil, fmt.Errorf("update building: %w", err)
 	}
 
 	return building.ToResponse(), nil

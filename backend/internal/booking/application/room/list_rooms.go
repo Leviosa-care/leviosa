@@ -2,12 +2,12 @@ package room
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/hengadev/encx"
 )
 
@@ -35,29 +35,7 @@ func (s *RoomService) ListRooms(ctx context.Context, filter ports.RoomFilter) ([
 
 	roomsEncx, err := s.roomRepo.List(ctx, repoFilter)
 	if err != nil {
-		// Handle specific repository errors with context
-		switch {
-		case errors.Is(err, errs.ErrConnectionFailure):
-			return nil, fmt.Errorf("failed to list rooms due to database connection failure: %w", err)
-		case errors.Is(err, errs.ErrTooManyConnections):
-			return nil, fmt.Errorf("failed to list rooms due to too many database connections: %w", err)
-		case errors.Is(err, errs.ErrResourceExhausted):
-			return nil, fmt.Errorf("failed to list rooms due to exhausted database resources: %w", err)
-		case errors.Is(err, errs.ErrQueryCancelled):
-			return nil, fmt.Errorf("list rooms query was cancelled: %w", err)
-		case errors.Is(err, errs.ErrTransactionFailure):
-			return nil, fmt.Errorf("failed to list rooms due to transaction failure: %w", err)
-		case errors.Is(err, errs.ErrDeadlock):
-			return nil, fmt.Errorf("failed to list rooms due to database deadlock: %w", err)
-		case errors.Is(err, errs.ErrInvalidInput):
-			return nil, fmt.Errorf("failed to list rooms due to invalid filter parameters: %w", err)
-		case errors.Is(err, context.Canceled):
-			return nil, fmt.Errorf("list rooms operation was cancelled: %w", err)
-		case errors.Is(err, context.DeadlineExceeded):
-			return nil, fmt.Errorf("list rooms operation timed out: %w", err)
-		default:
-			return nil, fmt.Errorf("failed to list rooms: %w", err)
-		}
+		return nil, fmt.Errorf("list rooms: %w", err)
 	}
 
 	var rooms []*domain.RoomResponse

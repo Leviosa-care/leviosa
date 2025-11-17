@@ -2,7 +2,6 @@ package availability
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
@@ -15,9 +14,6 @@ func (s *AvailabilityService) CancelAvailability(ctx context.Context, id uuid.UU
 	// Get existing availability
 	availabilityEncx, err := s.availabilityRepo.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return errs.ErrRepositoryNotFound
-		}
 		return fmt.Errorf("get availability for cancellation: %w", err)
 	}
 
