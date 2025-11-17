@@ -12,17 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *AvailabilityService) CreateAvailability(ctx context.Context, userID, roomID uuid.UUID, startTime, endTime time.Time, maxCapacity int) (*domain.Availability, error) {
-	// NOTE: that thing is going to be done using the middleware
-	// Validate partner exists and is verified
-	// isValidPartner, err := s.authUserClient.ValidatePartnerExists(ctx, partnerID)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("validate partner: %w", err)
-	// }
-	// if !isValidPartner {
-	// 	return nil, fmt.Errorf("partner not found or not verified")
-	// }
-
+func (s *AvailabilityService) CreateAvailability(ctx context.Context, request *domain.CreateAvailabilityRequest) (*domain.Availability, error) {
 	// Verify roomEncx exists and is active
 	roomEncx, err := s.roomRepo.GetByID(ctx, roomID)
 	if err != nil {

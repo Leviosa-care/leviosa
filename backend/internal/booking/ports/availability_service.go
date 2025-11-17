@@ -12,7 +12,7 @@ import (
 // AvailabilityService defines the interface for availability business logic
 type AvailabilityService interface {
 	// CreateAvailability creates a new availability slot
-	CreateAvailability(ctx context.Context, userID, roomID uuid.UUID, startTime, endTime time.Time, maxCapacity int) (*domain.Availability, error)
+	CreateAvailability(ctx context.Context, request *domain.CreateAvailabilityRequest) (*domain.Availability, error)
 
 	// CreateRecurringAvailability creates a recurring availability slot
 	CreateRecurringAvailability(ctx context.Context, userID, roomID uuid.UUID, startTime, endTime time.Time, maxCapacity int, pattern domain.RecurrencePattern) (*domain.Availability, error)

@@ -54,7 +54,7 @@ func (h *handler) CreateAvailability(w http.ResponseWriter, r *http.Request) {
 	request.UserID = sessionInfo.UserID
 
 	// Call service to create availability
-	availability, err := h.svc.CreateAvailability(ctx, request.UserID, request.RoomID, request.StartTime, request.EndTime, request.MaxCapacity)
+	availability, err := h.svc.CreateAvailability(ctx, &request)
 	if err != nil {
 		httpx.RespondWithServiceError(w, logger, ctx, err, "create availability")
 		return
