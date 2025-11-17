@@ -15,7 +15,7 @@ type AvailabilityService interface {
 	CreateAvailability(ctx context.Context, request *domain.CreateAvailabilityRequest) (*domain.Availability, error)
 
 	// CreateRecurringAvailability creates a recurring availability slot
-	CreateRecurringAvailability(ctx context.Context, userID, roomID uuid.UUID, startTime, endTime time.Time, maxCapacity int, pattern domain.RecurrencePattern) (*domain.Availability, error)
+	CreateRecurringAvailability(ctx context.Context, request *domain.CreateRecurringAvailabilityRequest) (*domain.Availability, error)
 
 	// GetAvailability retrieves an availability by ID
 	GetAvailability(ctx context.Context, id uuid.UUID) (*domain.Availability, error)
