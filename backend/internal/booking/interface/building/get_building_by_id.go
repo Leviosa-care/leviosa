@@ -2,7 +2,6 @@ package buildingHandler
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"time"
 
@@ -55,59 +54,7 @@ func (h *handler) GetBuildingByID(w http.ResponseWriter, r *http.Request) {
 	// Call service to get building
 	building, err := h.svc.GetBuildingByID(ctx, buildingID)
 	if err != nil {
-		// Log with specific error context based on error type
-		var logLevel string
-		var errorContext string
-		var statusCode int
-
-		switch {
-		case errors.Is(err, errs.ErrDomainNotFound):
-			logLevel = "warn"
-			errorContext = "building not found"
-			statusCode = http.StatusNotFound
-		case errors.Is(err, errs.ErrInvalidValue):
-			logLevel = "warn"
-			errorContext = "invalid building ID"
-			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrNotEncrypted), errors.Is(err, errs.ErrNotDecrypted):
-			logLevel = "error"
-			errorContext = "encryption error"
-			statusCode = http.StatusInternalServerError
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			logLevel = "error"
-			errorContext = "database operation failed"
-			statusCode = http.StatusInternalServerError
-		case errors.Is(err, context.Canceled):
-			logLevel = "warn"
-			errorContext = "request cancelled"
-			statusCode = http.StatusRequestTimeout
-		case errors.Is(err, context.DeadlineExceeded):
-			logLevel = "warn"
-			errorContext = "request timeout"
-			statusCode = http.StatusRequestTimeout
-		default:
-			logLevel = "error"
-			errorContext = "unexpected error"
-			statusCode = http.StatusInternalServerError
-		}
-
-		if logLevel == "error" {
-			logger.ErrorContext(ctx, "Handler: Get building by ID failed",
-				"error", err,
-				"building_id", buildingID,
-				"operation", "get_building_by_id",
-				"context", errorContext,
-				"status_code", statusCode)
-		} else {
-			logger.WarnContext(ctx, "Handler: Get building by ID failed",
-				"error", err,
-				"building_id", buildingID,
-				"operation", "get_building_by_id",
-				"context", errorContext,
-				"status_code", statusCode)
-		}
-
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get building by ID")
 		return
 	}
 

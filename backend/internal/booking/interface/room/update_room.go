@@ -1,7 +1,6 @@
 package roomHandler
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -76,53 +75,7 @@ func (h *handler) UpdateRoom(w http.ResponseWriter, r *http.Request) {
 	// Call service to update room
 	room, err := h.svc.UpdateRoom(ctx, &request)
 	if err != nil {
-		var statusCode int
-		var errorContext string
-
-		switch {
-		case errors.Is(err, errs.ErrDomainNotFound):
-			statusCode = http.StatusNotFound
-			errorContext = "room not found"
-		case errors.Is(err, errs.ErrInvalidValue):
-			statusCode = http.StatusBadRequest
-			errorContext = "invalid request validation"
-		case errors.Is(err, errs.ErrConflict):
-			statusCode = http.StatusConflict
-			errorContext = "room conflict"
-		case errors.Is(err, errs.ErrNotEncrypted), errors.Is(err, errs.ErrNotDecrypted):
-			statusCode = http.StatusInternalServerError
-			errorContext = "encryption error"
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			statusCode = http.StatusInternalServerError
-			errorContext = "database operation failed"
-		case errors.Is(err, context.Canceled):
-			statusCode = http.StatusRequestTimeout
-			errorContext = "request cancelled"
-		case errors.Is(err, context.DeadlineExceeded):
-			statusCode = http.StatusRequestTimeout
-			errorContext = "request timeout"
-		default:
-			statusCode = http.StatusInternalServerError
-			errorContext = "unexpected error"
-		}
-
-		if statusCode >= 500 {
-			logger.ErrorContext(ctx, "Handler: Update room failed",
-				"error", err,
-				"room_id", roomID,
-				"operation", "update_room",
-				"context", errorContext,
-				"status_code", statusCode)
-		} else {
-			logger.WarnContext(ctx, "Handler: Update room failed",
-				"error", err,
-				"room_id", roomID,
-				"operation", "update_room",
-				"context", errorContext,
-				"status_code", statusCode)
-		}
-
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "update room")
 		return
 	}
 

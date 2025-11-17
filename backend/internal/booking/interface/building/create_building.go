@@ -54,57 +54,7 @@ func (h *handler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
 	// Call service to create building
 	building, err := h.svc.CreateBuilding(ctx, &request)
 	if err != nil {
-		// Log with specific error context based on error type
-		var logLevel string
-		var errorContext string
-		var statusCode int
-
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			logLevel = "warn"
-			errorContext = "invalid request validation"
-			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrConflict):
-			logLevel = "warn"
-			errorContext = "building conflict"
-			statusCode = http.StatusConflict
-		case errors.Is(err, errs.ErrNotEncrypted), errors.Is(err, errs.ErrNotDecrypted):
-			logLevel = "error"
-			errorContext = "encryption error"
-			statusCode = http.StatusInternalServerError
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			logLevel = "error"
-			errorContext = "database operation failed"
-			statusCode = http.StatusInternalServerError
-		case errors.Is(err, context.Canceled):
-			logLevel = "warn"
-			errorContext = "request cancelled"
-			statusCode = http.StatusRequestTimeout
-		case errors.Is(err, context.DeadlineExceeded):
-			logLevel = "warn"
-			errorContext = "request timeout"
-			statusCode = http.StatusRequestTimeout
-		default:
-			logLevel = "error"
-			errorContext = "unexpected error"
-			statusCode = http.StatusInternalServerError
-		}
-
-		if logLevel == "error" {
-			logger.ErrorContext(ctx, "Handler: Create building failed",
-				"error", err,
-				"operation", "create_building",
-				"context", errorContext,
-				"status_code", statusCode)
-		} else {
-			logger.WarnContext(ctx, "Handler: Create building failed",
-				"error", err,
-				"operation", "create_building",
-				"context", errorContext,
-				"status_code", statusCode)
-		}
-
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "create building")
 		return
 	}
 

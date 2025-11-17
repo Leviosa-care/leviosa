@@ -42,27 +42,7 @@ func (h *handler) CreateAvailability(w http.ResponseWriter, r *http.Request) {
 	// Call service to create availability
 	availability, err := h.svc.CreateAvailability(ctx, request.PartnerID, request.RoomID, request.StartTime, request.EndTime, request.MaxCapacity)
 	if err != nil {
-		var statusCode int
-		switch {
-		case errors.Is(err, errs.ErrInvalidInput):
-			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrUniqueViolation):
-			statusCode = http.StatusConflict
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			statusCode = http.StatusServiceUnavailable
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-
-		logger.ErrorContext(ctx, "Handler: Create availability failed",
-			"error", err,
-			"partner_id", request.PartnerID,
-			"room_id", request.RoomID,
-			"operation", "create_availability")
-
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "create availability")
 		return
 	}
 
@@ -135,27 +115,7 @@ func (h *handler) CreateRecurringAvailability(w http.ResponseWriter, r *http.Req
 	// Call service to create recurring availability
 	availability, err := h.svc.CreateRecurringAvailability(ctx, request.PartnerID, request.RoomID, request.StartTime, request.EndTime, request.MaxCapacity, request.Pattern)
 	if err != nil {
-		var statusCode int
-		switch {
-		case errors.Is(err, errs.ErrInvalidInput):
-			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrUniqueViolation):
-			statusCode = http.StatusConflict
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			statusCode = http.StatusServiceUnavailable
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-
-		logger.ErrorContext(ctx, "Handler: Create recurring availability failed",
-			"error", err,
-			"partner_id", request.PartnerID,
-			"room_id", request.RoomID,
-			"operation", "create_recurring_availability")
-
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "create recurring availability")
 		return
 	}
 

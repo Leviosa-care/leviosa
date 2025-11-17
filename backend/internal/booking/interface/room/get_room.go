@@ -1,8 +1,6 @@
 package roomHandler
 
 import (
-	"context"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -53,50 +51,7 @@ func (h *handler) GetRoom(w http.ResponseWriter, r *http.Request) {
 	// Call service to get room
 	room, err := h.svc.GetRoom(ctx, roomID)
 	if err != nil {
-		var statusCode int
-		var errorContext string
-
-		switch {
-		case errors.Is(err, errs.ErrDomainNotFound):
-			statusCode = http.StatusNotFound
-			errorContext = "room not found"
-		case errors.Is(err, errs.ErrInvalidValue):
-			statusCode = http.StatusBadRequest
-			errorContext = "invalid request validation"
-		case errors.Is(err, errs.ErrNotEncrypted), errors.Is(err, errs.ErrNotDecrypted):
-			statusCode = http.StatusInternalServerError
-			errorContext = "encryption error"
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			statusCode = http.StatusInternalServerError
-			errorContext = "database operation failed"
-		case errors.Is(err, context.Canceled):
-			statusCode = http.StatusRequestTimeout
-			errorContext = "request cancelled"
-		case errors.Is(err, context.DeadlineExceeded):
-			statusCode = http.StatusRequestTimeout
-			errorContext = "request timeout"
-		default:
-			statusCode = http.StatusInternalServerError
-			errorContext = "unexpected error"
-		}
-
-		if statusCode >= 500 {
-			logger.ErrorContext(ctx, "Handler: Get room failed",
-				"error", err,
-				"room_id", roomID,
-				"operation", "get_room",
-				"context", errorContext,
-				"status_code", statusCode)
-		} else {
-			logger.WarnContext(ctx, "Handler: Get room failed",
-				"error", err,
-				"room_id", roomID,
-				"operation", "get_room",
-				"context", errorContext,
-				"status_code", statusCode)
-		}
-
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get room")
 		return
 	}
 

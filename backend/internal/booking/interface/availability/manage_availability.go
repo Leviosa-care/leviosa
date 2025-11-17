@@ -11,6 +11,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 	"github.com/google/uuid"
@@ -18,6 +19,12 @@ import (
 
 func (h *handler) GetAvailability(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
 
 	// Extract availability ID from URL path
 	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
@@ -35,14 +42,7 @@ func (h *handler) GetAvailability(w http.ResponseWriter, r *http.Request) {
 	// Call service to get availability
 	availability, err := h.svc.GetAvailability(ctx, availabilityID)
 	if err != nil {
-		var statusCode int
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			statusCode = http.StatusNotFound
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get availability")
 		return
 	}
 
@@ -70,6 +70,12 @@ func (h *handler) GetAvailability(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) GetPartnerAvailabilities(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
 
 	// Extract partner ID from URL path
 	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
@@ -109,7 +115,7 @@ func (h *handler) GetPartnerAvailabilities(w http.ResponseWriter, r *http.Reques
 	// Call service to get partner availabilities
 	availabilities, err := h.svc.GetPartnerAvailabilities(ctx, partnerID, filter)
 	if err != nil {
-		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get partner availabilities")
 		return
 	}
 
@@ -140,6 +146,12 @@ func (h *handler) GetPartnerAvailabilities(w http.ResponseWriter, r *http.Reques
 
 func (h *handler) GetAvailableSlots(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
 
 	// Parse query parameters for filtering
 	filter := ports.AvailabilityFilter{}
@@ -172,7 +184,7 @@ func (h *handler) GetAvailableSlots(w http.ResponseWriter, r *http.Request) {
 	// Call service to get available slots
 	availabilities, err := h.svc.GetAvailableSlots(ctx, filter)
 	if err != nil {
-		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get available slots")
 		return
 	}
 
@@ -209,6 +221,12 @@ func (h *handler) UpdateAvailability(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
 	// Extract availability ID from URL path
 	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
 	if len(pathParts) < 2 {
@@ -234,18 +252,7 @@ func (h *handler) UpdateAvailability(w http.ResponseWriter, r *http.Request) {
 	// Call service to update availability
 	availability, err := h.svc.UpdateAvailability(ctx, availabilityID, request.StartTime, request.EndTime, request.ServiceType, request.PriceCents, request.Notes)
 	if err != nil {
-		var statusCode int
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			statusCode = http.StatusNotFound
-		case errors.Is(err, errs.ErrInvalidInput):
-			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrUniqueViolation):
-			statusCode = http.StatusConflict
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "update availability")
 		return
 	}
 
@@ -274,6 +281,12 @@ func (h *handler) UpdateAvailability(w http.ResponseWriter, r *http.Request) {
 func (h *handler) CancelAvailability(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
 	// Extract availability ID from URL path
 	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
 	if len(pathParts) < 3 {
@@ -290,14 +303,7 @@ func (h *handler) CancelAvailability(w http.ResponseWriter, r *http.Request) {
 	// Call service to cancel availability
 	err = h.svc.CancelAvailability(ctx, availabilityID)
 	if err != nil {
-		var statusCode int
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			statusCode = http.StatusNotFound
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "cancel availability")
 		return
 	}
 
@@ -306,6 +312,12 @@ func (h *handler) CancelAvailability(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) BlockAvailability(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
 
 	// Extract availability ID from URL path
 	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
@@ -323,14 +335,7 @@ func (h *handler) BlockAvailability(w http.ResponseWriter, r *http.Request) {
 	// Call service to block availability
 	err = h.svc.BlockAvailability(ctx, availabilityID)
 	if err != nil {
-		var statusCode int
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			statusCode = http.StatusNotFound
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "block availability")
 		return
 	}
 
@@ -339,6 +344,12 @@ func (h *handler) BlockAvailability(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) CheckAvailabilityConflict(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	logger, err := ctxutil.GetLoggerFromContext(ctx)
+	if err != nil {
+		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
 
 	// Extract partner ID from URL path
 	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
@@ -385,7 +396,7 @@ func (h *handler) CheckAvailabilityConflict(w http.ResponseWriter, r *http.Reque
 	// Call service to check conflict
 	hasConflict, err := h.svc.CheckAvailabilityConflict(ctx, partnerID, startTime, endTime, excludeID)
 	if err != nil {
-		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "check availability conflict")
 		return
 	}
 
