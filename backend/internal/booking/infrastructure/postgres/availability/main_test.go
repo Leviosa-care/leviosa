@@ -98,4 +98,3 @@ func TestMain(m *testing.M) {
 	os.Exit(code) // Commented out to allow cleanup before exiting in some environments
 	// The `m.Run()` call handles exiting with the correct code in `go test`
 }
-

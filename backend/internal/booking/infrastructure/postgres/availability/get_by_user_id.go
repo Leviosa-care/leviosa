@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) GetByPartnerID(ctx context.Context, partnerID uuid.UUID, filter ports.AvailabilityFilter) ([]*domain.AvailabilityEncx, error) {
+func (r *Repository) GetByUserID(ctx context.Context, userID uuid.UUID, filter ports.AvailabilityFilter) ([]*domain.AvailabilityEncx, error) {
 	// Set partner filter
-	filter.PartnerID = &partnerID
+	filter.UserID = &userID
 	return r.List(ctx, filter)
 }

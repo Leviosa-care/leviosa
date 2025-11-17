@@ -111,7 +111,7 @@ func TestList(t *testing.T) {
 		availabilityHelpers.InsertAvailabilityEncx(t, ctx, avail3, testPool)
 
 		// Execute - filter by partner1
-		filter := ports.AvailabilityFilter{PartnerID: &partnerEncx1.ID}
+		filter := ports.AvailabilityFilter{UserID: &partnerEncx1.ID}
 		result, err := repo.List(ctx, filter)
 
 		// Assert
@@ -120,7 +120,7 @@ func TestList(t *testing.T) {
 
 		// Verify all results belong to partner1
 		for _, avail := range result {
-			assert.Equal(t, partnerEncx1.ID, avail.PartnerID)
+			assert.Equal(t, partnerEncx1.ID, avail.UserID)
 		}
 	})
 

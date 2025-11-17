@@ -16,9 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// make test-func TEST_NAME=TestGetByPartnerID TEST_PATH=internal/booking/infrastructure/postgres/availability/get_by_partner_id_test.go
+// make test-func TEST_NAME=TestGetByUserID TEST_PATH=internal/booking/infrastructure/postgres/availability/get_by_user_id_test.go
 
-func TestGetByPartnerID(t *testing.T) {
+func TestGetByUserID(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should return empty list when partner has no availabilities", func(t *testing.T) {
@@ -44,7 +44,7 @@ func TestGetByPartnerID(t *testing.T) {
 
 		// Execute
 		filter := ports.AvailabilityFilter{}
-		availabilities, err := repo.GetByPartnerID(ctx, partnerEncx.ID, filter)
+		availabilities, err := repo.GetByUserID(ctx, partnerEncx.ID, filter)
 
 		// Assert
 		require.NoError(t, err)
@@ -83,7 +83,7 @@ func TestGetByPartnerID(t *testing.T) {
 
 		// Execute
 		filter := ports.AvailabilityFilter{}
-		result, err := repo.GetByPartnerID(ctx, partnerEncx.ID, filter)
+		result, err := repo.GetByUserID(ctx, partnerEncx.ID, filter)
 
 		// Assert
 		require.NoError(t, err)
@@ -91,7 +91,7 @@ func TestGetByPartnerID(t *testing.T) {
 
 		// Verify all results belong to the correct partner
 		for _, avail := range result {
-			assert.Equal(t, partnerEncx.ID, avail.PartnerID)
+			assert.Equal(t, partnerEncx.ID, avail.UserID)
 		}
 	})
 
@@ -137,7 +137,7 @@ func TestGetByPartnerID(t *testing.T) {
 
 		// Execute - get availabilities for partner1
 		filter := ports.AvailabilityFilter{}
-		result, err := repo.GetByPartnerID(ctx, partnerEncx1.ID, filter)
+		result, err := repo.GetByUserID(ctx, partnerEncx1.ID, filter)
 
 		// Assert
 		require.NoError(t, err)
@@ -145,7 +145,7 @@ func TestGetByPartnerID(t *testing.T) {
 
 		// Verify all results belong to partner1
 		for _, avail := range result {
-			assert.Equal(t, partnerEncx1.ID, avail.PartnerID)
+			assert.Equal(t, partnerEncx1.ID, avail.UserID)
 		}
 	})
 
@@ -187,7 +187,7 @@ func TestGetByPartnerID(t *testing.T) {
 		filter := ports.AvailabilityFilter{
 			Status: []domain.AvailabilityStatus{domain.AvailabilityStatusAvailable},
 		}
-		result, err := repo.GetByPartnerID(ctx, partnerEncx.ID, filter)
+		result, err := repo.GetByUserID(ctx, partnerEncx.ID, filter)
 
 		// Assert
 		require.NoError(t, err)
@@ -195,7 +195,7 @@ func TestGetByPartnerID(t *testing.T) {
 
 		// Verify all results have available status and correct partner
 		for _, avail := range result {
-			assert.Equal(t, partnerEncx.ID, avail.PartnerID)
+			assert.Equal(t, partnerEncx.ID, avail.UserID)
 			assert.Equal(t, domain.AvailabilityStatusAvailable, avail.Status)
 		}
 	})
@@ -246,7 +246,7 @@ func TestGetByPartnerID(t *testing.T) {
 			StartTime: &[]time.Time{now}[0],
 			EndTime:   &[]time.Time{now.Add(5 * time.Hour)}[0],
 		}
-		result, err := repo.GetByPartnerID(ctx, partnerEncx.ID, filter)
+		result, err := repo.GetByUserID(ctx, partnerEncx.ID, filter)
 
 		// Assert
 		require.NoError(t, err)
@@ -254,7 +254,7 @@ func TestGetByPartnerID(t *testing.T) {
 
 		// Verify all results belong to the correct partner
 		for _, avail := range result {
-			assert.Equal(t, partnerEncx.ID, avail.PartnerID)
+			assert.Equal(t, partnerEncx.ID, avail.UserID)
 			assert.True(t, avail.StartTime.Before(now.Add(5*time.Hour)))
 		}
 	})
@@ -284,7 +284,7 @@ func TestGetByPartnerID(t *testing.T) {
 		nonRecurring1 := availabilityHelpers.NewTestAvailabilityEncxWithPartnerAndRoom(t, partnerEncx.ID, roomEncx.ID)
 		nonRecurring2 := availabilityHelpers.NewTestAvailabilityEncxWithPartnerAndRoom(t, partnerEncx.ID, roomEncx.ID)
 		recurring := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		recurring.PartnerID = partnerEncx.ID
+		recurring.UserID = partnerEncx.ID
 		recurring.RoomID = roomEncx.ID
 
 		availabilityHelpers.InsertAvailabilityEncx(t, ctx, nonRecurring1, testPool)
@@ -293,7 +293,7 @@ func TestGetByPartnerID(t *testing.T) {
 
 		// Execute
 		filter := ports.AvailabilityFilter{}
-		result, err := repo.GetByPartnerID(ctx, partnerEncx.ID, filter)
+		result, err := repo.GetByUserID(ctx, partnerEncx.ID, filter)
 
 		// Assert
 		require.NoError(t, err)
@@ -303,7 +303,7 @@ func TestGetByPartnerID(t *testing.T) {
 		recurringCount := 0
 		nonRecurringCount := 0
 		for _, avail := range result {
-			assert.Equal(t, partnerEncx.ID, avail.PartnerID)
+			assert.Equal(t, partnerEncx.ID, avail.UserID)
 			if avail.IsRecurring {
 				recurringCount++
 			} else {
@@ -347,7 +347,7 @@ func TestGetByPartnerID(t *testing.T) {
 			Limit:  2,
 			Offset: 0,
 		}
-		result, err := repo.GetByPartnerID(ctx, partnerEncx.ID, filter)
+		result, err := repo.GetByUserID(ctx, partnerEncx.ID, filter)
 
 		// Assert
 		require.NoError(t, err)
@@ -355,7 +355,7 @@ func TestGetByPartnerID(t *testing.T) {
 
 		// Verify all results belong to the correct partner
 		for _, avail := range result {
-			assert.Equal(t, partnerEncx.ID, avail.PartnerID)
+			assert.Equal(t, partnerEncx.ID, avail.UserID)
 		}
 	})
 
@@ -392,7 +392,7 @@ func TestGetByPartnerID(t *testing.T) {
 
 		// Execute
 		filter := ports.AvailabilityFilter{}
-		result, err := repo.GetByPartnerID(ctx, partnerEncx.ID, filter)
+		result, err := repo.GetByUserID(ctx, partnerEncx.ID, filter)
 
 		// Assert
 		require.NoError(t, err)
@@ -402,7 +402,7 @@ func TestGetByPartnerID(t *testing.T) {
 		freeCount := 0
 		paidCount := 0
 		for _, avail := range result {
-			assert.Equal(t, partnerEncx.ID, avail.PartnerID)
+			assert.Equal(t, partnerEncx.ID, avail.UserID)
 			if avail.PriceCents == nil {
 				freeCount++
 			} else {
@@ -435,13 +435,13 @@ func TestGetByPartnerID(t *testing.T) {
 		require.NoError(t, err)
 
 		original := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		original.PartnerID = partnerEncx.ID
+		original.UserID = partnerEncx.ID
 		original.RoomID = roomEncx.ID
 		availabilityHelpers.InsertAvailabilityEncx(t, ctx, original, testPool)
 
 		// Execute
 		filter := ports.AvailabilityFilter{}
-		result, err := repo.GetByPartnerID(ctx, partnerEncx.ID, filter)
+		result, err := repo.GetByUserID(ctx, partnerEncx.ID, filter)
 
 		// Assert
 		require.NoError(t, err)

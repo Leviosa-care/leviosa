@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *AvailabilityService) GetPartnerAvailabilities(ctx context.Context, partnerID uuid.UUID, filter ports.AvailabilityFilter) ([]*domain.Availability, error) {
-	availabilitiesEncx, err := s.availabilityRepo.GetByPartnerID(ctx, partnerID, filter)
+func (s *AvailabilityService) GetPartnerAvailabilities(ctx context.Context, userID uuid.UUID, filter ports.AvailabilityFilter) ([]*domain.Availability, error) {
+	availabilitiesEncx, err := s.availabilityRepo.GetByUserID(ctx, userID, filter)
 	if err != nil {
 		return nil, fmt.Errorf("get partner availabilities: %w", err)
 	}

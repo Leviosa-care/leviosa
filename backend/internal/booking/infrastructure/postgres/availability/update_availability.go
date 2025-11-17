@@ -11,7 +11,7 @@ import (
 func (r *Repository) Update(ctx context.Context, availabilityEncx *domain.AvailabilityEncx) error {
 	query := fmt.Sprintf(`
 		UPDATE %s.availabilities SET
-			partner_id = $2,
+			user_id = $2,
 			room_id = $3,
 			start_time = $4,
 			end_time = $5,
@@ -31,7 +31,7 @@ func (r *Repository) Update(ctx context.Context, availabilityEncx *domain.Availa
 
 	result, err := r.pool.Exec(ctx, query,
 		availabilityEncx.ID,
-		availabilityEncx.PartnerID,
+		availabilityEncx.UserID,
 		availabilityEncx.RoomID,
 		availabilityEncx.StartTime,
 		availabilityEncx.EndTime,

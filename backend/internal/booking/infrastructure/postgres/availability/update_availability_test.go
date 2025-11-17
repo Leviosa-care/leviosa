@@ -47,7 +47,7 @@ func TestUpdate(t *testing.T) {
 		// Prepare updated availability
 		updated := availabilityHelpers.NewTestAvailabilityEncxWithPartnerAndRoom(t, partnerEncx.ID, roomEncx.ID)
 		updated.ID = original.ID
-		updated.PartnerID = original.PartnerID
+		updated.UserID = original.UserID
 		updated.RoomID = original.RoomID
 		updated.StartTime = original.StartTime.Add(1 * time.Hour)
 		updated.EndTime = original.EndTime.Add(1 * time.Hour)
@@ -121,14 +121,14 @@ func TestUpdate(t *testing.T) {
 		require.NoError(t, err)
 
 		original := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		original.PartnerID = partnerEncx.ID
+		original.UserID = partnerEncx.ID
 		original.RoomID = roomEncx.ID
 		availabilityHelpers.InsertAvailabilityEncx(t, ctx, original, testPool)
 
 		// Update to non-recurring
 		updated := availabilityHelpers.NewTestAvailabilityEncxWithPartnerAndRoom(t, partnerEncx.ID, roomEncx.ID)
 		updated.ID = original.ID
-		updated.PartnerID = original.PartnerID
+		updated.UserID = original.UserID
 		updated.RoomID = original.RoomID
 		updated.StartTime = original.StartTime
 		updated.EndTime = original.EndTime
@@ -172,7 +172,7 @@ func TestUpdate(t *testing.T) {
 		// Update with new encrypted content
 		updated := availabilityHelpers.NewTestAvailabilityEncxWithPartnerAndRoom(t, partnerEncx.ID, roomEncx.ID)
 		updated.ID = original.ID
-		updated.PartnerID = original.PartnerID
+		updated.UserID = original.UserID
 		updated.RoomID = original.RoomID
 		updated.ServiceTypeEncrypted = []byte("encrypted_new_service_type")
 		updated.NotesEncrypted = []byte("encrypted_new_notes")
@@ -219,7 +219,7 @@ func TestUpdate(t *testing.T) {
 		// Update to booked status
 		updated := availabilityHelpers.NewTestAvailabilityEncxWithPartnerAndRoom(t, partnerEncx.ID, roomEncx.ID)
 		updated.ID = original.ID
-		updated.PartnerID = original.PartnerID
+		updated.UserID = original.UserID
 		updated.RoomID = original.RoomID
 		updated.Status = domain.AvailabilityStatusBooked
 

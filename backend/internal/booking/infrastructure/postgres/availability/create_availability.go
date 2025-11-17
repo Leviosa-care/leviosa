@@ -11,7 +11,7 @@ import (
 func (r *Repository) Create(ctx context.Context, availabilityEncx *domain.AvailabilityEncx) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s.availabilities (
-			id, partner_id, room_id, start_time, end_time,
+			id, user_id, room_id, start_time, end_time,
 			service_type_encrypted, price_cents, max_capacity,
 			notes_encrypted, is_recurring, recurrence_pattern_encrypted,
 			status, created_at, updated_at, dek_encrypted, key_version, metadata
@@ -22,7 +22,7 @@ func (r *Repository) Create(ctx context.Context, availabilityEncx *domain.Availa
 
 	_, err := r.pool.Exec(ctx, query,
 		availabilityEncx.ID,
-		availabilityEncx.PartnerID,
+		availabilityEncx.UserID,
 		availabilityEncx.RoomID,
 		availabilityEncx.StartTime,
 		availabilityEncx.EndTime,

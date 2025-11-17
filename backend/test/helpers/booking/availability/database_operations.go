@@ -22,7 +22,7 @@ func ClearAvailabilityTable(t *testing.T, ctx context.Context, pool *pgxpool.Poo
 func InsertAvailabilityEncx(t *testing.T, ctx context.Context, availability *domain.AvailabilityEncx, pool *pgxpool.Pool) {
 	query := `
 		INSERT INTO booking.availabilities (
-			id, partner_id, room_id, start_time, end_time,
+			id, user_id, room_id, start_time, end_time,
 			service_type_encrypted, price_cents, max_capacity,
 			notes_encrypted, is_recurring, recurrence_pattern_encrypted,
 			status, created_at, updated_at,
@@ -34,7 +34,7 @@ func InsertAvailabilityEncx(t *testing.T, ctx context.Context, availability *dom
 
 	_, err := pool.Exec(ctx, query,
 		availability.ID,
-		availability.PartnerID,
+		availability.UserID,
 		availability.RoomID,
 		availability.StartTime,
 		availability.EndTime,
@@ -70,7 +70,7 @@ func DeleteAvailabilityEncx(t *testing.T, ctx context.Context, availabilityID uu
 func GetAvailabilityEncxFromDB(t *testing.T, ctx context.Context, availabilityID uuid.UUID, pool *pgxpool.Pool) *domain.AvailabilityEncx {
 	query := `
 		SELECT
-			id, partner_id, room_id, start_time, end_time,
+			id, user_id, room_id, start_time, end_time,
 			service_type_encrypted, price_cents, max_capacity,
 			notes_encrypted, is_recurring, recurrence_pattern_encrypted,
 			status, created_at, updated_at,
@@ -82,7 +82,7 @@ func GetAvailabilityEncxFromDB(t *testing.T, ctx context.Context, availabilityID
 	availabilityEncx := &domain.AvailabilityEncx{}
 	err := pool.QueryRow(ctx, query, availabilityID).Scan(
 		&availabilityEncx.ID,
-		&availabilityEncx.PartnerID,
+		&availabilityEncx.UserID,
 		&availabilityEncx.RoomID,
 		&availabilityEncx.StartTime,
 		&availabilityEncx.EndTime,
@@ -120,7 +120,7 @@ func CountAvailabilitiesInTable(t *testing.T, ctx context.Context, pool *pgxpool
 
 // CountAvailabilitiesByPartnerID counts availabilities for a specific partner
 func CountAvailabilitiesByPartnerID(t *testing.T, ctx context.Context, partnerID uuid.UUID, pool *pgxpool.Pool) int {
-	query := `SELECT COUNT(*) FROM booking.availabilities WHERE partner_id = $1`
+	query := `SELECT COUNT(*) FROM booking.availabilities WHERE user_id = $1`
 	var count int
 	err := pool.QueryRow(ctx, query, partnerID).Scan(&count)
 	if err != nil {
@@ -172,4 +172,3 @@ func AvailabilityExistsInTable(t *testing.T, ctx context.Context, availabilityID
 	}
 	return exists
 }
-

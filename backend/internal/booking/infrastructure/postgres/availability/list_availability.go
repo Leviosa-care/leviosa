@@ -13,7 +13,7 @@ import (
 func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) ([]*domain.AvailabilityEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, partner_id, room_id, start_time, end_time,
+			id, user_id, room_id, start_time, end_time,
 			service_type_encrypted, price_cents, max_capacity,
 			notes_encrypted, is_recurring, recurrence_pattern_encrypted,
 			status, created_at, updated_at,
@@ -26,9 +26,9 @@ func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) 
 	argIndex := 1
 
 	// Apply filters
-	if filter.PartnerID != nil {
-		whereConditions = append(whereConditions, fmt.Sprintf("partner_id = $%d", argIndex))
-		args = append(args, *filter.PartnerID)
+	if filter.UserID != nil {
+		whereConditions = append(whereConditions, fmt.Sprintf("user_id = $%d", argIndex))
+		args = append(args, *filter.UserID)
 		argIndex++
 	}
 
@@ -114,7 +114,7 @@ func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) 
 		availabilityEncx := &domain.AvailabilityEncx{}
 		err := rows.Scan(
 			&availabilityEncx.ID,
-			&availabilityEncx.PartnerID,
+			&availabilityEncx.UserID,
 			&availabilityEncx.RoomID,
 			&availabilityEncx.StartTime,
 			&availabilityEncx.EndTime,

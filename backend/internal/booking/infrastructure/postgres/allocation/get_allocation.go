@@ -13,7 +13,7 @@ import (
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.RoomAllocation, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, room_id, partner_id, allocation_type,
+			id, room_id, user_id, allocation_type,
 			start_date, end_date, is_active, created_at, updated_at
 		FROM %s.room_allocations
 		WHERE id = $1
@@ -41,10 +41,10 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.RoomAll
 func (r *Repository) GetByPartnerID(ctx context.Context, partnerID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, room_id, partner_id, allocation_type,
+			id, room_id, user_id, allocation_type,
 			start_date, end_date, is_active, created_at, updated_at
 		FROM %s.room_allocations
-		WHERE partner_id = $1
+		WHERE user_id = $1
 	`, r.schema)
 
 	args := []interface{}{partnerID}
@@ -91,7 +91,7 @@ func (r *Repository) GetByPartnerID(ctx context.Context, partnerID uuid.UUID, ac
 func (r *Repository) GetByRoomID(ctx context.Context, roomID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, room_id, partner_id, allocation_type,
+			id, room_id, user_id, allocation_type,
 			start_date, end_date, is_active, created_at, updated_at
 		FROM %s.room_allocations
 		WHERE room_id = $1
@@ -141,10 +141,10 @@ func (r *Repository) GetByRoomID(ctx context.Context, roomID uuid.UUID, activeOn
 func (r *Repository) GetActiveAllocationForPartnerAndRoom(ctx context.Context, partnerID, roomID uuid.UUID, at time.Time) (*domain.RoomAllocation, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, room_id, partner_id, allocation_type,
+			id, room_id, user_id, allocation_type,
 			start_date, end_date, is_active, created_at, updated_at
 		FROM %s.room_allocations
-		WHERE partner_id = $1 AND room_id = $2 AND is_active = true
+		WHERE user_id = $1 AND room_id = $2 AND is_active = true
 		AND (
 			allocation_type = 'shared'
 			OR (

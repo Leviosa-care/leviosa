@@ -12,7 +12,7 @@ import (
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.AvailabilityEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, partner_id, room_id, start_time, end_time,
+			id, user_id, room_id, start_time, end_time,
 			service_type_encrypted, price_cents, max_capacity,
 			notes_encrypted, is_recurring, recurrence_pattern_encrypted,
 			status, created_at, updated_at,
@@ -24,7 +24,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Availab
 	availabilityEncx := &domain.AvailabilityEncx{}
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&availabilityEncx.ID,
-		&availabilityEncx.PartnerID,
+		&availabilityEncx.UserID,
 		&availabilityEncx.RoomID,
 		&availabilityEncx.StartTime,
 		&availabilityEncx.EndTime,
@@ -47,3 +47,4 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Availab
 
 	return availabilityEncx, nil
 }
+

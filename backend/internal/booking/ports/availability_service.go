@@ -30,7 +30,7 @@ type AvailabilityService interface {
 	BlockAvailability(ctx context.Context, id uuid.UUID) error
 
 	// GetuserAvailabilities retrieves availabilities for a user
-	GetuserAvailabilities(ctx context.Context, userID uuid.UUID, filter AvailabilityFilter) ([]*domain.Availability, error)
+	// GetuserAvailabilities(ctx context.Context, userID uuid.UUID, filter AvailabilityFilter) ([]*domain.Availability, error)
 
 	// GetAvailableSlots retrieves available slots for booking
 	GetAvailableSlots(ctx context.Context, filter AvailabilityFilter) ([]*domain.Availability, error)

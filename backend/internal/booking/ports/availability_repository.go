@@ -25,8 +25,8 @@ type AvailabilityRepository interface {
 	// List retrieves availabilities with optional filtering
 	List(ctx context.Context, filter AvailabilityFilter) ([]*domain.AvailabilityEncx, error)
 
-	// GetByPartnerID retrieves all availabilities for a specific partner
-	GetByPartnerID(ctx context.Context, partnerID uuid.UUID, filter AvailabilityFilter) ([]*domain.AvailabilityEncx, error)
+	// GetByuserID retrieves all availabilities for a specific user
+	GetByUserID(ctx context.Context, userID uuid.UUID, filter AvailabilityFilter) ([]*domain.AvailabilityEncx, error)
 
 	// GetByRoomID retrieves all availabilities for a specific room
 	GetByRoomID(ctx context.Context, roomID uuid.UUID, filter AvailabilityFilter) ([]*domain.AvailabilityEncx, error)
@@ -34,8 +34,8 @@ type AvailabilityRepository interface {
 	// GetAvailableSlots retrieves available slots within a time range
 	GetAvailableSlots(ctx context.Context, filter AvailabilityFilter) ([]*domain.AvailabilityEncx, error)
 
-	// CheckConflict checks if a new availability would conflict with existing ones for the same partner
-	CheckConflict(ctx context.Context, partnerID uuid.UUID, startTime, endTime time.Time, excludeID *uuid.UUID) (bool, error)
+	// CheckConflict checks if a new availability would conflict with existing ones for the same user
+	CheckConflict(ctx context.Context, userID uuid.UUID, startTime, endTime time.Time, excludeID *uuid.UUID) (bool, error)
 
 	// GetRecurringAvailabilities retrieves recurring availabilities that need to be expanded
 	GetRecurringAvailabilities(ctx context.Context, until time.Time) ([]*domain.AvailabilityEncx, error)
@@ -44,8 +44,8 @@ type AvailabilityRepository interface {
 // AvailabilityFilter defines filtering options for availability queries
 type AvailabilityFilter struct {
 	// Entity filters
-	PartnerID *uuid.UUID
-	RoomID    *uuid.UUID
+	UserID *uuid.UUID
+	RoomID *uuid.UUID
 
 	// Status filter
 	Status []domain.AvailabilityStatus

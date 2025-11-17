@@ -75,7 +75,7 @@ CREATE TABLE booking.rooms (
 CREATE TABLE booking.room_allocations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     room_id UUID NOT NULL REFERENCES booking.rooms(id) ON DELETE CASCADE,
-    partner_id UUID NOT NULL, -- References auth.partners.id (from authuser service)
+    user_id UUID NOT NULL, -- References auth.partners.user_id (from authuser service)
 
     -- Allocation type
     allocation_type VARCHAR(20) NOT NULL CHECK (allocation_type IN ('dedicated', 'shared')),
@@ -92,14 +92,14 @@ CREATE TABLE booking.room_allocations (
     metadata JSONB, -- Maps to 'Metadata map[string]any,omitempty'. JSONB for flexible key-value pairs. 'omitempty' implies NULLable.
 
     -- Constraints
-    UNIQUE(room_id, partner_id, allocation_type),
+    UNIQUE(room_id, user_id, allocation_type),
     CHECK ((allocation_type = 'dedicated' AND start_date IS NOT NULL) OR allocation_type = 'shared')
 );
 
 -- Availability: Time slots partners offer for services
 CREATE TABLE booking.availabilities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    partner_id UUID NOT NULL, -- References auth.partners.id (from authuser service)
+    user_id UUID NOT NULL, -- References auth.partners.user_id (from authuser service)
     room_id UUID NOT NULL REFERENCES booking.rooms(id) ON DELETE CASCADE,
 
     -- Time slot definition
@@ -139,7 +139,7 @@ CREATE TABLE booking.bookings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     availability_id UUID NOT NULL REFERENCES booking.availabilities(id) ON DELETE RESTRICT,
     client_id UUID NOT NULL, -- References auth.users.id (from authuser service)
-    partner_id UUID NOT NULL, -- References auth.partners.id (denormalized for queries)
+    user_id UUID NOT NULL, -- References auth.partners.user_id (denormalized for queries)
     room_id UUID NOT NULL, -- References booking.rooms.id (denormalized for queries)
 
     -- Booking details (encrypted for GDPR compliance)
@@ -178,13 +178,13 @@ CREATE INDEX idx_rooms_building_active ON booking.rooms(building_id, is_active) 
 CREATE INDEX idx_rooms_name_hash ON booking.rooms(name_hash);
 CREATE INDEX idx_rooms_room_number_hash ON booking.rooms(room_number_hash);
 
-CREATE INDEX idx_room_allocations_partner ON booking.room_allocations(partner_id, is_active) WHERE is_active = TRUE;
+CREATE INDEX idx_room_allocations_partner ON booking.room_allocations(user_id, is_active) WHERE is_active = TRUE;
 CREATE INDEX idx_room_allocations_room ON booking.room_allocations(room_id, is_active) WHERE is_active = TRUE;
-CREATE INDEX idx_availabilities_partner_time ON booking.availabilities(partner_id, start_time, end_time);
+CREATE INDEX idx_availabilities_partner_time ON booking.availabilities(user_id, start_time, end_time);
 CREATE INDEX idx_availabilities_room_time ON booking.availabilities(room_id, start_time, end_time);
 CREATE INDEX idx_availabilities_status_time ON booking.availabilities(status, start_time) WHERE status = 'available';
 CREATE INDEX idx_bookings_client ON booking.bookings(client_id, created_at DESC);
-CREATE INDEX idx_bookings_partner ON booking.bookings(partner_id, created_at DESC);
+CREATE INDEX idx_bookings_partner ON booking.bookings(user_id, created_at DESC);
 CREATE INDEX idx_bookings_availability ON booking.bookings(availability_id);
 CREATE INDEX idx_bookings_status ON booking.bookings(status, created_at DESC);
 CREATE INDEX idx_bookings_payment_status ON booking.bookings(payment_status) WHERE payment_status IN ('pending', 'failed');

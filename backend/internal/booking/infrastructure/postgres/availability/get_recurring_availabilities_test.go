@@ -61,7 +61,7 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 
 		// Create recurring availability
 		recurring := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		recurring.PartnerID = partnerEncx.ID
+		recurring.UserID = partnerEncx.ID
 		recurring.RoomID = roomEncx.ID
 		recurring.StartTime = now.Add(24 * time.Hour) // Start tomorrow
 		recurring.Status = domain.AvailabilityStatusAvailable
@@ -116,7 +116,7 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 
 		// Create available recurring availability
 		availableRecurring := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		availableRecurring.PartnerID = partnerEncx.ID
+		availableRecurring.UserID = partnerEncx.ID
 		availableRecurring.RoomID = roomEncx.ID
 		availableRecurring.StartTime = now.Add(24 * time.Hour)
 		availableRecurring.EndTime = now.Add(25 * time.Hour)
@@ -124,7 +124,7 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 
 		// Create booked recurring availability
 		bookedRecurring := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		bookedRecurring.PartnerID = partnerEncx.ID
+		bookedRecurring.UserID = partnerEncx.ID
 		bookedRecurring.RoomID = roomEncx.ID
 		bookedRecurring.StartTime = now.Add(48 * time.Hour)
 		bookedRecurring.EndTime = now.Add(49 * time.Hour)
@@ -172,7 +172,7 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 
 		// Create recurring availability that starts before the until date
 		earlyRecurring := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		earlyRecurring.PartnerID = partnerEncx.ID
+		earlyRecurring.UserID = partnerEncx.ID
 		earlyRecurring.RoomID = roomEncx.ID
 		earlyRecurring.StartTime = now.Add(1 * time.Hour) // Start in 1 hour
 		earlyRecurring.EndTime = now.Add(2 * time.Hour)   // End in 1 hour
@@ -180,7 +180,7 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 
 		// Create recurring availability that starts after the until date
 		lateRecurring := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		lateRecurring.PartnerID = partnerEncx.ID
+		lateRecurring.UserID = partnerEncx.ID
 		lateRecurring.RoomID = roomEncx.ID
 		lateRecurring.StartTime = now.Add(48 * time.Hour) // Start in 2 days
 		lateRecurring.EndTime = now.Add(49 * time.Hour)   // End in 2 days
@@ -229,7 +229,7 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 
 		// Create recurring availability that starts exactly at until time
 		exactRecurring := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		exactRecurring.PartnerID = partnerEncx.ID
+		exactRecurring.UserID = partnerEncx.ID
 		exactRecurring.RoomID = roomEncx.ID
 		exactRecurring.StartTime = until
 		exactRecurring.Status = domain.AvailabilityStatusAvailable
@@ -275,19 +275,19 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 
 		// Create multiple recurring availabilities at different times
 		recurring1 := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		recurring1.PartnerID = partnerEncx.ID
+		recurring1.UserID = partnerEncx.ID
 		recurring1.RoomID = roomEncx.ID
 		recurring1.StartTime = now.Add(3 * time.Hour)
 		recurring1.Status = domain.AvailabilityStatusAvailable
 
 		recurring2 := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		recurring2.PartnerID = partnerEncx.ID
+		recurring2.UserID = partnerEncx.ID
 		recurring2.RoomID = roomEncx.ID
 		recurring2.StartTime = now.Add(1 * time.Hour) // Earliest
 		recurring2.Status = domain.AvailabilityStatusAvailable
 
 		recurring3 := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		recurring3.PartnerID = partnerEncx.ID
+		recurring3.UserID = partnerEncx.ID
 		recurring3.RoomID = roomEncx.ID
 		recurring3.StartTime = now.Add(2 * time.Hour)
 		recurring3.Status = domain.AvailabilityStatusAvailable
@@ -341,7 +341,7 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 		until := now.Add(30 * 24 * time.Hour)
 
 		original := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		original.PartnerID = partnerEncx.ID
+		original.UserID = partnerEncx.ID
 		original.RoomID = roomEncx.ID
 		original.StartTime = now.Add(24 * time.Hour)
 		original.Status = domain.AvailabilityStatusAvailable
@@ -406,13 +406,13 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 
 		// Create recurring availabilities for different partners and rooms
 		recurring1 := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		recurring1.PartnerID = partnerEncx1.ID
+		recurring1.UserID = partnerEncx1.ID
 		recurring1.RoomID = roomEncx1.ID
 		recurring1.StartTime = now.Add(1 * time.Hour)
 		recurring1.Status = domain.AvailabilityStatusAvailable
 
 		recurring2 := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		recurring2.PartnerID = partnerEncx2.ID
+		recurring2.UserID = partnerEncx2.ID
 		recurring2.RoomID = roomEncx2.ID
 		recurring2.StartTime = now.Add(2 * time.Hour)
 		recurring2.Status = domain.AvailabilityStatusAvailable
@@ -433,7 +433,7 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 		for _, avail := range result {
 			assert.Equal(t, domain.AvailabilityStatusAvailable, avail.Status)
 			assert.True(t, avail.IsRecurring)
-			partnerIDs[avail.PartnerID] = true
+			partnerIDs[avail.UserID] = true
 			roomIDs[avail.RoomID] = true
 		}
 		assert.Len(t, partnerIDs, 2)
@@ -466,14 +466,14 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 
 		// Create available recurring availability
 		availableRecurring := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		availableRecurring.PartnerID = partnerEncx.ID
+		availableRecurring.UserID = partnerEncx.ID
 		availableRecurring.RoomID = roomEncx.ID
 		availableRecurring.StartTime = now.Add(24 * time.Hour)
 		availableRecurring.Status = domain.AvailabilityStatusAvailable
 
 		// Create cancelled recurring availability (should not be returned)
 		cancelledRecurring := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		cancelledRecurring.PartnerID = partnerEncx.ID
+		cancelledRecurring.UserID = partnerEncx.ID
 		cancelledRecurring.RoomID = roomEncx.ID
 		cancelledRecurring.StartTime = now.Add(25 * time.Hour)
 		cancelledRecurring.Status = domain.AvailabilityStatusCancelled
