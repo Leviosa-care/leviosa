@@ -89,6 +89,7 @@ func classifyServiceError(err error) int {
 
 	// 401 Unauthorized - Authentication required or failed
 	case errors.Is(err, errs.ErrUnauthorized),
+		errors.Is(err, errs.ErrValueMismatch),
 		errors.Is(err, errs.ErrExpiredToken):
 		return http.StatusUnauthorized
 
@@ -110,6 +111,7 @@ func classifyServiceError(err error) int {
 	// 409 Conflict - Resource already exists or conflict with current state
 	case errors.Is(err, errs.ErrAlreadyExists),
 		errors.Is(err, errs.ErrConflict),
+		errors.Is(err, errs.ErrAlreadyConsumed),
 		errors.Is(err, errs.ErrUniqueViolation):
 		return http.StatusConflict
 
