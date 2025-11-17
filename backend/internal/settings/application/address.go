@@ -2,7 +2,7 @@ package settings
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/settings/domain"
 
@@ -13,14 +13,7 @@ import (
 func (s *SettingsService) GetCompanyLegalAddress(ctx context.Context) (*domain.GetCompanyLegalAddressResponse, error) {
 	setting, err := s.repo.GetString(ctx, settings.CompanyLegalAddress)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(err, "company legal address")
-		case errors.Is(err, errs.ErrContext):
-			return nil, err
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, errs.NewQueryFailedErr(err)
-		}
+		return nil, fmt.Errorf("get company legal address: %w", err)
 	}
 	return &domain.GetCompanyLegalAddressResponse{Address: setting.Value}, nil
 }
@@ -32,7 +25,7 @@ func (s *SettingsService) SetCompanyLegalAddress(ctx context.Context, request *d
 
 	setting := NewSetting(settings.CompanyLegalAddress, request.Address)
 	if err := s.repo.SetString(ctx, setting); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("set company legal address: %w", err)
 	}
 
 	// COMMENTED OUT: Event publishing disabled - other modules will access settings via interface

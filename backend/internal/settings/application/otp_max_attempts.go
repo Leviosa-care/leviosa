@@ -2,7 +2,7 @@ package settings
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/settings/domain"
 
@@ -13,14 +13,7 @@ import (
 func (s *SettingsService) GetOTPMaxAttempts(ctx context.Context) (*domain.GetOTPMaxAttemptsResponse, error) {
 	setting, err := s.repo.GetInt(ctx, settings.OTPMaxAttempts)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(err, "OTP max attempts")
-		case errors.Is(err, errs.ErrContext):
-			return nil, err
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, errs.NewQueryFailedErr(err)
-		}
+		return nil, fmt.Errorf("get OTP max attempts: %w", err)
 	}
 	return &domain.GetOTPMaxAttemptsResponse{MaxAttempts: setting.Value}, nil
 }
@@ -32,7 +25,7 @@ func (s *SettingsService) SetOTPMaxAttempts(ctx context.Context, request *domain
 
 	setting := NewSetting(settings.OTPMaxAttempts, request.MaxAttempts)
 	if err := s.repo.SetInt(ctx, setting); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("set OTP max attempts: %w", err)
 	}
 
 	// COMMENTED OUT: Event publishing disabled - other modules will access settings via interface

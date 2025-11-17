@@ -2,13 +2,12 @@ package settings
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"io"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/settings/domain"
 
-	// "github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings" // Commented out: only used in commented-out RabbitMQ code
-	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/hengadev/errsx"
 )
 
@@ -53,10 +52,7 @@ func (s *SettingsService) GetCompanyLogo(ctx context.Context) (*domain.GetCompan
 	logo, err := s.media.GetLogo(ctx)
 	_ = logo
 	if err != nil {
-		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return nil, errs.NewNotFoundErr(err, "company logo")
-		}
-		return nil, err
+		return nil, fmt.Errorf("get company logo: %w", err)
 	}
 
 	// Note: This returns raw bytes. You may want to return a URL instead

@@ -2,25 +2,17 @@ package settings
 
 import (
 	"context"
-	"errors"
-
-	"github.com/Leviosa-care/leviosa/backend/internal/settings/domain"
+	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/settings"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	"github.com/Leviosa-care/leviosa/backend/internal/settings/domain"
 )
 
 func (s *SettingsService) GetCompanyEmail(ctx context.Context) (*domain.GetCompanyEmailResponse, error) {
 	setting, err := s.repo.GetString(ctx, settings.CompanyEmail)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(err, "company email")
-		case errors.Is(err, errs.ErrContext):
-			return nil, err
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, errs.NewQueryFailedErr(err)
-		}
+		return nil, fmt.Errorf("get company email: %w", err)
 	}
 
 	return &domain.GetCompanyEmailResponse{Email: setting.Value}, nil

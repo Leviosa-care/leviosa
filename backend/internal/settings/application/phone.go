@@ -2,7 +2,7 @@ package settings
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/settings/domain"
@@ -15,14 +15,7 @@ import (
 func (s *SettingsService) GetCompanyTelephone(ctx context.Context) (*domain.GetCompanyTelephoneResponse, error) {
 	settingEncx, err := s.repo.GetEncryptedSetting(ctx, settings.CompanyPhone)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(err, "company telephone")
-		case errors.Is(err, errs.ErrContext):
-			return nil, err
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, errs.NewQueryFailedErr(err)
-		}
+		return nil, fmt.Errorf("get company telephone: %w", err)
 	}
 
 	// Use generated decrypt function
@@ -59,7 +52,7 @@ func (s *SettingsService) SetCompanyTelephone(ctx context.Context, request *doma
 	}
 
 	if err := s.repo.SetEncryptedSetting(ctx, settingEncx); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("set company telephone: %w", err)
 	}
 
 	// COMMENTED OUT: Event publishing disabled - other modules will access settings via interface

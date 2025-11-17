@@ -2,7 +2,7 @@ package settings
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/settings/domain"
 
@@ -13,14 +13,7 @@ import (
 func (s *SettingsService) GetRefreshTokenDuration(ctx context.Context) (*domain.GetRefreshTokenDurationResponse, error) {
 	setting, err := s.repo.GetInt(ctx, settings.RefreshTokenDuration)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			return nil, errs.NewNotFoundErr(err, "refresh token duration")
-		case errors.Is(err, errs.ErrContext):
-			return nil, err
-		case errors.Is(err, errs.ErrDatabase):
-			return nil, errs.NewQueryFailedErr(err)
-		}
+		return nil, fmt.Errorf("get refresh token duration: %w", err)
 	}
 	return &domain.GetRefreshTokenDurationResponse{Duration: setting.Value}, nil
 }
@@ -32,7 +25,7 @@ func (s *SettingsService) SetRefreshTokenDuration(ctx context.Context, request *
 
 	setting := NewSetting(settings.RefreshTokenDuration, request.Duration)
 	if err := s.repo.SetInt(ctx, setting); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("set refresh token duration: %w", err)
 	}
 
 	// COMMENTED OUT: Event publishing disabled - other modules will access settings via interface
@@ -43,3 +36,4 @@ func (s *SettingsService) SetRefreshTokenDuration(ctx context.Context, request *
 
 	return &domain.SetRefreshTokenDurationResponse{Success: true}, nil
 }
+
