@@ -11,7 +11,7 @@ import (
 func (r *Repository) Create(ctx context.Context, allocation *domain.RoomAllocation) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s.room_allocations (
-			id, room_id, partner_id, allocation_type,
+			id, room_id, user_id, allocation_type,
 			start_date, end_date, is_active, created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9
@@ -21,7 +21,7 @@ func (r *Repository) Create(ctx context.Context, allocation *domain.RoomAllocati
 	_, err := r.pool.Exec(ctx, query,
 		allocation.ID,
 		allocation.RoomID,
-		allocation.PartnerID,
+		allocation.UserID,
 		allocation.AllocationType,
 		allocation.StartDate,
 		allocation.EndDate,

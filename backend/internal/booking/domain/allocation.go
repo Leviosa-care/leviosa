@@ -16,9 +16,9 @@ const (
 
 // RoomAllocation represents a partner's assignment to a room
 type RoomAllocation struct {
-	ID        uuid.UUID      `json:"id"`
-	RoomID    uuid.UUID      `json:"room_id"`
-	PartnerID uuid.UUID      `json:"partner_id"`
+	ID     uuid.UUID `json:"id"`
+	RoomID uuid.UUID `json:"room_id"`
+	UserID uuid.UUID `json:"user_id"`
 
 	// Allocation configuration
 	AllocationType AllocationType `json:"allocation_type"`
@@ -34,18 +34,18 @@ type RoomAllocation struct {
 }
 
 // NewSharedAllocation creates a new shared room allocation
-func NewSharedAllocation(roomID, partnerID uuid.UUID) (*RoomAllocation, error) {
+func NewSharedAllocation(roomID, userID uuid.UUID) (*RoomAllocation, error) {
 	if roomID == uuid.Nil {
 		return nil, ErrInvalidRoomID
 	}
-	if partnerID == uuid.Nil {
+	if userID == uuid.Nil {
 		return nil, ErrInvalidPartnerID
 	}
 
 	return &RoomAllocation{
 		ID:             uuid.New(),
 		RoomID:         roomID,
-		PartnerID:      partnerID,
+		UserID:         userID,
 		AllocationType: AllocationTypeShared,
 		IsActive:       true,
 		CreatedAt:      time.Now(),
@@ -54,11 +54,11 @@ func NewSharedAllocation(roomID, partnerID uuid.UUID) (*RoomAllocation, error) {
 }
 
 // NewDedicatedAllocation creates a new dedicated room allocation with time bounds
-func NewDedicatedAllocation(roomID, partnerID uuid.UUID, startDate, endDate time.Time) (*RoomAllocation, error) {
+func NewDedicatedAllocation(roomID, userID uuid.UUID, startDate, endDate time.Time) (*RoomAllocation, error) {
 	if roomID == uuid.Nil {
 		return nil, ErrInvalidRoomID
 	}
-	if partnerID == uuid.Nil {
+	if userID == uuid.Nil {
 		return nil, ErrInvalidPartnerID
 	}
 	if startDate.IsZero() {
@@ -71,7 +71,7 @@ func NewDedicatedAllocation(roomID, partnerID uuid.UUID, startDate, endDate time
 	return &RoomAllocation{
 		ID:             uuid.New(),
 		RoomID:         roomID,
-		PartnerID:      partnerID,
+		UserID:         userID,
 		AllocationType: AllocationTypeDedicated,
 		StartDate:      &startDate,
 		EndDate:        &endDate,

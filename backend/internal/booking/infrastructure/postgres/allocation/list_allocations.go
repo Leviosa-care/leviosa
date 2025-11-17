@@ -15,7 +15,7 @@ import (
 func (r *Repository) List(ctx context.Context, filter ports.RoomAllocationFilter) ([]*domain.RoomAllocation, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, room_id, partner_id, allocation_type,
+			id, room_id, user_id, allocation_type,
 			start_date, end_date, is_active, created_at, updated_at
 		FROM %s.room_allocations
 	`, r.schema)
@@ -31,9 +31,9 @@ func (r *Repository) List(ctx context.Context, filter ports.RoomAllocationFilter
 		argIndex++
 	}
 
-	if filter.PartnerID != nil {
-		whereConditions = append(whereConditions, fmt.Sprintf("partner_id = $%d", argIndex))
-		args = append(args, *filter.PartnerID)
+	if filter.UserID != nil {
+		whereConditions = append(whereConditions, fmt.Sprintf("user_id = $%d", argIndex))
+		args = append(args, *filter.UserID)
 		argIndex++
 	}
 
@@ -120,7 +120,7 @@ func (r *Repository) List(ctx context.Context, filter ports.RoomAllocationFilter
 		err := rows.Scan(
 			&allocation.ID,
 			&allocation.RoomID,
-			&allocation.PartnerID,
+			&allocation.UserID,
 			&allocation.AllocationType,
 			&allocation.StartDate,
 			&allocation.EndDate,
@@ -168,7 +168,7 @@ func (r *Repository) CheckConflict(ctx context.Context, roomID, partnerID uuid.U
 	query := fmt.Sprintf(`
 		SELECT COUNT(*)
 		FROM %s.room_allocations
-		WHERE room_id = $1 AND partner_id = $2 AND is_active = true
+		WHERE room_id = $1 AND user_id = $2 AND is_active = true
 	`, r.schema)
 
 	var count int

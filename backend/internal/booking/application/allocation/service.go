@@ -173,7 +173,7 @@ func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, id uu
 	}
 
 	// Check for conflicts with other allocations (excluding this one)
-	hasConflict, err := s.allocationRepo.CheckConflict(ctx, allocation.RoomID, allocation.PartnerID, domain.AllocationTypeDedicated, startDate, endDate)
+	hasConflict, err := s.allocationRepo.CheckConflict(ctx, allocation.RoomID, allocation.UserID, domain.AllocationTypeDedicated, startDate, endDate)
 	if err != nil {
 		return nil, fmt.Errorf("check allocation conflict: %w", err)
 	}
@@ -221,7 +221,7 @@ func (s *RoomAllocationService) DeactivateAllocation(ctx context.Context, id uui
 }
 
 func (s *RoomAllocationService) GetPartnerAllocations(ctx context.Context, partnerID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error) {
-	allocations, err := s.allocationRepo.GetByPartnerID(ctx, partnerID, activeOnly)
+	allocations, err := s.allocationRepo.GetByUserID(ctx, partnerID, activeOnly)
 	if err != nil {
 		return nil, fmt.Errorf("get partner allocations: %w", err)
 	}

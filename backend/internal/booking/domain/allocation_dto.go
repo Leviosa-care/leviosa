@@ -11,7 +11,7 @@ import (
 type RoomAllocationResponse struct {
 	ID             uuid.UUID      `json:"id"`
 	RoomID         uuid.UUID      `json:"room_id"`
-	PartnerID      uuid.UUID      `json:"partner_id"`
+	UserID         uuid.UUID      `json:"user_id"`
 	AllocationType AllocationType `json:"allocation_type"`
 	StartDate      *time.Time     `json:"start_date,omitempty"`
 	EndDate        *time.Time     `json:"end_date,omitempty"`
@@ -20,8 +20,8 @@ type RoomAllocationResponse struct {
 
 // Room Allocation DTOs
 type CreateSharedAllocationRequest struct {
-	RoomID    uuid.UUID `json:"room_id" validate:"required"`
-	PartnerID uuid.UUID `json:"partner_id" validate:"required"`
+	RoomID uuid.UUID `json:"room_id" validate:"required"`
+	UserID uuid.UUID `json:"user_id" validate:"required"`
 }
 
 func (r *CreateSharedAllocationRequest) Valid(ctx context.Context) error {
@@ -31,7 +31,7 @@ func (r *CreateSharedAllocationRequest) Valid(ctx context.Context) error {
 
 type CreateDedicatedAllocationRequest struct {
 	RoomID    uuid.UUID  `json:"room_id" validate:"required"`
-	PartnerID uuid.UUID  `json:"partner_id" validate:"required"`
+	UserID    uuid.UUID  `json:"user_id" validate:"required"`
 	StartDate *time.Time `json:"start_date" validate:"required"`
 	EndDate   *time.Time `json:"end_date,omitempty"`
 }

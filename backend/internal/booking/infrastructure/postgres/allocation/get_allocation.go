@@ -23,7 +23,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.RoomAll
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&allocation.ID,
 		&allocation.RoomID,
-		&allocation.PartnerID,
+		&allocation.UserID,
 		&allocation.AllocationType,
 		&allocation.StartDate,
 		&allocation.EndDate,
@@ -38,7 +38,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.RoomAll
 	return allocation, nil
 }
 
-func (r *Repository) GetByPartnerID(ctx context.Context, partnerID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error) {
+func (r *Repository) GetByUserID(ctx context.Context, partnerID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, room_id, user_id, allocation_type,
@@ -66,7 +66,7 @@ func (r *Repository) GetByPartnerID(ctx context.Context, partnerID uuid.UUID, ac
 		err := rows.Scan(
 			&allocation.ID,
 			&allocation.RoomID,
-			&allocation.PartnerID,
+			&allocation.UserID,
 			&allocation.AllocationType,
 			&allocation.StartDate,
 			&allocation.EndDate,
@@ -116,7 +116,7 @@ func (r *Repository) GetByRoomID(ctx context.Context, roomID uuid.UUID, activeOn
 		err := rows.Scan(
 			&allocation.ID,
 			&allocation.RoomID,
-			&allocation.PartnerID,
+			&allocation.UserID,
 			&allocation.AllocationType,
 			&allocation.StartDate,
 			&allocation.EndDate,
@@ -161,7 +161,7 @@ func (r *Repository) GetActiveAllocationForPartnerAndRoom(ctx context.Context, p
 	err := r.pool.QueryRow(ctx, query, partnerID, roomID, at).Scan(
 		&allocation.ID,
 		&allocation.RoomID,
-		&allocation.PartnerID,
+		&allocation.UserID,
 		&allocation.AllocationType,
 		&allocation.StartDate,
 		&allocation.EndDate,

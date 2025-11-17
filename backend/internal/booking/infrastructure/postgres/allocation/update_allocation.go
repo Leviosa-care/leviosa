@@ -13,7 +13,7 @@ func (r *Repository) Update(ctx context.Context, allocation *domain.RoomAllocati
 	query := fmt.Sprintf(`
 		UPDATE %s.room_allocations SET
 			room_id = $2,
-			partner_id = $3,
+			user_id = $3,
 			allocation_type = $4,
 			start_date = $5,
 			end_date = $6,
@@ -25,7 +25,7 @@ func (r *Repository) Update(ctx context.Context, allocation *domain.RoomAllocati
 	result, err := r.pool.Exec(ctx, query,
 		allocation.ID,
 		allocation.RoomID,
-		allocation.PartnerID,
+		allocation.UserID,
 		allocation.AllocationType,
 		allocation.StartDate,
 		allocation.EndDate,
