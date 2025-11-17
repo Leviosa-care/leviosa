@@ -1,8 +1,6 @@
 package partnerHandler
 
 import (
-	"context"
-	"errors"
 	"net/http"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
@@ -41,73 +39,7 @@ func (h *handler) GetAllPartnersByProducts(w http.ResponseWriter, r *http.Reques
 
 	partners, err := h.svc.GetAllPartnersByProducts(ctx, productIDs)
 	if err != nil {
-		// Log with specific error context based on error type
-		var logLevel string
-		var errorContext string
-		var statusCode int
-
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			logLevel = "warn"
-			errorContext = "invalid product ID format"
-			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			logLevel = "error"
-			errorContext = "database connection failure"
-			statusCode = http.StatusServiceUnavailable
-		case errors.Is(err, errs.ErrResourceExhausted):
-			logLevel = "error"
-			errorContext = "database resource exhaustion"
-			statusCode = http.StatusServiceUnavailable
-		case errors.Is(err, errs.ErrQueryCancelled), errors.Is(err, context.Canceled):
-			logLevel = "warn"
-			errorContext = "request cancelled"
-			statusCode = http.StatusRequestTimeout
-		case errors.Is(err, context.DeadlineExceeded):
-			logLevel = "warn"
-			errorContext = "request timeout"
-			statusCode = http.StatusRequestTimeout
-		case errors.Is(err, errs.ErrTransactionFailure), errors.Is(err, errs.ErrDeadlock):
-			logLevel = "error"
-			errorContext = "database transaction failure"
-			statusCode = http.StatusServiceUnavailable
-		case errors.Is(err, errs.ErrPermissionDenied):
-			logLevel = "error"
-			errorContext = "database permission denied"
-			statusCode = http.StatusInternalServerError
-		case errors.Is(err, errs.ErrDatabase):
-			logLevel = "error"
-			errorContext = "general database error"
-			statusCode = http.StatusInternalServerError
-		case errors.Is(err, errs.ErrNotDecrypted):
-			logLevel = "error"
-			errorContext = "data decryption failure"
-			statusCode = http.StatusInternalServerError
-		default:
-			logLevel = "error"
-			errorContext = "unexpected error"
-			statusCode = http.StatusInternalServerError
-		}
-
-		logFields := []any{
-			"operation", "get_partners_by_products",
-			"error_context", errorContext,
-			"method", r.Method,
-			"path", r.URL.Path,
-			"product_ids", productIDs,
-			"product_count", len(productIDs),
-			"status_code", statusCode,
-			"error", err,
-		}
-
-		switch logLevel {
-		case "warn":
-			logger.WarnContext(ctx, "Handler: Get partners by products failed", logFields...)
-		case "error":
-			logger.ErrorContext(ctx, "Handler: Get partners by products failed", logFields...)
-		}
-
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get partners by products")
 		return
 	}
 

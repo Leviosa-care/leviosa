@@ -1,7 +1,6 @@
 package userHandler
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -66,88 +65,7 @@ func (h *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	// Call service to change password
 	err = h.svc.ChangePassword(ctx, sessionInfo.UserID, &request)
 	if err != nil {
-		// Log with specific error context based on error type
-		var logLevel string
-		var errorContext string
-		var statusCode int
-
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			logLevel = "warn"
-			errorContext = "invalid request validation"
-			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrDomainNotFound):
-			logLevel = "warn"
-			errorContext = "user not found"
-			statusCode = http.StatusNotFound
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			logLevel = "error"
-			errorContext = "database connection failure"
-			statusCode = http.StatusServiceUnavailable
-		case errors.Is(err, errs.ErrResourceExhausted):
-			logLevel = "error"
-			errorContext = "database resource exhaustion"
-			statusCode = http.StatusServiceUnavailable
-		case errors.Is(err, errs.ErrQueryCancelled), errors.Is(err, context.Canceled):
-			logLevel = "warn"
-			errorContext = "request cancelled"
-			statusCode = http.StatusRequestTimeout
-		case errors.Is(err, context.DeadlineExceeded):
-			logLevel = "warn"
-			errorContext = "request timeout"
-			statusCode = http.StatusRequestTimeout
-		case errors.Is(err, errs.ErrTransactionFailure), errors.Is(err, errs.ErrDeadlock):
-			logLevel = "error"
-			errorContext = "database transaction failure"
-			statusCode = http.StatusServiceUnavailable
-		case errors.Is(err, errs.ErrPermissionDenied):
-			logLevel = "error"
-			errorContext = "permission denied"
-			statusCode = http.StatusForbidden
-		case errors.Is(err, errs.ErrNotEncrypted), errors.Is(err, errs.ErrNotDecrypted):
-			logLevel = "error"
-			errorContext = "encryption/decryption failure"
-			statusCode = http.StatusInternalServerError
-		case errors.Is(err, errs.ErrConflict):
-			logLevel = "warn"
-			errorContext = "password change conflict"
-			statusCode = http.StatusConflict
-		case errors.Is(err, errs.ErrExternalService):
-			logLevel = "error"
-			errorContext = "external service unavailable"
-			statusCode = http.StatusServiceUnavailable
-		case errors.Is(err, errs.ErrDatabase):
-			logLevel = "error"
-			errorContext = "general database error"
-			statusCode = http.StatusInternalServerError
-		case errors.Is(err, errs.ErrUnexpectedError):
-			logLevel = "error"
-			errorContext = "password hashing failure"
-			statusCode = http.StatusInternalServerError
-		default:
-			logLevel = "error"
-			errorContext = "unexpected error"
-			statusCode = http.StatusInternalServerError
-		}
-
-		logFields := []any{
-			"operation", "change_password",
-			"error_context", errorContext,
-			"method", r.Method,
-			"path", r.URL.Path,
-			"user_id", sessionInfo.UserID,
-			"status_code", statusCode,
-			"error", err,
-		}
-
-		switch logLevel {
-		case "warn":
-			logger.WarnContext(ctx, "Handler: Change password failed", logFields...)
-		case "error":
-			logger.ErrorContext(ctx, "Handler: Change password failed", logFields...)
-		}
-
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "change password")
 		return
 	}
 
@@ -162,4 +80,3 @@ func (h *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	// Return success response
 	httpx.RespondWithJSON(w, map[string]string{"message": "Password changed successfully"}, http.StatusOK)
 }
-
