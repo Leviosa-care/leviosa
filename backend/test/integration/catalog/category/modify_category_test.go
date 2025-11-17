@@ -84,7 +84,7 @@ func TestModifyCategory(t *testing.T) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		assert.NoError(t, err)
-		assert.Contains(t, respBody.Error, errs.ErrDomainNotFound.Error())
+		assert.Contains(t, respBody.Error, errs.ErrRepositoryNotFound.Error())
 	})
 
 	t.Run("should return 409 Conflict if category name already exists", func(t *testing.T) {

@@ -12,6 +12,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/settings/domain"
 	httpEndpoints "github.com/Leviosa-care/leviosa/backend/internal/settings/interface/http"
 	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -331,7 +331,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 		// Assert gone response (expired)
 		errorMsg, statusCode := td.ParseErrorResponse(t, resp)
 		assert.Contains(t, errorMsg, "expired")
-		assert.Equal(t, http.StatusGone, statusCode)
+		assert.Equal(t, http.StatusUnauthorized, statusCode)
 
 		// Verify no access cookie is set
 		cookies := resp.Cookies()

@@ -9,10 +9,10 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 	ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

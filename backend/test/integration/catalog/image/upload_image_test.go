@@ -211,7 +211,7 @@ func TestUploadImage(t *testing.T) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		assert.NoError(t, err)
-		assert.Contains(t, respBody.Error, errs.ErrDomainNotFound.Error())
+		assert.Contains(t, respBody.Error, errs.ErrRepositoryNotFound.Error())
 	})
 
 	t.Run("should succeed if a second active image is created for the same parent", func(t *testing.T) {

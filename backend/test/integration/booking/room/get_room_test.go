@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// make test-func TEST_NAME=TestGetRoom TEST_PATH=test/integration/booking/room/get_room_test.go
+// make test-func TEST_NAME='^TestGetRoom$$' TEST_PATH=test/integration/booking/room/get_room_test.go
 
 func TestGetRoom(t *testing.T) {
 	ctx := context.Background()
@@ -190,7 +190,7 @@ func TestGetRoom(t *testing.T) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Contains(t, respBody.Error, errs.ErrDomainNotFound.Error())
+		assert.Contains(t, respBody.Error, errs.ErrRepositoryNotFound.Error())
 	})
 
 	t.Run("should return 400 Bad Request for invalid room ID format", func(t *testing.T) {

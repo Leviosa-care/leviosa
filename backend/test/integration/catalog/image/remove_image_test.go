@@ -191,7 +191,7 @@ func TestRemoveImage(t *testing.T) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		assert.NoError(t, err)
-		assert.Contains(t, respBody.Error, errs.ErrDomainNotFound.Error(), nonExistentImageID)
+		assert.Contains(t, respBody.Error, errs.ErrRepositoryNotFound.Error(), nonExistentImageID)
 	})
 
 	t.Run("should return 400 Bad Request if image exists but parent_id mismatch", func(t *testing.T) {

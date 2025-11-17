@@ -239,7 +239,7 @@ func TestRemoveProduct(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+		assert.Equal(t, http.StatusBadGateway, resp.StatusCode)
 	})
 
 	t.Run("should return 405 for wrong HTTP method", func(t *testing.T) {

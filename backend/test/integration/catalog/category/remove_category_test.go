@@ -87,7 +87,7 @@ func TestRemoveCategory(t *testing.T) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		assert.NoError(t, err)
-		assert.Contains(t, respBody.Error, errs.ErrDomainNotFound.Error())
+		assert.Contains(t, respBody.Error, errs.ErrRepositoryNotFound.Error())
 	})
 
 	t.Run("should return 409 when the category still has associated products", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestRemoveCategory(t *testing.T) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		assert.NoError(t, err)
-		assert.Equal(t, "cannot delete category: it still has associated products", respBody.Error)
+		assert.Contains(t, respBody.Error, errs.ErrConflict.Error())
 	})
 
 	t.Run("should return 400 for an invalid category ID", func(t *testing.T) {

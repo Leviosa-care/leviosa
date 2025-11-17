@@ -175,7 +175,7 @@ func TestDeleteOwnAccount(t *testing.T) {
 
 		// Verify user is deleted
 		deletedUserEncx, err := td.GetUserEnxByID(t, ctx, user.ID, testPool)
-		assert.Error(t, err, "Should get 'no row found' type of error")
+		require.Error(t, err, "Should get 'no row found' type of error")
 		assert.Equal(t, *deletedUserEncx, domain.UserEncx{})
 	})
 

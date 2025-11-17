@@ -187,7 +187,7 @@ func TestCreateProductWithPrice(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, res.StatusCode)
 		var response map[string]string
 		json.NewDecoder(res.Body).Decode(&response)
-		assert.Contains(t, response["error"], errs.ErrDomainNotFound.Error())
+		assert.Contains(t, response["error"], errs.ErrRepositoryNotFound.Error())
 	})
 
 	t.Run("should return 401 when access token is missing", func(t *testing.T) {

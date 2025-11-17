@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// make test-func TEST_NAME=TestGetAllPartners TEST_PATH=test/integration/authuser/partner/get_all_partners_test.go
+// make test-func TEST_NAME='^TestGetAllPartners$$' TEST_PATH=test/integration/authuser/partner/get_all_partners_test.go
 
 func TestGetAllPartners(t *testing.T) {
 	ctx := context.Background()

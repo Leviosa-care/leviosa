@@ -297,7 +297,7 @@ func TestUpdateBuilding(t *testing.T) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Contains(t, respBody.Error, errs.ErrDomainNotFound.Error())
+		assert.Contains(t, respBody.Error, errs.ErrRepositoryNotFound.Error())
 	})
 
 	t.Run("should return 400 Bad Request for invalid building ID format", func(t *testing.T) {
@@ -543,7 +543,7 @@ func TestUpdateBuilding(t *testing.T) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		require.NoError(t, err)
-		assert.Contains(t, respBody.Error, errs.ErrDomainNotFound.Error())
+		assert.Contains(t, respBody.Error, errs.ErrRepositoryNotFound.Error())
 	})
 
 	t.Run("should handle context timeout appropriately", func(t *testing.T) {

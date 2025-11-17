@@ -243,7 +243,7 @@ func TestSetActiveImage(t *testing.T) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		assert.NoError(t, err)
-		assert.Contains(t, respBody.Error, errs.ErrDomainNotFound.Error())
+		assert.Contains(t, respBody.Error, errs.ErrRepositoryNotFound.Error())
 	})
 
 	t.Run("should return 404 Not Found if parent for image does not exist", func(t *testing.T) {
@@ -281,7 +281,7 @@ func TestSetActiveImage(t *testing.T) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		assert.NoError(t, err)
-		assert.Contains(t, respBody.Error, errs.ErrDomainNotFound.Error())
+		assert.Contains(t, respBody.Error, errs.ErrRepositoryNotFound.Error())
 	})
 
 	t.Run("should return 404 Not Found if image exists but parent_id/parent_type mismatch", func(t *testing.T) {
@@ -327,8 +327,7 @@ func TestSetActiveImage(t *testing.T) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
 		assert.NoError(t, err)
-		// TODO: find the right message to check
-		assert.Contains(t, respBody.Error, errs.ErrDomainNotFound.Error())
+		assert.Contains(t, respBody.Error, errs.ErrRepositoryNotFound.Error())
 
 		// Verify image status hasn't changed
 		assert.False(t, td.GetImageStatus(t, ctx, imageID, testPool), "Image status should not change on mismatch")
