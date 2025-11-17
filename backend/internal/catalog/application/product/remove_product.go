@@ -18,7 +18,7 @@ func (s *ProductService) RemoveProduct(ctx context.Context, productIDStr string)
 
 	stripeProductID, stripePriceIDs, err := s.sharedRepo.GetStripeProductAndPriceIDs(ctx, productID)
 	if err != nil {
-		return fmt.Errorf("get stripe product and prices IDs for product with ID: %w", productIDStr)
+		return fmt.Errorf("get stripe product and prices IDs for product with ID '%s': %w", productIDStr, err)
 	}
 
 	if err := s.stripe.DeactivateProduct(ctx, stripeProductID); err != nil {

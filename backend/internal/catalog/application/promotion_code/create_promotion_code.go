@@ -58,7 +58,7 @@ func (s *PromotionCodeService) CreatePromotionCode(ctx context.Context, request 
 
 	promotionCodeID, err := s.repo.CreatePromotionCode(ctx, promotionCode)
 	if err != nil {
-		return "", fmt.Errorf("create promotion code: %v", err)
+		return "", fmt.Errorf("create promotion code: %w", err)
 	}
 
 	return promotionCodeID, nil
