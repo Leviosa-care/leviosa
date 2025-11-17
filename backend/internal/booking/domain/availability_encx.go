@@ -18,7 +18,7 @@ import (
 type AvailabilityEncx struct {
 	ID uuid.UUID `db:"id" json:"id"`
 
-	PartnerID uuid.UUID `db:"partnerid" json:"partnerid"`
+	UserID uuid.UUID `db:"userid" json:"userid"`
 
 	RoomID uuid.UUID `db:"roomid" json:"roomid"`
 
@@ -69,7 +69,7 @@ func ProcessAvailabilityEncx(ctx context.Context, crypto encx.CryptoService, sou
 
 	result.ID = source.ID
 
-	result.PartnerID = source.PartnerID
+	result.UserID = source.UserID
 
 	result.RoomID = source.RoomID
 
@@ -157,7 +157,7 @@ func DecryptAvailabilityEncx(ctx context.Context, crypto encx.CryptoService, sou
 
 	result.ID = source.ID
 
-	result.PartnerID = source.PartnerID
+	result.UserID = source.UserID
 
 	result.RoomID = source.RoomID
 

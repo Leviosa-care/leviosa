@@ -5,16 +5,17 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
+
 	"github.com/google/uuid"
 )
 
 // AvailabilityService defines the interface for availability business logic
 type AvailabilityService interface {
 	// CreateAvailability creates a new availability slot
-	CreateAvailability(ctx context.Context, partnerID, roomID uuid.UUID, startTime, endTime time.Time, maxCapacity int) (*domain.Availability, error)
+	CreateAvailability(ctx context.Context, userID, roomID uuid.UUID, startTime, endTime time.Time, maxCapacity int) (*domain.Availability, error)
 
 	// CreateRecurringAvailability creates a recurring availability slot
-	CreateRecurringAvailability(ctx context.Context, partnerID, roomID uuid.UUID, startTime, endTime time.Time, maxCapacity int, pattern domain.RecurrencePattern) (*domain.Availability, error)
+	CreateRecurringAvailability(ctx context.Context, userID, roomID uuid.UUID, startTime, endTime time.Time, maxCapacity int, pattern domain.RecurrencePattern) (*domain.Availability, error)
 
 	// GetAvailability retrieves an availability by ID
 	GetAvailability(ctx context.Context, id uuid.UUID) (*domain.Availability, error)
@@ -28,12 +29,12 @@ type AvailabilityService interface {
 	// BlockAvailability blocks an availability slot
 	BlockAvailability(ctx context.Context, id uuid.UUID) error
 
-	// GetPartnerAvailabilities retrieves availabilities for a partner
-	GetPartnerAvailabilities(ctx context.Context, partnerID uuid.UUID, filter AvailabilityFilter) ([]*domain.Availability, error)
+	// GetuserAvailabilities retrieves availabilities for a user
+	GetuserAvailabilities(ctx context.Context, userID uuid.UUID, filter AvailabilityFilter) ([]*domain.Availability, error)
 
 	// GetAvailableSlots retrieves available slots for booking
 	GetAvailableSlots(ctx context.Context, filter AvailabilityFilter) ([]*domain.Availability, error)
 
 	// CheckAvailabilityConflict checks for scheduling conflicts
-	CheckAvailabilityConflict(ctx context.Context, partnerID uuid.UUID, startTime, endTime time.Time, excludeID *uuid.UUID) (bool, error)
+	CheckAvailabilityConflict(ctx context.Context, userID uuid.UUID, startTime, endTime time.Time, excludeID *uuid.UUID) (bool, error)
 }

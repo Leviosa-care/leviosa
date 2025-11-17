@@ -10,7 +10,7 @@ import (
 
 type AvailabilityResponse struct {
 	ID              uuid.UUID          `json:"id"`
-	PartnerID       uuid.UUID          `json:"partner_id"`
+	UserID          uuid.UUID          `json:"partner_id"`
 	RoomID          uuid.UUID          `json:"room_id"`
 	StartTime       time.Time          `json:"start_time"`
 	EndTime         time.Time          `json:"end_time"`
@@ -28,7 +28,7 @@ type AvailabilityResponse struct {
 
 // Availability DTOs
 type CreateAvailabilityRequest struct {
-	PartnerID   uuid.UUID `json:"partner_id" validate:"required"`
+	UserID      uuid.UUID `json:"partner_id" validate:"required"`
 	RoomID      uuid.UUID `json:"room_id" validate:"required"`
 	StartTime   time.Time `json:"start_time" validate:"required"`
 	EndTime     time.Time `json:"end_time" validate:"required"`
@@ -44,7 +44,7 @@ func (r *CreateAvailabilityRequest) Valid(ctx context.Context) error {
 }
 
 type CreateRecurringAvailabilityRequest struct {
-	PartnerID   uuid.UUID         `json:"partner_id" validate:"required"`
+	UserID      uuid.UUID         `json:"partner_id" validate:"required"`
 	RoomID      uuid.UUID         `json:"room_id" validate:"required"`
 	StartTime   time.Time         `json:"start_time" validate:"required"`
 	EndTime     time.Time         `json:"end_time" validate:"required"`

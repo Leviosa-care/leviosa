@@ -26,9 +26,9 @@ type RecurrencePattern struct {
 
 // Availability represents a time slot a partner offers for services
 type Availability struct {
-	ID        uuid.UUID `json:"id"`
-	PartnerID uuid.UUID `json:"partner_id"`
-	RoomID    uuid.UUID `json:"room_id"`
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
+	RoomID uuid.UUID `json:"room_id"`
 
 	// Time slot definition
 	StartTime time.Time `json:"start_time"`
@@ -72,7 +72,7 @@ func NewAvailability(partnerID, roomID uuid.UUID, startTime, endTime time.Time, 
 
 	return &Availability{
 		ID:          uuid.New(),
-		PartnerID:   partnerID,
+		UserID:      partnerID,
 		RoomID:      roomID,
 		StartTime:   startTime,
 		EndTime:     endTime,
