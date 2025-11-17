@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 )
 
@@ -33,29 +32,7 @@ func (h *handler) GetPricesByProductID(w http.ResponseWriter, r *http.Request) {
 
 	prices, err := h.svc.GetPricesByProductID(ctx, productID) // Service might take options or always active
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			httpx.RespondWithError(w, err, http.StatusBadRequest)
-		case errors.Is(err, errs.ErrConflict):
-			httpx.RespondWithError(w, err, http.StatusConflict)
-		case errors.Is(err, errs.ErrDomainNotFound):
-			// If the price isn't found
-			httpx.RespondWithError(w, err, http.StatusNotFound)
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			logger.ErrorContext(ctx, "Handler: get prices by product id failed",
-				"operation", "get_prices_by_product_id",
-				"error_context", "internal server error listing prices",
-				"status_code", http.StatusInternalServerError,
-				"error", err)
-			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
-		default:
-			logger.ErrorContext(ctx, "Handler: get prices by product id failed",
-				"operation", "get_prices_by_product_id",
-				"error_context", "unhandled error listing prices",
-				"status_code", http.StatusInternalServerError,
-				"error", err)
-			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
-		}
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get prices by product ID")
 		return
 	}
 

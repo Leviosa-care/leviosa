@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 )
 
@@ -36,28 +35,7 @@ func (h *handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.productService.RemoveProduct(ctx, productID); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			httpx.RespondWithError(w, err, http.StatusBadRequest)
-		case errors.Is(err, errs.ErrDomainNotFound):
-			httpx.RespondWithError(w, err, http.StatusNotFound)
-		case errors.Is(err, errs.ErrExternalService):
-			httpx.RespondWithError(w, errors.New("failed to delete product images due to external service issue"), http.StatusServiceUnavailable)
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			logger.ErrorContext(ctx, "Handler: remove product failed",
-				"operation", "remove_product",
-				"error_context", "internal server error during product deletion",
-				"status_code", http.StatusInternalServerError,
-				"error", err)
-			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
-		default:
-			logger.ErrorContext(ctx, "Handler: remove product failed",
-				"operation", "remove_product",
-				"error_context", "unexpected error from service during product deletion",
-				"status_code", http.StatusInternalServerError,
-				"error", err)
-			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
-		}
+		httpx.RespondWithServiceError(w, logger, ctx, err, "remove product")
 		return
 	}
 

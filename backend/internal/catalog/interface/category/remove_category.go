@@ -6,13 +6,10 @@ import (
 	"strings"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 )
 
 func (h *handler) RemoveCategory(w http.ResponseWriter, r *http.Request) {
-	// TODO: this an admin only request
-
 	ctx := r.Context()
 
 	logger, err := ctxutil.GetLoggerFromContext(ctx)
@@ -38,30 +35,7 @@ func (h *handler) RemoveCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.aggr.RemoveCategoryWithImages(ctx, categoryID); err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			httpx.RespondWithError(w, err, http.StatusBadRequest)
-		case errors.Is(err, errs.ErrDomainNotFound):
-			httpx.RespondWithError(w, err, http.StatusNotFound)
-		case errors.Is(err, errs.ErrExternalService):
-			httpx.RespondWithError(w, errors.New("failed to delete category images from external storage"), http.StatusServiceUnavailable)
-		case errors.Is(err, errs.ErrCategoryHasProducts): // Or errors.Is(err, errs.ErrConflict) if you only return ErrConflict from service
-			httpx.RespondWithError(w, errors.New("cannot delete category: it still has associated products"), http.StatusConflict)
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			logger.ErrorContext(ctx, "Handler: remove category failed",
-				"operation", "remove_category",
-				"error_context", "internal server error during image deletion",
-				"status_code", http.StatusInternalServerError,
-				"error", err)
-			httpx.RespondWithError(w, errors.New("an internal server error occurred during image cleanup"), http.StatusInternalServerError)
-		default:
-			logger.ErrorContext(ctx, "Handler: remove category failed",
-				"operation", "remove_category",
-				"error_context", "unexpected error from image service during deletion",
-				"status_code", http.StatusInternalServerError,
-				"error", err)
-			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
-		}
+		httpx.RespondWithServiceError(w, logger, ctx, err, "remove category")
 		return
 	}
 

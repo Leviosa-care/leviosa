@@ -2,14 +2,12 @@ package imageHandler
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 	"github.com/hengadev/errsx"
 )
@@ -86,22 +84,7 @@ func (h *handler) UploadImage(w http.ResponseWriter, r *http.Request) {
 
 	imageID, err := h.svc.AddImage(ctx, req, file, fileSize, contentType)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			println("HERE IN THE ADD IMAGE BROTHER")
-			httpx.RespondWithError(w, err, http.StatusBadRequest)
-		case errors.Is(err, errs.ErrDomainNotFound):
-			httpx.RespondWithError(w, err, http.StatusNotFound)
-		case errors.Is(err, errs.ErrExternalService):
-			httpx.RespondWithError(w, fmt.Errorf("failed to upload image due to an external service error: %w", err), http.StatusServiceUnavailable)
-		case errors.Is(err, errs.ErrUnexpectedError), errors.Is(err, errs.ErrUnexpectedError):
-			logger.Error("Handler: Internal server error during image upload", "error", err)
-			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
-		default:
-			// A catch-all for any other unhandled errors.
-			logger.Error("Handler: Unhandled error from service during image upload", "error", err)
-			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
-		}
+		httpx.RespondWithServiceError(w, logger, ctx, err, "upload image")
 		return
 	}
 

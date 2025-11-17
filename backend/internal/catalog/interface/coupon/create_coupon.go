@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
-
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
@@ -47,30 +46,7 @@ func (h *handler) CreateCoupon(w http.ResponseWriter, r *http.Request) {
 
 	couponID, err := h.svc.CreateCoupon(ctx, &coupon)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			httpx.RespondWithError(w, err, http.StatusBadRequest)
-		case errors.Is(err, errs.ErrAlreadyExists):
-			httpx.RespondWithError(w, err, http.StatusConflict)
-		case errors.Is(err, errs.ErrDomainNotFound):
-			httpx.RespondWithError(w, err, http.StatusNotFound)
-		case errors.Is(err, errs.ErrDomainNotCreated):
-			httpx.RespondWithError(w, errors.New("failed to create coupon due to an unprocessable entity"), http.StatusUnprocessableEntity)
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			logger.ErrorContext(ctx, "Handler: create coupon failed",
-				"operation", "create_coupon",
-				"error_context", "internal server error during coupon creation",
-				"status_code", http.StatusInternalServerError,
-				"error", err)
-			httpx.RespondWithError(w, errors.New("internal server error occurred"), http.StatusInternalServerError)
-		default:
-			logger.ErrorContext(ctx, "Handler: create coupon failed",
-				"operation", "create_coupon",
-				"error_context", "unhandled error from service during coupon creation",
-				"status_code", http.StatusInternalServerError,
-				"error", err)
-			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
-		}
+		httpx.RespondWithServiceError(w, logger, ctx, err, "create coupon")
 		return
 	}
 

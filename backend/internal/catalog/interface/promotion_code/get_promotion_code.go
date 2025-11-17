@@ -5,9 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 )
 
 func (h *handler) GetPromotionCodeByID(w http.ResponseWriter, r *http.Request) {
@@ -28,18 +27,7 @@ func (h *handler) GetPromotionCodeByID(w http.ResponseWriter, r *http.Request) {
 
 	promotionCode, err := h.svc.GetPromotionCodeByID(ctx, promotionCodeID)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			httpx.RespondWithError(w, err, http.StatusBadRequest)
-		case errors.Is(err, errs.ErrDomainNotFound):
-			httpx.RespondWithError(w, err, http.StatusNotFound)
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			logger.Error("Handler: Internal server error during promotion code retrieval", "error", err)
-			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
-		default:
-			logger.Error("Handler: Unhandled error from service during promotion code retrieval", "error", err)
-			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
-		}
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get promotion code by ID")
 		return
 	}
 
@@ -67,18 +55,7 @@ func (h *handler) GetPromotionCodeByCode(w http.ResponseWriter, r *http.Request)
 
 	promotionCode, err := h.svc.GetPromotionCodeByCode(ctx, code)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			httpx.RespondWithError(w, err, http.StatusBadRequest)
-		case errors.Is(err, errs.ErrDomainNotFound):
-			httpx.RespondWithError(w, err, http.StatusNotFound)
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			logger.Error("Handler: Internal server error during promotion code retrieval", "error", err)
-			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
-		default:
-			logger.Error("Handler: Unhandled error from service during promotion code retrieval", "error", err)
-			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
-		}
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get promotion code by code")
 		return
 	}
 
@@ -92,14 +69,7 @@ func (h *handler) GetAllPromotionCodes(w http.ResponseWriter, r *http.Request) {
 
 	promotionCodes, err := h.svc.GetAllPromotionCodes(ctx)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			logger.Error("Handler: Internal server error during promotion codes retrieval", "error", err)
-			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
-		default:
-			logger.Error("Handler: Unhandled error from service during promotion codes retrieval", "error", err)
-			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
-		}
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get all promotion codes")
 		return
 	}
 
@@ -113,14 +83,7 @@ func (h *handler) GetActivePromotionCodes(w http.ResponseWriter, r *http.Request
 
 	promotionCodes, err := h.svc.GetActivePromotionCodes(ctx)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			logger.Error("Handler: Internal server error during active promotion codes retrieval", "error", err)
-			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
-		default:
-			logger.Error("Handler: Unhandled error from service during active promotion codes retrieval", "error", err)
-			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
-		}
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get active promotion codes")
 		return
 	}
 
@@ -140,18 +103,7 @@ func (h *handler) GetPromotionCodeWithCoupon(w http.ResponseWriter, r *http.Requ
 
 	promotionCodeWithCoupon, err := h.svc.GetPromotionCodeWithCoupon(ctx, code)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			httpx.RespondWithError(w, err, http.StatusBadRequest)
-		case errors.Is(err, errs.ErrDomainNotFound):
-			httpx.RespondWithError(w, err, http.StatusNotFound)
-		case errors.Is(err, errs.ErrQueryFailed), errors.Is(err, errs.ErrUnexpectedError):
-			logger.Error("Handler: Internal server error during promotion code with coupon retrieval", "error", err)
-			httpx.RespondWithError(w, errors.New("an internal server error occurred"), http.StatusInternalServerError)
-		default:
-			logger.Error("Handler: Unhandled error from service during promotion code with coupon retrieval", "error", err)
-			httpx.RespondWithError(w, errors.New("an unexpected error occurred"), http.StatusInternalServerError)
-		}
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get promotion code with coupon")
 		return
 	}
 

@@ -1,11 +1,9 @@
 package productHandler
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 )
 
@@ -25,29 +23,7 @@ func (h *handler) GetAdminAllProducts(w http.ResponseWriter, r *http.Request) {
 
 	products, err := h.aggr.GetAdminAllProducts(ctx)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrInvalidValue):
-			logger.ErrorContext(ctx, "Handler: get admin all products failed",
-				"operation", "get_admin_all_products",
-				"error_context", "invalid value error",
-				"status_code", http.StatusBadRequest,
-				"error", err)
-			httpx.RespondWithError(w, err, http.StatusBadRequest)
-		case errors.Is(err, errs.ErrQueryFailed):
-			logger.ErrorContext(ctx, "Handler: get admin all products failed",
-				"operation", "get_admin_all_products",
-				"error_context", "query failed",
-				"status_code", http.StatusInternalServerError,
-				"error", err)
-			httpx.RespondWithError(w, err, http.StatusInternalServerError)
-		default:
-			logger.ErrorContext(ctx, "Handler: get admin all products failed",
-				"operation", "get_admin_all_products",
-				"error_context", "internal server error",
-				"status_code", http.StatusInternalServerError,
-				"error", err)
-			httpx.RespondWithError(w, errors.New("internal server occurred"), http.StatusInternalServerError)
-		}
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get admin all products")
 		return
 	}
 
