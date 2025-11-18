@@ -291,7 +291,7 @@ func TestGetAvailableSlots(t *testing.T) {
 
 		// Create recurring availability that is available
 		recurring := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		recurring.PartnerID = partnerEncx.ID
+		recurring.UserID = partnerEncx.ID
 		recurring.RoomID = roomEncx.ID
 		recurring.Status = domain.AvailabilityStatusAvailable
 		// Ensure it starts in the future
@@ -394,7 +394,7 @@ func TestGetAvailableSlots(t *testing.T) {
 		require.NoError(t, err)
 
 		original := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		original.PartnerID = partnerEncx.ID
+		original.UserID = partnerEncx.ID
 		original.RoomID = roomEncx.ID
 		original.Status = domain.AvailabilityStatusAvailable
 		// Ensure it starts in the future

@@ -52,7 +52,7 @@ func TestGetByID(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, retrieved)
 		assert.Equal(t, original.ID, retrieved.ID)
-		assert.Equal(t, original.PartnerID, retrieved.PartnerID)
+		assert.Equal(t, original.UserID, retrieved.UserID)
 		assert.Equal(t, original.RoomID, retrieved.RoomID)
 		assert.WithinDuration(t, original.StartTime, retrieved.StartTime, time.Second)
 		assert.WithinDuration(t, original.EndTime, retrieved.EndTime, time.Second)
@@ -102,7 +102,7 @@ func TestGetByID(t *testing.T) {
 		require.NoError(t, err)
 
 		original := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		original.PartnerID = partnerEncx.ID
+		original.UserID = partnerEncx.ID
 		original.RoomID = roomEncx.ID
 		availabilityHelpers.InsertAvailabilityEncx(t, ctx, original, testPool)
 
@@ -221,7 +221,7 @@ func TestGetByID(t *testing.T) {
 		require.NoError(t, err)
 
 		original := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		original.PartnerID = partnerEncx.ID
+		original.UserID = partnerEncx.ID
 		original.RoomID = roomEncx.ID
 		availabilityHelpers.InsertAvailabilityEncx(t, ctx, original, testPool)
 
@@ -274,7 +274,7 @@ func TestGetByID(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, retrieved)
 		assert.Equal(t, targetAvailability.ID, retrieved.ID)
-		assert.Equal(t, targetAvailability.PartnerID, retrieved.PartnerID)
+		assert.Equal(t, targetAvailability.UserID, retrieved.UserID)
 		assert.Equal(t, targetAvailability.RoomID, retrieved.RoomID)
 	})
 

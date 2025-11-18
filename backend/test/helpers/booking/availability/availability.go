@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
+
 	"github.com/google/uuid"
 	"github.com/hengadev/encx"
 )
@@ -16,9 +17,9 @@ func NewTestAvailability(t *testing.T) *domain.Availability {
 	priceCents := 15000                     // $150.00
 
 	return &domain.Availability{
-		ID:        uuid.New(),
-		PartnerID: uuid.New(),
-		RoomID:    uuid.New(),
+		ID:     uuid.New(),
+		UserID: uuid.New(),
+		RoomID: uuid.New(),
 
 		StartTime: startTime,
 		EndTime:   endTime,
@@ -37,12 +38,12 @@ func NewTestAvailability(t *testing.T) *domain.Availability {
 }
 
 // NewTestAvailabilityWithParams creates a test availability with custom parameters
-func NewTestAvailabilityWithParams(t *testing.T, partnerID, roomID uuid.UUID, startTime, endTime time.Time, serviceType string, priceCents *int, maxCapacity int, status domain.AvailabilityStatus) *domain.Availability {
+func NewTestAvailabilityWithParams(t *testing.T, userID, roomID uuid.UUID, startTime, endTime time.Time, serviceType string, priceCents *int, maxCapacity int, status domain.AvailabilityStatus) *domain.Availability {
 	now := time.Now()
 	return &domain.Availability{
-		ID:        uuid.New(),
-		PartnerID: partnerID,
-		RoomID:    roomID,
+		ID:     uuid.New(),
+		UserID: userID,
+		RoomID: roomID,
 
 		StartTime: startTime,
 		EndTime:   endTime,
@@ -69,9 +70,9 @@ func NewTestRecurringAvailability(t *testing.T) *domain.Availability {
 	priceCents := 10000                   // $100.00
 
 	return &domain.Availability{
-		ID:        uuid.New(),
-		PartnerID: uuid.New(),
-		RoomID:    uuid.New(),
+		ID:     uuid.New(),
+		UserID: uuid.New(),
+		RoomID: uuid.New(),
 
 		StartTime: startTime,
 		EndTime:   endTime,
@@ -95,17 +96,17 @@ func NewTestRecurringAvailability(t *testing.T) *domain.Availability {
 	}
 }
 
-// NewTestAvailabilityForPartner creates a test availability for a specific partner
-func NewTestAvailabilityForPartner(t *testing.T, partnerID uuid.UUID) *domain.Availability {
+// NewTestAvailabilityForuser creates a test availability for a specific user
+func NewTestAvailabilityForuser(t *testing.T, userID uuid.UUID) *domain.Availability {
 	now := time.Now()
 	startTime := now.Add(24 * time.Hour)
 	endTime := startTime.Add(1 * time.Hour)
 	priceCents := 8000 // $80.00
 
 	return &domain.Availability{
-		ID:        uuid.New(),
-		PartnerID: partnerID,
-		RoomID:    uuid.New(),
+		ID:     uuid.New(),
+		UserID: userID,
+		RoomID: uuid.New(),
 
 		StartTime: startTime,
 		EndTime:   endTime,
@@ -131,9 +132,9 @@ func NewTestAvailabilityForRoom(t *testing.T, roomID uuid.UUID) *domain.Availabi
 	priceCents := 20000 // $200.00
 
 	return &domain.Availability{
-		ID:        uuid.New(),
-		PartnerID: uuid.New(),
-		RoomID:    roomID,
+		ID:     uuid.New(),
+		UserID: uuid.New(),
+		RoomID: roomID,
 
 		StartTime: startTime,
 		EndTime:   endTime,
@@ -166,9 +167,9 @@ func NewPastTestAvailability(t *testing.T) *domain.Availability {
 	endTime := startTime.Add(1 * time.Hour)
 
 	return &domain.Availability{
-		ID:        uuid.New(),
-		PartnerID: uuid.New(),
-		RoomID:    uuid.New(),
+		ID:     uuid.New(),
+		UserID: uuid.New(),
+		RoomID: uuid.New(),
 
 		StartTime: startTime,
 		EndTime:   endTime,
@@ -193,9 +194,9 @@ func NewTestAvailabilityEncx(t *testing.T) *domain.AvailabilityEncx {
 	priceCents := 15000
 
 	return &domain.AvailabilityEncx{
-		ID:        uuid.New(),
-		PartnerID: uuid.New(),
-		RoomID:    uuid.New(),
+		ID:     uuid.New(),
+		UserID: uuid.New(),
+		RoomID: uuid.New(),
 
 		StartTime: startTime,
 		EndTime:   endTime,
@@ -218,17 +219,17 @@ func NewTestAvailabilityEncx(t *testing.T) *domain.AvailabilityEncx {
 	}
 }
 
-// NewTestAvailabilityEncxWithPartner creates an encrypted test availability with specific partner ID
-func NewTestAvailabilityEncxWithPartner(t *testing.T, partnerID uuid.UUID) *domain.AvailabilityEncx {
+// NewTestAvailabilityEncxWithPartner creates an encrypted test availability with specific user ID
+func NewTestAvailabilityEncxWithPartner(t *testing.T, userID uuid.UUID) *domain.AvailabilityEncx {
 	now := time.Now()
 	startTime := now.Add(24 * time.Hour)
 	endTime := startTime.Add(1 * time.Hour)
 	priceCents := 8000
 
 	return &domain.AvailabilityEncx{
-		ID:        uuid.New(),
-		PartnerID: partnerID,
-		RoomID:    uuid.New(),
+		ID:     uuid.New(),
+		UserID: userID,
+		RoomID: uuid.New(),
 
 		StartTime: startTime,
 		EndTime:   endTime,
@@ -259,9 +260,9 @@ func NewTestAvailabilityEncxWithRoom(t *testing.T, roomID uuid.UUID) *domain.Ava
 	priceCents := 20000
 
 	return &domain.AvailabilityEncx{
-		ID:        uuid.New(),
-		PartnerID: uuid.New(),
-		RoomID:    roomID,
+		ID:     uuid.New(),
+		UserID: uuid.New(),
+		RoomID: roomID,
 
 		StartTime: startTime,
 		EndTime:   endTime,
@@ -292,9 +293,9 @@ func NewTestRecurringAvailabilityEncx(t *testing.T) *domain.AvailabilityEncx {
 	priceCents := 10000
 
 	return &domain.AvailabilityEncx{
-		ID:        uuid.New(),
-		PartnerID: uuid.New(),
-		RoomID:    uuid.New(),
+		ID:     uuid.New(),
+		UserID: uuid.New(),
+		RoomID: uuid.New(),
 
 		StartTime: startTime,
 		EndTime:   endTime,
@@ -317,17 +318,17 @@ func NewTestRecurringAvailabilityEncx(t *testing.T) *domain.AvailabilityEncx {
 	}
 }
 
-// NewTestAvailabilityEncxWithPartnerAndRoom creates an encrypted test availability with specific partner and room IDs
-func NewTestAvailabilityEncxWithPartnerAndRoom(t *testing.T, partnerID, roomID uuid.UUID) *domain.AvailabilityEncx {
+// NewTestAvailabilityEncxWithPartnerAndRoom creates an encrypted test availability with specific user and room IDs
+func NewTestAvailabilityEncxWithPartnerAndRoom(t *testing.T, userID, roomID uuid.UUID) *domain.AvailabilityEncx {
 	now := time.Now()
 	startTime := now.Add(24 * time.Hour)
 	endTime := startTime.Add(2 * time.Hour)
 	priceCents := 15000 // $150.00
 
 	return &domain.AvailabilityEncx{
-		ID:        uuid.New(),
-		PartnerID: partnerID,
-		RoomID:    roomID,
+		ID:     uuid.New(),
+		UserID: userID,
+		RoomID: roomID,
 
 		StartTime: startTime,
 		EndTime:   endTime,

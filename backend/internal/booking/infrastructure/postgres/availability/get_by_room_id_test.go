@@ -192,9 +192,9 @@ func TestGetByRoomID(t *testing.T) {
 		partner2Count := 0
 		for _, avail := range result {
 			assert.Equal(t, roomEncx.ID, avail.RoomID)
-			if avail.PartnerID == partnerEncx1.ID {
+			if avail.UserID == partnerEncx1.ID {
 				partner1Count++
-			} else if avail.PartnerID == partnerEncx2.ID {
+			} else if avail.UserID == partnerEncx2.ID {
 				partner2Count++
 			}
 		}
@@ -338,7 +338,7 @@ func TestGetByRoomID(t *testing.T) {
 		nonRecurring2 := availabilityHelpers.NewTestAvailabilityEncxWithPartnerAndRoom(t, partnerEncx.ID, roomEncx.ID)
 		recurring := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
 		recurring.RoomID = roomEncx.ID
-		recurring.PartnerID = partnerEncx.ID
+		recurring.UserID = partnerEncx.ID
 
 		availabilityHelpers.InsertAvailabilityEncx(t, ctx, nonRecurring1, testPool)
 		availabilityHelpers.InsertAvailabilityEncx(t, ctx, nonRecurring2, testPool)

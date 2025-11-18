@@ -13,7 +13,7 @@ func (r *Repository) CheckConflict(ctx context.Context, partnerID uuid.UUID, sta
 	query := fmt.Sprintf(`
 		SELECT COUNT(*)
 		FROM %s.availabilities
-		WHERE partner_id = $1
+		WHERE user_id = $1
 		AND start_time < $2
 		AND end_time > $3
 		AND status IN ('available', 'booked', 'blocked')

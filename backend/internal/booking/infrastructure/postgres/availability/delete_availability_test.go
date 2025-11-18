@@ -92,7 +92,7 @@ func TestDelete(t *testing.T) {
 		require.NoError(t, err)
 
 		availability := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		availability.PartnerID = partnerEncx.ID
+		availability.UserID = partnerEncx.ID
 		availability.RoomID = roomEncx.ID
 		availabilityHelpers.InsertAvailabilityEncx(t, ctx, availability, testPool)
 

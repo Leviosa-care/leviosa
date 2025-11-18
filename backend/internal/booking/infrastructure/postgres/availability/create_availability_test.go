@@ -108,7 +108,7 @@ func TestCreate(t *testing.T) {
 
 		// Create test recurring encrypted availability
 		availabilityEncx := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		availabilityEncx.PartnerID = partnerEncx.ID
+		availabilityEncx.UserID = partnerEncx.ID
 		availabilityEncx.RoomID = roomEncx.ID
 
 		// Execute
@@ -258,7 +258,7 @@ func TestCreate(t *testing.T) {
 		require.NoError(t, err)
 
 		original := availabilityHelpers.NewTestRecurringAvailabilityEncx(t)
-		original.PartnerID = partnerEncx.ID
+		original.UserID = partnerEncx.ID
 		original.RoomID = roomEncx.ID
 
 		// Execute
