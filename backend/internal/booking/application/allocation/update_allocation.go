@@ -48,11 +48,7 @@ func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, id uu
 	}
 
 	// Update period with validation
-	var endTime time.Time
-	if endDate != nil {
-		endTime = *endDate
-	}
-	if err := allocation.UpdateDedicatedPeriod(*startDate, endTime); err != nil {
+	if err := allocation.UpdateDedicatedPeriod(startDate, endDate); err != nil {
 		return nil, fmt.Errorf("update dedicated period: %w", err)
 	}
 

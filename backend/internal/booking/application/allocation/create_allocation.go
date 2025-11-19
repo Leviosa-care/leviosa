@@ -104,12 +104,7 @@ func (s *RoomAllocationService) CreateDedicatedAllocation(ctx context.Context, r
 	}
 
 	// Create domain entity
-	var allocation *domain.RoomAllocation
-	if endDate != nil {
-		allocation, err = domain.NewDedicatedAllocation(roomID, partnerID, *startDate, *endDate)
-	} else {
-		allocation, err = domain.NewDedicatedAllocation(roomID, partnerID, *startDate, time.Time{})
-	}
+	allocation, err := domain.NewDedicatedAllocation(roomID, partnerID, startDate, endDate)
 	if err != nil {
 		return nil, fmt.Errorf("create dedicated allocation entity: %w", err)
 	}
