@@ -88,94 +88,11 @@ func (h *handler) UpdateDedicatedPeriod(w http.ResponseWriter, r *http.Request) 
 		StartDate:      allocation.StartDate,
 		EndDate:        allocation.EndDate,
 		IsActive:       allocation.IsActive,
-		CreatedAt:      allocation.CreatedAt,
-		UpdatedAt:      allocation.UpdatedAt,
 	}
 
 	logger.InfoContext(ctx, "Handler: Dedicated period updated successfully",
 		"allocation_id", allocationID,
 		"operation", "update_dedicated_period")
-
-	httpx.RespondWithJSON(w, response, http.StatusOK)
-}
-
-func (h *handler) DeactivateAllocation(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	logger, err := ctxutil.GetLoggerFromContext(ctx)
-	if err != nil {
-		httpx.RespondWithError(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	// Extract allocation ID from URL path
-	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
-	if len(pathParts) < 3 {
-		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid allocation ID in path"), http.StatusBadRequest)
-		return
-	}
-
-	allocationID, err := uuid.Parse(pathParts[1])
-	if err != nil {
-		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid allocation ID format"), http.StatusBadRequest)
-		return
-	}
-
-	logger.InfoContext(ctx, "Handler: Processing deactivate allocation request",
-		"allocation_id", allocationID,
-		"operation", "deactivate_allocation")
-
-	// Call service to deactivate allocation
-	err = h.svc.DeactivateAllocation(ctx, allocationID)
-	if err != nil {
-		var statusCode int
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			statusCode = http.StatusNotFound
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			statusCode = http.StatusServiceUnavailable
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-
-		if statusCode >= 500 {
-			logger.ErrorContext(ctx, "Handler: Deactivate allocation failed",
-				"error", err,
-				"allocation_id", allocationID,
-				"operation", "deactivate_allocation")
-		}
-
-		httpx.RespondWithError(w, err, statusCode)
-		return
-	}
-
-	// Get updated allocation to return
-	allocation, err := h.svc.GetAllocation(ctx, allocationID)
-	if err != nil {
-		logger.ErrorContext(ctx, "Handler: Failed to retrieve deactivated allocation",
-			"error", err,
-			"allocation_id", allocationID,
-			"operation", "deactivate_allocation")
-		httpx.RespondWithError(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	// Convert to response DTO
-	response := domain.RoomAllocationResponse{
-		ID:             allocation.ID,
-		RoomID:         allocation.RoomID,
-		UserID:         allocation.UserID,
-		AllocationType: allocation.AllocationType,
-		StartDate:      allocation.StartDate,
-		EndDate:        allocation.EndDate,
-		IsActive:       allocation.IsActive,
-		CreatedAt:      allocation.CreatedAt,
-		UpdatedAt:      allocation.UpdatedAt,
-	}
-
-	logger.InfoContext(ctx, "Handler: Allocation deactivated successfully",
-		"allocation_id", allocationID,
-		"operation", "deactivate_allocation")
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
 }
