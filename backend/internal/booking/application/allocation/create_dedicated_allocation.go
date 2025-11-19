@@ -28,7 +28,7 @@ func (s *RoomAllocationService) CreateDedicatedAllocation(ctx context.Context, r
 	room, err := s.roomRepo.GetByID(ctx, request.RoomID)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return nil, fmt.Errorf("room not found: %w", errs.ErrRepositoryNotFound)
+			return nil, errs.NewInvalidInputErr(errors.New("room with ID " + request.RoomID.String() + " not found"))
 		}
 		return nil, fmt.Errorf("verify room exists: %w", err)
 	}
