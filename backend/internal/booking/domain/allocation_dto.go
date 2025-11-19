@@ -26,6 +26,17 @@ type CreateSharedAllocationRequest struct {
 
 func (r *CreateSharedAllocationRequest) Valid(ctx context.Context) error {
 	var errs errsx.Map
+
+	// Validate RoomID
+	if r.RoomID == uuid.Nil {
+		errs.Set("room_id", "room ID is required")
+	}
+
+	// Validate UserID
+	if r.UserID == uuid.Nil {
+		errs.Set("user_id", "user ID is required")
+	}
+
 	return errs.AsError()
 }
 
