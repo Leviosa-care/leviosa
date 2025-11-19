@@ -7,14 +7,12 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-
-	"github.com/google/uuid"
 )
 
 // CreateSharedAllocation creates a shared room allocation for a partner
-func (s *RoomAllocationService) CreateSharedAllocation(ctx context.Context, roomID, partnerID uuid.UUID) (*domain.RoomAllocation, error) {
+func (s *RoomAllocationService) CreateSharedAllocation(ctx context.Context, request *domain.CreateSharedAllocationRequest) (*domain.RoomAllocation, error) {
 	// Validate partner exists and is verified
-	isVerified, err := s.authUserClient.GetPartnerVerificationStatus(ctx, partnerID)
+	isVerified, err := s.authUserClient.GetPartnerVerificationStatus(ctx, request.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("get partner verification status: %w", err)
 	}
@@ -23,7 +21,7 @@ func (s *RoomAllocationService) CreateSharedAllocation(ctx context.Context, room
 	}
 
 	// Verify room exists and is active
-	room, err := s.roomRepo.GetByID(ctx, roomID)
+	room, err := s.roomRepo.GetByID(ctx, request.RoomID)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return nil, fmt.Errorf("room not found: %w", errs.ErrRepositoryNotFound)
@@ -36,7 +34,7 @@ func (s *RoomAllocationService) CreateSharedAllocation(ctx context.Context, room
 	}
 
 	// Check for existing allocation conflict
-	hasConflict, err := s.allocationRepo.CheckConflict(ctx, roomID, partnerID, domain.AllocationTypeShared, nil, nil)
+	hasConflict, err := s.allocationRepo.CheckConflict(ctx, request.RoomID, request.UserID, domain.AllocationTypeShared, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("check allocation conflict: %w", err)
 	}
@@ -46,7 +44,7 @@ func (s *RoomAllocationService) CreateSharedAllocation(ctx context.Context, room
 	}
 
 	// Create domain entity
-	allocation, err := domain.NewSharedAllocation(roomID, partnerID)
+	allocation, err := domain.NewSharedAllocation(request.RoomID, request.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("create shared allocation entity: %w", err)
 	}

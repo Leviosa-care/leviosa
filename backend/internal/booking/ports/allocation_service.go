@@ -11,7 +11,7 @@ import (
 // RoomAllocationService defines the interface for room allocation business logic
 type RoomAllocationService interface {
 	// CreateSharedAllocation creates a shared room allocation
-	CreateSharedAllocation(ctx context.Context, roomID, partnerID uuid.UUID) (*domain.RoomAllocation, error)
+	CreateSharedAllocation(ctx context.Context, request *domain.CreateSharedAllocationRequest) (*domain.RoomAllocation, error)
 
 	// CreateDedicatedAllocation creates a dedicated room allocation with time bounds
 	CreateDedicatedAllocation(ctx context.Context, request *domain.CreateDedicatedAllocationRequest) (*domain.RoomAllocation, error)

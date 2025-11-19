@@ -49,7 +49,7 @@ func (h *handler) CreateSharedAllocation(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Call service to create shared allocation
-	allocation, err := h.svc.CreateSharedAllocation(ctx, request.RoomID, request.UserID)
+	allocation, err := h.svc.CreateSharedAllocation(ctx, &request)
 	if err != nil {
 		httpx.RespondWithServiceError(w, logger, ctx, err, "create shared allocation for partner")
 		return
