@@ -52,69 +52,7 @@ func (h *handler) CreateDedicatedAllocation(w http.ResponseWriter, r *http.Reque
 	// Call service to create dedicated allocation
 	allocation, err := h.svc.CreateDedicatedAllocation(ctx, &request)
 	if err != nil {
-		// Log with specific error context based on error type
-		var logLevel string
-		var errorContext string
-		var statusCode int
-
-		switch {
-		case errors.Is(err, errs.ErrInvalidInput):
-			logLevel = "warn"
-			errorContext = "invalid request validation"
-			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			logLevel = "warn"
-			errorContext = "room not found"
-			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrUniqueViolation):
-			logLevel = "warn"
-			errorContext = "allocation conflict"
-			statusCode = http.StatusConflict
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			logLevel = "error"
-			errorContext = "database connection failure"
-			statusCode = http.StatusServiceUnavailable
-		case errors.Is(err, errs.ErrResourceExhausted):
-			logLevel = "error"
-			errorContext = "database resource exhaustion"
-			statusCode = http.StatusServiceUnavailable
-		case errors.Is(err, errs.ErrQueryCancelled), errors.Is(err, context.Canceled):
-			logLevel = "warn"
-			errorContext = "request cancelled"
-			statusCode = http.StatusRequestTimeout
-		case errors.Is(err, context.DeadlineExceeded):
-			logLevel = "warn"
-			errorContext = "request timeout"
-			statusCode = http.StatusRequestTimeout
-		case errors.Is(err, errs.ErrTransactionFailure), errors.Is(err, errs.ErrDeadlock):
-			logLevel = "error"
-			errorContext = "transaction conflict"
-			statusCode = http.StatusServiceUnavailable
-		default:
-			logLevel = "error"
-			errorContext = "unexpected error"
-			statusCode = http.StatusInternalServerError
-		}
-
-		if logLevel == "error" {
-			logger.ErrorContext(ctx, "Handler: Create dedicated allocation failed",
-				"error", err,
-				"operation", "create_dedicated_allocation",
-				"context", errorContext,
-				"room_id", request.RoomID,
-				"partner_id", request.UserID,
-				"status_code", statusCode)
-		} else {
-			logger.WarnContext(ctx, "Handler: Create dedicated allocation failed",
-				"error", err,
-				"operation", "create_dedicated_allocation",
-				"context", errorContext,
-				"room_id", request.RoomID,
-				"partner_id", request.UserID,
-				"status_code", statusCode)
-		}
-
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "create dedicated allocation for partner")
 		return
 	}
 

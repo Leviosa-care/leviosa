@@ -38,6 +38,29 @@ type CreateDedicatedAllocationRequest struct {
 
 func (r *CreateDedicatedAllocationRequest) Valid(ctx context.Context) error {
 	var errs errsx.Map
+
+	// Validate RoomID
+	if r.RoomID == uuid.Nil {
+		errs.Set("room_id", "room ID is required")
+	}
+
+	// Validate UserID
+	if r.UserID == uuid.Nil {
+		errs.Set("user_id", "user ID is required")
+	}
+
+	// Validate StartDate
+	if r.StartDate == nil {
+		errs.Set("start_date", "start date is required")
+	}
+
+	// Validate EndDate is after StartDate (if both are provided)
+	if r.StartDate != nil && r.EndDate != nil {
+		if r.EndDate.Before(*r.StartDate) || r.EndDate.Equal(*r.StartDate) {
+			errs.Set("end_date", "end date must be after start date")
+		}
+	}
+
 	return errs.AsError()
 }
 

@@ -11,6 +11,10 @@ import (
 
 // CreateDedicatedAllocation creates a dedicated room allocation with time bounds
 func (s *RoomAllocationService) CreateDedicatedAllocation(ctx context.Context, request *domain.CreateDedicatedAllocationRequest) (*domain.RoomAllocation, error) {
+	if err := request.Valid(ctx); err != nil {
+		return nil, errs.NewInvalidValueErr(err.Error())
+	}
+
 	// Validate partner exists and is verified
 	isValidPartner, err := s.authUserClient.ValidatePartnerExists(ctx, request.UserID)
 	if err != nil {
