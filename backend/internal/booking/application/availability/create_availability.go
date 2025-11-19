@@ -2,14 +2,10 @@ package availability
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-
-	"github.com/google/uuid"
 )
 
 func (s *AvailabilityService) CreateAvailability(ctx context.Context, request *domain.CreateAvailabilityRequest) (*domain.Availability, error) {
@@ -18,7 +14,7 @@ func (s *AvailabilityService) CreateAvailability(ctx context.Context, request *d
 	}
 
 	// Verify roomEncx exists and is active
-	roomEncx, err := s.roomRepo.GetByID(ctx, roomID)
+	roomEncx, err := s.roomRepo.GetByID(ctx, request.RoomID)
 	if err != nil {
 		return nil, fmt.Errorf("get room by ID to verify existence: %w", err)
 	}
@@ -28,17 +24,17 @@ func (s *AvailabilityService) CreateAvailability(ctx context.Context, request *d
 	}
 
 	// Check partner has access to the room at the specified time
-	hasAccess, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, partnerID, roomID, startTime)
+	hasAccess, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, request.UserID, request.RoomID, request.StartTime)
 	if err != nil {
 		return nil, fmt.Errorf("check partner room access: %w", err)
 	}
 
-	if !hasAccess.IsActiveAt(startTime) || !hasAccess.IsActiveAt(endTime) {
+	if !hasAccess.IsActiveAt(request.StartTime) || !hasAccess.IsActiveAt(request.EndTime) {
 		return nil, fmt.Errorf("partner does not have access to room during specified time")
 	}
 
 	// Check for scheduling conflicts
-	hasConflict, err := s.availabilityRepo.CheckConflict(ctx, partnerID, startTime, endTime, nil)
+	hasConflict, err := s.availabilityRepo.CheckConflict(ctx, request.UserID, request.StartTime, request.EndTime, nil)
 	if err != nil {
 		return nil, fmt.Errorf("check availability conflict: %w", err)
 	}
@@ -48,7 +44,7 @@ func (s *AvailabilityService) CreateAvailability(ctx context.Context, request *d
 	}
 
 	// Create domain entity with validation
-	availability, err := domain.NewAvailability(partnerID, roomID, startTime, endTime, maxCapacity)
+	availability, err := domain.NewAvailability(request.UserID, request.RoomID, request.StartTime, request.EndTime, request.MaxCapacity)
 	if err != nil {
 		return nil, fmt.Errorf("create availability entity: %w", err)
 	}

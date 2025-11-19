@@ -2,28 +2,19 @@ package availability
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-	"github.com/google/uuid"
 )
 
-func (s *AvailabilityService) CreateRecurringAvailability(ctx context.Context, partnerID, roomID uuid.UUID, startTime, endTime time.Time, maxCapacity int, pattern domain.RecurrencePattern) (*domain.Availability, error) {
-	// NOTE: this is going to be handled using a auth middleware
-	// Validate partner exists and is verified
-	// isValidPartner, err := s.authUserClient.ValidatePartnerExists(ctx, partnerID)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("validate partner: %w", err)
-	// }
-	// if !isValidPartner {
-	// 	return nil, fmt.Errorf("partner not found or not verified")
-	// }
+func (s *AvailabilityService) CreateRecurringAvailability(ctx context.Context, request *domain.CreateRecurringAvailabilityRequest) (*domain.Availability, error) {
+	if err := request.Valid(ctx); err != nil {
+		return nil, errs.NewInvalidValueErr(err.Error())
+	}
 
 	// Verify roomEncx exists and is active
-	roomEncx, err := s.roomRepo.GetByID(ctx, roomID)
+	roomEncx, err := s.roomRepo.GetByID(ctx, request.RoomID)
 	if err != nil {
 		return nil, fmt.Errorf("get room by ID to verify room existence: %w", err)
 	}
@@ -33,17 +24,17 @@ func (s *AvailabilityService) CreateRecurringAvailability(ctx context.Context, p
 	}
 
 	// Check partner has access to the room
-	hasAccess, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, partnerID, roomID, startTime)
+	hasAccess, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, request.UserID, request.RoomID, request.StartTime)
 	if err != nil {
 		return nil, fmt.Errorf("check partner room access: %w", err)
 	}
 
-	if !hasAccess.IsActiveAt(startTime) {
+	if !hasAccess.IsActiveAt(request.StartTime) {
 		return nil, fmt.Errorf("partner does not have access to room during specified time")
 	}
 
 	// Check for scheduling conflicts
-	hasConflict, err := s.availabilityRepo.CheckConflict(ctx, partnerID, startTime, endTime, nil)
+	hasConflict, err := s.availabilityRepo.CheckConflict(ctx, request.UserID, request.StartTime, request.EndTime, nil)
 	if err != nil {
 		return nil, fmt.Errorf("check availability conflict: %w", err)
 	}
@@ -53,7 +44,7 @@ func (s *AvailabilityService) CreateRecurringAvailability(ctx context.Context, p
 	}
 
 	// Create domain entity with validation
-	availability, err := domain.NewRecurringAvailability(partnerID, roomID, startTime, endTime, maxCapacity, pattern)
+	availability, err := domain.NewRecurringAvailability(request.UserID, request.RoomID, request.StartTime, request.EndTime, request.MaxCapacity, request.Pattern)
 	if err != nil {
 		return nil, fmt.Errorf("create recurring availability entity: %w", err)
 	}

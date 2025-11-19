@@ -31,7 +31,7 @@ func (s *AvailabilityService) UpdateAvailability(ctx context.Context, id uuid.UU
 	// If time is being changed, check for conflicts
 	if !startTime.Equal(availability.StartTime) || !endTime.Equal(availability.EndTime) {
 		// Check partner still has room access for new time
-		hasAccess, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, availability.PartnerID, availability.RoomID, startTime)
+		hasAccess, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, availability.UserID, availability.RoomID, startTime)
 		if err != nil {
 			if errors.Is(err, errs.ErrRepositoryNotFound) {
 				return nil, fmt.Errorf("partner does not have allocation for this room at new time")
@@ -44,7 +44,7 @@ func (s *AvailabilityService) UpdateAvailability(ctx context.Context, id uuid.UU
 		}
 
 		// Check for scheduling conflicts (excluding this availability)
-		hasConflict, err := s.availabilityRepo.CheckConflict(ctx, availability.PartnerID, startTime, endTime, &id)
+		hasConflict, err := s.availabilityRepo.CheckConflict(ctx, availability.UserID, startTime, endTime, &id)
 		if err != nil {
 			return nil, fmt.Errorf("check availability conflict: %w", err)
 		}

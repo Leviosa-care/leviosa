@@ -2,6 +2,7 @@ package availability
 
 import (
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
+
 	"github.com/hengadev/encx"
 )
 
@@ -10,7 +11,7 @@ type AvailabilityService struct {
 	allocationRepo   ports.RoomAllocationRepository
 	roomRepo         ports.RoomRepository
 	crypto           encx.CryptoService
-	authUserClient   ports.AuthUserClient
+	// authUserClient   ports.AuthUserClient
 }
 
 // New creates a new instance of the availability service
