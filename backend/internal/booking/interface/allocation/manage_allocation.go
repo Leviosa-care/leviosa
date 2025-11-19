@@ -83,7 +83,7 @@ func (h *handler) UpdateDedicatedPeriod(w http.ResponseWriter, r *http.Request) 
 	response := domain.RoomAllocationResponse{
 		ID:             allocation.ID,
 		RoomID:         allocation.RoomID,
-		PartnerID:      allocation.PartnerID,
+		UserID:         allocation.UserID,
 		AllocationType: allocation.AllocationType,
 		StartDate:      allocation.StartDate,
 		EndDate:        allocation.EndDate,
@@ -164,7 +164,7 @@ func (h *handler) DeactivateAllocation(w http.ResponseWriter, r *http.Request) {
 	response := domain.RoomAllocationResponse{
 		ID:             allocation.ID,
 		RoomID:         allocation.RoomID,
-		PartnerID:      allocation.PartnerID,
+		UserID:         allocation.UserID,
 		AllocationType: allocation.AllocationType,
 		StartDate:      allocation.StartDate,
 		EndDate:        allocation.EndDate,
