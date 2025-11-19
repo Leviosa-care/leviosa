@@ -14,7 +14,7 @@ type RoomAllocationService interface {
 	CreateSharedAllocation(ctx context.Context, roomID, partnerID uuid.UUID) (*domain.RoomAllocation, error)
 
 	// CreateDedicatedAllocation creates a dedicated room allocation with time bounds
-	CreateDedicatedAllocation(ctx context.Context, roomID, partnerID uuid.UUID, startDate, endDate *time.Time) (*domain.RoomAllocation, error)
+	CreateDedicatedAllocation(ctx context.Context, request *domain.CreateDedicatedAllocationRequest) (*domain.RoomAllocation, error)
 
 	// GetAllocation retrieves an allocation by ID
 	GetAllocation(ctx context.Context, id uuid.UUID) (*domain.RoomAllocation, error)

@@ -50,7 +50,7 @@ func (h *handler) CreateDedicatedAllocation(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Call service to create dedicated allocation
-	allocation, err := h.svc.CreateDedicatedAllocation(ctx, request.RoomID, request.UserID, request.StartDate, request.EndDate)
+	allocation, err := h.svc.CreateDedicatedAllocation(ctx, &request)
 	if err != nil {
 		// Log with specific error context based on error type
 		var logLevel string
