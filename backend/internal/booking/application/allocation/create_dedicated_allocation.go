@@ -53,7 +53,7 @@ func (s *RoomAllocationService) CreateDedicatedAllocation(ctx context.Context, r
 	}
 
 	if hasConflict {
-		return nil, fmt.Errorf("dedicated allocation conflicts with existing allocation")
+		return nil, errs.NewAlreadyExistsError(fmt.Errorf("conflicts with existing allocation"), "dedicated allocation ")
 	}
 
 	// Create domain entity
