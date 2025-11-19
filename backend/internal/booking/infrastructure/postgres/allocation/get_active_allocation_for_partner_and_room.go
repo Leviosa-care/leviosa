@@ -25,7 +25,12 @@ func (r *Repository) GetActiveAllocationForPartnerAndRoom(ctx context.Context, p
 				AND (end_date IS NULL OR end_date >= $3)
 			)
 		)
-		ORDER BY allocation_type DESC, created_at DESC
+		ORDER BY
+			CASE
+				WHEN allocation_type = 'dedicated' THEN 1
+				WHEN allocation_type = 'shared' THEN 2
+			END ASC,
+			created_at DESC
 		LIMIT 1
 	`, r.schema)
 
