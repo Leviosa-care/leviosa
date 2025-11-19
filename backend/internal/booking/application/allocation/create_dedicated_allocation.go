@@ -16,12 +16,12 @@ func (s *RoomAllocationService) CreateDedicatedAllocation(ctx context.Context, r
 	}
 
 	// Validate partner exists and is verified
-	isValidPartner, err := s.authUserClient.ValidatePartnerExists(ctx, request.UserID)
+	partner, err := s.authUserClient.GetPartnerByUserID(ctx, request.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("validate partner: %w", err)
+		return nil, fmt.Errorf("get partner by user ID: %w", err)
 	}
-	if !isValidPartner {
-		return nil, fmt.Errorf("partner not found or not verified")
+	if !partner.IsVerified {
+		return nil, fmt.Errorf("partner is not verified")
 	}
 
 	// Verify room exists and is active
