@@ -64,8 +64,8 @@ var (
 	categorySvc     catalogPorts.CategoryService
 	productSvc      catalogPorts.ProductService
 	handler         partnerHandler.Handler
-	testServerURL   string           // Global variable to hold the URL of the running test server
-	testServer      *http.Server     // To allow graceful shutdown
+	testServerURL   string       // Global variable to hold the URL of the running test server
+	testServer      *http.Server // To allow graceful shutdown
 )
 
 func TestMain(m *testing.M) {
