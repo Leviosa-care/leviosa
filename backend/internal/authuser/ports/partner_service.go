@@ -7,7 +7,27 @@ import (
 	"github.com/google/uuid"
 )
 
+// PublicPartnerService defines read-only operations safe for inter-service communication.
+// This interface is exposed to other services (e.g., booking, notification) for partner
+// information retrieval without requiring user authentication context.
+type PublicPartnerService interface {
+	// GetPartnerVerificationStatus checks if a partner is verified.
+	// A partner is considered verified when:
+	// - stripe_account_status = 'active'
+	// - stripe_onboarding_complete = true
+	// - user.role = 'partner'
+	GetPartnerVerificationStatus(ctx context.Context, partnerID uuid.UUID) (bool, error)
+
+	// GetPartnerByUserID retrieves basic partner information by user ID.
+	// Returns error if partner not found or system error occurs.
+	GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*domain.PartnerResponse, error)
+}
+
+// PartnerService defines the full partner service interface including both
+// public operations (read-only, safe for inter-service calls) and private
+// operations (mutations, require user session context).
 type PartnerService interface {
+	PublicPartnerService
 	GetPartnerByID(ctx context.Context, partnerID uuid.UUID) (*domain.PartnerResponse, error)
 	GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*domain.PartnerResponse, error)
 	GetAllPartners(ctx context.Context) ([]*domain.PartnerResponse, error)
