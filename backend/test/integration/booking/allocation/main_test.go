@@ -13,11 +13,16 @@ import (
 	"time"
 
 	allocationService "github.com/Leviosa-care/leviosa/backend/internal/booking/application/allocation"
+	authuserClient "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/authuser"
 	allocationPostgres "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/allocation"
 	roomPostgres "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/room"
 	allocationHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/allocation"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
 
+	partnerService "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/partner"
+	partnerRepo "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/postgres/partner"
+	userRepo "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/postgres/user"
+	authuserPorts "github.com/Leviosa-care/leviosa/backend/internal/authuser/ports"
 	authsession "github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/services"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
@@ -28,7 +33,6 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 
-	"github.com/google/uuid"
 	"github.com/hengadev/encx"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
@@ -36,69 +40,22 @@ import (
 )
 
 var (
-	pgContainer      *tu.PostgresContainer
-	testPool         *pgxpool.Pool
-	redisContainer   *tu.RedisContainer
-	redisClient      *redis.Client
-	crypto           encx.CryptoService
-	allocationRepo   ports.RoomAllocationRepository
-	roomRepo         ports.RoomRepository
-	authUserClient   ports.AuthUserClient
-	service          ports.RoomAllocationService
-	authCtx          *tu.AuthTestContext // Authentication context for user/session tests
-	handler          allocationHandler.Handler
-	testServerURL    string       // Global variable to hold the URL of the running test server
-	testServer       *http.Server // To allow graceful shutdown
-	authSessionRepo  authsession.SessionRepository
+	pgContainer     *tu.PostgresContainer
+	testPool        *pgxpool.Pool
+	redisContainer  *tu.RedisContainer
+	redisClient     *redis.Client
+	crypto          encx.CryptoService
+	allocationRepo  ports.RoomAllocationRepository
+	roomRepo        ports.RoomRepository
+	authUserClient  ports.AuthUserClient
+	partnerSvc      authuserPorts.PublicPartnerService
+	service         ports.RoomAllocationService
+	authCtx         *tu.AuthTestContext // Authentication context for user/session tests
+	handler         allocationHandler.Handler
+	testServerURL   string       // Global variable to hold the URL of the running test server
+	testServer      *http.Server // To allow graceful shutdown
+	authSessionRepo authsession.SessionRepository
 )
-
-// mockAuthUserClient provides a simple mock implementation for testing
-type mockAuthUserClient struct{}
-
-func (m *mockAuthUserClient) GetPartnerByID(ctx context.Context, partnerID uuid.UUID) (*ports.PartnerInfo, error) {
-	return &ports.PartnerInfo{
-		ID:             partnerID,
-		UserID:         uuid.New(),
-		Bio:            "Test bio",
-		Experience:     "5 years",
-		Certifications: []string{"Cert1"},
-		IsVerified:     true,
-		Email:          "partner@test.com",
-		FirstName:      "Test",
-		LastName:       "Partner",
-		Telephone:      "+1234567890",
-	}, nil
-}
-
-func (m *mockAuthUserClient) GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*ports.PartnerInfo, error) {
-	return &ports.PartnerInfo{
-		ID:             uuid.New(),
-		UserID:         userID,
-		Bio:            "Test bio",
-		Experience:     "5 years",
-		Certifications: []string{"Cert1"},
-		IsVerified:     true,
-		Email:          "partner@test.com",
-		FirstName:      "Test",
-		LastName:       "Partner",
-		Telephone:      "+1234567890",
-	}, nil
-}
-
-func (m *mockAuthUserClient) ValidatePartnerExists(ctx context.Context, partnerID uuid.UUID) (bool, error) {
-	return true, nil
-}
-
-func (m *mockAuthUserClient) GetPartnerSpecializations(ctx context.Context, partnerID uuid.UUID) ([]ports.SpecializationInfo, error) {
-	return []ports.SpecializationInfo{
-		{
-			ID:          uuid.New(),
-			Name:        "Test Specialization",
-			Description: "Test Description",
-			IsActive:    true,
-		},
-	}, nil
-}
 
 func TestMain(m *testing.M) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -229,7 +186,33 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to create allocation repository: %v", err)
 	}
 	roomRepo = roomPostgres.New(ctx, testPool)
-	authUserClient = &mockAuthUserClient{}
+
+	// Initialize authuser dependencies for real inter-service communication
+	log.Println("Setting up authuser partner service for inter-service communication...")
+	partnerRepository := partnerRepo.New(ctx, testPool)
+	userRepository := userRepo.New(ctx, testPool)
+
+	// Initialize partner service with minimal dependencies (no catalog service or stripe needed for verification checks)
+	var partnerSvcFull authuserPorts.PartnerService
+	partnerSvcFull, err = partnerService.New(
+		ctx,
+		partnerRepository,
+		userRepository,
+		nil, // productService - not needed for verification status
+		nil, // categoryService - not needed for verification status
+		crypto,
+		nil, // stripe - not needed for verification status
+	)
+	if err != nil {
+		log.Fatalf("Failed to create partner service: %v", err)
+	}
+	partnerSvc = partnerSvcFull // Implicit cast to PublicPartnerService interface
+	log.Println("✓ Partner service initialized for verification checks")
+
+	// Create in-process authuser client
+	authUserClient = authuserClient.NewInProcessClient(partnerSvc)
+	log.Println("✓ In-process AuthUserClient created")
+
 	service = allocationService.New(allocationRepo, roomRepo, authUserClient)
 
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
