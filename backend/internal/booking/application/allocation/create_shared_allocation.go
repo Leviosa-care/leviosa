@@ -11,6 +11,10 @@ import (
 
 // CreateSharedAllocation creates a shared room allocation for a partner
 func (s *RoomAllocationService) CreateSharedAllocation(ctx context.Context, request *domain.CreateSharedAllocationRequest) (*domain.RoomAllocation, error) {
+	if err := request.Valid(ctx); err != nil {
+		return nil, errs.NewInvalidValueErr(err.Error())
+	}
+
 	// Validate partner exists and is verified
 	isVerified, err := s.authUserClient.GetPartnerVerificationStatus(ctx, request.UserID)
 	if err != nil {
