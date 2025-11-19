@@ -54,17 +54,17 @@ func NewSharedAllocation(roomID, userID uuid.UUID) (*RoomAllocation, error) {
 }
 
 // NewDedicatedAllocation creates a new dedicated room allocation with time bounds
-func NewDedicatedAllocation(roomID, userID uuid.UUID, startDate, endDate time.Time) (*RoomAllocation, error) {
+func NewDedicatedAllocation(roomID, userID uuid.UUID, startDate, endDate *time.Time) (*RoomAllocation, error) {
 	if roomID == uuid.Nil {
 		return nil, ErrInvalidRoomID
 	}
 	if userID == uuid.Nil {
 		return nil, ErrInvalidPartnerID
 	}
-	if startDate.IsZero() {
+	if startDate == nil || startDate.IsZero() {
 		return nil, ErrInvalidAllocationStartDate
 	}
-	if !endDate.IsZero() && endDate.Before(startDate) {
+	if endDate != nil && endDate.Before(*startDate) {
 		return nil, ErrInvalidAllocationEndDate
 	}
 
@@ -73,8 +73,8 @@ func NewDedicatedAllocation(roomID, userID uuid.UUID, startDate, endDate time.Ti
 		RoomID:         roomID,
 		UserID:         userID,
 		AllocationType: AllocationTypeDedicated,
-		StartDate:      &startDate,
-		EndDate:        &endDate,
+		StartDate:      startDate,
+		EndDate:        endDate,
 		IsActive:       true,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
@@ -82,21 +82,19 @@ func NewDedicatedAllocation(roomID, userID uuid.UUID, startDate, endDate time.Ti
 }
 
 // UpdateDedicatedPeriod updates the time period for a dedicated allocation
-func (ra *RoomAllocation) UpdateDedicatedPeriod(startDate, endDate time.Time) error {
+func (ra *RoomAllocation) UpdateDedicatedPeriod(startDate, endDate *time.Time) error {
 	if ra.AllocationType != AllocationTypeDedicated {
 		return ErrCannotUpdateSharedAllocationPeriod
 	}
-	if startDate.IsZero() {
+	if startDate == nil || startDate.IsZero() {
 		return ErrInvalidAllocationStartDate
 	}
-	if !endDate.IsZero() && endDate.Before(startDate) {
+	if endDate != nil && endDate.Before(*startDate) {
 		return ErrInvalidAllocationEndDate
 	}
 
-	ra.StartDate = &startDate
-	if !endDate.IsZero() {
-		ra.EndDate = &endDate
-	}
+	ra.StartDate = startDate
+	ra.EndDate = endDate
 	ra.UpdatedAt = time.Now()
 	return nil
 }
