@@ -11,13 +11,13 @@ type Handler interface {
 	RegisterRoutes(router *http.ServeMux)
 	CreateAvailability(w http.ResponseWriter, r *http.Request)
 	CreateRecurringAvailability(w http.ResponseWriter, r *http.Request)
-	GetAvailability(w http.ResponseWriter, r *http.Request)
-	GetPartnerAvailabilities(w http.ResponseWriter, r *http.Request)
-	GetAvailableSlots(w http.ResponseWriter, r *http.Request)
-	UpdateAvailability(w http.ResponseWriter, r *http.Request)
-	CancelAvailability(w http.ResponseWriter, r *http.Request)
-	BlockAvailability(w http.ResponseWriter, r *http.Request)
-	CheckAvailabilityConflict(w http.ResponseWriter, r *http.Request)
+	// GetAvailability(w http.ResponseWriter, r *http.Request)
+	// GetPartnerAvailabilities(w http.ResponseWriter, r *http.Request)
+	// GetAvailableSlots(w http.ResponseWriter, r *http.Request)
+	// UpdateAvailability(w http.ResponseWriter, r *http.Request)
+	// CancelAvailability(w http.ResponseWriter, r *http.Request)
+	// BlockAvailability(w http.ResponseWriter, r *http.Request)
+	// CheckAvailabilityConflict(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
