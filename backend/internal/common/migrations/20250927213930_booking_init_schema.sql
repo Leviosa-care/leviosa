@@ -92,7 +92,6 @@ CREATE TABLE booking.room_allocations (
     metadata JSONB, -- Maps to 'Metadata map[string]any,omitempty'. JSONB for flexible key-value pairs. 'omitempty' implies NULLable.
 
     -- Constraints
-    UNIQUE(room_id, user_id, allocation_type),
     CHECK ((allocation_type = 'dedicated' AND start_date IS NOT NULL) OR allocation_type = 'shared')
 );
 
