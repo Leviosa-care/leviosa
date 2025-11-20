@@ -286,3 +286,41 @@ func NewGetRoomAllocationsRequest(
 
 	return req
 }
+
+// NewCheckPartnerRoomAccessRequest creates an HTTP request for checking partner room access
+func NewCheckPartnerRoomAccessRequest(
+	t *testing.T,
+	ctx context.Context,
+	serverURL string,
+	partnerID uuid.UUID,
+	roomID uuid.UUID,
+	atTime *string,
+	accessToken string,
+) *http.Request {
+	t.Helper()
+
+	url := serverURL + "/partners/" + partnerID.String() + "/rooms/" + roomID.String() + "/access"
+
+	// Add query parameter if atTime is specified
+	if atTime != nil {
+		url += "?at=" + *atTime
+	}
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		url,
+		nil,
+	)
+	require.NoError(t, err)
+
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+
+	return req
+}
