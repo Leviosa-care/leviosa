@@ -26,11 +26,11 @@ type RoomAllocationService interface {
 	DeactivateAllocation(ctx context.Context, id uuid.UUID) error
 
 	// GetPartnerAllocations retrieves all allocations for a partner
-	GetPartnerAllocations(ctx context.Context, partnerID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error)
+	GetPartnerAllocations(ctx context.Context, userID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error)
 
 	// GetRoomAllocations retrieves all allocations for a room
 	GetRoomAllocations(ctx context.Context, roomID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error)
 
 	// CheckPartnerRoomAccess verifies if a partner has access to a room at a specific time
-	CheckPartnerRoomAccess(ctx context.Context, partnerID, roomID uuid.UUID, at time.Time) (bool, error)
+	CheckPartnerRoomAccess(ctx context.Context, userID, roomID uuid.UUID, at time.Time) (bool, error)
 }

@@ -9,8 +9,8 @@ import (
 )
 
 // GetPartnerAllocations retrieves all allocations for a specific partner
-func (s *RoomAllocationService) GetPartnerAllocations(ctx context.Context, partnerID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error) {
-	allocations, err := s.allocationRepo.GetByUserID(ctx, partnerID, activeOnly)
+func (s *RoomAllocationService) GetPartnerAllocations(ctx context.Context, userID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error) {
+	allocations, err := s.allocationRepo.GetByUserID(ctx, userID, activeOnly)
 	if err != nil {
 		return nil, fmt.Errorf("get partner allocations: %w", err)
 	}
