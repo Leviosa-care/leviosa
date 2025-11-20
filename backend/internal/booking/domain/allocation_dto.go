@@ -103,3 +103,19 @@ func (r *UpdateDedicatedAllocationRequest) Valid(ctx context.Context) error {
 
 	return errs.AsError()
 }
+
+type GetPartnerAllocationsRequest struct {
+	UserID     uuid.UUID `json:"user_id"`
+	ActiveOnly bool      `json:"active_only"`
+}
+
+func (r *GetPartnerAllocationsRequest) Valid(ctx context.Context) error {
+	var errs errsx.Map
+
+	// Validate RoomID
+	if r.UserID == uuid.Nil {
+		errs.Set("user_id", "user ID is required")
+	}
+
+	return errs.AsError()
+}
