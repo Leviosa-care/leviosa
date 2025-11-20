@@ -16,19 +16,22 @@ func (s *RoomAllocationService) CreateSharedAllocation(ctx context.Context, requ
 	}
 
 	// Validate partner exists and is verified
-	isVerified, err := s.authUserClient.GetPartnerVerificationStatus(ctx, request.UserID)
+	partner, err := s.authUserClient.GetPartnerByUserID(ctx, request.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("get partner verification status: %w", err)
+		if errors.Is(err, errs.ErrRepositoryNotFound) {
+			return nil, errs.NewInvalidInputErr(errors.New("partner by user ID not found"))
+		}
+		return nil, err
 	}
-	if !isVerified {
-		return nil, fmt.Errorf("partner not found or not verified")
+	if !partner.IsVerified {
+		return nil, fmt.Errorf("partner is not verified")
 	}
 
 	// Verify room exists and is active
 	room, err := s.roomRepo.GetByID(ctx, request.RoomID)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return nil, fmt.Errorf("room not found: %w", errs.ErrRepositoryNotFound)
+			return nil, errs.NewInvalidInputErr(errors.New("room with ID " + request.RoomID.String() + " not found"))
 		}
 		return nil, fmt.Errorf("verify room exists: %w", err)
 	}
