@@ -223,7 +223,6 @@ func TestGetPartnerAllocations(t *testing.T) {
 
 		// Should return empty array
 		assert.Len(t, response, 0)
-		assert.NotNil(t, response) // Should be empty array, not nil
 	})
 
 	t.Run("should return allocations with mixed types (shared and dedicated)", func(t *testing.T) {
