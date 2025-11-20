@@ -2,7 +2,6 @@ package ports
 
 import (
 	"context"
-	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/google/uuid"
@@ -32,5 +31,5 @@ type RoomAllocationService interface {
 	GetRoomAllocations(ctx context.Context, request *domain.GetRoomAllocationsRequest) ([]*domain.RoomAllocation, error)
 
 	// CheckPartnerRoomAccess verifies if a partner has access to a room at a specific time
-	CheckPartnerRoomAccess(ctx context.Context, userID, roomID uuid.UUID, at time.Time) (bool, error)
+	CheckPartnerRoomAccess(ctx context.Context, request *domain.CheckPartnerRoomAccessRequest) (bool, error)
 }

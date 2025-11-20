@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
@@ -69,8 +70,14 @@ func (h *handler) CheckPartnerRoomAccess(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
+	var request domain.CheckPartnerRoomAccessRequest
+
+	request.UserID = partnerID
+	request.RoomID = roomID
+	request.At = checkTime
+
 	// Call service to check access
-	hasAccess, err := h.svc.CheckPartnerRoomAccess(ctx, partnerID, roomID, checkTime)
+	hasAccess, err := h.svc.CheckPartnerRoomAccess(ctx, &request)
 	if err != nil {
 		httpx.RespondWithServiceError(w, logger, ctx, err, "check partner room access")
 		return

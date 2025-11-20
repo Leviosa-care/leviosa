@@ -4,17 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-
-	"github.com/google/uuid"
 )
 
 // CheckPartnerRoomAccess checks if a partner has access to a room at a specific time
-func (s *RoomAllocationService) CheckPartnerRoomAccess(ctx context.Context, partnerID, roomID uuid.UUID, at time.Time) (bool, error) {
+// func (s *RoomAllocationService) CheckPartnerRoomAccess(ctx context.Context, partnerID, roomID uuid.UUID, at time.Time) (bool, error) {
+func (s *RoomAllocationService) CheckPartnerRoomAccess(ctx context.Context, request *domain.CheckPartnerRoomAccessRequest) (bool, error) {
 	// Get active allocation for partner and room at the specified time
-	allocation, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, partnerID, roomID, at)
+	allocation, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, request.UserID, request.RoomID, request.At)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return false, nil // No allocation means no access
@@ -23,5 +22,5 @@ func (s *RoomAllocationService) CheckPartnerRoomAccess(ctx context.Context, part
 	}
 
 	// Check if allocation is active at the specified time
-	return allocation.IsActiveAt(at), nil
+	return allocation.IsActiveAt(request.At), nil
 }
