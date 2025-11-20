@@ -54,8 +54,13 @@ func (h *handler) GetPartnerAllocations(w http.ResponseWriter, r *http.Request) 
 	// Parse query parameters
 	activeOnly := r.URL.Query().Get("active_only") != "false" // Default to active only
 
+	request := domain.GetPartnerAllocationsRequest{
+		UserID:     partnerID,
+		ActiveOnly: activeOnly,
+	}
+
 	// Call service to get partner allocations
-	allocations, err := h.svc.GetPartnerAllocations(ctx, partnerID, activeOnly)
+	allocations, err := h.svc.GetPartnerAllocations(ctx, &request)
 	if err != nil {
 		var statusCode int
 		switch {

@@ -5,12 +5,16 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
-	"github.com/google/uuid"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
 // GetPartnerAllocations retrieves all allocations for a specific partner
-func (s *RoomAllocationService) GetPartnerAllocations(ctx context.Context, userID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error) {
-	allocations, err := s.allocationRepo.GetByUserID(ctx, userID, activeOnly)
+func (s *RoomAllocationService) GetPartnerAllocations(ctx context.Context, request *domain.GetPartnerAllocationsRequest) ([]*domain.RoomAllocation, error) {
+	if err := request.Valid(ctx); err != nil {
+		return nil, errs.NewInvalidValueErr(err.Error())
+	}
+
+	allocations, err := s.allocationRepo.GetByUserID(ctx, request.UserID, request.ActiveOnly)
 	if err != nil {
 		return nil, fmt.Errorf("get partner allocations: %w", err)
 	}
