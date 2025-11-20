@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
@@ -299,17 +300,23 @@ func NewCheckPartnerRoomAccessRequest(
 ) *http.Request {
 	t.Helper()
 
-	url := serverURL + "/partners/" + partnerID.String() + "/rooms/" + roomID.String() + "/access"
+	baseURL := serverURL + "/partners/" + partnerID.String() + "/rooms/" + roomID.String() + "/access"
 
-	// Add query parameter if atTime is specified
+	// Build URL with properly encoded query parameters
+	var fullURL string
 	if atTime != nil {
-		url += "?at=" + *atTime
+		// Use url.Values to properly encode the query parameter
+		params := url.Values{}
+		params.Add("at", *atTime)
+		fullURL = baseURL + "?" + params.Encode()
+	} else {
+		fullURL = baseURL
 	}
 
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		url,
+		fullURL,
 		nil,
 	)
 	require.NoError(t, err)
