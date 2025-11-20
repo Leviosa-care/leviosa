@@ -29,7 +29,7 @@ type RoomAllocationService interface {
 	GetPartnerAllocations(ctx context.Context, request *domain.GetPartnerAllocationsRequest) ([]*domain.RoomAllocation, error)
 
 	// GetRoomAllocations retrieves all allocations for a room
-	GetRoomAllocations(ctx context.Context, roomID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error)
+	GetRoomAllocations(ctx context.Context, request *domain.GetRoomAllocationsRequest) ([]*domain.RoomAllocation, error)
 
 	// CheckPartnerRoomAccess verifies if a partner has access to a room at a specific time
 	CheckPartnerRoomAccess(ctx context.Context, userID, roomID uuid.UUID, at time.Time) (bool, error)

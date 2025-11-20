@@ -54,8 +54,12 @@ func (h *handler) GetRoomAllocations(w http.ResponseWriter, r *http.Request) {
 	// Parse query parameters
 	activeOnly := r.URL.Query().Get("active_only") != "false" // Default to active only
 
+	var request domain.GetRoomAllocationsRequest
+	request.RoomID = roomID
+	request.ActiveOnly = activeOnly
+
 	// Call service to get room allocations
-	allocations, err := h.svc.GetRoomAllocations(ctx, roomID, activeOnly)
+	allocations, err := h.svc.GetRoomAllocations(ctx, &request)
 	if err != nil {
 		var statusCode int
 		switch {

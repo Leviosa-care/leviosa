@@ -7,21 +7,20 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-	"github.com/google/uuid"
 )
 
 // GetRoomAllocations retrieves all allocations for a specific room
-func (s *RoomAllocationService) GetRoomAllocations(ctx context.Context, roomID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error) {
+func (s *RoomAllocationService) GetRoomAllocations(ctx context.Context, request *domain.GetRoomAllocationsRequest) ([]*domain.RoomAllocation, error) {
 	// Verify room exists
-	_, err := s.roomRepo.GetByID(ctx, roomID)
+	_, err := s.roomRepo.GetByID(ctx, request.RoomID)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return nil, errs.NewInvalidInputErr(errors.New("room with ID " + roomID.String() + " not found"))
+			return nil, errs.NewInvalidInputErr(errors.New("room with ID " + request.RoomID.String() + " not found"))
 		}
 		return nil, fmt.Errorf("verify room exists: %w", err)
 	}
 
-	allocations, err := s.allocationRepo.GetByRoomID(ctx, roomID, activeOnly)
+	allocations, err := s.allocationRepo.GetByRoomID(ctx, request.RoomID, request.ActiveOnly)
 	if err != nil {
 		return nil, fmt.Errorf("get room allocations: %w", err)
 	}
