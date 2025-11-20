@@ -28,15 +28,32 @@ func (h *handler) UpdateDedicatedPeriod(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Log incoming request
+	logger.InfoContext(ctx, "Handler: Processing update dedicated period request",
+		"operation", "update_dedicated_period",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"user_agent", r.Header.Get("User-Agent"))
+
 	// Extract allocation ID from URL path
 	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
 	if len(pathParts) < 3 {
+		logger.WarnContext(ctx, "Handler: Invalid allocation ID in path",
+			"error", "invalid allocation ID in path",
+			"path", r.URL.Path,
+			"operation", "update_dedicated_period",
+			"method", r.Method)
 		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid allocation ID in path"), http.StatusBadRequest)
 		return
 	}
 
 	allocationID, err := uuid.Parse(pathParts[1])
 	if err != nil {
+		logger.WarnContext(ctx, "Handler: Invalid allocation ID format",
+			"error", err,
+			"raw_allocation_id", pathParts[1],
+			"operation", "update_dedicated_period",
+			"method", r.Method)
 		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid allocation ID format"), http.StatusBadRequest)
 		return
 	}
@@ -47,6 +64,11 @@ func (h *handler) UpdateDedicatedPeriod(w http.ResponseWriter, r *http.Request) 
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&request); err != nil {
+		logger.WarnContext(ctx, "Handler: Invalid JSON request body",
+			"error", err,
+			"operation", "update_dedicated_period",
+			"method", r.Method,
+			"path", r.URL.Path)
 		httpx.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("invalid request body: %v", err)), http.StatusBadRequest)
 		return
 	}
@@ -92,6 +114,10 @@ func (h *handler) UpdateDedicatedPeriod(w http.ResponseWriter, r *http.Request) 
 
 	logger.InfoContext(ctx, "Handler: Dedicated period updated successfully",
 		"allocation_id", allocationID,
+		"room_id", allocation.RoomID,
+		"user_id", allocation.UserID,
+		"start_date", request.StartDate,
+		"end_date", request.EndDate,
 		"operation", "update_dedicated_period")
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
