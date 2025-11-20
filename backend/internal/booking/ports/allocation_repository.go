@@ -36,7 +36,8 @@ type RoomAllocationRepository interface {
 	GetActiveAllocationForPartnerAndRoom(ctx context.Context, userID, roomID uuid.UUID, at time.Time) (*domain.RoomAllocation, error)
 
 	// CheckConflict checks if a new allocation would conflict with existing ones
-	CheckConflict(ctx context.Context, roomID, userID uuid.UUID, allocationType domain.AllocationType, startDate, endDate *time.Time) (bool, error)
+	// excludeID allows excluding a specific allocation from the conflict check (useful for updates)
+	CheckConflict(ctx context.Context, roomID, userID uuid.UUID, allocationType domain.AllocationType, startDate, endDate *time.Time, excludeID *uuid.UUID) (bool, error)
 }
 
 // RoomAllocationFilter defines filtering options for room allocation queries

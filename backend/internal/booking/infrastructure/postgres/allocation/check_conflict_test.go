@@ -51,7 +51,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
 		newEnd := time.Now().AddDate(0, 0, 20).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.True(t, hasConflict)
 	})
@@ -73,7 +73,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 11).Truncate(24 * time.Hour)
 		newEnd := time.Now().AddDate(0, 0, 20).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.False(t, hasConflict)
 	})
@@ -94,7 +94,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
 		newEnd := time.Now().AddDate(0, 0, 20).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.True(t, hasConflict)
 	})
@@ -117,7 +117,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
 		newEnd := time.Now().AddDate(0, 0, 20).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.False(t, hasConflict)
 	})
@@ -140,7 +140,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
 		newEnd := time.Now().AddDate(0, 0, 20).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, room2ID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, room2ID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.False(t, hasConflict)
 	})
@@ -224,7 +224,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 5).Truncate(24 * time.Hour)
 		newEnd := time.Now().AddDate(0, 0, 15).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.False(t, hasConflict)
 	})
@@ -246,7 +246,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := existingEnd
 		newEnd := time.Now().AddDate(0, 0, 20).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.False(t, hasConflict)
 	})
@@ -268,7 +268,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 5).Truncate(24 * time.Hour)
 		newEnd := existingStart
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.False(t, hasConflict)
 	})
@@ -290,7 +290,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 5).Truncate(24 * time.Hour)
 		newEnd := time.Now().AddDate(0, 0, 20).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.True(t, hasConflict)
 	})
@@ -312,7 +312,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
 		newEnd := time.Now().AddDate(0, 0, 15).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.True(t, hasConflict)
 	})
@@ -334,7 +334,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 5).Truncate(24 * time.Hour)
 		newEnd := time.Now().AddDate(0, 0, 15).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.True(t, hasConflict)
 	})
@@ -356,7 +356,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
 		newEnd := time.Now().AddDate(0, 0, 20).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.True(t, hasConflict)
 	})
@@ -385,7 +385,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 17).Truncate(24 * time.Hour)
 		newEnd := time.Now().AddDate(0, 0, 25).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.True(t, hasConflict)
 	})
@@ -407,7 +407,7 @@ func TestCheckConflict(t *testing.T) {
 		newStart := time.Now().AddDate(0, 0, 5).Truncate(24 * time.Hour)
 		newEnd := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, &newEnd, nil)
 		require.NoError(t, err)
 		assert.False(t, hasConflict)
 	})
@@ -428,7 +428,7 @@ func TestCheckConflict(t *testing.T) {
 		// Try to create new indefinite allocation (NULL end_date) starting during existing
 		newStart := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, nil)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, nil, nil)
 		require.NoError(t, err)
 		assert.True(t, hasConflict)
 	})
@@ -448,7 +448,7 @@ func TestCheckConflict(t *testing.T) {
 		// Try to create new indefinite allocation
 		newStart := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
 
-		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, nil)
+		hasConflict, err := repo.CheckConflict(ctx, roomID, uuid.New(), domain.AllocationTypeDedicated, &newStart, nil, nil)
 		require.NoError(t, err)
 		assert.True(t, hasConflict)
 	})

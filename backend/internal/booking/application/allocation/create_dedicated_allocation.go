@@ -47,7 +47,7 @@ func (s *RoomAllocationService) CreateDedicatedAllocation(ctx context.Context, r
 	}
 
 	// Check for existing allocation conflict
-	hasConflict, err := s.allocationRepo.CheckConflict(ctx, request.RoomID, request.UserID, domain.AllocationTypeDedicated, request.StartDate, request.EndDate)
+	hasConflict, err := s.allocationRepo.CheckConflict(ctx, request.RoomID, request.UserID, domain.AllocationTypeDedicated, request.StartDate, request.EndDate, nil)
 	if err != nil {
 		return nil, fmt.Errorf("check allocation conflict: %w", err)
 	}

@@ -14,16 +14,18 @@ import (
 // CheckConflict checks if a new allocation would conflict with existing active allocations
 // For dedicated allocations: checks for time period overlaps in the same room
 // For shared allocations: checks if the user already has an allocation for the room
+// excludeID allows excluding a specific allocation from the conflict check (useful for updates)
 func (r *Repository) CheckConflict(
 	ctx context.Context,
 	roomID, userID uuid.UUID,
 	allocationType domain.AllocationType,
 	startDate, endDate *time.Time,
+	excludeID *uuid.UUID,
 ) (bool, error) {
 	if allocationType == domain.AllocationTypeDedicated {
-		return r.checkDedicatedConflict(ctx, roomID, startDate, endDate)
+		return r.checkDedicatedConflict(ctx, roomID, startDate, endDate, excludeID)
 	}
-	return r.checkSharedConflict(ctx, roomID, userID)
+	return r.checkSharedConflict(ctx, roomID, userID, excludeID)
 }
 
 // checkDedicatedConflict checks for time period overlaps with existing dedicated allocations
@@ -31,6 +33,7 @@ func (r *Repository) checkDedicatedConflict(
 	ctx context.Context,
 	roomID uuid.UUID,
 	startDate, endDate *time.Time,
+	excludeID *uuid.UUID,
 ) (bool, error) {
 	if startDate == nil {
 		return false, fmt.Errorf("start_date is required for dedicated allocation conflict check: %w", errs.ErrInvalidValue)
@@ -40,6 +43,7 @@ func (r *Repository) checkDedicatedConflict(
 	// Two periods [A_start, A_end] and [B_start, B_end] overlap if:
 	// A_start < B_end AND B_start < A_end
 	// When end_date is NULL (indefinite), we treat it as extending infinitely
+	// excludeID allows excluding a specific allocation (useful when updating)
 	query := fmt.Sprintf(`
 		SELECT EXISTS (
 			SELECT 1
@@ -47,6 +51,7 @@ func (r *Repository) checkDedicatedConflict(
 			WHERE room_id = $1
 			AND is_active = true
 			AND allocation_type = 'dedicated'
+			AND ($4::uuid IS NULL OR id != $4)
 			AND (
 				-- Case 1: Existing has end_date, check overlap
 				(end_date IS NOT NULL AND start_date < $3 AND $2 < end_date)
@@ -61,7 +66,7 @@ func (r *Repository) checkDedicatedConflict(
 	`, r.schema)
 
 	var hasConflict bool
-	err := r.pool.QueryRow(ctx, query, roomID, startDate, endDate).Scan(&hasConflict)
+	err := r.pool.QueryRow(ctx, query, roomID, startDate, endDate, excludeID).Scan(&hasConflict)
 	if err != nil {
 		return false, errs.ClassifyPgError("check dedicated allocation conflict", err)
 	}
@@ -73,6 +78,7 @@ func (r *Repository) checkDedicatedConflict(
 func (r *Repository) checkSharedConflict(
 	ctx context.Context,
 	roomID, userID uuid.UUID,
+	excludeID *uuid.UUID,
 ) (bool, error) {
 	query := fmt.Sprintf(`
 		SELECT EXISTS (
@@ -82,11 +88,12 @@ func (r *Repository) checkSharedConflict(
 			AND user_id = $2
 			AND is_active = true
 			AND allocation_type = 'shared'
+			AND ($3::uuid IS NULL OR id != $3)
 		)
 	`, r.schema)
 
 	var hasConflict bool
-	err := r.pool.QueryRow(ctx, query, roomID, userID).Scan(&hasConflict)
+	err := r.pool.QueryRow(ctx, query, roomID, userID, excludeID).Scan(&hasConflict)
 	if err != nil {
 		return false, errs.ClassifyPgError("check shared allocation conflict", err)
 	}

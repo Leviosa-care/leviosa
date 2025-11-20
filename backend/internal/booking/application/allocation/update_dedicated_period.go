@@ -38,7 +38,7 @@ func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, id uu
 	}
 
 	// Check for conflicts with other allocations (excluding this one)
-	hasConflict, err := s.allocationRepo.CheckConflict(ctx, allocation.RoomID, allocation.UserID, domain.AllocationTypeDedicated, startDate, endDate)
+	hasConflict, err := s.allocationRepo.CheckConflict(ctx, allocation.RoomID, allocation.UserID, domain.AllocationTypeDedicated, startDate, endDate, &id)
 	if err != nil {
 		return nil, fmt.Errorf("check allocation conflict: %w", err)
 	}
