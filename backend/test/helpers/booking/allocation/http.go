@@ -126,8 +126,8 @@ func NewUpdateDedicatedAllocationRequest(
 
 	req, err := http.NewRequestWithContext(
 		ctx,
-		http.MethodPatch,
-		serverURL+"/allocations/"+allocationID.String()+"/dedicated",
+		http.MethodPut,
+		serverURL+"/allocations/"+allocationID.String()+"/period",
 		bytes.NewReader(jsonBody),
 	)
 	require.NoError(t, err)
