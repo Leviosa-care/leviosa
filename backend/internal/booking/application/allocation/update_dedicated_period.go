@@ -27,7 +27,7 @@ func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, reque
 
 	// Validate this is a dedicated allocation
 	if allocation.AllocationType != domain.AllocationTypeDedicated {
-		return nil, fmt.Errorf("can only update period for dedicated allocations")
+		return nil, errs.NewInvalidInputErr(errors.New("can only update period for dedicated allocations"))
 	}
 
 	// Validate dates
