@@ -73,8 +73,10 @@ func (h *handler) UpdateDedicatedPeriod(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	request.ID = allocationID
+
 	// Call service to update dedicated period
-	allocation, err := h.svc.UpdateDedicatedPeriod(ctx, allocationID, request.StartDate, request.EndDate)
+	allocation, err := h.svc.UpdateDedicatedPeriod(ctx, &request)
 	if err != nil {
 		var statusCode int
 		switch {

@@ -4,18 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-
-	"github.com/google/uuid"
 )
 
 // UpdateDedicatedPeriod updates the time period for a dedicated allocation
-func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, id uuid.UUID, startDate, endDate *time.Time) (*domain.RoomAllocation, error) {
+// func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, id uuid.UUID, startDate, endDate *time.Time) (*domain.RoomAllocation, error) {
+func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, request *domain.UpdateDedicatedAllocationRequest) (*domain.RoomAllocation, error) {
 	// Get existing allocation
-	allocation, err := s.allocationRepo.GetByID(ctx, id)
+	allocation, err := s.allocationRepo.GetByID(ctx, request.ID)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return nil, errs.NewInvalidInputErr(errors.New("allocation by ID not found"))
@@ -29,16 +27,16 @@ func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, id uu
 	}
 
 	// Validate dates
-	if startDate == nil {
+	if request.StartDate == nil {
 		return nil, fmt.Errorf("start date is required")
 	}
 
-	if endDate != nil && endDate.Before(*startDate) {
+	if request.EndDate != nil && request.EndDate.Before(*request.StartDate) {
 		return nil, fmt.Errorf("end date must be after start date")
 	}
 
 	// Check for conflicts with other allocations (excluding this one)
-	hasConflict, err := s.allocationRepo.CheckConflict(ctx, allocation.RoomID, allocation.UserID, domain.AllocationTypeDedicated, startDate, endDate, &id)
+	hasConflict, err := s.allocationRepo.CheckConflict(ctx, allocation.RoomID, allocation.UserID, domain.AllocationTypeDedicated, request.StartDate, request.EndDate, &request.ID)
 	if err != nil {
 		return nil, fmt.Errorf("check allocation conflict: %w", err)
 	}
@@ -48,7 +46,7 @@ func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, id uu
 	}
 
 	// Update period with validation
-	if err := allocation.UpdateDedicatedPeriod(startDate, endDate); err != nil {
+	if err := allocation.UpdateDedicatedPeriod(request.StartDate, request.EndDate); err != nil {
 		return nil, fmt.Errorf("update dedicated period: %w", err)
 	}
 

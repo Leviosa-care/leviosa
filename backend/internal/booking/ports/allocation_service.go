@@ -20,7 +20,7 @@ type RoomAllocationService interface {
 	GetAllocation(ctx context.Context, id uuid.UUID) (*domain.RoomAllocation, error)
 
 	// UpdateDedicatedPeriod updates the time period for a dedicated allocation
-	UpdateDedicatedPeriod(ctx context.Context, id uuid.UUID, startDate, endDate *time.Time) (*domain.RoomAllocation, error)
+	UpdateDedicatedPeriod(ctx context.Context, request *domain.UpdateDedicatedAllocationRequest) (*domain.RoomAllocation, error)
 
 	// DeactivateAllocation marks an allocation as inactive
 	DeactivateAllocation(ctx context.Context, id uuid.UUID) error
