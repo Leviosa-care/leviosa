@@ -244,3 +244,45 @@ func NewGetPartnerAllocationsRequest(
 
 	return req
 }
+
+// NewGetRoomAllocationsRequest creates an HTTP request for getting room allocations
+func NewGetRoomAllocationsRequest(
+	t *testing.T,
+	ctx context.Context,
+	serverURL string,
+	roomID uuid.UUID,
+	activeOnly *bool,
+	accessToken string,
+) *http.Request {
+	t.Helper()
+
+	url := serverURL + "/rooms/" + roomID.String() + "/allocations"
+
+	// Add query parameter if activeOnly is specified
+	if activeOnly != nil {
+		if *activeOnly {
+			url += "?active_only=true"
+		} else {
+			url += "?active_only=false"
+		}
+	}
+	// If activeOnly is nil, don't add query parameter (will use default)
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		url,
+		nil,
+	)
+	require.NoError(t, err)
+
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+
+	return req
+}
