@@ -15,7 +15,7 @@ func (s *RoomAllocationService) DeactivateAllocation(ctx context.Context, id uui
 	allocation, err := s.allocationRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return errs.ErrRepositoryNotFound
+			return errs.NewInvalidInputErr(errors.New("allocation by ID not found"))
 		}
 		return fmt.Errorf("get allocation for deactivation: %w", err)
 	}
