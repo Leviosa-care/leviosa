@@ -56,5 +56,9 @@ func (r *Repository) GetByRoomID(ctx context.Context, roomID uuid.UUID, activeOn
 		return nil, errs.ClassifyPgError("iterate room allocation rows", err)
 	}
 
+	if len(allocations) == 0 {
+		return []*domain.RoomAllocation{}, nil
+	}
+
 	return allocations, nil
 }

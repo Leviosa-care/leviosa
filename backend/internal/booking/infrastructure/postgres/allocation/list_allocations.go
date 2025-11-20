@@ -137,6 +137,10 @@ func (r *Repository) List(ctx context.Context, filter ports.RoomAllocationFilter
 		return nil, errs.ClassifyPgError("iterate room allocation rows", err)
 	}
 
+	if len(allocations) == 0 {
+		return []*domain.RoomAllocation{}, nil
+	}
+
 	return allocations, nil
 }
 

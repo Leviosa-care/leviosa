@@ -53,7 +53,11 @@ func (r *Repository) GetByUserID(ctx context.Context, partnerID uuid.UUID, activ
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, errs.ClassifyPgError("iterate room allocation rows", err)
+		return nil, errs.ClassifyPgError("iterate allocations rows", err)
+	}
+
+	if len(allocations) == 0 {
+		return []*domain.RoomAllocation{}, nil
 	}
 
 	return allocations, nil
