@@ -16,7 +16,7 @@ func (s *RoomAllocationService) GetRoomAllocations(ctx context.Context, roomID u
 	_, err := s.roomRepo.GetByID(ctx, roomID)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return nil, errs.ErrRepositoryNotFound
+			return nil, errs.NewInvalidInputErr(errors.New("room with ID " + roomID.String() + " not found"))
 		}
 		return nil, fmt.Errorf("verify room exists: %w", err)
 	}
