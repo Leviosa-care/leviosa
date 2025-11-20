@@ -12,23 +12,40 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
+	"github.com/hengadev/encx"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
 )
 
 var (
-	pgContainer *tu.PostgresContainer
-	testPool    *pgxpool.Pool
-	repo        ports.RoomAllocationRepository
+	pgContainer    *tu.PostgresContainer
+	vaultContainer *tu.VaultContainer
+	testPool       *pgxpool.Pool
+	testCrypto     encx.CryptoService
+	repo           ports.RoomAllocationRepository
 )
 
 func TestMain(m *testing.M) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Postgres container setup
+	// Vault container setup for encryption
 	var err error
+	vaultContainer, err = tu.SetupVault(ctx, nil)
+	if err != nil {
+		log.Fatalf("Failed to setup vault container: %v", err)
+	}
+	defer tu.TeardownVault(ctx, nil, vaultContainer)
+
+	// Initialize crypto service
+	testCrypto, err = tu.NewTestCryptoService(vaultContainer)
+	if err != nil {
+		log.Fatalf("Failed to initialize crypto service: %v", err)
+	}
+	log.Println("Crypto service initialized.")
+
+	// Postgres container setup
 	pgContainer, err = tu.SetupPostgres(ctx, nil)
 	if err != nil {
 		log.Fatalf("Failed to setup postgres container: %v", err)
