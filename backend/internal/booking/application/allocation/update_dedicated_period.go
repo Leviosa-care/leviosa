@@ -18,7 +18,7 @@ func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, id uu
 	allocation, err := s.allocationRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
-			return nil, errs.ErrRepositoryNotFound
+			return nil, errs.NewInvalidInputErr(errors.New("allocation by ID not found"))
 		}
 		return nil, fmt.Errorf("get allocation for update: %w", err)
 	}
@@ -44,7 +44,7 @@ func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, id uu
 	}
 
 	if hasConflict {
-		return nil, fmt.Errorf("updated period conflicts with existing allocation")
+		return nil, errs.NewAlreadyExistsError(fmt.Errorf("conflicts with existing allocation"), "dedicated allocation")
 	}
 
 	// Update period with validation
