@@ -76,11 +76,30 @@ func (r *CreateDedicatedAllocationRequest) Valid(ctx context.Context) error {
 }
 
 type UpdateDedicatedAllocationRequest struct {
+	ID        uuid.UUID  `json:"id"`
 	StartDate *time.Time `json:"start_date" validate:"required"`
 	EndDate   *time.Time `json:"end_date,omitempty"`
 }
 
 func (r *UpdateDedicatedAllocationRequest) Valid(ctx context.Context) error {
 	var errs errsx.Map
+
+	// Validate RoomID
+	if r.ID == uuid.Nil {
+		errs.Set("id", "allocation ID is required")
+	}
+
+	// Validate StartDate
+	if r.StartDate == nil {
+		errs.Set("start_date", "start date is required")
+	}
+
+	// Validate EndDate is after StartDate (if both are provided)
+	if r.StartDate != nil && r.EndDate != nil {
+		if r.EndDate.Before(*r.StartDate) || r.EndDate.Equal(*r.StartDate) {
+			errs.Set("end_date", "end date must be after start date")
+		}
+	}
+
 	return errs.AsError()
 }
