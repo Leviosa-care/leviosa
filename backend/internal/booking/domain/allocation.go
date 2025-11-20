@@ -54,6 +54,7 @@ func NewSharedAllocation(roomID, userID uuid.UUID) (*RoomAllocation, error) {
 }
 
 // NewDedicatedAllocation creates a new dedicated room allocation with time bounds
+// Dates are normalized to midnight UTC to match PostgreSQL DATE column behavior
 func NewDedicatedAllocation(roomID, userID uuid.UUID, startDate, endDate *time.Time) (*RoomAllocation, error) {
 	if roomID == uuid.Nil {
 		return nil, ErrInvalidRoomID
@@ -68,13 +69,17 @@ func NewDedicatedAllocation(roomID, userID uuid.UUID, startDate, endDate *time.T
 		return nil, ErrInvalidAllocationEndDate
 	}
 
+	// Normalize dates to midnight UTC for day-level precision
+	normalizedStart := DateOnlyPtr(startDate)
+	normalizedEnd := DateOnlyPtr(endDate)
+
 	return &RoomAllocation{
 		ID:             uuid.New(),
 		RoomID:         roomID,
 		UserID:         userID,
 		AllocationType: AllocationTypeDedicated,
-		StartDate:      startDate,
-		EndDate:        endDate,
+		StartDate:      normalizedStart,
+		EndDate:        normalizedEnd,
 		IsActive:       true,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
@@ -82,6 +87,7 @@ func NewDedicatedAllocation(roomID, userID uuid.UUID, startDate, endDate *time.T
 }
 
 // UpdateDedicatedPeriod updates the time period for a dedicated allocation
+// Dates are normalized to midnight UTC to match PostgreSQL DATE column behavior
 func (ra *RoomAllocation) UpdateDedicatedPeriod(startDate, endDate *time.Time) error {
 	if ra.AllocationType != AllocationTypeDedicated {
 		return ErrCannotUpdateSharedAllocationPeriod
@@ -93,8 +99,9 @@ func (ra *RoomAllocation) UpdateDedicatedPeriod(startDate, endDate *time.Time) e
 		return ErrInvalidAllocationEndDate
 	}
 
-	ra.StartDate = startDate
-	ra.EndDate = endDate
+	// Normalize dates to midnight UTC for day-level precision
+	ra.StartDate = DateOnlyPtr(startDate)
+	ra.EndDate = DateOnlyPtr(endDate)
 	ra.UpdatedAt = time.Now()
 	return nil
 }
