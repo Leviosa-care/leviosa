@@ -173,3 +173,32 @@ func NewDeleteAllocationRequest(
 
 	return req
 }
+
+// NewDeactivateAllocationRequest creates an HTTP request for deactivating an allocation
+func NewDeactivateAllocationRequest(
+	t *testing.T,
+	ctx context.Context,
+	serverURL string,
+	allocationID uuid.UUID,
+	accessToken string,
+) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		serverURL+"/allocations/"+allocationID.String()+"/deactivate",
+		nil,
+	)
+	require.NoError(t, err)
+
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+
+	return req
+}
