@@ -11,6 +11,10 @@ import (
 
 // GetRoomAllocations retrieves all allocations for a specific room
 func (s *RoomAllocationService) GetRoomAllocations(ctx context.Context, request *domain.GetRoomAllocationsRequest) ([]*domain.RoomAllocation, error) {
+	if err := request.Valid(ctx); err != nil {
+		return nil, errs.NewInvalidValueErr(err.Error())
+	}
+
 	// Verify room exists
 	_, err := s.roomRepo.GetByID(ctx, request.RoomID)
 	if err != nil {
