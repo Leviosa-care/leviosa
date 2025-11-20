@@ -1,0 +1,27 @@
+package allocation
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
+	"github.com/google/uuid"
+)
+
+// CheckPartnerRoomAccess checks if a partner has access to a room at a specific time
+func (s *RoomAllocationService) CheckPartnerRoomAccess(ctx context.Context, partnerID, roomID uuid.UUID, at time.Time) (bool, error) {
+	// Get active allocation for partner and room at the specified time
+	allocation, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, partnerID, roomID, at)
+	if err != nil {
+		if errors.Is(err, errs.ErrRepositoryNotFound) {
+			return false, nil // No allocation means no access
+		}
+		return false, fmt.Errorf("check partner room access: %w", err)
+	}
+
+	// Check if allocation is active at the specified time
+	return allocation.IsActiveAt(at), nil
+}
