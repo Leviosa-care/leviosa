@@ -119,3 +119,19 @@ func (r *GetPartnerAllocationsRequest) Valid(ctx context.Context) error {
 
 	return errs.AsError()
 }
+
+type GetRoomAllocationsRequest struct {
+	RoomID     uuid.UUID `json:"room_id"`
+	ActiveOnly bool      `json:"active_only"`
+}
+
+func (r *GetRoomAllocationsRequest) Valid(ctx context.Context) error {
+	var errs errsx.Map
+
+	// Validate RoomID
+	if r.RoomID == uuid.Nil {
+		errs.Set("room_id", "room ID is required")
+	}
+
+	return errs.AsError()
+}
