@@ -14,9 +14,26 @@ func (s *RoomAllocationService) GetPartnerAllocations(ctx context.Context, reque
 		return nil, errs.NewInvalidValueErr(err.Error())
 	}
 
-	allocations, err := s.allocationRepo.GetByUserID(ctx, request.UserID, request.ActiveOnly)
+	// Compute hash for lookup
+	userIDBytes, err := request.UserID.MarshalBinary()
+	if err != nil {
+		return nil, fmt.Errorf("serialize user ID for hashing: %w", err)
+	}
+	userIDHash := s.crypto.HashBasic(ctx, userIDBytes)
+
+	allocationsEncx, err := s.allocationRepo.GetByUserIDHash(ctx, userIDHash, request.ActiveOnly)
 	if err != nil {
 		return nil, fmt.Errorf("get partner allocations: %w", err)
+	}
+
+	// Decrypt all results
+	allocations := make([]*domain.RoomAllocation, 0, len(allocationsEncx))
+	for _, allocationEncx := range allocationsEncx {
+		allocation, err := domain.DecryptRoomAllocationEncx(ctx, s.crypto, allocationEncx)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt allocation: %w", err)
+		}
+		allocations = append(allocations, allocation)
 	}
 
 	return allocations, nil

@@ -40,8 +40,15 @@ func (s *RoomAllocationService) CreateSharedAllocation(ctx context.Context, requ
 		return nil, fmt.Errorf("cannot allocate inactive room")
 	}
 
+	// Compute hash for conflict check
+	userIDBytes, err := request.UserID.MarshalBinary()
+	if err != nil {
+		return nil, fmt.Errorf("serialize user ID for hashing: %w", err)
+	}
+	userIDHash := s.crypto.HashBasic(ctx, userIDBytes)
+
 	// Check for existing allocation conflict
-	hasConflict, err := s.allocationRepo.CheckConflict(ctx, request.RoomID, request.UserID, domain.AllocationTypeShared, nil, nil, nil)
+	hasConflict, err := s.allocationRepo.CheckConflict(ctx, request.RoomID, userIDHash, domain.AllocationTypeShared, nil, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("check allocation conflict: %w", err)
 	}
@@ -56,8 +63,14 @@ func (s *RoomAllocationService) CreateSharedAllocation(ctx context.Context, requ
 		return nil, fmt.Errorf("create shared allocation entity: %w", err)
 	}
 
+	// Encrypt before persisting
+	allocationEncx, err := domain.ProcessRoomAllocationEncx(ctx, s.crypto, allocation)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt allocation: %w", err)
+	}
+
 	// Persist to repository
-	if err := s.allocationRepo.Create(ctx, allocation); err != nil {
+	if err := s.allocationRepo.Create(ctx, allocationEncx); err != nil {
 		return nil, fmt.Errorf("create shared allocation: %w", err)
 	}
 

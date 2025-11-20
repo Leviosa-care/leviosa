@@ -24,9 +24,19 @@ func (s *RoomAllocationService) GetRoomAllocations(ctx context.Context, request 
 		return nil, fmt.Errorf("verify room exists: %w", err)
 	}
 
-	allocations, err := s.allocationRepo.GetByRoomID(ctx, request.RoomID, request.ActiveOnly)
+	allocationsEncx, err := s.allocationRepo.GetByRoomID(ctx, request.RoomID, request.ActiveOnly)
 	if err != nil {
 		return nil, fmt.Errorf("get room allocations: %w", err)
+	}
+
+	// Decrypt all results
+	allocations := make([]*domain.RoomAllocation, 0, len(allocationsEncx))
+	for _, allocationEncx := range allocationsEncx {
+		allocation, err := domain.DecryptRoomAllocationEncx(ctx, s.crypto, allocationEncx)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt allocation: %w", err)
+		}
+		allocations = append(allocations, allocation)
 	}
 
 	return allocations, nil

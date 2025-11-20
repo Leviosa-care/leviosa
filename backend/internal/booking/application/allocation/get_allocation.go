@@ -11,9 +11,15 @@ import (
 
 // GetAllocation retrieves a room allocation by ID
 func (s *RoomAllocationService) GetAllocation(ctx context.Context, id uuid.UUID) (*domain.RoomAllocation, error) {
-	allocation, err := s.allocationRepo.GetByID(ctx, id)
+	allocationEncx, err := s.allocationRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get allocation: %w", err)
+	}
+
+	// Decrypt before returning
+	allocation, err := domain.DecryptRoomAllocationEncx(ctx, s.crypto, allocationEncx)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt allocation: %w", err)
 	}
 
 	return allocation, nil

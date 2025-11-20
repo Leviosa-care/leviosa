@@ -16,13 +16,26 @@ func (s *RoomAllocationService) CheckPartnerRoomAccess(ctx context.Context, requ
 		return false, errs.NewInvalidValueErr(err.Error())
 	}
 
+	// Compute hash for lookup
+	userIDBytes, err := request.UserID.MarshalBinary()
+	if err != nil {
+		return false, fmt.Errorf("serialize user ID for hashing: %w", err)
+	}
+	userIDHash := s.crypto.HashBasic(ctx, userIDBytes)
+
 	// Get active allocation for partner and room at the specified time
-	allocation, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, request.UserID, request.RoomID, request.At)
+	allocationEncx, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, userIDHash, request.RoomID, request.At)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return false, nil // No allocation means no access
 		}
 		return false, fmt.Errorf("check partner room access: %w", err)
+	}
+
+	// Decrypt
+	allocation, err := domain.DecryptRoomAllocationEncx(ctx, s.crypto, allocationEncx)
+	if err != nil {
+		return false, fmt.Errorf("decrypt allocation: %w", err)
 	}
 
 	// Check if allocation is active at the specified time

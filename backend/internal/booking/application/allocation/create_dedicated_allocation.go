@@ -46,8 +46,15 @@ func (s *RoomAllocationService) CreateDedicatedAllocation(ctx context.Context, r
 		return nil, fmt.Errorf("end date must be after start date")
 	}
 
+	// Compute hash for conflict check
+	userIDBytes, err := request.UserID.MarshalBinary()
+	if err != nil {
+		return nil, fmt.Errorf("serialize user ID for hashing: %w", err)
+	}
+	userIDHash := s.crypto.HashBasic(ctx, userIDBytes)
+
 	// Check for existing allocation conflict
-	hasConflict, err := s.allocationRepo.CheckConflict(ctx, request.RoomID, request.UserID, domain.AllocationTypeDedicated, request.StartDate, request.EndDate, nil)
+	hasConflict, err := s.allocationRepo.CheckConflict(ctx, request.RoomID, userIDHash, domain.AllocationTypeDedicated, request.StartDate, request.EndDate, nil)
 	if err != nil {
 		return nil, fmt.Errorf("check allocation conflict: %w", err)
 	}
@@ -62,8 +69,14 @@ func (s *RoomAllocationService) CreateDedicatedAllocation(ctx context.Context, r
 		return nil, fmt.Errorf("create dedicated allocation entity: %w", err)
 	}
 
+	// Encrypt before persisting
+	allocationEncx, err := domain.ProcessRoomAllocationEncx(ctx, s.crypto, allocation)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt allocation: %w", err)
+	}
+
 	// Persist to repository
-	if err := s.allocationRepo.Create(ctx, allocation); err != nil {
+	if err := s.allocationRepo.Create(ctx, allocationEncx); err != nil {
 		return nil, fmt.Errorf("create dedicated allocation: %w", err)
 	}
 

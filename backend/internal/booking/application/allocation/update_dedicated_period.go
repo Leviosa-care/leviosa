@@ -17,12 +17,18 @@ func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, reque
 	}
 
 	// Get existing allocation
-	allocation, err := s.allocationRepo.GetByID(ctx, request.ID)
+	allocationEncx, err := s.allocationRepo.GetByID(ctx, request.ID)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return nil, errs.NewInvalidInputErr(errors.New("allocation by ID not found"))
 		}
 		return nil, fmt.Errorf("get allocation for update: %w", err)
+	}
+
+	// Decrypt
+	allocation, err := domain.DecryptRoomAllocationEncx(ctx, s.crypto, allocationEncx)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt allocation: %w", err)
 	}
 
 	// Validate this is a dedicated allocation
@@ -39,8 +45,15 @@ func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, reque
 		return nil, fmt.Errorf("end date must be after start date")
 	}
 
+	// Compute hash for conflict check
+	userIDBytes, err := allocation.UserID.MarshalBinary()
+	if err != nil {
+		return nil, fmt.Errorf("serialize user ID for hashing: %w", err)
+	}
+	userIDHash := s.crypto.HashBasic(ctx, userIDBytes)
+
 	// Check for conflicts with other allocations (excluding this one)
-	hasConflict, err := s.allocationRepo.CheckConflict(ctx, allocation.RoomID, allocation.UserID, domain.AllocationTypeDedicated, request.StartDate, request.EndDate, &request.ID)
+	hasConflict, err := s.allocationRepo.CheckConflict(ctx, allocation.RoomID, userIDHash, domain.AllocationTypeDedicated, request.StartDate, request.EndDate, &request.ID)
 	if err != nil {
 		return nil, fmt.Errorf("check allocation conflict: %w", err)
 	}
@@ -54,8 +67,14 @@ func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, reque
 		return nil, fmt.Errorf("update dedicated period: %w", err)
 	}
 
+	// Re-encrypt before persisting
+	allocationEncx, err = domain.ProcessRoomAllocationEncx(ctx, s.crypto, allocation)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt allocation: %w", err)
+	}
+
 	// Persist changes
-	if err := s.allocationRepo.Update(ctx, allocation); err != nil {
+	if err := s.allocationRepo.Update(ctx, allocationEncx); err != nil {
 		return nil, fmt.Errorf("update allocation period: %w", err)
 	}
 
