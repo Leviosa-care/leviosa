@@ -135,3 +135,29 @@ func (r *GetRoomAllocationsRequest) Valid(ctx context.Context) error {
 
 	return errs.AsError()
 }
+
+type CheckPartnerRoomAccessRequest struct {
+	UserID uuid.UUID `json:"user_id"`
+	RoomID uuid.UUID `json:"room_id"`
+	At     time.Time `json:"at"`
+}
+
+func (r *CheckPartnerRoomAccessRequest) Valid(ctx context.Context) error {
+	var errs errsx.Map
+
+	// Validate UserID
+	if r.UserID == uuid.Nil {
+		errs.Set("user_id", "user ID is required")
+	}
+
+	// Validate RoomID
+	if r.RoomID == uuid.Nil {
+		errs.Set("room_id", "room ID is required")
+	}
+
+	if r.At.IsZero() {
+		errs.Set("at", "time is required")
+	}
+
+	return errs.AsError()
+}
