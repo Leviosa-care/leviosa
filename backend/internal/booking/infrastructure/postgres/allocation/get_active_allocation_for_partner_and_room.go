@@ -10,13 +10,14 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) GetActiveAllocationForPartnerAndRoom(ctx context.Context, partnerID, roomID uuid.UUID, at time.Time) (*domain.RoomAllocation, error) {
+func (r *Repository) GetActiveAllocationForPartnerAndRoom(ctx context.Context, userIDHash string, roomID uuid.UUID, at time.Time) (*domain.RoomAllocationEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, room_id, user_id, allocation_type,
-			start_date, end_date, is_active, created_at, updated_at
+			id, room_id, user_id_encrypted, user_id_hash, allocation_type,
+			start_date, end_date, dek_encrypted, key_version,
+			is_active, created_at, updated_at
 		FROM %s.room_allocations
-		WHERE user_id = $1 AND room_id = $2 AND is_active = true
+		WHERE user_id_hash = $1 AND room_id = $2 AND is_active = true
 		AND (
 			allocation_type = 'shared'
 			OR (
@@ -34,14 +35,17 @@ func (r *Repository) GetActiveAllocationForPartnerAndRoom(ctx context.Context, p
 		LIMIT 1
 	`, r.schema)
 
-	allocation := &domain.RoomAllocation{}
-	err := r.pool.QueryRow(ctx, query, partnerID, roomID, at).Scan(
+	allocation := &domain.RoomAllocationEncx{}
+	err := r.pool.QueryRow(ctx, query, userIDHash, roomID, at).Scan(
 		&allocation.ID,
 		&allocation.RoomID,
-		&allocation.UserID,
+		&allocation.UserIDEncrypted,
+		&allocation.UserIDHash,
 		&allocation.AllocationType,
 		&allocation.StartDate,
 		&allocation.EndDate,
+		&allocation.DEKEncrypted,
+		&allocation.KeyVersion,
 		&allocation.IsActive,
 		&allocation.CreatedAt,
 		&allocation.UpdatedAt,

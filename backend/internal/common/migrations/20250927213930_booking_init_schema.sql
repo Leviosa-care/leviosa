@@ -75,7 +75,10 @@ CREATE TABLE booking.rooms (
 CREATE TABLE booking.room_allocations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     room_id UUID NOT NULL REFERENCES booking.rooms(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL, -- References auth.partners.user_id (from authuser service)
+
+    -- User ID (encrypted for GDPR compliance)
+    user_id_encrypted BYTEA NOT NULL,
+    user_id_hash TEXT NOT NULL,
 
     -- Allocation type
     allocation_type VARCHAR(20) NOT NULL CHECK (allocation_type IN ('dedicated', 'shared')),
@@ -83,6 +86,10 @@ CREATE TABLE booking.room_allocations (
     -- Time-based allocation (optional - for dedicated allocations with time limits)
     start_date DATE,
     end_date DATE,
+
+    -- Encryption metadata (required by encx)
+    dek_encrypted BYTEA NOT NULL,
+    key_version INTEGER NOT NULL DEFAULT 1,
 
     -- Administrative fields
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -177,7 +184,7 @@ CREATE INDEX idx_rooms_building_active ON booking.rooms(building_id, is_active) 
 CREATE INDEX idx_rooms_name_hash ON booking.rooms(name_hash);
 CREATE INDEX idx_rooms_room_number_hash ON booking.rooms(room_number_hash);
 
-CREATE INDEX idx_room_allocations_partner ON booking.room_allocations(user_id, is_active) WHERE is_active = TRUE;
+CREATE INDEX idx_room_allocations_partner ON booking.room_allocations(user_id_hash, is_active) WHERE is_active = TRUE;
 CREATE INDEX idx_room_allocations_room ON booking.room_allocations(room_id, is_active) WHERE is_active = TRUE;
 CREATE INDEX idx_availabilities_partner_time ON booking.availabilities(user_id, start_time, end_time);
 CREATE INDEX idx_availabilities_room_time ON booking.availabilities(room_id, start_time, end_time);

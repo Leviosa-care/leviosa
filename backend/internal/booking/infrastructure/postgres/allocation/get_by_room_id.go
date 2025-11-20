@@ -9,11 +9,12 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) GetByRoomID(ctx context.Context, roomID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocation, error) {
+func (r *Repository) GetByRoomID(ctx context.Context, roomID uuid.UUID, activeOnly bool) ([]*domain.RoomAllocationEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, room_id, user_id, allocation_type,
-			start_date, end_date, is_active, created_at, updated_at
+			id, room_id, user_id_encrypted, user_id_hash, allocation_type,
+			start_date, end_date, dek_encrypted, key_version,
+			is_active, created_at, updated_at
 		FROM %s.room_allocations
 		WHERE room_id = $1
 	`, r.schema)
@@ -31,16 +32,19 @@ func (r *Repository) GetByRoomID(ctx context.Context, roomID uuid.UUID, activeOn
 	}
 	defer rows.Close()
 
-	var allocations []*domain.RoomAllocation
+	var allocations []*domain.RoomAllocationEncx
 	for rows.Next() {
-		allocation := &domain.RoomAllocation{}
+		allocation := &domain.RoomAllocationEncx{}
 		err := rows.Scan(
 			&allocation.ID,
 			&allocation.RoomID,
-			&allocation.UserID,
+			&allocation.UserIDEncrypted,
+			&allocation.UserIDHash,
 			&allocation.AllocationType,
 			&allocation.StartDate,
 			&allocation.EndDate,
+			&allocation.DEKEncrypted,
+			&allocation.KeyVersion,
 			&allocation.IsActive,
 			&allocation.CreatedAt,
 			&allocation.UpdatedAt,
@@ -57,7 +61,7 @@ func (r *Repository) GetByRoomID(ctx context.Context, roomID uuid.UUID, activeOn
 	}
 
 	if len(allocations) == 0 {
-		return []*domain.RoomAllocation{}, nil
+		return []*domain.RoomAllocationEncx{}, nil
 	}
 
 	return allocations, nil

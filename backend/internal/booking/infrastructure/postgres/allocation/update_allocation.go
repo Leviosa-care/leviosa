@@ -8,26 +8,32 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
-func (r *Repository) Update(ctx context.Context, allocation *domain.RoomAllocation) error {
+func (r *Repository) Update(ctx context.Context, allocation *domain.RoomAllocationEncx) error {
 	query := fmt.Sprintf(`
 		UPDATE %s.room_allocations SET
 			room_id = $2,
-			user_id = $3,
-			allocation_type = $4,
-			start_date = $5,
-			end_date = $6,
-			is_active = $7,
-			updated_at = $8
+			user_id_encrypted = $3,
+			user_id_hash = $4,
+			allocation_type = $5,
+			start_date = $6,
+			end_date = $7,
+			dek_encrypted = $8,
+			key_version = $9,
+			is_active = $10,
+			updated_at = $11
 		WHERE id = $1
 	`, r.schema)
 
 	result, err := r.pool.Exec(ctx, query,
 		allocation.ID,
 		allocation.RoomID,
-		allocation.UserID,
+		allocation.UserIDEncrypted,
+		allocation.UserIDHash,
 		allocation.AllocationType,
 		allocation.StartDate,
 		allocation.EndDate,
+		allocation.DEKEncrypted,
+		allocation.KeyVersion,
 		allocation.IsActive,
 		allocation.UpdatedAt,
 	)

@@ -18,7 +18,7 @@ const (
 type RoomAllocation struct {
 	ID     uuid.UUID `json:"id"`
 	RoomID uuid.UUID `json:"room_id"`
-	UserID uuid.UUID `json:"user_id"`
+	UserID uuid.UUID `json:"user_id" encx:"encrypt,hash_basic"`
 
 	// Allocation configuration
 	AllocationType AllocationType `json:"allocation_type"`

@@ -10,11 +10,12 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
-func (r *Repository) List(ctx context.Context, filter ports.RoomAllocationFilter) ([]*domain.RoomAllocation, error) {
+func (r *Repository) List(ctx context.Context, filter ports.RoomAllocationFilter) ([]*domain.RoomAllocationEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, room_id, user_id, allocation_type,
-			start_date, end_date, is_active, created_at, updated_at
+			id, room_id, user_id_encrypted, user_id_hash, allocation_type,
+			start_date, end_date, dek_encrypted, key_version,
+			is_active, created_at, updated_at
 		FROM %s.room_allocations
 	`, r.schema)
 
@@ -29,9 +30,9 @@ func (r *Repository) List(ctx context.Context, filter ports.RoomAllocationFilter
 		argIndex++
 	}
 
-	if filter.UserID != nil {
-		whereConditions = append(whereConditions, fmt.Sprintf("user_id = $%d", argIndex))
-		args = append(args, *filter.UserID)
+	if filter.UserIDHash != nil {
+		whereConditions = append(whereConditions, fmt.Sprintf("user_id_hash = $%d", argIndex))
+		args = append(args, *filter.UserIDHash)
 		argIndex++
 	}
 
@@ -112,16 +113,19 @@ func (r *Repository) List(ctx context.Context, filter ports.RoomAllocationFilter
 	}
 	defer rows.Close()
 
-	var allocations []*domain.RoomAllocation
+	var allocations []*domain.RoomAllocationEncx
 	for rows.Next() {
-		allocation := &domain.RoomAllocation{}
+		allocation := &domain.RoomAllocationEncx{}
 		err := rows.Scan(
 			&allocation.ID,
 			&allocation.RoomID,
-			&allocation.UserID,
+			&allocation.UserIDEncrypted,
+			&allocation.UserIDHash,
 			&allocation.AllocationType,
 			&allocation.StartDate,
 			&allocation.EndDate,
+			&allocation.DEKEncrypted,
+			&allocation.KeyVersion,
 			&allocation.IsActive,
 			&allocation.CreatedAt,
 			&allocation.UpdatedAt,
@@ -138,52 +142,8 @@ func (r *Repository) List(ctx context.Context, filter ports.RoomAllocationFilter
 	}
 
 	if len(allocations) == 0 {
-		return []*domain.RoomAllocation{}, nil
+		return []*domain.RoomAllocationEncx{}, nil
 	}
 
 	return allocations, nil
 }
-
-// func (r *Repository) CheckConflict(
-// 	ctx context.Context,
-// 	roomID,
-// 	partnerID uuid.UUID,
-// 	allocationType domain.AllocationType,
-// 	startDate, endDate *time.Time,
-// ) (bool, error) {
-// 	// For dedicated allocations, check if there's an overlap with existing dedicated allocations for the same room
-// 	if allocationType == domain.AllocationTypeDedicated {
-// 		query := fmt.Sprintf(`
-// 			SELECT COUNT(*)
-// 			FROM %s.room_allocations
-// 			WHERE room_id = $1
-// 			AND allocation_type = 'dedicated'
-// 			AND is_active = true
-// 			AND start_date < $2
-// 			AND (end_date IS NULL OR end_date > $3)
-// 		`, r.schema)
-//
-// 		var count int
-// 		err := r.pool.QueryRow(ctx, query, roomID, endDate, startDate).Scan(&count)
-// 		if err != nil {
-// 			return false, errs.ClassifyPgError("check room allocation conflict", err)
-// 		}
-//
-// 		return count > 0, nil
-// 	}
-//
-// 	// For shared allocations, check if partner already has allocation for this room
-// 	query := fmt.Sprintf(`
-// 		SELECT COUNT(*)
-// 		FROM %s.room_allocations
-// 		WHERE room_id = $1 AND user_id = $2 AND is_active = true
-// 	`, r.schema)
-//
-// 	var count int
-// 	err := r.pool.QueryRow(ctx, query, roomID, partnerID).Scan(&count)
-// 	if err != nil {
-// 		return false, errs.ClassifyPgError("check partner allocation conflict", err)
-// 	}
-//
-// 	return count > 0, nil
-// }

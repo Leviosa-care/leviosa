@@ -17,7 +17,8 @@ import (
 // excludeID allows excluding a specific allocation from the conflict check (useful for updates)
 func (r *Repository) CheckConflict(
 	ctx context.Context,
-	roomID, userID uuid.UUID,
+	roomID uuid.UUID,
+	userIDHash string,
 	allocationType domain.AllocationType,
 	startDate, endDate *time.Time,
 	excludeID *uuid.UUID,
@@ -25,7 +26,7 @@ func (r *Repository) CheckConflict(
 	if allocationType == domain.AllocationTypeDedicated {
 		return r.checkDedicatedConflict(ctx, roomID, startDate, endDate, excludeID)
 	}
-	return r.checkSharedConflict(ctx, roomID, userID, excludeID)
+	return r.checkSharedConflict(ctx, roomID, userIDHash, excludeID)
 }
 
 // checkDedicatedConflict checks for time period overlaps with existing dedicated allocations
@@ -77,7 +78,8 @@ func (r *Repository) checkDedicatedConflict(
 // checkSharedConflict checks if the user already has an active allocation for the room
 func (r *Repository) checkSharedConflict(
 	ctx context.Context,
-	roomID, userID uuid.UUID,
+	roomID uuid.UUID,
+	userIDHash string,
 	excludeID *uuid.UUID,
 ) (bool, error) {
 	query := fmt.Sprintf(`
@@ -85,7 +87,7 @@ func (r *Repository) checkSharedConflict(
 			SELECT 1
 			FROM %s.room_allocations
 			WHERE room_id = $1
-			AND user_id = $2
+			AND user_id_hash = $2
 			AND is_active = true
 			AND allocation_type = 'shared'
 			AND ($3::uuid IS NULL OR id != $3)
@@ -93,7 +95,7 @@ func (r *Repository) checkSharedConflict(
 	`, r.schema)
 
 	var hasConflict bool
-	err := r.pool.QueryRow(ctx, query, roomID, userID, excludeID).Scan(&hasConflict)
+	err := r.pool.QueryRow(ctx, query, roomID, userIDHash, excludeID).Scan(&hasConflict)
 	if err != nil {
 		return false, errs.ClassifyPgError("check shared allocation conflict", err)
 	}
