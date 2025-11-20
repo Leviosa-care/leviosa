@@ -78,28 +78,7 @@ func (h *handler) UpdateDedicatedPeriod(w http.ResponseWriter, r *http.Request) 
 	// Call service to update dedicated period
 	allocation, err := h.svc.UpdateDedicatedPeriod(ctx, &request)
 	if err != nil {
-		var statusCode int
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			statusCode = http.StatusNotFound
-		case errors.Is(err, errs.ErrInvalidInput):
-			statusCode = http.StatusBadRequest
-		case errors.Is(err, errs.ErrUniqueViolation):
-			statusCode = http.StatusConflict
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			statusCode = http.StatusServiceUnavailable
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-
-		if statusCode >= 500 {
-			logger.ErrorContext(ctx, "Handler: Update dedicated period failed",
-				"error", err,
-				"allocation_id", allocationID,
-				"operation", "update_dedicated_period")
-		}
-
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "update dedicated allocation period")
 		return
 	}
 

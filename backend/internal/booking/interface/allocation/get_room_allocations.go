@@ -1,7 +1,6 @@
 package allocationHandler
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 
@@ -61,16 +60,7 @@ func (h *handler) GetRoomAllocations(w http.ResponseWriter, r *http.Request) {
 	// Call service to get room allocations
 	allocations, err := h.svc.GetRoomAllocations(ctx, &request)
 	if err != nil {
-		var statusCode int
-		switch {
-		case errors.Is(err, errs.ErrRepositoryNotFound):
-			statusCode = http.StatusNotFound
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			statusCode = http.StatusServiceUnavailable
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get all room allocations for partner")
 		return
 	}
 

@@ -1,7 +1,6 @@
 package allocationHandler
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 
@@ -62,14 +61,7 @@ func (h *handler) GetPartnerAllocations(w http.ResponseWriter, r *http.Request) 
 	// Call service to get partner allocations
 	allocations, err := h.svc.GetPartnerAllocations(ctx, &request)
 	if err != nil {
-		var statusCode int
-		switch {
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			statusCode = http.StatusServiceUnavailable
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get all allocations for partner")
 		return
 	}
 

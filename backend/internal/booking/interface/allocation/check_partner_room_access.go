@@ -1,7 +1,6 @@
 package allocationHandler
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -73,14 +72,7 @@ func (h *handler) CheckPartnerRoomAccess(w http.ResponseWriter, r *http.Request)
 	// Call service to check access
 	hasAccess, err := h.svc.CheckPartnerRoomAccess(ctx, partnerID, roomID, checkTime)
 	if err != nil {
-		var statusCode int
-		switch {
-		case errors.Is(err, errs.ErrConnectionFailure), errors.Is(err, errs.ErrTooManyConnections):
-			statusCode = http.StatusServiceUnavailable
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-		httpx.RespondWithError(w, err, statusCode)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "check partner room access")
 		return
 	}
 

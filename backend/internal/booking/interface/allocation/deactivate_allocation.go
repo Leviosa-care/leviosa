@@ -60,11 +60,7 @@ func (h *handler) DeactivateAllocation(w http.ResponseWriter, r *http.Request) {
 	// Get updated allocation to return
 	allocation, err := h.svc.GetAllocation(ctx, allocationID)
 	if err != nil {
-		logger.ErrorContext(ctx, "Handler: Failed to retrieve deactivated allocation",
-			"error", err,
-			"allocation_id", allocationID,
-			"operation", "deactivate_allocation")
-		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "deactivate allocation")
 		return
 	}
 
