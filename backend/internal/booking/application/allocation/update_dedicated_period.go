@@ -12,6 +12,10 @@ import (
 // UpdateDedicatedPeriod updates the time period for a dedicated allocation
 // func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, id uuid.UUID, startDate, endDate *time.Time) (*domain.RoomAllocation, error) {
 func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, request *domain.UpdateDedicatedAllocationRequest) (*domain.RoomAllocation, error) {
+	if err := request.Valid(ctx); err != nil {
+		return nil, errs.NewInvalidValueErr(err.Error())
+	}
+
 	// Get existing allocation
 	allocation, err := s.allocationRepo.GetByID(ctx, request.ID)
 	if err != nil {
