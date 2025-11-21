@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/services"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	"github.com/hengadev/encx"
@@ -19,31 +20,40 @@ import (
 )
 
 var (
-	pgContainer    *tu.PostgresContainer
-	vaultContainer *tu.VaultContainer
-	testPool       *pgxpool.Pool
-	testCrypto     encx.CryptoService
-	repo           ports.RoomAllocationRepository
+	pgContainer *tu.PostgresContainer
+	vaultSetup  *tu.ServiceVaultSetup
+	testPool    *pgxpool.Pool
+	testCrypto  encx.CryptoService
+	repo        ports.RoomAllocationRepository
 )
 
 func TestMain(m *testing.M) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Vault container setup for encryption
+	// Vault container setup for encryption (GDPR compliant)
 	var err error
-	vaultContainer, err = tu.SetupVault(ctx, nil)
+	serviceNames := []string{services.Booking}
+	vaultSetup, err = tu.SetupServiceVault(ctx, nil, serviceNames)
 	if err != nil {
-		log.Fatalf("Failed to setup vault container: %v", err)
+		log.Fatalf("Failed to setup service Vault container: %v", err)
 	}
-	defer tu.TeardownVault(ctx, nil, vaultContainer)
+	defer tu.TeardownVault(ctx, nil, vaultSetup.VaultContainer)
 
-	// Initialize crypto service
-	testCrypto, err = tu.NewTestCryptoService(vaultContainer)
-	if err != nil {
-		log.Fatalf("Failed to initialize crypto service: %v", err)
+	// Set environment variables for Vault (for encx library)
+	os.Setenv("VAULT_ADDR", vaultSetup.VaultContainer.HTTPSEndpoint)
+	os.Setenv("VAULT_TOKEN", vaultSetup.VaultContainer.RootToken)
+
+	// Get service-specific crypto service (GDPR compliant)
+	var exists bool
+	testCrypto, exists = vaultSetup.GetServiceCrypto(services.Booking)
+	if !exists {
+		log.Fatal("Booking service crypto not found in vault setup")
 	}
-	log.Println("Crypto service initialized.")
+	if testCrypto == nil {
+		log.Fatal("Booking crypto service is nil")
+	}
+	log.Printf("✓ Booking service crypto initialized with per-service encryption key")
 
 	// Postgres container setup
 	pgContainer, err = tu.SetupPostgres(ctx, nil)

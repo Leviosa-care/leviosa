@@ -229,10 +229,11 @@ func GetAllAllocationsEncx(t *testing.T, ctx context.Context, pool *pgxpool.Pool
 }
 
 // ComputeUserIDHash computes hash for a user ID using the crypto service
+// (uses same serialization as domain.ProcessRoomAllocationEncx)
 func ComputeUserIDHash(t *testing.T, ctx context.Context, crypto encx.CryptoService, userID uuid.UUID) string {
 	t.Helper()
 
-	userIDBytes, err := userID.MarshalBinary()
+	userIDBytes, err := encx.SerializeValue(userID)
 	require.NoError(t, err, "failed to serialize user ID")
 
 	return crypto.HashBasic(ctx, userIDBytes)

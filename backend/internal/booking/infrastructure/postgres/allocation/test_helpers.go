@@ -144,11 +144,11 @@ func CountAllocationsByRoomID(t *testing.T, ctx context.Context, pool *pgxpool.P
 	return count
 }
 
-// ComputeUserIDHash computes hash for a user ID
+// ComputeUserIDHash computes hash for a user ID (uses same serialization as domain.ProcessRoomAllocationEncx)
 func ComputeUserIDHash(t *testing.T, ctx context.Context, crypto encx.CryptoService, userID uuid.UUID) string {
 	t.Helper()
 
-	userIDBytes, err := userID.MarshalBinary()
+	userIDBytes, err := encx.SerializeValue(userID)
 	require.NoError(t, err, "failed to serialize user ID")
 
 	return crypto.HashBasic(ctx, userIDBytes)
