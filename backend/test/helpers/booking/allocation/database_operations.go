@@ -6,6 +6,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/google/uuid"
+	"github.com/hengadev/encx"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 )
@@ -17,25 +18,28 @@ func ClearAllocationTable(t *testing.T, ctx context.Context, pool *pgxpool.Pool)
 	require.NoError(t, err)
 }
 
-// InsertAllocation directly inserts an allocation into the database for testing
-func InsertAllocation(t *testing.T, ctx context.Context, allocation *domain.RoomAllocation, pool *pgxpool.Pool) {
+// InsertAllocationEncx directly inserts an encrypted allocation into the database for testing
+func InsertAllocationEncx(t *testing.T, ctx context.Context, allocation *domain.RoomAllocationEncx, pool *pgxpool.Pool) {
 	t.Helper()
 
 	query := `
 		INSERT INTO booking.room_allocations (
-			id, room_id, user_id, allocation_type,
-			start_date, end_date, is_active,
-			created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+			id, room_id, user_id_encrypted, user_id_hash, allocation_type,
+			start_date, end_date, dek_encrypted, key_version,
+			is_active, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
 	_, err := pool.Exec(ctx, query,
 		allocation.ID,
 		allocation.RoomID,
-		allocation.UserID,
+		allocation.UserIDEncrypted,
+		allocation.UserIDHash,
 		allocation.AllocationType,
 		allocation.StartDate,
 		allocation.EndDate,
+		allocation.DEKEncrypted,
+		allocation.KeyVersion,
 		allocation.IsActive,
 		allocation.CreatedAt,
 		allocation.UpdatedAt,
@@ -43,26 +47,29 @@ func InsertAllocation(t *testing.T, ctx context.Context, allocation *domain.Room
 	require.NoError(t, err)
 }
 
-// GetAllocationByID retrieves an allocation from the database by ID
-func GetAllocationByID(t *testing.T, ctx context.Context, id uuid.UUID, pool *pgxpool.Pool) (*domain.RoomAllocation, error) {
+// GetAllocationEncxByID retrieves an encrypted allocation from the database by ID
+func GetAllocationEncxByID(t *testing.T, ctx context.Context, id uuid.UUID, pool *pgxpool.Pool) (*domain.RoomAllocationEncx, error) {
 	t.Helper()
 
 	query := `
-		SELECT id, room_id, user_id, allocation_type,
-		       start_date, end_date, is_active,
-		       created_at, updated_at
+		SELECT id, room_id, user_id_encrypted, user_id_hash, allocation_type,
+		       start_date, end_date, dek_encrypted, key_version,
+		       is_active, created_at, updated_at
 		FROM booking.room_allocations
 		WHERE id = $1
 	`
 
-	var allocation domain.RoomAllocation
+	var allocation domain.RoomAllocationEncx
 	err := pool.QueryRow(ctx, query, id).Scan(
 		&allocation.ID,
 		&allocation.RoomID,
-		&allocation.UserID,
+		&allocation.UserIDEncrypted,
+		&allocation.UserIDHash,
 		&allocation.AllocationType,
 		&allocation.StartDate,
 		&allocation.EndDate,
+		&allocation.DEKEncrypted,
+		&allocation.KeyVersion,
 		&allocation.IsActive,
 		&allocation.CreatedAt,
 		&allocation.UpdatedAt,
@@ -108,13 +115,13 @@ func CountAllocationsInTable(t *testing.T, ctx context.Context, pool *pgxpool.Po
 	return count
 }
 
-// CountAllocationsByUserID counts allocations for a specific user
-func CountAllocationsByUserID(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pgxpool.Pool) int {
+// CountAllocationsByUserIDHash counts allocations for a specific user by their hash
+func CountAllocationsByUserIDHash(t *testing.T, ctx context.Context, userIDHash string, pool *pgxpool.Pool) int {
 	t.Helper()
 
-	query := `SELECT COUNT(*) FROM booking.room_allocations WHERE user_id = $1`
+	query := `SELECT COUNT(*) FROM booking.room_allocations WHERE user_id_hash = $1`
 	var count int
-	err := pool.QueryRow(ctx, query, userID).Scan(&count)
+	err := pool.QueryRow(ctx, query, userIDHash).Scan(&count)
 	require.NoError(t, err)
 
 	return count
@@ -180,14 +187,14 @@ func CountSharedAllocations(t *testing.T, ctx context.Context, pool *pgxpool.Poo
 	return count
 }
 
-// GetAllAllocations retrieves all allocations from the database (for verification)
-func GetAllAllocations(t *testing.T, ctx context.Context, pool *pgxpool.Pool) []*domain.RoomAllocation {
+// GetAllAllocationsEncx retrieves all encrypted allocations from the database (for verification)
+func GetAllAllocationsEncx(t *testing.T, ctx context.Context, pool *pgxpool.Pool) []*domain.RoomAllocationEncx {
 	t.Helper()
 
 	query := `
-		SELECT id, room_id, user_id, allocation_type,
-		       start_date, end_date, is_active,
-		       created_at, updated_at
+		SELECT id, room_id, user_id_encrypted, user_id_hash, allocation_type,
+		       start_date, end_date, dek_encrypted, key_version,
+		       is_active, created_at, updated_at
 		FROM booking.room_allocations
 		ORDER BY created_at DESC
 	`
@@ -196,16 +203,19 @@ func GetAllAllocations(t *testing.T, ctx context.Context, pool *pgxpool.Pool) []
 	require.NoError(t, err)
 	defer rows.Close()
 
-	var allocations []*domain.RoomAllocation
+	var allocations []*domain.RoomAllocationEncx
 	for rows.Next() {
-		var allocation domain.RoomAllocation
+		var allocation domain.RoomAllocationEncx
 		err := rows.Scan(
 			&allocation.ID,
 			&allocation.RoomID,
-			&allocation.UserID,
+			&allocation.UserIDEncrypted,
+			&allocation.UserIDHash,
 			&allocation.AllocationType,
 			&allocation.StartDate,
 			&allocation.EndDate,
+			&allocation.DEKEncrypted,
+			&allocation.KeyVersion,
 			&allocation.IsActive,
 			&allocation.CreatedAt,
 			&allocation.UpdatedAt,
@@ -216,4 +226,14 @@ func GetAllAllocations(t *testing.T, ctx context.Context, pool *pgxpool.Pool) []
 
 	require.NoError(t, rows.Err())
 	return allocations
+}
+
+// ComputeUserIDHash computes hash for a user ID using the crypto service
+func ComputeUserIDHash(t *testing.T, ctx context.Context, crypto encx.CryptoService, userID uuid.UUID) string {
+	t.Helper()
+
+	userIDBytes, err := userID.MarshalBinary()
+	require.NoError(t, err, "failed to serialize user ID")
+
+	return crypto.HashBasic(ctx, userIDBytes)
 }
