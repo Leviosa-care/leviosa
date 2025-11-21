@@ -8,7 +8,9 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
+	"github.com/hengadev/encx"
 )
 
 func (s *AvailabilityService) UpdateAvailability(ctx context.Context, id uuid.UUID, startTime, endTime time.Time, serviceType string, priceCents *int, notes string) (*domain.Availability, error) {
@@ -31,12 +33,23 @@ func (s *AvailabilityService) UpdateAvailability(ctx context.Context, id uuid.UU
 	// If time is being changed, check for conflicts
 	if !startTime.Equal(availability.StartTime) || !endTime.Equal(availability.EndTime) {
 		// Check partner still has room access for new time
-		hasAccess, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, availability.UserID, availability.RoomID, startTime)
+		userIDBytes, err := encx.SerializeValue(availability.UserID)
+		if err != nil {
+			return nil, fmt.Errorf("serialize user ID for hashing: %w", err)
+		}
+		userIDHash := s.crypto.HashBasic(ctx, userIDBytes)
+
+		roomAllocationEncx, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, userIDHash, availability.RoomID, startTime)
 		if err != nil {
 			if errors.Is(err, errs.ErrRepositoryNotFound) {
 				return nil, fmt.Errorf("partner does not have allocation for this room at new time")
 			}
 			return nil, fmt.Errorf("check partner room access: %w", err)
+		}
+
+		hasAccess, err := domain.DecryptRoomAllocationEncx(ctx, s.crypto, roomAllocationEncx)
+		if err != nil {
+			return nil, errs.NewNotDecryptedErr("room allocation", err)
 		}
 
 		if !hasAccess.IsActiveAt(startTime) || !hasAccess.IsActiveAt(endTime) {

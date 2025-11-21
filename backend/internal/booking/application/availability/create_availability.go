@@ -6,6 +6,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	"github.com/hengadev/encx"
 )
 
 func (s *AvailabilityService) CreateAvailability(ctx context.Context, request *domain.CreateAvailabilityRequest) (*domain.Availability, error) {
@@ -23,10 +24,21 @@ func (s *AvailabilityService) CreateAvailability(ctx context.Context, request *d
 		return nil, fmt.Errorf("cannot create availability for inactive room")
 	}
 
+	userIDBytes, err := encx.SerializeValue(request.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("serialize user ID for hashing: %w", err)
+	}
+	userIDHash := s.crypto.HashBasic(ctx, userIDBytes)
+
 	// Check partner has access to the room at the specified time
-	hasAccess, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, request.UserID, request.RoomID, request.StartTime)
+	roomAllocationEncx, err := s.allocationRepo.GetActiveAllocationForPartnerAndRoom(ctx, userIDHash, request.RoomID, request.StartTime)
 	if err != nil {
 		return nil, fmt.Errorf("check partner room access: %w", err)
+	}
+
+	hasAccess, err := domain.DecryptRoomAllocationEncx(ctx, s.crypto, roomAllocationEncx)
+	if err != nil {
+		return nil, errs.NewNotDecryptedErr("room allocation", err)
 	}
 
 	if !hasAccess.IsActiveAt(request.StartTime) || !hasAccess.IsActiveAt(request.EndTime) {
