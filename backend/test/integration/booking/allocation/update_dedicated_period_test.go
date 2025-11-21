@@ -86,7 +86,7 @@ func TestUpdateDedicatedPeriod(t *testing.T) {
 
 		// Create and insert dedicated allocation
 		allocation := ta.NewTestActiveDedicatedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Create update request with new dates
 		newStartDate := time.Now().Add(30 * 24 * time.Hour).Truncate(24 * time.Hour)
@@ -118,7 +118,7 @@ func TestUpdateDedicatedPeriod(t *testing.T) {
 		assert.WithinDuration(t, newEndDate, *response.EndDate, time.Second)
 
 		// Verify database persistence
-		updated, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool)
+		updated, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool, crypto)
 		require.NoError(t, err)
 
 		assert.WithinDuration(t, newStartDate, *updated.StartDate, time.Second)
@@ -140,7 +140,7 @@ func TestUpdateDedicatedPeriod(t *testing.T) {
 
 		// Create and insert dedicated allocation with end date
 		allocation := ta.NewTestActiveDedicatedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Create update request with only start date (indefinite)
 		newStartDate := time.Now().Add(15 * 24 * time.Hour).Truncate(24 * time.Hour)
@@ -168,7 +168,7 @@ func TestUpdateDedicatedPeriod(t *testing.T) {
 		assert.Nil(t, response.EndDate)
 
 		// Verify database persistence
-		updated, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool)
+		updated, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool, crypto)
 		require.NoError(t, err)
 		assert.Nil(t, updated.EndDate)
 	})
@@ -191,7 +191,7 @@ func TestUpdateDedicatedPeriod(t *testing.T) {
 
 		// Create and insert dedicated allocation
 		allocation := ta.NewTestDedicatedAllocation(t, roomID, partnerUserID, startDate, endDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Create update request extending the end date
 		extendedEndDate := allocation.EndDate.Add(30 * 24 * time.Hour)
@@ -270,7 +270,7 @@ func TestUpdateDedicatedPeriod(t *testing.T) {
 
 		// Create and insert dedicated allocation
 		allocation := ta.NewTestActiveDedicatedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Create request with invalid JSON
 		invalidJSON := `{"start_date": "not-a-date", "end_date": 12345}`
@@ -308,7 +308,7 @@ func TestUpdateDedicatedPeriod(t *testing.T) {
 
 		// Create and insert dedicated allocation
 		allocation := ta.NewTestActiveDedicatedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Create request without Content-Type header
 		req, err := http.NewRequestWithContext(ctx, http.MethodPut, testServerURL+"/allocations/"+allocation.ID.String()+"/period",
@@ -369,7 +369,7 @@ func TestUpdateDedicatedPeriod(t *testing.T) {
 
 		// Create and insert dedicated allocation
 		allocation := ta.NewTestActiveDedicatedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Create update request
 		newStartDate := time.Now().Add(15 * 24 * time.Hour)
@@ -413,7 +413,7 @@ func TestUpdateDedicatedPeriod(t *testing.T) {
 
 		// Create and insert SHARED allocation (not dedicated)
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Try to update shared allocation's period (should fail)
 		newStartDate := time.Now().Add(15 * 24 * time.Hour)

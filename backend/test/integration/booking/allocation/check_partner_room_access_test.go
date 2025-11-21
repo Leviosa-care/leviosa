@@ -86,7 +86,7 @@ func TestCheckPartnerRoomAccess(t *testing.T) {
 
 		// Create active shared allocation
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Check access without time parameter (defaults to now)
 		req := ta.NewCheckPartnerRoomAccessRequest(t, ctx, testServerURL, partnerID, roomID, nil, partnerAccessToken)
@@ -116,7 +116,7 @@ func TestCheckPartnerRoomAccess(t *testing.T) {
 
 		// Create active dedicated allocation (starts 7 days ago, ends 7 days from now)
 		allocation := ta.NewTestActiveDedicatedAllocation(t, roomID, partnerID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewCheckPartnerRoomAccessRequest(t, ctx, testServerURL, partnerID, roomID, nil, adminAccessToken)
 
@@ -169,7 +169,7 @@ func TestCheckPartnerRoomAccess(t *testing.T) {
 
 		// Create inactive allocation
 		allocation := ta.NewTestInactiveAllocation(t, roomID, partnerID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewCheckPartnerRoomAccessRequest(t, ctx, testServerURL, partnerID, roomID, nil, adminAccessToken)
 
@@ -199,7 +199,7 @@ func TestCheckPartnerRoomAccess(t *testing.T) {
 		startDate := time.Now().AddDate(0, 0, -30).Truncate(24 * time.Hour)
 		endDate := time.Now().AddDate(0, 0, -10).Truncate(24 * time.Hour)
 		allocation := ta.NewTestDedicatedAllocation(t, roomID, partnerID, startDate, endDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Check access 20 days ago (when allocation was active)
 		checkTime := time.Now().AddDate(0, 0, -20).Format(time.RFC3339)
@@ -233,7 +233,7 @@ func TestCheckPartnerRoomAccess(t *testing.T) {
 		startDate := time.Now().AddDate(0, 0, -10).Truncate(24 * time.Hour)
 		endDate := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
 		allocation := ta.NewTestDedicatedAllocation(t, roomID, partnerID, startDate, endDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Check access 20 days ago (before allocation started)
 		checkTime := time.Now().AddDate(0, 0, -20).Format(time.RFC3339)
@@ -263,7 +263,7 @@ func TestCheckPartnerRoomAccess(t *testing.T) {
 
 		// Create future allocation
 		allocation := ta.NewTestFutureDedicatedAllocation(t, roomID, partnerID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Check access 20 days from now (when allocation will be active)
 		checkTime := time.Now().AddDate(0, 0, 20).Format(time.RFC3339)
@@ -293,7 +293,7 @@ func TestCheckPartnerRoomAccess(t *testing.T) {
 
 		// Create future allocation (starts 15 days from now)
 		allocation := ta.NewTestFutureDedicatedAllocation(t, roomID, partnerID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Check access now (allocation hasn't started yet)
 		req := ta.NewCheckPartnerRoomAccessRequest(t, ctx, testServerURL, partnerID, roomID, nil, adminAccessToken)
@@ -323,7 +323,7 @@ func TestCheckPartnerRoomAccess(t *testing.T) {
 		// Create allocation with indefinite end date
 		startDate := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
 		allocation := ta.NewTestDedicatedAllocationIndefinite(t, roomID, partnerID, startDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewCheckPartnerRoomAccessRequest(t, ctx, testServerURL, partnerID, roomID, nil, adminAccessToken)
 
@@ -351,7 +351,7 @@ func TestCheckPartnerRoomAccess(t *testing.T) {
 
 		// Create current allocation
 		allocation := ta.NewTestActiveDedicatedAllocation(t, roomID, partnerID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Use invalid time format (should be ignored, defaults to now)
 		invalidTime := "not-a-valid-timestamp"

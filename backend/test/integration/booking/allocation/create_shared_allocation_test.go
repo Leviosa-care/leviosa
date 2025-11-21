@@ -120,7 +120,7 @@ func TestCreateSharedAllocation(t *testing.T) {
 		assert.True(t, response.IsActive)
 
 		// Verify allocation exists in database
-		allocation, err := ta.GetAllocationByID(t, ctx, response.ID, testPool)
+		allocation, err := ta.GetAllocationByID(t, ctx, response.ID, testPool, crypto)
 		require.NoError(t, err)
 		require.NotNil(t, allocation)
 
@@ -390,7 +390,7 @@ func TestCreateSharedAllocation(t *testing.T) {
 		// Create first partner and allocation
 		partner1ID := setupPartnerUser(t, ctx, "partner10@example.com")
 		allocation1 := ta.NewTestSharedAllocation(t, roomID, partner1ID)
-		ta.InsertAllocation(t, ctx, allocation1, testPool)
+		ta.InsertAllocation(t, ctx, allocation1, testPool, crypto)
 
 		// Create second partner and allocation for the same room
 		partner2ID := setupPartnerUser(t, ctx, "partner11@example.com")
@@ -426,7 +426,7 @@ func TestCreateSharedAllocation(t *testing.T) {
 		// Create first room and allocation
 		room1ID := setupTestRoom(t, ctx)
 		allocation1 := ta.NewTestSharedAllocation(t, room1ID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation1, testPool)
+		ta.InsertAllocation(t, ctx, allocation1, testPool, crypto)
 
 		// Create second room and allocation for the same partner
 		room2ID := setupTestRoom(t, ctx)

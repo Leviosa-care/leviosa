@@ -82,16 +82,16 @@ func TestGetRoomAllocations(t *testing.T) {
 
 		// Create active allocations for different partners in same room
 		activeAlloc1 := ta.NewTestSharedAllocation(t, roomID, partner1ID)
-		ta.InsertAllocation(t, ctx, activeAlloc1, testPool)
+		ta.InsertAllocation(t, ctx, activeAlloc1, testPool, crypto)
 
 		startDate := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
 		endDate := time.Now().AddDate(0, 0, 7).Truncate(24 * time.Hour)
 		activeAlloc2 := ta.NewTestDedicatedAllocation(t, roomID, partner2ID, startDate, endDate)
-		ta.InsertAllocation(t, ctx, activeAlloc2, testPool)
+		ta.InsertAllocation(t, ctx, activeAlloc2, testPool, crypto)
 
 		// Create inactive allocation
 		inactiveAlloc := ta.NewTestInactiveAllocation(t, roomID, partner1ID)
-		ta.InsertAllocation(t, ctx, inactiveAlloc, testPool)
+		ta.InsertAllocation(t, ctx, inactiveAlloc, testPool, crypto)
 
 		// Get allocations with default query parameter (should return only active)
 		req := ta.NewGetRoomAllocationsRequest(t, ctx, testServerURL, roomID, nil, adminAccessToken)
@@ -126,11 +126,11 @@ func TestGetRoomAllocations(t *testing.T) {
 
 		// Create active allocation
 		activeAlloc := ta.NewTestSharedAllocation(t, roomID, partnerID)
-		ta.InsertAllocation(t, ctx, activeAlloc, testPool)
+		ta.InsertAllocation(t, ctx, activeAlloc, testPool, crypto)
 
 		// Create inactive allocation
 		inactiveAlloc := ta.NewTestInactiveAllocation(t, roomID, partnerID)
-		ta.InsertAllocation(t, ctx, inactiveAlloc, testPool)
+		ta.InsertAllocation(t, ctx, inactiveAlloc, testPool, crypto)
 
 		// Get allocations with active_only=true
 		activeOnly := true
@@ -163,11 +163,11 @@ func TestGetRoomAllocations(t *testing.T) {
 
 		// Create active allocation
 		activeAlloc := ta.NewTestSharedAllocation(t, roomID, partnerID)
-		ta.InsertAllocation(t, ctx, activeAlloc, testPool)
+		ta.InsertAllocation(t, ctx, activeAlloc, testPool, crypto)
 
 		// Create inactive allocation
 		inactiveAlloc := ta.NewTestInactiveAllocation(t, roomID, partnerID)
-		ta.InsertAllocation(t, ctx, inactiveAlloc, testPool)
+		ta.InsertAllocation(t, ctx, inactiveAlloc, testPool, crypto)
 
 		// Get allocations with active_only=false
 		activeOnly := false
@@ -237,13 +237,13 @@ func TestGetRoomAllocations(t *testing.T) {
 
 		// Create shared allocation
 		sharedAlloc := ta.NewTestSharedAllocation(t, roomID, partner1ID)
-		ta.InsertAllocation(t, ctx, sharedAlloc, testPool)
+		ta.InsertAllocation(t, ctx, sharedAlloc, testPool, crypto)
 
 		// Create dedicated allocation
 		startDate := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour)
 		endDate := time.Now().AddDate(0, 0, 30).Truncate(24 * time.Hour)
 		dedicatedAlloc := ta.NewTestDedicatedAllocation(t, roomID, partner2ID, startDate, endDate)
-		ta.InsertAllocation(t, ctx, dedicatedAlloc, testPool)
+		ta.InsertAllocation(t, ctx, dedicatedAlloc, testPool, crypto)
 
 		req := ta.NewGetRoomAllocationsRequest(t, ctx, testServerURL, roomID, nil, adminAccessToken)
 
@@ -291,13 +291,13 @@ func TestGetRoomAllocations(t *testing.T) {
 
 		// Create allocations for three different partners in same room
 		alloc1 := ta.NewTestSharedAllocation(t, roomID, partner1ID)
-		ta.InsertAllocation(t, ctx, alloc1, testPool)
+		ta.InsertAllocation(t, ctx, alloc1, testPool, crypto)
 
 		alloc2 := ta.NewTestSharedAllocation(t, roomID, partner2ID)
-		ta.InsertAllocation(t, ctx, alloc2, testPool)
+		ta.InsertAllocation(t, ctx, alloc2, testPool, crypto)
 
 		alloc3 := ta.NewTestSharedAllocation(t, roomID, partner3ID)
-		ta.InsertAllocation(t, ctx, alloc3, testPool)
+		ta.InsertAllocation(t, ctx, alloc3, testPool, crypto)
 
 		req := ta.NewGetRoomAllocationsRequest(t, ctx, testServerURL, roomID, nil, adminAccessToken)
 
@@ -340,15 +340,15 @@ func TestGetRoomAllocations(t *testing.T) {
 
 		// Create past allocation
 		pastAlloc := ta.NewTestPastDedicatedAllocation(t, roomID, partner1ID)
-		ta.InsertAllocation(t, ctx, pastAlloc, testPool)
+		ta.InsertAllocation(t, ctx, pastAlloc, testPool, crypto)
 
 		// Create current allocation
 		currentAlloc := ta.NewTestActiveDedicatedAllocation(t, roomID, partner2ID)
-		ta.InsertAllocation(t, ctx, currentAlloc, testPool)
+		ta.InsertAllocation(t, ctx, currentAlloc, testPool, crypto)
 
 		// Create future allocation
 		futureAlloc := ta.NewTestFutureDedicatedAllocation(t, roomID, partner3ID)
-		ta.InsertAllocation(t, ctx, futureAlloc, testPool)
+		ta.InsertAllocation(t, ctx, futureAlloc, testPool, crypto)
 
 		req := ta.NewGetRoomAllocationsRequest(t, ctx, testServerURL, roomID, nil, adminAccessToken)
 
@@ -384,7 +384,7 @@ func TestGetRoomAllocations(t *testing.T) {
 		// Create allocation with indefinite end date
 		startDate := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
 		allocation := ta.NewTestDedicatedAllocationIndefinite(t, roomID, partnerID, startDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewGetRoomAllocationsRequest(t, ctx, testServerURL, roomID, nil, adminAccessToken)
 
@@ -561,7 +561,7 @@ func TestGetRoomAllocations(t *testing.T) {
 
 		// Create allocation
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewGetRoomAllocationsRequest(t, ctx, testServerURL, roomID, nil, standardAccessToken)
 
@@ -585,7 +585,7 @@ func TestGetRoomAllocations(t *testing.T) {
 
 		// Create allocation
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewGetRoomAllocationsRequest(t, ctx, testServerURL, roomID, nil, partnerAccessToken)
 

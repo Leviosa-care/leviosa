@@ -82,16 +82,16 @@ func TestGetPartnerAllocations(t *testing.T) {
 
 		// Create active allocations
 		activeAlloc1 := ta.NewTestSharedAllocation(t, roomID1, partnerUserID)
-		ta.InsertAllocation(t, ctx, activeAlloc1, testPool)
+		ta.InsertAllocation(t, ctx, activeAlloc1, testPool, crypto)
 
 		startDate := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
 		endDate := time.Now().AddDate(0, 0, 7).Truncate(24 * time.Hour)
 		activeAlloc2 := ta.NewTestDedicatedAllocation(t, roomID2, partnerUserID, startDate, endDate)
-		ta.InsertAllocation(t, ctx, activeAlloc2, testPool)
+		ta.InsertAllocation(t, ctx, activeAlloc2, testPool, crypto)
 
 		// Create inactive allocation
 		inactiveAlloc := ta.NewTestInactiveAllocation(t, roomID1, partnerUserID)
-		ta.InsertAllocation(t, ctx, inactiveAlloc, testPool)
+		ta.InsertAllocation(t, ctx, inactiveAlloc, testPool, crypto)
 
 		// Get allocations with default query parameter (should return only active)
 		req := ta.NewGetPartnerAllocationsRequest(t, ctx, testServerURL, partnerUserID, nil, adminAccessToken)
@@ -126,11 +126,11 @@ func TestGetPartnerAllocations(t *testing.T) {
 
 		// Create active allocation
 		activeAlloc := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, activeAlloc, testPool)
+		ta.InsertAllocation(t, ctx, activeAlloc, testPool, crypto)
 
 		// Create inactive allocation
 		inactiveAlloc := ta.NewTestInactiveAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, inactiveAlloc, testPool)
+		ta.InsertAllocation(t, ctx, inactiveAlloc, testPool, crypto)
 
 		// Get allocations with active_only=true
 		activeOnly := true
@@ -163,11 +163,11 @@ func TestGetPartnerAllocations(t *testing.T) {
 
 		// Create active allocation
 		activeAlloc := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, activeAlloc, testPool)
+		ta.InsertAllocation(t, ctx, activeAlloc, testPool, crypto)
 
 		// Create inactive allocation
 		inactiveAlloc := ta.NewTestInactiveAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, inactiveAlloc, testPool)
+		ta.InsertAllocation(t, ctx, inactiveAlloc, testPool, crypto)
 
 		// Get allocations with active_only=false
 		activeOnly := false
@@ -237,13 +237,13 @@ func TestGetPartnerAllocations(t *testing.T) {
 
 		// Create shared allocation
 		sharedAlloc := ta.NewTestSharedAllocation(t, roomID1, partnerUserID)
-		ta.InsertAllocation(t, ctx, sharedAlloc, testPool)
+		ta.InsertAllocation(t, ctx, sharedAlloc, testPool, crypto)
 
 		// Create dedicated allocation
 		startDate := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour)
 		endDate := time.Now().AddDate(0, 0, 30).Truncate(24 * time.Hour)
 		dedicatedAlloc := ta.NewTestDedicatedAllocation(t, roomID2, partnerUserID, startDate, endDate)
-		ta.InsertAllocation(t, ctx, dedicatedAlloc, testPool)
+		ta.InsertAllocation(t, ctx, dedicatedAlloc, testPool, crypto)
 
 		req := ta.NewGetPartnerAllocationsRequest(t, ctx, testServerURL, partnerUserID, nil, adminAccessToken)
 
@@ -290,15 +290,15 @@ func TestGetPartnerAllocations(t *testing.T) {
 
 		// Create past allocation
 		pastAlloc := ta.NewTestPastDedicatedAllocation(t, roomID1, partnerUserID)
-		ta.InsertAllocation(t, ctx, pastAlloc, testPool)
+		ta.InsertAllocation(t, ctx, pastAlloc, testPool, crypto)
 
 		// Create current allocation
 		currentAlloc := ta.NewTestActiveDedicatedAllocation(t, roomID2, partnerUserID)
-		ta.InsertAllocation(t, ctx, currentAlloc, testPool)
+		ta.InsertAllocation(t, ctx, currentAlloc, testPool, crypto)
 
 		// Create future allocation
 		futureAlloc := ta.NewTestFutureDedicatedAllocation(t, roomID3, partnerUserID)
-		ta.InsertAllocation(t, ctx, futureAlloc, testPool)
+		ta.InsertAllocation(t, ctx, futureAlloc, testPool, crypto)
 
 		req := ta.NewGetPartnerAllocationsRequest(t, ctx, testServerURL, partnerUserID, nil, adminAccessToken)
 
@@ -333,7 +333,7 @@ func TestGetPartnerAllocations(t *testing.T) {
 
 		// Create allocation for a partner
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Partner role accessing partner allocations (middleware allows this)
 		req := ta.NewGetPartnerAllocationsRequest(t, ctx, testServerURL, partnerUserID, nil, partnerAccessToken)
@@ -363,7 +363,7 @@ func TestGetPartnerAllocations(t *testing.T) {
 
 		// Create allocation for partner
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Admin accessing partner's allocations
 		req := ta.NewGetPartnerAllocationsRequest(t, ctx, testServerURL, partnerUserID, nil, adminAccessToken)
@@ -394,7 +394,7 @@ func TestGetPartnerAllocations(t *testing.T) {
 		// Create allocation with indefinite end date
 		startDate := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
 		allocation := ta.NewTestDedicatedAllocationIndefinite(t, roomID, partnerUserID, startDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewGetPartnerAllocationsRequest(t, ctx, testServerURL, partnerUserID, nil, adminAccessToken)
 
@@ -544,7 +544,7 @@ func TestGetPartnerAllocations(t *testing.T) {
 
 		// Create allocation
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewGetPartnerAllocationsRequest(t, ctx, testServerURL, partnerUserID, nil, standardAccessToken)
 

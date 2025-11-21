@@ -83,7 +83,7 @@ func TestDeactivateAllocation(t *testing.T) {
 		startDate := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
 		endDate := time.Now().AddDate(0, 0, 7).Truncate(24 * time.Hour)
 		allocation := ta.NewTestDedicatedAllocation(t, roomID, partnerUserID, startDate, endDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Verify allocation is active before deactivation
 		activeCountBefore := ta.CountActiveAllocations(t, ctx, testPool)
@@ -111,7 +111,7 @@ func TestDeactivateAllocation(t *testing.T) {
 		assert.False(t, response.IsActive)
 
 		// Verify allocation is deactivated in database
-		deactivatedAllocation, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool)
+		deactivatedAllocation, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool, crypto)
 		require.NoError(t, err)
 		assert.False(t, deactivatedAllocation.IsActive)
 
@@ -134,7 +134,7 @@ func TestDeactivateAllocation(t *testing.T) {
 
 		// Create shared allocation
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Deactivate allocation
 		req := ta.NewDeactivateAllocationRequest(t, ctx, testServerURL, allocation.ID, adminAccessToken)
@@ -154,7 +154,7 @@ func TestDeactivateAllocation(t *testing.T) {
 		assert.False(t, response.IsActive)
 
 		// Verify in database
-		deactivatedAllocation, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool)
+		deactivatedAllocation, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool, crypto)
 		require.NoError(t, err)
 		assert.False(t, deactivatedAllocation.IsActive)
 	})
@@ -170,7 +170,7 @@ func TestDeactivateAllocation(t *testing.T) {
 
 		// Create already inactive allocation
 		allocation := ta.NewTestInactiveAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Verify allocation is already inactive
 		assert.False(t, allocation.IsActive)
@@ -191,7 +191,7 @@ func TestDeactivateAllocation(t *testing.T) {
 		assert.False(t, response.IsActive)
 
 		// Verify still inactive in database
-		deactivatedAllocation, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool)
+		deactivatedAllocation, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool, crypto)
 		require.NoError(t, err)
 		assert.False(t, deactivatedAllocation.IsActive)
 	})
@@ -268,7 +268,7 @@ func TestDeactivateAllocation(t *testing.T) {
 
 		// Create allocation
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewDeactivateAllocationRequest(t, ctx, testServerURL, allocation.ID, "") // Empty token
 
@@ -291,7 +291,7 @@ func TestDeactivateAllocation(t *testing.T) {
 
 		// Create allocation
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewDeactivateAllocationRequest(t, ctx, testServerURL, allocation.ID, expiredToken)
 
@@ -312,7 +312,7 @@ func TestDeactivateAllocation(t *testing.T) {
 
 		// Create allocation
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewDeactivateAllocationRequest(t, ctx, testServerURL, allocation.ID, "invalid-token-12345")
 
@@ -336,7 +336,7 @@ func TestDeactivateAllocation(t *testing.T) {
 
 		// Create allocation
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewDeactivateAllocationRequest(t, ctx, testServerURL, allocation.ID, standardAccessToken)
 
@@ -360,7 +360,7 @@ func TestDeactivateAllocation(t *testing.T) {
 
 		// Create allocation
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		req := ta.NewDeactivateAllocationRequest(t, ctx, testServerURL, allocation.ID, partnerAccessToken)
 
@@ -383,7 +383,7 @@ func TestDeactivateAllocation(t *testing.T) {
 		// Create allocation with indefinite end date
 		startDate := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
 		allocation := ta.NewTestDedicatedAllocationIndefinite(t, roomID, partnerUserID, startDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Deactivate allocation
 		req := ta.NewDeactivateAllocationRequest(t, ctx, testServerURL, allocation.ID, adminAccessToken)
@@ -402,7 +402,7 @@ func TestDeactivateAllocation(t *testing.T) {
 		assert.Nil(t, response.EndDate) // Should still be nil
 
 		// Verify in database
-		deactivatedAllocation, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool)
+		deactivatedAllocation, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool, crypto)
 		require.NoError(t, err)
 		assert.False(t, deactivatedAllocation.IsActive)
 		assert.Nil(t, deactivatedAllocation.EndDate)
@@ -419,7 +419,7 @@ func TestDeactivateAllocation(t *testing.T) {
 
 		// Create past allocation (already ended)
 		allocation := ta.NewTestPastDedicatedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Deactivate allocation
 		req := ta.NewDeactivateAllocationRequest(t, ctx, testServerURL, allocation.ID, adminAccessToken)
@@ -437,7 +437,7 @@ func TestDeactivateAllocation(t *testing.T) {
 		assert.False(t, response.IsActive)
 
 		// Verify in database
-		deactivatedAllocation, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool)
+		deactivatedAllocation, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool, crypto)
 		require.NoError(t, err)
 		assert.False(t, deactivatedAllocation.IsActive)
 	})
@@ -453,7 +453,7 @@ func TestDeactivateAllocation(t *testing.T) {
 
 		// Create future allocation (hasn't started yet)
 		allocation := ta.NewTestFutureDedicatedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Deactivate allocation
 		req := ta.NewDeactivateAllocationRequest(t, ctx, testServerURL, allocation.ID, adminAccessToken)
@@ -471,7 +471,7 @@ func TestDeactivateAllocation(t *testing.T) {
 		assert.False(t, response.IsActive)
 
 		// Verify in database
-		deactivatedAllocation, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool)
+		deactivatedAllocation, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool, crypto)
 		require.NoError(t, err)
 		assert.False(t, deactivatedAllocation.IsActive)
 	})

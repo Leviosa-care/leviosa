@@ -213,7 +213,7 @@ func TestMain(m *testing.M) {
 	authUserClient = authuserClient.NewInProcessClient(partnerSvc)
 	log.Println("✓ In-process AuthUserClient created")
 
-	service = allocationService.New(allocationRepo, roomRepo, authUserClient)
+	service = allocationService.New(allocationRepo, roomRepo, authUserClient, crypto)
 
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)

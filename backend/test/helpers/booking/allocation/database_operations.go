@@ -237,3 +237,32 @@ func ComputeUserIDHash(t *testing.T, ctx context.Context, crypto encx.CryptoServ
 
 	return crypto.HashBasic(ctx, userIDBytes)
 }
+
+// InsertAllocation is a convenience wrapper that encrypts a RoomAllocation and inserts it.
+// This is for integration tests that work with normal domain objects.
+func InsertAllocation(t *testing.T, ctx context.Context, allocation *domain.RoomAllocation, pool *pgxpool.Pool, crypto encx.CryptoService) {
+	t.Helper()
+
+	allocationEncx, err := domain.ProcessRoomAllocationEncx(ctx, crypto, allocation)
+	require.NoError(t, err, "failed to encrypt allocation")
+
+	InsertAllocationEncx(t, ctx, allocationEncx, pool)
+}
+
+// GetAllocationByID is a convenience wrapper that retrieves and decrypts an allocation.
+// This is for integration tests that need to verify decrypted data.
+func GetAllocationByID(t *testing.T, ctx context.Context, id uuid.UUID, pool *pgxpool.Pool, crypto encx.CryptoService) (*domain.RoomAllocation, error) {
+	t.Helper()
+
+	allocationEncx, err := GetAllocationEncxByID(t, ctx, id, pool)
+	if err != nil {
+		return nil, err
+	}
+
+	allocation, err := domain.DecryptRoomAllocationEncx(ctx, crypto, allocationEncx)
+	if err != nil {
+		return nil, err
+	}
+
+	return allocation, nil
+}

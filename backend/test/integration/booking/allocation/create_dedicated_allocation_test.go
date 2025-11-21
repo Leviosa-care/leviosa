@@ -123,7 +123,7 @@ func TestCreateDedicatedAllocation(t *testing.T) {
 		assert.True(t, response.IsActive)
 
 		// Verify allocation exists in database
-		allocation, err := ta.GetAllocationByID(t, ctx, response.ID, testPool)
+		allocation, err := ta.GetAllocationByID(t, ctx, response.ID, testPool, crypto)
 		require.NoError(t, err)
 		require.NotNil(t, allocation)
 
@@ -173,7 +173,7 @@ func TestCreateDedicatedAllocation(t *testing.T) {
 		assert.Nil(t, response.EndDate) // Should be nil for indefinite allocation
 
 		// Verify in database
-		allocation, err := ta.GetAllocationByID(t, ctx, response.ID, testPool)
+		allocation, err := ta.GetAllocationByID(t, ctx, response.ID, testPool, crypto)
 		require.NoError(t, err)
 		assert.Nil(t, allocation.EndDate)
 	})
@@ -336,7 +336,7 @@ func TestCreateDedicatedAllocation(t *testing.T) {
 		existingStartDate := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
 		existingEndDate := time.Now().AddDate(0, 0, 30).Truncate(24 * time.Hour)
 		existingAllocation := ta.NewTestDedicatedAllocation(t, roomID, partnerUserID, existingStartDate, existingEndDate)
-		ta.InsertAllocation(t, ctx, existingAllocation, testPool)
+		ta.InsertAllocation(t, ctx, existingAllocation, testPool, crypto)
 
 		// Try to create overlapping allocation
 		newStartDate := time.Now().AddDate(0, 0, 20).Truncate(24 * time.Hour) // Overlaps with existing
@@ -546,7 +546,7 @@ func TestCreateDedicatedAllocation(t *testing.T) {
 		firstStartDate := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
 		firstEndDate := time.Now().AddDate(0, 0, 30).Truncate(24 * time.Hour)
 		firstAllocation := ta.NewTestDedicatedAllocation(t, roomID, partnerUserID, firstStartDate, firstEndDate)
-		ta.InsertAllocation(t, ctx, firstAllocation, testPool)
+		ta.InsertAllocation(t, ctx, firstAllocation, testPool, crypto)
 
 		// Create second allocation that doesn't overlap
 		secondStartDate := time.Now().AddDate(0, 0, 40).Truncate(24 * time.Hour) // After first ends

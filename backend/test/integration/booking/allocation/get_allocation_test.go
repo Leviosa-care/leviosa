@@ -84,7 +84,7 @@ func TestGetAllocation(t *testing.T) {
 
 		// Create and insert test allocation
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Make HTTP request
 		req := ta.NewGetAllocationRequest(t, ctx, testServerURL, allocation.ID, partnerAccessToken)
@@ -124,7 +124,7 @@ func TestGetAllocation(t *testing.T) {
 
 		// Create and insert dedicated allocation with time bounds
 		allocation := ta.NewTestActiveDedicatedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Make HTTP request
 		req := ta.NewGetAllocationRequest(t, ctx, testServerURL, allocation.ID, partnerAccessToken)
@@ -168,7 +168,7 @@ func TestGetAllocation(t *testing.T) {
 
 		// Create and insert dedicated allocation without end date (indefinite)
 		allocation := ta.NewTestDedicatedAllocationIndefinite(t, roomID, partnerUserID, startDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Make HTTP request
 		req := ta.NewGetAllocationRequest(t, ctx, testServerURL, allocation.ID, partnerAccessToken)
@@ -205,7 +205,7 @@ func TestGetAllocation(t *testing.T) {
 
 		// Create and insert inactive allocation
 		allocation := ta.NewTestInactiveAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Make HTTP request
 		req := ta.NewGetAllocationRequest(t, ctx, testServerURL, allocation.ID, partnerAccessToken)
@@ -284,7 +284,7 @@ func TestGetAllocation(t *testing.T) {
 
 		// Create and insert test allocation
 		allocation := ta.NewTestSharedAllocation(t, roomID, partnerUserID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		ta.InsertAllocation(t, ctx, allocation, testPool, crypto)
 
 		// Create request without authentication token
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testServerURL+"/allocations/"+allocation.ID.String(), nil)
