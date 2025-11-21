@@ -6,6 +6,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	"github.com/hengadev/encx"
 )
 
 // GetPartnerAllocations retrieves all allocations for a specific partner
@@ -14,8 +15,8 @@ func (s *RoomAllocationService) GetPartnerAllocations(ctx context.Context, reque
 		return nil, errs.NewInvalidValueErr(err.Error())
 	}
 
-	// Compute hash for lookup
-	userIDBytes, err := request.UserID.MarshalBinary()
+	// Compute hash for lookup (using encx.SerializeValue for consistency with domain)
+	userIDBytes, err := encx.SerializeValue(request.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("serialize user ID for hashing: %w", err)
 	}

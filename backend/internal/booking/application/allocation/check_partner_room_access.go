@@ -7,6 +7,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	"github.com/hengadev/encx"
 )
 
 // CheckPartnerRoomAccess checks if a partner has access to a room at a specific time
@@ -16,8 +17,8 @@ func (s *RoomAllocationService) CheckPartnerRoomAccess(ctx context.Context, requ
 		return false, errs.NewInvalidValueErr(err.Error())
 	}
 
-	// Compute hash for lookup
-	userIDBytes, err := request.UserID.MarshalBinary()
+	// Compute hash for lookup (using encx.SerializeValue for consistency with domain)
+	userIDBytes, err := encx.SerializeValue(request.UserID)
 	if err != nil {
 		return false, fmt.Errorf("serialize user ID for hashing: %w", err)
 	}

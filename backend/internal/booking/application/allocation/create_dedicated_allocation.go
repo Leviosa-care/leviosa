@@ -7,6 +7,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	"github.com/hengadev/encx"
 )
 
 // CreateDedicatedAllocation creates a dedicated room allocation with time bounds
@@ -46,8 +47,8 @@ func (s *RoomAllocationService) CreateDedicatedAllocation(ctx context.Context, r
 		return nil, fmt.Errorf("end date must be after start date")
 	}
 
-	// Compute hash for conflict check
-	userIDBytes, err := request.UserID.MarshalBinary()
+	// Compute hash for conflict check (using encx.SerializeValue for consistency with domain)
+	userIDBytes, err := encx.SerializeValue(request.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("serialize user ID for hashing: %w", err)
 	}

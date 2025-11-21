@@ -7,6 +7,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	"github.com/hengadev/encx"
 )
 
 // UpdateDedicatedPeriod updates the time period for a dedicated allocation
@@ -45,8 +46,8 @@ func (s *RoomAllocationService) UpdateDedicatedPeriod(ctx context.Context, reque
 		return nil, fmt.Errorf("end date must be after start date")
 	}
 
-	// Compute hash for conflict check
-	userIDBytes, err := allocation.UserID.MarshalBinary()
+	// Compute hash for conflict check (using encx.SerializeValue for consistency with domain)
+	userIDBytes, err := encx.SerializeValue(allocation.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("serialize user ID for hashing: %w", err)
 	}

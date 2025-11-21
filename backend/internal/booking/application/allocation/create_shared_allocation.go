@@ -7,6 +7,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+	"github.com/hengadev/encx"
 )
 
 // CreateSharedAllocation creates a shared room allocation for a partner
@@ -40,8 +41,8 @@ func (s *RoomAllocationService) CreateSharedAllocation(ctx context.Context, requ
 		return nil, fmt.Errorf("cannot allocate inactive room")
 	}
 
-	// Compute hash for conflict check
-	userIDBytes, err := request.UserID.MarshalBinary()
+	// Compute hash for conflict check (using encx.SerializeValue for consistency with domain)
+	userIDBytes, err := encx.SerializeValue(request.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("serialize user ID for hashing: %w", err)
 	}
