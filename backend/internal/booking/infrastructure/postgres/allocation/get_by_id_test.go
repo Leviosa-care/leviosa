@@ -7,7 +7,6 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-	ta "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/allocation"
 	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/building"
 	tr "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/room"
 
@@ -37,22 +36,24 @@ func TestGetByID(t *testing.T) {
 	}
 
 	t.Run("should successfully retrieve shared allocation by ID", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
 
-		// Create allocation
-		allocation := ta.NewTestSharedAllocation(t, roomID, userID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		// Create and insert encrypted allocation
+		allocationEncx := NewTestSharedAllocationEncx(t, testCrypto, roomID, userID)
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		// Retrieve by ID
-		retrieved, err := repo.GetByID(ctx, allocation.ID)
+		retrieved, err := repo.GetByID(ctx, allocationEncx.ID)
 		require.NoError(t, err)
-		assert.Equal(t, allocation.ID, retrieved.ID)
+		assert.Equal(t, allocationEncx.ID, retrieved.ID)
 		assert.Equal(t, roomID, retrieved.RoomID)
-		assert.Equal(t, userID, retrieved.UserID)
+		assert.Equal(t, allocationEncx.UserIDHash, retrieved.UserIDHash)
+		assert.NotEmpty(t, retrieved.UserIDEncrypted)
 		assert.Equal(t, domain.AllocationTypeShared, retrieved.AllocationType)
 		assert.Nil(t, retrieved.StartDate)
 		assert.Nil(t, retrieved.EndDate)
@@ -60,7 +61,7 @@ func TestGetByID(t *testing.T) {
 	})
 
 	t.Run("should successfully retrieve dedicated allocation with end date", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
@@ -69,12 +70,13 @@ func TestGetByID(t *testing.T) {
 		startDate := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour)
 		endDate := time.Now().AddDate(0, 1, 0).Truncate(24 * time.Hour)
 
-		allocation := ta.NewTestDedicatedAllocation(t, roomID, userID, startDate, endDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
-
-		retrieved, err := repo.GetByID(ctx, allocation.ID)
+		allocationEncx := NewTestDedicatedAllocationEncx(t, testCrypto, roomID, userID, startDate, endDate)
+		err := repo.Create(ctx, allocationEncx)
 		require.NoError(t, err)
-		assert.Equal(t, allocation.ID, retrieved.ID)
+
+		retrieved, err := repo.GetByID(ctx, allocationEncx.ID)
+		require.NoError(t, err)
+		assert.Equal(t, allocationEncx.ID, retrieved.ID)
 		assert.Equal(t, domain.AllocationTypeDedicated, retrieved.AllocationType)
 		assert.NotNil(t, retrieved.StartDate)
 		assert.NotNil(t, retrieved.EndDate)
@@ -83,7 +85,7 @@ func TestGetByID(t *testing.T) {
 	})
 
 	t.Run("should successfully retrieve dedicated allocation without end date", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
@@ -91,12 +93,13 @@ func TestGetByID(t *testing.T) {
 
 		startDate := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour)
 
-		allocation := ta.NewTestDedicatedAllocationIndefinite(t, roomID, userID, startDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
-
-		retrieved, err := repo.GetByID(ctx, allocation.ID)
+		allocationEncx := NewTestDedicatedAllocationEncxWithNilEndDate(t, testCrypto, roomID, userID, startDate)
+		err := repo.Create(ctx, allocationEncx)
 		require.NoError(t, err)
-		assert.Equal(t, allocation.ID, retrieved.ID)
+
+		retrieved, err := repo.GetByID(ctx, allocationEncx.ID)
+		require.NoError(t, err)
+		assert.Equal(t, allocationEncx.ID, retrieved.ID)
 		assert.Equal(t, domain.AllocationTypeDedicated, retrieved.AllocationType)
 		assert.NotNil(t, retrieved.StartDate)
 		assert.Nil(t, retrieved.EndDate) // NULL end date
@@ -104,7 +107,7 @@ func TestGetByID(t *testing.T) {
 	})
 
 	t.Run("should return ErrRepositoryNotFound when allocation does not exist", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		nonExistentID := uuid.New()
@@ -116,36 +119,38 @@ func TestGetByID(t *testing.T) {
 	})
 
 	t.Run("should retrieve inactive allocation", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
 
-		allocation := ta.NewTestInactiveAllocation(t, roomID, userID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
-
-		retrieved, err := repo.GetByID(ctx, allocation.ID)
+		allocationEncx := NewTestInactiveSharedAllocationEncx(t, testCrypto, roomID, userID)
+		err := repo.Create(ctx, allocationEncx)
 		require.NoError(t, err)
-		assert.Equal(t, allocation.ID, retrieved.ID)
+
+		retrieved, err := repo.GetByID(ctx, allocationEncx.ID)
+		require.NoError(t, err)
+		assert.Equal(t, allocationEncx.ID, retrieved.ID)
 		assert.False(t, retrieved.IsActive)
 	})
 
 	t.Run("should retrieve allocation with all timestamps", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
 
-		allocation := ta.NewTestSharedAllocation(t, roomID, userID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestSharedAllocationEncx(t, testCrypto, roomID, userID)
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
-		retrieved, err := repo.GetByID(ctx, allocation.ID)
+		retrieved, err := repo.GetByID(ctx, allocationEncx.ID)
 		require.NoError(t, err)
 		assert.NotZero(t, retrieved.CreatedAt)
 		assert.NotZero(t, retrieved.UpdatedAt)
-		assert.WithinDuration(t, allocation.CreatedAt, retrieved.CreatedAt, time.Second)
-		assert.WithinDuration(t, allocation.UpdatedAt, retrieved.UpdatedAt, time.Second)
+		assert.WithinDuration(t, allocationEncx.CreatedAt, retrieved.CreatedAt, time.Second)
+		assert.WithinDuration(t, allocationEncx.UpdatedAt, retrieved.UpdatedAt, time.Second)
 	})
 }

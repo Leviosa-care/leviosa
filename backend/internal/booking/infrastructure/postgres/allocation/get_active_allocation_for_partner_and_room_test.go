@@ -7,7 +7,6 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-	ta "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/allocation"
 	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/building"
 	tr "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/room"
 
@@ -36,193 +35,208 @@ func TestGetActiveAllocationForPartnerAndRoom(t *testing.T) {
 	}
 
 	t.Run("should retrieve shared allocation (always active)", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
+		userIDHash := ComputeUserIDHash(t, ctx, testCrypto, userID)
 
-		allocation := ta.NewTestSharedAllocation(t, roomID, userID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestSharedAllocationEncx(t, testCrypto, roomID, userID)
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		// Check at any time (shared is always active)
 		at := time.Now()
-		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userID, roomID, at)
+		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userIDHash, roomID, at)
 		require.NoError(t, err)
-		assert.Equal(t, allocation.ID, retrieved.ID)
+		assert.Equal(t, allocationEncx.ID, retrieved.ID)
 		assert.Equal(t, domain.AllocationTypeShared, retrieved.AllocationType)
 	})
 
 	t.Run("should retrieve dedicated allocation within active period", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
+		userIDHash := ComputeUserIDHash(t, ctx, testCrypto, userID)
 
 		startDate := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
 		endDate := time.Now().AddDate(0, 0, 7).Truncate(24 * time.Hour)
 
-		allocation := ta.NewTestDedicatedAllocation(t, roomID, userID, startDate, endDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestDedicatedAllocationEncx(t, testCrypto, roomID, userID, startDate, endDate)
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		// Check at current time (within period)
 		at := time.Now()
-		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userID, roomID, at)
+		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userIDHash, roomID, at)
 		require.NoError(t, err)
-		assert.Equal(t, allocation.ID, retrieved.ID)
+		assert.Equal(t, allocationEncx.ID, retrieved.ID)
 		assert.Equal(t, domain.AllocationTypeDedicated, retrieved.AllocationType)
 	})
 
 	t.Run("should not retrieve dedicated allocation before start_date", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
+		userIDHash := ComputeUserIDHash(t, ctx, testCrypto, userID)
 
-		startDate := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
-		endDate := time.Now().AddDate(0, 1, 0).Truncate(24 * time.Hour)
-
-		allocation := ta.NewTestFutureDedicatedAllocation(t, roomID, userID)
-		allocation.StartDate = &startDate
-		allocation.EndDate = &endDate
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestFutureDedicatedAllocationEncx(t, testCrypto, roomID, userID)
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		// Check at current time (before start_date)
 		at := time.Now()
-		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userID, roomID, at)
+		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userIDHash, roomID, at)
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, errs.ErrRepositoryNotFound)
 		assert.Nil(t, retrieved)
 	})
 
 	t.Run("should not retrieve dedicated allocation after end_date", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
+		userIDHash := ComputeUserIDHash(t, ctx, testCrypto, userID)
 
-		allocation := ta.NewTestPastDedicatedAllocation(t, roomID, userID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestPastDedicatedAllocationEncx(t, testCrypto, roomID, userID)
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		// Check at current time (after end_date)
 		at := time.Now()
-		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userID, roomID, at)
+		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userIDHash, roomID, at)
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, errs.ErrRepositoryNotFound)
 		assert.Nil(t, retrieved)
 	})
 
 	t.Run("should retrieve dedicated allocation with NULL end_date (indefinite)", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
+		userIDHash := ComputeUserIDHash(t, ctx, testCrypto, userID)
 
 		startDate := time.Now().AddDate(0, 0, -30).Truncate(24 * time.Hour)
 
-		allocation := ta.NewTestDedicatedAllocationIndefinite(t, roomID, userID, startDate)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestDedicatedAllocationEncxWithNilEndDate(t, testCrypto, roomID, userID, startDate)
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		// Check at current time and future time
 		at := time.Now().AddDate(0, 1, 0) // 1 month in future
-		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userID, roomID, at)
+		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userIDHash, roomID, at)
 		require.NoError(t, err)
-		assert.Equal(t, allocation.ID, retrieved.ID)
+		assert.Equal(t, allocationEncx.ID, retrieved.ID)
 		assert.Nil(t, retrieved.EndDate)
 	})
 
 	t.Run("should prioritize dedicated over shared when both exist", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
+		userIDHash := ComputeUserIDHash(t, ctx, testCrypto, userID)
 
 		// Create shared allocation
-		sharedAllocation := ta.NewTestSharedAllocation(t, roomID, userID)
-		ta.InsertAllocation(t, ctx, sharedAllocation, testPool)
+		sharedAllocationEncx := NewTestSharedAllocationEncx(t, testCrypto, roomID, userID)
+		err := repo.Create(ctx, sharedAllocationEncx)
+		require.NoError(t, err)
 
 		// Create dedicated allocation (currently active)
-		dedicatedAllocation := ta.NewTestActiveDedicatedAllocation(t, roomID, userID)
-		ta.InsertAllocation(t, ctx, dedicatedAllocation, testPool)
+		dedicatedAllocationEncx := NewTestActiveDedicatedAllocationEncx(t, testCrypto, roomID, userID)
+		err = repo.Create(ctx, dedicatedAllocationEncx)
+		require.NoError(t, err)
 
-		count := ta.CountActiveAllocations(t, ctx, testPool)
+		count := CountActiveAllocations(t, ctx, testPool)
 		require.Equal(t, 2, count, "Should have 2 active allocations in the database set up.")
 
 		// Should return dedicated (higher priority)
 		at := time.Now()
-		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userID, roomID, at)
+		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userIDHash, roomID, at)
 		require.NoError(t, err)
-		assert.Equal(t, dedicatedAllocation.ID, retrieved.ID)
+		assert.Equal(t, dedicatedAllocationEncx.ID, retrieved.ID)
 		assert.Equal(t, domain.AllocationTypeDedicated, retrieved.AllocationType)
 	})
 
 	t.Run("should not retrieve inactive allocation", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
+		userIDHash := ComputeUserIDHash(t, ctx, testCrypto, userID)
 
-		allocation := ta.NewTestInactiveAllocation(t, roomID, userID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestInactiveSharedAllocationEncx(t, testCrypto, roomID, userID)
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		at := time.Now()
-		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userID, roomID, at)
+		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userIDHash, roomID, at)
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, errs.ErrRepositoryNotFound)
 		assert.Nil(t, retrieved)
 	})
 
 	t.Run("should return not found when no allocation exists", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		nonExistentUserID := uuid.New()
+		nonExistentUserIDHash := ComputeUserIDHash(t, ctx, testCrypto, nonExistentUserID)
 		nonExistentRoomID := uuid.New()
 
 		at := time.Now()
-		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, nonExistentUserID, nonExistentRoomID, at)
+		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, nonExistentUserIDHash, nonExistentRoomID, at)
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, errs.ErrRepositoryNotFound)
 		assert.Nil(t, retrieved)
 	})
 
 	t.Run("should not retrieve allocation for different user", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		user1ID := uuid.New()
 		user2ID := uuid.New()
+		user2IDHash := ComputeUserIDHash(t, ctx, testCrypto, user2ID)
 
-		allocation := ta.NewTestSharedAllocation(t, roomID, user1ID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestSharedAllocationEncx(t, testCrypto, roomID, user1ID)
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		at := time.Now()
-		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, user2ID, roomID, at)
+		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, user2IDHash, roomID, at)
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, errs.ErrRepositoryNotFound)
 		assert.Nil(t, retrieved)
 	})
 
 	t.Run("should not retrieve allocation for different room", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		room1ID := setupTestRoom(t)
 		room2ID := setupTestRoom(t)
 		userID := uuid.New()
+		userIDHash := ComputeUserIDHash(t, ctx, testCrypto, userID)
 
-		allocation := ta.NewTestSharedAllocation(t, room1ID, userID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestSharedAllocationEncx(t, testCrypto, room1ID, userID)
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		at := time.Now()
-		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userID, room2ID, at)
+		retrieved, err := repo.GetActiveAllocationForPartnerAndRoom(ctx, userIDHash, room2ID, at)
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, errs.ErrRepositoryNotFound)
 		assert.Nil(t, retrieved)
