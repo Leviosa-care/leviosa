@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-	ta "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/allocation"
 	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/building"
 	tr "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/room"
 
@@ -34,28 +33,28 @@ func TestDelete(t *testing.T) {
 	}
 
 	t.Run("should soft delete allocation (mark as inactive)", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
 
-		allocation := ta.NewTestSharedAllocation(t, roomID, userID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestSharedAllocationEncx(t, testCrypto, roomID, userID)
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		// Execute soft delete
-		err := repo.Delete(ctx, allocation.ID)
+		err = repo.Delete(ctx, allocationEncx.ID)
 		require.NoError(t, err)
 
 		// Verify allocation still exists but is inactive
-		deleted, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool)
-		require.NoError(t, err)
+		deleted := GetAllocationEncxByID(t, ctx, testPool, allocationEncx.ID)
 		assert.False(t, deleted.IsActive)
-		assert.True(t, deleted.UpdatedAt.After(allocation.CreatedAt))
+		assert.True(t, deleted.UpdatedAt.After(allocationEncx.CreatedAt))
 	})
 
 	t.Run("should return ErrRepositoryNotFound when deleting non-existent allocation", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 
 		nonExistentID := uuid.New()
 
@@ -65,46 +64,46 @@ func TestDelete(t *testing.T) {
 	})
 
 	t.Run("should successfully soft delete already inactive allocation", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
 
-		allocation := ta.NewTestInactiveAllocation(t, roomID, userID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestInactiveSharedAllocationEncx(t, testCrypto, roomID, userID)
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		// Soft delete already inactive allocation
-		err := repo.Delete(ctx, allocation.ID)
+		err = repo.Delete(ctx, allocationEncx.ID)
 		require.NoError(t, err)
 
-		deleted, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool)
-		require.NoError(t, err)
+		deleted := GetAllocationEncxByID(t, ctx, testPool, allocationEncx.ID)
 		assert.False(t, deleted.IsActive)
 	})
 
 	t.Run("should update updated_at timestamp on soft delete", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
 
-		allocation := ta.NewTestSharedAllocation(t, roomID, userID)
-		ta.InsertAllocation(t, ctx, allocation, testPool)
-
-		originalUpdatedAt := allocation.UpdatedAt
-
-		err := repo.Delete(ctx, allocation.ID)
+		allocationEncx := NewTestSharedAllocationEncx(t, testCrypto, roomID, userID)
+		err := repo.Create(ctx, allocationEncx)
 		require.NoError(t, err)
 
-		deleted, err := ta.GetAllocationByID(t, ctx, allocation.ID, testPool)
+		originalUpdatedAt := allocationEncx.UpdatedAt
+
+		err = repo.Delete(ctx, allocationEncx.ID)
 		require.NoError(t, err)
+
+		deleted := GetAllocationEncxByID(t, ctx, testPool, allocationEncx.ID)
 		assert.True(t, deleted.UpdatedAt.After(originalUpdatedAt))
 	})
 
 	t.Run("should not affect other allocations when soft deleting", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
@@ -112,24 +111,24 @@ func TestDelete(t *testing.T) {
 		user2ID := uuid.New()
 
 		// Create two allocations
-		allocation1 := ta.NewTestSharedAllocation(t, roomID, user1ID)
-		ta.InsertAllocation(t, ctx, allocation1, testPool)
+		allocation1Encx := NewTestSharedAllocationEncx(t, testCrypto, roomID, user1ID)
+		err := repo.Create(ctx, allocation1Encx)
+		require.NoError(t, err)
 
-		allocation2 := ta.NewTestSharedAllocation(t, roomID, user2ID)
-		ta.InsertAllocation(t, ctx, allocation2, testPool)
+		allocation2Encx := NewTestSharedAllocationEncx(t, testCrypto, roomID, user2ID)
+		err = repo.Create(ctx, allocation2Encx)
+		require.NoError(t, err)
 
 		// Delete first allocation
-		err := repo.Delete(ctx, allocation1.ID)
+		err = repo.Delete(ctx, allocation1Encx.ID)
 		require.NoError(t, err)
 
 		// Verify first is inactive
-		deleted, err := ta.GetAllocationByID(t, ctx, allocation1.ID, testPool)
-		require.NoError(t, err)
+		deleted := GetAllocationEncxByID(t, ctx, testPool, allocation1Encx.ID)
 		assert.False(t, deleted.IsActive)
 
 		// Verify second is still active
-		notDeleted, err := ta.GetAllocationByID(t, ctx, allocation2.ID, testPool)
-		require.NoError(t, err)
+		notDeleted := GetAllocationEncxByID(t, ctx, testPool, allocation2Encx.ID)
 		assert.True(t, notDeleted.IsActive)
 	})
 }

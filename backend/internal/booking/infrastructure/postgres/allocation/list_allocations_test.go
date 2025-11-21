@@ -7,7 +7,6 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
-	ta "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/allocation"
 	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/building"
 	tr "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/room"
 
@@ -36,17 +35,19 @@ func TestList(t *testing.T) {
 	}
 
 	t.Run("should list all allocations with empty filter", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 
 		// Create multiple allocations
-		allocation1 := ta.NewTestSharedAllocation(t, roomID, uuid.New())
-		ta.InsertAllocation(t, ctx, allocation1, testPool)
+		allocation1Encx := NewTestSharedAllocationEncx(t, testCrypto, roomID, uuid.New())
+		err := repo.Create(ctx, allocation1Encx)
+		require.NoError(t, err)
 
-		allocation2 := ta.NewTestSharedAllocation(t, roomID, uuid.New())
-		ta.InsertAllocation(t, ctx, allocation2, testPool)
+		allocation2Encx := NewTestSharedAllocationEncx(t, testCrypto, roomID, uuid.New())
+		err = repo.Create(ctx, allocation2Encx)
+		require.NoError(t, err)
 
 		allocations, err := repo.List(ctx, ports.RoomAllocationFilter{})
 		require.NoError(t, err)
@@ -54,17 +55,19 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("should filter by RoomID", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		room1ID := setupTestRoom(t)
 		room2ID := setupTestRoom(t)
 
-		allocation1 := ta.NewTestSharedAllocation(t, room1ID, uuid.New())
-		ta.InsertAllocation(t, ctx, allocation1, testPool)
+		allocation1Encx := NewTestSharedAllocationEncx(t, testCrypto, room1ID, uuid.New())
+		err := repo.Create(ctx, allocation1Encx)
+		require.NoError(t, err)
 
-		allocation2 := ta.NewTestSharedAllocation(t, room2ID, uuid.New())
-		ta.InsertAllocation(t, ctx, allocation2, testPool)
+		allocation2Encx := NewTestSharedAllocationEncx(t, testCrypto, room2ID, uuid.New())
+		err = repo.Create(ctx, allocation2Encx)
+		require.NoError(t, err)
 
 		filter := ports.RoomAllocationFilter{RoomID: &room1ID}
 		allocations, err := repo.List(ctx, filter)
@@ -73,41 +76,46 @@ func TestList(t *testing.T) {
 		assert.Equal(t, room1ID, allocations[0].RoomID)
 	})
 
-	t.Run("should filter by UserID", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+	t.Run("should filter by UserIDHash", func(t *testing.T) {
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		user1ID := uuid.New()
 		user2ID := uuid.New()
+		user1IDHash := ComputeUserIDHash(t, ctx, testCrypto, user1ID)
 
-		allocation1 := ta.NewTestSharedAllocation(t, roomID, user1ID)
-		ta.InsertAllocation(t, ctx, allocation1, testPool)
+		allocation1Encx := NewTestSharedAllocationEncx(t, testCrypto, roomID, user1ID)
+		err := repo.Create(ctx, allocation1Encx)
+		require.NoError(t, err)
 
-		allocation2 := ta.NewTestSharedAllocation(t, roomID, user2ID)
-		ta.InsertAllocation(t, ctx, allocation2, testPool)
+		allocation2Encx := NewTestSharedAllocationEncx(t, testCrypto, roomID, user2ID)
+		err = repo.Create(ctx, allocation2Encx)
+		require.NoError(t, err)
 
-		filter := ports.RoomAllocationFilter{UserID: &user1ID}
+		filter := ports.RoomAllocationFilter{UserIDHash: &user1IDHash}
 		allocations, err := repo.List(ctx, filter)
 		require.NoError(t, err)
 		assert.Len(t, allocations, 1)
-		assert.Equal(t, user1ID, allocations[0].UserID)
+		assert.Equal(t, user1IDHash, allocations[0].UserIDHash)
 	})
 
 	t.Run("should filter by AllocationType", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 		userID := uuid.New()
 
 		// Create shared
-		sharedAllocation := ta.NewTestSharedAllocation(t, roomID, userID)
-		ta.InsertAllocation(t, ctx, sharedAllocation, testPool)
+		sharedAllocationEncx := NewTestSharedAllocationEncx(t, testCrypto, roomID, userID)
+		err := repo.Create(ctx, sharedAllocationEncx)
+		require.NoError(t, err)
 
 		// Create dedicated
-		dedicatedAllocation := ta.NewTestActiveDedicatedAllocation(t, roomID, uuid.New())
-		ta.InsertAllocation(t, ctx, dedicatedAllocation, testPool)
+		dedicatedAllocationEncx := NewTestActiveDedicatedAllocationEncx(t, testCrypto, roomID, uuid.New())
+		err = repo.Create(ctx, dedicatedAllocationEncx)
+		require.NoError(t, err)
 
 		allocType := domain.AllocationTypeShared
 		filter := ports.RoomAllocationFilter{AllocationType: &allocType}
@@ -118,16 +126,18 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("should filter by IsActive", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 
-		activeAllocation := ta.NewTestSharedAllocation(t, roomID, uuid.New())
-		ta.InsertAllocation(t, ctx, activeAllocation, testPool)
+		activeAllocationEncx := NewTestSharedAllocationEncx(t, testCrypto, roomID, uuid.New())
+		err := repo.Create(ctx, activeAllocationEncx)
+		require.NoError(t, err)
 
-		inactiveAllocation := ta.NewTestInactiveAllocation(t, roomID, uuid.New())
-		ta.InsertAllocation(t, ctx, inactiveAllocation, testPool)
+		inactiveAllocationEncx := NewTestInactiveSharedAllocationEncx(t, testCrypto, roomID, uuid.New())
+		err = repo.Create(ctx, inactiveAllocationEncx)
+		require.NoError(t, err)
 
 		isActive := true
 		filter := ports.RoomAllocationFilter{IsActive: &isActive}
@@ -138,13 +148,14 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("should filter by ActiveAt for shared allocation", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 
-		sharedAllocation := ta.NewTestSharedAllocation(t, roomID, uuid.New())
-		ta.InsertAllocation(t, ctx, sharedAllocation, testPool)
+		sharedAllocationEncx := NewTestSharedAllocationEncx(t, testCrypto, roomID, uuid.New())
+		err := repo.Create(ctx, sharedAllocationEncx)
+		require.NoError(t, err)
 
 		// Shared is always active
 		activeAt := time.Now()
@@ -155,13 +166,14 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("should filter by ActiveAt for dedicated allocation within period", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 
-		dedicatedAllocation := ta.NewTestActiveDedicatedAllocation(t, roomID, uuid.New())
-		ta.InsertAllocation(t, ctx, dedicatedAllocation, testPool)
+		dedicatedAllocationEncx := NewTestActiveDedicatedAllocationEncx(t, testCrypto, roomID, uuid.New())
+		err := repo.Create(ctx, dedicatedAllocationEncx)
+		require.NoError(t, err)
 
 		// Check at time within period
 		activeAt := time.Now()
@@ -172,13 +184,14 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("should not return dedicated allocation outside ActiveAt period", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 
-		pastAllocation := ta.NewTestPastDedicatedAllocation(t, roomID, uuid.New())
-		ta.InsertAllocation(t, ctx, pastAllocation, testPool)
+		pastAllocationEncx := NewTestPastDedicatedAllocationEncx(t, testCrypto, roomID, uuid.New())
+		err := repo.Create(ctx, pastAllocationEncx)
+		require.NoError(t, err)
 
 		// Check at current time (after period)
 		activeAt := time.Now()
@@ -189,13 +202,14 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("should filter by OverlapsWith for dedicated allocation", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 
-		allocation := ta.NewTestActiveDedicatedAllocation(t, roomID, uuid.New())
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestActiveDedicatedAllocationEncx(t, testCrypto, roomID, uuid.New())
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		// Create range that overlaps with allocation
 		overlapRange := ports.TimeRange{
@@ -209,13 +223,14 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("should not return allocation when OverlapsWith has no overlap", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 
-		allocation := ta.NewTestPastDedicatedAllocation(t, roomID, uuid.New())
-		ta.InsertAllocation(t, ctx, allocation, testPool)
+		allocationEncx := NewTestPastDedicatedAllocationEncx(t, testCrypto, roomID, uuid.New())
+		err := repo.Create(ctx, allocationEncx)
+		require.NoError(t, err)
 
 		// Create range in the future (no overlap with past allocation)
 		overlapRange := ports.TimeRange{
@@ -229,15 +244,16 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("should apply pagination with Limit", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 
 		// Create 5 allocations
 		for i := 0; i < 5; i++ {
-			allocation := ta.NewTestSharedAllocation(t, roomID, uuid.New())
-			ta.InsertAllocation(t, ctx, allocation, testPool)
+			allocationEncx := NewTestSharedAllocationEncx(t, testCrypto, roomID, uuid.New())
+			err := repo.Create(ctx, allocationEncx)
+			require.NoError(t, err)
 		}
 
 		filter := ports.RoomAllocationFilter{Limit: 2}
@@ -247,18 +263,17 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("should apply pagination with Offset", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 
 		// Create allocations with staggered times for consistent ordering
-		allocations := make([]*domain.RoomAllocation, 5)
 		for i := 0; i < 5; i++ {
-			allocation := ta.NewTestSharedAllocation(t, roomID, uuid.New())
-			allocation.CreatedAt = time.Now().Add(-time.Duration(4-i) * time.Hour)
-			ta.InsertAllocation(t, ctx, allocation, testPool)
-			allocations[i] = allocation
+			allocationEncx := NewTestSharedAllocationEncx(t, testCrypto, roomID, uuid.New())
+			allocationEncx.CreatedAt = time.Now().Add(-time.Duration(4-i) * time.Hour)
+			err := repo.Create(ctx, allocationEncx)
+			require.NoError(t, err)
 		}
 
 		filter := ports.RoomAllocationFilter{Offset: 2}
@@ -268,22 +283,25 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("should order by created_at DESC by default", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 
-		first := ta.NewTestSharedAllocation(t, roomID, uuid.New())
+		first := NewTestSharedAllocationEncx(t, testCrypto, roomID, uuid.New())
 		first.CreatedAt = time.Now().Add(-2 * time.Hour)
-		ta.InsertAllocation(t, ctx, first, testPool)
+		err := repo.Create(ctx, first)
+		require.NoError(t, err)
 
-		second := ta.NewTestSharedAllocation(t, roomID, uuid.New())
+		second := NewTestSharedAllocationEncx(t, testCrypto, roomID, uuid.New())
 		second.CreatedAt = time.Now().Add(-1 * time.Hour)
-		ta.InsertAllocation(t, ctx, second, testPool)
+		err = repo.Create(ctx, second)
+		require.NoError(t, err)
 
-		third := ta.NewTestSharedAllocation(t, roomID, uuid.New())
+		third := NewTestSharedAllocationEncx(t, testCrypto, roomID, uuid.New())
 		third.CreatedAt = time.Now()
-		ta.InsertAllocation(t, ctx, third, testPool)
+		err = repo.Create(ctx, third)
+		require.NoError(t, err)
 
 		allocations, err := repo.List(ctx, ports.RoomAllocationFilter{})
 		require.NoError(t, err)
@@ -293,20 +311,22 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("should order by start_date ASC", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		roomID := setupTestRoom(t)
 
-		allocation1 := ta.NewTestFutureDedicatedAllocation(t, roomID, uuid.New())
-		startDate1 := time.Now().AddDate(0, 0, 10).Truncate(24 * time.Hour)
-		allocation1.StartDate = &startDate1
-		ta.InsertAllocation(t, ctx, allocation1, testPool)
+		allocation1Encx := NewTestFutureDedicatedAllocationEncx(t, testCrypto, roomID, uuid.New())
+		startDate1 := time.Now().AddDate(0, 0, 15).Truncate(24 * time.Hour)
+		allocation1Encx.StartDate = &startDate1
+		err := repo.Create(ctx, allocation1Encx)
+		require.NoError(t, err)
 
-		allocation2 := ta.NewTestFutureDedicatedAllocation(t, roomID, uuid.New())
-		startDate2 := time.Now().AddDate(0, 0, 5).Truncate(24 * time.Hour)
-		allocation2.StartDate = &startDate2
-		ta.InsertAllocation(t, ctx, allocation2, testPool)
+		allocation2Encx := NewTestFutureDedicatedAllocationEncx(t, testCrypto, roomID, uuid.New())
+		startDate2 := time.Now().AddDate(0, 0, 12).Truncate(24 * time.Hour)
+		allocation2Encx.StartDate = &startDate2
+		err = repo.Create(ctx, allocation2Encx)
+		require.NoError(t, err)
 
 		filter := ports.RoomAllocationFilter{
 			OrderBy:        "start_date",
@@ -314,32 +334,39 @@ func TestList(t *testing.T) {
 		}
 		allocations, err := repo.List(ctx, filter)
 		require.NoError(t, err)
-		assert.Equal(t, allocation2.ID, allocations[0].ID)
-		assert.Equal(t, allocation1.ID, allocations[1].ID)
+		assert.Equal(t, allocation2Encx.ID, allocations[0].ID)
+		assert.Equal(t, allocation1Encx.ID, allocations[1].ID)
 	})
 
 	t.Run("should combine multiple filters", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		room1ID := setupTestRoom(t)
 		room2ID := setupTestRoom(t)
 		room3ID := setupTestRoom(t)
 		userID := uuid.New()
+		userIDHash := ComputeUserIDHash(t, ctx, testCrypto, userID)
 
 		// Create allocation that matches all filters
-		matchingAllocation := ta.NewTestSharedAllocation(t, room1ID, userID)
-		ta.InsertAllocation(t, ctx, matchingAllocation, testPool)
+		matchingAllocationEncx := NewTestSharedAllocationEncx(t, testCrypto, room1ID, userID)
+		err := repo.Create(ctx, matchingAllocationEncx)
+		require.NoError(t, err)
 
 		// Create allocations that don't match
-		ta.InsertAllocation(t, ctx, ta.NewTestSharedAllocation(t, room2ID, userID), testPool)
-		ta.InsertAllocation(t, ctx, ta.NewTestInactiveAllocation(t, room3ID, userID), testPool)
+		allocation2Encx := NewTestSharedAllocationEncx(t, testCrypto, room2ID, userID)
+		err = repo.Create(ctx, allocation2Encx)
+		require.NoError(t, err)
+
+		allocation3Encx := NewTestInactiveSharedAllocationEncx(t, testCrypto, room3ID, userID)
+		err = repo.Create(ctx, allocation3Encx)
+		require.NoError(t, err)
 
 		allocType := domain.AllocationTypeShared
 		isActive := true
 		filter := ports.RoomAllocationFilter{
 			RoomID:         &room1ID,
-			UserID:         &userID,
+			UserIDHash:     &userIDHash,
 			AllocationType: &allocType,
 			IsActive:       &isActive,
 		}
@@ -347,11 +374,11 @@ func TestList(t *testing.T) {
 		allocations, err := repo.List(ctx, filter)
 		require.NoError(t, err)
 		assert.Len(t, allocations, 1)
-		assert.Equal(t, matchingAllocation.ID, allocations[0].ID)
+		assert.Equal(t, matchingAllocationEncx.ID, allocations[0].ID)
 	})
 
 	t.Run("should return empty slice when no matches", func(t *testing.T) {
-		ta.ClearAllocationTable(t, ctx, testPool)
+		ClearAllocationTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 
 		nonExistentRoomID := uuid.New()
