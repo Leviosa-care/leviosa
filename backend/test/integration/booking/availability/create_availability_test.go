@@ -8,11 +8,13 @@ import (
 	"testing"
 	"time"
 
+	userDomain "github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	// ck "github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	// "github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
+	th "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	ta "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/availability"
 	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/building"
 	tr "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/room"
@@ -22,6 +24,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// TODO: for the service type offered in availability that should be set based on the catalog service.
+// The partner when declaring an availability should specify the catalog service available. And they can offer
+// multiple service so the type should be []string
 
 // make test-func TEST_NAME=TestCreateAvailability TEST_PATH=test/integration/booking/availability/create_availability_test.go
 
@@ -50,11 +56,32 @@ func TestCreateAvailability(t *testing.T) {
 		return room.ID
 	}
 
+	// TODO: create the partner here
+	setupPartnerUser := func(t *testing.T, ctx context.Context, email string) uuid.UUID {
+		user := th.NewTestUser(t, email, "John", "DOE")
+		user.Role = identity.Partner.String()
+		userEncx, err := userDomain.ProcessUserEncx(ctx, crypto, user)
+		require.NoError(t, err)
+		err = th.InsertUserEncx(t, ctx, userEncx, testPool)
+		require.NoError(t, err)
+
+		partner := th.NewTestPartner(t, user.ID)
+		partner.StripeAccountStatus = userDomain.StripeAccountStatusActive
+		partner.StripeOnboardingComplete = true
+		partnerEncx, err := userDomain.ProcessPartnerEncx(ctx, crypto, partner)
+		require.NoError(t, err)
+		err = th.InsertPartnerEncx(t, ctx, partnerEncx, testPool)
+		require.NoError(t, err)
+
+		// TODO: create a session for that user
+
+		return user.ID
+	}
+
 	// Create valid request helper
 	createValidRequest := func(roomID uuid.UUID) domain.CreateAvailabilityRequest {
 		startTime := time.Now().Add(24 * time.Hour).Truncate(time.Second)
 		endTime := startTime.Add(2 * time.Hour)
-
 		return domain.CreateAvailabilityRequest{
 			RoomID:      roomID,
 			StartTime:   startTime,
@@ -69,6 +96,11 @@ func TestCreateAvailability(t *testing.T) {
 		tb.ClearBuildingsTable(t, ctx, testPool)
 		defer tu.ClearAuthData(t, ctx, authCtx)
 
+		// TODO:
+		// - create a user with the role partner
+		// - create a room
+		// - create an allocation for that user for the created room
+
 		// Setup partner user and get access token
 		accessToken := tu.SetupUserWithRole(t, ctx, identity.Partner, authCtx)
 
@@ -77,6 +109,9 @@ func TestCreateAvailability(t *testing.T) {
 
 		// Prepare request
 		request := createValidRequest(roomID)
+
+		// the error that I get for the test so maybe is the setup not operational enough
+		// NOTE: error: check partner room access: get active allocation for partner and room: record not found
 
 		req := ta.NewCreateAvailabilityRequest(t, ctx, testServerURL, request, accessToken)
 
@@ -116,48 +151,48 @@ func TestCreateAvailability(t *testing.T) {
 		assert.Equal(t, domain.AvailabilityStatusAvailable, availability.Status)
 	})
 
-	// t.Run("should successfully create availability with service details", func(t *testing.T) {
-	// 	ta.ClearAvailabilityTable(t, ctx, testPool)
-	// 	tb.ClearBuildingsTable(t, ctx, testPool)
-	// 	defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	// 	accessToken := tu.SetupUserWithRole(t, ctx, identity.Partner, authCtx)
-	// 	roomID := setupTestRoom(t, ctx)
-	//
-	// 	// Create request with service details
-	// 	request := createValidRequest(roomID)
-	// 	priceCents := 5000 // $50.00
-	// 	request.ServiceType = "Massage Therapy"
-	// 	request.PriceCents = &priceCents
-	// 	request.Notes = "Bring comfortable clothing"
-	//
-	// 	req := ta.NewCreateAvailabilityRequest(t, ctx, testServerURL, request, accessToken)
-	//
-	// 	resp, err := client.Do(req)
-	// 	require.NoError(t, err)
-	// 	defer resp.Body.Close()
-	//
-	// 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
-	//
-	// 	var response domain.AvailabilityResponse
-	// 	err = json.NewDecoder(resp.Body).Decode(&response)
-	// 	require.NoError(t, err)
-	//
-	// 	// Verify service details in response
-	// 	assert.Equal(t, request.ServiceType, response.ServiceType)
-	// 	assert.Equal(t, *request.PriceCents, *response.PriceCents)
-	// 	assert.Equal(t, request.Notes, response.Notes)
-	//
-	// 	// Verify in database with encryption
-	// 	availabilityEncx := ta.GetAvailabilityEncxFromDB(t, ctx, response.ID, testPool)
-	// 	availability, err := domain.DecryptAvailabilityEncx(ctx, crypto, availabilityEncx)
-	// 	require.NoError(t, err)
-	//
-	// 	assert.Equal(t, request.ServiceType, availability.ServiceType)
-	// 	assert.Equal(t, *request.PriceCents, *availability.PriceCents)
-	// 	assert.Equal(t, request.Notes, availability.Notes)
-	// })
-	//
+	t.Run("should successfully create availability with service details", func(t *testing.T) {
+		ta.ClearAvailabilityTable(t, ctx, testPool)
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupUserWithRole(t, ctx, identity.Partner, authCtx)
+		roomID := setupTestRoom(t, ctx)
+
+		// Create request with service details
+		request := createValidRequest(roomID)
+		priceCents := 5000 // $50.00
+		request.ServiceType = "Massage Therapy"
+		request.PriceCents = &priceCents
+		request.Notes = "Bring comfortable clothing"
+
+		req := ta.NewCreateAvailabilityRequest(t, ctx, testServerURL, request, accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+		var response domain.AvailabilityResponse
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		// Verify service details in response
+		assert.Equal(t, request.ServiceType, response.ServiceType)
+		assert.Equal(t, *request.PriceCents, *response.PriceCents)
+		assert.Equal(t, request.Notes, response.Notes)
+
+		// Verify in database with encryption
+		availabilityEncx := ta.GetAvailabilityEncxFromDB(t, ctx, response.ID, testPool)
+		availability, err := domain.DecryptAvailabilityEncx(ctx, crypto, availabilityEncx)
+		require.NoError(t, err)
+
+		assert.Equal(t, request.ServiceType, availability.ServiceType)
+		assert.Equal(t, *request.PriceCents, *availability.PriceCents)
+		assert.Equal(t, request.Notes, availability.Notes)
+	})
+
 	// t.Run("should successfully create availability with admin token", func(t *testing.T) {
 	// 	ta.ClearAvailabilityTable(t, ctx, testPool)
 	// 	tb.ClearBuildingsTable(t, ctx, testPool)
