@@ -36,20 +36,20 @@ import (
 )
 
 var (
-	pgContainer        *tu.PostgresContainer
-	testPool           *pgxpool.Pool
-	redisContainer     *tu.RedisContainer
-	redisClient        *redis.Client
-	crypto             encx.CryptoService
-	availabilityRepo   ports.AvailabilityRepository
-	allocationRepo     ports.RoomAllocationRepository
-	roomRepo           ports.RoomRepository
-	service            ports.AvailabilityService
-	authCtx            *tu.AuthTestContext // Authentication context for user/session tests
-	handler            availabilityHandler.Handler
-	testServerURL      string       // Global variable to hold the URL of the running test server
-	testServer         *http.Server // To allow graceful shutdown
-	authSessionRepo    authsession.SessionRepository
+	pgContainer      *tu.PostgresContainer
+	testPool         *pgxpool.Pool
+	redisContainer   *tu.RedisContainer
+	redisClient      *redis.Client
+	crypto           encx.CryptoService
+	availabilityRepo ports.AvailabilityRepository
+	allocationRepo   ports.RoomAllocationRepository
+	roomRepo         ports.RoomRepository
+	service          ports.AvailabilityService
+	authCtx          *tu.AuthTestContext // Authentication context for user/session tests
+	handler          availabilityHandler.Handler
+	testServerURL    string       // Global variable to hold the URL of the running test server
+	testServer       *http.Server // To allow graceful shutdown
+	authSessionRepo  authsession.SessionRepository
 )
 
 func TestMain(m *testing.M) {
