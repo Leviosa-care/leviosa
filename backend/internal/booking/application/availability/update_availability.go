@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
@@ -87,16 +88,19 @@ func (s *AvailabilityService) UpdateAvailability(ctx context.Context, request *d
 		}
 	}
 
-	// Update service details (handle optional pointer fields)
-	var serviceType string
-	var notes string
+	// Update service details (handle optional pointer fields for partial updates)
 	if request.ServiceType != nil {
-		serviceType = *request.ServiceType
+		availability.ServiceType = *request.ServiceType
+		availability.UpdatedAt = time.Now()
+	}
+	if request.PriceCents != nil {
+		availability.PriceCents = request.PriceCents
+		availability.UpdatedAt = time.Now()
 	}
 	if request.Notes != nil {
-		notes = *request.Notes
+		availability.Notes = *request.Notes
+		availability.UpdatedAt = time.Now()
 	}
-	availability.SetServiceDetails(serviceType, request.PriceCents, notes)
 
 	updatedAvailabilityEncx, err := domain.ProcessAvailabilityEncx(ctx, s.crypto, availability)
 	if err != nil {
