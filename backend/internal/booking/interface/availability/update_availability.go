@@ -50,8 +50,10 @@ func (h *handler) UpdateAvailability(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	request.ID = availabilityID
+
 	// Call service to update availability
-	availability, err := h.svc.UpdateAvailability(ctx, availabilityID, request.StartTime, request.EndTime, request.ServiceType, request.PriceCents, request.Notes)
+	availability, err := h.svc.UpdateAvailability(ctx, &request)
 	if err != nil {
 		httpx.RespondWithServiceError(w, logger, ctx, err, "update availability")
 		return
