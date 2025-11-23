@@ -20,5 +20,6 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// router.HandleFunc("GET /availabilities", RequireStandard(mw.EnableCORS(h.GetAvailableSlots)))
 	// router.HandleFunc("PUT /availabilities/{id}", RequirePartner(mw.EnableCORS(h.UpdateAvailability)))
 	// router.HandleFunc("POST /availabilities/{id}/cancel", RequirePartner(mw.EnableCORS(h.CancelAvailability)))
-	// router.HandleFunc("POST /availabilities/{id}/block", RequireAdmin(mw.EnableCORS(h.BlockAvailability))) router.HandleFunc("GET /partners/{partnerId}/availabilities/conflict", RequirePartner(mw.EnableCORS(h.CheckAvailabilityConflict)))
+	// router.HandleFunc("POST /availabilities/{id}/block", RequireAdmin(mw.EnableCORS(h.BlockAvailability)))
+	// router.HandleFunc("GET /partners/{partnerId}/availabilities/conflict", RequirePartner(mw.EnableCORS(h.CheckAvailabilityConflict)))
 }
