@@ -108,8 +108,8 @@ func TestCheckAvailabilityConflict(t *testing.T) {
 		accessToken, userID, _, _ := setupTestAvailabilityForConflictCheck(t, ctx, "partner@leviosa.care")
 
 		// Check for conflict with non-overlapping time slot (2 days later)
-		newStartTime := time.Now().Add(72 * time.Hour).Truncate(time.Second)   // 3 days from now
-		newEndTime := time.Now().Add(74 * time.Hour).Truncate(time.Second)     // 3 days + 2 hours from now
+		newStartTime := time.Now().Add(72 * time.Hour).Truncate(time.Second) // 3 days from now
+		newEndTime := time.Now().Add(74 * time.Hour).Truncate(time.Second)   // 3 days + 2 hours from now
 
 		req := createCheckConflictRequest(
 			t,
@@ -294,6 +294,7 @@ func TestCheckAvailabilityConflict(t *testing.T) {
 		// Clean up test data
 		ta.ClearAvailabilityTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
 		// Setup test data
 		_, userID, _, _ := setupTestAvailabilityForConflictCheck(t, ctx, "partner@leviosa.care")
@@ -320,40 +321,39 @@ func TestCheckAvailabilityConflict(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 
-	// TODO: Fix standard user test setup - temporarily commented out due to user creation conflicts
-	// t.Run("should return 403 for standard user trying to check another partner's conflicts", func(t *testing.T) {
-	// 	// Clean up test data
-	// 	ta.ClearAvailabilityTable(t, ctx, testPool)
-	// 	tb.ClearBuildingsTable(t, ctx, testPool)
-	// 	defer tu.ClearAuthData(t, ctx, authCtx)
+	t.Run("should return 403 for standard user trying to check another partner's conflicts", func(t *testing.T) {
+		// Clean up test data
+		ta.ClearAvailabilityTable(t, ctx, testPool)
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
 
-	// 	// Setup test data with partner
-	// 	_, partnerUserID, _, roomID := setupTestAvailabilityForConflictCheck(t, ctx, "partner@leviosa.care")
+		// Setup test data with partner
+		_, partnerUserID, _, roomID := setupTestAvailabilityForConflictCheck(t, ctx, "partner@leviosa.care")
 
-	// 	// Create standard user
-	// 	standardAccessToken, _ := ts.SetupStandardUser(t, ctx, "standarduser@leviosa.care", roomID, testPool, redisClient, crypto)
+		// Create standard user
+		standardAccessToken, _ := ts.SetupStandardUser(t, ctx, "standarduser@leviosa.care", roomID, testPool, redisClient, crypto)
 
-	// 	newStartTime := time.Now().Add(48 * time.Hour).Truncate(time.Second)
-	// 	newEndTime := time.Now().Add(50 * time.Hour).Truncate(time.Second)
+		newStartTime := time.Now().Add(48 * time.Hour).Truncate(time.Second)
+		newEndTime := time.Now().Add(50 * time.Hour).Truncate(time.Second)
 
-	// 	// Standard user trying to check partner's conflicts
-	// 	req := createCheckConflictRequest(
-	// 		t,
-	// 		ctx,
-	// 		testServerURL,
-	// 		partnerUserID.String(),
-	// 		newStartTime.Format(time.RFC3339),
-	// 		newEndTime.Format(time.RFC3339),
-	// 		"",
-	// 		standardAccessToken,
-	// 	)
+		// Standard user trying to check partner's conflicts
+		req := createCheckConflictRequest(
+			t,
+			ctx,
+			testServerURL,
+			partnerUserID.String(),
+			newStartTime.Format(time.RFC3339),
+			newEndTime.Format(time.RFC3339),
+			"",
+			standardAccessToken,
+		)
 
-	// 	resp, err := client.Do(req)
-	// 	require.NoError(t, err)
-	// 	defer resp.Body.Close()
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
 
-	// 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-	// })
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
 
 	t.Run("should return 400 for invalid partner ID format", func(t *testing.T) {
 		// Clean up test data
@@ -734,3 +734,4 @@ func TestCheckAvailabilityConflict(t *testing.T) {
 		assert.False(t, response.HasConflict, "Expected no conflict when new slot ends exactly when existing starts")
 	})
 }
+
