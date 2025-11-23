@@ -163,7 +163,7 @@ func (a *Availability) Cancel() {
 	a.UpdatedAt = time.Now()
 }
 
-// Block blocks the availability (partner-initiated)
+// Block blocks the availability (admin-initiated administrative action)
 func (a *Availability) Block() {
 	a.Status = AvailabilityStatusBlocked
 	a.UpdatedAt = time.Now()
