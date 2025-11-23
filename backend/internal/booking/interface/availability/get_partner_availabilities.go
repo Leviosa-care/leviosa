@@ -3,8 +3,8 @@ package availabilityHandler
 import (
 	"net/http"
 	"strconv"
-	"time"
 	"strings"
+	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
