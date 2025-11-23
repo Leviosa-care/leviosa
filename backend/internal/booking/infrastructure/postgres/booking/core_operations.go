@@ -17,7 +17,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Booking
 			id, availability_id, client_id, partner_id, room_id,
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
-			status, cancelled_at, cancellation_reason_encrypted,
+			status, cancelled_at, cancellation_reason_encrypted, completed_at,
 			created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM %s.bookings
@@ -40,6 +40,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Booking
 		&bookingEncx.Status,
 		&bookingEncx.CancelledAt,
 		&bookingEncx.CancellationReasonEncrypted,
+		&bookingEncx.CompletedAt,
 		&bookingEncx.CreatedAt,
 		&bookingEncx.UpdatedAt,
 		&bookingEncx.DEKEncrypted,
@@ -81,10 +82,11 @@ func (r *Repository) Update(ctx context.Context, booking *domain.Booking) error 
 			status = $12,
 			cancelled_at = $13,
 			cancellation_reason_encrypted = $14,
-			updated_at = $15,
-			dek_encrypted = $16,
-			key_version = $17,
-			metadata = $18
+			completed_at = $15,
+			updated_at = $16,
+			dek_encrypted = $17,
+			key_version = $18,
+			metadata = $19
 		WHERE id = $1
 	`, r.schema)
 
@@ -103,6 +105,7 @@ func (r *Repository) Update(ctx context.Context, booking *domain.Booking) error 
 		bookingEncx.Status,
 		bookingEncx.CancelledAt,
 		bookingEncx.CancellationReasonEncrypted,
+		bookingEncx.CompletedAt,
 		bookingEncx.UpdatedAt,
 		bookingEncx.DEKEncrypted,
 		bookingEncx.KeyVersion,
@@ -146,7 +149,7 @@ func (r *Repository) GetByAvailabilityID(ctx context.Context, availabilityID uui
 			id, availability_id, client_id, partner_id, room_id,
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
-			status, cancelled_at, cancellation_reason_encrypted,
+			status, cancelled_at, cancellation_reason_encrypted, completed_at,
 			created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM %s.bookings
@@ -171,6 +174,7 @@ func (r *Repository) GetByAvailabilityID(ctx context.Context, availabilityID uui
 		&bookingEncx.Status,
 		&bookingEncx.CancelledAt,
 		&bookingEncx.CancellationReasonEncrypted,
+		&bookingEncx.CompletedAt,
 		&bookingEncx.CreatedAt,
 		&bookingEncx.UpdatedAt,
 		&bookingEncx.DEKEncrypted,
@@ -196,7 +200,7 @@ func (r *Repository) GetByPaymentIntentID(ctx context.Context, paymentIntentID s
 			id, availability_id, client_id, partner_id, room_id,
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
-			status, cancelled_at, cancellation_reason_encrypted,
+			status, cancelled_at, cancellation_reason_encrypted, completed_at,
 			created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM %s.bookings
@@ -219,6 +223,7 @@ func (r *Repository) GetByPaymentIntentID(ctx context.Context, paymentIntentID s
 		&bookingEncx.Status,
 		&bookingEncx.CancelledAt,
 		&bookingEncx.CancellationReasonEncrypted,
+		&bookingEncx.CompletedAt,
 		&bookingEncx.CreatedAt,
 		&bookingEncx.UpdatedAt,
 		&bookingEncx.DEKEncrypted,
@@ -244,7 +249,7 @@ func (r *Repository) List(ctx context.Context, filter ports.BookingFilter) ([]*d
 			b.id, b.availability_id, b.client_id, b.partner_id, b.room_id,
 			b.client_notes_encrypted, b.partner_notes_encrypted,
 			b.total_price_cents, b.currency, b.payment_status, b.payment_intent_id,
-			b.status, b.cancelled_at, b.cancellation_reason_encrypted,
+			b.status, b.cancelled_at, b.cancellation_reason_encrypted, b.completed_at,
 			b.created_at, b.updated_at,
 			b.dek_encrypted, b.key_version, b.metadata
 		FROM %s.bookings b
@@ -368,6 +373,7 @@ func (r *Repository) List(ctx context.Context, filter ports.BookingFilter) ([]*d
 			&bookingEncx.Status,
 			&bookingEncx.CancelledAt,
 			&bookingEncx.CancellationReasonEncrypted,
+			&bookingEncx.CompletedAt,
 			&bookingEncx.CreatedAt,
 			&bookingEncx.UpdatedAt,
 			&bookingEncx.DEKEncrypted,

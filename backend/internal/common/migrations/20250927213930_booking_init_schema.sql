@@ -59,6 +59,10 @@ CREATE TABLE booking.rooms (
     capacity INTEGER NOT NULL DEFAULT 1 CHECK (capacity > 0),
     equipment_encrypted BYTEA, -- JSON array of equipment/amenities
 
+    -- Operating hours (time of day)
+    operating_start_time TIME NOT NULL DEFAULT '08:00:00',
+    operating_end_time TIME NOT NULL DEFAULT '20:00:00',
+
     -- Encryption metadata (required by encx)
     dek_encrypted BYTEA NOT NULL,
     key_version INTEGER NOT NULL DEFAULT 1,
@@ -164,6 +168,7 @@ CREATE TABLE booking.bookings (
     status VARCHAR(20) NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'cancelled', 'completed', 'no_show')),
     cancelled_at TIMESTAMP WITH TIME ZONE,
     cancellation_reason_encrypted BYTEA,
+    completed_at TIMESTAMP WITH TIME ZONE,
 
     -- Encryption metadata (required by encx)
     dek_encrypted BYTEA NOT NULL,

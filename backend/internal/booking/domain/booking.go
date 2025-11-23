@@ -47,9 +47,10 @@ type Booking struct {
 	PaymentIntentID   *string       `json:"payment_intent_id,omitempty"`
 
 	// Booking lifecycle
-	Status                          BookingStatus `json:"status"`
-	CancelledAt                     *time.Time    `json:"cancelled_at,omitempty"`
-	CancellationReason string `json:"cancellation_reason,omitempty" encx:"encrypt"`
+	Status             BookingStatus `json:"status"`
+	CancelledAt        *time.Time    `json:"cancelled_at,omitempty"`
+	CancellationReason string        `json:"cancellation_reason,omitempty" encx:"encrypt"`
+	CompletedAt        *time.Time    `json:"completed_at,omitempty"`
 
 	// Administrative fields
 	CreatedAt time.Time `json:"created_at"`
@@ -162,8 +163,10 @@ func (b *Booking) Complete() error {
 		return ErrBookingAlreadyCompleted
 	}
 
+	now := time.Now()
 	b.Status = BookingStatusCompleted
-	b.UpdatedAt = time.Now()
+	b.CompletedAt = &now
+	b.UpdatedAt = now
 	return nil
 }
 
