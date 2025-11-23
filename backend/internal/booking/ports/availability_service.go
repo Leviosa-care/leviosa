@@ -21,7 +21,7 @@ type AvailabilityService interface {
 	GetAvailability(ctx context.Context, id uuid.UUID) (*domain.Availability, error)
 
 	// UpdateAvailability updates availability details
-	UpdateAvailability(ctx context.Context, id uuid.UUID, startTime, endTime time.Time, serviceType string, priceCents *int, notes string) (*domain.Availability, error)
+	UpdateAvailability(ctx context.Context, id uuid.UUID, request *domain.UpdateAvailabilityRequest) (*domain.Availability, error)
 
 	// CancelAvailability cancels an availability slot
 	CancelAvailability(ctx context.Context, id uuid.UUID) error
