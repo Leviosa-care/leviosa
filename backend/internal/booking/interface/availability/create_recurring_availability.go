@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
@@ -17,6 +18,16 @@ func (h *handler) CreateRecurringAvailability(w http.ResponseWriter, r *http.Req
 	logger, err := ctxutil.GetLoggerFromContext(ctx)
 	if err != nil {
 		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	sessionInfo, ok := session.SessionInfoFromContext(ctx)
+	if !ok {
+		logger.WarnContext(ctx, "Handler: Missing session info",
+			"operation", "create_recurring_availability",
+			"method", r.Method,
+			"path", r.URL.Path)
+		httpx.RespondWithError(w, errs.NewInvalidValueErr("session information from context required"), http.StatusUnauthorized)
 		return
 	}
 
@@ -32,6 +43,8 @@ func (h *handler) CreateRecurringAvailability(w http.ResponseWriter, r *http.Req
 		httpx.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("invalid request body: %v", err)), http.StatusBadRequest)
 		return
 	}
+
+	request.UserID = sessionInfo.UserID
 
 	// Call service to create recurring availability
 	availability, err := h.svc.CreateRecurringAvailability(ctx, &request)
