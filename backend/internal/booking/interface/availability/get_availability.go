@@ -42,21 +42,19 @@ func (h *handler) GetAvailability(w http.ResponseWriter, r *http.Request) {
 
 	// Convert to response DTO
 	response := domain.AvailabilityResponse{
-		ID:          availability.ID,
-		UserID:      availability.UserID,
-		RoomID:      availability.RoomID,
-		StartTime:   availability.StartTime,
-		EndTime:     availability.EndTime,
-		MaxCapacity: availability.MaxCapacity,
-		// CurrentBookings: availability.CurrentBookings,
-		Status:      availability.Status,
-		ServiceType: availability.ServiceType,
-		PriceCents:  availability.PriceCents,
-		Notes:       availability.Notes,
-		// RecurrenceRule:  availability.RecurrenceRule,
-		// ParentID:        availability.ParentID,
-		CreatedAt: availability.CreatedAt,
-		UpdatedAt: availability.UpdatedAt,
+		ID:                availability.ID,
+		UserID:            availability.UserID,
+		RoomID:            availability.RoomID,
+		StartTime:         availability.StartTime,
+		EndTime:           availability.EndTime,
+		MaxCapacity:       availability.MaxCapacity,
+		Status:            availability.Status,
+		ServiceType:       availability.ServiceType,
+		PriceCents:        availability.PriceCents,
+		Notes:             availability.Notes,
+		RecurrencePattern: availability.RecurrencePattern,
+		CreatedAt:         availability.CreatedAt,
+		UpdatedAt:         availability.UpdatedAt,
 	}
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
