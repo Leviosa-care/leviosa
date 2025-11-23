@@ -34,7 +34,6 @@ func (h *handler) CreateRecurringAvailability(w http.ResponseWriter, r *http.Req
 	}
 
 	// Call service to create recurring availability
-	// availability, err := h.svc.CreateRecurringAvailability(ctx, request.UserID, request.RoomID, request.StartTime, request.EndTime, request.MaxCapacity, request.Pattern)
 	availability, err := h.svc.CreateRecurringAvailability(ctx, &request)
 	if err != nil {
 		httpx.RespondWithServiceError(w, logger, ctx, err, "create recurring availability")
