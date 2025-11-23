@@ -65,7 +65,13 @@ func (h *handler) CreateAvailability(w http.ResponseWriter, r *http.Request) {
 		availability.SetServiceDetails(request.ServiceType, request.PriceCents, request.Notes)
 
 		// Update availability with service details
-		availability, err = h.svc.UpdateAvailability(ctx, availability.ID, availability.StartTime, availability.EndTime, availability.ServiceType, availability.PriceCents, availability.Notes)
+		updateRequest := &domain.UpdateAvailabilityRequest{
+			ID:          availability.ID,
+			ServiceType: &request.ServiceType,
+			PriceCents:  request.PriceCents,
+			Notes:       &request.Notes,
+		}
+		availability, err = h.svc.UpdateAvailability(ctx, updateRequest)
 		if err != nil {
 			logger.ErrorContext(ctx, "Handler: Failed to update availability with service details",
 				"error", err,
