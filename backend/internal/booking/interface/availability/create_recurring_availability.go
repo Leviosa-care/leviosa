@@ -82,8 +82,8 @@ func (h *handler) CreateRecurringAvailability(w http.ResponseWriter, r *http.Req
 		ServiceType: availability.ServiceType,
 		PriceCents:  availability.PriceCents,
 		Notes:       availability.Notes,
-		// RecurrenceRule:  availability.RecurrenceRule,
-		// ParentID:        availability.ParentID,
+		// RecurrencePattern: availability.RecurrencePattern,
+		// ParentID:          availability.ParentID,
 		CreatedAt: availability.CreatedAt,
 		UpdatedAt: availability.UpdatedAt,
 	}

@@ -89,7 +89,7 @@ func (h *handler) CreateAvailability(w http.ResponseWriter, r *http.Request) {
 		ServiceType: availability.ServiceType,
 		PriceCents:  availability.PriceCents,
 		Notes:       availability.Notes,
-		// RecurrenceRule: availability.RecurrenceRule,
+		// RecurrencePattern: availability.RecurrencePattern,
 		// ParentID:  availability.ParentID,
 		CreatedAt: availability.CreatedAt,
 		UpdatedAt: availability.UpdatedAt,
