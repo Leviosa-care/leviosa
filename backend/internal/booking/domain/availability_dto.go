@@ -260,5 +260,57 @@ type UpdateAvailabilityRequest struct {
 
 func (r *UpdateAvailabilityRequest) Valid(ctx context.Context) error {
 	var errs errsx.Map
+
+	// Validate time constraints
+	if r.StartTime.IsZero() {
+		errs.Set("start_time", "start time is required")
+	}
+
+	if r.EndTime.IsZero() {
+		errs.Set("end_time", "end time is required")
+	}
+
+	if !r.StartTime.IsZero() && !r.EndTime.IsZero() {
+		if r.StartTime.Before(time.Now()) {
+			errs.Set("start_time", "start time cannot be in the past")
+		}
+
+		if r.StartTime.After(r.EndTime) {
+			errs.Set("start_time", "start time must be before end time")
+		}
+
+		if r.StartTime.Equal(r.EndTime) {
+			errs.Set("start_time", "start time and end time cannot be the same")
+		}
+
+		// Check for reasonable duration (between 15 minutes and 12 hours)
+		duration := r.EndTime.Sub(r.StartTime)
+		if duration < 15*time.Minute {
+			errs.Set("end_time", "availability duration must be at least 15 minutes")
+		}
+		if duration > 12*time.Hour {
+			errs.Set("end_time", "availability duration cannot exceed 12 hours")
+		}
+	}
+
+	// Validate optional fields
+	if len(r.ServiceType) > 255 {
+		errs.Set("service_type", "service type cannot exceed 255 characters")
+	}
+
+	if len(r.Notes) > 1000 {
+		errs.Set("notes", "notes cannot exceed 1000 characters")
+	}
+
+	// Validate price if provided
+	if r.PriceCents != nil {
+		if *r.PriceCents < 0 {
+			errs.Set("price_cents", "price cannot be negative")
+		}
+		if *r.PriceCents > 999999 { // $9,999.99 max
+			errs.Set("price_cents", "price cannot exceed $9,999.99")
+		}
+	}
+
 	return errs.AsError()
 }
