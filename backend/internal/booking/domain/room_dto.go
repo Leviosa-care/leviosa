@@ -4,31 +4,36 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hengadev/errsx"
 )
 
 type RoomResponse struct {
-	ID          uuid.UUID `json:"id"`
-	BuildingID  uuid.UUID `json:"building_id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	RoomNumber  string    `json:"room_number"`
-	Capacity    int       `json:"capacity"`
-	Equipment   []string  `json:"equipment"`
-	IsActive    bool      `json:"is_active"`
+	ID                 uuid.UUID `json:"id"`
+	BuildingID         uuid.UUID `json:"building_id"`
+	Name               string    `json:"name"`
+	Description        string    `json:"description"`
+	RoomNumber         string    `json:"room_number"`
+	Capacity           int       `json:"capacity"`
+	Equipment          []string  `json:"equipment"`
+	OperatingStartTime time.Time `json:"operating_start_time"`
+	OperatingEndTime   time.Time `json:"operating_end_time"`
+	IsActive           bool      `json:"is_active"`
 }
 
 // Room DTOs
 type CreateRoomRequest struct {
-	BuildingID  uuid.UUID `json:"building_id" validate:"required"`
-	Name        string    `json:"name" validate:"required,min=1,max=255"`
-	Description string    `json:"description,omitempty" validate:"max=1000"`
-	RoomNumber  string    `json:"room_number,omitempty" encx:"encrypt"`
-	Capacity    int       `json:"capacity" validate:"required,min=1,max=50"`
-	Equipment   []string  `json:"equipment,omitempty"`
-	IsActive    bool      `json:"is_active"`
+	BuildingID         uuid.UUID  `json:"building_id" validate:"required"`
+	Name               string     `json:"name" validate:"required,min=1,max=255"`
+	Description        string     `json:"description,omitempty" validate:"max=1000"`
+	RoomNumber         string     `json:"room_number,omitempty" encx:"encrypt"`
+	Capacity           int        `json:"capacity" validate:"required,min=1,max=50"`
+	Equipment          []string   `json:"equipment,omitempty"`
+	OperatingStartTime *time.Time `json:"operating_start_time,omitempty"` // Defaults to 08:00
+	OperatingEndTime   *time.Time `json:"operating_end_time,omitempty"`   // Defaults to 20:00
+	IsActive           bool       `json:"is_active"`
 }
 
 func (r *CreateRoomRequest) Valid(ctx context.Context) error {
@@ -84,18 +89,37 @@ func (r *CreateRoomRequest) Valid(ctx context.Context) error {
 		}
 	}
 
+	// Operating hours validation (optional, defaults will be applied if not provided)
+	if r.OperatingStartTime != nil && r.OperatingEndTime != nil {
+		// Validate that end time is after start time
+		if !r.OperatingEndTime.After(*r.OperatingStartTime) {
+			errs.Set("operating_hours", fmt.Errorf("operating end time must be after start time"))
+		}
+
+		// Validate minimum 1 hour operating window
+		duration := r.OperatingEndTime.Sub(*r.OperatingStartTime)
+		if duration < time.Hour {
+			errs.Set("operating_hours", fmt.Errorf("minimum operating window is 1 hour"))
+		}
+	} else if (r.OperatingStartTime != nil && r.OperatingEndTime == nil) ||
+		(r.OperatingStartTime == nil && r.OperatingEndTime != nil) {
+		errs.Set("operating_hours", fmt.Errorf("both operating start and end times must be provided together"))
+	}
+
 	return errs.AsError()
 }
 
 type UpdateRoomRequest struct {
-	ID          uuid.UUID `json:"id"`
-	BuildingID  *string   `json:"building_id"`
-	Name        *string   `json:"name"`
-	Description *string   `json:"description,omitempty"`
-	RoomNumber  *string   `json:"room_number,omitempty"`
-	Capacity    *int      `json:"capacity"`
-	Equipment   *[]string `json:"equipment,omitempty"`
-	IsActive    *bool     `json:"is_active,omitempty"`
+	ID                 uuid.UUID  `json:"id"`
+	BuildingID         *string    `json:"building_id"`
+	Name               *string    `json:"name"`
+	Description        *string    `json:"description,omitempty"`
+	RoomNumber         *string    `json:"room_number,omitempty"`
+	Capacity           *int       `json:"capacity"`
+	Equipment          *[]string  `json:"equipment,omitempty"`
+	OperatingStartTime *time.Time `json:"operating_start_time,omitempty"`
+	OperatingEndTime   *time.Time `json:"operating_end_time,omitempty"`
+	IsActive           *bool      `json:"is_active,omitempty"`
 }
 
 func (r *UpdateRoomRequest) Valid(ctx context.Context) error {
@@ -161,6 +185,23 @@ func (r *UpdateRoomRequest) Valid(ctx context.Context) error {
 				break
 			}
 		}
+	}
+
+	// Operating hours validation (only if provided)
+	if r.OperatingStartTime != nil && r.OperatingEndTime != nil {
+		// Validate that end time is after start time
+		if !r.OperatingEndTime.After(*r.OperatingStartTime) {
+			errs.Set("operating_hours", fmt.Errorf("operating end time must be after start time"))
+		}
+
+		// Validate minimum 1 hour operating window
+		duration := r.OperatingEndTime.Sub(*r.OperatingStartTime)
+		if duration < time.Hour {
+			errs.Set("operating_hours", fmt.Errorf("minimum operating window is 1 hour"))
+		}
+	} else if (r.OperatingStartTime != nil && r.OperatingEndTime == nil) ||
+		(r.OperatingStartTime == nil && r.OperatingEndTime != nil) {
+		errs.Set("operating_hours", fmt.Errorf("both operating start and end times must be provided together"))
 	}
 
 	return errs.AsError()
