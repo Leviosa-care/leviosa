@@ -8,4 +8,3 @@ const (
 	// ServiceNameHeader is the header containing the service's name identifier
 	ServiceNameHeader = "X-Service-Name"
 )
-
