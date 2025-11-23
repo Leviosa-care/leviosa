@@ -7,6 +7,7 @@ package booking
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -166,6 +167,41 @@ func SetupAdminWithAllocation(
 
 	// Create session for admin
 	accessToken = CreateSessionForUser(t, ctx, userID, identity.Administrator, redisClient, crypto)
+
+	return accessToken, userID
+}
+
+// SetupStandardUser creates a standard user (not a partner) with room allocation.
+// Returns both the access token and user ID.
+func SetupStandardUser(
+	t *testing.T,
+	ctx context.Context,
+	email string,
+	roomID uuid.UUID,
+	pool *pgxpool.Pool,
+	redisClient *redis.Client,
+	crypto encx.CryptoService,
+) (accessToken string, userID uuid.UUID) {
+	t.Helper()
+
+	// Create standard user directly in database
+	userID = uuid.New()
+	// Ensure email uniqueness by appending UUID suffix
+	uniqueEmail := fmt.Sprintf("%s+%s", email, userID.String()[:8])
+	user := th.NewTestUser(t, uniqueEmail, "Standard", "User")
+	user.ID = userID
+	user.Role = identity.StandardStr // Regular user, not partner
+	userEncx, err := userDomain.ProcessUserEncx(ctx, crypto, user)
+	require.NoError(t, err)
+	err = th.InsertUserEncx(t, ctx, userEncx, pool)
+	require.NoError(t, err)
+
+	// Create allocation for the room
+	allocation := talloc.NewTestSharedAllocation(t, roomID, userID)
+	talloc.InsertAllocation(t, ctx, allocation, pool, crypto)
+
+	// Create session for standard user
+	accessToken = CreateSessionForUser(t, ctx, userID, identity.Standard, redisClient, crypto)
 
 	return accessToken, userID
 }
