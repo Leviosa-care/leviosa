@@ -211,7 +211,7 @@ func NewTestAvailabilityEncx(t *testing.T) *domain.AvailabilityEncx {
 
 		ServiceTypeEncrypted:       []byte("encrypted_consultation"),
 		NotesEncrypted:             []byte("encrypted_regular_consultation_slot"),
-		RecurrencePatternEncrypted: nil,
+		RecurrencePattern: nil,
 
 		DEKEncrypted: []byte("mock_dek_data"),
 		KeyVersion:   1,
@@ -244,7 +244,7 @@ func NewTestAvailabilityEncxWithPartner(t *testing.T, userID uuid.UUID) *domain.
 
 		ServiceTypeEncrypted:       []byte("encrypted_check_up"),
 		NotesEncrypted:             []byte("encrypted_regular_health_check_up"),
-		RecurrencePatternEncrypted: nil,
+		RecurrencePattern: nil,
 
 		DEKEncrypted: []byte("mock_dek_data"),
 		KeyVersion:   1,
@@ -277,7 +277,7 @@ func NewTestAvailabilityEncxWithRoom(t *testing.T, roomID uuid.UUID) *domain.Ava
 
 		ServiceTypeEncrypted:       []byte("encrypted_specialized_treatment"),
 		NotesEncrypted:             []byte("encrypted_specialized_treatment_session"),
-		RecurrencePatternEncrypted: nil,
+		RecurrencePattern: nil,
 
 		DEKEncrypted: []byte("mock_dek_data"),
 		KeyVersion:   1,
@@ -310,7 +310,11 @@ func NewTestRecurringAvailabilityEncx(t *testing.T) *domain.AvailabilityEncx {
 
 		ServiceTypeEncrypted:       []byte("encrypted_therapy_session"),
 		NotesEncrypted:             []byte("encrypted_weekly_therapy_session"),
-		RecurrencePatternEncrypted: []byte(`{"type":"weekly","interval":1,"days_of_week":[1,3,5]}`),
+		RecurrencePattern: &domain.RecurrencePattern{
+			Type:       "weekly",
+			Interval:   1,
+			DaysOfWeek: []int{1, 3, 5},
+		},
 
 		DEKEncrypted: []byte("mock_dek_data"),
 		KeyVersion:   1,
@@ -343,7 +347,7 @@ func NewTestAvailabilityEncxWithPartnerAndRoom(t *testing.T, userID, roomID uuid
 
 		ServiceTypeEncrypted:       []byte("encrypted_consultation"),
 		NotesEncrypted:             []byte("encrypted_regular_consultation_slot"),
-		RecurrencePatternEncrypted: nil,
+		RecurrencePattern: nil,
 
 		DEKEncrypted: []byte("mock_dek_data"),
 		KeyVersion:   1,

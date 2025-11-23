@@ -120,7 +120,7 @@ CREATE TABLE booking.availabilities (
     -- Availability metadata
     notes_encrypted BYTEA, -- Internal notes for the partner
     is_recurring BOOLEAN NOT NULL DEFAULT FALSE,
-    recurrence_pattern_encrypted BYTEA, -- JSON with recurrence rules if applicable
+    recurrence_pattern JSONB, -- JSON with recurrence rules if applicable
 
     -- Status tracking
     status VARCHAR(20) NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'booked', 'cancelled', 'blocked')),

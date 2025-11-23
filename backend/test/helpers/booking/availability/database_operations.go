@@ -24,7 +24,7 @@ func InsertAvailabilityEncx(t *testing.T, ctx context.Context, availability *dom
 		INSERT INTO booking.availabilities (
 			id, user_id, room_id, start_time, end_time,
 			service_type_encrypted, price_cents, max_capacity,
-			notes_encrypted, is_recurring, recurrence_pattern_encrypted,
+			notes_encrypted, is_recurring, recurrence_pattern,
 			status, created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		) VALUES (
@@ -43,7 +43,7 @@ func InsertAvailabilityEncx(t *testing.T, ctx context.Context, availability *dom
 		availability.MaxCapacity,
 		availability.NotesEncrypted,
 		availability.IsRecurring,
-		availability.RecurrencePatternEncrypted,
+		availability.RecurrencePattern,
 		availability.Status,
 		availability.CreatedAt,
 		availability.UpdatedAt,
@@ -72,7 +72,7 @@ func GetAvailabilityEncxFromDB(t *testing.T, ctx context.Context, availabilityID
 		SELECT
 			id, user_id, room_id, start_time, end_time,
 			service_type_encrypted, price_cents, max_capacity,
-			notes_encrypted, is_recurring, recurrence_pattern_encrypted,
+			notes_encrypted, is_recurring, recurrence_pattern,
 			status, created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM booking.availabilities
@@ -91,7 +91,7 @@ func GetAvailabilityEncxFromDB(t *testing.T, ctx context.Context, availabilityID
 		&availabilityEncx.MaxCapacity,
 		&availabilityEncx.NotesEncrypted,
 		&availabilityEncx.IsRecurring,
-		&availabilityEncx.RecurrencePatternEncrypted,
+		&availabilityEncx.RecurrencePattern,
 		&availabilityEncx.Status,
 		&availabilityEncx.CreatedAt,
 		&availabilityEncx.UpdatedAt,

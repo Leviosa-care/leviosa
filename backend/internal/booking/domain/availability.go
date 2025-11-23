@@ -42,7 +42,7 @@ type Availability struct {
 	// Availability metadata
 	Notes             string             `json:"notes,omitempty" encx:"encrypt"`
 	IsRecurring       bool               `json:"is_recurring"`
-	RecurrencePattern *RecurrencePattern `json:"recurrence_pattern,omitempty" encx:"encrypt"`
+	RecurrencePattern *RecurrencePattern `json:"recurrence_pattern,omitempty"`
 
 	// Status tracking
 	Status AvailabilityStatus `json:"status"`

@@ -13,7 +13,7 @@ func (r *Repository) Create(ctx context.Context, availabilityEncx *domain.Availa
 		INSERT INTO %s.availabilities (
 			id, user_id, room_id, start_time, end_time,
 			service_type_encrypted, price_cents, max_capacity,
-			notes_encrypted, is_recurring, recurrence_pattern_encrypted,
+			notes_encrypted, is_recurring, recurrence_pattern,
 			status, created_at, updated_at, dek_encrypted, key_version, metadata
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
@@ -31,7 +31,7 @@ func (r *Repository) Create(ctx context.Context, availabilityEncx *domain.Availa
 		availabilityEncx.MaxCapacity,
 		availabilityEncx.NotesEncrypted,
 		availabilityEncx.IsRecurring,
-		availabilityEncx.RecurrencePatternEncrypted,
+		availabilityEncx.RecurrencePattern,
 		availabilityEncx.Status,
 		availabilityEncx.CreatedAt,
 		availabilityEncx.UpdatedAt,

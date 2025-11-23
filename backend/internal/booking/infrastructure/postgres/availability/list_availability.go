@@ -15,7 +15,7 @@ func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) 
 		SELECT
 			id, user_id, room_id, start_time, end_time,
 			service_type_encrypted, price_cents, max_capacity,
-			notes_encrypted, is_recurring, recurrence_pattern_encrypted,
+			notes_encrypted, is_recurring, recurrence_pattern,
 			status, created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM %s.availabilities
@@ -123,7 +123,7 @@ func (r *Repository) List(ctx context.Context, filter ports.AvailabilityFilter) 
 			&availabilityEncx.MaxCapacity,
 			&availabilityEncx.NotesEncrypted,
 			&availabilityEncx.IsRecurring,
-			&availabilityEncx.RecurrencePatternEncrypted,
+			&availabilityEncx.RecurrencePattern,
 			&availabilityEncx.Status,
 			&availabilityEncx.CreatedAt,
 			&availabilityEncx.UpdatedAt,
