@@ -63,144 +63,144 @@ func TestGetAvailability(t *testing.T) {
 		return availability.ID, room.ID
 	}
 
-	// t.Run("should successfully retrieve availability with standard user token", func(t *testing.T) { // Clean test data
-	// 	ta.ClearAvailabilityTable(t, ctx, testPool)
-	// 	tb.ClearBuildingsTable(t, ctx, testPool)
-	// 	defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	// 	// Setup user and availability
-	// 	accessToken := tu.SetupUserWithRole(t, ctx, identity.Standard, authCtx)
-	// 	availabilityID, _ := setupTestAvailability(t, ctx, uuid.New())
-	//
-	// 	// Make request
-	// 	req := ta.NewGetAvailabilityRequest(t, ctx, testServerURL, availabilityID.String(), accessToken)
-	//
-	// 	resp, err := client.Do(req)
-	// 	require.NoError(t, err)
-	// 	defer resp.Body.Close()
-	//
-	// 	// Verify response
-	// 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	//
-	// 	var response domain.AvailabilityResponse
-	// 	err = json.NewDecoder(resp.Body).Decode(&response)
-	// 	require.NoError(t, err)
-	//
-	// 	// Verify response data
-	// 	assert.Equal(t, availabilityID, response.ID)
-	// 	assert.NotEqual(t, uuid.Nil, response.UserID)
-	// 	assert.NotEqual(t, uuid.Nil, response.RoomID)
-	// 	assert.Equal(t, domain.AvailabilityStatusAvailable, response.Status)
-	// 	assert.Equal(t, "Consultation", response.ServiceType)
-	// 	assert.NotNil(t, response.PriceCents)
-	// 	assert.Equal(t, 15000, *response.PriceCents)
-	// 	assert.Equal(t, 1, response.MaxCapacity)
-	// })
-	//
-	// t.Run("should successfully retrieve availability with partner token", func(t *testing.T) {
-	// 	ta.ClearAvailabilityTable(t, ctx, testPool)
-	// 	tb.ClearBuildingsTable(t, ctx, testPool)
-	// 	defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	// 	// Setup partner and availability
-	// 	accessToken := tu.SetupUserWithRole(t, ctx, identity.Partner, authCtx)
-	// 	availabilityID, _ := setupTestAvailability(t, ctx, uuid.New())
-	//
-	// 	req := ta.NewGetAvailabilityRequest(t, ctx, testServerURL, availabilityID.String(), accessToken)
-	//
-	// 	resp, err := client.Do(req)
-	// 	require.NoError(t, err)
-	// 	defer resp.Body.Close()
-	//
-	// 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	//
-	// 	var response domain.AvailabilityResponse
-	// 	err = json.NewDecoder(resp.Body).Decode(&response)
-	// 	require.NoError(t, err)
-	//
-	// 	assert.Equal(t, availabilityID, response.ID)
-	// })
-	//
-	// t.Run("should successfully retrieve availability with admin token", func(t *testing.T) {
-	// 	ta.ClearAvailabilityTable(t, ctx, testPool)
-	// 	tb.ClearBuildingsTable(t, ctx, testPool)
-	// 	defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	// 	// Setup admin and availability
-	// 	accessToken := tu.SetupUserWithRole(t, ctx, identity.Administrator, authCtx)
-	// 	availabilityID, _ := setupTestAvailability(t, ctx, uuid.New())
-	//
-	// 	req := ta.NewGetAvailabilityRequest(t, ctx, testServerURL, availabilityID.String(), accessToken)
-	//
-	// 	resp, err := client.Do(req)
-	// 	require.NoError(t, err)
-	// 	defer resp.Body.Close()
-	//
-	// 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	//
-	// 	var response domain.AvailabilityResponse
-	// 	err = json.NewDecoder(resp.Body).Decode(&response)
-	// 	require.NoError(t, err)
-	//
-	// 	assert.Equal(t, availabilityID, response.ID)
-	// })
-	//
-	// t.Run("should retrieve availability with encrypted fields properly decrypted", func(t *testing.T) {
-	// 	ta.ClearAvailabilityTable(t, ctx, testPool)
-	// 	tb.ClearBuildingsTable(t, ctx, testPool)
-	// 	defer tu.ClearAuthData(t, ctx, authCtx)
-	//
-	// 	accessToken := tu.SetupUserWithRole(t, ctx, identity.Standard, authCtx)
-	//
-	// 	// Create building and room
-	// 	building := tb.NewTestBuilding(t)
-	// 	buildingEncx, err := domain.ProcessBuildingEncx(ctx, crypto, building)
-	// 	require.NoError(t, err)
-	// 	err = tb.InsertBuildingEncx(t, ctx, testPool, buildingEncx)
-	// 	require.NoError(t, err)
-	//
-	// 	room := tr.NewTestRoomWithBuilding(t, building.ID)
-	// 	roomEncx, err := domain.ProcessRoomEncx(ctx, crypto, room)
-	// 	require.NoError(t, err)
-	// 	err = tr.InsertRoomEncx(t, ctx, testPool, roomEncx)
-	// 	require.NoError(t, err)
-	//
-	// 	// Create availability with specific encrypted values
-	// 	availability := ta.NewTestAvailabilityWithParams(
-	// 		t,
-	// 		uuid.New(),
-	// 		room.ID,
-	// 		time.Now().Add(24*time.Hour).Truncate(time.Second),
-	// 		time.Now().Add(26*time.Hour).Truncate(time.Second),
-	// 		"Specialized Therapy Session",
-	// 		intPtr(25000), // $250.00
-	// 		2,
-	// 		domain.AvailabilityStatusAvailable,
-	// 	)
-	// 	availability.Notes = "Bring comfortable clothing and arrive 10 minutes early"
-	//
-	// 	availabilityEncx, err := domain.ProcessAvailabilityEncx(ctx, crypto, availability)
-	// 	require.NoError(t, err)
-	// 	ta.InsertAvailabilityEncx(t, ctx, availabilityEncx, testPool)
-	//
-	// 	// Make request
-	// 	req := ta.NewGetAvailabilityRequest(t, ctx, testServerURL, availability.ID.String(), accessToken)
-	//
-	// 	resp, err := client.Do(req)
-	// 	require.NoError(t, err)
-	// 	defer resp.Body.Close()
-	//
-	// 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	//
-	// 	var response domain.AvailabilityResponse
-	// 	err = json.NewDecoder(resp.Body).Decode(&response)
-	// 	require.NoError(t, err)
-	//
-	// 	// Verify encrypted fields are properly decrypted
-	// 	assert.Equal(t, "Specialized Therapy Session", response.ServiceType)
-	// 	assert.Equal(t, "Bring comfortable clothing and arrive 10 minutes early", response.Notes)
-	// 	assert.Equal(t, 25000, *response.PriceCents)
-	// })
+	t.Run("should successfully retrieve availability with standard user token", func(t *testing.T) { // Clean test data
+		ta.ClearAvailabilityTable(t, ctx, testPool)
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup user and availability
+		accessToken := tu.SetupUserWithRole(t, ctx, identity.Standard, authCtx)
+		availabilityID, _ := setupTestAvailability(t, ctx, uuid.New())
+
+		// Make request
+		req := ta.NewGetAvailabilityRequest(t, ctx, testServerURL, availabilityID.String(), accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		// Verify response
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var response domain.AvailabilityResponse
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		// Verify response data
+		assert.Equal(t, availabilityID, response.ID)
+		assert.NotEqual(t, uuid.Nil, response.UserID)
+		assert.NotEqual(t, uuid.Nil, response.RoomID)
+		assert.Equal(t, domain.AvailabilityStatusAvailable, response.Status)
+		assert.Equal(t, "Consultation", response.ServiceType)
+		assert.NotNil(t, response.PriceCents)
+		assert.Equal(t, 15000, *response.PriceCents)
+		assert.Equal(t, 1, response.MaxCapacity)
+	})
+
+	t.Run("should successfully retrieve availability with partner token", func(t *testing.T) {
+		ta.ClearAvailabilityTable(t, ctx, testPool)
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup partner and availability
+		accessToken := tu.SetupUserWithRole(t, ctx, identity.Partner, authCtx)
+		availabilityID, _ := setupTestAvailability(t, ctx, uuid.New())
+
+		req := ta.NewGetAvailabilityRequest(t, ctx, testServerURL, availabilityID.String(), accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var response domain.AvailabilityResponse
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		assert.Equal(t, availabilityID, response.ID)
+	})
+
+	t.Run("should successfully retrieve availability with admin token", func(t *testing.T) {
+		ta.ClearAvailabilityTable(t, ctx, testPool)
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		// Setup admin and availability
+		accessToken := tu.SetupUserWithRole(t, ctx, identity.Administrator, authCtx)
+		availabilityID, _ := setupTestAvailability(t, ctx, uuid.New())
+
+		req := ta.NewGetAvailabilityRequest(t, ctx, testServerURL, availabilityID.String(), accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var response domain.AvailabilityResponse
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		assert.Equal(t, availabilityID, response.ID)
+	})
+
+	t.Run("should retrieve availability with encrypted fields properly decrypted", func(t *testing.T) {
+		ta.ClearAvailabilityTable(t, ctx, testPool)
+		tb.ClearBuildingsTable(t, ctx, testPool)
+		defer tu.ClearAuthData(t, ctx, authCtx)
+
+		accessToken := tu.SetupUserWithRole(t, ctx, identity.Standard, authCtx)
+
+		// Create building and room
+		building := tb.NewTestBuilding(t)
+		buildingEncx, err := domain.ProcessBuildingEncx(ctx, crypto, building)
+		require.NoError(t, err)
+		err = tb.InsertBuildingEncx(t, ctx, testPool, buildingEncx)
+		require.NoError(t, err)
+
+		room := tr.NewTestRoomWithBuilding(t, building.ID)
+		roomEncx, err := domain.ProcessRoomEncx(ctx, crypto, room)
+		require.NoError(t, err)
+		err = tr.InsertRoomEncx(t, ctx, testPool, roomEncx)
+		require.NoError(t, err)
+
+		// Create availability with specific encrypted values
+		availability := ta.NewTestAvailabilityWithParams(
+			t,
+			uuid.New(),
+			room.ID,
+			time.Now().Add(24*time.Hour).Truncate(time.Second),
+			time.Now().Add(26*time.Hour).Truncate(time.Second),
+			"Specialized Therapy Session",
+			intPtr(25000), // $250.00
+			2,
+			domain.AvailabilityStatusAvailable,
+		)
+		availability.Notes = "Bring comfortable clothing and arrive 10 minutes early"
+
+		availabilityEncx, err := domain.ProcessAvailabilityEncx(ctx, crypto, availability)
+		require.NoError(t, err)
+		ta.InsertAvailabilityEncx(t, ctx, availabilityEncx, testPool)
+
+		// Make request
+		req := ta.NewGetAvailabilityRequest(t, ctx, testServerURL, availability.ID.String(), accessToken)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var response domain.AvailabilityResponse
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		require.NoError(t, err)
+
+		// Verify encrypted fields are properly decrypted
+		assert.Equal(t, "Specialized Therapy Session", response.ServiceType)
+		assert.Equal(t, "Bring comfortable clothing and arrive 10 minutes early", response.Notes)
+		assert.Equal(t, 25000, *response.PriceCents)
+	})
 
 	t.Run("should retrieve recurring availability with pattern", func(t *testing.T) {
 		ta.ClearAvailabilityTable(t, ctx, testPool)
