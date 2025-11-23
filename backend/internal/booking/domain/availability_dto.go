@@ -9,21 +9,21 @@ import (
 )
 
 type AvailabilityResponse struct {
-	ID              uuid.UUID          `json:"id"`
-	UserID          uuid.UUID          `json:"partner_id"`
-	RoomID          uuid.UUID          `json:"room_id"`
-	StartTime       time.Time          `json:"start_time"`
-	EndTime         time.Time          `json:"end_time"`
-	MaxCapacity     int                `json:"max_capacity"`
-	CurrentBookings int                `json:"current_bookings"`
-	Status          AvailabilityStatus `json:"status"`
-	ServiceType     string             `json:"service_type,omitempty"`
-	PriceCents      *int               `json:"price_cents,omitempty"`
-	Notes           string             `json:"notes,omitempty"`
-	RecurrenceRule  *RecurrencePattern `json:"recurrence_rule,omitempty"`
-	ParentID        *uuid.UUID         `json:"parent_id,omitempty"`
-	CreatedAt       time.Time          `json:"created_at"`
-	UpdatedAt       time.Time          `json:"updated_at"`
+	ID                uuid.UUID          `json:"id"`
+	UserID            uuid.UUID          `json:"partner_id"`
+	RoomID            uuid.UUID          `json:"room_id"`
+	StartTime         time.Time          `json:"start_time"`
+	EndTime           time.Time          `json:"end_time"`
+	MaxCapacity       int                `json:"max_capacity"`
+	CurrentBookings   int                `json:"current_bookings"`
+	Status            AvailabilityStatus `json:"status"`
+	ServiceType       string             `json:"service_type,omitempty"`
+	PriceCents        *int               `json:"price_cents,omitempty"`
+	Notes             string             `json:"notes,omitempty"`
+	RecurrencePattern *RecurrencePattern `json:"recurrence_pattern,omitempty"`
+	ParentID          *uuid.UUID         `json:"parent_id,omitempty"`
+	CreatedAt         time.Time          `json:"created_at"`
+	UpdatedAt         time.Time          `json:"updated_at"`
 }
 
 // Availability DTOs
