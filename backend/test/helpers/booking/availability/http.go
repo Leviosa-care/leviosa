@@ -213,3 +213,42 @@ func NewCheckAvailabilityConflictRequest(t *testing.T, ctx context.Context, serv
 
 	return req
 }
+
+// NewGetRoomGapsRequest creates a request to get time gaps in a room's schedule (partner endpoint)
+// date should be in YYYY-MM-DD format
+// accessToken is optional - if empty, no auth cookie is added (for testing unauthorized access)
+func NewGetRoomGapsRequest(t *testing.T, ctx context.Context, serverURL string, roomID string, date string, accessToken string) *http.Request {
+	urlStr := serverURL + "/availabilities/rooms/" + roomID + "/gaps?date=" + date
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
+	require.NoError(t, err)
+
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+
+	return req
+}
+
+// NewSuggestBlocksRequest creates a request to get availability block suggestions (partner endpoint)
+// accessToken is optional - if empty, no auth cookie is added (for testing unauthorized access)
+func NewSuggestBlocksRequest(t *testing.T, ctx context.Context, serverURL string, partnerID string, roomID string, accessToken string) *http.Request {
+	urlStr := serverURL + "/partners/" + partnerID + "/rooms/" + roomID + "/suggest-blocks"
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
+	require.NoError(t, err)
+
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+
+	return req
+}

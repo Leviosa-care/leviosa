@@ -21,7 +21,6 @@ func (s *Service) GetPartnerUtilization(
 	if endDate.Before(startDate) {
 		return nil, errs.NewInvalidInputErr(errors.New("end date must be after start date"))
 	}
-
 	// Get all rooms partner has access to
 	roomIDs, err := s.metricsRepo.GetPartnerRoomIDs(ctx, partnerID)
 	if err != nil {
