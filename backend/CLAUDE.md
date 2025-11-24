@@ -99,6 +99,67 @@ The `core/` directory contains shared components:
 - **Events**: Event creation and management with capacity tracking
 - **Messaging**: User-to-user conversations and notifications
 - **Payments**: Stripe integration for pricing and checkout
+- **Booking**: Room scheduling, availability management, utilization analytics
+
+### Booking Service Features
+
+The booking service provides advanced scheduling optimization for massage therapy practices:
+
+#### 1. Gap Detection API
+**Purpose**: Identifies unused time slots between bookings to maximize room utilization
+
+**Key Features**:
+- Analyzes room schedules for a specific date
+- Finds gaps before first booking, between bookings, and after last booking
+- Suggests products that fit within each gap (Duration + BufferTime <= gap)
+- Sorts suggestions by duration (shortest first for flexibility)
+- Respects room operating hours
+
+**Endpoints**:
+- `GET /availabilities/rooms/{room_id}/gaps?date=YYYY-MM-DD`
+
+**Algorithm**: See `internal/booking/application/availability/get_room_gaps.go`
+
+#### 2. Utilization Metrics
+**Purpose**: Track room efficiency and identify scheduling improvements
+
+**Key Features**:
+- Daily metrics stored in materialized view (`booking.room_daily_metrics`)
+- Tracks utilization percentage, fragmentation count, idle minutes
+- Calculates efficiency score (utilization - fragmentation penalty - idle penalty)
+- Supports room-level and partner-level aggregation
+- Historical analysis with date ranges
+
+**Endpoints**:
+- `GET /rooms/{room_id}/metrics?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
+- `GET /partners/{partner_id}/metrics?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
+
+**Database**: Materialized view uses CTEs for complex calculations
+**Migration**: `20251124110535_booking_add_metrics_materialized_view.sql`
+
+#### 3. Availability Suggestions
+**Purpose**: Recommend optimal availability block durations based on products
+
+**Key Features**:
+- Analyzes partner's product catalog (Duration + BufferTime)
+- Generates single and multi-session block suggestions (1x, 2x, 3x, 4x)
+- For shared rooms, suggests standard durations (60, 90, 120, 180, 240 min)
+- Priority ranking:
+  * Priority 1: Standard durations (60, 90, 120, 180 min)
+  * Priority 2: 30-minute increments
+  * Priority 3: Non-standard durations
+- Consolidates multiple products suggesting same duration
+
+**Endpoints**:
+- `GET /partners/{partner_id}/rooms/{room_id}/suggest-blocks`
+
+**Algorithm**: See `internal/booking/application/availability/suggestion_algorithm.go`
+
+#### Error Handling Pattern
+All booking handlers use `httpx.RespondWithServiceError()` for automatic error classification:
+- Repository layer: `errs.ClassifyPgError()` converts DB errors to sentinel errors
+- Service layer: Wraps errors with `fmt.Errorf` or returns sentinel errors
+- Handler layer: `RespondWithServiceError()` maps to HTTP status codes (400/404/503/500)
 
 ### Development Workflow
 1. Start dependencies: `make deps`
