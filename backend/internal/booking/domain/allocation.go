@@ -139,3 +139,13 @@ func (ra *RoomAllocation) Activate() {
 	ra.IsActive = true
 	ra.UpdatedAt = time.Now()
 }
+
+// IsShared returns true if the allocation is for a shared room
+func (ra *RoomAllocation) IsShared() bool {
+	return ra.AllocationType == AllocationTypeShared
+}
+
+// IsDedicated returns true if the allocation is for a dedicated room
+func (ra *RoomAllocation) IsDedicated() bool {
+	return ra.AllocationType == AllocationTypeDedicated
+}
