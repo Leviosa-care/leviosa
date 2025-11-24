@@ -37,6 +37,9 @@ var (
 	// Input/Format specific errors
 	ErrParsing = errors.New("parsing error")
 	ErrFormat  = errors.New("format error")
+
+	// Booking-specific errors
+	ErrInvalidAvailabilityDuration = errors.New("availability duration does not align with product offerings")
 )
 
 func NewConflictErr(err error) error {
