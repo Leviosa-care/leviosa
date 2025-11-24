@@ -40,4 +40,7 @@ type AvailabilityService interface {
 
 	// GetRoomGaps finds time gaps in a room's schedule and suggests products
 	GetRoomGaps(ctx context.Context, request domain.GetRoomGapsRequest) (*domain.GetRoomGapsResponse, error)
+
+	// SuggestAvailabilityBlocks recommends optimal availability block durations
+	SuggestAvailabilityBlocks(ctx context.Context, partnerID uuid.UUID, roomID uuid.UUID) (*domain.AvailabilitySuggestions, error)
 }
