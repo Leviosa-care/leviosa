@@ -356,3 +356,42 @@ type ProductSuggestion struct {
 	BufferTime  int       `json:"buffer_time"`
 	TotalTime   int       `json:"total_time"` // Duration + BufferTime
 }
+
+// Availability Suggestion DTOs
+
+// GetAvailabilitySuggestionsRequest represents a request for availability block suggestions
+type GetAvailabilitySuggestionsRequest struct {
+	PartnerID uuid.UUID `json:"partner_id" validate:"required"`
+	RoomID    uuid.UUID `json:"room_id" validate:"required"`
+}
+
+// GetAvailabilitySuggestionsResponse contains recommended availability block durations
+type GetAvailabilitySuggestionsResponse struct {
+	PartnerID         uuid.UUID                  `json:"partner_id"`
+	RoomID            uuid.UUID                  `json:"room_id"`
+	AllocationType    string                     `json:"allocation_type"`
+	RecommendedBlocks []BlockSuggestionResponse  `json:"recommended_blocks"`
+}
+
+// BlockSuggestionResponse represents a recommended block in the API response
+type BlockSuggestionResponse struct {
+	DurationMinutes     int                     `json:"duration_minutes"`
+	Rationale           string                  `json:"rationale"`
+	ProductCombinations []ProductComboResponse  `json:"product_combinations"`
+	Priority            int                     `json:"priority"`
+}
+
+// ProductComboResponse represents a product combination in the API response
+type ProductComboResponse struct {
+	Products      []ProductInfoResponse `json:"products"`
+	TotalDuration int                   `json:"total_duration"`
+	SessionCount  int                   `json:"session_count"`
+}
+
+// ProductInfoResponse contains product information in the API response
+type ProductInfoResponse struct {
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	Duration   int       `json:"duration"`
+	BufferTime int       `json:"buffer_time"`
+}
