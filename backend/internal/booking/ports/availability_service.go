@@ -37,4 +37,7 @@ type AvailabilityService interface {
 
 	// CheckAvailabilityConflict checks for scheduling conflicts
 	CheckAvailabilityConflict(ctx context.Context, userID uuid.UUID, startTime, endTime time.Time, excludeID *uuid.UUID) (bool, error)
+
+	// GetRoomGaps finds time gaps in a room's schedule and suggests products
+	GetRoomGaps(ctx context.Context, request domain.GetRoomGapsRequest) (*domain.GetRoomGapsResponse, error)
 }
