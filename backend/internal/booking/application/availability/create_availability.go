@@ -45,6 +45,30 @@ func (s *AvailabilityService) CreateAvailability(ctx context.Context, request *d
 		return nil, fmt.Errorf("partner does not have access to room during specified time")
 	}
 
+	// Validate duration for shared rooms to prevent fragmentation
+	if hasAccess.IsShared() {
+		duration := request.EndTime.Sub(request.StartTime).Minutes()
+
+		// Fetch partner's products to determine valid durations
+		products, err := s.getPartnerProducts(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("fetch products for duration validation: %w", err)
+		}
+
+		// Calculate valid availability blocks based on products
+		validBlocks := calculateValidBlocks(products)
+
+		// Validate that the requested duration aligns with valid blocks
+		if !isValidDuration(duration, validBlocks) {
+			// Find closest valid durations for suggestions
+			closestBlocks := findClosestValidBlocks(int(duration), validBlocks)
+			return nil, &InvalidDurationError{
+				RequestedDuration: int(duration),
+				ValidBlocks:       closestBlocks,
+			}
+		}
+	}
+
 	// Check for scheduling conflicts
 	hasConflict, err := s.availabilityRepo.CheckConflict(ctx, request.UserID, request.StartTime, request.EndTime, nil)
 	if err != nil {
