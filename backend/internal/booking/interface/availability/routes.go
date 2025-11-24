@@ -23,4 +23,5 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("PUT /availabilities/{id}", RequirePartner(mw.EnableCORS(h.UpdateAvailability)))
 	router.HandleFunc("GET /partners/{partnerId}/availabilities/conflict", RequirePartner(mw.EnableCORS(h.CheckAvailabilityConflict)))
 	router.HandleFunc("GET /availabilities/rooms/{room_id}/gaps", RequirePartner(mw.EnableCORS(h.GetRoomGaps)))
+	router.HandleFunc("GET /partners/{partner_id}/rooms/{room_id}/suggest-blocks", RequirePartner(mw.EnableCORS(h.SuggestBlocks)))
 }
