@@ -19,6 +19,12 @@ import (
 	availabilityHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/availability"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
 
+	// Catalog for product integration
+	productSvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/product"
+	productPostgres "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/product"
+	sharedPostgres "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/shared"
+	catalogPorts "github.com/Leviosa-care/leviosa/backend/internal/catalog/ports"
+
 	authsession "github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/services"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
@@ -44,6 +50,7 @@ var (
 	availabilityRepo ports.AvailabilityRepository
 	allocationRepo   ports.RoomAllocationRepository
 	roomRepo         ports.RoomRepository
+	productService   catalogPorts.PublicProductService
 	service          ports.AvailabilityService
 	authCtx          *tu.AuthTestContext // Authentication context for user/session tests
 	handler          availabilityHandler.Handler
@@ -182,7 +189,14 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to create allocation repository: %v", err)
 	}
 	roomRepo = roomPostgres.New(ctx, testPool)
-	service = availabilityService.New(availabilityRepo, allocationRepo, roomRepo, crypto)
+
+	// Initialize catalog product service (real service for integration testing)
+	productRepo := productPostgres.New(ctx, testPool)
+	sharedRepo := sharedPostgres.New(ctx, testPool)
+	// Pass nil for Stripe gateways - not needed for read-only product queries in availability tests
+	productService = productSvc.New(productRepo, sharedRepo, nil, nil)
+
+	service = availabilityService.New(availabilityRepo, allocationRepo, roomRepo, productService, crypto)
 
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
