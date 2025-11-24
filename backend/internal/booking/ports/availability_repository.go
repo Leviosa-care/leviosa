@@ -39,6 +39,10 @@ type AvailabilityRepository interface {
 
 	// GetRecurringAvailabilities retrieves recurring availabilities that need to be expanded
 	GetRecurringAvailabilities(ctx context.Context, until time.Time) ([]*domain.AvailabilityEncx, error)
+
+	// GetRoomBookingsForDate retrieves all bookings for a specific room on a given date
+	// Used for gap detection - returns availabilities sorted by start time
+	GetRoomBookingsForDate(ctx context.Context, roomID uuid.UUID, date time.Time) ([]*domain.AvailabilityEncx, error)
 }
 
 // AvailabilityFilter defines filtering options for availability queries
