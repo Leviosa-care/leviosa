@@ -1,4 +1,4 @@
-package availability
+package availabilityRepository
 
 import (
 	"context"
@@ -12,14 +12,16 @@ import (
 
 // GetRoomBookingsForDate retrieves all bookings (availabilities) for a room on a specific date
 // Returns availabilities sorted by start time, useful for gap detection
-func (r *AvailabilityRepository) GetRoomBookingsForDate(ctx context.Context, roomID uuid.UUID, date time.Time) ([]*domain.AvailabilityEncx, error) {
+func (r *Repository) GetRoomBookingsForDate(ctx context.Context, roomID uuid.UUID, date time.Time) ([]*domain.AvailabilityEncx, error) {
 	query := `
 		SELECT
-			id, partner_id, partner_id_hash, room_id, start_time, end_time,
-			max_capacity, status, service_type, price_cents, notes_encrypted, notes_hash,
-			is_recurring, recurrence_pattern, parent_id, is_available, is_booked, is_cancelled,
-			created_at, updated_at, dek_encrypted, key_version, metadata
-		FROM bookingschema.availabilities
+			id, user_id, room_id, start_time, end_time,
+			max_capacity, status, price_cents,
+			service_type_encrypted, notes_encrypted,
+			is_recurring, recurrence_pattern,
+			created_at, updated_at,
+			dek_encrypted, key_version, metadata
+		FROM booking.availabilities
 		WHERE room_id = $1
 			AND DATE(start_time) = $2
 			AND status IN ('available', 'booked')
@@ -42,23 +44,17 @@ func (r *AvailabilityRepository) GetRoomBookingsForDate(ctx context.Context, roo
 
 		err := rows.Scan(
 			&availabilityEncx.ID,
-			&availabilityEncx.PartnerID,
-			&availabilityEncx.PartnerIDHash,
+			&availabilityEncx.UserID,
 			&availabilityEncx.RoomID,
 			&availabilityEncx.StartTime,
 			&availabilityEncx.EndTime,
 			&availabilityEncx.MaxCapacity,
 			&availabilityEncx.Status,
-			&availabilityEncx.ServiceType,
 			&availabilityEncx.PriceCents,
+			&availabilityEncx.ServiceTypeEncrypted,
 			&availabilityEncx.NotesEncrypted,
-			&availabilityEncx.NotesHash,
 			&availabilityEncx.IsRecurring,
 			&availabilityEncx.RecurrencePattern,
-			&availabilityEncx.ParentID,
-			&availabilityEncx.IsAvailable,
-			&availabilityEncx.IsBooked,
-			&availabilityEncx.IsCancelled,
 			&availabilityEncx.CreatedAt,
 			&availabilityEncx.UpdatedAt,
 			&availabilityEncx.DEKEncrypted,
