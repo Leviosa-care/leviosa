@@ -62,7 +62,7 @@ func (r *Repository) GetRoomBookingsForDate(ctx context.Context, roomID uuid.UUI
 			&availabilityEncx.Metadata,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("scan availability: %w", err)
+			return nil, errs.ClassifyPgError("scan availability", err)
 		}
 
 		availabilities = append(availabilities, availabilityEncx)

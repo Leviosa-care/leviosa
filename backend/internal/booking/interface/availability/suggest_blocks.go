@@ -64,20 +64,10 @@ func (h *handler) SuggestBlocks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger.InfoContext(ctx, "Handler: Calling service to get block suggestions",
-		"partner_id", partnerID,
-		"room_id", roomID,
-		"operation", "suggest_blocks")
-
 	// Call service
 	suggestions, err := h.svc.SuggestAvailabilityBlocks(ctx, partnerID, roomID)
 	if err != nil {
-		logger.ErrorContext(ctx, "Handler: Failed to get block suggestions",
-			"partner_id", partnerID,
-			"room_id", roomID,
-			"error", err.Error(),
-			"operation", "suggest_blocks")
-		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get availability block suggestions")
 		return
 	}
 

@@ -77,22 +77,10 @@ func (h *Handler) GetPartnerMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger.InfoContext(ctx, "Handler: Calling service to get partner metrics",
-		"partner_id", partnerID,
-		"start_date", startDate.Format("2006-01-02"),
-		"end_date", endDate.Format("2006-01-02"),
-		"operation", "get_partner_metrics")
-
 	// Call service
 	response, err := h.svc.GetPartnerUtilization(ctx, partnerID, startDate, endDate)
 	if err != nil {
-		logger.ErrorContext(ctx, "Handler: Failed to get partner metrics",
-			"partner_id", partnerID,
-			"start_date", startDate.Format("2006-01-02"),
-			"end_date", endDate.Format("2006-01-02"),
-			"error", err.Error(),
-			"operation", "get_partner_metrics")
-		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get partner utilization metrics")
 		return
 	}
 

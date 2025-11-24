@@ -44,6 +44,21 @@ import (
 	imageMedia "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/s3/image"
 	stripeCatalog "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe"
 
+	// Booking
+	allocationSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/allocation"
+	availabilitySvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/availability"
+	bookingSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/booking"
+	buildingSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/building"
+	roomSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/room"
+
+	bookingPorts "github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
+
+	allocationRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/allocation"
+	availabilityRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/availability"
+	bookingRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/booking"
+	buildingRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/building"
+	roomRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/room"
+
 	// Common
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
 
@@ -99,6 +114,13 @@ type Container struct {
 	ImageMedia        catalogPorts.ImageMedia
 	StripeCatalog     catalogPorts.StripeService
 
+	// Booking Repositories
+	BuildingRepo     bookingPorts.BuildingRepository
+	RoomRepo         bookingPorts.RoomRepository
+	AllocationRepo   bookingPorts.RoomAllocationRepository
+	AvailabilityRepo bookingPorts.AvailabilityRepository
+	BookingRepo      bookingPorts.BookingRepository
+
 	// Authuser Services
 	UserService    *userSvc.UserService
 	PartnerService *partnerSvc.PartnerService
@@ -116,6 +138,13 @@ type Container struct {
 	CouponService        *couponSvc.CouponService
 	PromotionCodeService *promotionCodeSvc.PromotionCodeService
 	CatalogAggregator    *catalogAgg.ProductAggregatorService
+
+	// Booking Services
+	BuildingService     bookingPorts.BuildingService
+	RoomService         bookingPorts.RoomService
+	AllocationService   bookingPorts.RoomAllocationService
+	AvailabilityService bookingPorts.AvailabilityService
+	BookingService      bookingPorts.BookingService
 }
 
 // NewContainer creates and wires all dependencies

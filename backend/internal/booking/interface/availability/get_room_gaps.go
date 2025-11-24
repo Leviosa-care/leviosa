@@ -71,20 +71,10 @@ func (h *handler) GetRoomGaps(w http.ResponseWriter, r *http.Request) {
 		Date:   date,
 	}
 
-	logger.InfoContext(ctx, "Handler: Calling service to get room gaps",
-		"room_id", roomID,
-		"date", date.Format("2006-01-02"),
-		"operation", "get_room_gaps")
-
 	// Call service
 	response, err := h.svc.GetRoomGaps(ctx, request)
 	if err != nil {
-		logger.ErrorContext(ctx, "Handler: Failed to get room gaps",
-			"room_id", roomID,
-			"date", date.Format("2006-01-02"),
-			"error", err.Error(),
-			"operation", "get_room_gaps")
-		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+		httpx.RespondWithServiceError(w, logger, ctx, err, "get room gaps")
 		return
 	}
 

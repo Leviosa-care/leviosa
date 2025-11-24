@@ -2,9 +2,11 @@ package metricsRepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
+	"github.com/hengadev/encx"
 )
 
 // GetPartnerRoomIDs retrieves all room IDs a partner has access to
@@ -17,9 +19,12 @@ func (r *Repository) GetPartnerRoomIDs(ctx context.Context, partnerID uuid.UUID)
 		ORDER BY room_id
 	`
 
-	// Hash the partner ID for querying
-	// Note: This is a simplified version - in production you'd use the same hashing as encx
-	partnerIDHash := partnerID.String() // Placeholder - should use proper hashing
+	// Hash the partner ID for querying (GDPR-compliant hashing)
+	partnerIDBytes, err := encx.SerializeValue(partnerID)
+	if err != nil {
+		return nil, fmt.Errorf("serialize partner ID for hashing: %w", err)
+	}
+	partnerIDHash := r.crypto.HashBasic(ctx, partnerIDBytes)
 
 	rows, err := r.pool.Query(ctx, query, partnerIDHash)
 	if err != nil {
