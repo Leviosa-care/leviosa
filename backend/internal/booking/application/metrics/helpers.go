@@ -4,7 +4,16 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 )
 
-// calculateSummary computes aggregate statistics across multiple metrics
+// calculateSummary computes aggregate statistics across multiple daily metrics.
+//
+// Aggregates the following metrics:
+//   - Average Utilization: Mean utilization percentage across all days
+//   - Total Fragmentation: Sum of all fragmentation counts
+//   - Total Idle Minutes: Sum of all idle minutes
+//   - Average Efficiency: Mean efficiency score across all days
+//   - Days Analyzed: Total number of days with data
+//
+// Returns zero values if no metrics are provided.
 func calculateSummary(metrics []*domain.RoomMetrics) domain.MetricsSummary {
 	if len(metrics) == 0 {
 		return domain.MetricsSummary{
@@ -39,7 +48,10 @@ func calculateSummary(metrics []*domain.RoomMetrics) domain.MetricsSummary {
 	}
 }
 
-// convertToDaily converts domain metrics to DTO response format
+// convertToDaily converts domain metrics to DTO response format.
+//
+// Transforms RoomMetrics domain models into DailyMetricsResponse DTOs,
+// computing the efficiency score for each day and including all relevant metrics.
 func convertToDaily(metrics []*domain.RoomMetrics) []domain.DailyMetricsResponse {
 	dailyMetrics := make([]domain.DailyMetricsResponse, 0, len(metrics))
 

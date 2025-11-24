@@ -8,7 +8,18 @@ import (
 	catalogDomain "github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
 )
 
-// generateBlockSuggestions creates availability block suggestions based on products
+// generateBlockSuggestions creates availability block suggestions based on products and room allocation type.
+//
+// Algorithm:
+//   1. For each product, calculate session time (Duration + BufferTime)
+//   2. Generate single session blocks (1x product)
+//   3. Generate multi-session blocks (2x, 3x, 4x product)
+//   4. For shared rooms, also suggest standard durations (60, 90, 120, 180, 240 minutes)
+//      if they divide evenly by session time
+//
+// Multiple products may suggest the same duration (e.g., 60-min product and 120-min product
+// both suggest 120-min blocks). These are consolidated into a single suggestion with multiple
+// product combinations, allowing practitioners to see all options for a given block duration.
 func generateBlockSuggestions(
 	products []*catalogDomain.ProductRes,
 	allocationType domain.AllocationType,
@@ -51,7 +62,13 @@ func generateBlockSuggestions(
 	return result
 }
 
-// addSuggestion adds or updates a block suggestion
+// addSuggestion adds or updates a block suggestion for a given duration.
+//
+// If a suggestion for this duration already exists, adds a new product combination to it.
+// If not, creates a new suggestion with the given product as the first combination.
+//
+// This allows multiple products to suggest the same duration (e.g., 2x 60-min sessions
+// and 1x 120-min session both suggest 120-minute blocks).
 func addSuggestion(
 	suggestions map[int]*domain.BlockSuggestion,
 	duration int,
@@ -85,7 +102,22 @@ func addSuggestion(
 	}
 }
 
-// rankSuggestions assigns priority levels and sorts suggestions
+// rankSuggestions assigns priority levels and sorts suggestions by priority and duration.
+//
+// Priority Levels:
+//   Priority 1 (Highest): Standard durations (60, 90, 120, 180 minutes)
+//     - These are industry-standard time blocks that work well for scheduling
+//     - Easy for clients to understand and book
+//
+//   Priority 2 (Good): 30-minute increments (30, 150, 210, etc.)
+//     - Flexible for scheduling and calendar display
+//     - Compatible with most booking systems
+//
+//   Priority 3 (Alternative): Non-standard durations (45, 75, etc.)
+//     - Valid but may create scheduling complexity
+//     - Suggested only when they match product offerings exactly
+//
+// Sorting: Priority (ascending), then duration (ascending) within each priority level.
 func rankSuggestions(suggestions []domain.BlockSuggestion) {
 	// Standard durations that work well for scheduling
 	standardDurations := map[int]bool{

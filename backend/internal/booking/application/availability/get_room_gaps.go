@@ -65,7 +65,18 @@ func (s *AvailabilityService) GetRoomGaps(ctx context.Context, request domain.Ge
 	return response, nil
 }
 
-// calculateGaps finds time gaps between bookings and suggests fitting products
+// calculateGaps finds time gaps between bookings and suggests fitting products.
+//
+// Algorithm:
+//   1. If no bookings exist, return entire operating period as one gap
+//   2. Check gap before first booking (if first booking starts after operating hours)
+//   3. Iterate between consecutive bookings to find gaps
+//   4. Check gap after last booking (if last booking ends before operating hours close)
+//
+// For each gap found, the function:
+//   - Calculates duration in minutes
+//   - Finds products that fit (product.Duration + product.BufferTime <= gap)
+//   - Sorts suggestions by duration (shortest first for maximum flexibility)
 func (s *AvailabilityService) calculateGaps(
 	bookings []*domain.AvailabilityEncx,
 	operatingStart, operatingEnd time.Time,
@@ -142,8 +153,13 @@ func (s *AvailabilityService) calculateGaps(
 	return gaps
 }
 
-// findFittingProducts finds all products that fit within a time gap
-// A product fits if: gap_duration >= product.Duration + product.BufferTime
+// findFittingProducts finds all products that can be scheduled within a time gap.
+//
+// A product fits if its total required time (session + buffer) does not exceed the gap:
+//   gap_duration >= product.Duration + product.BufferTime
+//
+// Returns suggestions sorted by total time (shortest first) to maximize scheduling flexibility.
+// This allows practitioners to see products that leave the most room for additional bookings.
 func findFittingProducts(gapMinutes int, products []*catalogDomain.ProductRes) []domain.ProductSuggestion {
 	suggestions := []domain.ProductSuggestion{}
 
@@ -168,7 +184,15 @@ func findFittingProducts(gapMinutes int, products []*catalogDomain.ProductRes) [
 	return suggestions
 }
 
-// combineDateTime combines a date with a time-of-day to create a full timestamp
+// combineDateTime combines a date with a time-of-day to create a full timestamp.
+//
+// Takes the year/month/day from 'date' and hour/minute/second from 'timeOfDay',
+// preserving the location/timezone from 'date'.
+//
+// Example:
+//   date = 2025-11-24 00:00:00 UTC
+//   timeOfDay = 0001-01-01 09:30:00 UTC (from Room.OperatingStartTime)
+//   result = 2025-11-24 09:30:00 UTC
 func combineDateTime(date time.Time, timeOfDay time.Time) time.Time {
 	return time.Date(
 		date.Year(),
