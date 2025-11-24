@@ -315,3 +315,44 @@ func (r *UpdateAvailabilityRequest) Valid(ctx context.Context) error {
 
 	return errs.AsError()
 }
+
+// Gap Detection DTOs
+
+// GetRoomGapsRequest represents a request to find time gaps in a room's schedule
+type GetRoomGapsRequest struct {
+	RoomID uuid.UUID `json:"room_id" validate:"required"`
+	Date   time.Time `json:"date" validate:"required"`
+}
+
+// GetRoomGapsResponse represents the time gaps found in a room's schedule
+type GetRoomGapsResponse struct {
+	RoomID          uuid.UUID              `json:"room_id"`
+	Date            time.Time              `json:"date"`
+	OperatingHours  OperatingHoursResponse `json:"operating_hours"`
+	Gaps            []TimeGapResponse      `json:"gaps"`
+	TotalGapMinutes int                    `json:"total_gap_minutes"`
+}
+
+// OperatingHoursResponse represents a room's operating hours for a specific date
+type OperatingHoursResponse struct {
+	StartTime time.Time `json:"start_time"`
+	EndTime   time.Time `json:"end_time"`
+}
+
+// TimeGapResponse represents a time gap in the API response
+type TimeGapResponse struct {
+	StartTime         time.Time           `json:"start_time"`
+	EndTime           time.Time           `json:"end_time"`
+	DurationMinutes   int                 `json:"duration_minutes"`
+	IsBookable        bool                `json:"is_bookable"`
+	SuggestedProducts []ProductSuggestion `json:"suggested_products"`
+}
+
+// ProductSuggestion represents a product that fits in a time gap
+type ProductSuggestion struct {
+	ProductID   uuid.UUID `json:"product_id"`
+	ProductName string    `json:"product_name"`
+	Duration    int       `json:"duration"`
+	BufferTime  int       `json:"buffer_time"`
+	TotalTime   int       `json:"total_time"` // Duration + BufferTime
+}
