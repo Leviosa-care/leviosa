@@ -555,10 +555,3 @@ func TestGetAvailableSlots(t *testing.T) {
 		assert.True(t, resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusOK)
 	})
 }
-
-
-
-
-
-
-

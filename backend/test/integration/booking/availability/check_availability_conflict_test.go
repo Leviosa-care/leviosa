@@ -734,4 +734,3 @@ func TestCheckAvailabilityConflict(t *testing.T) {
 		assert.False(t, response.HasConflict, "Expected no conflict when new slot ends exactly when existing starts")
 	})
 }
-

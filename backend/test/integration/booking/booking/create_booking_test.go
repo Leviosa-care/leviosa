@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -291,7 +290,7 @@ func createTestRoom(t *testing.T, ctx context.Context, buildingID uuid.UUID, nam
 		roomNumEnc.Ciphertext,
 		roomNumHash,
 		capacity,
-		time.Date(0, 1, 1, 8, 0, 0, 0, time.UTC),  // 08:00
+		time.Date(0, 1, 1, 8, 0, 0, 0, time.UTC), // 08:00
 		time.Date(0, 1, 1, 20, 0, 0, 0, time.UTC), // 20:00
 		true,
 		now,

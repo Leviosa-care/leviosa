@@ -14,7 +14,6 @@ import (
 	metricsHelpers "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/metrics"
 	roomHelpers "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/room"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,9 +24,9 @@ func TestGetPartnerMetrics(t *testing.T) {
 
 	t.Run("should aggregate metrics across multiple rooms", func(t *testing.T) {
 		// Clean state
-		allocationHelpers.ClearAllocationTables(t, ctx, testPool)
+		allocationHelpers.ClearAllocationTable(t, ctx, testPool)
 		availabilityHelpers.ClearAvailabilityTable(t, ctx, testPool)
-		roomHelpers.ClearRoomTables(t, ctx, testPool)
+		roomHelpers.ClearRoomsTable(t, ctx, testPool)
 		buildingHelpers.ClearBuildingTable(t, ctx, testPool)
 
 		// Create test data

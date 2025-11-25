@@ -370,6 +370,6 @@ func TestBlockAvailability(t *testing.T) {
 			// If we got a response, it should be either success or timeout status
 			assert.True(t, resp.StatusCode == http.StatusNoContent || resp.StatusCode == http.StatusRequestTimeout)
 		}
-})
+	})
 
 }
