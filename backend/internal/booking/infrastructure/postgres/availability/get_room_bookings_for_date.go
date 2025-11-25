@@ -2,7 +2,6 @@ package availabilityRepository
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
