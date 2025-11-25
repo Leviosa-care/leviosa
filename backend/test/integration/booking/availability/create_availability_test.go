@@ -149,6 +149,7 @@ func TestCreateAvailability(t *testing.T) {
 
 		// Verify service details in response
 		assert.Equal(t, request.ServiceType, response.ServiceType)
+		require.NotNil(t, response.PriceCents)
 		assert.Equal(t, *request.PriceCents, *response.PriceCents)
 		assert.Equal(t, request.Notes, response.Notes)
 
