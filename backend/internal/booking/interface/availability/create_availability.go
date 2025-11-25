@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	availabilitySvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/availability"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
@@ -57,17 +56,6 @@ func (h *handler) CreateAvailability(w http.ResponseWriter, r *http.Request) {
 	// Call service to create availability
 	availability, err := h.svc.CreateAvailability(ctx, &request)
 	if err != nil {
-		// Check if error is InvalidDurationError and return structured response
-		var invalidDurationErr *availabilitySvc.InvalidDurationError
-		if errors.As(err, &invalidDurationErr) {
-			logger.WarnContext(ctx, "Handler: Invalid availability duration",
-				"requested_duration", invalidDurationErr.RequestedDuration,
-				"valid_blocks_count", len(invalidDurationErr.ValidBlocks),
-				"operation", "create_availability")
-			httpx.RespondWithJSON(w, invalidDurationErr.ToJSON(), http.StatusBadRequest)
-			return
-		}
-
 		httpx.RespondWithServiceError(w, logger, ctx, err, "create availability")
 		return
 	}

@@ -367,18 +367,18 @@ type GetAvailabilitySuggestionsRequest struct {
 
 // GetAvailabilitySuggestionsResponse contains recommended availability block durations
 type GetAvailabilitySuggestionsResponse struct {
-	PartnerID         uuid.UUID                  `json:"partner_id"`
-	RoomID            uuid.UUID                  `json:"room_id"`
-	AllocationType    string                     `json:"allocation_type"`
-	RecommendedBlocks []BlockSuggestionResponse  `json:"recommended_blocks"`
+	PartnerID         uuid.UUID                 `json:"partner_id"`
+	RoomID            uuid.UUID                 `json:"room_id"`
+	AllocationType    string                    `json:"allocation_type"`
+	RecommendedBlocks []BlockSuggestionResponse `json:"recommended_blocks"`
 }
 
 // BlockSuggestionResponse represents a recommended block in the API response
 type BlockSuggestionResponse struct {
-	DurationMinutes     int                     `json:"duration_minutes"`
-	Rationale           string                  `json:"rationale"`
-	ProductCombinations []ProductComboResponse  `json:"product_combinations"`
-	Priority            int                     `json:"priority"`
+	DurationMinutes     int                    `json:"duration_minutes"`
+	Rationale           string                 `json:"rationale"`
+	ProductCombinations []ProductComboResponse `json:"product_combinations"`
+	Priority            int                    `json:"priority"`
 }
 
 // ProductComboResponse represents a product combination in the API response

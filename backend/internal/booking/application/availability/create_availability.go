@@ -2,7 +2,9 @@ package availability
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
@@ -45,28 +47,41 @@ func (s *AvailabilityService) CreateAvailability(ctx context.Context, request *d
 		return nil, fmt.Errorf("partner does not have access to room during specified time")
 	}
 
-	// Validate duration for shared rooms to prevent fragmentation
-	if hasAccess.IsShared() {
-		duration := request.EndTime.Sub(request.StartTime).Minutes()
-
-		// Fetch partner's products to determine valid durations
-		products, err := s.getPartnerProducts(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("fetch products for duration validation: %w", err)
+	// Validate partner availability falls within room operating hours
+	roomSchedule, err := s.roomScheduleRepo.GetRoomHoursForDate(ctx, request.RoomID, request.StartTime)
+	if err != nil {
+		if errors.Is(err, errs.ErrRepositoryNotFound) {
+			return nil, errs.NewInvalidValueErr("room has no operating hours configured for this date")
 		}
+		return nil, fmt.Errorf("check room operating hours: %w", err)
+	}
 
-		// Calculate valid availability blocks based on products
-		validBlocks := calculateValidBlocks(products)
+	// Extract time components for comparison
+	partnerStartTime := request.StartTime.In(request.StartTime.Location())
+	partnerEndTime := request.EndTime.In(request.EndTime.Location())
 
-		// Validate that the requested duration aligns with valid blocks
-		if !isValidDuration(duration, validBlocks) {
-			// Find closest valid durations for suggestions
-			closestBlocks := findClosestValidBlocks(int(duration), validBlocks)
-			return nil, &InvalidDurationError{
-				RequestedDuration: int(duration),
-				ValidBlocks:       closestBlocks,
-			}
-		}
+	// Construct room hours with the same date as partner's availability
+	roomOpenTime := time.Date(
+		partnerStartTime.Year(), partnerStartTime.Month(), partnerStartTime.Day(),
+		roomSchedule.OpenTime.Hour(), roomSchedule.OpenTime.Minute(), roomSchedule.OpenTime.Second(),
+		0, partnerStartTime.Location(),
+	)
+
+	roomCloseTime := time.Date(
+		partnerEndTime.Year(), partnerEndTime.Month(), partnerEndTime.Day(),
+		roomSchedule.CloseTime.Hour(), roomSchedule.CloseTime.Minute(), roomSchedule.CloseTime.Second(),
+		0, partnerEndTime.Location(),
+	)
+
+	// Validate partner's time window fits within room's operating hours
+	if partnerStartTime.Before(roomOpenTime) || partnerEndTime.After(roomCloseTime) {
+		return nil, errs.NewInvalidValueErr(fmt.Sprintf(
+			"partner availability (%s-%s) falls outside room operating hours (%s-%s)",
+			partnerStartTime.Format("15:04"),
+			partnerEndTime.Format("15:04"),
+			roomSchedule.OpenTime.Format("15:04"),
+			roomSchedule.CloseTime.Format("15:04"),
+		))
 	}
 
 	// Check for scheduling conflicts

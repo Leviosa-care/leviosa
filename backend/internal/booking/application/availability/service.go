@@ -11,6 +11,7 @@ type AvailabilityService struct {
 	availabilityRepo ports.AvailabilityRepository
 	allocationRepo   ports.RoomAllocationRepository
 	roomRepo         ports.RoomRepository
+	roomScheduleRepo ports.RoomScheduleRepository
 	productService   catalogPorts.PublicProductService
 	crypto           encx.CryptoService
 	// authUserClient   ports.AuthUserClient
@@ -21,6 +22,7 @@ func New(
 	availabilityRepo ports.AvailabilityRepository,
 	allocationRepo ports.RoomAllocationRepository,
 	roomRepo ports.RoomRepository,
+	roomScheduleRepo ports.RoomScheduleRepository,
 	productService catalogPorts.PublicProductService,
 	crypto encx.CryptoService,
 	// authUserClient ports.AuthUserClient,
@@ -29,6 +31,7 @@ func New(
 		availabilityRepo: availabilityRepo,
 		allocationRepo:   allocationRepo,
 		roomRepo:         roomRepo,
+		roomScheduleRepo: roomScheduleRepo,
 		productService:   productService,
 		crypto:           crypto,
 		// authUserClient:   authUserClient,
