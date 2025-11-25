@@ -59,10 +59,6 @@ CREATE TABLE booking.rooms (
     capacity INTEGER NOT NULL DEFAULT 1 CHECK (capacity > 0),
     equipment_encrypted BYTEA, -- JSON array of equipment/amenities
 
-    -- Operating hours (time of day)
-    operating_start_time TIME NOT NULL DEFAULT '08:00:00',
-    operating_end_time TIME NOT NULL DEFAULT '20:00:00',
-
     -- Encryption metadata (required by encx)
     dek_encrypted BYTEA NOT NULL,
     key_version INTEGER NOT NULL DEFAULT 1,
@@ -74,6 +70,48 @@ CREATE TABLE booking.rooms (
 
     metadata JSONB -- Maps to 'Metadata map[string]any,omitempty'. JSONB for flexible key-value pairs. 'omitempty' implies NULLable.
 );
+
+-- Room Availability Schedules: Flexible operating hours for rooms
+CREATE TABLE booking.room_availability_schedules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    room_id UUID NOT NULL REFERENCES booking.rooms(id) ON DELETE CASCADE,
+
+    -- Recurring pattern (NULL for one-time exceptions)
+    -- 0=Sunday, 1=Monday, ..., 6=Saturday
+    day_of_week INTEGER CHECK (day_of_week BETWEEN 0 AND 6),
+
+    -- Specific date override (NULL for recurring patterns)
+    specific_date DATE,
+
+    -- Operating hours for this pattern/date
+    open_time TIME NOT NULL,
+    close_time TIME NOT NULL,
+
+    -- Priority for conflict resolution (higher = takes precedence)
+    -- Specific dates should have priority > recurring patterns
+    priority INTEGER NOT NULL DEFAULT 1,
+
+    -- Administrative fields
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+
+    metadata JSONB, -- Maps to 'Metadata map[string]any,omitempty'. JSONB for flexible key-value pairs. 'omitempty' implies NULLable.
+
+    -- Constraints
+    CHECK (close_time > open_time),
+    -- Must be EITHER recurring OR specific date, not both
+    CHECK (
+        (day_of_week IS NOT NULL AND specific_date IS NULL) OR
+        (day_of_week IS NULL AND specific_date IS NOT NULL)
+    )
+);
+
+-- Indexes for efficient querying
+CREATE INDEX idx_room_schedules_room_dow ON booking.room_availability_schedules(room_id, day_of_week, is_active)
+    WHERE day_of_week IS NOT NULL;
+CREATE INDEX idx_room_schedules_room_date ON booking.room_availability_schedules(room_id, specific_date, is_active)
+    WHERE specific_date IS NOT NULL;
 
 -- Room allocations: Partner assignments to rooms (dedicated vs shared access)
 CREATE TABLE booking.room_allocations (
@@ -216,6 +254,9 @@ CREATE TRIGGER rooms_update_timestamp BEFORE UPDATE ON booking.rooms
     FOR EACH ROW EXECUTE FUNCTION booking.update_timestamp();
 
 CREATE TRIGGER room_allocations_update_timestamp BEFORE UPDATE ON booking.room_allocations
+    FOR EACH ROW EXECUTE FUNCTION booking.update_timestamp();
+
+CREATE TRIGGER room_schedules_update_timestamp BEFORE UPDATE ON booking.room_availability_schedules
     FOR EACH ROW EXECUTE FUNCTION booking.update_timestamp();
 
 CREATE TRIGGER availabilities_update_timestamp BEFORE UPDATE ON booking.availabilities
