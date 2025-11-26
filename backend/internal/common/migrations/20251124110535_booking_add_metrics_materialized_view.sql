@@ -4,11 +4,34 @@
 -- Create materialized view for room utilization metrics
 CREATE MATERIALIZED VIEW booking.room_daily_metrics AS
 WITH room_operating_hours AS (
-    SELECT
-        r.id as room_id,
-        EXTRACT(EPOCH FROM (r.operating_end_time - r.operating_start_time)) / 60 as minutes_open
-    FROM booking.rooms r
-    WHERE r.is_active = true
+    -- Calculate daily operating hours from room_availability_schedules
+    -- For each date in availabilities, find the corresponding room schedule
+    SELECT DISTINCT
+        da.room_id,
+        da.date,
+        EXTRACT(EPOCH FROM (
+            ras.close_time - ras.open_time
+        )) / 60 as minutes_open
+    FROM (
+        SELECT DISTINCT
+            room_id,
+            DATE(start_time) as date
+        FROM booking.availabilities
+        WHERE status IN ('available', 'booked')
+    ) da
+    LEFT JOIN LATERAL (
+        SELECT close_time, open_time
+        FROM booking.room_availability_schedules
+        WHERE room_id = da.room_id
+          AND is_active = true
+          AND (
+              specific_date = da.date OR
+              day_of_week = EXTRACT(DOW FROM da.date)::INTEGER
+          )
+        ORDER BY priority DESC, specific_date DESC NULLS LAST
+        LIMIT 1
+    ) ras ON true
+    WHERE ras.close_time IS NOT NULL
 ),
 daily_availabilities AS (
     SELECT
@@ -65,7 +88,7 @@ SELECT
     NOW() as created_at,
     NOW() as updated_at
 FROM daily_availabilities da
-JOIN room_operating_hours roh ON da.room_id = roh.room_id
+JOIN room_operating_hours roh ON da.room_id = roh.room_id AND da.date = roh.date
 LEFT JOIN daily_gaps dg ON da.room_id = dg.room_id AND da.date = dg.date;
 
 -- Create indexes for fast queries
