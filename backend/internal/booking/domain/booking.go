@@ -198,4 +198,3 @@ func (b *Booking) IsCancellable() bool {
 func (b *Booking) RequiresPayment() bool {
 	return b.PaymentStatus == PaymentStatusPending || b.PaymentStatus == PaymentStatusFailed
 }
-

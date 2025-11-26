@@ -57,3 +57,4 @@ func (s *BookingService) RefundBooking(ctx context.Context, id uuid.UUID) (*doma
 
 	return booking, nil
 }
+

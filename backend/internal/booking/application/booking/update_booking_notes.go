@@ -35,3 +35,4 @@ func (s *BookingService) UpdateBookingNotes(ctx context.Context, id uuid.UUID, c
 
 	return booking, nil
 }
+

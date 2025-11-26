@@ -62,3 +62,4 @@ func (s *BookingService) ProcessPayment(ctx context.Context, id uuid.UUID, payme
 
 	return booking, nil
 }
+
