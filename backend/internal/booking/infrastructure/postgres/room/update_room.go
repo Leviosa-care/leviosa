@@ -19,13 +19,11 @@ func (r *Repository) Update(ctx context.Context, room *domain.RoomEncx) error {
 			room_number_hash = $7,
 			capacity = $8,
 			equipment_encrypted = $9,
-			operating_start_time = $10,
-			operating_end_time = $11,
-			is_active = $12,
-			updated_at = $13,
-			dek_encrypted = $14,
-			key_version = $15,
-			metadata = $16
+			is_active = $10,
+			updated_at = $11,
+			dek_encrypted = $12,
+			key_version = $13,
+			metadata = $14
 		WHERE id = $1
 	`, r.schema)
 
@@ -39,8 +37,6 @@ func (r *Repository) Update(ctx context.Context, room *domain.RoomEncx) error {
 		room.RoomNumberHash,
 		room.Capacity,
 		room.EquipmentEncrypted,
-		room.OperatingStartTime,
-		room.OperatingEndTime,
 		room.IsActive,
 		room.UpdatedAt,
 		room.DEKEncrypted,
