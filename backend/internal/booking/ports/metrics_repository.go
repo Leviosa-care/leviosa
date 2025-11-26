@@ -14,7 +14,8 @@ type MetricsRepository interface {
 	GetRoomMetrics(ctx context.Context, roomID uuid.UUID, startDate, endDate time.Time) ([]*domain.RoomMetrics, error)
 
 	// GetPartnerRoomIDs retrieves all room IDs that a partner has access to
-	GetPartnerRoomIDs(ctx context.Context, partnerID uuid.UUID) ([]uuid.UUID, error)
+	// The userIDHash parameter should be pre-hashed by the application layer
+	GetPartnerRoomIDs(ctx context.Context, userIDHash string) ([]uuid.UUID, error)
 
 	// RefreshMaterializedView refreshes the metrics materialized view
 	RefreshMaterializedView(ctx context.Context) error
