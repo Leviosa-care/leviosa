@@ -2,15 +2,13 @@ package metricsRepository
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
-	"github.com/hengadev/encx"
 )
 
 // GetPartnerRoomIDs retrieves all room IDs a partner has access to
-func (r *Repository) GetPartnerRoomIDs(ctx context.Context, partnerID uuid.UUID) ([]uuid.UUID, error) {
+func (r *Repository) GetPartnerRoomIDs(ctx context.Context, userIDHash string) ([]uuid.UUID, error) {
 	query := `
 		SELECT DISTINCT room_id
 		FROM booking.room_allocations
@@ -19,14 +17,7 @@ func (r *Repository) GetPartnerRoomIDs(ctx context.Context, partnerID uuid.UUID)
 		ORDER BY room_id
 	`
 
-	// Hash the partner ID for querying (GDPR-compliant hashing)
-	partnerIDBytes, err := encx.SerializeValue(partnerID)
-	if err != nil {
-		return nil, fmt.Errorf("serialize partner ID for hashing: %w", err)
-	}
-	partnerIDHash := r.crypto.HashBasic(ctx, partnerIDBytes)
-
-	rows, err := r.pool.Query(ctx, query, partnerIDHash)
+	rows, err := r.pool.Query(ctx, query, userIDHash)
 	if err != nil {
 		return nil, errs.ClassifyPgError("query partner room IDs", err)
 	}
