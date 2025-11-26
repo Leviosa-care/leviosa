@@ -9,6 +9,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
+	"github.com/hengadev/encx"
 )
 
 // GetPartnerUtilization retrieves aggregated metrics for all rooms a partner has access to
@@ -21,8 +22,16 @@ func (s *Service) GetPartnerUtilization(
 	if endDate.Before(startDate) {
 		return nil, errs.NewInvalidInputErr(errors.New("end date must be after start date"))
 	}
+
+	// Hash the partner ID for querying (application layer responsibility)
+	partnerIDBytes, err := encx.SerializeValue(partnerID)
+	if err != nil {
+		return nil, fmt.Errorf("serialize partner ID for hashing: %w", err)
+	}
+	partnerIDHash := s.crypto.HashBasic(ctx, partnerIDBytes)
+
 	// Get all rooms partner has access to
-	roomIDs, err := s.metricsRepo.GetPartnerRoomIDs(ctx, partnerID)
+	roomIDs, err := s.metricsRepo.GetPartnerRoomIDs(ctx, partnerIDHash)
 	if err != nil {
 		return nil, fmt.Errorf("get partner room IDs: %w", err)
 	}
