@@ -47,13 +47,21 @@ func TestCreateAvailability(t *testing.T) {
 		err = tr.InsertRoomEncx(t, ctx, testPool, roomEncx)
 		require.NoError(t, err)
 
+		// Create room schedule for all days of the week (8:00 AM - 8:00 PM)
+		for dayOfWeek := 0; dayOfWeek < 7; dayOfWeek++ {
+			schedule := ta.NewTestRoomScheduleRecurring(room.ID, dayOfWeek, "08:00", "20:00")
+			ta.InsertRoomSchedule(t, ctx, schedule, testPool)
+		}
+
 		return room.ID
 	}
 
 	// Create valid request helper
 	createValidRequest := func(roomID uuid.UUID) domain.CreateAvailabilityRequest {
-		startTime := time.Now().Add(24 * time.Hour).Truncate(time.Second)
-		endTime := startTime.Add(2 * time.Hour)
+		// Create start time tomorrow at 9:00 AM (within operating hours 08:00-20:00)
+		tomorrow := time.Now().AddDate(0, 0, 1)
+		startTime := time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 9, 0, 0, 0, tomorrow.Location())
+		endTime := startTime.Add(2 * time.Hour) // 9:00 AM - 11:00 AM
 		return domain.CreateAvailabilityRequest{
 			RoomID:      roomID,
 			StartTime:   startTime,
@@ -165,6 +173,7 @@ func TestCreateAvailability(t *testing.T) {
 
 	t.Run("should successfully create availability with admin token", func(t *testing.T) {
 		ta.ClearAvailabilityTable(t, ctx, testPool)
+		ta.ClearRoomSchedulesTable(t, ctx, testPool)
 		tb.ClearBuildingsTable(t, ctx, testPool)
 		defer tu.ClearAuthData(t, ctx, authCtx)
 

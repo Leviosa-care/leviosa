@@ -13,6 +13,7 @@ import (
 	"time"
 
 	availabilityService "github.com/Leviosa-care/leviosa/backend/internal/booking/application/availability"
+	bookingPostgres "github.com/Leviosa-care/leviosa/backend/internal/booking/adapters/postgres"
 	allocationPostgres "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/allocation"
 	availabilityPostgres "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/availability"
 	roomPostgres "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/room"
@@ -50,6 +51,7 @@ var (
 	availabilityRepo ports.AvailabilityRepository
 	allocationRepo   ports.RoomAllocationRepository
 	roomRepo         ports.RoomRepository
+	roomScheduleRepo ports.RoomScheduleRepository
 	productService   catalogPorts.PublicProductService
 	service          ports.AvailabilityService
 	authCtx          *tu.AuthTestContext // Authentication context for user/session tests
@@ -189,6 +191,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to create allocation repository: %v", err)
 	}
 	roomRepo = roomPostgres.New(ctx, testPool)
+	roomScheduleRepo = bookingPostgres.NewRoomScheduleRepository(testPool)
 
 	// Initialize catalog product service (real service for integration testing)
 	productRepo := productPostgres.New(ctx, testPool)
@@ -196,7 +199,7 @@ func TestMain(m *testing.M) {
 	// Pass nil for Stripe gateways - not needed for read-only product queries in availability tests
 	productService = productSvc.New(productRepo, sharedRepo, nil, nil)
 
-	service = availabilityService.New(availabilityRepo, allocationRepo, roomRepo, productService, crypto)
+	service = availabilityService.New(availabilityRepo, allocationRepo, roomRepo, roomScheduleRepo, productService, crypto)
 
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
