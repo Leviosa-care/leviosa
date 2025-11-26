@@ -32,3 +32,4 @@ func (s *BookingService) CompleteBooking(ctx context.Context, id uuid.UUID) (*do
 
 	return booking, nil
 }
+

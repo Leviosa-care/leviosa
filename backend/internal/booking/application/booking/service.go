@@ -2,12 +2,14 @@ package booking
 
 import (
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
+	"github.com/hengadev/encx"
 )
 
 type BookingService struct {
 	bookingRepo      ports.BookingRepository
 	availabilityRepo ports.AvailabilityRepository
 	paymentService   ports.PaymentService
+	crypto           encx.CryptoService
 }
 
 // New creates a new instance of the booking service
@@ -15,10 +17,12 @@ func New(
 	bookingRepo ports.BookingRepository,
 	availabilityRepo ports.AvailabilityRepository,
 	paymentService ports.PaymentService,
+	crypto encx.CryptoService,
 ) ports.BookingService {
 	return &BookingService{
 		bookingRepo:      bookingRepo,
 		availabilityRepo: availabilityRepo,
 		paymentService:   paymentService,
+		crypto:           crypto,
 	}
 }

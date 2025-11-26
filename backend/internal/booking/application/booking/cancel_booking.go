@@ -7,6 +7,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
@@ -31,10 +32,16 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uuid.UUID, reason
 	}
 
 	// Mark associated availability as available again
-	availability, err := s.availabilityRepo.GetByID(ctx, booking.AvailabilityID)
+	availabilityEncx, err := s.availabilityRepo.GetByID(ctx, booking.AvailabilityID)
 	if err == nil {
+		availability, err := domain.DecryptAvailabilityEncx(ctx, s.crypto, availabilityEncx)
+		if err != nil {
+
+		}
 		availability.MarkAsAvailable()
-		s.availabilityRepo.Update(ctx, availability) // Best effort, don't fail booking cancellation
+		if err := s.availabilityRepo.Update(ctx, availabilityEncx); err != nil { // Best effort, don't fail booking cancellation
+
+		}
 	}
 
 	// Persist changes
@@ -44,3 +51,4 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uuid.UUID, reason
 
 	return booking, nil
 }
+

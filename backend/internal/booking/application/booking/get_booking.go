@@ -21,3 +21,4 @@ func (s *BookingService) GetBooking(ctx context.Context, id uuid.UUID) (*domain.
 
 	return booking, nil
 }
+

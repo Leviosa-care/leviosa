@@ -43,8 +43,8 @@ type Booking struct {
 	Currency        string `json:"currency"`
 
 	// Payment tracking
-	PaymentStatus     PaymentStatus `json:"payment_status"`
-	PaymentIntentID   *string       `json:"payment_intent_id,omitempty"`
+	PaymentStatus   PaymentStatus `json:"payment_status"`
+	PaymentIntentID *string       `json:"payment_intent_id,omitempty"`
 
 	// Booking lifecycle
 	Status             BookingStatus `json:"status"`
@@ -198,3 +198,4 @@ func (b *Booking) IsCancellable() bool {
 func (b *Booking) RequiresPayment() bool {
 	return b.PaymentStatus == PaymentStatusPending || b.PaymentStatus == PaymentStatusFailed
 }
+

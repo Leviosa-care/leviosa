@@ -6,19 +6,24 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
-	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
+
 	"github.com/google/uuid"
 )
 
 func (s *BookingService) CreateBooking(ctx context.Context, availabilityID, clientID uuid.UUID, clientNotes string) (*domain.Booking, error) {
 	// Get availability and verify it's bookable
-	availability, err := s.availabilityRepo.GetByID(ctx, availabilityID)
+	availabilityEncx, err := s.availabilityRepo.GetByID(ctx, availabilityID)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return nil, fmt.Errorf("availability not found: %w", errs.ErrRepositoryNotFound)
 		}
 		return nil, fmt.Errorf("get availability: %w", err)
+	}
+
+	availability, err := domain.DecryptAvailabilityEncx(ctx, s.crypto, availabilityEncx)
+	if err != nil {
+		return nil, errs.NewNotDecryptedErr("availability", err)
 	}
 
 	// Check if availability is still available for booking
@@ -46,7 +51,7 @@ func (s *BookingService) CreateBooking(ctx context.Context, availabilityID, clie
 	booking, err := domain.NewBooking(
 		availabilityID,
 		clientID,
-		availability.PartnerID,
+		availability.UserID,
 		availability.RoomID,
 		totalPriceCents,
 		"EUR", // Default currency
@@ -67,7 +72,7 @@ func (s *BookingService) CreateBooking(ctx context.Context, availabilityID, clie
 			"booking_id":      booking.ID.String(),
 			"availability_id": availabilityID.String(),
 			"client_id":       clientID.String(),
-			"partner_id":      availability.PartnerID.String(),
+			"partner_id":      availability.UserID.String(),
 		}
 
 		paymentIntentID, _, err := s.paymentService.CreatePaymentIntent(
@@ -90,8 +95,13 @@ func (s *BookingService) CreateBooking(ctx context.Context, availabilityID, clie
 		return nil, fmt.Errorf("mark availability as booked: %w", err)
 	}
 
+	availabilityEncx, err = domain.ProcessAvailabilityEncx(ctx, s.crypto, availability)
+	if err != nil {
+		return nil, errs.NewNotEncryptedErr("availability", err)
+	}
+
 	// Update availability in repository
-	if err := s.availabilityRepo.Update(ctx, availability); err != nil {
+	if err := s.availabilityRepo.Update(ctx, availabilityEncx); err != nil {
 		return nil, fmt.Errorf("update availability status: %w", err)
 	}
 
@@ -99,9 +109,12 @@ func (s *BookingService) CreateBooking(ctx context.Context, availabilityID, clie
 	if err := s.bookingRepo.Create(ctx, booking); err != nil {
 		// Rollback availability status on failure
 		availability.MarkAsAvailable()
-		s.availabilityRepo.Update(ctx, availability)
+		if err := s.availabilityRepo.Update(ctx, availabilityEncx); err != nil {
+
+		}
 		return nil, fmt.Errorf("create booking: %w", err)
 	}
 
 	return booking, nil
 }
+
