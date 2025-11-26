@@ -1,3 +1,27 @@
+package analytics
+
+// TEMPORARILY DISABLED - ARCHITECTURAL MISMATCH
+//
+// This feature (along with suggestion_algorithm.go) has been moved here from the
+// availability service because it violates the separation of concerns.
+//
+// ISSUE:
+// SuggestAvailabilityBlocks queries the product catalog and generates availability
+// block recommendations based on product durations. This couples the availability
+// layer to products, which should be separate concerns.
+//
+// The availability layer should be product-agnostic - partners declare time blocks,
+// clients book products within those blocks. Product-based scheduling optimization
+// belongs elsewhere (booking analytics, partner dashboard, etc.).
+//
+// TODO: Decide whether to:
+// - Reimplement as a UI/dashboard feature (not a backend service)
+// - Move to a separate scheduling optimization service
+// - Delete if not needed
+//
+// For now, commented out to prevent compilation errors.
+
+/*
 package availability
 
 import (
@@ -56,3 +80,4 @@ func (s *AvailabilityService) SuggestAvailabilityBlocks(
 		RecommendedBlocks: suggestions,
 	}, nil
 }
+*/

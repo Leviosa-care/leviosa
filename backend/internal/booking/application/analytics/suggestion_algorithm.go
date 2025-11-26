@@ -1,3 +1,11 @@
+package analytics
+
+// TEMPORARILY DISABLED - ARCHITECTURAL MISMATCH
+//
+// This file contains helper functions for suggest_blocks.go.
+// See suggest_blocks.go for explanation of why this is disabled.
+
+/*
 package availability
 
 import (
@@ -148,3 +156,4 @@ func rankSuggestions(suggestions []domain.BlockSuggestion) {
 		return suggestions[i].DurationMinutes < suggestions[j].DurationMinutes
 	})
 }
+*/

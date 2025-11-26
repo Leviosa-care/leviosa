@@ -1,3 +1,11 @@
+package analytics
+
+// TEMPORARILY DISABLED - ARCHITECTURAL MISMATCH
+//
+// HTTP handler for SuggestBlocks endpoint. See application/analytics/suggest_blocks.go
+// for explanation of why this feature is disabled.
+
+/*
 package availabilityHandler
 
 import (
@@ -132,3 +140,4 @@ func convertToSuggestionsResponse(suggestions *domain.AvailabilitySuggestions) d
 		RecommendedBlocks: blocks,
 	}
 }
+*/
