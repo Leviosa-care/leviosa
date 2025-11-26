@@ -20,10 +20,6 @@ type Room struct {
 	Capacity  int      `json:"capacity"`
 	Equipment []string `json:"equipment,omitempty" encx:"encrypt"`
 
-	// Operating hours (time of day in HH:MM format)
-	OperatingStartTime time.Time `json:"operating_start_time"`
-	OperatingEndTime   time.Time `json:"operating_end_time"`
-
 	// Administrative fields
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
@@ -32,16 +28,14 @@ type Room struct {
 
 func (r *Room) ToResponse() *RoomResponse {
 	return &RoomResponse{
-		ID:                 r.ID,
-		BuildingID:         r.BuildingID,
-		Name:               r.Name,
-		Description:        r.Description,
-		RoomNumber:         r.RoomNumber,
-		Capacity:           r.Capacity,
-		Equipment:          r.Equipment,
-		OperatingStartTime: r.OperatingStartTime,
-		OperatingEndTime:   r.OperatingEndTime,
-		IsActive:           r.IsActive,
+		ID:          r.ID,
+		BuildingID:  r.BuildingID,
+		Name:        r.Name,
+		Description: r.Description,
+		RoomNumber:  r.RoomNumber,
+		Capacity:    r.Capacity,
+		Equipment:   r.Equipment,
+		IsActive:    r.IsActive,
 	}
 }
 
