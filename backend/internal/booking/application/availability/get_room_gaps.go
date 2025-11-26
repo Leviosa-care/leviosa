@@ -13,16 +13,10 @@ import (
 // GetRoomGaps finds time gaps in a room's schedule for a specific date
 // and suggests products that could fit in those gaps
 func (s *AvailabilityService) GetRoomGaps(ctx context.Context, request domain.GetRoomGapsRequest) (*domain.GetRoomGapsResponse, error) {
-	// 1. Get room details to access operating hours
-	roomEncx, err := s.roomRepo.GetByID(ctx, request.RoomID)
+	// 1. Get room schedule for the specific date
+	roomHours, err := s.roomScheduleRepo.GetRoomHoursForDate(ctx, request.RoomID, request.Date)
 	if err != nil {
-		return nil, fmt.Errorf("get room: %w", err)
-	}
-
-	// Decrypt room to access operating hours
-	room, err := domain.DecryptRoomEncx(ctx, s.crypto, roomEncx)
-	if err != nil {
-		return nil, fmt.Errorf("decrypt room: %w", err)
+		return nil, fmt.Errorf("get room hours: %w", err)
 	}
 
 	// 2. Get all bookings for the specified date
@@ -32,14 +26,14 @@ func (s *AvailabilityService) GetRoomGaps(ctx context.Context, request domain.Ge
 	}
 
 	// 3. Get products to suggest for gaps
-	products, err := s.getPartnerProducts(ctx)
+	products, err := s.productService.GetAllPublishedProducts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get products: %w", err)
 	}
 
 	// 4. Calculate operating hours for the specific date
-	operatingStart := combineDateTime(request.Date, room.OperatingStartTime)
-	operatingEnd := combineDateTime(request.Date, room.OperatingEndTime)
+	operatingStart := combineDateTime(request.Date, roomHours.OpenTime)
+	operatingEnd := combineDateTime(request.Date, roomHours.CloseTime)
 
 	// 5. Find gaps between bookings
 	gaps := s.calculateGaps(bookings, operatingStart, operatingEnd, products)

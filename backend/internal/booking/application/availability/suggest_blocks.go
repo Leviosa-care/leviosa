@@ -38,7 +38,7 @@ func (s *AvailabilityService) SuggestAvailabilityBlocks(
 	}
 
 	// 3. Get partner's products
-	products, err := s.getPartnerProducts(ctx)
+	products, err := s.productService.GetAllPublishedProducts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get partner products: %w", err)
 	}
