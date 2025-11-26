@@ -22,6 +22,9 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /availabilities/{id}/block", RequireAdmin(mw.EnableCORS(h.BlockAvailability)))
 	router.HandleFunc("PUT /availabilities/{id}", RequirePartner(mw.EnableCORS(h.UpdateAvailability)))
 	router.HandleFunc("GET /partners/{partnerId}/availabilities/conflict", RequirePartner(mw.EnableCORS(h.CheckAvailabilityConflict)))
-	router.HandleFunc("GET /availabilities/rooms/{room_id}/gaps", RequirePartner(mw.EnableCORS(h.GetRoomGaps)))
-	router.HandleFunc("GET /partners/{partner_id}/rooms/{room_id}/suggest-blocks", RequirePartner(mw.EnableCORS(h.SuggestBlocks)))
+
+	// TEMPORARILY DISABLED - Moved to analytics (architectural mismatch)
+	// See internal/booking/interface/analytics/ for explanation
+	// router.HandleFunc("GET /availabilities/rooms/{room_id}/gaps", RequirePartner(mw.EnableCORS(h.GetRoomGaps)))
+	// router.HandleFunc("GET /partners/{partner_id}/rooms/{room_id}/suggest-blocks", RequirePartner(mw.EnableCORS(h.SuggestBlocks)))
 }
