@@ -38,9 +38,8 @@ type AvailabilityService interface {
 	// CheckAvailabilityConflict checks for scheduling conflicts
 	CheckAvailabilityConflict(ctx context.Context, userID uuid.UUID, startTime, endTime time.Time, excludeID *uuid.UUID) (bool, error)
 
-	// GetRoomGaps finds time gaps in a room's schedule and suggests products
-	GetRoomGaps(ctx context.Context, request domain.GetRoomGapsRequest) (*domain.GetRoomGapsResponse, error)
-
-	// SuggestAvailabilityBlocks recommends optimal availability block durations
-	SuggestAvailabilityBlocks(ctx context.Context, partnerID uuid.UUID, roomID uuid.UUID) (*domain.AvailabilitySuggestions, error)
+	// TEMPORARILY DISABLED - Moved to analytics service (architectural mismatch)
+	// See internal/booking/application/analytics/ for explanation
+	// GetRoomGaps(ctx context.Context, request domain.GetRoomGapsRequest) (*domain.GetRoomGapsResponse, error)
+	// SuggestAvailabilityBlocks(ctx context.Context, partnerID uuid.UUID, roomID uuid.UUID) (*domain.AvailabilitySuggestions, error)
 }
