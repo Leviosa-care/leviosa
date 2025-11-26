@@ -162,8 +162,8 @@ func TestMain(m *testing.M) {
 	ctx = context.WithValue(ctx, ctxutil.LoggerKey, testLogger)
 
 	// Initialize application layers
-	metricsRepo = metricsPostgres.New(ctx, testPool, crypto)
-	service = metricsService.New(metricsRepo)
+	metricsRepo = metricsPostgres.New(testPool)
+	service = metricsService.New(metricsRepo, crypto)
 
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
