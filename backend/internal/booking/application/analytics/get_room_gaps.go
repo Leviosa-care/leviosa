@@ -1,3 +1,34 @@
+package analytics
+
+// TEMPORARILY DISABLED - ARCHITECTURAL MISMATCH
+//
+// This feature has been moved here from the availability service because it violates
+// the separation of concerns established during the room schedule refactoring.
+//
+// ISSUE:
+// The availability layer should be product-agnostic. Partners declare availability blocks
+// (just time slots), and clients book products within those blocks. Gap detection and
+// product suggestion logic belongs in a booking optimization/analytics service, not in
+// the availability management layer.
+//
+// The three-layer model is:
+// 1. Room Schedule (admin) - when rooms are physically open
+// 2. Availability (partner) - when partners are available (product-agnostic)
+// 3. Booking (client) - clients book products within availability blocks
+//
+// GetRoomGaps mixes concerns by:
+// - Being in the availability service
+// - Querying product catalog
+// - Suggesting products for time gaps
+// - Optimizing booking schedules
+//
+// TODO: Decide whether to:
+// - Reimplement this as a proper booking analytics feature (analyzes actual bookings)
+// - Delete entirely if not needed
+//
+// For now, this file is commented out to prevent compilation errors.
+
+/*
 package availability
 
 import (
@@ -201,3 +232,4 @@ func combineDateTime(date time.Time, timeOfDay time.Time) time.Time {
 		date.Location(),
 	)
 }
+*/

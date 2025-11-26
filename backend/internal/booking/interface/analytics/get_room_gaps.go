@@ -1,3 +1,11 @@
+package analytics
+
+// TEMPORARILY DISABLED - ARCHITECTURAL MISMATCH
+//
+// HTTP handler for GetRoomGaps endpoint. See application/analytics/get_room_gaps.go
+// for explanation of why this feature is disabled.
+
+/*
 package availabilityHandler
 
 import (
@@ -94,3 +102,4 @@ func (h *handler) GetRoomGaps(w http.ResponseWriter, r *http.Request) {
 			"operation", "get_room_gaps")
 	}
 }
+*/
