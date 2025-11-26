@@ -3,6 +3,7 @@ package availabilityHelpers
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/google/uuid"
@@ -171,4 +172,119 @@ func AvailabilityExistsInTable(t *testing.T, ctx context.Context, availabilityID
 		t.Fatalf("Failed to check if availability exists: %v", err)
 	}
 	return exists
+}
+
+// ClearRoomSchedulesTable removes all room schedule records
+func ClearRoomSchedulesTable(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
+	query := `DELETE FROM booking.room_availability_schedules`
+	_, err := pool.Exec(ctx, query)
+	if err != nil {
+		t.Fatalf("Failed to clear room schedules table: %v", err)
+	}
+}
+
+// InsertRoomSchedule directly inserts a room schedule into the database
+func InsertRoomSchedule(t *testing.T, ctx context.Context, schedule *domain.RoomAvailabilitySchedule, pool *pgxpool.Pool) {
+	query := `
+		INSERT INTO booking.room_availability_schedules (
+			id, room_id, day_of_week, specific_date, open_time, close_time,
+			priority, is_active, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	`
+
+	now := time.Now()
+	if schedule.ID == uuid.Nil {
+		schedule.ID = uuid.New()
+	}
+	if schedule.CreatedAt.IsZero() {
+		schedule.CreatedAt = now
+	}
+	if schedule.UpdatedAt.IsZero() {
+		schedule.UpdatedAt = now
+	}
+
+	_, err := pool.Exec(ctx, query,
+		schedule.ID,
+		schedule.RoomID,
+		schedule.DayOfWeek,
+		schedule.SpecificDate,
+		schedule.OpenTime,
+		schedule.CloseTime,
+		schedule.Priority,
+		schedule.IsActive,
+		schedule.CreatedAt,
+		schedule.UpdatedAt,
+	)
+
+	if err != nil {
+		t.Fatalf("Failed to insert room schedule: %v", err)
+	}
+}
+
+// GetRoomScheduleFromDB retrieves a room schedule by ID
+func GetRoomScheduleFromDB(t *testing.T, ctx context.Context, scheduleID uuid.UUID, pool *pgxpool.Pool) *domain.RoomAvailabilitySchedule {
+	query := `
+		SELECT id, room_id, day_of_week, specific_date, open_time, close_time,
+		       priority, is_active, created_at, updated_at
+		FROM booking.room_availability_schedules
+		WHERE id = $1
+	`
+
+	schedule := &domain.RoomAvailabilitySchedule{}
+	var dayOfWeekPtr *int
+	var specificDatePtr *time.Time
+
+	err := pool.QueryRow(ctx, query, scheduleID).Scan(
+		&schedule.ID,
+		&schedule.RoomID,
+		&dayOfWeekPtr,
+		&specificDatePtr,
+		&schedule.OpenTime,
+		&schedule.CloseTime,
+		&schedule.Priority,
+		&schedule.IsActive,
+		&schedule.CreatedAt,
+		&schedule.UpdatedAt,
+	)
+
+	if err != nil {
+		t.Fatalf("Failed to get room schedule: %v", err)
+	}
+
+	schedule.DayOfWeek = dayOfWeekPtr
+	schedule.SpecificDate = specificDatePtr
+
+	return schedule
+}
+
+// NewTestRoomScheduleRecurring creates a test room schedule for a specific day of week
+func NewTestRoomScheduleRecurring(roomID uuid.UUID, dayOfWeek int, openTime, closeTime string) *domain.RoomAvailabilitySchedule {
+	open, _ := time.Parse("15:04", openTime)
+	close, _ := time.Parse("15:04", closeTime)
+
+	return &domain.RoomAvailabilitySchedule{
+		ID:        uuid.New(),
+		RoomID:    roomID,
+		DayOfWeek: &dayOfWeek,
+		OpenTime:  open,
+		CloseTime: close,
+		Priority:  1,
+		IsActive:  true,
+	}
+}
+
+// NewTestRoomScheduleSpecificDate creates a test room schedule for a specific date
+func NewTestRoomScheduleSpecificDate(roomID uuid.UUID, date time.Time, openTime, closeTime string) *domain.RoomAvailabilitySchedule {
+	open, _ := time.Parse("15:04", openTime)
+	close, _ := time.Parse("15:04", closeTime)
+
+	return &domain.RoomAvailabilitySchedule{
+		ID:           uuid.New(),
+		RoomID:       roomID,
+		SpecificDate: &date,
+		OpenTime:     open,
+		CloseTime:    close,
+		Priority:     10, // Higher priority for specific dates
+		IsActive:     true,
+	}
 }
