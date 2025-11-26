@@ -19,6 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make test-func TEST_NAME=TestGetRoomMetrics TEST_PATH=test/integration/booking/metrics/get_room_metrics_test.go
+
 func TestGetRoomMetrics(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
