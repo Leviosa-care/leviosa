@@ -32,8 +32,10 @@ func (p Product) Valid(ctx context.Context) error {
 		errs.Set("name", "Product name cannot be empty.")
 	}
 	// Numeric field validation
-	if p.Duration <= 0 {
-		errs.Set("duration", "Duration must be a positive value.")
+	if p.Duration < 20 {
+		errs.Set("duration", "Duration must be at least 20 minutes.")
+	} else if p.Duration%10 != 0 {
+		errs.Set("duration", "Duration must be a multiple of 10 minutes (e.g., 20, 30, 40, 60, 90).")
 	}
 	if p.BufferTime < 0 { // Changed to non-negative as per your example
 		errs.Set("bufferTime", "Buffer time cannot be negative.")

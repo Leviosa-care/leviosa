@@ -54,8 +54,12 @@ func (u UpdateProductRequest) Valid(ctx context.Context) error {
 			errs.Set("categoryID", fmt.Errorf("Product category ID is not valid: %w", err))
 		}
 	}
-	if u.Duration != nil && *u.Duration <= 0 {
-		errs.Set("duration", "Duration must be a positive value.")
+	if u.Duration != nil {
+		if *u.Duration < 20 {
+			errs.Set("duration", "Duration must be at least 20 minutes.")
+		} else if *u.Duration%10 != 0 {
+			errs.Set("duration", "Duration must be a multiple of 10 minutes (e.g., 20, 30, 40, 60, 90).")
+		}
 	}
 	if u.Status != nil && !PublishedStatus(*u.Status).IsValid() {
 		errs.Set("status", "Invalid product status.")
