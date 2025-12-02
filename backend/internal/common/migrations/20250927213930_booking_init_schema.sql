@@ -190,6 +190,11 @@ CREATE TABLE booking.bookings (
     user_id UUID NOT NULL, -- References auth.partners.user_id (denormalized for queries)
     room_id UUID NOT NULL, -- References booking.rooms.id (denormalized for queries)
 
+    -- Slot information (encrypted for GDPR compliance)
+    product_id_encrypted BYTEA NOT NULL, -- References catalog.products.id
+    slot_start_time_encrypted BYTEA NOT NULL, -- Start of booking slot
+    slot_end_time_encrypted BYTEA NOT NULL, -- End of booking slot
+
     -- Booking details (encrypted for GDPR compliance)
     client_notes_encrypted BYTEA, -- Special requests from client
     partner_notes_encrypted BYTEA, -- Private notes from partner
@@ -237,6 +242,9 @@ CREATE INDEX idx_bookings_partner ON booking.bookings(user_id, created_at DESC);
 CREATE INDEX idx_bookings_availability ON booking.bookings(availability_id);
 CREATE INDEX idx_bookings_status ON booking.bookings(status, created_at DESC);
 CREATE INDEX idx_bookings_payment_status ON booking.bookings(payment_status) WHERE payment_status IN ('pending', 'failed');
+
+-- Index for slot overlap detection and availability queries
+CREATE INDEX idx_bookings_availability_slot_times ON booking.bookings(availability_id, slot_start_time_encrypted, slot_end_time_encrypted);
 
 -- Create update timestamp triggers
 CREATE OR REPLACE FUNCTION booking.update_timestamp()
