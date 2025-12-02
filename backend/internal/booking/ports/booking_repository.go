@@ -11,40 +11,40 @@ import (
 // BookingRepository defines the interface for booking data persistence
 type BookingRepository interface {
 	// Create stores a new booking
-	Create(ctx context.Context, booking *domain.Booking) error
+	Create(ctx context.Context, booking *domain.BookingEncx) error
 
 	// GetByID retrieves a booking by its ID
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.Booking, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.BookingEncx, error)
 
 	// Update modifies an existing booking
-	Update(ctx context.Context, booking *domain.Booking) error
+	Update(ctx context.Context, booking *domain.BookingEncx) error
 
 	// Delete removes a booking (hard delete for GDPR compliance)
 	Delete(ctx context.Context, id uuid.UUID) error
 
 	// List retrieves bookings with optional filtering
-	List(ctx context.Context, filter BookingFilter) ([]*domain.Booking, error)
+	List(ctx context.Context, filter BookingFilter) ([]*domain.BookingEncx, error)
 
 	// GetByClientID retrieves all bookings for a specific client
-	GetByClientID(ctx context.Context, clientID uuid.UUID, filter BookingFilter) ([]*domain.Booking, error)
+	GetByClientID(ctx context.Context, clientID uuid.UUID, filter BookingFilter) ([]*domain.BookingEncx, error)
 
 	// GetByPartnerID retrieves all bookings for a specific partner
-	GetByPartnerID(ctx context.Context, partnerID uuid.UUID, filter BookingFilter) ([]*domain.Booking, error)
+	GetByPartnerID(ctx context.Context, partnerID uuid.UUID, filter BookingFilter) ([]*domain.BookingEncx, error)
 
 	// GetByAvailabilityID retrieves booking for a specific availability (should be max 1)
 	// DEPRECATED: Use GetBookingsByAvailability for slot-based booking system
-	GetByAvailabilityID(ctx context.Context, availabilityID uuid.UUID) (*domain.Booking, error)
+	GetByAvailabilityID(ctx context.Context, availabilityID uuid.UUID) (*domain.BookingEncx, error)
 
 	// GetBookingsByAvailability retrieves all bookings for a specific availability.
 	// Used for slot overlap detection in the slot-based booking system.
 	// Returns bookings sorted by slot_start_time ASC.
-	GetBookingsByAvailability(ctx context.Context, availabilityID uuid.UUID) ([]*domain.Booking, error)
+	GetBookingsByAvailability(ctx context.Context, availabilityID uuid.UUID) ([]*domain.BookingEncx, error)
 
 	// GetUpcoming retrieves upcoming bookings (status = confirmed, start time in future)
-	GetUpcoming(ctx context.Context, filter BookingFilter) ([]*domain.Booking, error)
+	GetUpcoming(ctx context.Context, filter BookingFilter) ([]*domain.BookingEncx, error)
 
 	// GetByPaymentIntentID retrieves booking by Stripe payment intent ID
-	GetByPaymentIntentID(ctx context.Context, paymentIntentID string) (*domain.Booking, error)
+	GetByPaymentIntentID(ctx context.Context, paymentIntentID string) (*domain.BookingEncx, error)
 }
 
 // BookingFilter defines filtering options for booking queries
