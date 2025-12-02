@@ -34,6 +34,11 @@ type Booking struct {
 	PartnerID      uuid.UUID `json:"partner_id"`
 	RoomID         uuid.UUID `json:"room_id"`
 
+	// Slot information (product and time boundaries)
+	ProductID     uuid.UUID `json:"product_id" encx:"encrypt"`               // Link to catalog product
+	SlotStartTime time.Time `json:"slot_start_time" encx:"encrypt"`          // Actual slot start (10-min aligned)
+	SlotEndTime   time.Time `json:"slot_end_time" encx:"encrypt"`            // Calculated: SlotStartTime + Product.Duration
+
 	// Booking details (encrypted for GDPR compliance)
 	ClientNotes  string `json:"client_notes,omitempty" encx:"encrypt"`
 	PartnerNotes string `json:"partner_notes,omitempty" encx:"encrypt"`

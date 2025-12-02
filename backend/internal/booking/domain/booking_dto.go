@@ -12,6 +12,9 @@ type BookingResponse struct {
 	ClientID           uuid.UUID             `json:"client_id"`
 	PartnerID          uuid.UUID             `json:"partner_id"`
 	RoomID             uuid.UUID             `json:"room_id"`
+	ProductID          uuid.UUID             `json:"product_id"`
+	SlotStartTime      time.Time             `json:"slot_start_time"`
+	SlotEndTime        time.Time             `json:"slot_end_time"`
 	Status             BookingStatus         `json:"status"`
 	TotalPriceCents    int                   `json:"total_price_cents"`
 	Currency           string                `json:"currency"`
@@ -29,6 +32,8 @@ type BookingResponse struct {
 type CreateBookingRequest struct {
 	AvailabilityID uuid.UUID `json:"availability_id" validate:"required"`
 	ClientID       uuid.UUID `json:"client_id" validate:"required"`
+	ProductID      uuid.UUID `json:"product_id" validate:"required"`
+	SlotStartTime  time.Time `json:"slot_start_time" validate:"required"`
 	ClientNotes    string    `json:"client_notes,omitempty" validate:"max=1000"`
 }
 
