@@ -4,15 +4,45 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
+	bookingContracts "github.com/Leviosa-care/leviosa/backend/internal/common/contracts/booking"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 
 	"github.com/google/uuid"
 )
 
-func (s *BookingService) CreateBooking(ctx context.Context, availabilityID, clientID uuid.UUID, clientNotes string) (*domain.Booking, error) {
-	// Get availability and verify it's bookable
+// CreateBooking creates a new booking for a specific product slot within an availability.
+//
+// Flow:
+//  1. Validate and fetch availability
+//  2. Validate and fetch product
+//  3. Calculate slot end time based on product duration
+//  4. Validate slot is within availability bounds
+//  5. Validate slot alignment to 10-minute base
+//  6. Check for overlapping bookings
+//  7. Get product price from Stripe
+//  8. Create payment intent if price > 0
+//  9. Create and persist booking entity
+//
+// Parameters:
+//   - availabilityID: The availability block to book within
+//   - clientID: The user making the booking
+//   - productID: The product/service being booked
+//   - slotStartTime: Desired start time (must be aligned to 10-minute boundaries)
+//   - clientNotes: Optional notes from client
+//
+// Returns:
+//   - Created booking with encrypted fields
+//   - Error if validation fails or slot is unavailable
+func (s *BookingService) CreateBooking(
+	ctx context.Context,
+	availabilityID, clientID, productID uuid.UUID,
+	slotStartTime time.Time,
+	clientNotes string,
+) (*domain.Booking, error) {
+	// 1. Fetch and decrypt availability
 	availabilityEncx, err := s.availabilityRepo.GetByID(ctx, availabilityID)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
@@ -26,32 +56,65 @@ func (s *BookingService) CreateBooking(ctx context.Context, availabilityID, clie
 		return nil, errs.NewNotDecryptedErr("availability", err)
 	}
 
-	// Check if availability is still available for booking
+	// Verify availability is still open for bookings
 	if !availability.IsAvailable() {
 		return nil, fmt.Errorf("availability is no longer available for booking")
 	}
 
-	// Check if there's already a booking for this availability
-	existingBooking, err := s.bookingRepo.GetByAvailabilityID(ctx, availabilityID)
+	// 2. Fetch product from catalog service
+	product, err := s.productService.GetPublicProductByID(ctx, productID)
+	if err != nil {
+		if errors.Is(err, errs.ErrRepositoryNotFound) {
+			return nil, fmt.Errorf("product not found: %w", errs.ErrRepositoryNotFound)
+		}
+		return nil, fmt.Errorf("get product: %w", err)
+	}
+
+	// 3. Calculate slot end time based on product duration
+	slotEndTime := slotStartTime.Add(time.Duration(product.Duration) * time.Minute)
+
+	// 4. Validate slot is within availability time bounds
+	if slotStartTime.Before(availability.StartTime) {
+		return nil, errs.ErrInvalidValue.With("slot_start_time", "Slot start time is before availability start time")
+	}
+
+	if slotEndTime.After(availability.EndTime) {
+		return nil, errs.ErrInvalidValue.With("slot_end_time", "Slot end time extends beyond availability end time")
+	}
+
+	// 5. Validate slot start time is aligned to 10-minute base
+	if !isAlignedToBaseSlot(slotStartTime) {
+		return nil, errs.ErrInvalidValue.With("slot_start_time",
+			fmt.Sprintf("Slot start time must be aligned to %d-minute boundaries (e.g., :00, :10, :20)",
+				bookingContracts.BaseTimeSlotMinutes))
+	}
+
+	// 6. Check for overlapping bookings
+	existingBookings, err := s.bookingRepo.GetBookingsByAvailability(ctx, availabilityID)
 	if err != nil && !errors.Is(err, errs.ErrRepositoryNotFound) {
-		return nil, fmt.Errorf("check existing booking: %w", err)
+		return nil, fmt.Errorf("check existing bookings: %w", err)
 	}
 
-	if existingBooking != nil {
-		return nil, fmt.Errorf("availability is already booked")
+	// Use slot calculator's overlap detection
+	if hasOverlap(slotStartTime, slotEndTime, existingBookings) {
+		return nil, errs.ErrConflict.With("slot", "This time slot is already booked")
 	}
 
-	// Calculate price (use availability price or default to 0 for now)
+	// 7. Get product price from Stripe
 	totalPriceCents := 0
-	if availability.PriceCents != nil {
-		totalPriceCents = *availability.PriceCents
+	if product.StripeProductID != "" {
+		price, err := s.paymentService.GetProductPrice(ctx, product.StripeProductID)
+		if err != nil {
+			return nil, fmt.Errorf("get product price: %w", err)
+		}
+		totalPriceCents = price
 	}
 
-	// Create booking entity
+	// 8. Create booking entity with slot information
 	booking, err := domain.NewBooking(
 		availabilityID,
 		clientID,
-		availability.UserID,
+		availability.UserID, // partner ID
 		availability.RoomID,
 		totalPriceCents,
 		"EUR", // Default currency
@@ -60,19 +123,31 @@ func (s *BookingService) CreateBooking(ctx context.Context, availabilityID, clie
 		return nil, fmt.Errorf("create booking entity: %w", err)
 	}
 
+	// Set slot information (new fields)
+	booking.ProductID = productID
+	booking.SlotStartTime = slotStartTime
+	booking.SlotEndTime = slotEndTime
+
 	// Set client notes if provided
 	if clientNotes != "" {
 		booking.SetClientNotes(clientNotes)
 	}
 
-	// Create payment intent if booking has a price
+	// 9. Create payment intent if booking has a price
 	if totalPriceCents > 0 {
-		description := fmt.Sprintf("Booking for availability %s", availabilityID.String())
+		description := fmt.Sprintf("Booking for %s - %s to %s",
+			product.Name,
+			slotStartTime.Format("Jan 02, 15:04"),
+			slotEndTime.Format("15:04"))
+
 		metadata := map[string]string{
 			"booking_id":      booking.ID.String(),
 			"availability_id": availabilityID.String(),
 			"client_id":       clientID.String(),
 			"partner_id":      availability.UserID.String(),
+			"product_id":      productID.String(),
+			"slot_start":      slotStartTime.Format(time.RFC3339),
+			"slot_end":        slotEndTime.Format(time.RFC3339),
 		}
 
 		paymentIntentID, _, err := s.paymentService.CreatePaymentIntent(
@@ -86,35 +161,19 @@ func (s *BookingService) CreateBooking(ctx context.Context, availabilityID, clie
 			return nil, fmt.Errorf("create payment intent: %w", err)
 		}
 
-		// Update booking with payment intent ID
 		booking.SetPaymentIntentID(paymentIntentID)
 	}
 
-	// Mark availability as booked (atomic operation would be ideal here)
-	if err := availability.MarkAsBooked(); err != nil {
-		return nil, fmt.Errorf("mark availability as booked: %w", err)
-	}
-
-	availabilityEncx, err = domain.ProcessAvailabilityEncx(ctx, s.crypto, availability)
-	if err != nil {
-		return nil, errs.NewNotEncryptedErr("availability", err)
-	}
-
-	// Update availability in repository
-	if err := s.availabilityRepo.Update(ctx, availabilityEncx); err != nil {
-		return nil, fmt.Errorf("update availability status: %w", err)
-	}
-
-	// Persist booking to repository
+	// 10. Persist booking to repository
 	if err := s.bookingRepo.Create(ctx, booking); err != nil {
-		// Rollback availability status on failure
-		availability.MarkAsAvailable()
-		if err := s.availabilityRepo.Update(ctx, availabilityEncx); err != nil {
-
-		}
 		return nil, fmt.Errorf("create booking: %w", err)
 	}
 
 	return booking, nil
 }
 
+// isAlignedToBaseSlot checks if a time is aligned to the base time slot boundary.
+// For a 10-minute base slot, valid times are :00, :10, :20, :30, :40, :50 with 0 seconds.
+func isAlignedToBaseSlot(t time.Time) bool {
+	return t.Minute()%bookingContracts.BaseTimeSlotMinutes == 0 && t.Second() == 0
+}
