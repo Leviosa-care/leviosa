@@ -7,11 +7,14 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-	"github.com/google/uuid"
 	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/booking"
+
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// make test-func TEST_NAME=TestUpdateBooking TEST_PATH=internal/booking/infrastructure/postgres/booking/update_booking_test.go
 
 func TestUpdateBooking(t *testing.T) {
 	ctx := context.Background()

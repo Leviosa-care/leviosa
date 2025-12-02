@@ -6,11 +6,14 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
-	"github.com/google/uuid"
 	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/booking"
+
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// make test-func TEST_NAME=TestGetUpcoming TEST_PATH=internal/booking/infrastructure/postgres/booking/get_upcoming_bookings_test.go
 
 func TestGetUpcoming(t *testing.T) {
 	ctx := context.Background()

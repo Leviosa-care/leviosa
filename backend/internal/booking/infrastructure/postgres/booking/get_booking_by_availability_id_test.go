@@ -5,12 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/booking"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// make test-func TEST_NAME=TestGetByAvailabilityID TEST_PATH=internal/booking/infrastructure/postgres/booking/get_booking_by_availability_id_test.go
 
 func TestGetByAvailabilityID(t *testing.T) {
 	ctx := context.Background()

@@ -5,9 +5,12 @@ import (
 	"testing"
 
 	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/booking"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// make test-func TEST_NAME=TestCreateBooking TEST_PATH=internal/booking/infrastructure/postgres/booking/create_booking_test.go
 
 func TestCreateBooking(t *testing.T) {
 	ctx := context.Background()

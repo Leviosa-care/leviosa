@@ -70,4 +70,3 @@ func (r *Repository) Update(ctx context.Context, booking *domain.BookingEncx) er
 
 	return nil
 }
-
