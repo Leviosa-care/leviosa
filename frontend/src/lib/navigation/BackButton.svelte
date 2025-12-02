@@ -30,7 +30,10 @@
     // TODO: add other variant for that button other than the one with the black stroke.
 </script>
 
-<button onclick={goBack} class="bg-gray-50 hover:bg-gray-100 rounded-full p-3">
+<button
+    onclick={goBack}
+    class="bg-gray-50 hover:bg-gray-100 rounded-full p-3 cursor-pointer"
+>
     <!-- <button onclick={goBack} class="rounded-full p-3"> -->
     {#if variant === "arrow"}
         <ArrowLeft {color} />

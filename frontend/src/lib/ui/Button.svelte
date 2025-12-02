@@ -1,24 +1,27 @@
 <script lang="ts">
-    import { Button } from 'bits-ui';
-    import { buttonVariants, type ButtonVariants } from '$lib/utils/design-system';
+    import { Button } from "bits-ui";
+    import {
+        buttonVariants,
+        type ButtonVariants,
+    } from "$lib/utils/design-system";
 
     type Props = {
-        variant?: ButtonVariants['variant'];
-        size?: ButtonVariants['size'];
+        variant?: ButtonVariants["variant"];
+        size?: ButtonVariants["size"];
         disabled?: boolean;
-        type?: 'button' | 'submit' | 'reset';
+        type?: "button" | "submit" | "reset";
         onclick?: () => void;
         class?: string;
         children?: any;
     };
 
     let {
-        variant = 'default',
-        size = 'default',
+        variant = "default",
+        size = "default",
         disabled = false,
-        type = 'button',
+        type = "button",
         onclick,
-        class: className = '',
+        class: className = "",
         children,
         ...restProps
     }: Props = $props();
@@ -37,3 +40,4 @@
         <slot />
     {/if}
 </Button.Root>
+

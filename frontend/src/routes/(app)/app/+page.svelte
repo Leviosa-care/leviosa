@@ -1,1 +1,1 @@
-thsi is for the user (the basic one)
+this is for the user (the basic one, the one with the standard role)

@@ -21,7 +21,7 @@ func ClearBookingsTable(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
 func EnsureBookingForeignKeys(t *testing.T, ctx context.Context, pool *pgxpool.Pool, bookingEncx *domain.BookingEncx) {
 	t.Helper()
 
-	// First check if foreign keys already exist
+	// Check if availability already exists
 	var availExists bool
 	err := pool.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM booking.availabilities WHERE id = $1)", bookingEncx.AvailabilityID).Scan(&availExists)
 	require.NoError(t, err)
@@ -31,23 +31,30 @@ func EnsureBookingForeignKeys(t *testing.T, ctx context.Context, pool *pgxpool.P
 		return
 	}
 
-	// Create a stub building
-	buildingID := uuid.New()
-	_, err = pool.Exec(ctx, `
-		INSERT INTO booking.buildings (id, name_encrypted, name_hash, address_encrypted, address_hash,
-			city_encrypted, city_hash, postal_code_encrypted, country_encrypted, country_hash, dek_encrypted, key_version)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-	`, buildingID, []byte("name"), "name_hash", []byte("address"), "address_hash",
-		[]byte("city"), "city_hash", []byte("postal"), []byte("country"), "country_hash",
-		[]byte("dek"), 1)
+	// Check if room already exists
+	var roomExists bool
+	err = pool.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM booking.rooms WHERE id = $1)", bookingEncx.RoomID).Scan(&roomExists)
 	require.NoError(t, err)
 
-	// Create a stub room
-	_, err = pool.Exec(ctx, `
-		INSERT INTO booking.rooms (id, building_id, name_encrypted, name_hash, dek_encrypted, key_version)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, bookingEncx.RoomID, buildingID, []byte("room_name"), "room_hash", []byte("dek"), 1)
-	require.NoError(t, err)
+	if !roomExists {
+		// Create a stub building
+		buildingID := uuid.New()
+		_, err = pool.Exec(ctx, `
+			INSERT INTO booking.buildings (id, name_encrypted, name_hash, address_encrypted, address_hash,
+				city_encrypted, city_hash, postal_code_encrypted, country_encrypted, country_hash, dek_encrypted, key_version)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		`, buildingID, []byte("name"), "name_hash", []byte("address"), "address_hash",
+			[]byte("city"), "city_hash", []byte("postal"), []byte("country"), "country_hash",
+			[]byte("dek"), 1)
+		require.NoError(t, err)
+
+		// Create a stub room
+		_, err = pool.Exec(ctx, `
+			INSERT INTO booking.rooms (id, building_id, name_encrypted, name_hash, dek_encrypted, key_version)
+			VALUES ($1, $2, $3, $4, $5, $6)
+		`, bookingEncx.RoomID, buildingID, []byte("room_name"), "room_hash", []byte("dek"), 1)
+		require.NoError(t, err)
+	}
 
 	// Create a stub availability with future start time
 	_, err = pool.Exec(ctx, `

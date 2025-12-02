@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
 	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/booking"
-	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -52,7 +52,7 @@ func TestGetByID(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, retrieved)
-		assert.ErrorIs(t, err, pgx.ErrNoRows)
+		assert.ErrorIs(t, err, errs.ErrRepositoryNotFound)
 	})
 
 	t.Run("should retrieve booking with all optional fields", func(t *testing.T) {

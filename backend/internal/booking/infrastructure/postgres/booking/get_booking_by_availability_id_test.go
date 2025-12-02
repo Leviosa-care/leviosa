@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/booking"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +41,7 @@ func TestGetByAvailabilityID(t *testing.T) {
 		retrieved, err := repo.GetByAvailabilityID(ctx, nonExistentAvailabilityID)
 		assert.Error(t, err)
 		assert.Nil(t, retrieved)
-		assert.ErrorIs(t, err, pgx.ErrNoRows)
+		assert.ErrorIs(t, err, errs.ErrRepositoryNotFound)
 	})
 
 	t.Run("should return most recent booking when multiple exist", func(t *testing.T) {
