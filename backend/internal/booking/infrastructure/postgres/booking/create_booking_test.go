@@ -16,6 +16,7 @@ func TestCreateBooking(t *testing.T) {
 		tb.ClearBookingsTable(t, ctx, testPool)
 
 		bookingEncx := tb.NewTestBookingEncx(t)
+		tb.EnsureBookingForeignKeys(t, ctx, testPool, bookingEncx)
 		err := repo.Create(ctx, bookingEncx)
 		require.NoError(t, err)
 
@@ -34,6 +35,7 @@ func TestCreateBooking(t *testing.T) {
 		tb.ClearBookingsTable(t, ctx, testPool)
 
 		bookingEncx := tb.NewTestBookingEncx(t)
+		tb.EnsureBookingForeignKeys(t, ctx, testPool, bookingEncx)
 		err := repo.Create(ctx, bookingEncx)
 		require.NoError(t, err)
 
@@ -46,6 +48,7 @@ func TestCreateBooking(t *testing.T) {
 		tb.ClearBookingsTable(t, ctx, testPool)
 
 		bookingEncx := tb.NewTestBookingEncx(t)
+		tb.EnsureBookingForeignKeys(t, ctx, testPool, bookingEncx)
 
 		err := repo.Create(ctx, bookingEncx)
 		require.NoError(t, err)
@@ -79,6 +82,7 @@ func TestCreateBooking(t *testing.T) {
 			tb.NewTestBookingEncx(t).RoomID,
 			paymentIntentID,
 		)
+		tb.EnsureBookingForeignKeys(t, ctx, testPool, bookingEncx)
 
 		err := repo.Create(ctx, bookingEncx)
 		require.NoError(t, err)
@@ -102,6 +106,7 @@ func TestCreateBooking(t *testing.T) {
 			"client note content",
 			"partner note content",
 		)
+		tb.EnsureBookingForeignKeys(t, ctx, testPool, bookingEncx)
 
 		err := repo.Create(ctx, bookingEncx)
 		require.NoError(t, err)
@@ -124,6 +129,7 @@ func TestCreateBooking(t *testing.T) {
 			tb.NewTestBookingEncx(t).PartnerID,
 			tb.NewTestBookingEncx(t).RoomID,
 		)
+		tb.EnsureBookingForeignKeys(t, ctx, testPool, completedBooking)
 		err := repo.Create(ctx, completedBooking)
 		require.NoError(t, err)
 
@@ -136,6 +142,7 @@ func TestCreateBooking(t *testing.T) {
 			tb.NewTestBookingEncx(t).RoomID,
 			"client requested",
 		)
+		tb.EnsureBookingForeignKeys(t, ctx, testPool, cancelledBooking)
 		err = repo.Create(ctx, cancelledBooking)
 		require.NoError(t, err)
 

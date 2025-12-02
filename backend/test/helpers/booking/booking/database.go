@@ -17,6 +17,46 @@ func ClearBookingsTable(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
 	require.NoError(t, err)
 }
 
+// EnsureBookingForeignKeys ensures all foreign key dependencies exist for a booking
+func EnsureBookingForeignKeys(t *testing.T, ctx context.Context, pool *pgxpool.Pool, bookingEncx *domain.BookingEncx) {
+	t.Helper()
+
+	// First check if foreign keys already exist
+	var availExists bool
+	err := pool.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM booking.availabilities WHERE id = $1)", bookingEncx.AvailabilityID).Scan(&availExists)
+	require.NoError(t, err)
+
+	if availExists {
+		// Foreign keys already exist
+		return
+	}
+
+	// Create a stub building
+	buildingID := uuid.New()
+	_, err = pool.Exec(ctx, `
+		INSERT INTO booking.buildings (id, name_encrypted, name_hash, address_encrypted, address_hash,
+			city_encrypted, city_hash, postal_code_encrypted, country_encrypted, country_hash, dek_encrypted, key_version)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+	`, buildingID, []byte("name"), "name_hash", []byte("address"), "address_hash",
+		[]byte("city"), "city_hash", []byte("postal"), []byte("country"), "country_hash",
+		[]byte("dek"), 1)
+	require.NoError(t, err)
+
+	// Create a stub room
+	_, err = pool.Exec(ctx, `
+		INSERT INTO booking.rooms (id, building_id, name_encrypted, name_hash, dek_encrypted, key_version)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`, bookingEncx.RoomID, buildingID, []byte("room_name"), "room_hash", []byte("dek"), 1)
+	require.NoError(t, err)
+
+	// Create a stub availability with future start time
+	_, err = pool.Exec(ctx, `
+		INSERT INTO booking.availabilities (id, user_id, room_id, start_time, end_time, dek_encrypted, key_version)
+		VALUES ($1, $2, $3, NOW() + INTERVAL '1 hour', NOW() + INTERVAL '2 hours', $4, $5)
+	`, bookingEncx.AvailabilityID, bookingEncx.PartnerID, bookingEncx.RoomID, []byte("dek"), 1)
+	require.NoError(t, err)
+}
+
 // InsertBookingEncx inserts a booking into the database directly for testing
 func InsertBookingEncx(
 	t *testing.T,
@@ -26,10 +66,13 @@ func InsertBookingEncx(
 ) error {
 	t.Helper()
 
+	// Ensure foreign key dependencies exist
+	EnsureBookingForeignKeys(t, ctx, pool, bookingEncx)
+
 	query := `
 		INSERT INTO booking.bookings (
-			id, availability_id, client_id, partner_id, room_id,
-			productid_encrypted, slotstarttime_encrypted, slotendtime_encrypted,
+			id, availability_id, client_id, user_id, room_id,
+			product_id_encrypted, slot_start_time_encrypted, slot_end_time_encrypted,
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
@@ -80,8 +123,8 @@ func GetBookingEncxByID(
 
 	query := `
 		SELECT
-			id, availability_id, client_id, partner_id, room_id,
-			productid_encrypted, slotstarttime_encrypted, slotendtime_encrypted,
+			id, availability_id, client_id, user_id, room_id,
+			product_id_encrypted, slot_start_time_encrypted, slot_end_time_encrypted,
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
@@ -132,8 +175,8 @@ func GetBookingsByAvailabilityID(
 
 	query := `
 		SELECT
-			id, availability_id, client_id, partner_id, room_id,
-			productid_encrypted, slotstarttime_encrypted, slotendtime_encrypted,
+			id, availability_id, client_id, user_id, room_id,
+			product_id_encrypted, slot_start_time_encrypted, slot_end_time_encrypted,
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
@@ -198,8 +241,8 @@ func GetBookingsByClientID(
 
 	query := `
 		SELECT
-			id, availability_id, client_id, partner_id, room_id,
-			productid_encrypted, slotstarttime_encrypted, slotendtime_encrypted,
+			id, availability_id, client_id, user_id, room_id,
+			product_id_encrypted, slot_start_time_encrypted, slot_end_time_encrypted,
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
@@ -264,15 +307,15 @@ func GetBookingsByPartnerID(
 
 	query := `
 		SELECT
-			id, availability_id, client_id, partner_id, room_id,
-			productid_encrypted, slotstarttime_encrypted, slotendtime_encrypted,
+			id, availability_id, client_id, user_id, room_id,
+			product_id_encrypted, slot_start_time_encrypted, slot_end_time_encrypted,
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
 			created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM booking.bookings
-		WHERE partner_id = $1
+		WHERE user_id = $1
 		ORDER BY created_at DESC
 	`
 
@@ -330,8 +373,8 @@ func GetBookingByPaymentIntentID(
 
 	query := `
 		SELECT
-			id, availability_id, client_id, partner_id, room_id,
-			productid_encrypted, slotstarttime_encrypted, slotendtime_encrypted,
+			id, availability_id, client_id, user_id, room_id,
+			product_id_encrypted, slot_start_time_encrypted, slot_end_time_encrypted,
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,

@@ -15,33 +15,33 @@ func (r *Repository) GetBookingsByAvailability(ctx context.Context, availability
 	query := `
 		SELECT
 			id,
-			availabilityid,
-			clientid,
-			partnerid,
-			roomid,
-			totalpricecents,
+			availability_id,
+			client_id,
+			user_id,
+			room_id,
+			total_price_cents,
 			currency,
-			paymentstatus,
-			paymentintentid,
+			payment_status,
+			payment_intent_id,
 			status,
-			cancelledat,
-			completedat,
-			createdat,
-			updatedat,
+			cancelled_at,
+			completed_at,
+			created_at,
+			updated_at,
 			-- Encrypted fields
-			productid_encrypted,
-			slotstarttime_encrypted,
-			slotendtime_encrypted,
-			clientnotes_encrypted,
-			partnernotes_encrypted,
-			cancellationreason_encrypted,
+			product_id_encrypted,
+			slot_start_time_encrypted,
+			slot_end_time_encrypted,
+			client_notes_encrypted,
+			partner_notes_encrypted,
+			cancellation_reason_encrypted,
 			-- Encryption metadata
 			dek_encrypted,
 			key_version,
 			metadata
 		FROM booking.bookings
-		WHERE availabilityid = $1
-		ORDER BY slotstarttime_encrypted ASC
+		WHERE availability_id = $1
+		ORDER BY slot_start_time_encrypted ASC
 	`
 
 	rows, err := r.pool.Query(ctx, query, availabilityID)

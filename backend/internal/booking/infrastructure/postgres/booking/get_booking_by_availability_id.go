@@ -12,8 +12,8 @@ import (
 func (r *Repository) GetByAvailabilityID(ctx context.Context, availabilityID uuid.UUID) (*domain.BookingEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, availability_id, client_id, partner_id, room_id,
-			productid_encrypted, slotstarttime_encrypted, slotendtime_encrypted,
+			id, availability_id, client_id, user_id, room_id,
+			product_id_encrypted, slot_start_time_encrypted, slot_end_time_encrypted,
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,

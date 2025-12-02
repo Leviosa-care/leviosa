@@ -13,8 +13,8 @@ import (
 func (r *Repository) List(ctx context.Context, filter ports.BookingFilter) ([]*domain.BookingEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			b.id, b.availability_id, b.client_id, b.partner_id, b.room_id,
-			b.productid_encrypted, b.slotstarttime_encrypted, b.slotendtime_encrypted,
+			b.id, b.availability_id, b.client_id, b.user_id, b.room_id,
+			b.product_id_encrypted, b.slot_start_time_encrypted, b.slot_end_time_encrypted,
 			b.client_notes_encrypted, b.partner_notes_encrypted,
 			b.total_price_cents, b.currency, b.payment_status, b.payment_intent_id,
 			b.status, b.cancelled_at, b.cancellation_reason_encrypted, b.completed_at,
@@ -35,7 +35,7 @@ func (r *Repository) List(ctx context.Context, filter ports.BookingFilter) ([]*d
 	}
 
 	if filter.PartnerID != nil {
-		whereConditions = append(whereConditions, fmt.Sprintf("b.partner_id = $%d", argIndex))
+		whereConditions = append(whereConditions, fmt.Sprintf("b.user_id = $%d", argIndex))
 		args = append(args, *filter.PartnerID)
 		argIndex++
 	}
