@@ -13,12 +13,18 @@ import (
 
 func (s *BookingService) ProcessPayment(ctx context.Context, id uuid.UUID, paymentIntentID string) (*domain.Booking, error) {
 	// Get existing booking
-	booking, err := s.bookingRepo.GetByID(ctx, id)
+	bookingEncx, err := s.bookingRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return nil, errs.ErrRepositoryNotFound
 		}
 		return nil, fmt.Errorf("get booking for payment: %w", err)
+	}
+
+	// Decrypt booking
+	booking, err := domain.DecryptBookingEncx(ctx, s.crypto, bookingEncx)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt booking: %w", err)
 	}
 
 	// Verify payment intent status with Stripe
@@ -51,8 +57,13 @@ func (s *BookingService) ProcessPayment(ctx context.Context, id uuid.UUID, payme
 		return nil, fmt.Errorf("unknown payment status: %s", paymentInfo.Status)
 	}
 
-	// Persist changes
-	if err := s.bookingRepo.Update(ctx, booking); err != nil {
+	// Encrypt and persist changes
+	bookingEncx, err = domain.ProcessBookingEncx(ctx, s.crypto, booking)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt booking: %w", err)
+	}
+
+	if err := s.bookingRepo.Update(ctx, bookingEncx); err != nil {
 		return nil, fmt.Errorf("update booking payment: %w", err)
 	}
 

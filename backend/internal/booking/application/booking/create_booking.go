@@ -90,9 +90,19 @@ func (s *BookingService) CreateBooking(
 	}
 
 	// 6. Check for overlapping bookings
-	existingBookings, err := s.bookingRepo.GetBookingsByAvailability(ctx, availabilityID)
+	existingBookingsEncx, err := s.bookingRepo.GetBookingsByAvailability(ctx, availabilityID)
 	if err != nil && !errors.Is(err, errs.ErrRepositoryNotFound) {
 		return nil, fmt.Errorf("check existing bookings: %w", err)
+	}
+
+	// Decrypt existing bookings for overlap detection
+	existingBookings := make([]*domain.Booking, 0, len(existingBookingsEncx))
+	for _, bookingEncx := range existingBookingsEncx {
+		existingBooking, err := domain.DecryptBookingEncx(ctx, s.crypto, bookingEncx)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt existing booking %s: %w", bookingEncx.ID, err)
+		}
+		existingBookings = append(existingBookings, existingBooking)
 	}
 
 	// Use slot calculator's overlap detection
@@ -164,8 +174,13 @@ func (s *BookingService) CreateBooking(
 		booking.SetPaymentIntentID(paymentIntentID)
 	}
 
-	// 10. Persist booking to repository
-	if err := s.bookingRepo.Create(ctx, booking); err != nil {
+	// 10. Encrypt and persist booking to repository
+	bookingEncx, err := domain.ProcessBookingEncx(ctx, s.crypto, booking)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt booking: %w", err)
+	}
+
+	if err := s.bookingRepo.Create(ctx, bookingEncx); err != nil {
 		return nil, fmt.Errorf("create booking: %w", err)
 	}
 
