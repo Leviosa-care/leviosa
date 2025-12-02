@@ -18,13 +18,14 @@ func (r *Repository) Create(ctx context.Context, booking *domain.Booking) error 
 	query := fmt.Sprintf(`
 		INSERT INTO %s.bookings (
 			id, availability_id, client_id, partner_id, room_id,
+			productid_encrypted, slotstarttime_encrypted, slotendtime_encrypted,
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
 			created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23
 		)
 	`, r.schema)
 
@@ -34,6 +35,9 @@ func (r *Repository) Create(ctx context.Context, booking *domain.Booking) error 
 		bookingEncx.ClientID,
 		bookingEncx.PartnerID,
 		bookingEncx.RoomID,
+		bookingEncx.ProductIDEncrypted,
+		bookingEncx.SlotStartTimeEncrypted,
+		bookingEncx.SlotEndTimeEncrypted,
 		bookingEncx.ClientNotesEncrypted,
 		bookingEncx.PartnerNotesEncrypted,
 		bookingEncx.TotalPriceCents,
