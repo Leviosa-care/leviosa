@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Booking, error) {
+func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.BookingEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, availability_id, client_id, partner_id, room_id,
@@ -55,22 +55,10 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Booking
 		return nil, errs.ClassifyPgError("get booking by id", err)
 	}
 
-	// Decrypt sensitive fields using the new generated function
-	booking, err := domain.DecryptBookingEncx(ctx, r.crypto, bookingEncx)
-	if err != nil {
-		return nil, fmt.Errorf("decrypt booking data: %w", err)
-	}
-
-	return booking, nil
+	return bookingEncx, nil
 }
 
-func (r *Repository) Update(ctx context.Context, booking *domain.Booking) error {
-	// Encrypt sensitive fields using the new generated function
-	bookingEncx, err := domain.ProcessBookingEncx(ctx, r.crypto, booking)
-	if err != nil {
-		return fmt.Errorf("encrypt booking data: %w", err)
-	}
-
+func (r *Repository) Update(ctx context.Context, booking *domain.BookingEncx) error {
 	query := fmt.Sprintf(`
 		UPDATE %s.bookings SET
 			availability_id = $2,
@@ -98,28 +86,28 @@ func (r *Repository) Update(ctx context.Context, booking *domain.Booking) error 
 	`, r.schema)
 
 	result, err := r.pool.Exec(ctx, query,
-		bookingEncx.ID,
-		bookingEncx.AvailabilityID,
-		bookingEncx.ClientID,
-		bookingEncx.PartnerID,
-		bookingEncx.RoomID,
-		bookingEncx.ProductIDEncrypted,
-		bookingEncx.SlotStartTimeEncrypted,
-		bookingEncx.SlotEndTimeEncrypted,
-		bookingEncx.ClientNotesEncrypted,
-		bookingEncx.PartnerNotesEncrypted,
-		bookingEncx.TotalPriceCents,
-		bookingEncx.Currency,
-		bookingEncx.PaymentStatus,
-		bookingEncx.PaymentIntentID,
-		bookingEncx.Status,
-		bookingEncx.CancelledAt,
-		bookingEncx.CancellationReasonEncrypted,
-		bookingEncx.CompletedAt,
-		bookingEncx.UpdatedAt,
-		bookingEncx.DEKEncrypted,
-		bookingEncx.KeyVersion,
-		bookingEncx.Metadata,
+		booking.ID,
+		booking.AvailabilityID,
+		booking.ClientID,
+		booking.PartnerID,
+		booking.RoomID,
+		booking.ProductIDEncrypted,
+		booking.SlotStartTimeEncrypted,
+		booking.SlotEndTimeEncrypted,
+		booking.ClientNotesEncrypted,
+		booking.PartnerNotesEncrypted,
+		booking.TotalPriceCents,
+		booking.Currency,
+		booking.PaymentStatus,
+		booking.PaymentIntentID,
+		booking.Status,
+		booking.CancelledAt,
+		booking.CancellationReasonEncrypted,
+		booking.CompletedAt,
+		booking.UpdatedAt,
+		booking.DEKEncrypted,
+		booking.KeyVersion,
+		booking.Metadata,
 	)
 	if err != nil {
 		return errs.ClassifyPgError("update booking", err)
@@ -153,7 +141,7 @@ func (r *Repository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *Repository) GetByAvailabilityID(ctx context.Context, availabilityID uuid.UUID) (*domain.Booking, error) {
+func (r *Repository) GetByAvailabilityID(ctx context.Context, availabilityID uuid.UUID) (*domain.BookingEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, availability_id, client_id, partner_id, room_id,
@@ -195,16 +183,10 @@ func (r *Repository) GetByAvailabilityID(ctx context.Context, availabilityID uui
 		return nil, errs.ClassifyPgError("get booking by availability id", err)
 	}
 
-	// Decrypt sensitive fields using the new generated function
-	booking, err := domain.DecryptBookingEncx(ctx, r.crypto, bookingEncx)
-	if err != nil {
-		return nil, fmt.Errorf("decrypt booking data: %w", err)
-	}
-
-	return booking, nil
+	return bookingEncx, nil
 }
 
-func (r *Repository) GetByPaymentIntentID(ctx context.Context, paymentIntentID string) (*domain.Booking, error) {
+func (r *Repository) GetByPaymentIntentID(ctx context.Context, paymentIntentID string) (*domain.BookingEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			id, availability_id, client_id, partner_id, room_id,
@@ -244,16 +226,10 @@ func (r *Repository) GetByPaymentIntentID(ctx context.Context, paymentIntentID s
 		return nil, errs.ClassifyPgError("get booking by payment intent id", err)
 	}
 
-	// Decrypt sensitive fields using the new generated function
-	booking, err := domain.DecryptBookingEncx(ctx, r.crypto, bookingEncx)
-	if err != nil {
-		return nil, fmt.Errorf("decrypt booking data: %w", err)
-	}
-
-	return booking, nil
+	return bookingEncx, nil
 }
 
-func (r *Repository) List(ctx context.Context, filter ports.BookingFilter) ([]*domain.Booking, error) {
+func (r *Repository) List(ctx context.Context, filter ports.BookingFilter) ([]*domain.BookingEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			b.id, b.availability_id, b.client_id, b.partner_id, b.room_id,
@@ -365,7 +341,7 @@ func (r *Repository) List(ctx context.Context, filter ports.BookingFilter) ([]*d
 	}
 	defer rows.Close()
 
-	var bookings []*domain.Booking
+	var bookingsEncx []*domain.BookingEncx
 	for rows.Next() {
 		bookingEncx := &domain.BookingEncx{}
 		err := rows.Scan(
@@ -394,33 +370,27 @@ func (r *Repository) List(ctx context.Context, filter ports.BookingFilter) ([]*d
 			return nil, errs.ClassifyPgError("scan booking row", err)
 		}
 
-		// Decrypt sensitive fields using the new generated function
-		booking, err := domain.DecryptBookingEncx(ctx, r.crypto, bookingEncx)
-		if err != nil {
-			return nil, fmt.Errorf("decrypt booking data: %w", err)
-		}
-
-		bookings = append(bookings, booking)
+		bookingsEncx = append(bookingsEncx, bookingEncx)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, errs.ClassifyPgError("iterate booking rows", err)
 	}
 
-	return bookings, nil
+	return bookingsEncx, nil
 }
 
-func (r *Repository) GetByClientID(ctx context.Context, clientID uuid.UUID, filter ports.BookingFilter) ([]*domain.Booking, error) {
+func (r *Repository) GetByClientID(ctx context.Context, clientID uuid.UUID, filter ports.BookingFilter) ([]*domain.BookingEncx, error) {
 	filter.ClientID = &clientID
 	return r.List(ctx, filter)
 }
 
-func (r *Repository) GetByPartnerID(ctx context.Context, partnerID uuid.UUID, filter ports.BookingFilter) ([]*domain.Booking, error) {
+func (r *Repository) GetByPartnerID(ctx context.Context, partnerID uuid.UUID, filter ports.BookingFilter) ([]*domain.BookingEncx, error) {
 	filter.PartnerID = &partnerID
 	return r.List(ctx, filter)
 }
 
-func (r *Repository) GetUpcoming(ctx context.Context, filter ports.BookingFilter) ([]*domain.Booking, error) {
+func (r *Repository) GetUpcoming(ctx context.Context, filter ports.BookingFilter) ([]*domain.BookingEncx, error) {
 	// Force confirmed status and join with availabilities to filter by future start times
 	filter.Status = []domain.BookingStatus{domain.BookingStatusConfirmed}
 

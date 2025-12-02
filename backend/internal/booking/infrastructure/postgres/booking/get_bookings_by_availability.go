@@ -12,7 +12,7 @@ import (
 // GetBookingsByAvailability retrieves all bookings for a specific availability.
 // Used for slot overlap detection in the slot-based booking system.
 // Returns bookings sorted by slot_start_time ASC.
-func (r *Repository) GetBookingsByAvailability(ctx context.Context, availabilityID uuid.UUID) ([]*domain.Booking, error) {
+func (r *Repository) GetBookingsByAvailability(ctx context.Context, availabilityID uuid.UUID) ([]*domain.BookingEncx, error) {
 	query := `
 		SELECT
 			id,
@@ -51,7 +51,7 @@ func (r *Repository) GetBookingsByAvailability(ctx context.Context, availability
 	}
 	defer rows.Close()
 
-	var bookings []*domain.Booking
+	var bookingsEncx []*domain.BookingEncx
 	for rows.Next() {
 		bookingEncx := &domain.BookingEncx{}
 
@@ -86,13 +86,7 @@ func (r *Repository) GetBookingsByAvailability(ctx context.Context, availability
 			return nil, errs.ClassifyPgError("scan booking row", err)
 		}
 
-		// Decrypt booking
-		booking, err := domain.DecryptBookingEncx(ctx, r.crypto, bookingEncx)
-		if err != nil {
-			return nil, fmt.Errorf("decrypt booking %s: %w", bookingEncx.ID, err)
-		}
-
-		bookings = append(bookings, booking)
+		bookingsEncx = append(bookingsEncx, bookingEncx)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -100,9 +94,9 @@ func (r *Repository) GetBookingsByAvailability(ctx context.Context, availability
 	}
 
 	// Return empty slice instead of nil if no bookings found
-	if bookings == nil {
-		return []*domain.Booking{}, nil
+	if bookingsEncx == nil {
+		return []*domain.BookingEncx{}, nil
 	}
 
-	return bookings, nil
+	return bookingsEncx, nil
 }

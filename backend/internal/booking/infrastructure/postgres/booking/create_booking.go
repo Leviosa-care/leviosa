@@ -8,13 +8,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 )
 
-func (r *Repository) Create(ctx context.Context, booking *domain.Booking) error {
-	// Encrypt sensitive fields using the new generated function
-	bookingEncx, err := domain.ProcessBookingEncx(ctx, r.crypto, booking)
-	if err != nil {
-		return fmt.Errorf("encrypt booking data: %w", err)
-	}
-
+func (r *Repository) Create(ctx context.Context, booking *domain.BookingEncx) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s.bookings (
 			id, availability_id, client_id, partner_id, room_id,
@@ -29,30 +23,30 @@ func (r *Repository) Create(ctx context.Context, booking *domain.Booking) error 
 		)
 	`, r.schema)
 
-	_, err = r.pool.Exec(ctx, query,
-		bookingEncx.ID,
-		bookingEncx.AvailabilityID,
-		bookingEncx.ClientID,
-		bookingEncx.PartnerID,
-		bookingEncx.RoomID,
-		bookingEncx.ProductIDEncrypted,
-		bookingEncx.SlotStartTimeEncrypted,
-		bookingEncx.SlotEndTimeEncrypted,
-		bookingEncx.ClientNotesEncrypted,
-		bookingEncx.PartnerNotesEncrypted,
-		bookingEncx.TotalPriceCents,
-		bookingEncx.Currency,
-		bookingEncx.PaymentStatus,
-		bookingEncx.PaymentIntentID,
-		bookingEncx.Status,
-		bookingEncx.CancelledAt,
-		bookingEncx.CancellationReasonEncrypted,
-		bookingEncx.CompletedAt,
-		bookingEncx.CreatedAt,
-		bookingEncx.UpdatedAt,
-		bookingEncx.DEKEncrypted,
-		bookingEncx.KeyVersion,
-		bookingEncx.Metadata,
+	_, err := r.pool.Exec(ctx, query,
+		booking.ID,
+		booking.AvailabilityID,
+		booking.ClientID,
+		booking.PartnerID,
+		booking.RoomID,
+		booking.ProductIDEncrypted,
+		booking.SlotStartTimeEncrypted,
+		booking.SlotEndTimeEncrypted,
+		booking.ClientNotesEncrypted,
+		booking.PartnerNotesEncrypted,
+		booking.TotalPriceCents,
+		booking.Currency,
+		booking.PaymentStatus,
+		booking.PaymentIntentID,
+		booking.Status,
+		booking.CancelledAt,
+		booking.CancellationReasonEncrypted,
+		booking.CompletedAt,
+		booking.CreatedAt,
+		booking.UpdatedAt,
+		booking.DEKEncrypted,
+		booking.KeyVersion,
+		booking.Metadata,
 	)
 	if err != nil {
 		return errs.ClassifyPgError("create booking", err)
