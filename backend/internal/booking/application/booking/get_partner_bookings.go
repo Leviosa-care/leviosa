@@ -10,9 +10,19 @@ import (
 )
 
 func (s *BookingService) GetPartnerBookings(ctx context.Context, partnerID uuid.UUID, filter ports.BookingFilter) ([]*domain.Booking, error) {
-	bookings, err := s.bookingRepo.GetByPartnerID(ctx, partnerID, filter)
+	bookingsEncx, err := s.bookingRepo.GetByPartnerID(ctx, partnerID, filter)
 	if err != nil {
 		return nil, fmt.Errorf("get partner bookings: %w", err)
+	}
+
+	// Decrypt each booking
+	bookings := make([]*domain.Booking, 0, len(bookingsEncx))
+	for _, bookingEncx := range bookingsEncx {
+		booking, err := domain.DecryptBookingEncx(ctx, s.crypto, bookingEncx)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt booking %s: %w", bookingEncx.ID, err)
+		}
+		bookings = append(bookings, booking)
 	}
 
 	return bookings, nil
