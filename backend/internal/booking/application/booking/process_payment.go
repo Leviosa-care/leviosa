@@ -44,13 +44,9 @@ func (s *BookingService) ProcessPayment(ctx context.Context, id uuid.UUID, payme
 		ports.PaymentIntentStatusProcessing:
 		// Payment is still pending, no action needed
 	case ports.PaymentIntentStatusCanceled:
-		if err := booking.MarkPaymentFailed(); err != nil {
-			return nil, fmt.Errorf("mark payment as failed: %w", err)
-		}
+		booking.MarkPaymentFailed()
 	case ports.PaymentIntentStatusPaymentFailed:
-		if err := booking.MarkPaymentFailed(); err != nil {
-			return nil, fmt.Errorf("mark payment as failed: %w", err)
-		}
+		booking.MarkPaymentFailed()
 	default:
 		return nil, fmt.Errorf("unknown payment status: %s", paymentInfo.Status)
 	}
