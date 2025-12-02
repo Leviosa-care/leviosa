@@ -2,7 +2,6 @@ package bookingRepository
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
