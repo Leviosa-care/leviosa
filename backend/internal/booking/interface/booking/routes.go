@@ -25,4 +25,3 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /bookings/{id}/payment", RequireStandard(mw.EnableCORS(h.ProcessPayment)))
 	router.HandleFunc("POST /bookings/{id}/refund", RequireAdmin(mw.EnableCORS(h.RefundBooking)))
 }
-
