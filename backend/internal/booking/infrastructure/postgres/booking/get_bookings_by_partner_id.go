@@ -1,0 +1,14 @@
+package bookingRepository
+
+import (
+	"context"
+
+	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
+	"github.com/google/uuid"
+)
+
+func (r *Repository) GetByPartnerID(ctx context.Context, partnerID uuid.UUID, filter ports.BookingFilter) ([]*domain.BookingEncx, error) {
+	filter.PartnerID = &partnerID
+	return r.List(ctx, filter)
+}
