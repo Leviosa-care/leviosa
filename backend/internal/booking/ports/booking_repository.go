@@ -32,7 +32,13 @@ type BookingRepository interface {
 	GetByPartnerID(ctx context.Context, partnerID uuid.UUID, filter BookingFilter) ([]*domain.Booking, error)
 
 	// GetByAvailabilityID retrieves booking for a specific availability (should be max 1)
+	// DEPRECATED: Use GetBookingsByAvailability for slot-based booking system
 	GetByAvailabilityID(ctx context.Context, availabilityID uuid.UUID) (*domain.Booking, error)
+
+	// GetBookingsByAvailability retrieves all bookings for a specific availability.
+	// Used for slot overlap detection in the slot-based booking system.
+	// Returns bookings sorted by slot_start_time ASC.
+	GetBookingsByAvailability(ctx context.Context, availabilityID uuid.UUID) ([]*domain.Booking, error)
 
 	// GetUpcoming retrieves upcoming bookings (status = confirmed, start time in future)
 	GetUpcoming(ctx context.Context, filter BookingFilter) ([]*domain.Booking, error)
