@@ -36,7 +36,7 @@ func (h *handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call service to create booking
-	booking, err := h.svc.CreateBooking(ctx, request.AvailabilityID, request.ClientID, request.ClientNotes)
+	booking, err := h.svc.CreateBooking(ctx, request.AvailabilityID, request.ClientID, request.ProductID, request.SlotStartTime, request.ClientNotes)
 	if err != nil {
 		var statusCode int
 		switch {
@@ -54,12 +54,20 @@ func (h *handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert to response DTO
+	var cancellationReason *string
+	if booking.CancellationReason != "" {
+		cancellationReason = &booking.CancellationReason
+	}
+
 	response := domain.BookingResponse{
 		ID:                 booking.ID,
 		AvailabilityID:     booking.AvailabilityID,
 		ClientID:           booking.ClientID,
 		PartnerID:          booking.PartnerID,
 		RoomID:             booking.RoomID,
+		ProductID:          booking.ProductID,
+		SlotStartTime:      booking.SlotStartTime,
+		SlotEndTime:        booking.SlotEndTime,
 		Status:             booking.Status,
 		TotalPriceCents:    booking.TotalPriceCents,
 		Currency:           booking.Currency,
@@ -67,11 +75,9 @@ func (h *handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		PaymentIntentID:    booking.PaymentIntentID,
 		ClientNotes:        booking.ClientNotes,
 		PartnerNotes:       booking.PartnerNotes,
-		CancellationReason: booking.CancellationReason,
+		CancellationReason: cancellationReason,
 		CancelledAt:        booking.CancelledAt,
 		CompletedAt:        booking.CompletedAt,
-		CreatedAt:          booking.CreatedAt,
-		UpdatedAt:          booking.UpdatedAt,
 	}
 
 	logger.InfoContext(ctx, "Handler: Booking created successfully",

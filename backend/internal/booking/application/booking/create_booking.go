@@ -62,7 +62,7 @@ func (s *BookingService) CreateBooking(
 	}
 
 	// 2. Fetch product from catalog service
-	product, err := s.productService.GetPublicProductByID(ctx, productID)
+	product, err := s.productService.GetProductByID(ctx, productID.String())
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			return nil, fmt.Errorf("product not found: %w", errs.ErrRepositoryNotFound)
@@ -75,17 +75,17 @@ func (s *BookingService) CreateBooking(
 
 	// 4. Validate slot is within availability time bounds
 	if slotStartTime.Before(availability.StartTime) {
-		return nil, errs.ErrInvalidValue.With("slot_start_time", "Slot start time is before availability start time")
+		return nil, errs.NewInvalidValueErr("slot_start_time: slot start time is before availability start time")
 	}
 
 	if slotEndTime.After(availability.EndTime) {
-		return nil, errs.ErrInvalidValue.With("slot_end_time", "Slot end time extends beyond availability end time")
+		return nil, errs.NewInvalidValueErr("slot_end_time: slot end time extends beyond availability end time")
 	}
 
 	// 5. Validate slot start time is aligned to 10-minute base
 	if !isAlignedToBaseSlot(slotStartTime) {
-		return nil, errs.ErrInvalidValue.With("slot_start_time",
-			fmt.Sprintf("Slot start time must be aligned to %d-minute boundaries (e.g., :00, :10, :20)",
+		return nil, errs.NewInvalidValueErr(
+			fmt.Sprintf("slot_start_time: must be aligned to %d-minute boundaries (e.g., :00, :10, :20)",
 				bookingContracts.BaseTimeSlotMinutes))
 	}
 
@@ -107,18 +107,13 @@ func (s *BookingService) CreateBooking(
 
 	// Use slot calculator's overlap detection
 	if hasOverlap(slotStartTime, slotEndTime, existingBookings) {
-		return nil, errs.ErrConflict.With("slot", "This time slot is already booked")
+		return nil, errs.NewConflictErr(fmt.Errorf("time slot is already booked"))
 	}
 
-	// 7. Get product price from Stripe
+	// 7. Set product price
+	// TODO: Integrate with pricing service to get actual product price
+	// For now, bookings are created with price of 0 (free)
 	totalPriceCents := 0
-	if product.StripeProductID != "" {
-		price, err := s.paymentService.GetProductPrice(ctx, product.StripeProductID)
-		if err != nil {
-			return nil, fmt.Errorf("get product price: %w", err)
-		}
-		totalPriceCents = price
-	}
 
 	// 8. Create booking entity with slot information
 	booking, err := domain.NewBooking(
