@@ -26,13 +26,13 @@ func (m *MockPaymentService) CreatePaymentIntent(ctx context.Context, amount int
 	clientSecret := "pi_test_secret_" + uuid.New().String()[:8]
 
 	m.paymentIntents[paymentIntentID] = &ports.PaymentIntentInfo{
-		ID:            paymentIntentID,
-		Status:        ports.PaymentIntentStatusRequiresPaymentMethod,
-		Amount:        amount,
-		Currency:      currency,
-		ClientSecret:  clientSecret,
-		Description:   description,
-		Metadata:      metadata,
+		ID:           paymentIntentID,
+		Status:       ports.PaymentIntentStatusRequiresPaymentMethod,
+		Amount:       amount,
+		Currency:     currency,
+		ClientSecret: clientSecret,
+		Description:  description,
+		Metadata:     metadata,
 	}
 
 	return paymentIntentID, clientSecret, nil

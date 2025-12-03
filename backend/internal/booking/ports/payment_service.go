@@ -24,14 +24,14 @@ type PaymentService interface {
 
 // PaymentIntentInfo represents payment intent information from Stripe
 type PaymentIntentInfo struct {
-	ID            string                 `json:"id"`
-	Status        string                 `json:"status"`
-	Amount        int                    `json:"amount"`
-	Currency      string                 `json:"currency"`
-	ClientSecret  string                 `json:"client_secret"`
-	Description   string                 `json:"description"`
-	Metadata      map[string]string      `json:"metadata"`
-	LastError     *PaymentIntentError    `json:"last_error,omitempty"`
+	ID           string              `json:"id"`
+	Status       string              `json:"status"`
+	Amount       int                 `json:"amount"`
+	Currency     string              `json:"currency"`
+	ClientSecret string              `json:"client_secret"`
+	Description  string              `json:"description"`
+	Metadata     map[string]string   `json:"metadata"`
+	LastError    *PaymentIntentError `json:"last_error,omitempty"`
 }
 
 // PaymentIntentError represents payment error information
@@ -78,3 +78,4 @@ const (
 	// RefundReasonRequestedByCustomer indicates customer requested refund
 	RefundReasonRequestedByCustomer = "requested_by_customer"
 )
+
