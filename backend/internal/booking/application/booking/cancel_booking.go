@@ -29,7 +29,7 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uuid.UUID, reason
 
 	// Check if booking can be cancelled
 	if !booking.IsCancellable() {
-		return nil, fmt.Errorf("booking cannot be cancelled")
+		return nil, errs.NewInvalidValueErr("booking cannot be cancelled: current status is " + string(booking.Status))
 	}
 
 	// Cancel booking

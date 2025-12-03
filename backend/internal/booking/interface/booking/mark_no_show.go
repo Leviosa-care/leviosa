@@ -34,7 +34,9 @@ func (h *handler) MarkNoShow(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, errs.ErrRepositoryNotFound):
 			statusCode = http.StatusNotFound
-		case errors.Is(err, errs.ErrInvalidInput):
+		case errors.Is(err, errs.ErrInvalidInput),
+			errors.Is(err, domain.ErrCannotMarkCancelledAsNoShow),
+			errors.Is(err, domain.ErrCannotMarkCompletedAsNoShow):
 			statusCode = http.StatusBadRequest
 		default:
 			statusCode = http.StatusInternalServerError
@@ -44,12 +46,20 @@ func (h *handler) MarkNoShow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert to response DTO
+	var cancellationReason *string
+	if booking.CancellationReason != "" {
+		cancellationReason = &booking.CancellationReason
+	}
+
 	response := domain.BookingResponse{
 		ID:                 booking.ID,
 		AvailabilityID:     booking.AvailabilityID,
 		ClientID:           booking.ClientID,
 		PartnerID:          booking.PartnerID,
 		RoomID:             booking.RoomID,
+		ProductID:          booking.ProductID,
+		SlotStartTime:      booking.SlotStartTime,
+		SlotEndTime:        booking.SlotEndTime,
 		Status:             booking.Status,
 		TotalPriceCents:    booking.TotalPriceCents,
 		Currency:           booking.Currency,
@@ -57,11 +67,9 @@ func (h *handler) MarkNoShow(w http.ResponseWriter, r *http.Request) {
 		PaymentIntentID:    booking.PaymentIntentID,
 		ClientNotes:        booking.ClientNotes,
 		PartnerNotes:       booking.PartnerNotes,
-		CancellationReason: booking.CancellationReason,
+		CancellationReason: cancellationReason,
 		CancelledAt:        booking.CancelledAt,
 		CompletedAt:        booking.CompletedAt,
-		CreatedAt:          booking.CreatedAt,
-		UpdatedAt:          booking.UpdatedAt,
 	}
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)
