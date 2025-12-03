@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/google/uuid"
@@ -9,8 +10,8 @@ import (
 
 // BookingService defines the interface for booking business logic
 type BookingService interface {
-	// CreateBooking creates a new booking
-	CreateBooking(ctx context.Context, availabilityID, clientID uuid.UUID, clientNotes string) (*domain.Booking, error)
+	// CreateBooking creates a new booking with product and time slot information
+	CreateBooking(ctx context.Context, availabilityID, clientID, productID uuid.UUID, slotStartTime time.Time, clientNotes string) (*domain.Booking, error)
 
 	// GetBooking retrieves a booking by ID
 	GetBooking(ctx context.Context, id uuid.UUID) (*domain.Booking, error)
