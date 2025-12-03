@@ -10,22 +10,20 @@ import (
 	"github.com/hengadev/encx"
 )
 
-func NewTestAvailability(t *testing.T) *domain.Availability {
+func NewTestAvailability(t *testing.T, userID, roomID uuid.UUID, startTime, endTime time.Time, priceCents int) *domain.Availability {
 	now := time.Now()
-	startTime := now.Add(24 * time.Hour)    // Tomorrow
-	endTime := startTime.Add(2 * time.Hour) // 2 hours later
-	priceCents := 15000                     // $150.00
+	pricePtr := &priceCents
 
 	return &domain.Availability{
 		ID:     uuid.New(),
-		UserID: uuid.New(),
-		RoomID: uuid.New(),
+		UserID: userID,
+		RoomID: roomID,
 
 		StartTime: startTime,
 		EndTime:   endTime,
 
 		ServiceType: "Consultation",
-		PriceCents:  &priceCents,
+		PriceCents:  pricePtr,
 		MaxCapacity: 1,
 
 		Notes:       "Regular consultation slot",
@@ -154,7 +152,10 @@ func NewTestAvailabilityForRoom(t *testing.T, roomID uuid.UUID) *domain.Availabi
 
 // NewBookedTestAvailability creates a test availability that is already booked
 func NewBookedTestAvailability(t *testing.T) *domain.Availability {
-	avail := NewTestAvailability(t)
+	now := time.Now()
+	startTime := now.Add(24 * time.Hour)
+	endTime := startTime.Add(2 * time.Hour)
+	avail := NewTestAvailability(t, uuid.New(), uuid.New(), startTime, endTime, 15000)
 	avail.Status = domain.AvailabilityStatusBooked
 	avail.UpdatedAt = time.Now()
 	return avail
