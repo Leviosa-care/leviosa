@@ -11,16 +11,18 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	tsetup "github.com/Leviosa-care/leviosa/backend/test/helpers/booking"
-	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/building"
-	tr "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/room"
 	tavail "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/availability"
 	tbooking "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/booking"
+	tb "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/building"
+	tr "github.com/Leviosa-care/leviosa/backend/test/helpers/booking/room"
 	tcatalog "github.com/Leviosa-care/leviosa/backend/test/helpers/catalog"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// make test-func TEST_NAME=TestUpdateBookingNotes TEST_PATH=test/integration/booking/booking/update_booking_notes_test.go
 
 func TestUpdateBookingNotes(t *testing.T) {
 	ctx := context.Background()
