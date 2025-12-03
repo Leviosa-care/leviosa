@@ -18,6 +18,12 @@ import (
 	bookingHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/booking"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
 
+	productService "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/product"
+	productPostgres "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/product"
+	sharedPostgres "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/shared"
+	pricePayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/price"
+	productPayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/product"
+
 	authsession "github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/services"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
@@ -170,10 +176,26 @@ func TestMain(m *testing.M) {
 	bookingRepo = bookingPostgres.New(ctx, testPool)
 	availabilityRepo = availabilityPostgres.New(ctx, testPool)
 
-	// Initialize mock payment service for testing
+	// Initialize mock payment service (Stripe integration not needed for booking tests)
 	paymentService = NewMockPaymentService()
 
-	service = bookingService.New(bookingRepo, availabilityRepo, paymentService)
+	// Initialize real product service with all dependencies
+	productRepo := productPostgres.New(ctx, testPool)
+	sharedRepo := sharedPostgres.New(ctx, testPool)
+
+	// Use Stripe test key for product service
+	stripeTestKey := os.Getenv("STRIPE_SECRET_KEY")
+	if stripeTestKey == "" {
+		stripeTestKey = "sk_test_dummy_key_for_testing" // Fallback for test environment
+	}
+	stripeBaseURL := os.Getenv("STRIPE_API_BASE_URL") // Empty for production Stripe API
+
+	productStripe := productPayment.NewProduct(stripeTestKey, stripeBaseURL)
+	priceStripe := pricePayment.NewPrice(stripeTestKey, stripeBaseURL)
+
+	catalogProductService := productService.New(productRepo, sharedRepo, productStripe, priceStripe)
+
+	service = bookingService.New(bookingRepo, availabilityRepo, paymentService, catalogProductService, crypto)
 
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
