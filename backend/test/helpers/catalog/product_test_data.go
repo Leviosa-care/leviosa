@@ -28,12 +28,18 @@ func InsertTestProduct(t *testing.T, ctx context.Context, pool *pgxpool.Pool, pr
 	query := `
 		INSERT INTO catalog.products (
 			id, category_id, name, description,
-			duration, buffer_time, is_published,
+			duration, buffer_time, status, availability,
+			cancellation_hours, stripe_product_id,
 			created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 		)
 	`
+
+	status := "draft"
+	if product.IsPublished {
+		status = "published"
+	}
 
 	now := time.Now()
 	_, err := pool.Exec(ctx, query,
@@ -43,7 +49,10 @@ func InsertTestProduct(t *testing.T, ctx context.Context, pool *pgxpool.Pool, pr
 		product.Description,
 		product.Duration,
 		product.BufferTime,
-		product.IsPublished,
+		status,
+		"in-person", // Default availability type for massage products
+		24,          // Default cancellation hours
+		"stripe_prod_test_"+product.ID.String(), // Test Stripe product ID
 		now,
 		now,
 	)
@@ -53,7 +62,7 @@ func InsertTestProduct(t *testing.T, ctx context.Context, pool *pgxpool.Pool, pr
 	priceQuery := `
 		INSERT INTO catalog.prices (
 			id, product_id, amount, currency,
-			is_active, stripe_price_id, stripe_product_id,
+			interval, is_active, stripe_price_id,
 			created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9
@@ -65,10 +74,10 @@ func InsertTestProduct(t *testing.T, ctx context.Context, pool *pgxpool.Pool, pr
 		priceID,
 		product.ID,
 		product.PriceCents,
-		"USD",
+		"EUR", // Use EUR to match booking expectations
+		"one_time", // One-time payment for massage services
 		true,
 		product.StripePriceID,
-		"", // stripe_product_id
 		now,
 		now,
 	)
@@ -128,6 +137,9 @@ func ClearProductsTable(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
 
 	_, err = pool.Exec(ctx, "DELETE FROM catalog.products")
 	require.NoError(t, err, "Failed to clear products table")
+
+	_, err = pool.Exec(ctx, "DELETE FROM catalog.categories")
+	require.NoError(t, err, "Failed to clear categories table")
 }
 
 // CreateTestCategory creates a test category for products
@@ -135,7 +147,7 @@ func CreateTestCategory(t *testing.T, ctx context.Context, pool *pgxpool.Pool) u
 	categoryID := uuid.New()
 	query := `
 		INSERT INTO catalog.categories (
-			id, name, description, is_published, created_at, updated_at
+			id, name, description, status, created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4, $5, $6
 		)
@@ -146,7 +158,7 @@ func CreateTestCategory(t *testing.T, ctx context.Context, pool *pgxpool.Pool) u
 		categoryID,
 		"Massage Therapy",
 		"Various massage therapy services",
-		true,
+		"published", // Use published status for test categories
 		now,
 		now,
 	)
