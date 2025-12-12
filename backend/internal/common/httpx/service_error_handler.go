@@ -35,7 +35,7 @@ func RespondWithServiceError(w http.ResponseWriter, logger *slog.Logger, ctx con
 	if statusCode >= 500 {
 		logger.ErrorContext(ctx,
 			fmt.Sprintf("Handler: %s failed", operation),
-			"error", err,
+			"error", err.Error(),
 			"status_code", statusCode,
 		)
 
