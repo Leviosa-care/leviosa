@@ -25,4 +25,3 @@ type NotificationService interface {
 	UpdateCompanyLegalAddress(address string)
 	UpdateCompanyInstagram(instagram string)
 }
-

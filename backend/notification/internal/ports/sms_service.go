@@ -9,4 +9,3 @@ import (
 type SMSService interface {
 	SendSMS(ctx context.Context, request *domain.SMSRequest) error
 }
-

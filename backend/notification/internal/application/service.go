@@ -69,4 +69,3 @@ func (s *NotificationService) UpdateCompanyLegalAddress(address string) {
 func (s *NotificationService) UpdateCompanyInstagram(instagram string) {
 	// This will be handled by the RabbitMQ consumer
 }
-

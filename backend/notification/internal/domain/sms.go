@@ -25,7 +25,7 @@ func NewSMSRequest(phone, message string) (*SMSRequest, error) {
 
 func normalizePhoneNumber(phone string) (string, error) {
 	phone = strings.TrimSpace(phone)
-	
+
 	if phone == "" {
 		return "", fmt.Errorf("phone number cannot be empty")
 	}
@@ -41,3 +41,4 @@ func normalizePhoneNumber(phone string) (string, error) {
 
 	return phone, nil
 }
+

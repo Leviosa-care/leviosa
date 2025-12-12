@@ -3,12 +3,12 @@ package domain
 import "time"
 
 type EmailRequest struct {
-	To           string
-	Subject      string
-	Template     string
-	Data         interface{}
-	CarbonCopy   map[string]string // email -> name
-	Images       map[string]string // path -> rename
+	To         string
+	Subject    string
+	Template   string
+	Data       interface{}
+	CarbonCopy map[string]string // email -> name
+	Images     map[string]string // path -> rename
 }
 
 type OTPEmailData struct {
@@ -124,3 +124,4 @@ func NewRegistrationReminderEmailData(registrationName string, daysLeft int, add
 		InstagramPath:    instagram,
 	}
 }
+

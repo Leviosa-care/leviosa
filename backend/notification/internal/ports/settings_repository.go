@@ -10,3 +10,4 @@ type SettingsRepository interface {
 	GetCompanyInstagram(ctx context.Context) (string, error)
 	GetCompanyLogo(ctx context.Context) ([]byte, error)
 }
+

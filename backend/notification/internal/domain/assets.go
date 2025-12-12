@@ -7,7 +7,8 @@ import (
 var (
 	//go:embed ../../assets/instagram.png
 	InstagramImage []byte
-	
+
 	//go:embed ../../templates/*.html
 	EmailTemplates embed.FS
 )
+
