@@ -9,12 +9,6 @@ import (
 	"github.com/hengadev/errsx"
 )
 
-// TODO: this is the thing that I should when creating a product
-type CreateProductRequest2 struct {
-	Product CreateProductRequest `json:"product"`
-	Price   CreatePriceRequest   `json:"price"`
-}
-
 type CreateProductRequest struct {
 	Name              string           `json:"name"`
 	Description       string           `json:"description,omitempty"`
