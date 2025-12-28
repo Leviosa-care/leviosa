@@ -40,4 +40,3 @@
         <slot />
     {/if}
 </Button.Root>
-
