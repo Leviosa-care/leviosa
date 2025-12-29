@@ -5,8 +5,8 @@ import type { RequestEvent } from './$types';
 import { API_URL } from "$env/static/private"
 import { redirect } from '@sveltejs/kit';
 
-// TODO: then add the otp thing brother
 const schema = type({
+    email: "string.email",
     otp0: "/^\\d$/",
     otp1: "/^\\d$/",
     otp2: "/^\\d$/",
@@ -15,70 +15,76 @@ const schema = type({
     otp5: "/^\\d$/",
 });
 
-// Defaults should also be defined outside the load function
 const defaults = {
-    // otp0: '',
-    // otp1: '',
-    // otp2: '',
-    // otp3: '',
-    // otp4: '',
-    // otp5: '',
-
-    otp0: '13',
-    otp1: '4',
-    otp2: '4',
-    otp3: '29',
-    otp4: '0',
-    otp5: '2',
+    email: '',
+    otp0: '',
+    otp1: '',
+    otp2: '',
+    otp3: '',
+    otp4: '',
+    otp5: '',
 };
 
-export const load = async () => {
-    const form = await superValidate(arktype(schema, { defaults }));
+export const load = async ({ url }: RequestEvent) => {
+    // Get email from URL search params (passed from register action)
+    const email = url.searchParams.get("email") || '';
+    const form = await superValidate({ ...defaults, email }, arktype(schema, { defaults }));
     return { form };
 };
 
 export const actions = {
     default: async ({ request, fetch }: RequestEvent) => {
         const form = await superValidate(request, arktype(schema, { defaults }));
-        console.log("in the form action:\n", form);
 
-        // NOTE: this is the expected error
-        // error(404, "Juste une erreur pour voir !")
-        // NOTE: this is the not expected error
-        // throw new Error(404, "Juste une erreur pour voir !")
-        if (!form.valid) return setError(form, "Veuillez entrer des valeurs numériques à un seul chiffre (de 0 à 9).");
+        if (!form.valid) {
+            if (form.errors.email) {
+                return setError(form, "email", "L'adresse email n'est pas valide.");
+            }
+            return setError(form, "Veuillez entrer des valeurs numériques à un seul chiffre (de 0 à 9).");
+        }
 
-        const otp = [
+        const code = [
             form.data.otp0,
             form.data.otp1,
             form.data.otp2,
             form.data.otp3,
             form.data.otp4,
             form.data.otp5,
-        ]
+        ].join("");
 
-        try {
-            const res = await fetch(`${API_URL}/auth/otp`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", },
-                body: JSON.stringify({ otp: otp.join("") })
+        const res = await fetch(`${API_URL}/auth/otp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: form.data.email,
+                code: code
             })
-            if (!res.ok) {
-                switch (res.status) {
-                    case 500:
-                    // server error
-                    case 422:
-                    // user not processed for some reason
-                    case 409:
-                    // user exists
-                    case 400:
-                        return setError(form, "")
-                }
+        });
+
+        if (!res.ok) {
+            switch (res.status) {
+                case 400:
+                    return setError(form, "Format d'email ou de code OTP invalide.");
+                case 401:
+                    return setError(form, "Code OTP invalide ou expiré. Veuillez demander un nouveau code.");
+                case 404:
+                    return setError(form, "Aucune demande de vérification trouvée pour cet email.");
+                case 409:
+                    return setError(form, "Un utilisateur avec cet email existe déjà.");
+                case 415:
+                    return setError(form, "Type de contenu non supporté. Veuillez réessayer.");
+                case 423:
+                    return setError(form, "Trop de tentatives échouées. Votre compte est temporairement verrouillé.");
+                case 500:
+                    return setError(form, "Une erreur serveur est survenue. Veuillez réessayer.");
+                case 503:
+                    return setError(form, "Le service est temporairement indisponible. Veuillez réessayer dans quelques instants.");
+                default:
+                    return setError(form, "Une erreur inattendue est survenue. Veuillez réessayer.");
             }
-        } catch (err) {
-            console.error("here is the error:", err)
         }
 
-        throw redirect(200, "/auth/general")
+        // Success - redirect to general info page
+        redirect(302, "/auth/general");
     }
 };
