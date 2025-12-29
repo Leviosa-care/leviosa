@@ -34,9 +34,5 @@
     class={buttonVariants({ variant, size, class: className })}
     {...restProps}
 >
-    {#if children}
-        {@render children()}
-    {:else}
-        <slot />
-    {/if}
+    {@render children()}
 </Button.Root>
