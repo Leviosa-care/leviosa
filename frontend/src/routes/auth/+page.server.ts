@@ -7,6 +7,7 @@ import { arktype } from 'sveltekit-superforms/adapters';
 import { type } from "arktype"
 
 import { MESSAGES, type MessageType } from "$lib/utils/redirect";
+import { forwardAuthCookies } from "$lib/utils/auth-helpers";
 
 const loginSchema = type({
     email: "string.email",
@@ -69,31 +70,29 @@ export const actions = {
 
         if (!res.ok) {
             switch (res.status) {
-                case 500:
-                    return setError(form, "registerEmail", "Une erreur serveur est survenue. Le service semble momentanément indisponible.")
-                case 422:
-                // something went wrong with validating the data. I might need to parse that thing
-                case 429:
-                    return setError(form, "registerEmail", "Trop de tentatives. Veuillez réessayer plus tard.");
-                case 409:
-                // the user exists
                 case 400:
                     return setError(form, "registerEmail", "Format d'adresse e-mail invalide. Veuillez vérifier.");
+                case 409:
+                    return setError(form, "registerEmail", "Cette adresse e-mail est déjà enregistrée.");
+                case 415:
+                    return setError(form, "registerEmail", "Type de contenu non supporté. Veuillez réessayer.");
+                case 429:
+                    return setError(form, "registerEmail", "Trop de tentatives. Veuillez réessayer plus tard.");
+                case 500:
+                    return setError(form, "registerEmail", "Une erreur serveur est survenue. Le service semble momentanément indisponible.");
+                case 503:
+                    return setError(form, "registerEmail", "Le service est temporairement indisponible. Veuillez réessayer dans quelques instants.");
+                default:
+                    return setError(form, "registerEmail", "Une erreur inattendue est survenue. Veuillez réessayer.");
             }
         }
-        // const exists = await res.json()
-        // if (exists === true) {
-        //     return setError(form, "registerEmail", "Cette adresse e-mail est déjà utilisée.");
-        // }
-        return {
-            registerForm: form,
-            registerSuccess: true,
-        }
+
+        // Success - redirect to verify email page with email as query param
+        redirect(302, `/auth/verify-email?email=${encodeURIComponent(form.data.registerEmail)}`)
     },
     login: async ({ request, cookies }: RequestEvent) => {
         const form = await superValidate(request, arktype(loginSchema, { defaults: loginDefaults }))
-        // TODO: remove that at the end
-        console.log(form)
+
         if (!form.valid) {
             if (form.errors.email) {
                 setError(form, "email", "L'adresse email saisie n'est pas valide. Veuillez vérifier et réessayer.")
@@ -103,6 +102,7 @@ export const actions = {
             }
             return fail(400, { loginForm: form })
         }
+
         const res = await fetch(`${API_URL}/auth/login`, {
             method: "POST",
             headers: { 'Content-Type': "application/json" },
@@ -111,76 +111,48 @@ export const actions = {
                 password: form.data.password,
             })
         })
-        // if (!res.ok) {
-        if (res.status != 201) {
-            const err = res.text() // from golang http.Error
-            console.error("login attempt failed:", err)
+
+        if (res.status !== 201) {
             switch (res.status) {
                 case 400:
                     return setError(form, "Format d'adresse e-mail ou de mot de passe invalide. Veuillez vérifier.");
-                case 429: // too many requests
+                case 401:
+                    return setError(form, "Identifiants incorrects. Veuillez vérifier votre email et mot de passe.");
+                case 403:
+                    return setError(form, "Votre compte n'est pas encore approuvé ou est inactif. Veuillez contacter l'administrateur.");
+                case 415:
+                    return setError(form, "Type de contenu non supporté. Veuillez réessayer.");
+                case 423:
+                    return setError(form, "Votre compte est verrouillé suite à trop de tentatives échouées. Veuillez réessayer plus tard.");
+                case 429:
                     return setError(form, "Trop de tentatives. Veuillez réessayer plus tard.");
                 case 500:
-                    error(500, "Une erreur est survenue sur le serveur. Nous travaillons à résoudre le problème au plus vite.")
+                    return setError(form, "Une erreur est survenue sur le serveur. Nous travaillons à résoudre le problème au plus vite.");
+                case 503:
+                    return setError(form, "Le service est temporairement indisponible. Veuillez réessayer dans quelques instants.");
                 default:
-                    error(404, "Une erreur est survenue. Veuillez réessayer.")
+                    return setError(form, "Une erreur inattendue est survenue. Veuillez réessayer.");
             }
         }
-        const sessionID = cookies.get(SESSION_COOKIE_NAME)
-        if (!sessionID) {
-            error(404, "Le serveur est en panne. Veuillez réessayer plus tard.")
-        }
-        cookies.set(SESSION_COOKIE_NAME, sessionID, {
-            // TODO: set that properly with the right values
-            httpOnly: true,
-            maxAge: 60 * 10,
-            secure: import.meta.env.PROD,
-            path: '/',
-            sameSite: 'lax'
-        })
 
-        return {
-            form,
-            success: true,
-        }
+        // Extract and forward authentication cookies from backend response to client
+        forwardAuthCookies(res, cookies);
+
+        // Success - redirect to app
+        redirect(302, "/");
     },
-    oauth: async ({ request, cookies }: RequestEvent) => {
+    oauth: async ({ request }: RequestEvent) => {
         const form = await superValidate(request, arktype(oauthSchema, { defaults: oauthDefaults }))
-        console.log(form)
+
         if (!form.valid) {
-            setError(form, "provider", "L'adresse provider saisie n'est pas valide. Veuillez vérifier et réessayer.")
+            setError(form, "provider", "Le fournisseur OAuth sélectionné n'est pas valide.")
             return fail(400, { oauthForm: form })
         }
 
-        const res = await fetch(`${API_URL}/oauth/${form.data.provider}`, {
-            method: "POST",
-        })
-        if (!res.ok) {
-            const err = res.text() // from golang http.Error
-            console.error("login attempt failed:", err)
-            switch (res.status) {
-                case 400:
-                // return setError(form, "Format d'adresse e-mail ou de mot de passe invalide. Veuillez vérifier.");
-                case 429: // too many requests
-                // return setError(form, "Trop de tentatives. Veuillez réessayer plus tard.");
-                case 500:
-                    error(500, "Une erreur est survenue sur le serveur. Nous travaillons à résoudre le problème au plus vite.")
-                default:
-                    error(404, "Une erreur est survenue. Veuillez réessayer.")
-            }
-        }
-        const sessionID = cookies.get(SESSION_COOKIE_NAME)
-        if (!sessionID) {
-            error(404, "Le serveur est en panne. Veuillez réessayer plus tard.")
-        }
-        cookies.set(SESSION_COOKIE_NAME, sessionID, {
-            // TODO: set that properly with the right values
-            httpOnly: true,
-            maxAge: 60 * 10,
-            secure: import.meta.env.PROD,
-            path: '/',
-            sameSite: 'lax'
-        })
-        throw redirect(302, "/")
+        // Redirect to OAuth provider
+        // The backend GET endpoint will redirect to the provider's authorization screen
+        // After authorization, the provider will redirect back to /auth/oauth/{provider}/callback
+        // The backend callback handler will set cookies and redirect to the app
+        redirect(302, `${API_URL}/auth/oauth/${form.data.provider}`)
     }
 } satisfies Actions
