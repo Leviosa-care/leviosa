@@ -1,14 +1,20 @@
 <script lang="ts">
     import type { LayoutProps } from "./$types";
-    let { children }: LayoutProps = $props();
+    import Sidebar from "./sidebar.svelte";
 
-    // NOTE: Here we render the children + sidebar that is going to be using our defined
-    // permissions matrix to display the right elements
+    let { children, data }: LayoutProps = $props();
 </script>
 
-<div class="flex">
-    <div id="sidebar"></div>
-    <div class="flex-1">
-        {@render children()}
-    </div>
+<!-- Main layout container with sidebar and content area -->
+<div class="flex min-h-screen">
+    <!-- Sidebar component handles both desktop sidebar and mobile bottom nav -->
+    <Sidebar {data} />
+
+    <!-- Main content area -->
+    <main class="flex-1 overflow-x-hidden">
+        <!-- Add bottom padding on mobile to prevent content from being hidden behind bottom nav -->
+        <div class="pb-20 lg:pb-0">
+            {@render children()}
+        </div>
+    </main>
 </div>
