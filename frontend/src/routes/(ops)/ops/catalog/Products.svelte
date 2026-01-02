@@ -164,7 +164,10 @@
             category: formData.category,
             duration: formData.duration,
             status: formData.status as "draft" | "published",
-            availability: formData.availability as "online" | "in-person" | "hybrid",
+            availability: formData.availability as
+                | "online"
+                | "in-person"
+                | "hybrid",
             bufferTime: formData.bufferTime,
             cancellationHours: formData.cancellationHours,
             stripeProductId: formData.stripeProductId,
@@ -192,13 +195,16 @@
                       category: formData.category,
                       duration: formData.duration,
                       status: formData.status as "draft" | "published",
-                      availability: formData.availability as "online" | "in-person" | "hybrid",
+                      availability: formData.availability as
+                          | "online"
+                          | "in-person"
+                          | "hybrid",
                       bufferTime: formData.bufferTime,
                       cancellationHours: formData.cancellationHours,
                       stripeProductId: formData.stripeProductId,
                       updatedAt: new Date().toISOString(),
                   }
-                : p
+                : p,
         );
         editDialogOpen = false;
         selectedProduct = null;
@@ -258,8 +264,7 @@
                         class="flex gap-2 items-center py-2 px-4 bg-dark text-white rounded-input hover:bg-dark/95 transition-all shadow-mini"
                     >
                         <Plus size={18} />
-                        <span class="text-sm font-medium"
-                            >Créer un produit</span
+                        <span class="text-sm font-medium">Créer un produit</span
                         >
                     </div>
                 </Button.Root>
@@ -342,7 +347,11 @@
                             >
                                 <div class="flex items-center gap-1">
                                     <Clock size={14} />
-                                    <span>{formatDuration(product.duration)}</span>
+                                    <span
+                                        >{formatDuration(
+                                            product.duration,
+                                        )}</span
+                                    >
                                 </div>
                                 <div class="flex items-center gap-1">
                                     {#if product.availability === "online"}
@@ -392,31 +401,29 @@
 <!-- Create Product Dialog/Drawer -->
 {#if isMobile}
     <Drawer bind:isOpen={createDialogOpen}>
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold tracking-tight">
-                Créer un produit
-            </h2>
-            <button
-                type="button"
-                onclick={() => (createDialogOpen = false)}
-                class="p-2 hover:bg-dark-04 rounded-md transition-all"
-            >
-                <X class="text-foreground size-5" />
-            </button>
+        <div
+            class="sticky top-0 bg-white pb-4 border-b border-border-card -mx-4 px-4 -mt-4 pt-4 z-10"
+        >
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-xl font-semibold tracking-tight">
+                    Créer un produit
+                </h2>
+                <button
+                    type="button"
+                    onclick={() => (createDialogOpen = false)}
+                    class="p-2 hover:bg-dark-04 rounded-md transition-all"
+                >
+                    <X class="text-foreground size-5" />
+                </button>
+            </div>
+            <p class="text-foreground-alt text-sm">
+                Remplissez les détails ci-dessous pour créer un nouveau produit.
+            </p>
         </div>
-        <p class="text-foreground-alt text-sm mb-6">
-            Remplissez les détails ci-dessous pour créer un nouveau produit.
-        </p>
 
-        <form onsubmit={handleCreateSubmit} class="grid gap-4">
+        <form onsubmit={handleCreateSubmit} class="grid gap-4 pt-8">
             <div class="grid grid-cols-1 gap-4 w-full pb-4">
-                {@render field(
-                    "name",
-                    "Nom",
-                    inputCreate,
-                    formData.name,
-                    null,
-                )}
+                {@render field("name", "Nom", inputCreate, formData.name, null)}
                 {@render field(
                     "description",
                     "Description",
@@ -614,31 +621,29 @@
 <!-- Edit Product Dialog/Drawer -->
 {#if isMobile}
     <Drawer bind:isOpen={editDialogOpen}>
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold tracking-tight">
-                Modifier {selectedProduct?.name}
-            </h2>
-            <button
-                type="button"
-                onclick={() => (editDialogOpen = false)}
-                class="p-2 hover:bg-dark-04 rounded-md transition-all"
-            >
-                <X class="text-foreground size-5" />
-            </button>
+        <div
+            class="sticky top-0 bg-white pb-4 border-b border-border-card -mx-4 px-4 -mt-4 pt-4 z-10"
+        >
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-xl font-semibold tracking-tight">
+                    Modifier "{selectedProduct?.name}"
+                </h2>
+                <button
+                    type="button"
+                    onclick={() => (editDialogOpen = false)}
+                    class="p-2 hover:bg-dark-04 rounded-md transition-all"
+                >
+                    <X class="text-foreground size-5" />
+                </button>
+            </div>
+            <p class="text-foreground-alt text-sm">
+                Mettez à jour les détails du produit.
+            </p>
         </div>
-        <p class="text-foreground-alt text-sm mb-6">
-            Mettez à jour les détails du produit.
-        </p>
 
-        <form onsubmit={handleEditSubmit} class="grid gap-4">
+        <form onsubmit={handleEditSubmit} class="grid gap-4 pt-8">
             <div class="grid grid-cols-1 gap-4 w-full pb-4">
-                {@render field(
-                    "name",
-                    "Nom",
-                    inputEdit,
-                    formData.name,
-                    null,
-                )}
+                {@render field("name", "Nom", inputEdit, formData.name, null)}
                 {@render field(
                     "description",
                     "Description",
@@ -835,25 +840,29 @@
 <!-- Delete Product Dialog/Drawer -->
 {#if isMobile}
     <Drawer bind:isOpen={deleteDialogOpen}>
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold tracking-tight">
-                Supprimer le produit
-            </h2>
-            <button
-                type="button"
-                onclick={() => (deleteDialogOpen = false)}
-                class="p-2 hover:bg-dark-04 rounded-md transition-all"
-            >
-                <X class="text-foreground size-5" />
-            </button>
+        <div
+            class="sticky top-0 bg-white pb-4 border-b border-border-card -mx-4 px-4 -mt-4 pt-4 z-10"
+        >
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-xl font-semibold tracking-tight">
+                    Supprimer le produit
+                </h2>
+                <button
+                    type="button"
+                    onclick={() => (deleteDialogOpen = false)}
+                    class="p-2 hover:bg-dark-04 rounded-md transition-all"
+                >
+                    <X class="text-foreground size-5" />
+                </button>
+            </div>
+            <p class="text-foreground-alt text-sm">
+                Êtes-vous sûr de vouloir supprimer le produit "<span
+                    class="font-medium">{selectedProduct?.name}</span
+                >" ? Cette action est irréversible.
+            </p>
         </div>
-        <p class="text-foreground-alt text-sm mb-6">
-            Êtes-vous sûr de vouloir supprimer le produit "<span
-                class="font-medium">{selectedProduct?.name}</span
-            >" ? Cette action est irréversible.
-        </p>
 
-        <form onsubmit={handleDeleteSubmit}>
+        <form onsubmit={handleDeleteSubmit} class="pt-8">
             <div class="flex w-full justify-end gap-3">
                 <button
                     type="button"
@@ -931,7 +940,7 @@
     value: any,
     error: any,
 )}
-    <Label.Root for={name} class="text-sm font-semibold text-right">
+    <Label.Root for={name} class="text-sm font-semibold">
         {label}
     </Label.Root>
     <div class="relative w-full">
