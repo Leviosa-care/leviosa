@@ -78,7 +78,7 @@
     ></div>
     <div
         transition:slide={{ duration: 300 }}
-        class="drawer"
+        class="drawer bg-white"
         class:visible={isOpen}
         onclick={bubble}
         onkeydown={handleKeydown}
@@ -112,15 +112,16 @@
         bottom: -100%;
         left: 0;
         width: 100%;
-        background: hsl(var(--clr-light-primary));
-        /* padding: 2rem 1rem; */
-        padding: 1rem;
+        max-height: 85vh;
+        overflow-y: auto;
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
         box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.2);
         border-top-left-radius: var(--border-top-radius);
         border-top-right-radius: var(--border-top-radius);
         /* TODO: should the drawer be on top of the navigation, it makes sense but it is weird right? */
         z-index: 9999;
-        color: hsl(var(--clr-dark-primary));
+        color: hsl(var(--dark-900));
     }
     .drawer.visible {
         bottom: 0;
