@@ -17,8 +17,8 @@
         { value: "categories", name: "Catégories" },
         { value: "produits", name: "Produits" },
         { value: "prix", name: "Prix" },
-        { value: "coupons", name: "Codes promo" },
-        { value: "promotion-codes", name: "Codes promotion" },
+        { value: "coupons", name: "Coupons" },
+        { value: "promotion-codes", name: "Codes de promotion" },
         { value: "exercices", name: "Exercices" },
     ];
 </script>
