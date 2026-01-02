@@ -7,54 +7,87 @@
     import Categories from "./Categories.svelte";
 
     let { data }: { data: PageData } = $props();
+    interface Trigger {
+        value: string;
+        name: string;
+    }
+    let triggers: Trigger[] = [
+        {
+            value: "categories",
+            name: "Catégories",
+        },
+        {
+            value: "produits",
+            name: "Produits",
+        },
+        {
+            value: "prix",
+            name: "Prix",
+        },
+        {
+            value: "exercices",
+            name: "Exercices",
+        },
+    ];
 </script>
 
-<div class="h-[100vh] flex-1 gap-4 overflow-y-scroll bg-gray-50">
-    <Tabs
-        value="categories"
-        class="border-muted bg-background-alt shadow-card border"
+{#snippet tab_trigger(value: string, name: string)}
+    <TabsTrigger
+        {value}
+        class="px-2 py-1.75 md:px-4 md:py-2 md:h-8 rounded-none md:rounded-[7px] bg-transparent border-b-3 data-[state=active]:shadow-none mb-[-2px] md:mb-0 md:border-b-0 data-[state=active]:border-b-dark-900 data-[state=active]:text-foreground md:data-[state=active]:bg-white md:data-[state=active]:shadow-mini dark:md:data-[state=active]:bg-muted data-[state=inactive]:border-transparent data-[state=inactive]:text-foreground-alt md:data-[state=inactive]:hover:bg-dark-04 hover:text-foreground transition-colors"
     >
-        <div class="p-4">
-            <TabsList
-                class="rounded-9px bg-dark-10 shadow-mini-inset dark:bg-background grid grid-cols-4 gap-1 p-1 text-sm font-semibold leading-[0.01em] dark:border dark:border-neutral-600/30 w-[720px] mx-auto"
-            >
-                <TabsTrigger
-                    value="categories"
-                    class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-8 rounded-[7px] bg-transparent py-2 data-[state=active]:bg-white data-[state=inactive]:hover:bg-dark-04 hover:text-foreground"
+        {name}
+    </TabsTrigger>
+{/snippet}
+
+<div class="h-[100vh] flex-1 flex flex-col overflow-hidden bg-gray-50">
+    <Tabs value="categories" class="flex flex-col h-full">
+        <!-- Header with title and description -->
+        <div class="bg-white border-b border-border-card px-6 py-6">
+            <div class="grid gap-1 mb-6">
+                <h1 class="text-2xl font-semibold tracking-tight">Catalogue</h1>
+                <p class="text-sm text-foreground-alt">
+                    Gérez vos catégories, produits, prix et exercices
+                </p>
+            </div>
+
+            <!-- Scrollable tabs -->
+            <div class="overflow-x-auto -mx-6 px-6 scrollbar-hide">
+                <TabsList
+                    class="inline-flex gap-2 md:gap-1 bg-transparent text-sm font-semibold min-w-max border-b-1 border-border-card md:border-b-0 md:rounded-9px md:bg-dark-10 md:shadow-mini-inset dark:md:bg-background md:p-1 md:leading-[0.01em] dark:md:border dark:md:border-neutral-600/30"
                 >
-                    Categories
-                </TabsTrigger>
-                <TabsTrigger
-                    value="produits"
-                    class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-8 rounded-[7px] bg-transparent py-2 data-[state=active]:bg-white data-[state=inactive]:hover:bg-dark-04 hover:text-foreground"
-                >
-                    Produits
-                </TabsTrigger>
-                <TabsTrigger
-                    value="prix"
-                    class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-8 rounded-[7px] bg-transparent py-2 data-[state=active]:bg-white data-[state=inactive]:hover:bg-dark-04 hover:text-foreground"
-                >
-                    Prix
-                </TabsTrigger>
-                <TabsTrigger
-                    value="exercices"
-                    class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-8 rounded-[7px] bg-transparent py-2 data-[state=active]:bg-white data-[state=inactive]:hover:bg-dark-04 hover:text-foreground"
-                >
-                    Exercices
-                </TabsTrigger>
-            </TabsList>
+                    {#each triggers as trigger}
+                        {@render tab_trigger(trigger.value, trigger.name)}
+                    {/each}
+                </TabsList>
+            </div>
         </div>
-        <TabsContent value="categories" class="select-none">
-            <Categories {data} />
-        </TabsContent>
-        <TabsContent value="produits" class="select-none pt-3">
-            <!-- Produits content -->
-        </TabsContent>
-        <TabsContent value="prix" class="select-none pt-3">
-            <!-- Prix content -->
-        </TabsContent>
-        <TabsContent value="exercices" class="select-none pt-3">
-            <!-- Exercices content -->
-        </TabsContent>
+
+        <!-- Tab content area -->
+        <div class="flex-1 overflow-y-auto">
+            <TabsContent value="categories" class="h-full p-6">
+                <Categories {data} />
+            </TabsContent>
+            <TabsContent value="produits" class="h-full p-6">
+                <!-- Produits content -->
+            </TabsContent>
+            <TabsContent value="prix" class="h-full p-6">
+                <!-- Prix content -->
+            </TabsContent>
+            <TabsContent value="exercices" class="h-full p-6">
+                <!-- Exercices content -->
+            </TabsContent>
+        </div>
     </Tabs>
 </div>
+
+<style>
+    /* Hide scrollbar but keep functionality */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
