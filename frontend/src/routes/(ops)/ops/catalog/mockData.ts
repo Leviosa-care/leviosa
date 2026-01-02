@@ -1,4 +1,23 @@
-// Mock data for categories in development mode
+// // Mock data for categories in development mode
+
+
+// type Product struct {
+// 	ID                uuid.UUID        `json:"id"`
+// 	Name              string           `json:"name"`
+// 	Description       string           `json:"description,omitempty"`
+// 	CategoryID        uuid.UUID        `json:"category"`
+// 	Duration          int              `json:"duration"` // in minutes
+// 	CreatedAt         time.Time        `json:"createdAt"`
+// 	UpdatedAt         time.Time        `json:"updatedAt"`
+// 	Status            PublishedStatus  `json:"publishedStatus"`
+// 	Availability      AvailabilityType `json:"availability"`
+// 	BufferTime        int              `json:"bufferTime"`                // in minutes
+// 	CancellationHours int              `json:"cancellationHours"`         // in hours
+// 	StripeProductID   string           `json:"stripeProductId,omitempty"` // ID of the product in Stripe
+// 	Metadata          map[string]any   `json:"metadata,omitempty"`        // Flexible storage for type-specific attributes
+// }
+
+
 
 export const mockCategories = [
     {
