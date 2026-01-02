@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Dialog, Button, Label, Separator } from "bits-ui";
+    import { Dialog, Button, Label, Separator, Combobox } from "bits-ui";
     import {
         Plus,
         Pencil,
@@ -7,6 +7,9 @@
         X,
         Image as ImageIcon,
         Clock,
+        Filter,
+        Check,
+        ChevronsUpDown,
     } from "@lucide/svelte";
     import type { Snippet } from "svelte";
     import type { PageData } from "./$types";
@@ -61,6 +64,17 @@
 
     // Use mock products for now
     let products = $state<Product[]>([...mockProducts]);
+
+    // Category filter state (single select)
+    const ALL_CATEGORIES = "";
+    let selectedCategoryId = $state<string>(ALL_CATEGORIES);
+
+    // Filtered products based on selected category
+    const filteredProducts = $derived(
+        selectedCategoryId === ALL_CATEGORIES
+            ? products
+            : products.filter((p) => p.category === selectedCategoryId),
+    );
 
     // Dialog states
     let createDialogOpen = $state(false);
@@ -239,9 +253,124 @@
         </div>
     </Button.Root>
 
-    <!-- Products Grid -->
+    <!-- Category Filter & Products Grid -->
     <div class="p-4 md:p-8">
-        {#if products.length === 0}
+        <!-- Category Filter Section -->
+        <div
+            class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6"
+        >
+            <Combobox.Root type="single" bind:value={selectedCategoryId}>
+                <div class="relative w-full md:w-auto md:min-w-[280px]">
+                    <Filter
+                        class="text-muted-foreground absolute start-3 top-1/2 size-4 -translate-y-1/2"
+                    />
+                    <Combobox.Input
+                        class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-9 text-sm focus:ring-2 focus:ring-offset-2 transition-all"
+                        placeholder="Filtrer par catégorie"
+                    />
+                    <Combobox.Trigger
+                        class="absolute end-3 top-1/2 size-4 -translate-y-1/2"
+                    >
+                        <ChevronsUpDown class="text-muted-foreground size-4" />
+                    </Combobox.Trigger>
+                </div>
+                <Combobox.Portal>
+                    <Combobox.Content
+                        class="bg-background border border-border-input rounded-card-lg shadow-popover z-50 max-h-[300px] overflow-y-auto"
+                    >
+                        <Combobox.Viewport class="p-1">
+                            <Combobox.Item value={ALL_CATEGORIES} label="Toutes les catégories">
+                                {#snippet children({ selected })}
+                                    <div
+                                        class="flex items-center justify-between px-3 py-2 rounded-md hover:bg-dark-04 cursor-pointer"
+                                    >
+                                        <span class="text-sm"
+                                            >Toutes les catégories</span
+                                        >
+                                        {#if selected}
+                                            <Check class="size-4" />
+                                        {/if}
+                                    </div>
+                                {/snippet}
+                            </Combobox.Item>
+                            <Combobox.Group class="pt-1">
+                                {#each mockCategories as category}
+                                    <Combobox.Item
+                                        value={category.id}
+                                        label={category.name}
+                                    >
+                                        {#snippet children({ selected })}
+                                            <div
+                                                class="flex items-center justify-between px-3 py-2 rounded-md hover:bg-dark-04 cursor-pointer"
+                                            >
+                                                <span class="text-sm"
+                                                    >{category.name}</span
+                                                >
+                                                {#if selected}
+                                                    <Check class="size-4" />
+                                                {/if}
+                                            </div>
+                                        {/snippet}
+                                    </Combobox.Item>
+                                {/each}
+                            </Combobox.Group>
+                        </Combobox.Viewport>
+                    </Combobox.Content>
+                </Combobox.Portal>
+            </Combobox.Root>
+
+            <!-- Product count -->
+            <div class="flex items-center gap-2 text-sm text-foreground-alt">
+                {#if selectedCategoryId !== ALL_CATEGORIES}
+                    <span class="hidden md:inline">•</span>
+                    <span
+                        >{filteredProducts.length} produit{filteredProducts.length !==
+                        1
+                            ? "s"
+                            : ""}</span
+                    >
+                    <button
+                        type="button"
+                        onclick={() => (selectedCategoryId = ALL_CATEGORIES)}
+                        class="text-destructive hover:underline"
+                    >
+                        Réinitialiser
+                    </button>
+                {:else}
+                    <span
+                        >{products.length} produit{products.length !== 1
+                            ? "s"
+                            : ""}</span
+                    >
+                {/if}
+            </div>
+        </div>
+
+        <!-- Selected category chip -->
+        {#if selectedCategoryId !== ALL_CATEGORIES}
+            {@const category = mockCategories.find(
+                (c) => c.id === selectedCategoryId,
+            )}
+            {#if category}
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <div
+                        class="inline-flex items-center gap-1 px-3 py-1 bg-dark-04 border border-border-input rounded-full text-sm"
+                    >
+                        <span>{category.name}</span>
+                        <button
+                            type="button"
+                            onclick={() => (selectedCategoryId = ALL_CATEGORIES)}
+                            class="hover:text-destructive transition-colors"
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+                </div>
+            {/if}
+        {/if}
+
+        <!-- Products Grid -->
+        {#if filteredProducts.length === 0}
             <div
                 class="flex flex-col items-center justify-center py-16 text-center"
             >
@@ -250,28 +379,44 @@
                 >
                     <ImageIcon size={32} class="text-dark-400" />
                 </div>
-                <h3 class="text-lg font-medium mb-2">Aucun produit</h3>
+                <h3 class="text-lg font-medium mb-2">
+                    {products.length === 0 || selectedCategoryId === ALL_CATEGORIES
+                        ? "Aucun produit"
+                        : "Aucun résultat"}
+                </h3>
                 <p class="text-sm text-foreground-alt mb-6 max-w-sm">
-                    Commencez par créer votre premier produit pour proposer des
-                    services à vos clients.
+                    {products.length === 0
+                        ? "Commencez par créer votre premier produit pour proposer des services à vos clients."
+                        : "Aucun produit ne correspond aux catégories sélectionnées."}
                 </p>
-                <Button.Root
-                    type="button"
-                    class="cursor-pointer"
-                    onclick={openCreateDialog}
-                >
-                    <div
-                        class="flex gap-2 items-center py-2 px-4 bg-dark text-white rounded-input hover:bg-dark/95 transition-all shadow-mini"
+                {#if products.length === 0}
+                    <Button.Root
+                        type="button"
+                        class="cursor-pointer"
+                        onclick={openCreateDialog}
                     >
-                        <Plus size={18} />
-                        <span class="text-sm font-medium">Créer un produit</span
+                        <div
+                            class="flex gap-2 items-center py-2 px-4 bg-dark text-white rounded-input hover:bg-dark/95 transition-all shadow-mini"
                         >
-                    </div>
-                </Button.Root>
+                            <Plus size={18} />
+                            <span class="text-sm font-medium"
+                                >Créer un produit</span
+                            >
+                        </div>
+                    </Button.Root>
+                {:else}
+                    <button
+                        type="button"
+                        onclick={() => (selectedCategoryId = ALL_CATEGORIES)}
+                        class="text-destructive hover:underline text-sm font-medium"
+                    >
+                        Effacer les filtres
+                    </button>
+                {/if}
             </div>
         {:else}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {#each products as product (product.id)}
+                {#each filteredProducts as product (product.id)}
                     {@const activeImage = getActiveImage(product)}
                     <div
                         class="border border-border-card rounded-card bg-background shadow-card hover:shadow-popover transition-all overflow-hidden"
