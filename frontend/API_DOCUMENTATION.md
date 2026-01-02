@@ -1,6 +1,6 @@
 # Backend API Documentation
 
-This document provides comprehensive documentation for all HTTP endpoints available in the `authuser` and `settings` microservices.
+This document provides comprehensive documentation for all HTTP endpoints available in the `authuser`, `settings`, and `catalog` microservices.
 
 ## Table of Contents
 
@@ -15,6 +15,13 @@ This document provides comprehensive documentation for all HTTP endpoints availa
   - [OTP Settings Endpoints](#otp-settings-endpoints)
   - [Token Settings Endpoints](#token-settings-endpoints)
   - [Bulk Settings Endpoints](#bulk-settings-endpoints)
+- [Catalog Service](#catalog-service)
+  - [Product Endpoints](#product-endpoints)
+  - [Category Endpoints](#category-endpoints)
+  - [Price Endpoints](#price-endpoints)
+  - [Image Endpoints](#image-endpoints)
+  - [Coupon Endpoints](#coupon-endpoints)
+  - [Promotion Code Endpoints](#promotion-code-endpoints)
 
 ---
 
@@ -2183,6 +2190,1730 @@ The Settings service also provides internal endpoints for service-to-service com
 - **Authentication**: Service authentication token required
 
 These endpoints mirror the public GET endpoints but are intended for microservice-to-microservice communication within the backend infrastructure.
+
+---
+
+## Catalog Service
+
+The Catalog service manages products, categories, pricing, images, coupons, and promotion codes. It integrates with Stripe for payment processing and pricing management.
+
+---
+
+## Product Endpoints
+
+### Get All Published Products
+
+🔓 **Public**
+
+Retrieves all published products with their associated pricing and category information.
+
+- **Method**: `GET`
+- **Path**: `/products`
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Swedish Massage - 60min",
+    "description": "Classic Swedish massage for relaxation",
+    "category": "880e8400-e29b-41d4-a716-446655440000",
+    "duration": 60,
+    "published_status": "published",
+    "availability": "both",
+    "buffer_time": 15,
+    "cancellation_hours": 24,
+    "metadata": {},
+    "prices": [
+      {
+        "id": "660e8400-e29b-41d4-a716-446655440000",
+        "stripe_price_id": "price_1234567890",
+        "product_id": "550e8400-e29b-41d4-a716-446655440000",
+        "amount": 8000,
+        "currency": "eur",
+        "interval": "one_time",
+        "active": true,
+        "nickname": "Standard Rate",
+        "metadata": {},
+        "created_at": "2025-01-15T10:30:00Z"
+      }
+    ],
+    "created_at": "2025-01-15T10:30:00Z",
+    "updated_at": "2025-01-15T10:30:00Z"
+  }
+]
+```
+
+#### Field Descriptions
+- `availability`: Enum values - "in_salon", "home_visit", "both"
+- `published_status`: Enum values - "draft", "published", "archived"
+- `duration`: Service duration in minutes
+- `buffer_time`: Buffer time after service in minutes
+- `cancellation_hours`: Minimum hours before appointment for cancellation
+- `interval`: Price billing interval - "one_time", "month", "year"
+- `amount`: Price in cents (e.g., 8000 = €80.00)
+
+#### Status Codes
+- **200 OK** - Products retrieved successfully
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Get Product by ID
+
+🔓 **Public**
+
+Retrieves a single published product by its UUID.
+
+- **Method**: `GET`
+- **Path**: `/products/{id}`
+- **Path Parameters**:
+  - `id`: Product UUID
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Swedish Massage - 60min",
+  "description": "Classic Swedish massage for relaxation",
+  "category": "880e8400-e29b-41d4-a716-446655440000",
+  "duration": 60,
+  "published_status": "published",
+  "availability": "both",
+  "buffer_time": 15,
+  "cancellation_hours": 24,
+  "metadata": {},
+  "prices": [
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440000",
+      "stripe_price_id": "price_1234567890",
+      "product_id": "550e8400-e29b-41d4-a716-446655440000",
+      "amount": 8000,
+      "currency": "eur",
+      "interval": "one_time",
+      "active": true,
+      "nickname": "Standard Rate",
+      "metadata": {},
+      "created_at": "2025-01-15T10:30:00Z"
+    }
+  ],
+  "created_at": "2025-01-15T10:30:00Z",
+  "updated_at": "2025-01-15T10:30:00Z"
+}
+```
+
+#### Status Codes
+- **200 OK** - Product retrieved successfully
+- **404 Not Found** - Product not found
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Get All Products (Admin)
+
+👑 **Administrator**
+
+Retrieves all products including draft and archived ones (admin only).
+
+- **Method**: `GET`
+- **Path**: `/admin/products`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+Same structure as public product list, but includes products with all published_status values.
+
+#### Status Codes
+- **200 OK** - Products retrieved successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Create Product with Price
+
+👑 **Administrator**
+
+Creates a new product with an initial price. Automatically creates corresponding Stripe product and price.
+
+- **Method**: `POST`
+- **Path**: `/admin/products`
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "product": {
+    "name": "Deep Tissue Massage - 90min",
+    "description": "Intensive deep tissue massage for muscle relief",
+    "category": "880e8400-e29b-41d4-a716-446655440000",
+    "duration": 90,
+    "availability": "both",
+    "buffer_time": 20,
+    "cancellation_hours": 48,
+    "metadata": {
+      "intensity": "high"
+    }
+  },
+  "price": {
+    "amount": 12000,
+    "currency": "eur",
+    "interval": "one_time",
+    "nickname": "Standard Rate",
+    "metadata": {}
+  }
+}
+```
+
+**Product Field Validations**:
+- `name`: Required, max 255 characters
+- `description`: Optional, max 1000 characters
+- `category`: Required, valid category UUID
+- `duration`: Required, positive integer (minutes)
+- `availability`: Required, one of: "in_salon", "home_visit", "both"
+- `buffer_time`: Required, non-negative integer (minutes)
+- `cancellation_hours`: Required, non-negative integer
+- `metadata`: Optional JSON object
+
+**Price Field Validations**:
+- `amount`: Required, positive integer (cents)
+- `currency`: Required, 3-character ISO currency code (e.g., "eur", "usd")
+- `interval`: Required, one of: "one_time", "month", "year"
+- `nickname`: Optional, max 255 characters
+- `metadata`: Optional JSON object
+
+#### Success Response (201 Created)
+```json
+{
+  "product_id": "550e8400-e29b-41d4-a716-446655440000",
+  "price_id": "660e8400-e29b-41d4-a716-446655440000",
+  "message": "Product created successfully!"
+}
+```
+
+#### Status Codes
+- **201 Created** - Product and price created successfully
+- **400 Bad Request** - Validation error or invalid input
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Category not found
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+### Modify Product
+
+👑 **Administrator**
+
+Updates an existing product. All fields are optional - only include fields you want to change.
+
+- **Method**: `PATCH`
+- **Path**: `/admin/products/{id}`
+- **Path Parameters**:
+  - `id`: Product UUID
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "name": "Swedish Massage - 75min",
+  "description": "Extended Swedish massage session",
+  "category": "880e8400-e29b-41d4-a716-446655440001",
+  "duration": 75,
+  "published_status": "published",
+  "availability": "in_salon",
+  "buffer_time": 20,
+  "cancellation_hours": 48,
+  "metadata": {
+    "featured": true
+  }
+}
+```
+
+**Field Validations**:
+- `name`: Optional, max 255 characters
+- `description`: Optional, max 1000 characters
+- `category`: Optional, valid category UUID
+- `duration`: Optional, positive integer
+- `published_status`: Optional, one of: "draft", "published", "archived"
+- `availability`: Optional, one of: "in_salon", "home_visit", "both"
+- `buffer_time`: Optional, non-negative integer
+- `cancellation_hours`: Optional, non-negative integer
+- `metadata`: Optional JSON object
+- At least one field must be provided
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Product updated successfully
+- **400 Bad Request** - No fields provided or validation error
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Product or category not found
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Remove Product
+
+👑 **Administrator**
+
+Deletes a product and all associated prices. Also deletes from Stripe.
+
+- **Method**: `DELETE`
+- **Path**: `/admin/products/{id}`
+- **Path Parameters**:
+  - `id`: Product UUID
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Product deleted successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Product not found
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+## Category Endpoints
+
+### Get All Published Categories
+
+🔓 **Public**
+
+Retrieves all published categories with their active images.
+
+- **Method**: `GET`
+- **Path**: `/categories`
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+```json
+[
+  {
+    "id": "880e8400-e29b-41d4-a716-446655440000",
+    "name": "Massage Therapy",
+    "description": "Professional massage and bodywork services",
+    "status": "published",
+    "metadata": {},
+    "created_at": "2025-01-10T08:00:00Z",
+    "updated_at": "2025-01-15T10:30:00Z",
+    "images": [
+      {
+        "id": "990e8400-e29b-41d4-a716-446655440000",
+        "parent_id": "880e8400-e29b-41d4-a716-446655440000",
+        "parent_type": "category",
+        "url": "https://s3.amazonaws.com/images/category-massage.jpg",
+        "title": "Massage Room",
+        "is_active": true,
+        "created_at": "2025-01-10T08:15:00Z"
+      }
+    ]
+  }
+]
+```
+
+#### Field Descriptions
+- `status`: Enum values - "draft", "published", "archived"
+- `parent_type`: Always "category" for category images
+- `is_active`: Only one image per category can be active
+
+#### Status Codes
+- **200 OK** - Categories retrieved successfully
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Get Category by ID
+
+🔓 **Public**
+
+Retrieves a single published category by its UUID.
+
+- **Method**: `GET`
+- **Path**: `/categories/{id}`
+- **Path Parameters**:
+  - `id`: Category UUID
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+```json
+{
+  "id": "880e8400-e29b-41d4-a716-446655440000",
+  "name": "Massage Therapy",
+  "description": "Professional massage and bodywork services",
+  "status": "published",
+  "metadata": {},
+  "created_at": "2025-01-10T08:00:00Z",
+  "updated_at": "2025-01-15T10:30:00Z",
+  "images": [
+    {
+      "id": "990e8400-e29b-41d4-a716-446655440000",
+      "parent_id": "880e8400-e29b-41d4-a716-446655440000",
+      "parent_type": "category",
+      "url": "https://s3.amazonaws.com/images/category-massage.jpg",
+      "title": "Massage Room",
+      "is_active": true,
+      "created_at": "2025-01-10T08:15:00Z"
+    }
+  ]
+}
+```
+
+#### Status Codes
+- **200 OK** - Category retrieved successfully
+- **404 Not Found** - Category not found
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Get All Categories (Admin)
+
+👑 **Administrator**
+
+Retrieves all categories including draft and archived ones (admin only).
+
+- **Method**: `GET`
+- **Path**: `/admin/categories`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+Same structure as public category list, but includes categories with all status values.
+
+#### Status Codes
+- **200 OK** - Categories retrieved successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Create Category
+
+👑 **Administrator**
+
+Creates a new category.
+
+- **Method**: `POST`
+- **Path**: `/admin/categories`
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "name": "Aromatherapy",
+  "description": "Essential oil-based therapeutic treatments",
+  "metadata": {
+    "color": "purple"
+  }
+}
+```
+
+**Field Validations**:
+- `name`: Required, min 1 character, max 255 characters
+- `description`: Required, min 1 character, max 1000 characters
+- `metadata`: Optional JSON object
+
+#### Success Response (201 Created)
+```json
+{
+  "id": "880e8400-e29b-41d4-a716-446655440001",
+  "message": "Category created successfully!"
+}
+```
+
+#### Status Codes
+- **201 Created** - Category created successfully
+- **400 Bad Request** - Validation error (missing required fields, too long, etc.)
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **409 Conflict** - Category name already exists
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Modify Category
+
+👑 **Administrator**
+
+Updates an existing category. All fields are optional.
+
+- **Method**: `PATCH`
+- **Path**: `/admin/categories/{id}`
+- **Path Parameters**:
+  - `id`: Category UUID
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "name": "Massage & Bodywork",
+  "description": "Updated description",
+  "status": "published",
+  "metadata": {
+    "featured": true
+  }
+}
+```
+
+**Field Validations**:
+- `name`: Optional, min 1 character, max 255 characters
+- `description`: Optional, min 1 character, max 1000 characters
+- `status`: Optional, one of: "draft", "published", "archived"
+- `metadata`: Optional JSON object
+- At least one field must be provided
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Category updated successfully
+- **400 Bad Request** - No fields provided or validation error
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Category not found
+- **409 Conflict** - Category name already exists
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Remove Category
+
+👑 **Administrator**
+
+Deletes a category. Cannot delete if products are associated with it.
+
+- **Method**: `DELETE`
+- **Path**: `/admin/categories/{id}`
+- **Path Parameters**:
+  - `id`: Category UUID
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Category deleted successfully
+- **400 Bad Request** - Category has associated products
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Category not found
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+## Price Endpoints
+
+### Get Price by ID
+
+👑 **Administrator**
+
+Retrieves a single price by its UUID.
+
+- **Method**: `GET`
+- **Path**: `/admin/prices/{id}`
+- **Path Parameters**:
+  - `id`: Price UUID
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+```json
+{
+  "id": "660e8400-e29b-41d4-a716-446655440000",
+  "stripe_price_id": "price_1234567890",
+  "product_id": "550e8400-e29b-41d4-a716-446655440000",
+  "amount": 8000,
+  "currency": "eur",
+  "interval": "one_time",
+  "active": true,
+  "nickname": "Standard Rate",
+  "metadata": {},
+  "created_at": "2025-01-15T10:30:00Z"
+}
+```
+
+#### Status Codes
+- **200 OK** - Price retrieved successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Price not found
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Get Prices by Product ID
+
+👑 **Administrator**
+
+Retrieves all prices for a specific product.
+
+- **Method**: `GET`
+- **Path**: `/admin/products/{id}/prices`
+- **Path Parameters**:
+  - `id`: Product UUID
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+```json
+[
+  {
+    "id": "660e8400-e29b-41d4-a716-446655440000",
+    "stripe_price_id": "price_1234567890",
+    "product_id": "550e8400-e29b-41d4-a716-446655440000",
+    "amount": 8000,
+    "currency": "eur",
+    "interval": "one_time",
+    "active": true,
+    "nickname": "Standard Rate",
+    "metadata": {},
+    "created_at": "2025-01-15T10:30:00Z"
+  }
+]
+```
+
+#### Status Codes
+- **200 OK** - Prices retrieved successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Product not found
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Create Price
+
+👑 **Administrator**
+
+Creates a new price for an existing product. Also creates corresponding Stripe price.
+
+- **Method**: `POST`
+- **Path**: `/admin/products/{id}/prices`
+- **Path Parameters**:
+  - `id`: Product UUID
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "amount": 10000,
+  "currency": "eur",
+  "interval": "one_time",
+  "nickname": "Premium Rate",
+  "metadata": {
+    "tier": "premium"
+  }
+}
+```
+
+**Field Validations**:
+- `amount`: Required, positive integer (cents)
+- `currency`: Required, 3-character ISO currency code
+- `interval`: Required, one of: "one_time", "month", "year"
+- `nickname`: Optional, max 255 characters
+- `metadata`: Optional JSON object
+
+#### Success Response (201 Created)
+```json
+{
+  "id": "660e8400-e29b-41d4-a716-446655440001",
+  "stripe_price_id": "price_0987654321",
+  "product_id": "550e8400-e29b-41d4-a716-446655440000",
+  "amount": 10000,
+  "currency": "eur",
+  "interval": "one_time",
+  "active": true,
+  "nickname": "Premium Rate",
+  "metadata": {
+    "tier": "premium"
+  },
+  "created_at": "2025-01-15T14:00:00Z"
+}
+```
+
+#### Status Codes
+- **201 Created** - Price created successfully
+- **400 Bad Request** - Validation error or invalid input
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Product not found
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+### Update Price
+
+👑 **Administrator**
+
+Updates price metadata and active status. Note: Amount and currency cannot be changed (Stripe limitation).
+
+- **Method**: `PATCH`
+- **Path**: `/admin/prices/{id}`
+- **Path Parameters**:
+  - `id`: Price UUID
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "active": false,
+  "nickname": "Legacy Rate",
+  "metadata": {
+    "deprecated": true
+  }
+}
+```
+
+**Field Validations**:
+- `active`: Optional, boolean
+- `nickname`: Optional, max 255 characters
+- `metadata`: Optional JSON object
+- At least one field must be provided
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Price updated successfully
+- **400 Bad Request** - No fields provided or validation error
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Price not found
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+## Image Endpoints
+
+### Upload Image
+
+👑 **Administrator**
+
+Associates an image with a category or product.
+
+- **Method**: `POST`
+- **Path**: `/admin/images`
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "parent_id": "880e8400-e29b-41d4-a716-446655440000",
+  "parent_type": "category",
+  "title": "Main Category Image",
+  "is_active": true
+}
+```
+
+**Field Validations**:
+- `parent_id`: Required, valid UUID
+- `parent_type`: Required, one of: "category", "product"
+- `title`: Required, max 255 characters
+- `is_active`: Optional, boolean (default: false)
+
+**Important**: If `is_active` is true, automatically deactivates other images for the same parent.
+
+#### Success Response (201 Created)
+```json
+{
+  "id": "990e8400-e29b-41d4-a716-446655440001",
+  "parent_id": "880e8400-e29b-41d4-a716-446655440000",
+  "parent_type": "category",
+  "url": "https://s3.amazonaws.com/images/category-image.jpg",
+  "title": "Main Category Image",
+  "is_active": true,
+  "created_at": "2025-01-15T15:00:00Z"
+}
+```
+
+#### Status Codes
+- **201 Created** - Image uploaded successfully
+- **400 Bad Request** - Validation error or invalid parent type
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Parent category or product not found
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database or S3 temporarily unavailable
+
+---
+
+### Remove Image
+
+👑 **Administrator**
+
+Deletes an image association.
+
+- **Method**: `DELETE`
+- **Path**: `/admin/images`
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "image_id": "990e8400-e29b-41d4-a716-446655440001",
+  "parent_id": "880e8400-e29b-41d4-a716-446655440000",
+  "parent_type": "category"
+}
+```
+
+**Field Validations**:
+- `image_id`: Required, valid UUID
+- `parent_id`: Required, valid UUID
+- `parent_type`: Required, one of: "category", "product"
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Image deleted successfully
+- **400 Bad Request** - Validation error or invalid parent type
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Image not found
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Set Active Image
+
+👑 **Administrator**
+
+Sets an image as the active image for a category or product. Automatically deactivates other images.
+
+- **Method**: `POST`
+- **Path**: `/admin/images/set-active`
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "image_id": "990e8400-e29b-41d4-a716-446655440001",
+  "parent_id": "880e8400-e29b-41d4-a716-446655440000",
+  "parent_type": "category"
+}
+```
+
+**Field Validations**:
+- `image_id`: Required, valid UUID
+- `parent_id`: Required, valid UUID
+- `parent_type`: Required, one of: "category", "product"
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Active image updated successfully
+- **400 Bad Request** - Validation error or invalid parent type
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Image or parent not found
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+## Coupon Endpoints
+
+### Validate Coupon
+
+🔓 **Public**
+
+Validates a coupon by its Stripe coupon ID.
+
+- **Method**: `POST`
+- **Path**: `/coupons/validate`
+- **Content-Type**: `application/json`
+
+#### Request Body
+```json
+{
+  "stripeCouponId": "SUMMER2025"
+}
+```
+
+**Field Validations**:
+- `stripeCouponId`: Required, non-empty string
+
+#### Success Response (200 OK)
+
+**Valid Coupon**:
+```json
+{
+  "valid": true,
+  "coupon": {
+    "id": "770e8400-e29b-41d4-a716-446655440000",
+    "stripe_coupon_id": "SUMMER2025",
+    "name": "Summer Sale",
+    "percent_off": 20.0,
+    "amount_off": null,
+    "currency": null,
+    "duration": "once",
+    "duration_in_months": null,
+    "max_redemptions": 100,
+    "times_redeemed": 45,
+    "redeem_by": "2025-09-01T00:00:00Z",
+    "valid": true,
+    "metadata": {},
+    "created_at": "2025-06-01T00:00:00Z"
+  }
+}
+```
+
+**Invalid Coupon**:
+```json
+{
+  "valid": false,
+  "reason": "Coupon has expired"
+}
+```
+
+#### Field Descriptions
+- `percent_off`: Percentage discount (0.1-100)
+- `amount_off`: Fixed discount in cents (mutually exclusive with percent_off)
+- `currency`: Required if amount_off is set
+- `duration`: Enum values - "once", "repeating", "forever"
+- `duration_in_months`: Required if duration is "repeating"
+- `times_redeemed`: Current redemption count
+
+#### Status Codes
+- **200 OK** - Validation completed (check `valid` field for result)
+- **400 Bad Request** - Missing or invalid stripeCouponId
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+### Get Valid Coupons
+
+🔓 **Public**
+
+Retrieves all currently valid and active coupons.
+
+- **Method**: `GET`
+- **Path**: `/coupons/valid`
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+```json
+[
+  {
+    "id": "770e8400-e29b-41d4-a716-446655440000",
+    "stripe_coupon_id": "SUMMER2025",
+    "name": "Summer Sale",
+    "percent_off": 20.0,
+    "amount_off": null,
+    "currency": null,
+    "duration": "once",
+    "duration_in_months": null,
+    "max_redemptions": 100,
+    "times_redeemed": 45,
+    "redeem_by": "2025-09-01T00:00:00Z",
+    "valid": true,
+    "metadata": {},
+    "created_at": "2025-06-01T00:00:00Z"
+  }
+]
+```
+
+#### Status Codes
+- **200 OK** - Valid coupons retrieved successfully
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Get All Coupons (Admin)
+
+👑 **Administrator**
+
+Retrieves all coupons including invalid and expired ones.
+
+- **Method**: `GET`
+- **Path**: `/admin/coupons`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+Same structure as valid coupons list, but includes all coupons regardless of validity.
+
+#### Status Codes
+- **200 OK** - Coupons retrieved successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Get Coupon by ID (Admin)
+
+👑 **Administrator**
+
+Retrieves a single coupon by its UUID.
+
+- **Method**: `GET`
+- **Path**: `/admin/coupons/{id}`
+- **Path Parameters**:
+  - `id`: Coupon UUID
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+```json
+{
+  "id": "770e8400-e29b-41d4-a716-446655440000",
+  "stripe_coupon_id": "SUMMER2025",
+  "name": "Summer Sale",
+  "percent_off": 20.0,
+  "amount_off": null,
+  "currency": null,
+  "duration": "once",
+  "duration_in_months": null,
+  "max_redemptions": 100,
+  "times_redeemed": 45,
+  "redeem_by": "2025-09-01T00:00:00Z",
+  "valid": true,
+  "metadata": {},
+  "created_at": "2025-06-01T00:00:00Z"
+}
+```
+
+#### Status Codes
+- **200 OK** - Coupon retrieved successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Coupon not found
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Get Coupon by Stripe ID (Admin)
+
+👑 **Administrator**
+
+Retrieves a coupon by its Stripe coupon ID.
+
+- **Method**: `GET`
+- **Path**: `/admin/coupons/stripe/{stripeId}`
+- **Path Parameters**:
+  - `stripeId`: Stripe coupon ID
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+Same structure as Get Coupon by ID.
+
+#### Status Codes
+- **200 OK** - Coupon retrieved successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Coupon not found
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Create Coupon (Admin)
+
+👑 **Administrator**
+
+Creates a new coupon in both the database and Stripe.
+
+- **Method**: `POST`
+- **Path**: `/admin/coupons`
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "name": "Holiday Special",
+  "percentOff": 25.0,
+  "duration": "once",
+  "maxRedemptions": 50,
+  "redeemBy": "2025-12-31T23:59:59Z",
+  "metadata": {
+    "campaign": "holiday2025"
+  }
+}
+```
+
+**Field Validations**:
+- `name`: Required, max 255 characters
+- `percentOff`: Optional, 0.1-100 (mutually exclusive with amountOff)
+- `amountOff`: Optional, positive integer in cents (mutually exclusive with percentOff)
+- `currency`: Required if amountOff is set, 3-character ISO code
+- `duration`: Required, one of: "once", "repeating", "forever"
+- `durationInMonths`: Required if duration is "repeating"
+- `maxRedemptions`: Optional, positive integer
+- `redeemBy`: Optional, ISO 8601 timestamp
+- `metadata`: Optional JSON object
+
+**Important**: Must provide either `percentOff` OR `amountOff`, not both.
+
+#### Success Response (201 Created)
+```json
+{
+  "id": "770e8400-e29b-41d4-a716-446655440001",
+  "stripe_coupon_id": "HOLIDAY2025_ABC123",
+  "name": "Holiday Special",
+  "percent_off": 25.0,
+  "amount_off": null,
+  "currency": null,
+  "duration": "once",
+  "duration_in_months": null,
+  "max_redemptions": 50,
+  "times_redeemed": 0,
+  "redeem_by": "2025-12-31T23:59:59Z",
+  "valid": true,
+  "metadata": {
+    "campaign": "holiday2025"
+  },
+  "created_at": "2025-01-15T16:00:00Z"
+}
+```
+
+#### Status Codes
+- **201 Created** - Coupon created successfully
+- **400 Bad Request** - Validation error (both percentOff and amountOff provided, missing currency, etc.)
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+### Update Coupon (Admin)
+
+👑 **Administrator**
+
+Updates coupon name and metadata. Most fields cannot be changed after creation (Stripe limitation).
+
+- **Method**: `PATCH`
+- **Path**: `/admin/coupons/{id}`
+- **Path Parameters**:
+  - `id`: Coupon UUID
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "name": "Updated Holiday Special",
+  "metadata": {
+    "campaign": "holiday2025",
+    "featured": true
+  }
+}
+```
+
+**Field Validations**:
+- `name`: Optional, max 255 characters
+- `metadata`: Optional JSON object
+- At least one field must be provided
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Coupon updated successfully
+- **400 Bad Request** - No fields provided or validation error
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Coupon not found
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+### Deactivate Coupon (Admin)
+
+👑 **Administrator**
+
+Deactivates a coupon, preventing new redemptions. Does not affect existing subscriptions.
+
+- **Method**: `POST`
+- **Path**: `/admin/coupons/{id}/deactivate`
+- **Path Parameters**:
+  - `id`: Coupon UUID
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Coupon deactivated successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Coupon not found
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+### Delete Coupon (Admin)
+
+👑 **Administrator**
+
+Deletes a coupon from both database and Stripe.
+
+- **Method**: `DELETE`
+- **Path**: `/admin/coupons/{id}`
+- **Path Parameters**:
+  - `id`: Coupon UUID
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Coupon deleted successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Coupon not found
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+## Promotion Code Endpoints
+
+### Validate Promotion Code
+
+🔓 **Public**
+
+Validates a promotion code and checks if it can be applied to an order.
+
+- **Method**: `POST`
+- **Path**: `/promotion-codes/validate`
+- **Content-Type**: `application/json`
+
+#### Request Body
+```json
+{
+  "code": "SUMMER20",
+  "orderAmount": 10000,
+  "orderCurrency": "eur",
+  "customerId": "cus_123456789"
+}
+```
+
+**Field Validations**:
+- `code`: Required, non-empty string
+- `orderAmount`: Optional, positive integer in cents
+- `orderCurrency`: Optional, 3-character ISO code
+- `customerId`: Optional, Stripe customer ID
+
+#### Success Response (200 OK)
+
+**Valid Promotion Code**:
+```json
+{
+  "valid": true,
+  "promotionCode": {
+    "id": "aa0e8400-e29b-41d4-a716-446655440000",
+    "stripe_promotion_code_id": "promo_123456",
+    "coupon_id": "770e8400-e29b-41d4-a716-446655440000",
+    "code": "SUMMER20",
+    "active": true,
+    "max_redemptions": 100,
+    "times_redeemed": 45,
+    "expires_at": "2025-09-01T00:00:00Z",
+    "first_time_transaction": false,
+    "minimum_amount": 5000,
+    "minimum_amount_currency": "eur",
+    "restrictions": {
+      "currency_options": ["eur", "usd"]
+    },
+    "metadata": {},
+    "created_at": "2025-06-01T00:00:00Z"
+  }
+}
+```
+
+**Invalid Promotion Code**:
+```json
+{
+  "valid": false,
+  "reason": "Order amount below minimum required (€50.00)"
+}
+```
+
+#### Validation Rules
+- Code must be active
+- Must not be expired (expires_at check)
+- Must not exceed max_redemptions
+- Order amount must meet minimum_amount requirement
+- Order currency must match restrictions.currency_options
+- If first_time_transaction is true, customer must be new
+
+#### Status Codes
+- **200 OK** - Validation completed (check `valid` field for result)
+- **400 Bad Request** - Missing or invalid code
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+### Get Promotion Code with Coupon (Public)
+
+🔓 **Public**
+
+Retrieves promotion code details with associated coupon information.
+
+- **Method**: `GET`
+- **Path**: `/promotion-codes/code/{code}`
+- **Path Parameters**:
+  - `code`: Promotion code string
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+```json
+{
+  "id": "aa0e8400-e29b-41d4-a716-446655440000",
+  "stripe_promotion_code_id": "promo_123456",
+  "coupon_id": "770e8400-e29b-41d4-a716-446655440000",
+  "code": "SUMMER20",
+  "active": true,
+  "max_redemptions": 100,
+  "times_redeemed": 45,
+  "expires_at": "2025-09-01T00:00:00Z",
+  "first_time_transaction": false,
+  "minimum_amount": 5000,
+  "minimum_amount_currency": "eur",
+  "restrictions": {
+    "currency_options": ["eur", "usd"]
+  },
+  "metadata": {},
+  "created_at": "2025-06-01T00:00:00Z",
+  "coupon": {
+    "id": "770e8400-e29b-41d4-a716-446655440000",
+    "stripe_coupon_id": "SUMMER2025",
+    "name": "Summer Sale",
+    "percent_off": 20.0,
+    "amount_off": null,
+    "currency": null,
+    "duration": "once",
+    "duration_in_months": null,
+    "max_redemptions": 100,
+    "times_redeemed": 45,
+    "redeem_by": "2025-09-01T00:00:00Z",
+    "valid": true,
+    "metadata": {},
+    "created_at": "2025-06-01T00:00:00Z"
+  }
+}
+```
+
+#### Status Codes
+- **200 OK** - Promotion code retrieved successfully
+- **404 Not Found** - Promotion code not found
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Get All Promotion Codes (Admin)
+
+👑 **Administrator**
+
+Retrieves all promotion codes.
+
+- **Method**: `GET`
+- **Path**: `/admin/promotion-codes`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+```json
+[
+  {
+    "id": "aa0e8400-e29b-41d4-a716-446655440000",
+    "stripe_promotion_code_id": "promo_123456",
+    "coupon_id": "770e8400-e29b-41d4-a716-446655440000",
+    "code": "SUMMER20",
+    "active": true,
+    "max_redemptions": 100,
+    "times_redeemed": 45,
+    "expires_at": "2025-09-01T00:00:00Z",
+    "first_time_transaction": false,
+    "minimum_amount": 5000,
+    "minimum_amount_currency": "eur",
+    "restrictions": {
+      "currency_options": ["eur", "usd"]
+    },
+    "metadata": {},
+    "created_at": "2025-06-01T00:00:00Z"
+  }
+]
+```
+
+#### Status Codes
+- **200 OK** - Promotion codes retrieved successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Get Active Promotion Codes (Admin)
+
+👑 **Administrator**
+
+Retrieves only active promotion codes.
+
+- **Method**: `GET`
+- **Path**: `/admin/promotion-codes/active`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+Same structure as Get All Promotion Codes, but filtered to active codes only.
+
+#### Status Codes
+- **200 OK** - Active promotion codes retrieved successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Get Promotion Code by ID (Admin)
+
+👑 **Administrator**
+
+Retrieves a single promotion code by its UUID.
+
+- **Method**: `GET`
+- **Path**: `/admin/promotion-codes/{id}`
+- **Path Parameters**:
+  - `id`: Promotion code UUID
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+Same structure as promotion code object in Get All Promotion Codes.
+
+#### Status Codes
+- **200 OK** - Promotion code retrieved successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Promotion code not found
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Get Promotion Code by Code String (Admin)
+
+👑 **Administrator**
+
+Retrieves a promotion code by its code string.
+
+- **Method**: `GET`
+- **Path**: `/admin/promotion-codes/code/{code}`
+- **Path Parameters**:
+  - `code`: Promotion code string
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (200 OK)
+Same structure as promotion code object in Get All Promotion Codes.
+
+#### Status Codes
+- **200 OK** - Promotion code retrieved successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Promotion code not found
+- **500 Internal Server Error** - Server error
+- **503 Service Unavailable** - Database temporarily unavailable
+
+---
+
+### Create Promotion Code (Admin)
+
+👑 **Administrator**
+
+Creates a new promotion code in both the database and Stripe.
+
+- **Method**: `POST`
+- **Path**: `/admin/promotion-codes`
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "couponId": "770e8400-e29b-41d4-a716-446655440000",
+  "code": "WELCOME-2025",
+  "maxRedemptions": 500,
+  "expiresAt": "2025-12-31T23:59:59Z",
+  "firstTimeTransaction": true,
+  "minimumAmount": 3000,
+  "minimumAmountCurrency": "eur",
+  "restrictions": {
+    "currencyOptions": ["eur"]
+  },
+  "metadata": {
+    "campaign": "welcome"
+  }
+}
+```
+
+**Field Validations**:
+- `couponId`: Required, valid coupon UUID
+- `code`: Required, 3-50 characters, uppercase alphanumeric with `-` and `_` allowed
+- `maxRedemptions`: Optional, positive integer
+- `expiresAt`: Optional, ISO 8601 timestamp
+- `firstTimeTransaction`: Required, boolean
+- `minimumAmount`: Optional, positive integer in cents
+- `minimumAmountCurrency`: Optional, 3-character ISO code (required if minimumAmount set)
+- `restrictions.currencyOptions`: Optional, array of 3-character ISO codes
+- `metadata`: Optional JSON object
+
+#### Success Response (201 Created)
+```json
+{
+  "id": "aa0e8400-e29b-41d4-a716-446655440001",
+  "stripe_promotion_code_id": "promo_987654",
+  "coupon_id": "770e8400-e29b-41d4-a716-446655440000",
+  "code": "WELCOME-2025",
+  "active": true,
+  "max_redemptions": 500,
+  "times_redeemed": 0,
+  "expires_at": "2025-12-31T23:59:59Z",
+  "first_time_transaction": true,
+  "minimum_amount": 3000,
+  "minimum_amount_currency": "eur",
+  "restrictions": {
+    "currency_options": ["eur"]
+  },
+  "metadata": {
+    "campaign": "welcome"
+  },
+  "created_at": "2025-01-15T17:00:00Z"
+}
+```
+
+#### Status Codes
+- **201 Created** - Promotion code created successfully
+- **400 Bad Request** - Validation error (invalid code format, missing currency, etc.)
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Coupon not found
+- **409 Conflict** - Promotion code already exists
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+### Update Promotion Code (Admin)
+
+👑 **Administrator**
+
+Updates promotion code active status and metadata.
+
+- **Method**: `PATCH`
+- **Path**: `/admin/promotion-codes/{id}`
+- **Path Parameters**:
+  - `id`: Promotion code UUID
+- **Content-Type**: `application/json`
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+```json
+{
+  "active": false,
+  "metadata": {
+    "campaign": "welcome",
+    "deprecated": true
+  }
+}
+```
+
+**Field Validations**:
+- `active`: Optional, boolean
+- `metadata`: Optional JSON object
+- At least one field must be provided
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Promotion code updated successfully
+- **400 Bad Request** - No fields provided or validation error
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Promotion code not found
+- **415 Unsupported Media Type** - Missing `application/json` Content-Type
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+### Deactivate Promotion Code (Admin)
+
+👑 **Administrator**
+
+Deactivates a promotion code, preventing new redemptions.
+
+- **Method**: `POST`
+- **Path**: `/admin/promotion-codes/{id}/deactivate`
+- **Path Parameters**:
+  - `id`: Promotion code UUID
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Promotion code deactivated successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Promotion code not found
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
+
+---
+
+### Delete Promotion Code (Admin)
+
+👑 **Administrator**
+
+Deletes a promotion code from both database and Stripe.
+
+- **Method**: `DELETE`
+- **Path**: `/admin/promotion-codes/{id}`
+- **Path Parameters**:
+  - `id`: Promotion code UUID
+- **Authentication**: Requires Administrator role
+
+#### Request Body
+None
+
+#### Success Response (204 No Content)
+No response body
+
+#### Status Codes
+- **204 No Content** - Promotion code deleted successfully
+- **401 Unauthorized** - Not authenticated
+- **403 Forbidden** - Not an administrator
+- **404 Not Found** - Promotion code not found
+- **500 Internal Server Error** - Server error
+- **502 Bad Gateway** - Stripe API error
+- **503 Service Unavailable** - Database or Stripe temporarily unavailable
 
 ---
 
