@@ -1,7 +1,12 @@
 <script lang="ts">
-    import type { LayoutProps } from "./$types";
-    let { children }: LayoutProps = $props();
-    // NOTE: here we have the sidebar for authenticated users
+	import type { LayoutProps } from "./$types";
+	import Navigation from "./navigation.svelte";
+
+	let { children, data }: LayoutProps = $props();
 </script>
 
-{@render children()}
+<Navigation user={data.user} />
+
+<main class="min-h-screen bg-white">
+	{@render children()}
+</main>
