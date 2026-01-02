@@ -62,7 +62,7 @@
 
 <!-- Desktop Top Navigation (hidden below 1280px) -->
 <div
-    class="hidden xl:flex fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-dark-100/50 items-center justify-between px-4 py-4 xl:grid xl:grid-cols-[1fr_auto_1fr] xl:py-4 xl:px-12"
+    class="hidden xl:grid xl:grid-cols-[1fr_auto_1fr] fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-dark-100/50 items-center px-4 py-4 xl:py-4 xl:px-12"
 >
     <!-- Logo/Brand -->
     <div class="xl:justify-start">
