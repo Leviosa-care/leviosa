@@ -6,6 +6,7 @@
     import TabsContent from "$lib/ui/bits-components/TabsContent.svelte";
     import Categories from "./Categories.svelte";
     import Products from "./Products.svelte";
+    import Exercices from "./Exercices.svelte";
 
     let { data }: { data: PageData } = $props();
     interface Trigger {
@@ -65,8 +66,14 @@
             <TabsContent value="prix" class="h-full p-6">
                 <!-- Prix content -->
             </TabsContent>
+            <TabsContent value="coupons" class="h-full p-6">
+                <!-- Coupons content -->
+            </TabsContent>
+            <TabsContent value="promotion-codes" class="h-full p-6">
+                <!-- Promotion codes content -->
+            </TabsContent>
             <TabsContent value="exercices" class="h-full p-6">
-                <!-- Exercices content -->
+                <Exercices {data} />
             </TabsContent>
         </div>
     </Tabs>
