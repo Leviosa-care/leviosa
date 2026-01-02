@@ -4,6 +4,19 @@
     import type { Snippet } from "svelte";
     import { superForm } from "sveltekit-superforms";
     import type { PageData } from "./$types";
+    import Drawer from "$lib/ui/Drawer.svelte";
+
+    import { browser } from "$app/environment";
+
+    // Detect if we're on mobile
+    let isMobile = $state(false);
+
+    if (browser) {
+        isMobile = window.innerWidth < 768;
+        window.addEventListener('resize', () => {
+            isMobile = window.innerWidth < 768;
+        });
+    }
 
     type Input = Snippet<[string]>;
 
@@ -109,33 +122,22 @@
 </script>
 
 <div class="h-full bg-white">
-    <!-- Header -->
-    <div
-        class="px-8 py-6 flex justify-between items-center border-b border-border-card"
+    <!-- Create button - floating on mobile -->
+    <Button.Root
+        type="button"
+        class="cursor-pointer fixed bottom-20 right-4 md:absolute md:top-6 md:right-8 z-10"
+        onclick={openCreateDialog}
     >
-        <div class="grid gap-1">
-            <h2 class="text-2xl font-semibold tracking-tight">Catégories</h2>
-            <p class="text-sm text-foreground-alt">
-                Créer et gérer les catégories de services disponibles sur la
-                plateforme.
-            </p>
-        </div>
-        <Button.Root
-            type="button"
-            class="cursor-pointer"
-            onclick={openCreateDialog}
+        <div
+            class="flex gap-2 items-center py-2 bg-dark text-white rounded-input hover:bg-dark/95 transition-all shadow-mini md:px-4 w-12 h-12 md:w-auto md:h-auto justify-center"
         >
-            <div
-                class="flex gap-2 items-center py-2 px-4 bg-dark text-white rounded-input hover:bg-dark/95 transition-all shadow-mini"
-            >
-                <Plus size={18} />
-                <span class="text-sm font-medium">Nouvelle Catégorie</span>
-            </div>
-        </Button.Root>
-    </div>
+            <Plus size={18} />
+            <span class="text-sm font-medium hidden md:inline">Nouvelle Catégorie</span>
+        </div>
+    </Button.Root>
 
     <!-- Categories Grid -->
-    <div class="p-8">
+    <div class="p-4 md:p-8">
         {#if categories.length === 0}
             <div
                 class="flex flex-col items-center justify-center py-16 text-center"
@@ -254,237 +256,435 @@
     </div>
 </div>
 
-<!-- Create Category Dialog -->
-<Dialog.Root bind:open={createDialogOpen}>
-    <Dialog.Portal>
-        <Dialog.Overlay
-            class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80"
-        />
-        <Dialog.Content
-            class="rounded-card-lg bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-hidden fixed left-[50%] top-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] border p-8 sm:max-w-[540px] md:w-full"
-        >
-            <Dialog.Title class="w-full text-xl font-semibold tracking-tight">
+<!-- Create Category Dialog/Drawer -->
+{#if isMobile}
+    <Drawer bind:isOpen={createDialogOpen}>
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold tracking-tight">
                 Créer une catégorie
-            </Dialog.Title>
-            <Dialog.Description class="text-foreground-alt !mt-1 text-sm">
-                Remplissez les détails ci-dessous pour créer une nouvelle
-                catégorie.
-            </Dialog.Description>
-
-            <Separator.Root class="bg-muted mx-5 !mb-2 !mt-5 block h-px" />
-
-            <form
-                method="POST"
-                action="?/createCategory"
-                enctype="multipart/form-data"
-                use:createEnhance
-                class="grid gap-4"
+            </h2>
+            <button
+                type="button"
+                onclick={() => (createDialogOpen = false)}
+                class="p-2 hover:bg-dark-04 rounded-md transition-all"
             >
-                {#if $createErrors._errors}
-                    <div class="text-sm text-destructive mt-4">
-                        {$createErrors._errors[0]}
-                    </div>
-                {/if}
+                <X class="text-foreground size-5" />
+            </button>
+        </div>
+        <p class="text-foreground-alt text-sm mb-6">
+            Remplissez les détails ci-dessous pour créer une nouvelle
+            catégorie.
+        </p>
 
-                <div
-                    class="grid grid-cols-[max-content_1fr] gap-4 w-full items-center pb-11 pt-7"
-                >
-                    {@render field(
-                        "name",
-                        "Nom",
-                        input,
-                        $createForm.name,
-                        $createErrors.name,
-                    )}
-                    {@render field(
-                        "description",
-                        "Description",
-                        textarea,
-                        $createForm.description,
-                        $createErrors.description,
-                    )}
-                    {@render field("image", "Image", fileInput, null, null)}
-                </div>
-                <div class="flex w-full justify-end gap-3">
-                    <Button.Root type="button" class="cursor-pointer">
-                        <Dialog.Close
-                            class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
-                        >
-                            Annuler
-                        </Dialog.Close>
-                    </Button.Root>
-                    <Button.Root type="submit" class="cursor-pointer">
-                        <div
-                            class="h-input rounded-input bg-dark text-background shadow-mini hover:bg-dark/95 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
-                        >
-                            Créer
-                        </div>
-                    </Button.Root>
-                </div>
-            </form>
-
-            <Button.Root type="button" class="cursor-pointer">
-                <Dialog.Close
-                    class="focus-visible:ring-foreground focus-visible:ring-offset-background focus-visible:outline-hidden absolute right-5 top-5 rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer"
-                >
-                    <X class="text-foreground size-5" />
-                    <span class="sr-only">Close</span>
-                </Dialog.Close>
-            </Button.Root>
-        </Dialog.Content>
-    </Dialog.Portal>
-</Dialog.Root>
-
-<!-- Edit Category Dialog -->
-<Dialog.Root bind:open={editDialogOpen}>
-    <Dialog.Portal>
-        <Dialog.Overlay
-            class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80"
-        />
-        <Dialog.Content
-            class="rounded-card-lg bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-hidden fixed left-[50%] top-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] border p-8 sm:max-w-[540px] md:w-full"
+        <form
+            method="POST"
+            action="?/createCategory"
+            enctype="multipart/form-data"
+            use:createEnhance
+            class="grid gap-4"
         >
-            <Dialog.Title class="w-full text-xl font-semibold tracking-tight">
-                Modifier la catégorie
-            </Dialog.Title>
-            <Dialog.Description class="text-foreground-alt !mt-1 text-sm">
-                Mettez à jour les détails de la catégorie.
-            </Dialog.Description>
-
-            <Separator.Root class="bg-muted mx-5 !mb-2 !mt-5 block h-px" />
-
-            <form
-                method="POST"
-                action="?/updateCategory"
-                enctype="multipart/form-data"
-                use:updateEnhance
-                class="grid gap-4"
-            >
-                <input type="hidden" name="id" bind:value={$updateForm.id} />
-
-                {#if $updateErrors._errors}
-                    <div class="text-sm text-destructive mt-4">
-                        {$updateErrors._errors[0]}
-                    </div>
-                {/if}
-
-                <div
-                    class="grid grid-cols-[max-content_1fr] gap-4 w-full items-center pb-11 pt-7"
-                >
-                    {@render field(
-                        "name",
-                        "Nom",
-                        inputUpdate,
-                        $updateForm.name,
-                        $updateErrors.name,
-                    )}
-                    {@render field(
-                        "description",
-                        "Description",
-                        textareaUpdate,
-                        $updateForm.description,
-                        $updateErrors.description,
-                    )}
-                    {@render field(
-                        "status",
-                        "Statut",
-                        statusSelect,
-                        $updateForm.status,
-                        $updateErrors.status,
-                    )}
-                    {@render field("image", "Image", fileInput, null, null)}
-                </div>
-                <div class="flex w-full justify-end gap-3">
-                    <Button.Root type="button" class="cursor-pointer">
-                        <Dialog.Close
-                            class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
-                        >
-                            Annuler
-                        </Dialog.Close>
-                    </Button.Root>
-                    <Button.Root type="submit" class="cursor-pointer">
-                        <div
-                            class="h-input rounded-input bg-dark text-background shadow-mini hover:bg-dark/95 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
-                        >
-                            Enregistrer
-                        </div>
-                    </Button.Root>
-                </div>
-            </form>
-
-            <Button.Root type="button" class="cursor-pointer">
-                <Dialog.Close
-                    class="focus-visible:ring-foreground focus-visible:ring-offset-background focus-visible:outline-hidden absolute right-5 top-5 rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer"
-                >
-                    <X class="text-foreground size-5" />
-                    <span class="sr-only">Close</span>
-                </Dialog.Close>
-            </Button.Root>
-        </Dialog.Content>
-    </Dialog.Portal>
-</Dialog.Root>
-
-<!-- Delete Category Dialog -->
-<Dialog.Root bind:open={deleteDialogOpen}>
-    <Dialog.Portal>
-        <Dialog.Overlay
-            class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80"
-        />
-        <Dialog.Content
-            class="rounded-card-lg bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-hidden fixed left-[50%] top-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] border p-8 sm:max-w-[440px] md:w-full"
-        >
-            <Dialog.Title class="w-full text-xl font-semibold tracking-tight">
-                Supprimer la catégorie
-            </Dialog.Title>
-            <Dialog.Description class="text-foreground-alt !mt-2 text-sm">
-                Êtes-vous sûr de vouloir supprimer la catégorie "<span
-                    class="font-medium">{selectedCategory?.name}</span
-                >" ? Cette action est irréversible.
-            </Dialog.Description>
-
-            {#if $deleteErrors._errors}
+            {#if $createErrors._errors}
                 <div class="text-sm text-destructive mt-4">
-                    {$deleteErrors._errors[0]}
+                    {$createErrors._errors[0]}
                 </div>
             {/if}
 
-            <form
-                method="POST"
-                action="?/deleteCategory"
-                use:deleteEnhance
-                class="mt-8"
+            <div
+                class="grid grid-cols-1 gap-4 w-full pb-4"
             >
-                <input type="hidden" name="id" bind:value={$deleteForm.id} />
-
-                <div class="flex w-full justify-end gap-3">
-                    <Button.Root type="button" class="cursor-pointer">
-                        <Dialog.Close
-                            class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
-                        >
-                            Annuler
-                        </Dialog.Close>
-                    </Button.Root>
-                    <Button.Root type="submit" class="cursor-pointer">
-                        <div
-                            class="h-input rounded-input bg-destructive text-white shadow-mini hover:bg-destructive/90 focus-visible:ring-destructive focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
-                        >
-                            Supprimer
-                        </div>
-                    </Button.Root>
-                </div>
-            </form>
-
-            <Button.Root type="button" class="cursor-pointer">
-                <Dialog.Close
-                    class="focus-visible:ring-foreground focus-visible:ring-offset-background focus-visible:outline-hidden absolute right-5 top-5 rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer"
+                {@render field(
+                    "name",
+                    "Nom",
+                    input,
+                    $createForm.name,
+                    $createErrors.name,
+                )}
+                {@render field(
+                    "description",
+                    "Description",
+                    textarea,
+                    $createForm.description,
+                    $createErrors.description,
+                )}
+                {@render field("image", "Image", fileInput, null, null)}
+            </div>
+            <div class="flex w-full justify-end gap-3">
+                <button
+                    type="button"
+                    onclick={() => (createDialogOpen = false)}
+                    class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
                 >
-                    <X class="text-foreground size-5" />
-                    <span class="sr-only">Close</span>
-                </Dialog.Close>
-            </Button.Root>
-        </Dialog.Content>
-    </Dialog.Portal>
-</Dialog.Root>
+                    Annuler
+                </button>
+                <button
+                    type="submit"
+                    class="h-input rounded-input bg-dark text-background shadow-mini hover:bg-dark/95 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                >
+                    Créer
+                </button>
+            </div>
+        </form>
+    </Drawer>
+{:else}
+    <Dialog.Root bind:open={createDialogOpen}>
+        <Dialog.Portal>
+            <Dialog.Overlay
+                class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80"
+            />
+            <Dialog.Content
+                class="rounded-card-lg bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-hidden fixed left-[50%] top-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] border p-8 sm:max-w-[540px] md:w-full"
+            >
+                <Dialog.Title class="w-full text-xl font-semibold tracking-tight">
+                    Créer une catégorie
+                </Dialog.Title>
+                <Dialog.Description class="text-foreground-alt !mt-1 text-sm">
+                    Remplissez les détails ci-dessous pour créer une nouvelle
+                    catégorie.
+                </Dialog.Description>
+
+                <Separator.Root class="bg-muted mx-5 !mb-2 !mt-5 block h-px" />
+
+                <form
+                    method="POST"
+                    action="?/createCategory"
+                    enctype="multipart/form-data"
+                    use:createEnhance
+                    class="grid gap-4"
+                >
+                    {#if $createErrors._errors}
+                        <div class="text-sm text-destructive mt-4">
+                            {$createErrors._errors[0]}
+                        </div>
+                    {/if}
+
+                    <div
+                        class="grid grid-cols-[max-content_1fr] gap-4 w-full items-center pb-11 pt-7"
+                    >
+                        {@render field(
+                            "name",
+                            "Nom",
+                            input,
+                            $createForm.name,
+                            $createErrors.name,
+                        )}
+                        {@render field(
+                            "description",
+                            "Description",
+                            textarea,
+                            $createForm.description,
+                            $createErrors.description,
+                        )}
+                        {@render field("image", "Image", fileInput, null, null)}
+                    </div>
+                    <div class="flex w-full justify-end gap-3">
+                        <Button.Root type="button" class="cursor-pointer">
+                            <Dialog.Close
+                                class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                            >
+                                Annuler
+                            </Dialog.Close>
+                        </Button.Root>
+                        <Button.Root type="submit" class="cursor-pointer">
+                            <div
+                                class="h-input rounded-input bg-dark text-background shadow-mini hover:bg-dark/95 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                            >
+                                Créer
+                            </div>
+                        </Button.Root>
+                    </div>
+                </form>
+
+                <Button.Root type="button" class="cursor-pointer">
+                    <Dialog.Close
+                        class="focus-visible:ring-foreground focus-visible:ring-offset-background focus-visible:outline-hidden absolute right-5 top-5 rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer"
+                    >
+                        <X class="text-foreground size-5" />
+                        <span class="sr-only">Close</span>
+                    </Dialog.Close>
+                </Button.Root>
+            </Dialog.Content>
+        </Dialog.Portal>
+    </Dialog.Root>
+{/if}
+
+<!-- Edit Category Dialog/Drawer -->
+{#if isMobile}
+    <Drawer bind:isOpen={editDialogOpen}>
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold tracking-tight">
+                Modifier la catégorie
+            </h2>
+            <button
+                type="button"
+                onclick={() => (editDialogOpen = false)}
+                class="p-2 hover:bg-dark-04 rounded-md transition-all"
+            >
+                <X class="text-foreground size-5" />
+            </button>
+        </div>
+        <p class="text-foreground-alt text-sm mb-6">
+            Mettez à jour les détails de la catégorie.
+        </p>
+
+        <form
+            method="POST"
+            action="?/updateCategory"
+            enctype="multipart/form-data"
+            use:updateEnhance
+            class="grid gap-4"
+        >
+            <input type="hidden" name="id" bind:value={$updateForm.id} />
+
+            {#if $updateErrors._errors}
+                <div class="text-sm text-destructive mt-4">
+                    {$updateErrors._errors[0]}
+                </div>
+            {/if}
+
+            <div class="grid grid-cols-1 gap-4 w-full pb-4">
+                {@render field(
+                    "name",
+                    "Nom",
+                    inputUpdate,
+                    $updateForm.name,
+                    $updateErrors.name,
+                )}
+                {@render field(
+                    "description",
+                    "Description",
+                    textareaUpdate,
+                    $updateForm.description,
+                    $updateErrors.description,
+                )}
+                {@render field(
+                    "status",
+                    "Statut",
+                    statusSelect,
+                    $updateForm.status,
+                    $updateErrors.status,
+                )}
+                {@render field("image", "Image", fileInput, null, null)}
+            </div>
+            <div class="flex w-full justify-end gap-3">
+                <button
+                    type="button"
+                    onclick={() => (editDialogOpen = false)}
+                    class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                >
+                    Annuler
+                </button>
+                <button
+                    type="submit"
+                    class="h-input rounded-input bg-dark text-background shadow-mini hover:bg-dark/95 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                >
+                    Enregistrer
+                </button>
+            </div>
+        </form>
+    </Drawer>
+{:else}
+    <Dialog.Root bind:open={editDialogOpen}>
+        <Dialog.Portal>
+            <Dialog.Overlay
+                class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80"
+            />
+            <Dialog.Content
+                class="rounded-card-lg bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-hidden fixed left-[50%] top-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] border p-8 sm:max-w-[540px] md:w-full"
+            >
+                <Dialog.Title class="w-full text-xl font-semibold tracking-tight">
+                    Modifier la catégorie
+                </Dialog.Title>
+                <Dialog.Description class="text-foreground-alt !mt-1 text-sm">
+                    Mettez à jour les détails de la catégorie.
+                </Dialog.Description>
+
+                <Separator.Root class="bg-muted mx-5 !mb-2 !mt-5 block h-px" />
+
+                <form
+                    method="POST"
+                    action="?/updateCategory"
+                    enctype="multipart/form-data"
+                    use:updateEnhance
+                    class="grid gap-4"
+                >
+                    <input type="hidden" name="id" bind:value={$updateForm.id} />
+
+                    {#if $updateErrors._errors}
+                        <div class="text-sm text-destructive mt-4">
+                            {$updateErrors._errors[0]}
+                        </div>
+                    {/if}
+
+                    <div
+                        class="grid grid-cols-[max-content_1fr] gap-4 w-full items-center pb-11 pt-7"
+                    >
+                        {@render field(
+                            "name",
+                            "Nom",
+                            inputUpdate,
+                            $updateForm.name,
+                            $updateErrors.name,
+                        )}
+                        {@render field(
+                            "description",
+                            "Description",
+                            textareaUpdate,
+                            $updateForm.description,
+                            $updateErrors.description,
+                        )}
+                        {@render field(
+                            "status",
+                            "Statut",
+                            statusSelect,
+                            $updateForm.status,
+                            $updateErrors.status,
+                        )}
+                        {@render field("image", "Image", fileInput, null, null)}
+                    </div>
+                    <div class="flex w-full justify-end gap-3">
+                        <Button.Root type="button" class="cursor-pointer">
+                            <Dialog.Close
+                                class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                            >
+                                Annuler
+                            </Dialog.Close>
+                        </Button.Root>
+                        <Button.Root type="submit" class="cursor-pointer">
+                            <div
+                                class="h-input rounded-input bg-dark text-background shadow-mini hover:bg-dark/95 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                            >
+                                Enregistrer
+                            </div>
+                        </Button.Root>
+                    </div>
+                </form>
+
+                <Button.Root type="button" class="cursor-pointer">
+                    <Dialog.Close
+                        class="focus-visible:ring-foreground focus-visible:ring-offset-background focus-visible:outline-hidden absolute right-5 top-5 rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer"
+                    >
+                        <X class="text-foreground size-5" />
+                        <span class="sr-only">Close</span>
+                    </Dialog.Close>
+                </Button.Root>
+            </Dialog.Content>
+        </Dialog.Portal>
+    </Dialog.Root>
+{/if}
+
+<!-- Delete Category Dialog/Drawer -->
+{#if isMobile}
+    <Drawer bind:isOpen={deleteDialogOpen}>
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold tracking-tight">
+                Supprimer la catégorie
+            </h2>
+            <button
+                type="button"
+                onclick={() => (deleteDialogOpen = false)}
+                class="p-2 hover:bg-dark-04 rounded-md transition-all"
+            >
+                <X class="text-foreground size-5" />
+            </button>
+        </div>
+        <p class="text-foreground-alt text-sm mb-6">
+            Êtes-vous sûr de vouloir supprimer la catégorie "<span
+                class="font-medium">{selectedCategory?.name}</span
+            >" ? Cette action est irréversible.
+        </p>
+
+        {#if $deleteErrors._errors}
+            <div class="text-sm text-destructive mb-4">
+                {$deleteErrors._errors[0]}
+            </div>
+        {/if}
+
+        <form
+            method="POST"
+            action="?/deleteCategory"
+            use:deleteEnhance
+        >
+            <input type="hidden" name="id" bind:value={$deleteForm.id} />
+
+            <div class="flex w-full justify-end gap-3">
+                <button
+                    type="button"
+                    onclick={() => (deleteDialogOpen = false)}
+                    class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                >
+                    Annuler
+                </button>
+                <button
+                    type="submit"
+                    class="h-input rounded-input bg-destructive text-white shadow-mini hover:bg-destructive/90 focus-visible:ring-destructive focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                >
+                    Supprimer
+                </button>
+            </div>
+        </form>
+    </Drawer>
+{:else}
+    <Dialog.Root bind:open={deleteDialogOpen}>
+        <Dialog.Portal>
+            <Dialog.Overlay
+                class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80"
+            />
+            <Dialog.Content
+                class="rounded-card-lg bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state-closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-hidden fixed left-[50%] top-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] border p-8 sm:max-w-[440px] md:w-full"
+            >
+                <Dialog.Title class="w-full text-xl font-semibold tracking-tight">
+                    Supprimer la catégorie
+                </Dialog.Title>
+                <Dialog.Description class="text-foreground-alt !mt-2 text-sm">
+                    Êtes-vous sûr de vouloir supprimer la catégorie "<span
+                        class="font-medium">{selectedCategory?.name}</span
+                    >" ? Cette action est irréversible.
+                </Dialog.Description>
+
+                {#if $deleteErrors._errors}
+                    <div class="text-sm text-destructive mt-4">
+                        {$deleteErrors._errors[0]}
+                    </div>
+                {/if}
+
+                <form
+                    method="POST"
+                    action="?/deleteCategory"
+                    use:deleteEnhance
+                    class="mt-8"
+                >
+                    <input type="hidden" name="id" bind:value={$deleteForm.id} />
+
+                    <div class="flex w-full justify-end gap-3">
+                        <Button.Root type="button" class="cursor-pointer">
+                            <Dialog.Close
+                                class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                            >
+                                Annuler
+                            </Dialog.Close>
+                        </Button.Root>
+                        <Button.Root type="submit" class="cursor-pointer">
+                            <div
+                                class="h-input rounded-input bg-destructive text-white shadow-mini hover:bg-destructive/90 focus-visible:ring-destructive focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                            >
+                                Supprimer
+                            </div>
+                        </Button.Root>
+                    </div>
+                </form>
+
+                <Button.Root type="button" class="cursor-pointer">
+                    <Dialog.Close
+                        class="focus-visible:ring-foreground focus-visible:ring-offset-background focus-visible:outline-hidden absolute right-5 top-5 rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer"
+                    >
+                        <X class="text-foreground size-5" />
+                        <span class="sr-only">Close</span>
+                    </Dialog.Close>
+                </Button.Root>
+            </Dialog.Content>
+        </Dialog.Portal>
+    </Dialog.Root>
+{/if}
 
 <!-- Snippets for form fields -->
 {#snippet field(
