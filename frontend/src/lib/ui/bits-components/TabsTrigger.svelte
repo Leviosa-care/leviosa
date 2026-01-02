@@ -1,12 +1,13 @@
 <script lang="ts">
     import { Tabs as TabsPrimitive } from "bits-ui";
     import { cn } from "$lib/utils/design-system";
+    import type { Snippet } from "svelte";
 
     interface Props {
         value: string;
         disabled?: boolean;
         class?: string;
-        children?: any;
+        children?: Snippet;
     }
 
     let {
@@ -31,6 +32,7 @@
     )}
     {...restProps}
 >
-    {@render children()}
+    {#if children}
+        {@render children()}
+    {/if}
 </TabsPrimitive.Trigger>
-

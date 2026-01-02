@@ -1,13 +1,14 @@
 <script lang="ts">
     import { Tabs as TabsPrimitive } from "bits-ui";
     import { cn } from "$lib/utils/design-system";
+    import type { Snippet } from "svelte";
 
     interface Props {
         value?: string;
         onValueChange?: (value: string) => void;
         orientation?: "horizontal" | "vertical";
         class?: string;
-        children?: any;
+        children?: Snippet;
     }
 
     let {
@@ -20,7 +21,7 @@
     }: Props = $props();
 
     // Forward value binding to bits-ui Tabs primitive
-    let valueBinding = $bindable(value);
+    let valueBinding = $state(value);
 </script>
 
 <TabsPrimitive.Root
@@ -36,8 +37,5 @@
 >
     {#if children}
         {@render children()}
-    {:else}
-        <slot />
     {/if}
 </TabsPrimitive.Root>
-
