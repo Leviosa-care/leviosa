@@ -12,22 +12,10 @@
         name: string;
     }
     let triggers: Trigger[] = [
-        {
-            value: "categories",
-            name: "Catégories",
-        },
-        {
-            value: "produits",
-            name: "Produits",
-        },
-        {
-            value: "prix",
-            name: "Prix",
-        },
-        {
-            value: "exercices",
-            name: "Exercices",
-        },
+        { value: "categories", name: "Catégories" },
+        { value: "produits", name: "Produits" },
+        { value: "prix", name: "Prix" },
+        { value: "exercices", name: "Exercices" },
     ];
 </script>
 
