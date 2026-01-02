@@ -1,8 +1,12 @@
 <script lang="ts">
+    import type { PageData } from "./$types";
     import Tabs from "$lib/ui/bits-components/Tabs.svelte";
     import TabsList from "$lib/ui/bits-components/TabsList.svelte";
     import TabsTrigger from "$lib/ui/bits-components/TabsTrigger.svelte";
     import TabsContent from "$lib/ui/bits-components/TabsContent.svelte";
+    import Categories from "./Categories.svelte";
+
+    let { data }: { data: PageData } = $props();
 </script>
 
 <div class="h-[100vh] flex-1 gap-4 overflow-y-scroll bg-gray-50">
@@ -40,8 +44,8 @@
                 </TabsTrigger>
             </TabsList>
         </div>
-        <TabsContent value="categories" class="select-none pt-3">
-            <!-- Categories content -->
+        <TabsContent value="categories" class="select-none">
+            <Categories {data} />
         </TabsContent>
         <TabsContent value="produits" class="select-none pt-3">
             <!-- Produits content -->
