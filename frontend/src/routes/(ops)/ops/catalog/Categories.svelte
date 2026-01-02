@@ -1,6 +1,12 @@
 <script lang="ts">
     import { Dialog, Button, Label, Separator } from "bits-ui";
-    import { Plus, Pencil, Trash2, X, Image as ImageIcon } from "@lucide/svelte";
+    import {
+        Plus,
+        Pencil,
+        Trash2,
+        X,
+        Image as ImageIcon,
+    } from "@lucide/svelte";
     import type { Snippet } from "svelte";
     import { superForm } from "sveltekit-superforms";
     import type { PageData } from "./$types";
@@ -13,7 +19,7 @@
 
     if (browser) {
         isMobile = window.innerWidth < 768;
-        window.addEventListener('resize', () => {
+        window.addEventListener("resize", () => {
             isMobile = window.innerWidth < 768;
         });
     }
@@ -132,7 +138,9 @@
             class="flex gap-2 items-center py-2 bg-dark text-white rounded-input hover:bg-dark/95 transition-all shadow-mini md:px-4 w-12 h-12 md:w-auto md:h-auto justify-center"
         >
             <Plus size={18} />
-            <span class="text-sm font-medium hidden md:inline">Nouvelle Catégorie</span>
+            <span class="text-sm font-medium hidden md:inline"
+                >Nouvelle Catégorie</span
+            >
         </div>
     </Button.Root>
 
@@ -272,8 +280,7 @@
             </button>
         </div>
         <p class="text-foreground-alt text-sm mb-6">
-            Remplissez les détails ci-dessous pour créer une nouvelle
-            catégorie.
+            Remplissez les détails ci-dessous pour créer une nouvelle catégorie.
         </p>
 
         <form
@@ -289,9 +296,7 @@
                 </div>
             {/if}
 
-            <div
-                class="grid grid-cols-1 gap-4 w-full pb-4"
-            >
+            <div class="grid grid-cols-1 gap-4 w-full pb-4">
                 {@render field(
                     "name",
                     "Nom",
@@ -334,7 +339,9 @@
             <Dialog.Content
                 class="rounded-card-lg bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-hidden fixed left-[50%] top-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] border p-8 sm:max-w-[540px] md:w-full"
             >
-                <Dialog.Title class="w-full text-xl font-semibold tracking-tight">
+                <Dialog.Title
+                    class="w-full text-xl font-semibold tracking-tight"
+                >
                     Créer une catégorie
                 </Dialog.Title>
                 <Dialog.Description class="text-foreground-alt !mt-1 text-sm">
@@ -491,7 +498,9 @@
             <Dialog.Content
                 class="rounded-card-lg bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-hidden fixed left-[50%] top-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] border p-8 sm:max-w-[540px] md:w-full"
             >
-                <Dialog.Title class="w-full text-xl font-semibold tracking-tight">
+                <Dialog.Title
+                    class="w-full text-xl font-semibold tracking-tight"
+                >
                     Modifier la catégorie
                 </Dialog.Title>
                 <Dialog.Description class="text-foreground-alt !mt-1 text-sm">
@@ -507,7 +516,11 @@
                     use:updateEnhance
                     class="grid gap-4"
                 >
-                    <input type="hidden" name="id" bind:value={$updateForm.id} />
+                    <input
+                        type="hidden"
+                        name="id"
+                        bind:value={$updateForm.id}
+                    />
 
                     {#if $updateErrors._errors}
                         <div class="text-sm text-destructive mt-4">
@@ -599,11 +612,7 @@
             </div>
         {/if}
 
-        <form
-            method="POST"
-            action="?/deleteCategory"
-            use:deleteEnhance
-        >
+        <form method="POST" action="?/deleteCategory" use:deleteEnhance>
             <input type="hidden" name="id" bind:value={$deleteForm.id} />
 
             <div class="flex w-full justify-end gap-3">
@@ -632,7 +641,9 @@
             <Dialog.Content
                 class="rounded-card-lg bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state-closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-hidden fixed left-[50%] top-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] border p-8 sm:max-w-[440px] md:w-full"
             >
-                <Dialog.Title class="w-full text-xl font-semibold tracking-tight">
+                <Dialog.Title
+                    class="w-full text-xl font-semibold tracking-tight"
+                >
                     Supprimer la catégorie
                 </Dialog.Title>
                 <Dialog.Description class="text-foreground-alt !mt-2 text-sm">
@@ -653,7 +664,11 @@
                     use:deleteEnhance
                     class="mt-8"
                 >
-                    <input type="hidden" name="id" bind:value={$deleteForm.id} />
+                    <input
+                        type="hidden"
+                        name="id"
+                        bind:value={$deleteForm.id}
+                    />
 
                     <div class="flex w-full justify-end gap-3">
                         <Button.Root type="button" class="cursor-pointer">
