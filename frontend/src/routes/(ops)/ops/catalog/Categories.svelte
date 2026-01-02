@@ -267,28 +267,33 @@
 <!-- Create Category Dialog/Drawer -->
 {#if isMobile}
     <Drawer bind:isOpen={createDialogOpen}>
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold tracking-tight">
-                Créer une catégorie
-            </h2>
-            <button
-                type="button"
-                onclick={() => (createDialogOpen = false)}
-                class="p-2 hover:bg-dark-04 rounded-md transition-all"
-            >
-                <X class="text-foreground size-5" />
-            </button>
+        <div
+            class="sticky top-0 bg-white pb-4 border-b border-border-card -mx-4 px-4 -mt-4 pt-4 z-10"
+        >
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-xl font-semibold tracking-tight">
+                    Créer une catégorie
+                </h2>
+                <button
+                    type="button"
+                    onclick={() => (createDialogOpen = false)}
+                    class="p-2 hover:bg-dark-04 rounded-md transition-all"
+                >
+                    <X class="text-foreground size-5" />
+                </button>
+            </div>
+            <p class="text-foreground-alt text-sm">
+                Remplissez les détails ci-dessous pour créer une nouvelle
+                catégorie.
+            </p>
         </div>
-        <p class="text-foreground-alt text-sm mb-6">
-            Remplissez les détails ci-dessous pour créer une nouvelle catégorie.
-        </p>
 
         <form
             method="POST"
             action="?/createCategory"
             enctype="multipart/form-data"
             use:createEnhance
-            class="grid gap-4"
+            class="grid gap-4 pt-8"
         >
             {#if $createErrors._errors}
                 <div class="text-sm text-destructive mt-4">
@@ -417,28 +422,32 @@
 <!-- Edit Category Dialog/Drawer -->
 {#if isMobile}
     <Drawer bind:isOpen={editDialogOpen}>
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold tracking-tight">
-                Modifier la catégorie
-            </h2>
-            <button
-                type="button"
-                onclick={() => (editDialogOpen = false)}
-                class="p-2 hover:bg-dark-04 rounded-md transition-all"
-            >
-                <X class="text-foreground size-5" />
-            </button>
+        <div
+            class="sticky top-0 bg-white pb-4 border-b border-border-card -mx-4 px-4 -mt-4 pt-4 z-10"
+        >
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-xl font-semibold tracking-tight">
+                    Modifier la catégorie
+                </h2>
+                <button
+                    type="button"
+                    onclick={() => (editDialogOpen = false)}
+                    class="p-2 hover:bg-dark-04 rounded-md transition-all"
+                >
+                    <X class="text-foreground size-5" />
+                </button>
+            </div>
+            <p class="text-foreground-alt text-sm">
+                Mettez à jour les détails de la catégorie.
+            </p>
         </div>
-        <p class="text-foreground-alt text-sm mb-6">
-            Mettez à jour les détails de la catégorie.
-        </p>
 
         <form
             method="POST"
             action="?/updateCategory"
             enctype="multipart/form-data"
             use:updateEnhance
-            class="grid gap-4"
+            class="grid gap-4 pt-8"
         >
             <input type="hidden" name="id" bind:value={$updateForm.id} />
 
@@ -588,49 +597,55 @@
 <!-- Delete Category Dialog/Drawer -->
 {#if isMobile}
     <Drawer bind:isOpen={deleteDialogOpen}>
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold tracking-tight">
-                Supprimer la catégorie
-            </h2>
-            <button
-                type="button"
-                onclick={() => (deleteDialogOpen = false)}
-                class="p-2 hover:bg-dark-04 rounded-md transition-all"
-            >
-                <X class="text-foreground size-5" />
-            </button>
-        </div>
-        <p class="text-foreground-alt text-sm mb-6">
-            Êtes-vous sûr de vouloir supprimer la catégorie "<span
-                class="font-medium">{selectedCategory?.name}</span
-            >" ? Cette action est irréversible.
-        </p>
-
-        {#if $deleteErrors._errors}
-            <div class="text-sm text-destructive mb-4">
-                {$deleteErrors._errors[0]}
-            </div>
-        {/if}
-
-        <form method="POST" action="?/deleteCategory" use:deleteEnhance>
-            <input type="hidden" name="id" bind:value={$deleteForm.id} />
-
-            <div class="flex w-full justify-end gap-3">
+        <div
+            class="sticky top-0 bg-white pb-4 border-b border-border-card -mx-4 px-4 -mt-4 pt-4 z-10"
+        >
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-xl font-semibold tracking-tight">
+                    Supprimer la catégorie
+                </h2>
                 <button
                     type="button"
                     onclick={() => (deleteDialogOpen = false)}
-                    class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                    class="p-2 hover:bg-dark-04 rounded-md transition-all"
                 >
-                    Annuler
-                </button>
-                <button
-                    type="submit"
-                    class="h-input rounded-input bg-destructive text-white shadow-mini hover:bg-destructive/90 focus-visible:ring-destructive focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
-                >
-                    Supprimer
+                    <X class="text-foreground size-5" />
                 </button>
             </div>
-        </form>
+            <p class="text-foreground-alt text-sm">
+                Êtes-vous sûr de vouloir supprimer la catégorie "<span
+                    class="font-medium">{selectedCategory?.name}</span
+                >" ? Cette action est irréversible.
+            </p>
+        </div>
+
+        <div class="pt-8">
+            {#if $deleteErrors._errors}
+                <div class="text-sm text-destructive mb-4">
+                    {$deleteErrors._errors[0]}
+                </div>
+            {/if}
+
+            <form method="POST" action="?/deleteCategory" use:deleteEnhance>
+                <input type="hidden" name="id" bind:value={$deleteForm.id} />
+
+                <div class="flex w-full justify-end gap-3">
+                    <button
+                        type="button"
+                        onclick={() => (deleteDialogOpen = false)}
+                        class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        type="submit"
+                        class="h-input rounded-input bg-destructive text-white shadow-mini hover:bg-destructive/90 focus-visible:ring-destructive focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
+                    >
+                        Supprimer
+                    </button>
+                </div>
+            </form>
+        </div>
     </Drawer>
 {:else}
     <Dialog.Root bind:open={deleteDialogOpen}>
@@ -709,7 +724,7 @@
     value: any,
     error: any,
 )}
-    <Label.Root for={name} class="text-sm font-semibold text-right">
+    <Label.Root for={name} class="text-sm font-semibold">
         {label}
     </Label.Root>
     <div class="relative w-full">
