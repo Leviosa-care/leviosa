@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { PageData } from "./$types";
-    import CalendarClock from "lucide-svelte";
+    import { CalendarClock } from "@lucide/svelte";
 
     let { data }: { data: PageData } = $props();
 </script>
@@ -16,8 +16,9 @@
             Bientôt disponible
         </h2>
         <p class="text-foreground-alt text-base mb-6">
-            La gestion des exercices sera bientôt implémentée. Cette fonctionnalité
-            vous permettra de créer et gérer des exercices pour vos produits.
+            La gestion des exercices sera bientôt implémentée. Cette
+            fonctionnalité vous permettra de créer et gérer des exercices pour
+            vos produits.
         </p>
         <div
             class="bg-dark-5 border border-border-card rounded-lg px-4 py-3 text-sm text-foreground-alt"
