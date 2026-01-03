@@ -3,7 +3,6 @@
     import {
         Plus,
         Pencil,
-        Trash2,
         X,
         Filter,
         Check,
@@ -14,9 +13,9 @@
     import type { Snippet } from "svelte";
     import type { PageData } from "./$types";
     import Drawer from "$lib/ui/Drawer.svelte";
+    import { superForm } from "sveltekit-superforms";
 
     import { browser } from "$app/environment";
-    import { mockPrices, mockProducts } from "./mockData";
 
     // Detect if we're on mobile
     let isMobile = $state(false);
@@ -49,8 +48,9 @@
 
     let { data }: Props = $props();
 
-    // Use mock prices for now
-    let prices = $state<Price[]>([...mockPrices]);
+    // Extract prices and products from page data
+    let prices = $state<Price[]>(data.prices || []);
+    let products = $state(data.products || []);
 
     // Product filter state (single select)
     const ALL_PRODUCTS = "";
@@ -99,69 +99,51 @@
     // Dialog states
     let createDialogOpen = $state(false);
     let editDialogOpen = $state(false);
-    let deleteDialogOpen = $state(false);
 
-    // Currently selected price for edit/delete
+    // Currently selected price for edit
     let selectedPrice: Price | null = $state(null);
 
-    // Form states for new/edit price
-    let formData = $state<{
-        id: string;
-        productId: string;
-        stripePriceId: string;
-        amount: number;
-        currency: string;
-        interval: string;
-        isActive: boolean;
-    }>({
-        id: "",
-        productId: "",
-        stripePriceId: "",
-        amount: 0,
-        currency: "eur",
-        interval: "one_time",
-        isActive: true,
+    // Superforms for create and update
+    const {
+        form: createForm,
+        errors: createErrors,
+        enhance: createEnhance,
+    } = superForm(data.createPriceForm, {
+        resetForm: true,
+        onUpdated({ form }) {
+            if (form.valid) {
+                createDialogOpen = false;
+            }
+        },
     });
 
-    // Reset form to default values
-    function resetForm() {
-        formData = {
-            id: "",
-            productId: "",
-            stripePriceId: "",
-            amount: 0,
-            currency: "eur",
-            interval: "one_time",
-            isActive: true,
-        };
-    }
+    const {
+        form: updateForm,
+        errors: updateErrors,
+        enhance: updateEnhance,
+    } = superForm(data.updatePriceForm, {
+        resetForm: false,
+        onUpdated({ form }) {
+            if (form.valid) {
+                editDialogOpen = false;
+            }
+        },
+    });
 
     function openCreateDialog() {
-        resetForm();
         createDialogOpen = true;
     }
 
     function openEditDialog(price: Price) {
         selectedPrice = price;
-        formData = {
-            id: price.id,
-            productId: price.productId,
-            stripePriceId: price.stripePriceId,
-            amount: price.amount,
-            currency: price.currency,
-            interval: price.interval,
-            isActive: price.isActive,
-        };
+        $updateForm.id = price.id;
+        $updateForm.active = price.isActive;
+        $updateForm.nickname = undefined;
         editDialogOpen = true;
     }
 
-    function openDeleteDialog(price: Price) {
-        selectedPrice = price;
-        deleteDialogOpen = true;
-    }
-
     function getProductName(productId: string): string {
-        return mockProducts.find((p) => p.id === productId)?.name || "Inconnu";
+        return products.find((p) => p.id === productId)?.name || "Inconnu";
     }
 
     function formatAmount(amount: number, currency: string): string {
@@ -177,58 +159,6 @@
             year: "Annuel",
         };
         return labels[interval] || interval;
-    }
-
-    function handleCreateSubmit(e: Event) {
-        e.preventDefault();
-        const newPrice = {
-            id: `price-${Date.now()}`,
-            productId: formData.productId,
-            stripePriceId: formData.stripePriceId,
-            amount: formData.amount,
-            currency: formData.currency,
-            interval: formData.interval as "one_time" | "month" | "year",
-            isActive: formData.isActive,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        } satisfies Price;
-        prices = [...prices, newPrice];
-        createDialogOpen = false;
-        resetForm();
-    }
-
-    function handleEditSubmit(e: Event) {
-        e.preventDefault();
-        if (!selectedPrice) return;
-
-        const selectedId = selectedPrice.id;
-        prices = prices.map((p) =>
-            p.id === selectedId
-                ? {
-                      ...p,
-                      productId: formData.productId,
-                      stripePriceId: formData.stripePriceId,
-                      amount: formData.amount,
-                      currency: formData.currency,
-                      interval: formData.interval as "one_time" | "month" | "year",
-                      isActive: formData.isActive,
-                      updatedAt: new Date().toISOString(),
-                  }
-                : p,
-        );
-        editDialogOpen = false;
-        selectedPrice = null;
-        resetForm();
-    }
-
-    function handleDeleteSubmit(e: Event) {
-        e.preventDefault();
-        if (!selectedPrice) return;
-
-        const selectedId = selectedPrice.id;
-        prices = prices.filter((p) => p.id !== selectedId);
-        deleteDialogOpen = false;
-        selectedPrice = null;
     }
 
     function toggleSort(field: SortField) {
@@ -528,20 +458,10 @@
                                             onclick={() => openEditDialog(price)}
                                         >
                                             <div
-                                                class="flex items-center justify-center p-2 border border-border-input rounded-md hover:bg-dark-04 transition-all"
+                                                class="flex gap-2 items-center p-2 px-3 border border-border-input rounded-md hover:bg-dark-04 transition-all"
                                             >
                                                 <Pencil size={14} />
-                                            </div>
-                                        </Button.Root>
-                                        <Button.Root
-                                            type="button"
-                                            class="cursor-pointer"
-                                            onclick={() => openDeleteDialog(price)}
-                                        >
-                                            <div
-                                                class="flex items-center justify-center p-2 border border-destructive/20 text-destructive rounded-md hover:bg-destructive/10 transition-all"
-                                            >
-                                                <Trash2 size={14} />
+                                                <span class="text-sm font-medium">Modifier</span>
                                             </div>
                                         </Button.Root>
                                     </div>
@@ -832,99 +752,6 @@
                                 class="h-input rounded-input bg-dark text-background shadow-mini hover:bg-dark/95 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
                             >
                                 Enregistrer
-                            </div>
-                        </Button.Root>
-                    </div>
-                </form>
-
-                <Button.Root type="button" class="cursor-pointer">
-                    <Dialog.Close
-                        class="focus-visible:ring-foreground focus-visible:ring-offset-background focus-visible:outline-hidden absolute right-5 top-5 rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer"
-                    >
-                        <X class="text-foreground size-5" />
-                        <span class="sr-only">Close</span>
-                    </Dialog.Close>
-                </Button.Root>
-            </Dialog.Content>
-        </Dialog.Portal>
-    </Dialog.Root>
-{/if}
-
-<!-- Delete Price Dialog/Drawer -->
-{#if isMobile}
-    <Drawer bind:isOpen={deleteDialogOpen}>
-        <div
-            class="sticky top-0 bg-white pb-4 border-b border-border-card -mx-4 px-4 -mt-4 pt-4 z-10"
-        >
-            <div class="flex items-center justify-between mb-2">
-                <h2 class="text-xl font-semibold tracking-tight">
-                    Supprimer le prix
-                </h2>
-                <button
-                    type="button"
-                    onclick={() => (deleteDialogOpen = false)}
-                    class="p-2 hover:bg-dark-04 rounded-md transition-all"
-                >
-                    <X class="text-foreground size-5" />
-                </button>
-            </div>
-            <p class="text-foreground-alt text-sm">
-                Êtes-vous sûr de vouloir supprimer ce prix ? Cette action est
-                irréversible.
-            </p>
-        </div>
-
-        <form onsubmit={handleDeleteSubmit} class="pt-8">
-            <div class="flex w-full justify-end gap-3">
-                <button
-                    type="button"
-                    onclick={() => (deleteDialogOpen = false)}
-                    class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
-                >
-                    Annuler
-                </button>
-                <button
-                    type="submit"
-                    class="h-input rounded-input bg-destructive text-white shadow-mini hover:bg-destructive/90 focus-visible:ring-destructive focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
-                >
-                    Supprimer
-                </button>
-            </div>
-        </form>
-    </Drawer>
-{:else}
-    <Dialog.Root bind:open={deleteDialogOpen}>
-        <Dialog.Portal>
-            <Dialog.Overlay
-                class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80"
-            />
-            <Dialog.Content
-                class="rounded-card-lg bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state-closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-hidden fixed left-[50%] top-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] border p-8 sm:max-w-[440px] md:w-full"
-            >
-                <Dialog.Title
-                    class="w-full text-xl font-semibold tracking-tight"
-                >
-                    Supprimer le prix
-                </Dialog.Title>
-                <Dialog.Description class="text-foreground-alt !mt-2 text-sm">
-                    Êtes-vous sûr de vouloir supprimer ce prix ? Cette action
-                    est irréversible.
-                </Dialog.Description>
-
-                <form onsubmit={handleDeleteSubmit} class="mt-8">
-                    <div class="flex w-full justify-end gap-3">
-                        <Button.Root type="button" class="cursor-pointer">
-                            <Dialog.Close
-                                class="h-input rounded-input border border-border-input hover:bg-dark-04 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-6 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
-                            >
-                                Annuler
-                            </Dialog.Close>
-                        </Button.Root>
-                        <Button.Root type="submit" class="cursor-pointer">
-                            <div
-                                class="h-input rounded-input bg-destructive text-white shadow-mini hover:bg-destructive/90 focus-visible:ring-destructive focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex items-center justify-center px-8 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer transition-all"
-                            >
-                                Supprimer
                             </div>
                         </Button.Root>
                     </div>
