@@ -7,6 +7,8 @@
     import Categories from "./Categories.svelte";
     import Products from "./Products.svelte";
     import Prices from "./Prices.svelte";
+    import Coupons from "./Coupons.svelte";
+    import PromotionCodes from "./PromotionCodes.svelte";
     import Exercices from "./Exercices.svelte";
 
     let { data }: { data: PageData } = $props();
@@ -68,10 +70,10 @@
                 <Prices {data} />
             </TabsContent>
             <TabsContent value="coupons" class="h-full p-6">
-                <!-- Coupons content -->
+                <Coupons {data} />
             </TabsContent>
             <TabsContent value="promotion-codes" class="h-full p-6">
-                <!-- Promotion codes content -->
+                <PromotionCodes {data} />
             </TabsContent>
             <TabsContent value="exercices" class="h-full p-6">
                 <Exercices {data} />
