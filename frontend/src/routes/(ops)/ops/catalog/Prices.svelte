@@ -498,14 +498,13 @@
             </p>
         </div>
 
-        <form onsubmit={handleCreateSubmit} class="grid gap-4 pt-8">
+        <form method="POST" action="?/createPrice" use:createEnhance class="grid gap-4 pt-8">
             <div class="grid grid-cols-1 gap-4 w-full pb-4">
-                {@render field("productId", "Produit", productSelect, formData.productId, null)}
-                {@render field("amount", "Montant (en centimes)", numberInput, formData.amount, null)}
-                {@render field("currency", "Devise", currencySelect, formData.currency, null)}
-                {@render field("interval", "Type", intervalSelect, formData.interval, null)}
-                {@render field("stripePriceId", "Stripe Price ID", textInput, formData.stripePriceId, null)}
-                {@render field("isActive", "Statut", statusCheckbox, formData.isActive, null)}
+                {@render createField("productId", "Produit")}
+                {@render createField("amount", "Montant (en centimes)")}
+                {@render createField("currency", "Devise")}
+                {@render createField("interval", "Type")}
+                {@render createField("nickname", "Nom (optionnel)")}
             </div>
             <div class="flex w-full justify-end gap-3">
                 <button
@@ -545,52 +544,15 @@
 
                 <Separator.Root class="bg-muted mx-5 !mb-2 !mt-5 block h-px" />
 
-                <form onsubmit={handleCreateSubmit} class="grid gap-4">
+                <form method="POST" action="?/createPrice" use:createEnhance class="grid gap-4">
                     <div
                         class="grid grid-cols-[max-content_1fr] gap-4 w-full items-center pb-11 pt-7"
                     >
-                        {@render field(
-                            "productId",
-                            "Produit",
-                            productSelect,
-                            formData.productId,
-                            null,
-                        )}
-                        {@render field(
-                            "amount",
-                            "Montant (centimes)",
-                            numberInput,
-                            formData.amount,
-                            null,
-                        )}
-                        {@render field(
-                            "currency",
-                            "Devise",
-                            currencySelect,
-                            formData.currency,
-                            null,
-                        )}
-                        {@render field(
-                            "interval",
-                            "Type",
-                            intervalSelect,
-                            formData.interval,
-                            null,
-                        )}
-                        {@render field(
-                            "stripePriceId",
-                            "Stripe Price ID",
-                            textInput,
-                            formData.stripePriceId,
-                            null,
-                        )}
-                        {@render field(
-                            "isActive",
-                            "Statut",
-                            statusCheckbox,
-                            formData.isActive,
-                            null,
-                        )}
+                        {@render createField("productId", "Produit")}
+                        {@render createField("amount", "Montant (centimes)")}
+                        {@render createField("currency", "Devise")}
+                        {@render createField("interval", "Type")}
+                        {@render createField("nickname", "Nom (optionnel)")}
                     </div>
                     <div class="flex w-full justify-end gap-3">
                         <Button.Root type="button" class="cursor-pointer">
@@ -646,14 +608,18 @@
             </p>
         </div>
 
-        <form onsubmit={handleEditSubmit} class="grid gap-4 pt-8">
+        <form method="POST" action="?/updatePrice" use:updateEnhance class="grid gap-4 pt-8">
+            {#if selectedPrice}
+                <div class="bg-dark-04 p-4 rounded-card mb-4">
+                    <p class="text-sm text-foreground-alt mb-2">Prix sélectionné:</p>
+                    <p class="text-sm font-medium">{getProductName(selectedPrice.productId)} - {formatAmount(selectedPrice.amount, selectedPrice.currency)}</p>
+                    <p class="text-xs text-foreground-alt">{formatInterval(selectedPrice.interval)}</p>
+                </div>
+            {/if}
             <div class="grid grid-cols-1 gap-4 w-full pb-4">
-                {@render field("productId", "Produit", productSelect, formData.productId, null)}
-                {@render field("amount", "Montant (en centimes)", numberInput, formData.amount, null)}
-                {@render field("currency", "Devise", currencySelect, formData.currency, null)}
-                {@render field("interval", "Type", intervalSelect, formData.interval, null)}
-                {@render field("stripePriceId", "Stripe Price ID", textInput, formData.stripePriceId, null)}
-                {@render field("isActive", "Statut", statusCheckbox, formData.isActive, null)}
+                <input type="hidden" name="id" bind:value={$updateForm.id} />
+                {@render updateField("active", "Statut actif")}
+                {@render updateField("nickname", "Nom (optionnel)")}
             </div>
             <div class="flex w-full justify-end gap-3">
                 <button
@@ -692,52 +658,20 @@
 
                 <Separator.Root class="bg-muted mx-5 !mb-2 !mt-5 block h-px" />
 
-                <form onsubmit={handleEditSubmit} class="grid gap-4">
+                <form method="POST" action="?/updatePrice" use:updateEnhance class="grid gap-4">
+                    {#if selectedPrice}
+                        <div class="bg-dark-04 p-4 rounded-card mt-4">
+                            <p class="text-sm text-foreground-alt mb-2">Prix sélectionné:</p>
+                            <p class="text-sm font-medium">{getProductName(selectedPrice.productId)} - {formatAmount(selectedPrice.amount, selectedPrice.currency)}</p>
+                            <p class="text-xs text-foreground-alt">{formatInterval(selectedPrice.interval)}</p>
+                        </div>
+                    {/if}
                     <div
                         class="grid grid-cols-[max-content_1fr] gap-4 w-full items-center pb-11 pt-7"
                     >
-                        {@render field(
-                            "productId",
-                            "Produit",
-                            productSelect,
-                            formData.productId,
-                            null,
-                        )}
-                        {@render field(
-                            "amount",
-                            "Montant (centimes)",
-                            numberInput,
-                            formData.amount,
-                            null,
-                        )}
-                        {@render field(
-                            "currency",
-                            "Devise",
-                            currencySelect,
-                            formData.currency,
-                            null,
-                        )}
-                        {@render field(
-                            "interval",
-                            "Type",
-                            intervalSelect,
-                            formData.interval,
-                            null,
-                        )}
-                        {@render field(
-                            "stripePriceId",
-                            "Stripe Price ID",
-                            textInput,
-                            formData.stripePriceId,
-                            null,
-                        )}
-                        {@render field(
-                            "isActive",
-                            "Statut",
-                            statusCheckbox,
-                            formData.isActive,
-                            null,
-                        )}
+                        <input type="hidden" name="id" bind:value={$updateForm.id} />
+                        {@render updateField("active", "Statut actif")}
+                        {@render updateField("nickname", "Nom (optionnel)")}
                     </div>
                     <div class="flex w-full justify-end gap-3">
                         <Button.Root type="button" class="cursor-pointer">
@@ -770,108 +704,105 @@
     </Dialog.Root>
 {/if}
 
-<!-- Snippets for form fields -->
-{#snippet field(
-    name: string,
-    label: string,
-    inputSnippet: Input,
-    value: any,
-    error: any,
-)}
+<!-- Snippets for create form fields -->
+{#snippet createField(name: string, label: string)}
     <Label.Root for={name} class="text-sm font-semibold">
         {label}
     </Label.Root>
     <div class="relative w-full">
-        {@render inputSnippet(name)}
-        {#if error && error.length > 0}
-            <p class="text-xs text-destructive mt-1">{error[0]}</p>
+        {#if name === "productId"}
+            <select
+                id={name}
+                {name}
+                bind:value={$createForm.productId}
+                class="h-input rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+                required
+            >
+                <option value="">Sélectionner un produit</option>
+                {#each products as product}
+                    <option value={product.id}>{product.name}</option>
+                {/each}
+            </select>
+        {:else if name === "amount"}
+            <input
+                id={name}
+                type="number"
+                {name}
+                bind:value={$createForm.amount}
+                min="0"
+                step="1"
+                class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+                placeholder="Ex: 5000 pour 50.00€"
+                required
+            />
+        {:else if name === "currency"}
+            <select
+                id={name}
+                {name}
+                bind:value={$createForm.currency}
+                class="h-input rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+                required
+            >
+                <option value="eur">EUR (€)</option>
+                <option value="usd">USD ($)</option>
+            </select>
+        {:else if name === "interval"}
+            <select
+                id={name}
+                {name}
+                bind:value={$createForm.interval}
+                class="h-input rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+                required
+            >
+                <option value="one_time">Paiement unique</option>
+                <option value="month">Mensuel</option>
+                <option value="year">Annuel</option>
+            </select>
+        {:else if name === "nickname"}
+            <input
+                id={name}
+                type="text"
+                {name}
+                bind:value={$createForm.nickname}
+                class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+                placeholder="Ex: Tarif standard"
+            />
+        {/if}
+        {#if $createErrors[name]}
+            <p class="text-xs text-destructive mt-1">{$createErrors[name]}</p>
         {/if}
     </div>
 {/snippet}
 
-{#snippet productSelect(name: string)}
-    <select
-        id={name}
-        {name}
-        bind:value={formData.productId}
-        class="h-input rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
-        required
-    >
-        <option value="">Sélectionner un produit</option>
-        {#each mockProducts as product}
-            <option value={product.id}>{product.name}</option>
-        {/each}
-    </select>
-{/snippet}
-
-{#snippet numberInput(name: string)}
-    {#if name === "amount"}
-        <input
-            id={name}
-            type="number"
-            {name}
-            bind:value={formData.amount}
-            min="0"
-            step="1"
-            class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
-            placeholder="Ex: 5000 pour 50.00€"
-            required
-        />
-    {/if}
-{/snippet}
-
-{#snippet currencySelect(name: string)}
-    <select
-        id={name}
-        {name}
-        bind:value={formData.currency}
-        class="h-input rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
-        required
-    >
-        <option value="eur">EUR (€)</option>
-        <option value="usd">USD ($)</option>
-    </select>
-{/snippet}
-
-{#snippet intervalSelect(name: string)}
-    <select
-        id={name}
-        {name}
-        bind:value={formData.interval}
-        class="h-input rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
-        required
-    >
-        <option value="one_time">Paiement unique</option>
-        <option value="month">Mensuel</option>
-        <option value="year">Annuel</option>
-    </select>
-{/snippet}
-
-{#snippet textInput(name: string)}
-    {#if name === "stripePriceId"}
-        <input
-            id={name}
-            type="text"
-            {name}
-            bind:value={formData.stripePriceId}
-            class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
-            placeholder="price_..."
-            required
-        />
-    {/if}
-{/snippet}
-
-{#snippet statusCheckbox(name: string)}
-    {#if name === "isActive"}
-        <label class="flex items-center gap-2 cursor-pointer">
+<!-- Snippets for update form fields -->
+{#snippet updateField(name: string, label: string)}
+    <Label.Root for={name} class="text-sm font-semibold">
+        {label}
+    </Label.Root>
+    <div class="relative w-full">
+        {#if name === "active"}
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                    type="checkbox"
+                    id={name}
+                    {name}
+                    bind:checked={$updateForm.active}
+                    class="w-4 h-4 text-dark border-gray-300 rounded focus:ring-dark"
+                />
+                <span class="text-sm">Prix actif</span>
+            </label>
+        {:else if name === "nickname"}
             <input
-                type="checkbox"
                 id={name}
+                type="text"
                 {name}
-                bind:checked={formData.isActive}
-                class="w-4 h-4 text-dark border-gray-300 rounded focus:ring-dark"
+                bind:value={$updateForm.nickname}
+                class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+                placeholder="Ex: Tarif standard"
             />
-            <span class="text-sm">Actif</span>
-        </label>
-    {/if}
+        {/if}
+        {#if $updateErrors[name]}
+            <p class="text-xs text-destructive mt-1">{$updateErrors[name]}</p>
+        {/if}
+    </div>
 {/snippet}
