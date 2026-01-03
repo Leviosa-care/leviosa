@@ -18,8 +18,12 @@ import {
     updateProductDefaults,
     deleteProductSchema,
     deleteProductDefaults,
+    createPriceSchema,
+    createPriceDefaults,
+    updatePriceSchema,
+    updatePriceDefaults,
 } from "./schemas"
-import { mockCategories, mockProducts } from "./mockData"
+import { mockCategories, mockProducts, mockPrices } from "./mockData"
 
 // Enable mock mode for development
 const MOCK_MODE = true
@@ -42,13 +46,19 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
     const updateProductForm = await superValidate(arktype(updateProductSchema, { defaults: updateProductDefaults }))
     const deleteProductForm = await superValidate(arktype(deleteProductSchema, { defaults: deleteProductDefaults }))
 
+    // Initialize price forms
+    const createPriceForm = await superValidate(arktype(createPriceSchema, { defaults: createPriceDefaults }))
+    const updatePriceForm = await superValidate(arktype(updatePriceSchema, { defaults: updatePriceDefaults }))
+
     let categories = []
     let products = []
+    let prices = []
 
     if (MOCK_MODE) {
         // Use mock data in development
         categories = mockCategories
         products = mockProducts
+        prices = mockPrices
     } else {
         const sessionCookie = cookies.get('session');
 
@@ -73,6 +83,22 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         if (productsRes.ok) {
             products = await productsRes.json()
         }
+
+        // Fetch all prices across all products
+        // Note: We could fetch prices per product, but for the catalog management page
+        // it's more efficient to get all prices at once
+        for (const product of products) {
+            const pricesRes = await fetch(`${API_URL}/admin/products/${product.id}/prices`, {
+                headers: {
+                    'Authorization': `Bearer ${sessionCookie}`,
+                }
+            })
+
+            if (pricesRes.ok) {
+                const productPrices = await pricesRes.json()
+                prices = [...prices, ...productPrices]
+            }
+        }
     }
 
     return {
@@ -82,8 +108,11 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         createProductForm,
         updateProductForm,
         deleteProductForm,
+        createPriceForm,
+        updatePriceForm,
         categories,
         products,
+        prices,
     }
 }
 
@@ -608,5 +637,151 @@ export const actions = {
         }
 
         return { deleteProductForm: form }
+    },
+
+    createPrice: async ({ request, fetch, cookies }) => {
+        const formData = await request.formData()
+
+        const productId = formData.get('productId') as string
+        const amount = parseInt(formData.get('amount') as string)
+        const currency = formData.get('currency') as string
+        const interval = formData.get('interval') as 'one_time' | 'month' | 'year'
+        const nickname = formData.get('nickname') as string | null
+
+        const form = await superValidate({
+            productId,
+            amount,
+            currency,
+            interval,
+            nickname: nickname || undefined,
+        }, arktype(createPriceSchema, { defaults: createPriceDefaults }))
+
+        if (!form.valid) {
+            return fail(400, { createPriceForm: form })
+        }
+
+        if (MOCK_MODE) {
+            console.log('📝 [MOCK] Creating price:', {
+                productId: form.data.productId,
+                amount: form.data.amount,
+                currency: form.data.currency,
+                interval: form.data.interval,
+                nickname: form.data.nickname,
+            })
+
+            return { createPriceForm: form }
+        }
+
+        const sessionCookie = cookies.get('session');
+
+        // Create price via product endpoint
+        const res = await fetch(`${API_URL}/admin/products/${form.data.productId}/prices`, {
+            method: "POST",
+            headers: {
+                'Content-Type': "application/json",
+                'Authorization': `Bearer ${sessionCookie}`,
+            },
+            body: JSON.stringify({
+                amount: form.data.amount,
+                currency: form.data.currency,
+                interval: form.data.interval,
+                nickname: form.data.nickname,
+                metadata: {},
+            })
+        })
+
+        if (!res.ok) {
+            switch (res.status) {
+                case 400:
+                    return setError(form, "Données invalides. Veuillez vérifier les champs.");
+                case 401:
+                    return setError(form, "Non autorisé. Veuillez vous reconnecter.");
+                case 403:
+                    return setError(form, "Accès refusé. Vous devez être administrateur.");
+                case 404:
+                    return setError(form, "Produit introuvable.");
+                case 415:
+                    return setError(form, "Type de contenu non supporté.");
+                case 500:
+                    return setError(form, "Erreur serveur. Veuillez réessayer.");
+                case 502:
+                    return setError(form, "Erreur Stripe. Veuillez réessayer.");
+                case 503:
+                    return setError(form, "Service temporairement indisponible.");
+                default:
+                    return setError(form, "Une erreur inattendue est survenue.");
+            }
+        }
+
+        return { createPriceForm: form }
+    },
+
+    updatePrice: async ({ request, fetch, cookies }) => {
+        const formData = await request.formData()
+
+        const id = formData.get('id') as string
+        const active = formData.get('active') === 'true'
+        const nickname = formData.get('nickname') as string | null
+
+        const form = await superValidate({
+            id,
+            active,
+            nickname: nickname || undefined,
+        }, arktype(updatePriceSchema, { defaults: updatePriceDefaults }))
+
+        if (!form.valid) {
+            return fail(400, { updatePriceForm: form })
+        }
+
+        if (MOCK_MODE) {
+            console.log('✏️ [MOCK] Updating price:', {
+                id: form.data.id,
+                active: form.data.active,
+                nickname: form.data.nickname,
+            })
+
+            return { updatePriceForm: form }
+        }
+
+        const sessionCookie = cookies.get('session');
+
+        // Update price
+        const res = await fetch(`${API_URL}/admin/prices/${form.data.id}`, {
+            method: "PATCH",
+            headers: {
+                'Content-Type': "application/json",
+                'Authorization': `Bearer ${sessionCookie}`,
+            },
+            body: JSON.stringify({
+                active: form.data.active,
+                nickname: form.data.nickname,
+                metadata: {},
+            })
+        })
+
+        if (!res.ok) {
+            switch (res.status) {
+                case 400:
+                    return setError(form, "Données invalides ou aucun champ fourni.");
+                case 401:
+                    return setError(form, "Non autorisé. Veuillez vous reconnecter.");
+                case 403:
+                    return setError(form, "Accès refusé. Vous devez être administrateur.");
+                case 404:
+                    return setError(form, "Prix introuvable.");
+                case 415:
+                    return setError(form, "Type de contenu non supporté.");
+                case 500:
+                    return setError(form, "Erreur serveur. Veuillez réessayer.");
+                case 502:
+                    return setError(form, "Erreur Stripe. Veuillez réessayer.");
+                case 503:
+                    return setError(form, "Service temporairement indisponible.");
+                default:
+                    return setError(form, "Une erreur inattendue est survenue.");
+            }
+        }
+
+        return { updatePriceForm: form }
     },
 } satisfies Actions
