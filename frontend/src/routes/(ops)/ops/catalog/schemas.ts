@@ -104,3 +104,37 @@ export const updateProductDefaults: UpdateProduct = {
 export const deleteProductDefaults: DeleteProduct = {
     id: ""
 }
+
+// Price schemas
+export const createPriceSchema = type({
+    productId: "string",
+    amount: "number",  // in cents
+    currency: "string",  // ISO currency code (eur, usd)
+    interval: "'one_time' | 'month' | 'year'",
+    nickname: "string?",  // optional
+})
+
+export const updatePriceSchema = type({
+    id: "string",
+    active: "boolean",
+    nickname: "string?",  // optional
+})
+
+// Price types
+export type CreatePrice = Infer<typeof createPriceSchema>
+export type UpdatePrice = Infer<typeof updatePriceSchema>
+
+// Price defaults
+export const createPriceDefaults: CreatePrice = {
+    productId: "",
+    amount: 0,
+    currency: "eur",
+    interval: "one_time",
+    nickname: undefined,
+}
+
+export const updatePriceDefaults: UpdatePrice = {
+    id: "",
+    active: true,
+    nickname: undefined,
+}
