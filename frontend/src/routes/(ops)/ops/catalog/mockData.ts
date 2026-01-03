@@ -231,3 +231,94 @@ export const mockProducts = [
         ]
     },
 ];
+
+export const mockPrices = [
+    {
+        id: "price-1",
+        productId: "prod-1",
+        stripePriceId: "price_1ABC123XYZ",
+        amount: 8000, // 80.00 in cents
+        currency: "eur",
+        interval: "one_time" as const,
+        isActive: true,
+        createdAt: "2025-01-01T10:00:00Z",
+        updatedAt: "2025-01-15T14:30:00Z",
+    },
+    {
+        id: "price-2",
+        productId: "prod-2",
+        stripePriceId: "price_2DEF456UVW",
+        amount: 7500, // 75.00
+        currency: "eur",
+        interval: "one_time" as const,
+        isActive: true,
+        createdAt: "2025-01-02T11:00:00Z",
+        updatedAt: "2025-01-16T09:00:00Z",
+    },
+    {
+        id: "price-3",
+        productId: "prod-3",
+        stripePriceId: "price_3GHI789RST",
+        amount: 12000, // 120.00
+        currency: "eur",
+        interval: "one_time" as const,
+        isActive: true,
+        createdAt: "2025-01-03T09:30:00Z",
+        updatedAt: "2025-01-17T16:45:00Z",
+    },
+    {
+        id: "price-4",
+        productId: "prod-4",
+        stripePriceId: "price_4JKL012OPQ",
+        amount: 15000, // 150.00
+        currency: "eur",
+        interval: "one_time" as const,
+        isActive: true,
+        createdAt: "2025-01-04T14:00:00Z",
+        updatedAt: "2025-01-18T11:20:00Z",
+    },
+    {
+        id: "price-5",
+        productId: "prod-4",
+        stripePriceId: "price_5MNO345LMN",
+        amount: 50000, // 500.00
+        currency: "eur",
+        interval: "month" as const,
+        isActive: true,
+        createdAt: "2025-01-04T14:30:00Z",
+        updatedAt: "2025-01-18T11:30:00Z",
+    },
+    {
+        id: "price-6",
+        productId: "prod-5",
+        stripePriceId: "price_6PQR678IJK",
+        amount: 9500, // 95.00
+        currency: "eur",
+        interval: "one_time" as const,
+        isActive: true,
+        createdAt: "2025-01-05T10:15:00Z",
+        updatedAt: "2025-01-19T13:00:00Z",
+    },
+    {
+        id: "price-7",
+        productId: "prod-5",
+        stripePriceId: "price_7STU901GHI",
+        amount: 30000, // 300.00
+        currency: "eur",
+        interval: "month" as const,
+        isActive: false,
+        createdAt: "2025-01-05T10:30:00Z",
+        updatedAt: "2025-01-19T13:15:00Z",
+    },
+    {
+        id: "price-8",
+        productId: "prod-1",
+        stripePriceId: "price_8VWX234DEF",
+        amount: 80000, // 800.00
+        currency: "eur",
+        interval: "year" as const,
+        isActive: false,
+        createdAt: "2025-01-01T11:00:00Z",
+        updatedAt: "2025-01-15T15:00:00Z",
+    },
+];
