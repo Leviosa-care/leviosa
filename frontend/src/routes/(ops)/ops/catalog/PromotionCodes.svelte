@@ -14,9 +14,9 @@
     import type { Snippet } from "svelte";
     import type { PageData } from "./$types";
     import Drawer from "$lib/ui/Drawer.svelte";
+    import { superForm } from "sveltekit-superforms";
 
     import { browser } from "$app/environment";
-    import { mockPromotionCodes, mockCoupons } from "./mockData";
 
     // Detect if we're on mobile
     let isMobile = $state(false);
@@ -27,8 +27,6 @@
             isMobile = window.innerWidth < 768;
         });
     }
-
-    type Input = Snippet<[string]>;
 
     // PromotionCode type from API
     type PromotionCode = {
@@ -48,14 +46,64 @@
         metadata?: Record<string, string | undefined>;
     };
 
+    // Coupon type for lookups
+    type Coupon = {
+        id: string;
+        name: string;
+        percentOff?: number;
+        amountOff?: number;
+        currency?: string;
+    };
+
     interface Props {
         data: PageData;
     }
 
     let { data }: Props = $props();
 
-    // Use mock promotion codes for now
-    let promotionCodes = $state<PromotionCode[]>([...mockPromotionCodes]);
+    // Use promotion codes from server data
+    let promotionCodes = $state<PromotionCode[]>(data.promotionCodes || []);
+    let coupons = $state<Coupon[]>(data.coupons || []);
+
+    // Initialize superforms for create, update, and delete
+    const {
+        form: createForm,
+        errors: createErrors,
+        enhance: createEnhance,
+    } = superForm(data.createPromotionCodeForm, {
+        resetForm: true,
+        onUpdated({ form }) {
+            if (form.valid) {
+                createDialogOpen = false;
+            }
+        },
+    });
+
+    const {
+        form: updateForm,
+        errors: updateErrors,
+        enhance: updateEnhance,
+    } = superForm(data.updatePromotionCodeForm, {
+        resetForm: false,
+        onUpdated({ form }) {
+            if (form.valid) {
+                editDialogOpen = false;
+            }
+        },
+    });
+
+    const {
+        form: deleteForm,
+        errors: deleteErrors,
+        enhance: deleteEnhance,
+    } = superForm(data.deletePromotionCodeForm, {
+        resetForm: false,
+        onUpdated({ form }) {
+            if (form.valid) {
+                deleteDialogOpen = false;
+            }
+        },
+    });
 
     // Status filter state (single select)
     const ALL_STATUSES = "all";
@@ -78,12 +126,12 @@
 
     // Helper function to get coupon name by ID
     function getCouponName(couponId: string): string {
-        return mockCoupons.find((c) => c.id === couponId)?.name || "Inconnu";
+        return coupons.find((c) => c.id === couponId)?.name || "Inconnu";
     }
 
     // Helper function to get coupon discount info
     function getCouponDiscount(couponId: string): string {
-        const coupon = mockCoupons.find((c) => c.id === couponId);
+        const coupon = coupons.find((c) => c.id === couponId);
         if (!coupon) return "-";
         if (coupon.percentOff !== undefined) {
             return `${coupon.percentOff}%`;
@@ -151,71 +199,27 @@
     // Currently selected promotion code for edit/delete
     let selectedPromo: PromotionCode | null = $state(null);
 
-    // Form states for new/edit promotion code
-    let formData = $state<{
-        id: string;
-        stripePromotionId: string;
-        couponId: string;
-        code: string;
-        active: boolean;
-        maxRedemptions: number;
-        expiresAt: string;
-        firstTimeTransaction: boolean;
-        minimumAmount: number;
-        minimumAmountCurrency: string;
-    }>({
-        id: "",
-        stripePromotionId: "",
-        couponId: "",
-        code: "",
-        active: true,
-        maxRedemptions: 0,
-        expiresAt: "",
-        firstTimeTransaction: false,
-        minimumAmount: 0,
-        minimumAmountCurrency: "eur",
-    });
-
-    // Reset form to default values
-    function resetForm() {
-        formData = {
-            id: "",
-            stripePromotionId: "",
-            couponId: "",
-            code: "",
-            active: true,
-            maxRedemptions: 0,
-            expiresAt: "",
-            firstTimeTransaction: false,
-            minimumAmount: 0,
-            minimumAmountCurrency: "eur",
-        };
-    }
-
     function openCreateDialog() {
-        resetForm();
+        $createForm.couponId = "";
+        $createForm.code = "";
+        $createForm.maxRedemptions = undefined;
+        $createForm.expiresAt = undefined;
+        $createForm.firstTimeTransaction = false;
+        $createForm.minimumAmount = undefined;
+        $createForm.minimumAmountCurrency = undefined;
         createDialogOpen = true;
     }
 
     function openEditDialog(promo: PromotionCode) {
         selectedPromo = promo;
-        formData = {
-            id: promo.id,
-            stripePromotionId: promo.stripePromotionId,
-            couponId: promo.couponId,
-            code: promo.code,
-            active: promo.active,
-            maxRedemptions: promo.maxRedemptions ?? 0,
-            expiresAt: promo.expiresAt ? promo.expiresAt.slice(0, 16) : "",
-            firstTimeTransaction: promo.firstTimeTransaction,
-            minimumAmount: promo.minimumAmount ?? 0,
-            minimumAmountCurrency: promo.minimumAmountCurrency ?? "eur",
-        };
+        $updateForm.id = promo.id;
+        $updateForm.active = promo.active;
         editDialogOpen = true;
     }
 
     function openDeleteDialog(promo: PromotionCode) {
         selectedPromo = promo;
+        $deleteForm.id = promo.id;
         deleteDialogOpen = true;
     }
 
@@ -242,67 +246,6 @@
         const currency = promo.minimumAmountCurrency || "eur";
         const symbol = currency === "eur" ? "€" : currency === "usd" ? "$" : currency.toUpperCase();
         return `${value.toFixed(2)} ${symbol}`;
-    }
-
-    function handleCreateSubmit(e: Event) {
-        e.preventDefault();
-        const newPromo: PromotionCode = {
-            id: `promo-${Date.now()}`,
-            stripePromotionId: formData.stripePromotionId,
-            couponId: formData.couponId,
-            code: formData.code.toUpperCase(),
-            active: formData.active,
-            maxRedemptions: formData.maxRedemptions > 0 ? formData.maxRedemptions : undefined,
-            timesRedeemed: 0,
-            expiresAt: formData.expiresAt ? formData.expiresAt + ":00Z" : undefined,
-            firstTimeTransaction: formData.firstTimeTransaction,
-            minimumAmount: formData.minimumAmount > 0 ? formData.minimumAmount : undefined,
-            minimumAmountCurrency: formData.minimumAmount > 0 ? formData.minimumAmountCurrency : undefined,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        };
-        promotionCodes = [...promotionCodes, newPromo];
-        createDialogOpen = false;
-        resetForm();
-    }
-
-    function handleEditSubmit(e: Event) {
-        e.preventDefault();
-        if (!selectedPromo) return;
-
-        const selectedId = selectedPromo.id;
-        promotionCodes = promotionCodes.map((p) => {
-            if (p.id === selectedId) {
-                return {
-                    ...p,
-                    stripePromotionId: formData.stripePromotionId,
-                    couponId: formData.couponId,
-                    code: formData.code.toUpperCase(),
-                    active: formData.active,
-                    maxRedemptions: formData.maxRedemptions > 0 ? formData.maxRedemptions : undefined,
-                    expiresAt: formData.expiresAt ? formData.expiresAt + ":00Z" : undefined,
-                    firstTimeTransaction: formData.firstTimeTransaction,
-                    minimumAmount: formData.minimumAmount > 0 ? formData.minimumAmount : undefined,
-                    minimumAmountCurrency: formData.minimumAmount > 0 ? formData.minimumAmountCurrency : undefined,
-                    updatedAt: new Date().toISOString(),
-                };
-            }
-            return p;
-        });
-
-        editDialogOpen = false;
-        selectedPromo = null;
-        resetForm();
-    }
-
-    function handleDeleteSubmit(e: Event) {
-        e.preventDefault();
-        if (!selectedPromo) return;
-
-        const selectedId = selectedPromo.id;
-        promotionCodes = promotionCodes.filter((p) => p.id !== selectedId);
-        deleteDialogOpen = false;
-        selectedPromo = null;
     }
 
     function toggleSort(field: SortField) {
@@ -662,19 +605,17 @@
             </p>
         </div>
 
-        <form onsubmit={handleCreateSubmit} class="grid gap-4 pt-8">
+        <form method="POST" action="?/createPromotionCode" use:createEnhance class="grid gap-4 pt-8">
             <div class="grid grid-cols-1 gap-4 w-full pb-4">
-                {@render field("code", "Code promotion", textInput, formData.code, null)}
-                {@render field("couponId", "Coupon associé", couponSelect, formData.couponId, null)}
-                {@render field("stripePromotionId", "Stripe Promotion ID", textInputStripe, formData.stripePromotionId, null)}
-                {@render field("maxRedemptions", "Max. utilisations (0 = illimité)", numberInputMaxRedemptions, formData.maxRedemptions, null)}
-                {@render field("expiresAt", "Date d'expiration", dateTimeInput, formData.expiresAt, null)}
-                {@render field("minimumAmount", "Montant minimum (centimes)", numberInputMinimum, formData.minimumAmount, null)}
-                {#if formData.minimumAmount > 0}
-                    {@render field("minimumAmountCurrency", "Devise", currencySelect, formData.minimumAmountCurrency, null)}
+                {@render createField("code", "Code promotion")}
+                {@render createField("couponId", "Coupon associé")}
+                {@render createField("maxRedemptions", "Max. utilisations (0 = illimité)")}
+                {@render createField("expiresAt", "Date d'expiration")}
+                {@render createField("minimumAmount", "Montant minimum (centimes)")}
+                {#if $createForm.minimumAmount && $createForm.minimumAmount > 0}
+                    {@render createField("minimumAmountCurrency", "Devise")}
                 {/if}
-                {@render field("firstTimeTransaction", "Restrictions", firstTimeCheckbox, formData.firstTimeTransaction, null)}
-                {@render field("active", "Statut", activeCheckbox, formData.active, null)}
+                {@render createField("firstTimeTransaction", "Restrictions")}
             </div>
             <div class="flex w-full justify-end gap-3">
                 <button
@@ -714,21 +655,19 @@
 
                 <Separator.Root class="bg-muted mx-5 !mb-2 !mt-5 block h-px" />
 
-                <form onsubmit={handleCreateSubmit} class="grid gap-4">
+                <form method="POST" action="?/createPromotionCode" use:createEnhance class="grid gap-4">
                     <div
                         class="grid grid-cols-[max-content_1fr] gap-4 w-full items-center pb-11 pt-7"
                     >
-                        {@render field("code", "Code promotion", textInput, formData.code, null)}
-                        {@render field("couponId", "Coupon associé", couponSelect, formData.couponId, null)}
-                        {@render field("stripePromotionId", "Stripe Promotion ID", textInputStripe, formData.stripePromotionId, null)}
-                        {@render field("maxRedemptions", "Max. utilisations (0 = illimité)", numberInputMaxRedemptions, formData.maxRedemptions, null)}
-                        {@render field("expiresAt", "Date d'expiration", dateTimeInput, formData.expiresAt, null)}
-                        {@render field("minimumAmount", "Montant minimum (centimes)", numberInputMinimum, formData.minimumAmount, null)}
-                        {#if formData.minimumAmount > 0}
-                            {@render field("minimumAmountCurrency", "Devise", currencySelect, formData.minimumAmountCurrency, null)}
+                        {@render createField("code", "Code promotion")}
+                        {@render createField("couponId", "Coupon associé")}
+                        {@render createField("maxRedemptions", "Max. utilisations (0 = illimité)")}
+                        {@render createField("expiresAt", "Date d'expiration")}
+                        {@render createField("minimumAmount", "Montant minimum (centimes)")}
+                        {#if $createForm.minimumAmount && $createForm.minimumAmount > 0}
+                            {@render createField("minimumAmountCurrency", "Devise")}
                         {/if}
-                        {@render field("firstTimeTransaction", "Restrictions", firstTimeCheckbox, formData.firstTimeTransaction, null)}
-                        {@render field("active", "Statut", activeCheckbox, formData.active, null)}
+                        {@render createField("firstTimeTransaction", "Restrictions")}
                     </div>
                     <div class="flex w-full justify-end gap-3">
                         <Button.Root type="button" class="cursor-pointer">
@@ -784,19 +723,17 @@
             </p>
         </div>
 
-        <form onsubmit={handleEditSubmit} class="grid gap-4 pt-8">
+        <form method="POST" action="?/updatePromotionCode" use:updateEnhance class="grid gap-4 pt-8">
+            {#if selectedPromo}
+                <div class="bg-dark-04 p-4 rounded-card mt-4">
+                    <p class="text-sm text-foreground-alt mb-2">Code promotion sélectionné:</p>
+                    <p class="text-sm font-medium font-mono">{selectedPromo.code}</p>
+                    <p class="text-xs text-foreground-alt">{getCouponName(selectedPromo.couponId)} - {getCouponDiscount(selectedPromo.couponId)}</p>
+                </div>
+            {/if}
+            <input type="hidden" name="id" bind:value={$updateForm.id} />
             <div class="grid grid-cols-1 gap-4 w-full pb-4">
-                {@render field("code", "Code promotion", textInput, formData.code, null)}
-                {@render field("couponId", "Coupon associé", couponSelect, formData.couponId, null)}
-                {@render field("stripePromotionId", "Stripe Promotion ID", textInputStripe, formData.stripePromotionId, null)}
-                {@render field("maxRedemptions", "Max. utilisations (0 = illimité)", numberInputMaxRedemptions, formData.maxRedemptions, null)}
-                {@render field("expiresAt", "Date d'expiration", dateTimeInput, formData.expiresAt, null)}
-                {@render field("minimumAmount", "Montant minimum (centimes)", numberInputMinimum, formData.minimumAmount, null)}
-                {#if formData.minimumAmount > 0}
-                    {@render field("minimumAmountCurrency", "Devise", currencySelect, formData.minimumAmountCurrency, null)}
-                {/if}
-                {@render field("firstTimeTransaction", "Restrictions", firstTimeCheckbox, formData.firstTimeTransaction, null)}
-                {@render field("active", "Statut", activeCheckbox, formData.active, null)}
+                {@render updateField("active", "Statut actif")}
             </div>
             <div class="flex w-full justify-end gap-3">
                 <button
@@ -835,21 +772,19 @@
 
                 <Separator.Root class="bg-muted mx-5 !mb-2 !mt-5 block h-px" />
 
-                <form onsubmit={handleEditSubmit} class="grid gap-4">
+                <form method="POST" action="?/updatePromotionCode" use:updateEnhance class="grid gap-4">
+                    {#if selectedPromo}
+                        <div class="bg-dark-04 p-4 rounded-card mt-4">
+                            <p class="text-sm text-foreground-alt mb-2">Code promotion sélectionné:</p>
+                            <p class="text-sm font-medium font-mono">{selectedPromo.code}</p>
+                            <p class="text-xs text-foreground-alt">{getCouponName(selectedPromo.couponId)} - {getCouponDiscount(selectedPromo.couponId)}</p>
+                        </div>
+                    {/if}
+                    <input type="hidden" name="id" bind:value={$updateForm.id} />
                     <div
                         class="grid grid-cols-[max-content_1fr] gap-4 w-full items-center pb-11 pt-7"
                     >
-                        {@render field("code", "Code promotion", textInput, formData.code, null)}
-                        {@render field("couponId", "Coupon associé", couponSelect, formData.couponId, null)}
-                        {@render field("stripePromotionId", "Stripe Promotion ID", textInputStripe, formData.stripePromotionId, null)}
-                        {@render field("maxRedemptions", "Max. utilisations (0 = illimité)", numberInputMaxRedemptions, formData.maxRedemptions, null)}
-                        {@render field("expiresAt", "Date d'expiration", dateTimeInput, formData.expiresAt, null)}
-                        {@render field("minimumAmount", "Montant minimum (centimes)", numberInputMinimum, formData.minimumAmount, null)}
-                        {#if formData.minimumAmount > 0}
-                            {@render field("minimumAmountCurrency", "Devise", currencySelect, formData.minimumAmountCurrency, null)}
-                        {/if}
-                        {@render field("firstTimeTransaction", "Restrictions", firstTimeCheckbox, formData.firstTimeTransaction, null)}
-                        {@render field("active", "Statut", activeCheckbox, formData.active, null)}
+                        {@render updateField("active", "Statut actif")}
                     </div>
                     <div class="flex w-full justify-end gap-3">
                         <Button.Root type="button" class="cursor-pointer">
@@ -906,7 +841,11 @@
             </p>
         </div>
 
-        <form onsubmit={handleDeleteSubmit} class="pt-8">
+        <form method="POST" action="?/deletePromotionCode" use:deleteEnhance class="pt-8">
+            <input type="hidden" name="id" bind:value={$deleteForm.id} />
+            {#if $deleteErrors._errors}
+                <p class="text-sm text-destructive mb-4">{$deleteErrors._errors}</p>
+            {/if}
             <div class="flex w-full justify-end gap-3">
                 <button
                     type="button"
@@ -943,7 +882,11 @@
                     est irréversible.
                 </Dialog.Description>
 
-                <form onsubmit={handleDeleteSubmit} class="mt-8">
+                <form method="POST" action="?/deletePromotionCode" use:deleteEnhance class="mt-8">
+                    <input type="hidden" name="id" bind:value={$deleteForm.id} />
+                    {#if $deleteErrors._errors}
+                        <p class="text-sm text-destructive mb-4">{$deleteErrors._errors}</p>
+                    {/if}
                     <div class="flex w-full justify-end gap-3">
                         <Button.Root type="button" class="cursor-pointer">
                             <Dialog.Close
@@ -975,153 +918,109 @@
     </Dialog.Root>
 {/if}
 
-<!-- Snippets for form fields -->
-{#snippet field(
-    name: string,
-    label: string,
-    inputSnippet: Input,
-    value: any,
-    error: any,
-)}
-    <Label.Root for={name} class="text-sm font-semibold">
-        {label}
-    </Label.Root>
+<!-- Snippets for create form fields -->
+{#snippet createField(name: string, label: string)}
+    <Label.Root for={name} class="text-sm font-semibold">{label}</Label.Root>
     <div class="relative w-full">
-        {@render inputSnippet(name)}
-        {#if error && error.length > 0}
-            <p class="text-xs text-destructive mt-1">{error[0]}</p>
+        {#if name === "code"}
+            <input
+                id={name}
+                type="text"
+                {name}
+                bind:value={$createForm.code}
+                class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base font-mono uppercase focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+                placeholder="Ex: BIENVENUE2025"
+                required
+            />
+        {:else if name === "couponId"}
+            <select
+                id={name}
+                {name}
+                bind:value={$createForm.couponId}
+                class="h-input rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+                required
+            >
+                <option value="">Sélectionner un coupon</option>
+                {#each coupons as coupon}
+                    <option value={coupon.id}>{coupon.name}</option>
+                {/each}
+            </select>
+        {:else if name === "maxRedemptions"}
+            <input
+                id={name}
+                type="number"
+                {name}
+                bind:value={$createForm.maxRedemptions}
+                min="0"
+                step="1"
+                class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+                placeholder="0 pour illimité"
+            />
+        {:else if name === "expiresAt"}
+            <input
+                id={name}
+                type="datetime-local"
+                {name}
+                bind:value={$createForm.expiresAt}
+                class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+            />
+        {:else if name === "minimumAmount"}
+            <input
+                id={name}
+                type="number"
+                {name}
+                bind:value={$createForm.minimumAmount}
+                min="0"
+                step="1"
+                class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+                placeholder="0 pour aucun minimum"
+            />
+        {:else if name === "minimumAmountCurrency"}
+            <select
+                id={name}
+                {name}
+                bind:value={$createForm.minimumAmountCurrency}
+                class="h-input rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+            >
+                <option value="eur">EUR (€)</option>
+                <option value="usd">USD ($)</option>
+            </select>
+        {:else if name === "firstTimeTransaction"}
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                    type="checkbox"
+                    id={name}
+                    {name}
+                    bind:checked={$createForm.firstTimeTransaction}
+                    class="w-4 h-4 text-dark border-gray-300 rounded focus:ring-dark"
+                />
+                <span class="text-sm">Nouveaux clients uniquement</span>
+            </label>
+        {/if}
+        {#if $createErrors[name]}
+            <p class="text-xs text-destructive mt-1">{$createErrors[name]}</p>
         {/if}
     </div>
 {/snippet}
 
-{#snippet textInput(name: string)}
-    {#if name === "code"}
-        <input
-            id={name}
-            type="text"
-            {name}
-            bind:value={formData.code}
-            class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base font-mono uppercase focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
-            placeholder="Ex: BIENVENUE2025"
-            required
-        />
-    {/if}
-{/snippet}
-
-{#snippet textInputStripe(name: string)}
-    {#if name === "stripePromotionId"}
-        <input
-            id={name}
-            type="text"
-            {name}
-            bind:value={formData.stripePromotionId}
-            class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base font-mono focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
-            placeholder="promo_..."
-            required
-        />
-    {/if}
-{/snippet}
-
-{#snippet couponSelect(name: string)}
-    {#if name === "couponId"}
-        <select
-            id={name}
-            {name}
-            bind:value={formData.couponId}
-            class="h-input rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
-            required
-        >
-            <option value="">Sélectionner un coupon</option>
-            {#each mockCoupons as coupon}
-                <option value={coupon.id}>{coupon.name}</option>
-            {/each}
-        </select>
-    {/if}
-{/snippet}
-
-{#snippet currencySelect(name: string)}
-    {#if name === "minimumAmountCurrency"}
-        <select
-            id={name}
-            {name}
-            bind:value={formData.minimumAmountCurrency}
-            class="h-input rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
-            required
-        >
-            <option value="eur">EUR (€)</option>
-            <option value="usd">USD ($)</option>
-        </select>
-    {/if}
-{/snippet}
-
-{#snippet numberInputMaxRedemptions(name: string)}
-    {#if name === "maxRedemptions"}
-        <input
-            id={name}
-            type="number"
-            {name}
-            bind:value={formData.maxRedemptions}
-            min="0"
-            step="1"
-            class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
-            placeholder="0 pour illimité"
-        />
-    {/if}
-{/snippet}
-
-{#snippet numberInputMinimum(name: string)}
-    {#if name === "minimumAmount"}
-        <input
-            id={name}
-            type="number"
-            {name}
-            bind:value={formData.minimumAmount}
-            min="0"
-            step="1"
-            class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
-            placeholder="0 pour aucun minimum"
-        />
-    {/if}
-{/snippet}
-
-{#snippet dateTimeInput(name: string)}
-    {#if name === "expiresAt"}
-        <input
-            id={name}
-            type="datetime-local"
-            {name}
-            bind:value={formData.expiresAt}
-            class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
-        />
-    {/if}
-{/snippet}
-
-{#snippet firstTimeCheckbox(name: string)}
-    {#if name === "firstTimeTransaction"}
-        <label class="flex items-center gap-2 cursor-pointer">
-            <input
-                type="checkbox"
-                id={name}
-                {name}
-                bind:checked={formData.firstTimeTransaction}
-                class="w-4 h-4 text-dark border-gray-300 rounded focus:ring-dark"
-            />
-            <span class="text-sm">Nouveaux clients uniquement</span>
-        </label>
-    {/if}
-{/snippet}
-
-{#snippet activeCheckbox(name: string)}
-    {#if name === "active"}
-        <label class="flex items-center gap-2 cursor-pointer">
-            <input
-                type="checkbox"
-                id={name}
-                {name}
-                bind:checked={formData.active}
-                class="w-4 h-4 text-dark border-gray-300 rounded focus:ring-dark"
-            />
-            <span class="text-sm">Actif</span>
-        </label>
-    {/if}
+<!-- Snippet for update form fields -->
+{#snippet updateField(name: string, label: string)}
+    <Label.Root for={name} class="text-sm font-semibold">{label}</Label.Root>
+    <div class="relative w-full">
+        {#if name === "active"}
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                    type="checkbox"
+                    id={name}
+                    {name}
+                    bind:checked={$updateForm.active}
+                    class="w-4 h-4 text-dark border-gray-300 rounded focus:ring-dark"
+                />
+                <span class="text-sm">Actif</span>
+            </label>
+        {/if}
+        {#if $updateErrors[name]}
+            <p class="text-xs text-destructive mt-1">{$updateErrors[name]}</p>
+        {/if}
+    </div>
 {/snippet}
