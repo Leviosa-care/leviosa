@@ -22,8 +22,14 @@ import {
     createPriceDefaults,
     updatePriceSchema,
     updatePriceDefaults,
+    createCouponSchema,
+    createCouponDefaults,
+    updateCouponSchema,
+    updateCouponDefaults,
+    deleteCouponSchema,
+    deleteCouponDefaults,
 } from "./schemas"
-import { mockCategories, mockProducts, mockPrices } from "./mockData"
+import { mockCategories, mockProducts, mockPrices, mockCoupons } from "./mockData"
 
 // Enable mock mode for development
 const MOCK_MODE = true
@@ -50,15 +56,22 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
     const createPriceForm = await superValidate(arktype(createPriceSchema, { defaults: createPriceDefaults }))
     const updatePriceForm = await superValidate(arktype(updatePriceSchema, { defaults: updatePriceDefaults }))
 
+    // Initialize coupon forms
+    const createCouponForm = await superValidate(arktype(createCouponSchema, { defaults: createCouponDefaults }))
+    const updateCouponForm = await superValidate(arktype(updateCouponSchema, { defaults: updateCouponDefaults }))
+    const deleteCouponForm = await superValidate(arktype(deleteCouponSchema, { defaults: deleteCouponDefaults }))
+
     let categories = []
     let products = []
     let prices = []
+    let coupons = []
 
     if (MOCK_MODE) {
         // Use mock data in development
         categories = mockCategories
         products = mockProducts
         prices = mockPrices
+        coupons = mockCoupons
     } else {
         const sessionCookie = cookies.get('session');
 
@@ -99,6 +112,17 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
                 prices = [...prices, ...productPrices]
             }
         }
+
+        // Fetch all coupons
+        const couponsRes = await fetch(`${API_URL}/admin/coupons`, {
+            headers: {
+                'Authorization': `Bearer ${sessionCookie}`,
+            }
+        })
+
+        if (couponsRes.ok) {
+            coupons = await couponsRes.json()
+        }
     }
 
     return {
@@ -110,9 +134,13 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         deleteProductForm,
         createPriceForm,
         updatePriceForm,
+        createCouponForm,
+        updateCouponForm,
+        deleteCouponForm,
         categories,
         products,
         prices,
+        coupons,
     }
 }
 
@@ -783,5 +811,232 @@ export const actions = {
         }
 
         return { updatePriceForm: form }
+    },
+
+    createCoupon: async ({ request, fetch, cookies }) => {
+        const formData = await request.formData()
+
+        const name = formData.get('name') as string
+        const percentOff = formData.get('percentOff') ? parseFloat(formData.get('percentOff') as string) : undefined
+        const amountOff = formData.get('amountOff') ? parseInt(formData.get('amountOff') as string) : undefined
+        const currency = formData.get('currency') as string | null
+        const duration = formData.get('duration') as string
+        const durationInMonths = formData.get('durationInMonths') ? parseInt(formData.get('durationInMonths') as string) : undefined
+        const maxRedemptions = formData.get('maxRedemptions') ? parseInt(formData.get('maxRedemptions') as string) : undefined
+        const redeemBy = formData.get('redeemBy') as string | null
+
+        const form = await superValidate({
+            name,
+            percentOff,
+            amountOff,
+            currency: currency || undefined,
+            duration,
+            durationInMonths,
+            maxRedemptions,
+            redeemBy: redeemBy || undefined,
+        }, arktype(createCouponSchema, { defaults: createCouponDefaults }))
+
+        if (!form.valid) {
+            return fail(400, { createCouponForm: form })
+        }
+
+        // Validate mutually exclusive discount types
+        if ((form.data.percentOff !== undefined && form.data.amountOff !== undefined) ||
+            (form.data.percentOff === undefined && form.data.amountOff === undefined)) {
+            return setError(form, "Vous devez fournir soit percentOff soit amountOff, mais pas les deux.");
+        }
+
+        // Validate currency is required if amountOff is set
+        if (form.data.amountOff !== undefined && !form.data.currency) {
+            return setError(form, "currency", "La devise est requise pour un montant fixe.");
+        }
+
+        // Validate durationInMonths is required if duration is repeating
+        if (form.data.duration === "repeating" && !form.data.durationInMonths) {
+            return setError(form, "durationInMonths", "La durée en mois est requise pour un coupon récurrent.");
+        }
+
+        if (MOCK_MODE) {
+            console.log('📝 [MOCK] Creating coupon:', form.data)
+            return { createCouponForm: form }
+        }
+
+        const sessionCookie = cookies.get('session');
+
+        // Prepare request body
+        const requestBody: any = {
+            name: form.data.name,
+            duration: form.data.duration,
+        }
+
+        if (form.data.percentOff !== undefined) {
+            requestBody.percentOff = form.data.percentOff
+        }
+
+        if (form.data.amountOff !== undefined) {
+            requestBody.amountOff = form.data.amountOff
+            requestBody.currency = form.data.currency
+        }
+
+        if (form.data.durationInMonths) {
+            requestBody.durationInMonths = form.data.durationInMonths
+        }
+
+        if (form.data.maxRedemptions) {
+            requestBody.maxRedemptions = form.data.maxRedemptions
+        }
+
+        if (form.data.redeemBy) {
+            requestBody.redeemBy = form.data.redeemBy
+        }
+
+        requestBody.metadata = {}
+
+        // Create coupon
+        const res = await fetch(`${API_URL}/admin/coupons`, {
+            method: "POST",
+            headers: {
+                'Content-Type': "application/json",
+                'Authorization': `Bearer ${sessionCookie}`,
+            },
+            body: JSON.stringify(requestBody)
+        })
+
+        if (!res.ok) {
+            switch (res.status) {
+                case 400:
+                    return setError(form, "Données invalides. Vérifiez que vous avez fourni soit un pourcentage soit un montant.");
+                case 401:
+                    return setError(form, "Non autorisé. Veuillez vous reconnecter.");
+                case 403:
+                    return setError(form, "Accès refusé. Vous devez être administrateur.");
+                case 415:
+                    return setError(form, "Type de contenu non supporté.");
+                case 500:
+                    return setError(form, "Erreur serveur. Veuillez réessayer.");
+                case 502:
+                    return setError(form, "Erreur Stripe. Veuillez réessayer.");
+                case 503:
+                    return setError(form, "Service temporairement indisponible.");
+                default:
+                    return setError(form, "Une erreur inattendue est survenue.");
+            }
+        }
+
+        return { createCouponForm: form }
+    },
+
+    updateCoupon: async ({ request, fetch, cookies }) => {
+        const formData = await request.formData()
+
+        const id = formData.get('id') as string
+        const name = formData.get('name') as string | null
+
+        const form = await superValidate({
+            id,
+            name: name || undefined,
+        }, arktype(updateCouponSchema, { defaults: updateCouponDefaults }))
+
+        if (!form.valid) {
+            return fail(400, { updateCouponForm: form })
+        }
+
+        // Validate at least one field is provided
+        if (!form.data.name) {
+            return setError(form, "Vous devez fournir au moins un champ à mettre à jour.");
+        }
+
+        if (MOCK_MODE) {
+            console.log('✏️ [MOCK] Updating coupon:', form.data)
+            return { updateCouponForm: form }
+        }
+
+        const sessionCookie = cookies.get('session');
+
+        // Update coupon
+        const res = await fetch(`${API_URL}/admin/coupons/${form.data.id}`, {
+            method: "PATCH",
+            headers: {
+                'Content-Type': "application/json",
+                'Authorization': `Bearer ${sessionCookie}`,
+            },
+            body: JSON.stringify({
+                name: form.data.name,
+                metadata: {},
+            })
+        })
+
+        if (!res.ok) {
+            switch (res.status) {
+                case 400:
+                    return setError(form, "Données invalides ou aucun champ fourni.");
+                case 401:
+                    return setError(form, "Non autorisé. Veuillez vous reconnecter.");
+                case 403:
+                    return setError(form, "Accès refusé. Vous devez être administrateur.");
+                case 404:
+                    return setError(form, "Coupon introuvable.");
+                case 415:
+                    return setError(form, "Type de contenu non supporté.");
+                case 500:
+                    return setError(form, "Erreur serveur. Veuillez réessayer.");
+                case 502:
+                    return setError(form, "Erreur Stripe. Veuillez réessayer.");
+                case 503:
+                    return setError(form, "Service temporairement indisponible.");
+                default:
+                    return setError(form, "Une erreur inattendue est survenue.");
+            }
+        }
+
+        return { updateCouponForm: form }
+    },
+
+    deleteCoupon: async ({ request, fetch, cookies }) => {
+        const formData = await request.formData()
+
+        const id = formData.get('id') as string
+
+        const form = await superValidate({ id }, arktype(deleteCouponSchema, { defaults: deleteCouponDefaults }))
+
+        if (!form.valid) {
+            return fail(400, { deleteCouponForm: form })
+        }
+
+        if (MOCK_MODE) {
+            console.log('🗑️ [MOCK] Deleting coupon:', form.data.id)
+            return { deleteCouponForm: form }
+        }
+
+        const sessionCookie = cookies.get('session');
+
+        // Delete coupon
+        const res = await fetch(`${API_URL}/admin/coupons/${form.data.id}`, {
+            method: "DELETE",
+            headers: {
+                'Authorization': `Bearer ${sessionCookie}`,
+            },
+        })
+
+        if (!res.ok) {
+            switch (res.status) {
+                case 401:
+                    return setError(form, "Non autorisé. Veuillez vous reconnecter.");
+                case 403:
+                    return setError(form, "Accès refusé. Vous devez être administrateur.");
+                case 404:
+                    return setError(form, "Coupon introuvable.");
+                case 500:
+                    return setError(form, "Erreur serveur. Veuillez réessayer.");
+                case 502:
+                    return setError(form, "Erreur Stripe. Veuillez réessayer.");
+                case 503:
+                    return setError(form, "Service temporairement indisponible.");
+                default:
+                    return setError(form, "Une erreur inattendue est survenue.");
+            }
+        }
+
+        return { deleteCouponForm: form }
     },
 } satisfies Actions
