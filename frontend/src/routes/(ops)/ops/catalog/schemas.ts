@@ -185,3 +185,48 @@ export const updateCouponDefaults: UpdateCoupon = {
 export const deleteCouponDefaults: DeleteCoupon = {
     id: ""
 }
+
+// Promotion Code schemas
+export const createPromotionCodeSchema = type({
+    couponId: "string",
+    code: "string",  // 3-50 chars, uppercase alphanumeric with - and _
+    maxRedemptions: "number?",
+    expiresAt: "string?",  // ISO 8601 timestamp
+    firstTimeTransaction: "boolean",
+    minimumAmount: "number?",  // in cents
+    minimumAmountCurrency: "string?",  // required if minimumAmount set
+})
+
+export const updatePromotionCodeSchema = type({
+    id: "string",
+    active: "boolean?",
+})
+
+export const deletePromotionCodeSchema = type({
+    id: "string"
+})
+
+// Promotion Code types
+export type CreatePromotionCode = Infer<typeof createPromotionCodeSchema>
+export type UpdatePromotionCode = Infer<typeof updatePromotionCodeSchema>
+export type DeletePromotionCode = Infer<typeof deletePromotionCodeSchema>
+
+// Promotion Code defaults
+export const createPromotionCodeDefaults: CreatePromotionCode = {
+    couponId: "",
+    code: "",
+    maxRedemptions: undefined,
+    expiresAt: undefined,
+    firstTimeTransaction: false,
+    minimumAmount: undefined,
+    minimumAmountCurrency: undefined,
+}
+
+export const updatePromotionCodeDefaults: UpdatePromotionCode = {
+    id: "",
+    active: undefined,
+}
+
+export const deletePromotionCodeDefaults: DeletePromotionCode = {
+    id: ""
+}
