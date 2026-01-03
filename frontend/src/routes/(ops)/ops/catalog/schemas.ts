@@ -138,3 +138,50 @@ export const updatePriceDefaults: UpdatePrice = {
     active: true,
     nickname: undefined,
 }
+
+// Coupon schemas
+export const createCouponSchema = type({
+    name: "string",
+    percentOff: "number?",  // 0.1-100, mutually exclusive with amountOff
+    amountOff: "number?",  // in cents, mutually exclusive with percentOff
+    currency: "string?",  // required if amountOff is set
+    duration: "'once' | 'repeating' | 'forever'",
+    durationInMonths: "number?",  // required if duration is "repeating"
+    maxRedemptions: "number?",
+    redeemBy: "string?",  // ISO 8601 timestamp
+})
+
+export const updateCouponSchema = type({
+    id: "string",
+    name: "string?",
+})
+
+export const deleteCouponSchema = type({
+    id: "string"
+})
+
+// Coupon types
+export type CreateCoupon = Infer<typeof createCouponSchema>
+export type UpdateCoupon = Infer<typeof updateCouponSchema>
+export type DeleteCoupon = Infer<typeof deleteCouponSchema>
+
+// Coupon defaults
+export const createCouponDefaults: CreateCoupon = {
+    name: "",
+    percentOff: undefined,
+    amountOff: undefined,
+    currency: undefined,
+    duration: "once",
+    durationInMonths: undefined,
+    maxRedemptions: undefined,
+    redeemBy: undefined,
+}
+
+export const updateCouponDefaults: UpdateCoupon = {
+    id: "",
+    name: undefined,
+}
+
+export const deleteCouponDefaults: DeleteCoupon = {
+    id: ""
+}
