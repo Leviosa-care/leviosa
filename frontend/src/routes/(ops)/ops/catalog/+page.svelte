@@ -6,6 +6,7 @@
     import TabsContent from "$lib/ui/bits-components/TabsContent.svelte";
     import Categories from "./Categories.svelte";
     import Products from "./Products.svelte";
+    import Prices from "./Prices.svelte";
     import Exercices from "./Exercices.svelte";
 
     let { data }: { data: PageData } = $props();
@@ -64,7 +65,7 @@
                 <Products {data} />
             </TabsContent>
             <TabsContent value="prix" class="h-full p-6">
-                <!-- Prix content -->
+                <Prices {data} />
             </TabsContent>
             <TabsContent value="coupons" class="h-full p-6">
                 <!-- Coupons content -->
