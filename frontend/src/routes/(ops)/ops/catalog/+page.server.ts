@@ -28,8 +28,14 @@ import {
     updateCouponDefaults,
     deleteCouponSchema,
     deleteCouponDefaults,
+    createPromotionCodeSchema,
+    createPromotionCodeDefaults,
+    updatePromotionCodeSchema,
+    updatePromotionCodeDefaults,
+    deletePromotionCodeSchema,
+    deletePromotionCodeDefaults,
 } from "./schemas"
-import { mockCategories, mockProducts, mockPrices, mockCoupons } from "./mockData"
+import { mockCategories, mockProducts, mockPrices, mockCoupons, mockPromotionCodes } from "./mockData"
 
 // Enable mock mode for development
 const MOCK_MODE = true
@@ -61,10 +67,16 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
     const updateCouponForm = await superValidate(arktype(updateCouponSchema, { defaults: updateCouponDefaults }))
     const deleteCouponForm = await superValidate(arktype(deleteCouponSchema, { defaults: deleteCouponDefaults }))
 
+    // Initialize promotion code forms
+    const createPromotionCodeForm = await superValidate(arktype(createPromotionCodeSchema, { defaults: createPromotionCodeDefaults }))
+    const updatePromotionCodeForm = await superValidate(arktype(updatePromotionCodeSchema, { defaults: updatePromotionCodeDefaults }))
+    const deletePromotionCodeForm = await superValidate(arktype(deletePromotionCodeSchema, { defaults: deletePromotionCodeDefaults }))
+
     let categories = []
     let products = []
     let prices = []
     let coupons = []
+    let promotionCodes = []
 
     if (MOCK_MODE) {
         // Use mock data in development
@@ -72,6 +84,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         products = mockProducts
         prices = mockPrices
         coupons = mockCoupons
+        promotionCodes = mockPromotionCodes
     } else {
         const sessionCookie = cookies.get('session');
 
@@ -123,6 +136,17 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         if (couponsRes.ok) {
             coupons = await couponsRes.json()
         }
+
+        // Fetch all promotion codes
+        const promotionCodesRes = await fetch(`${API_URL}/admin/promotion-codes`, {
+            headers: {
+                'Authorization': `Bearer ${sessionCookie}`,
+            }
+        })
+
+        if (promotionCodesRes.ok) {
+            promotionCodes = await promotionCodesRes.json()
+        }
     }
 
     return {
@@ -137,10 +161,14 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         createCouponForm,
         updateCouponForm,
         deleteCouponForm,
+        createPromotionCodeForm,
+        updatePromotionCodeForm,
+        deletePromotionCodeForm,
         categories,
         products,
         prices,
         coupons,
+        promotionCodes,
     }
 }
 
@@ -1038,5 +1066,221 @@ export const actions = {
         }
 
         return { deleteCouponForm: form }
+    },
+
+    createPromotionCode: async ({ request, fetch, cookies }) => {
+        const formData = await request.formData()
+
+        const couponId = formData.get('couponId') as string
+        const code = formData.get('code') as string
+        const maxRedemptions = formData.get('maxRedemptions') ? parseInt(formData.get('maxRedemptions') as string) : undefined
+        const expiresAt = formData.get('expiresAt') as string | null
+        const firstTimeTransaction = formData.get('firstTimeTransaction') === 'on'
+        const minimumAmount = formData.get('minimumAmount') ? parseInt(formData.get('minimumAmount') as string) : undefined
+        const minimumAmountCurrency = formData.get('minimumAmountCurrency') as string | null
+
+        const form = await superValidate({
+            couponId,
+            code,
+            maxRedemptions,
+            expiresAt: expiresAt || undefined,
+            firstTimeTransaction,
+            minimumAmount,
+            minimumAmountCurrency: minimumAmountCurrency || undefined,
+        }, arktype(createPromotionCodeSchema, { defaults: createPromotionCodeDefaults }))
+
+        if (!form.valid) {
+            return fail(400, { createPromotionCodeForm: form })
+        }
+
+        // Validate code format (3-50 chars, alphanumeric with - and _)
+        const codeRegex = /^[A-Z0-9_-]{3,50}$/
+        if (!codeRegex.test(form.data.code.toUpperCase())) {
+            return setError(form, "code", "Le code doit contenir 3-50 caractères alphanumériques (A-Z, 0-9, -, _).");
+        }
+
+        // Validate currency is required if minimumAmount is set
+        if (form.data.minimumAmount !== undefined && form.data.minimumAmount > 0 && !form.data.minimumAmountCurrency) {
+            return setError(form, "minimumAmountCurrency", "La devise est requise pour un montant minimum.");
+        }
+
+        if (MOCK_MODE) {
+            console.log('📝 [MOCK] Creating promotion code:', form.data)
+            return { createPromotionCodeForm: form }
+        }
+
+        const sessionCookie = cookies.get('session');
+
+        // Prepare request body
+        const requestBody: any = {
+            couponId: form.data.couponId,
+            code: form.data.code.toUpperCase(),
+            firstTimeTransaction: form.data.firstTimeTransaction,
+            metadata: {},
+        }
+
+        if (form.data.maxRedemptions) {
+            requestBody.maxRedemptions = form.data.maxRedemptions
+        }
+
+        if (form.data.expiresAt) {
+            requestBody.expiresAt = form.data.expiresAt
+        }
+
+        if (form.data.minimumAmount && form.data.minimumAmount > 0) {
+            requestBody.minimumAmount = form.data.minimumAmount
+            requestBody.minimumAmountCurrency = form.data.minimumAmountCurrency
+        }
+
+        // Create promotion code
+        const res = await fetch(`${API_URL}/admin/promotion-codes`, {
+            method: "POST",
+            headers: {
+                'Content-Type': "application/json",
+                'Authorization': `Bearer ${sessionCookie}`,
+            },
+            body: JSON.stringify(requestBody)
+        })
+
+        if (!res.ok) {
+            switch (res.status) {
+                case 400:
+                    return setError(form, "Données invalides. Vérifiez le format du code.");
+                case 401:
+                    return setError(form, "Non autorisé. Veuillez vous reconnecter.");
+                case 403:
+                    return setError(form, "Accès refusé. Vous devez être administrateur.");
+                case 404:
+                    return setError(form, "Coupon introuvable.");
+                case 409:
+                    return setError(form, "Ce code promotion existe déjà.");
+                case 415:
+                    return setError(form, "Type de contenu non supporté.");
+                case 500:
+                    return setError(form, "Erreur serveur. Veuillez réessayer.");
+                case 502:
+                    return setError(form, "Erreur Stripe. Veuillez réessayer.");
+                case 503:
+                    return setError(form, "Service temporairement indisponible.");
+                default:
+                    return setError(form, "Une erreur inattendue est survenue.");
+            }
+        }
+
+        return { createPromotionCodeForm: form }
+    },
+
+    updatePromotionCode: async ({ request, fetch, cookies }) => {
+        const formData = await request.formData()
+
+        const id = formData.get('id') as string
+        const active = formData.get('active') === 'on'
+
+        const form = await superValidate({
+            id,
+            active,
+        }, arktype(updatePromotionCodeSchema, { defaults: updatePromotionCodeDefaults }))
+
+        if (!form.valid) {
+            return fail(400, { updatePromotionCodeForm: form })
+        }
+
+        // Validate at least one field is provided
+        if (form.data.active === undefined) {
+            return setError(form, "Vous devez fournir au moins un champ à mettre à jour.");
+        }
+
+        if (MOCK_MODE) {
+            console.log('✏️ [MOCK] Updating promotion code:', form.data)
+            return { updatePromotionCodeForm: form }
+        }
+
+        const sessionCookie = cookies.get('session');
+
+        // Update promotion code
+        const res = await fetch(`${API_URL}/admin/promotion-codes/${form.data.id}`, {
+            method: "PATCH",
+            headers: {
+                'Content-Type': "application/json",
+                'Authorization': `Bearer ${sessionCookie}`,
+            },
+            body: JSON.stringify({
+                active: form.data.active,
+                metadata: {},
+            })
+        })
+
+        if (!res.ok) {
+            switch (res.status) {
+                case 400:
+                    return setError(form, "Données invalides ou aucun champ fourni.");
+                case 401:
+                    return setError(form, "Non autorisé. Veuillez vous reconnecter.");
+                case 403:
+                    return setError(form, "Accès refusé. Vous devez être administrateur.");
+                case 404:
+                    return setError(form, "Code promotion introuvable.");
+                case 415:
+                    return setError(form, "Type de contenu non supporté.");
+                case 500:
+                    return setError(form, "Erreur serveur. Veuillez réessayer.");
+                case 502:
+                    return setError(form, "Erreur Stripe. Veuillez réessayer.");
+                case 503:
+                    return setError(form, "Service temporairement indisponible.");
+                default:
+                    return setError(form, "Une erreur inattendue est survenue.");
+            }
+        }
+
+        return { updatePromotionCodeForm: form }
+    },
+
+    deletePromotionCode: async ({ request, fetch, cookies }) => {
+        const formData = await request.formData()
+
+        const id = formData.get('id') as string
+
+        const form = await superValidate({ id }, arktype(deletePromotionCodeSchema, { defaults: deletePromotionCodeDefaults }))
+
+        if (!form.valid) {
+            return fail(400, { deletePromotionCodeForm: form })
+        }
+
+        if (MOCK_MODE) {
+            console.log('🗑️ [MOCK] Deleting promotion code:', form.data.id)
+            return { deletePromotionCodeForm: form }
+        }
+
+        const sessionCookie = cookies.get('session');
+
+        // Delete promotion code
+        const res = await fetch(`${API_URL}/admin/promotion-codes/${form.data.id}`, {
+            method: "DELETE",
+            headers: {
+                'Authorization': `Bearer ${sessionCookie}`,
+            },
+        })
+
+        if (!res.ok) {
+            switch (res.status) {
+                case 401:
+                    return setError(form, "Non autorisé. Veuillez vous reconnecter.");
+                case 403:
+                    return setError(form, "Accès refusé. Vous devez être administrateur.");
+                case 404:
+                    return setError(form, "Code promotion introuvable.");
+                case 500:
+                    return setError(form, "Erreur serveur. Veuillez réessayer.");
+                case 502:
+                    return setError(form, "Erreur Stripe. Veuillez réessayer.");
+                case 503:
+                    return setError(form, "Service temporairement indisponible.");
+                default:
+                    return setError(form, "Une erreur inattendue est survenue.");
+            }
+        }
+
+        return { deletePromotionCodeForm: form }
     },
 } satisfies Actions
