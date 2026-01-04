@@ -59,6 +59,20 @@
             icon: Home,
             roles: ["admin", "partner"],
         },
+        // Catalogue
+        {
+            href: "/ops/catalog",
+            label: "Catalogue",
+            icon: Package,
+            roles: ["admin", "partner"],
+        },
+        // Users - admin only
+        {
+            href: "/ops/users",
+            label: "Utilisateurs",
+            icon: Users,
+            roles: ["admin"],
+        },
         // Agenda section - expanded on desktop
         {
             href: "/ops/agenda/disponibilites",
@@ -70,13 +84,6 @@
             href: "/ops/agenda/reservations",
             label: "Réservations",
             icon: CalendarCheck,
-            roles: ["admin", "partner"],
-        },
-        // Catalogue
-        {
-            href: "/ops/catalog",
-            label: "Catalogue",
-            icon: Package,
             roles: ["admin", "partner"],
         },
         // Statistics section - expanded on desktop
@@ -91,13 +98,6 @@
             label: "Finances",
             icon: DollarSign,
             roles: ["admin", "partner"],
-        },
-        // Users - admin only
-        {
-            href: "/ops/users",
-            label: "Utilisateurs",
-            icon: Users,
-            roles: ["admin"],
         },
     ];
 
