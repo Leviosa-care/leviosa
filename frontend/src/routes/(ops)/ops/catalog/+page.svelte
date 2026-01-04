@@ -42,7 +42,9 @@
             <div class="grid gap-1 mb-6">
                 <h1 class="text-2xl font-semibold tracking-tight">Catalogue</h1>
                 <p class="text-sm text-foreground-alt">
-                    Gérez vos catégories, produits, prix et exercices
+                    Configurez et organisez l'ensemble de votre offre
+                    commerciale : catégories, produits, tarification, promotions
+                    et exercices disponibles.
                 </p>
             </div>
 
