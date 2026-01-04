@@ -28,7 +28,7 @@
     let { user, permissions } = data;
 
     // Sidebar collapse state
-    let isCollapsed = $state(false);
+    let isCollapsed = $state(true);
 
     function toggleSidebar() {
         isCollapsed = !isCollapsed;
@@ -168,7 +168,7 @@
 {#if permissions.canAccessOps}
     <!-- Desktop Sidebar Navigation -->
     <aside
-        class="hidden lg:flex lg:flex-col lg:border-r bg-black relative transition-all duration-300
+        class="hidden lg:flex lg:flex-col lg:border-r bg-dark-900 relative transition-all duration-300
                {isCollapsed ? 'lg:w-20' : 'lg:w-64'}"
         style="border-color: rgba(255, 255, 255, 0.1);"
         aria-label="Sidebar navigation"
@@ -176,7 +176,7 @@
         <!-- Collapse Toggle Button -->
         <button
             onclick={toggleSidebar}
-            class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-black flex items-center justify-center
+            class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-dark-800 flex items-center justify-center
                    text-white/50 hover:text-white hover:bg-dark-900 transition-all duration-200"
             style="border: 1px solid rgba(255, 255, 255, 0.2);"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -223,7 +223,8 @@
         </div>
 
         <!-- Navigation Items -->
-        <nav class="flex-1 py-6 {isCollapsed ? 'px-2' : 'px-4'}">
+        <!-- <nav class="flex-1 py-6 {isCollapsed ? 'px-4' : 'px-4'}"> -->
+        <nav class="flex-1 py-6 px-4 {isCollapsed ? 'aspect-square' : ''}">
             <ul class="space-y-0.5">
                 {#each desktopItems as item (item.href)}
                     {@const active = isActive(item.href, page.url.pathname)}
@@ -299,7 +300,7 @@
 
     <!-- Mobile Bottom Navigation -->
     <nav
-        class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-black backdrop-blur-sm"
+        class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-dark-900 backdrop-blur-sm"
         style="border-top: 1px solid rgba(255, 255, 255, 0.1);"
         aria-label="Bottom navigation"
     >

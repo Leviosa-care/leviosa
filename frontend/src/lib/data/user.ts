@@ -1,4 +1,3 @@
-// TODO: make a role type and use it here as I should
 import { ROLES } from "$lib/types/role";
 
 export const mockUser: App.User = {
