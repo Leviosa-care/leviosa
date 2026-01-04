@@ -33,7 +33,7 @@
     <!-- > -->
     <TabsTrigger
         {value}
-        class="px-2 py-1.75 md:px-4 md:py-2 md:h-8 rounded-none bg-transparent border-b-3 data-[state=active]:shadow-none mb-[-2px] data-[state=active]:border-b-dark-900 data-[state=active]:text-foreground data-[state=inactive]:border-transparent data-[state=inactive]:text-foreground-alt hover:text-foreground transition-colors"
+        class="px-2 py-1.75 md:px-4 md:py-2 md:h-8 rounded-none bg-transparent border-b-3 data-[state=active]:shadow-none mb-[-2px] data-[state=active]:border-b-dark-900 data-[state=active]:text-dark-900 data-[state=inactive]:border-transparent data-[state=inactive]:text-dark-400 hover:text-foreground transition-colors"
     >
         {name}
     </TabsTrigger>
