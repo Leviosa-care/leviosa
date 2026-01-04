@@ -27,9 +27,13 @@
 </script>
 
 {#snippet tab_trigger(value: string, name: string)}
+    <!-- <TabsTrigger -->
+    <!--     {value} -->
+    <!--     class="px-2 py-1.75 md:px-4 md:py-2 md:h-8 rounded-none md:rounded-[7px] bg-transparent border-b-3 data-[state=active]:shadow-none mb-[-2px] md:mb-0 md:border-b-0 data-[state=active]:border-b-dark-900 data-[state=active]:text-foreground md:data-[state=active]:bg-white md:data-[state=active]:shadow-mini dark:md:data-[state=active]:bg-muted data-[state=inactive]:border-transparent data-[state=inactive]:text-foreground-alt md:data-[state=inactive]:hover:bg-dark-04 hover:text-foreground transition-colors" -->
+    <!-- > -->
     <TabsTrigger
         {value}
-        class="px-2 py-1.75 md:px-4 md:py-2 md:h-8 rounded-none md:rounded-[7px] bg-transparent border-b-3 data-[state=active]:shadow-none mb-[-2px] md:mb-0 md:border-b-0 data-[state=active]:border-b-dark-900 data-[state=active]:text-foreground md:data-[state=active]:bg-white md:data-[state=active]:shadow-mini dark:md:data-[state=active]:bg-muted data-[state=inactive]:border-transparent data-[state=inactive]:text-foreground-alt md:data-[state=inactive]:hover:bg-dark-04 hover:text-foreground transition-colors"
+        class="px-2 py-1.75 md:px-4 md:py-2 md:h-8 rounded-none bg-transparent border-b-3 data-[state=active]:shadow-none mb-[-2px] data-[state=active]:border-b-dark-900 data-[state=active]:text-foreground data-[state=inactive]:border-transparent data-[state=inactive]:text-foreground-alt hover:text-foreground transition-colors"
     >
         {name}
     </TabsTrigger>
@@ -50,8 +54,12 @@
 
             <!-- Scrollable tabs -->
             <div class="overflow-x-auto -mx-6 px-6 scrollbar-hide">
+                <!-- NOTE: here is the old navigation with the classic tab that we removed since there are some many triggers -->
+                <!-- <TabsList -->
+                <!--     class="inline-flex gap-2 md:gap-1 bg-transparent text-sm font-semibold min-w-max border-b-1 border-border-card md:border-b-0 md:rounded-9px md:bg-dark-10 md:shadow-mini-inset dark:md:bg-background md:p-1 md:leading-[0.01em] dark:md:border dark:md:border-neutral-600/30" -->
+                <!-- > -->
                 <TabsList
-                    class="inline-flex gap-2 md:gap-1 bg-transparent text-sm font-semibold min-w-max border-b-1 border-border-card md:border-b-0 md:rounded-9px md:bg-dark-10 md:shadow-mini-inset dark:md:bg-background md:p-1 md:leading-[0.01em] dark:md:border dark:md:border-neutral-600/30"
+                    class="inline-flex gap-2 md:gap-1 bg-transparent text-sm font-semibold min-w-max border-b-1 border-border-card md:p-1 md:leading-[0.01em]"
                 >
                     {#each triggers as trigger}
                         {@render tab_trigger(trigger.value, trigger.name)}
