@@ -189,7 +189,7 @@
 
         <!-- Sidebar Header -->
         <div
-            class="flex items-center justify-between border-border-card py-6 {isCollapsed
+            class="flex items-center justify-between border-b border-border-card py-6 {isCollapsed
                 ? 'px-3'
                 : 'px-6'}"
         >
@@ -249,14 +249,12 @@
 
         <!-- Sidebar Footer -->
         <div
-            class="py-5 {isCollapsed ? 'px-3' : 'px-6'}"
-            style="border-top: 1px solid rgba(255, 255, 255, 0.1);"
+            class="py-5 border-t border-dark-10 {isCollapsed ? 'px-3' : 'px-6'}"
         >
             {#if !isCollapsed}
                 <div class="flex items-center gap-3">
                     <div
                         class="w-9 h-9 rounded-full flex items-center justify-center bg-foreground-alt/10 border-border-card"
-                        style="border: 1px solid rgba(255, 255, 255, 0.15);"
                     >
                         <span
                             class="text-xs font-semibold text-dark-700 uppercase"
@@ -279,8 +277,7 @@
                 </div>
             {:else}
                 <div
-                    class="w-9 h-9 mx-auto rounded-full flex items-center justify-center bg-dark-10"
-                    style="border: 1px solid rgba(255, 255, 255, 0.15);"
+                    class="w-9 h-9 mx-auto rounded-full flex items-center justify-center bg-dark-10 border border-border-card"
                     title={user.firstname ?? "Admin"}
                 >
                     <span class="text-xs font-semibold text-dark-700 uppercase">
