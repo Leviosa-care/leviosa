@@ -1,19 +1,39 @@
 <script lang="ts">
+    import { TrendingUp } from "@lucide/svelte";
+    // TODO: add  parameter to card snippet
 </script>
 
 <div class="grid grid-cols-4 gap-8">
-    {@render card("consultations (jour)", 42)}
-    {@render card("ca du mois", "28k $")}
-    {@render card("practiciens actifs", 154)}
-    {@render card("a traiter", 8)}
+    {@render card()}
+    {@render card()}
+    {@render card()}
+    {@render card()}
 </div>
 
-{#snippet card(title: string, figure: string | number)}
+{#snippet card()}
     <div
-        class="bg-white border border-dark-50 rounded-lg p-4 w-full grid gap-2 shadow-mini"
+        class="bg-dark-50 border border-border-card rounded-lg p-6 w-full max-w-90 grid gap-6 shadow-mini"
     >
-        <p class="text-dark-700 text-md font-sm uppercase">{title}</p>
-        <p class="text-dark-900 text-3xl font-bold">{figure}</p>
-        <p class="text-sm">+12 % vs semaine derniere</p>
+        <div>
+            <div class="flex items-center justify-between">
+                <p class="text-dark-500 text-md font-medium capitalize">
+                    Total Revenue
+                </p>
+                <div
+                    class="text-sm font-medium flex items-center gap-1 border border-border-input hover:border-border-input-hover px-2 py-1 rounded-3xl"
+                >
+                    <TrendingUp size={16} />
+                    <p>+12.5%</p>
+                </div>
+            </div>
+            <p class="text-dark-900 text-3xl font-bold">$1,250.00</p>
+        </div>
+        <div class="grid gap-2">
+            <div class="flex items-center gap-2">
+                <p class="text-sm text-dark-900">Trending up this month</p>
+                <TrendingUp size={16} />
+            </div>
+            <p class="text-sm text-dark-500">Visitors for the last 6 months</p>
+        </div>
     </div>
 {/snippet}

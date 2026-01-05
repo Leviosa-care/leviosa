@@ -3,9 +3,11 @@
 </script>
 
 <div
-    class="bg-white h-fit border border-dark-100/40 rounded-xl overflow-hidden"
+    class="bg-background h-fit border border-dark-100/40 rounded-xl overflow-hidden"
 >
-    <div class="px-8 py-6 flex gap-4 items-center border border-b-dark-50">
+    <div
+        class="bg-dark-50 px-8 py-4 flex gap-4 items-center border border-b-dark-50"
+    >
         <p class="text-dark-900 font-bold">Agenda du jour</p>
     </div>
     <div class="grid">
