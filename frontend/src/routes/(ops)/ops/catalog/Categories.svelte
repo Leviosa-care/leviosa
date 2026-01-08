@@ -127,7 +127,7 @@
     }
 </script>
 
-<div class="h-full bg-white">
+<div class="h-full">
     <!-- Create button - floating on mobile -->
     <Button.Root
         type="button"
@@ -135,7 +135,7 @@
         onclick={openCreateDialog}
     >
         <div
-            class="flex gap-2 items-center py-2 bg-dark text-white rounded-input hover:bg-dark/95 transition-all shadow-mini md:px-4 w-12 h-12 md:w-auto md:h-auto justify-center"
+            class="flex gap-2 items-center py-2 bg-dark text-background rounded-input hover:bg-dark/95 transition-all shadow-mini md:px-4 w-12 h-12 md:w-auto md:h-auto justify-center"
         >
             <Plus size={18} />
             <span class="text-sm font-medium hidden md:inline"

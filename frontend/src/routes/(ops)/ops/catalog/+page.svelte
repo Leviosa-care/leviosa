@@ -11,6 +11,10 @@
     import PromotionCodes from "./PromotionCodes.svelte";
     import Exercices from "./Exercices.svelte";
 
+    import { theme } from "$lib/stores/theme";
+
+    import { Power } from "@lucide/svelte";
+
     let { data }: { data: PageData } = $props();
     interface Trigger {
         value: string;
@@ -27,29 +31,37 @@
 </script>
 
 {#snippet tab_trigger(value: string, name: string)}
-    <!-- <TabsTrigger -->
-    <!--     {value} -->
-    <!--     class="px-2 py-1.75 md:px-4 md:py-2 md:h-8 rounded-none md:rounded-[7px] bg-transparent border-b-3 data-[state=active]:shadow-none mb-[-2px] md:mb-0 md:border-b-0 data-[state=active]:border-b-dark-900 data-[state=active]:text-foreground md:data-[state=active]:bg-white md:data-[state=active]:shadow-mini dark:md:data-[state=active]:bg-muted data-[state=inactive]:border-transparent data-[state=inactive]:text-foreground-alt md:data-[state=inactive]:hover:bg-dark-04 hover:text-foreground transition-colors" -->
-    <!-- > -->
     <TabsTrigger
         {value}
-        class="px-2 py-1.75 md:px-4 md:py-2 md:h-8 rounded-none bg-transparent border-b-3 data-[state=active]:shadow-none mb-[-2px] data-[state=active]:border-b-dark-900 data-[state=active]:text-dark-900 data-[state=inactive]:border-transparent data-[state=inactive]:text-dark-400 hover:text-foreground transition-colors"
+        class="px-2 py-1.75 md:px-4 md:py-2 md:h-8 rounded-none bg-transparent border-b-3 data-[state=active]:shadow-none mb-[-2px] data-[state=active]:border-b-dark-900 data-[state=active]:text-dark-900 data-[state=inactive]:border-transparent data-[state=inactive]:text-dark-400 data-[state=inactive]:hover:bg-transparent  data-[state=inactive]:hover:text-dark-600 transition-colors cursor-pointer"
     >
         {name}
     </TabsTrigger>
 {/snippet}
 
-<div class="h-[100vh] flex-1 flex flex-col overflow-hidden bg-gray-50">
+<div class="h-[100vh] flex-1 flex flex-col overflow-hidden bg-background">
     <Tabs value="categories" class="flex flex-col h-full">
         <!-- Header with title and description -->
-        <div class="bg-white border-b border-border-card px-6 py-6">
-            <div class="grid gap-1 mb-6">
-                <h1 class="text-2xl font-semibold tracking-tight">Catalogue</h1>
-                <p class="text-sm text-foreground-alt">
-                    Configurez et organisez l'ensemble de votre offre
-                    commerciale : catégories, produits, tarification, promotions
-                    et exercices disponibles.
-                </p>
+        <div class="border-b border-border-card px-6 py-4 grid gap-8">
+            <div class="flex flex-row items-center justify-between">
+                <div class="grid gap-1 mb-6">
+                    <h1 class="text-2xl font-semibold tracking-tight">
+                        Catalogue
+                    </h1>
+                    <p class="text-sm text-foreground-alt">
+                        Configurez et organisez l'ensemble de votre offre
+                        commerciale : catégories, produits, tarification,
+                        promotions et exercices disponibles.
+                    </p>
+                </div>
+
+                <button
+                    class="text-dark-900 bg-dark-100/40 flex items-center justify-center gap-2 px-4 py-2 rounded-lg mr-8 z-20"
+                    onclick={() => theme.toggle()}
+                >
+                    <Power size={20} />
+                    <p>Toggle mode</p>
+                </button>
             </div>
 
             <!-- Scrollable tabs -->
