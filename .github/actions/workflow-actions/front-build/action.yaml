@@ -36,7 +36,7 @@ runs:
         run: pnpm run build  # or pnpm prepare
         shell: bash
       - name: Cache .svelte-kit and node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ./frontend/.svelte-kit

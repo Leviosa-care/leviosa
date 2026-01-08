@@ -16,7 +16,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: ⬇️ Checkout repo
-          uses: actions/checkout@v4.1.1
+          uses: actions/checkout@v4.2.2
         - name: frontend actions
           uses: ./.github/actions/workflow-actions/front-build
           with:
@@ -29,7 +29,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: ⬇️ Checkout repo
-          uses: actions/checkout@v4.1.1
+          uses: actions/checkout@v4.2.2
         - name: backend actions
           uses: ./.github/actions/workflow-actions/back-build
           with:
@@ -74,7 +74,7 @@ jobs:
     runs-on: [self-hosted]
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v4.2.2
       - uses: ./.github/actions/workflow-actions/deploy-app
         with:
           filter: 'staging'
