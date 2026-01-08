@@ -3,7 +3,7 @@ name: 🛠️Deploy staging application
 on:
   push:
     branches:
-    - staging
+      - main
 
 permissions:
   actions: write
@@ -33,7 +33,7 @@ jobs:
         - name: backend actions
           uses: ./.github/actions/workflow-actions/back-build
           with:
-            go-version: '1.22.1'
+            go-version: '1.24.2'
             build-path: './cmd/leviosa/*.go'
             test-path: './...'
             output-name: 'leviosa'

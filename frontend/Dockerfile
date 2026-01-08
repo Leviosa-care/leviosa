@@ -27,9 +27,9 @@ RUN pnpm run build
 
 FROM gcr.io/distroless/nodejs20-debian12:nonroot AS runtime
 WORKDIR /usr/src/app
-COPY --from=prod-deps /app/node_modules/ ./node_modules/
-COPY --from=build /app/build/ ./build/
-COPY --from=build /app/package.json ./
+COPY --from=prod-deps /usr/src/app/node_modules/ ./node_modules/
+COPY --from=build /usr/src/app/build/ ./build/
+COPY --from=build /usr/src/app/package.json ./
 
 EXPOSE 3000 3001
 
