@@ -135,3 +135,49 @@ backend/
 - **Frontend**: No testing framework currently configured
 - Uses real adapters for black-box integration testing
 - Test data helpers available in `test/testdata/`
+
+### CI/CD Pipeline (GitHub Actions)
+
+**Workflow Strategy:** GitHub Flow with environment promotion
+
+```
+feature/new-feature
+    ↓ Push to remote
+    ↓ Create PR to main
+    ↓ CI validation (tests, security scan)
+main branch
+    ↓ Merge triggers staging deployment
+staging.leviosa.com (password-protected testing)
+    ↓ Create git tag v*.*.*
+production.leviosa.com (public users)
+```
+
+**Key Workflows:**
+
+1. **CI Workflow** (`ci.yaml`) - Runs on all PRs to main:
+   - Frontend: Build, unit tests
+   - Backend: Build, unit tests, integration tests (with testcontainers)
+   - Security: Go vulnerability scanning (govulncheck)
+   - Blocks merge if any checks fail
+
+2. **Staging Deployment** (`staging.yaml`) - Triggers on push to main:
+   - Build and test frontend/backend
+   - Scan Docker images with Trivy
+   - Deploy to staging environment
+   - Run health checks
+
+3. **Production Deployment** (`production.yaml`) - Triggers on git tags (v*.*.*):
+   - Build and test frontend/backend
+   - Scan Docker images with Trivy
+   - Deploy to production environment
+   - Run health checks
+
+**Security Features:**
+- Docker image vulnerability scanning with Trivy (CRITICAL/HIGH threshold)
+- Go dependency scanning with govulncheck
+- Integration tests run with real dependencies (PostgreSQL, Redis, RabbitMQ, S3)
+- Deployment blocked if security vulnerabilities found
+
+**Merge Strategy:** Rebase and merge only (preserves full commit history)
+
+See `.github/README.md` for detailed workflow documentation.
