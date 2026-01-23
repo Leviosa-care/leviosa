@@ -3,6 +3,7 @@
     import Button from "$lib/ui/Button.svelte";
     import Card from "./_card.svelte";
     import { type Product } from "./types";
+    import { reveal } from "$lib/actions/reveal";
 
     // import type { PageProps } from "./$types";
     // let { data }: PageProps = $props();
@@ -84,6 +85,7 @@
     <!-- Hero Section -->
     <div
         class="bg-white rounded-3xl px-6 py-8 md:px-12 lg:px-16 md:py-12 my-8 md:my-16 max-w-7xl mx-4 md:mx-auto"
+        use:reveal={{ preset: "fade-up", delay: 100 }}
     >
         <p class="uppercase">Our philosophy</p>
         <div>
@@ -110,7 +112,7 @@
     <div
         class="max-w-7xl mx-4 md:mx-auto grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-8 lg:gap-20"
     >
-        <div class="w-full lg:w-auto">
+        <div class="w-full lg:w-auto" use:reveal={{ preset: "fade-up", delay: 150 }}>
             <p class="uppercase text-dark-600 font-medium mb-4 px-2 lg:px-0">
                 categories
             </p>
@@ -123,7 +125,7 @@
                 {/each}
             </div>
         </div>
-        <div class="w-full px-2 lg:px-0">
+        <div class="w-full px-2 lg:px-0" use:reveal={{ preset: "fade-up", delay: 150 }}>
             <div class="grid gap-8 md:gap-12">
                 {#if activeCategory === allCategories}
                     {#each categories as category}
@@ -137,8 +139,10 @@
                                 {category.description}
                             </p>
                         </div>
-                        {#each category.products as product}
-                            <Card {...product} />
+                        {#each category.products as product, index}
+                            <div use:reveal={{ preset: "fade-up", delay: 200 + index * 60 }}>
+                                <Card {...product} />
+                            </div>
                         {/each}
                     {/each}
                 {:else}
@@ -150,8 +154,10 @@
                             {activeDescription}
                         </p>
                     </div>
-                    {#each products as product}
-                        <Card {...product} />
+                    {#each products as product, index}
+                        <div use:reveal={{ preset: "fade-up", delay: 200 + index * 60 }}>
+                            <Card {...product} />
+                        </div>
                     {/each}
                 {/if}
             </div>
