@@ -12,6 +12,14 @@ import (
 	partnerHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/partner"
 	userHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/user"
 
+	// Booking HTTP handlers
+	allocationHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/allocation"
+	availabilityHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/availability"
+	bookingHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/booking"
+	buildingHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/building"
+	metricsHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/metrics"
+	roomHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/room"
+
 	// Catalog HTTP handlers
 	categoryHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/category"
 	couponHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/coupon"
@@ -95,6 +103,9 @@ func (s *Server) setupRoutes(mux *http.ServeMux) {
 
 	// Catalog routes
 	s.setupCatalogRoutes(mux)
+
+	// Booking routes
+	s.setupBookingRoutes(mux)
 }
 
 func (s *Server) setupAuthuserRoutes(router *http.ServeMux) {
@@ -165,6 +176,51 @@ func (s *Server) setupCatalogRoutes(router *http.ServeMux) {
 		s.container.AuthMw,
 	)
 	promotionCodeH.RegisterRoutes(router)
+}
+
+func (s *Server) setupBookingRoutes(router *http.ServeMux) {
+	// Building handler
+	buildingH := buildingHandler.New(
+		s.container.BuildingService,
+		s.container.AuthMw,
+	)
+	buildingH.RegisterRoutes(router)
+
+	// Room handler
+	roomH := roomHandler.New(
+		s.container.RoomService,
+		s.container.AuthMw,
+	)
+	roomH.RegisterRoutes(router)
+
+	// Allocation handler
+	allocationH := allocationHandler.New(
+		s.container.AllocationService,
+		s.container.AuthMw,
+	)
+	allocationH.RegisterRoutes(router)
+
+	// Availability handler
+	availabilityH := availabilityHandler.New(
+		s.container.AvailabilityService,
+		s.container.AuthMw,
+	)
+	availabilityH.RegisterRoutes(router)
+
+	// Booking handler
+	bookingH := bookingHandler.New(
+		s.container.BookingService,
+		s.container.PaymentService,
+		s.container.AuthMw,
+	)
+	bookingH.RegisterRoutes(router)
+
+	// Metrics handler (analytics endpoints)
+	metricsH := metricsHandler.New(
+		s.container.MetricsService,
+		s.container.AuthMw,
+	)
+	metricsH.RegisterRoutes(router)
 }
 
 // func (s *Server) applyMiddleware(handler http.Handler) http.Handler {

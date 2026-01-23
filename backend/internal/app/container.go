@@ -145,6 +145,8 @@ type Container struct {
 	AllocationService   bookingPorts.RoomAllocationService
 	AvailabilityService bookingPorts.AvailabilityService
 	BookingService      bookingPorts.BookingService
+	MetricsService      bookingPorts.MetricsService
+	PaymentService      bookingPorts.PaymentService
 }
 
 // NewContainer creates and wires all dependencies
