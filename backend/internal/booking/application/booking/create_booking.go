@@ -110,10 +110,19 @@ func (s *BookingService) CreateBooking(
 		return nil, errs.NewConflictErr(fmt.Errorf("time slot is already booked"))
 	}
 
-	// 7. Set product price
-	// TODO: Integrate with pricing service to get actual product price
-	// For now, bookings are created with price of 0 (free)
-	totalPriceCents := 0
+	// 7. Get product price from pricing service
+	// Default currency for Europe-based business
+	const defaultCurrency = "EUR"
+
+	price, err := s.priceService.GetActiveOneTimePriceByProductID(ctx, productID.String(), defaultCurrency)
+	if err != nil {
+		if errors.Is(err, errs.ErrRepositoryNotFound) {
+			return nil, fmt.Errorf("no active price found for product: %w", errs.ErrRepositoryNotFound)
+		}
+		return nil, fmt.Errorf("get product price: %w", err)
+	}
+
+	totalPriceCents := price.Amount
 
 	// 8. Create booking entity with slot information
 	booking, err := domain.NewBooking(
@@ -122,7 +131,7 @@ func (s *BookingService) CreateBooking(
 		availability.UserID, // partner ID
 		availability.RoomID,
 		totalPriceCents,
-		"EUR", // Default currency
+		price.Currency,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create booking entity: %w", err)
@@ -177,6 +186,16 @@ func (s *BookingService) CreateBooking(
 
 	if err := s.bookingRepo.Create(ctx, bookingEncx); err != nil {
 		return nil, fmt.Errorf("create booking: %w", err)
+	}
+
+	// 11. Send booking confirmation notification (best effort - don't fail booking on notification error)
+	if s.notificationService != nil {
+		notificationData := s.buildNotificationData(booking, product.Name)
+		if err := s.notificationService.SendBookingConfirmation(ctx, notificationData); err != nil {
+			// Log error but don't fail the booking
+			// The booking was created successfully, notification is secondary
+			_ = err // TODO: Add proper logging
+		}
 	}
 
 	return booking, nil
