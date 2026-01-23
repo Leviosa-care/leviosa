@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
@@ -27,9 +28,30 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uuid.UUID, reason
 		return nil, fmt.Errorf("decrypt booking: %w", err)
 	}
 
-	// Check if booking can be cancelled
+	// Check if booking can be cancelled (status-based)
 	if !booking.IsCancellable() {
 		return nil, errs.NewInvalidValueErr("booking cannot be cancelled: current status is " + string(booking.Status))
+	}
+
+	// Enforce cancellation policy based on product's CancellationHours
+	product, err := s.productService.GetProductByID(ctx, booking.ProductID.String())
+	if err != nil {
+		// If product lookup fails, allow cancellation (fail open for customer benefit)
+		// but log the issue for investigation
+		if !errors.Is(err, errs.ErrRepositoryNotFound) {
+			return nil, fmt.Errorf("get product for cancellation policy: %w", err)
+		}
+		// Product not found - proceed without policy enforcement
+	} else if product.CancellationHours > 0 {
+		// Calculate time remaining until appointment
+		now := time.Now()
+		timeUntilAppointment := booking.SlotStartTime.Sub(now)
+		hoursRemaining := int(timeUntilAppointment.Hours())
+
+		// Check if within cancellation window
+		if hoursRemaining < product.CancellationHours {
+			return nil, errs.NewCancellationWindowClosedErr(product.CancellationHours, hoursRemaining)
+		}
 	}
 
 	// Cancel booking
@@ -58,6 +80,19 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uuid.UUID, reason
 
 	if err := s.bookingRepo.Update(ctx, bookingEncx); err != nil {
 		return nil, fmt.Errorf("update cancelled booking: %w", err)
+	}
+
+	// Send cancellation notification (best effort)
+	if s.notificationService != nil {
+		productName := ""
+		if product != nil {
+			productName = product.Name
+		}
+		notificationData := s.buildNotificationData(booking, productName)
+		if err := s.notificationService.SendBookingCancellation(ctx, notificationData); err != nil {
+			// Log error but don't fail the cancellation
+			_ = err // TODO: Add proper logging
+		}
 	}
 
 	return booking, nil

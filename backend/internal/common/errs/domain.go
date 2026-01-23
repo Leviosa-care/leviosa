@@ -40,7 +40,13 @@ var (
 
 	// Booking-specific errors
 	ErrInvalidAvailabilityDuration = errors.New("availability duration does not align with product offerings")
+	ErrCancellationWindowClosed    = errors.New("cancellation window has closed")
 )
+
+func NewCancellationWindowClosedErr(hoursRequired int, hoursRemaining int) error {
+	return fmt.Errorf("%w: cancellation requires %d hours notice, only %d hours remain before appointment",
+		ErrCancellationWindowClosed, hoursRequired, hoursRemaining)
+}
 
 func NewConflictErr(err error) error {
 	return fmt.Errorf("%w: %w", ErrConflict, err)
