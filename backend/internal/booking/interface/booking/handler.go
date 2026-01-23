@@ -20,13 +20,15 @@ type Handler interface {
 	MarkNoShow(w http.ResponseWriter, r *http.Request)
 	ProcessPayment(w http.ResponseWriter, r *http.Request)
 	RefundBooking(w http.ResponseWriter, r *http.Request)
+	HandleStripeWebhook(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
-	svc    ports.BookingService
-	authmw auth.AuthMiddleware
+	svc            ports.BookingService
+	paymentService ports.PaymentService
+	authmw         auth.AuthMiddleware
 }
 
-func New(svc ports.BookingService, authmw auth.AuthMiddleware) Handler {
-	return &handler{svc: svc, authmw: authmw}
+func New(svc ports.BookingService, paymentService ports.PaymentService, authmw auth.AuthMiddleware) Handler {
+	return &handler{svc: svc, paymentService: paymentService, authmw: authmw}
 }

@@ -2,6 +2,7 @@ package stripe
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
@@ -9,18 +10,20 @@ import (
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/paymentintent"
 	"github.com/stripe/stripe-go/v82/refund"
+	"github.com/stripe/stripe-go/v82/webhook"
 )
 
 // Service handles Stripe payment operations for bookings
 type Service struct {
-	client *stripe.Client
+	client        *stripe.Client
+	webhookSecret string
 }
 
 // Compile-time check to ensure Service implements ports.PaymentService
 var _ ports.PaymentService = (*Service)(nil)
 
 // NewService creates a new Stripe payment service
-func NewService(apiKey, baseURL string) *Service {
+func NewService(apiKey, baseURL, webhookSecret string) *Service {
 	var sc *stripe.Client
 
 	if baseURL != "" {
@@ -33,7 +36,10 @@ func NewService(apiKey, baseURL string) *Service {
 		sc = stripe.NewClient(apiKey)
 	}
 
-	return &Service{sc}
+	return &Service{
+		client:        sc,
+		webhookSecret: webhookSecret,
+	}
 }
 
 // CreatePaymentIntent creates a Stripe payment intent for a booking
@@ -137,6 +143,61 @@ func (s *Service) CancelPaymentIntent(ctx context.Context, paymentIntentID strin
 	}
 
 	return nil
+}
+
+// VerifyWebhookSignature verifies the Stripe webhook signature and returns the parsed event
+func (s *Service) VerifyWebhookSignature(payload []byte, signature string) (*ports.WebhookEvent, error) {
+	// Verify the webhook signature
+	event, err := webhook.ConstructEvent(payload, signature, s.webhookSecret)
+	if err != nil {
+		return nil, errs.NewInvalidValueErr(fmt.Sprintf("webhook signature verification failed: %s", err.Error()))
+	}
+
+	// Parse the event based on type
+	webhookEvent := &ports.WebhookEvent{
+		ID:   event.ID,
+		Type: string(event.Type),
+	}
+
+	// Extract payment intent data for payment-related events
+	switch event.Type {
+	case "payment_intent.succeeded",
+		"payment_intent.payment_failed",
+		"payment_intent.canceled",
+		"payment_intent.requires_action":
+
+		var pi stripe.PaymentIntent
+		if err := json.Unmarshal(event.Data.Raw, &pi); err != nil {
+			return nil, errs.NewInvalidValueErr(fmt.Sprintf("failed to parse payment intent from webhook: %s", err.Error()))
+		}
+
+		webhookEvent.PaymentIntentID = pi.ID
+		webhookEvent.Status = string(pi.Status)
+		webhookEvent.Amount = int(pi.Amount)
+		webhookEvent.Currency = string(pi.Currency)
+		webhookEvent.Metadata = pi.Metadata
+
+		if pi.LastPaymentError != nil {
+			webhookEvent.FailureCode = string(pi.LastPaymentError.Code)
+			webhookEvent.FailureMessage = pi.LastPaymentError.Msg
+		}
+
+	case "charge.refunded":
+		var charge stripe.Charge
+		if err := json.Unmarshal(event.Data.Raw, &charge); err != nil {
+			return nil, errs.NewInvalidValueErr(fmt.Sprintf("failed to parse charge from webhook: %s", err.Error()))
+		}
+
+		// Extract payment intent ID from the charge
+		if charge.PaymentIntent != nil {
+			webhookEvent.PaymentIntentID = charge.PaymentIntent.ID
+		}
+		webhookEvent.Amount = int(charge.Amount)
+		webhookEvent.Currency = string(charge.Currency)
+		webhookEvent.Metadata = charge.Metadata
+	}
+
+	return webhookEvent, nil
 }
 
 // classifyStripeError converts Stripe errors to application-specific errors

@@ -20,7 +20,32 @@ type PaymentService interface {
 
 	// CancelPaymentIntent cancels a payment intent
 	CancelPaymentIntent(ctx context.Context, paymentIntentID string) error
+
+	// VerifyWebhookSignature verifies the Stripe webhook signature and returns the parsed event
+	VerifyWebhookSignature(payload []byte, signature string) (*WebhookEvent, error)
 }
+
+// WebhookEvent represents a parsed and verified Stripe webhook event
+type WebhookEvent struct {
+	ID              string            `json:"id"`
+	Type            string            `json:"type"`
+	PaymentIntentID string            `json:"payment_intent_id"`
+	Status          string            `json:"status"`
+	Amount          int               `json:"amount"`
+	Currency        string            `json:"currency"`
+	Metadata        map[string]string `json:"metadata"`
+	FailureCode     string            `json:"failure_code,omitempty"`
+	FailureMessage  string            `json:"failure_message,omitempty"`
+}
+
+// Webhook Event Type Constants
+const (
+	WebhookEventPaymentIntentSucceeded      = "payment_intent.succeeded"
+	WebhookEventPaymentIntentPaymentFailed  = "payment_intent.payment_failed"
+	WebhookEventPaymentIntentCanceled       = "payment_intent.canceled"
+	WebhookEventChargeRefunded              = "charge.refunded"
+	WebhookEventPaymentIntentRequiresAction = "payment_intent.requires_action"
+)
 
 // PaymentIntentInfo represents payment intent information from Stripe
 type PaymentIntentInfo struct {

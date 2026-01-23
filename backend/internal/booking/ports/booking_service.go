@@ -42,4 +42,7 @@ type BookingService interface {
 
 	// GetUpcomingBookings retrieves upcoming confirmed bookings
 	GetUpcomingBookings(ctx context.Context, filter BookingFilter) ([]*domain.Booking, error)
+
+	// HandlePaymentWebhook processes a Stripe payment webhook event and updates the booking status
+	HandlePaymentWebhook(ctx context.Context, event *WebhookEvent) error
 }
