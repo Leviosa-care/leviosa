@@ -1,9 +1,11 @@
-<script lang="ts"></script>
+<script lang="ts">
+    import { reveal } from "$lib/actions/reveal";
+</script>
 
 <section id="why-us" class="py-24 bg-white border-b border-dark-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Centered Header -->
-        <div class="max-w-2xl mx-auto text-center mb-16">
+        <div class="max-w-2xl mx-auto text-center mb-16" use:reveal={{ preset: "fade-up", delay: 100 }}>
             <span
                 class="text-sm font-semibold text-dark-500 uppercase tracking-wider"
                 >Pourquoi Nous Choisir</span
@@ -26,6 +28,7 @@
             <!-- Card 1: Direct Access -->
             <div
                 class="group h-full p-8 rounded-2xl bg-dark-50 border border-dark-100 hover:border-dark-200 transition-colors duration-200 flex flex-col items-start text-left"
+                use:reveal={{ preset: "fade-up", delay: 150 }}
             >
                 <div
                     class="w-12 h-12 rounded-xl bg-white border border-dark-200 flex items-center justify-center shadow-sm mb-6 group-hover:scale-105 transition-transform duration-200"
@@ -68,6 +71,7 @@
             <!-- Card 2: Pragmatism -->
             <div
                 class="group h-full p-8 rounded-2xl bg-dark-50 border border-dark-100 hover:border-dark-200 transition-colors duration-200 flex flex-col items-start text-left"
+                use:reveal={{ preset: "fade-up", delay: 200 }}
             >
                 <div
                     class="w-12 h-12 rounded-xl bg-white border border-dark-200 flex items-center justify-center shadow-sm mb-6 group-hover:scale-105 transition-transform duration-200"
@@ -112,6 +116,7 @@
             <!-- Card 3: Transparency -->
             <div
                 class="group h-full p-8 rounded-2xl bg-dark-50 border border-dark-100 hover:border-dark-200 transition-colors duration-200 flex flex-col items-start text-left"
+                use:reveal={{ preset: "fade-up", delay: 250 }}
             >
                 <div
                     class="w-12 h-12 rounded-xl bg-white border border-dark-200 flex items-center justify-center shadow-sm mb-6 group-hover:scale-105 transition-transform duration-200"

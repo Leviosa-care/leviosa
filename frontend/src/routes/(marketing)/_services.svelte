@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { reveal } from "$lib/actions/reveal";
 </script>
 
 <section id="services" class="py-20 lg:py-24 bg-white border-b border-dark-100">
@@ -6,6 +7,7 @@
         <!-- Section Header -->
         <div
             class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12"
+            use:reveal={{ preset: "fade-up", delay: 100 }}
         >
             <div class="max-w-xl">
                 <span
@@ -27,6 +29,7 @@
         <!-- Service Card: Single Item Layout -->
         <div
             class="group relative bg-white rounded-3xl border border-dark-200 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300"
+            use:reveal={{ preset: "fade-up", delay: 150 }}
         >
             <div class="grid grid-cols-1 lg:grid-cols-2">
                 <!-- Content Side -->

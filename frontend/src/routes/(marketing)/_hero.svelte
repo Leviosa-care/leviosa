@@ -1,5 +1,6 @@
 <script lang="ts">
     import Button from "$lib/ui/Button.svelte";
+    import { reveal } from "$lib/actions/reveal";
 </script>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -9,6 +10,7 @@
             <!-- Trust Badge -->
             <div
                 class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dark-50 border border-dark-200 mb-6"
+                use:reveal={{ preset: "fade-down", delay: 100 }}
             >
                 <span class="relative flex h-2 w-2">
                     <span
@@ -28,6 +30,7 @@
             <!-- -->
             <h1
                 class="text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-dark-900 leading-[1.1] mb-6"
+                use:reveal={{ preset: "fade-up", delay: 150 }}
             >
                 Un expert à vos côtés,<br class="hidden lg:block" /> à vos horaires.
             </h1>
@@ -35,6 +38,7 @@
             <!-- Supporting Text -->
             <p
                 class="text-lg text-dark-500 leading-relaxed mb-8 max-w-lg font-normal"
+                use:reveal={{ preset: "fade-up", delay: 200 }}
             >
                 Réservez instantanément une consultation vérifiée. Fini les
                 allers-retours par email, un pro à vos côtés quand vous en avez
@@ -42,7 +46,7 @@
             </p>
 
             <!-- Primary CTA -->
-            <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-4">
+            <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-4" use:reveal={{ preset: "fade-up", delay: 250 }}>
                 <button
                     class="group w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-dark-900 hover:bg-dark-800 text-white text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ring-offset-2 focus:ring-2 focus:ring-dark-900"
                 >
@@ -63,7 +67,7 @@
             </div>
 
             <!-- Social Proof / Trust Indicators -->
-            <div class="mt-8 flex items-center gap-4 text-sm text-dark-500">
+            <div class="mt-8 flex items-center gap-4 text-sm text-dark-500" use:reveal={{ preset: "fade-up", delay: 300 }}>
                 <div class="flex -space-x-2">
                     <div
                         class="w-8 h-8 rounded-full border-2 border-white bg-dark-200 flex items-center justify-center text-xs overflow-hidden"
@@ -98,7 +102,7 @@
 
         <!-- Right Column: Visual / Context (Priority 2) -->
         <!-- On Mobile: Appears below CTA. On Desktop: Right column -->
-        <div class="relative w-full mt-4 lg:mt-0 select-none">
+        <div class="relative w-full mt-4 lg:mt-0 select-none" use:reveal={{ preset: "fade-in-scale", delay: 200 }}>
             <!-- Decorative Background Blob -->
             <div
                 class="absolute top-1/2 left-1/2 -trandark-x-1/2 -trandark-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-dark-100 to-white rounded-full blur-3xl opacity-60 -z-10"

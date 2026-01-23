@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { reveal } from "$lib/actions/reveal";
 </script>
 
 <!-- Final CTA Section (Conclusion) -->
@@ -12,18 +13,19 @@
         <!-- Headline -->
         <h2
             class="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight text-white mb-6"
+            use:reveal={{ preset: "fade-up", delay: 100 }}
         >
             Prêt·e à prendre soin de votre santé ?
         </h2>
 
         <!-- Subtext -->
-        <p class="text-lg text-dark-400 mb-10 max-w-lg mx-auto leading-relaxed">
+        <p class="text-lg text-dark-400 mb-10 max-w-lg mx-auto leading-relaxed" use:reveal={{ preset: "fade-up", delay: 150 }}>
             Rejoignez les centaines de patients qui ont déjà transformé leur
             quotidien. Accédez à une expertise vérifiée dès aujourd'hui.
         </p>
 
         <!-- Primary Action -->
-        <div class="flex justify-center">
+        <div class="flex justify-center" use:reveal={{ preset: "fade-up", delay: 200 }}>
             <button
                 class="bg-white text-dark-900 hover:bg-dark-100 px-8 py-4 rounded-xl font-semibold text-base transition-all duration-200 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] hover:scale-[1.02] active:scale-[0.98]"
             >

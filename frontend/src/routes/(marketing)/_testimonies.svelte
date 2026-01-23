@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { reveal } from "$lib/actions/reveal";
 </script>
 
 <section
@@ -11,7 +12,7 @@
 
     <div class="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
         <!-- Rating Visual -->
-        <div class="flex justify-center gap-1 mb-8">
+        <div class="flex justify-center gap-1 mb-8" use:reveal={{ preset: "fade-down", delay: 100 }}>
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 aria-hidden="true"
@@ -117,13 +118,14 @@
         <!-- The Quote -->
         <blockquote
             class="text-2xl sm:text-3xl md:text-4xl font-medium tracking-tight text-dark-900 leading-tight md:leading-[1.15] mb-10"
+            use:reveal={{ preset: "fade-up", delay: 150 }}
         >
             "L'approche la plus complète en matière de santé que j'aie jamais
             connue. Les coachs se soucient véritablement de votre succès à long terme."
         </blockquote>
 
         <!-- User Context -->
-        <div class="flex flex-col items-center justify-center">
+        <div class="flex flex-col items-center justify-center" use:reveal={{ preset: "fade-up", delay: 200 }}>
             <div class="flex items-center gap-4 mb-2">
                 <img
                     src="https://ui-avatars.com/api/?name=Emma+W&amp;background=0f172a&amp;color=fff"
