@@ -1,0 +1,19 @@
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "{{ docker_log_max_size | default('10m') }}",
+    "max-file": "{{ docker_log_max_files | default('3') }}"
+  },
+  "metrics-addr": "{{ docker_metrics_addr | default('127.0.0.1:9323') }}",
+  "icc": {{ docker_icc | default(false) | lower }},
+  "userland-proxy": {{ docker_userland_proxy | default(false) | lower }},
+  "no-new-privileges": {{ docker_no_new_privileges | default(true) | lower }},
+  "live-restore": {{ docker_live_restore | default(true) | lower }},
+  "default-ulimits": {
+    "nofile": {
+      "Name": "nofile",
+      "Hard": {{ docker_ulimit_nofile | default(65536) }},
+      "Soft": {{ docker_ulimit_nofile | default(65536) }}
+    }
+  }
+}
