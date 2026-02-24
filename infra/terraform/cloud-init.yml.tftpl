@@ -1,0 +1,13 @@
+#cloud-config
+# Minimal cloud-init for Leviosa VPS
+# Only ensures the server is reachable by Ansible — all configuration
+# (user creation, Docker, firewall, fail2ban, etc.) is handled by Ansible.
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - python3
+  - python3-apt
+
+final_message: "Cloud-init complete. Server is ready for Ansible provisioning."

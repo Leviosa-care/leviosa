@@ -1,0 +1,13 @@
+# Terraform files
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform.tfvars.example
+.terraform-backup/
+terraform.tfbackup
+crash.log
+crash.*.log
+terraform-graph.png
+backend.tf.bak
