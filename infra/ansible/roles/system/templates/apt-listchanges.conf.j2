@@ -1,0 +1,9 @@
+# apt-listchanges Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+[apt]
+frontend=pager
+email_address={{ auto_updates_email | default('root@localhost') }}
+confirm=false
+save_seen=/var/lib/apt/listchanges.db
+which=both

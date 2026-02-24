@@ -1,0 +1,7 @@
+---
+# System Handlers
+
+- name: restart unattended-upgrades
+  ansible.builtin.service:
+    name: unattended-upgrades
+    state: restarted

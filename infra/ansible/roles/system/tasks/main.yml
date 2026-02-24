@@ -1,0 +1,137 @@
+---
+# System Hardening Tasks
+# - Update system packages
+# - Set timezone
+# - Configure automatic security updates
+# - Harden kernel parameters
+# - Secure shared memory
+# - Create app directories
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+    update_cache: true
+  register: apt_upgrade
+  retries: 3
+  delay: 5
+  until: apt_upgrade is succeeded
+
+- name: Install essential packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - wget
+      - git
+      - vim
+      - htop
+      - ufw
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - apt-transport-https
+      - software-properties-common
+      - unzip
+      - logrotate
+    state: present
+
+- name: Set system timezone
+  community.general.timezone:
+    name: "{{ system_timezone | default('Europe/Berlin') }}"
+
+- name: Configure automatic security updates
+  ansible.builtin.apt:
+    name: unattended-upgrades
+    state: present
+  when: auto_security_updates | default(true)
+
+- name: Copy unattended-upgrades configuration
+  ansible.builtin.template:
+    src: unattended-upgrades.j2
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    mode: '0644'
+  when: auto_security_updates | default(true)
+  notify: restart unattended-upgrades
+
+- name: Install apt-listchanges for update notifications
+  ansible.builtin.apt:
+    name: apt-listchanges
+    state: present
+  when: auto_security_updates | default(true)
+
+- name: Deploy apt-listchanges configuration
+  ansible.builtin.template:
+    src: apt-listchanges.conf.j2
+    dest: /etc/apt/listchanges.conf
+    mode: '0644'
+  when: auto_security_updates | default(true)
+
+- name: Enable auto-upgrades
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Download-Upgradeable-Packages "1";
+      APT::Periodic::AutocleanInterval "7";
+      APT::Periodic::Unattended-Upgrade "1";
+    mode: '0644'
+  when: auto_security_updates | default(true)
+
+- name: Harden sysctl - IP spoofing protection
+  ansible.posix.sysctl:
+    name: "{{ item }}"
+    value: '1'
+    state: present
+    sysctl_set: true
+    reload: true
+  loop:
+    - net.ipv4.conf.all.rp_filter
+    - net.ipv4.conf.default.rp_filter
+
+- name: Harden sysctl - Ignore ICMP redirects and disable source routing
+  ansible.posix.sysctl:
+    name: "{{ item }}"
+    value: '0'
+    state: present
+    sysctl_set: true
+    reload: true
+  loop:
+    - net.ipv4.conf.all.accept_redirects
+    - net.ipv4.conf.default.accept_redirects
+    - net.ipv4.conf.all.send_redirects
+    - net.ipv4.conf.default.send_redirects
+    - net.ipv4.conf.all.accept_source_route
+    - net.ipv4.conf.default.accept_source_route
+
+- name: Harden sysctl - Enable TCP SYN cookies
+  ansible.posix.sysctl:
+    name: net.ipv4.tcp_syncookies
+    value: '1'
+    state: present
+    sysctl_set: true
+    reload: true
+
+- name: Secure shared memory
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    regexp: '^tmpfs\s+/run/shm'
+    line: 'tmpfs /run/shm tmpfs defaults,noexec,nosuid,size=64M 0 0'
+    state: present
+    backup: true
+
+- name: Create app directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0750'
+    owner: root
+    group: root
+  loop:
+    - "{{ app_base_dir | default('/opt/leviosa') }}"
+    - "{{ app_data_dir | default('/opt/leviosa/data') }}"
+    - "{{ app_logs_dir | default('/opt/leviosa/logs') }}"
+    - "{{ app_backup_dir | default('/opt/leviosa/backups') }}"
