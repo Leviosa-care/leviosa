@@ -1,9 +1,11 @@
 terraform {
   backend "s3" {
-    bucket  = "staging-leviosa-terraform-state"
-    key     = "terraform.tfstate"
-    region  = "eu-central-1"
-    encrypt = true
+    bucket         = "staging-leviosa-terraform-state"
+    key            = "terraform.tfstate"
+    region         = "eu-central-1"
+    encrypt        = true
+    dynamodb_table = "leviosa-terraform-locks"
+    use_lockfile   = true
   }
   required_providers {
     aws = {
