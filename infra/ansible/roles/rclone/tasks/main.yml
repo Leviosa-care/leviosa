@@ -1,4 +1,11 @@
 ---
+# Rclone Backup Configuration Tasks
+# - Install rclone
+# - Configure S3 backup
+# - Deploy backup and restore scripts
+# - Set up cron jobs
+# - Configure logrotate
+
 - name: Install rclone
   ansible.builtin.apt:
     name: rclone
@@ -45,11 +52,42 @@
     group: "{{ user }}"
     mode: '0755'
 
-- name: Set up a cron job to run the sync script with sudo
+- name: Deploy restore script
+  ansible.builtin.template:
+    src: restore.sh.j2
+    dest: /home/{{ user }}/scripts/restore.sh
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0750'
+
+- name: Create backup log directory
+  ansible.builtin.file:
+    path: /var/backups/leviosa
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0750'
+
+- name: Set up a cron job to run the sync script (fixed syntax)
   ansible.builtin.cron:
     name: "rclone sync script to backup application database"
     user: root
-    job: "sudo -u /home/{{ user }}/scripts/backup_database.sh"
+    job: "sudo -u {{ user }} /home/{{ user }}/scripts/backup_database.sh"
     minute: "0"
     hour: "*/6"
     state: present
+
+- name: Create logrotate config for backup logs
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/leviosa-backup
+    content: |
+      /var/backups/leviosa/backup.log {
+        daily
+        rotate 14
+        compress
+        delaycompress
+        missingok
+        notifempty
+        create 0640 {{ user }} {{ user }}
+      }
+    mode: '0644'

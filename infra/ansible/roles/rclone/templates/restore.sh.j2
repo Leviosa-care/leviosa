@@ -1,0 +1,53 @@
+#!/bin/bash
+# Database Restore Script
+# Usage: ./restore.sh <backup-file>
+# Example: ./restore.sh daily/leviosa_daily_20250224_020000.sql.gz
+
+set -e
+
+BACKUP_FILE="$1"
+BACKUP_DIR="/var/backups/leviosa"
+LOG_FILE="/var/log/leviosa/restore.log"
+
+# Function to log messages
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+# Function to show usage
+usage() {
+    echo "Usage: $0 <backup-file>"
+    echo "Example: $0 daily/leviosa_daily_20250224_020000.sql.gz"
+    echo ""
+    echo "Available backups:"
+    rclone ls {{ rclone_aws_remote_name }}:{{ rclone_aws_bucket_name }}/ --include "*.sql.gz" || echo "No backups found in S3"
+    exit 1
+}
+
+# Check if backup file is provided
+if [ -z "$BACKUP_FILE" ]; then
+    usage
+fi
+
+log "Starting database restore from: $BACKUP_FILE"
+
+# Download backup from S3
+TEMP_DIR=$(mktemp -d)
+trap "rm -rf $TEMP_DIR" EXIT
+
+log "Downloading backup from S3..."
+rclone copy {{ rclone_aws_remote_name }}:{{ rclone_aws_bucket_name }}/$BACKUP_FILE "$TEMP_DIR/"
+
+# Get local filename
+LOCAL_FILE=$(basename "$BACKUP_FILE")
+
+# Restore database
+log "Restoring database..."
+gunzip -c "$TEMP_DIR/$LOCAL_FILE" | docker exec -i postgres psql -U {{ postgres_user }} -d {{ postgres_db }}
+
+log "Database restore completed successfully"
+
+# Clean up
+rm -rf "$TEMP_DIR"
+
+log "Restore complete. Backup file: $BACKUP_FILE"
