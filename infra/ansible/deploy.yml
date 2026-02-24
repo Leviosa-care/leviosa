@@ -1,0 +1,40 @@
+---
+# Leviosa VPS - Application Deployment
+# Usage: ansible-playbook -i inventory/hosts deploy.yml
+#
+# This playbook deploys/updates the application without touching system config.
+# Run after the initial playbook.yml setup.
+
+- name: Leviosa VPS - Deploy Application
+  hosts: webserver, manager
+  gather_facts: true
+  become: yes
+  remote_user: root
+  vars_files:
+    - group_vars/secrets.yml
+
+  pre_tasks:
+    - name: Display deployment info
+      ansible.builtin.debug:
+        msg: "Deploying Leviosa to {{ inventory_hostname }}"
+
+  roles:
+    - role: caddy
+      tags: ['caddy', 'deploy']
+
+  post_tasks:
+    - name: Pull latest images and restart services
+      ansible.builtin.shell:
+        cmd: cd /opt/leviosa && docker compose pull && docker compose up -d
+      become: true
+      become_user: "{{ user }}"
+
+    - name: Display deployment completion
+      ansible.builtin.debug:
+        msg:
+          - "==========================================="
+          - "Deployment Complete!"
+          - "==========================================="
+          - "Status: sudo -u {{ user }} docker compose ps"
+          - "Logs: sudo -u {{ user }} docker compose logs -f"
+          - "==========================================="
