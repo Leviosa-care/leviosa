@@ -1,0 +1,12 @@
+# Fail2ban Caddy Rate Limit Filter
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# Matches Caddy JSON access logs for rate-limited and forbidden requests
+
+[Definition]
+
+# Match 429 (rate limited) and 403 (forbidden) status codes in Caddy JSON log format
+# Caddy logs JSON: {"status":429,"request":{"remote_ip":"1.2.3.4"},...}
+failregex = ^.*"status":429.*"request".*?"remote_ip":"<HOST>".*$
+            ^.*"status":403.*"request".*?"remote_ip":"<HOST>".*$
+
+ignoreregex =

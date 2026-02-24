@@ -1,0 +1,40 @@
+# Fail2ban Jail Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+[DEFAULT]
+ignoreip = {{ fail2ban_ignoreip | default('127.0.0.1/8 ::1') }}
+bantime = {{ fail2ban_bantime | default(3600) }}
+findtime = {{ fail2ban_findtime | default(600) }}
+maxretry = {{ fail2ban_maxretry | default(5) }}
+destemail = {{ fail2ban_notify_email | default('root@localhost') }}
+sender = fail2ban@localhost
+action = %(action_mwl)s
+
+[sshd]
+enabled = true
+port = {{ ssh_port | default(22) }}
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = {{ fail2ban_ssh_maxretry | default(3) }}
+bantime = {{ fail2ban_ssh_bantime | default(3600) }}
+findtime = {{ fail2ban_findtime | default(600) }}
+
+[sshd-ddos]
+enabled = true
+port = {{ ssh_port | default(22) }}
+filter = sshd[mode=ddos]
+logpath = /var/log/auth.log
+maxretry = {{ fail2ban_ddos_maxretry | default(5) }}
+bantime = {{ fail2ban_ddos_bantime | default(86400) }}
+findtime = {{ fail2ban_findtime | default(600) }}
+
+{% if caddy_enabled | default(false) %}
+[caddy-rate-limit]
+enabled = true
+port = http,https
+filter = caddy-rate-limit
+logpath = {{ caddy_log_path | default('/var/log/caddy/access.log') }}
+maxretry = {{ fail2ban_caddy_maxretry | default(20) }}
+bantime = {{ fail2ban_bantime | default(3600) }}
+findtime = {{ fail2ban_findtime | default(600) }}
+{% endif %}
