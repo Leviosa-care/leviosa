@@ -1,4 +1,12 @@
 ---
+# SSH Hardening Tasks
+# - Disable root login
+# - Disable password authentication
+# - Set up strict key-based authentication
+# - Add modern crypto hardening
+# - Add SSH banner
+# - Test SSH configuration
+
 - name: Ensure SSH is installed
   ansible.builtin.apt:
     name: openssh-server
@@ -29,6 +37,59 @@
     state: present
   notify: Restart SSH
 
+# Additional SSH hardening settings
+- name: Configure additional SSH security settings
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?{{ item.key }}\\s"
+    line: "{{ item.key }} {{ item.value }}"
+    state: present
+  loop:
+    - { key: "MaxAuthTries", value: "3" }
+    - { key: "ClientAliveInterval", value: "300" }
+    - { key: "ClientAliveCountMax", value: "2" }
+    - { key: "X11Forwarding", value: "no" }
+    - { key: "PermitTunnel", value: "no" }
+    - { key: "AllowTcpForwarding", value: "no" }
+  notify: Restart SSH
+
+- name: Configure SSH key-based authentication with modern crypto
+  ansible.builtin.blockinfile:
+    path: /etc/ssh/sshd_config
+    block: |
+      # Modern cryptographic algorithms
+      # Key exchange - Curve25519 only (most secure)
+      KexAlgorithms curve25519-sha256@libssh.org
+
+      # Ciphers - ChaCha20 and AES-GCM only (authenticated encryption)
+      Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com
+
+      # MACs - Encrypt-then-MAC only (prevents padding oracle attacks)
+      MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+
+      # Host key algorithms - Ed25519 and RSA with SHA-256/512
+      HostKeyAlgorithms ssh-ed25519,ssh-ed25519-cert-v01@openssh.com,rsa-sha2-512,rsa-sha2-256
+
+      # Required minimum RSA key size
+      PubkeyAcceptedKeyTypes ssh-ed25519,rsa-sha2-512,rsa-sha2-256,ecdsa-sha2-nistp256
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Cryptographic hardening"
+    insertafter: EOF
+  notify: Restart SSH
+
+- name: Add SSH banner
+  ansible.builtin.copy:
+    src: banner.txt
+    dest: /etc/ssh/banner.txt
+    mode: '0644'
+
+- name: Enable SSH banner
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?Banner"
+    line: "Banner /etc/ssh/banner.txt"
+    state: present
+  notify: Restart SSH
+
 - name: Ensure .ssh directory exists for the user
   ansible.builtin.file:
     path: "/home/{{ user }}/.ssh"
@@ -37,13 +98,23 @@
     group: "{{ user }}"
     mode: '0700'
 
-- name: Add your public key to authorized_keys
+- name: Add public key to authorized_keys
   ansible.builtin.copy:
     content: "{{ ssh_public_key }}"
     dest: "/home/{{ user }}/.ssh/authorized_keys"
     owner: "{{ user }}"
     group: "{{ user }}"
     mode: '0600'
+
+- name: Test SSH configuration before applying
+  ansible.builtin.command:
+    cmd: sshd -t
+  register: sshd_test
+  changed_when: false
+  failed_when: sshd_test.rc != 0
+
+- name: Ensure SSH is restarted after configuration
+  ansible.builtin.meta: flush_handlers
 
 - name: Ensure SSH service is enabled and running
   ansible.builtin.service:
