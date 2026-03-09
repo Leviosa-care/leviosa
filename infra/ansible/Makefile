@@ -1,9 +1,9 @@
 # Leviosa Ansible Makefile
 # Usage: make <target>
 
-.PHONY: help setup deploy backup check-clean lint \
-        ssh-info status logs health-check \
-        install-deps vars-test
+.PHONY: help setup deploy deploy-staging restart restart-staging backup check-clean lint \
+        ssh-info status staging-status logs staging-logs health-check \
+        install-deps vars-test terraform-outputs
 
 # Default target
 help:
@@ -12,7 +12,10 @@ help:
 	@echo ""
 	@echo "Setup:"
 	@echo "  make setup           - Complete VPS setup (first time only)"
-	@echo "  make deploy          - Deploy/update application"
+	@echo "  make deploy          - Deploy/update production"
+	@echo "  make deploy-staging  - Deploy/update staging"
+	@echo "  make restart         - Pull latest image and restart production (quick)"
+	@echo "  make restart-staging - Pull latest image and restart staging (quick)"
 	@echo "  make backup          - Configure database backups"
 	@echo ""
 	@echo "Verification:"
@@ -22,16 +25,23 @@ help:
 	@echo ""
 	@echo "Server Operations:"
 	@echo "  make ssh-info        - Display SSH connection details"
-	@echo "  make status          - Check service status"
-	@echo "  make logs            - View application logs"
+	@echo "  make status          - Check production service status"
+	@echo "  make staging-status  - Check staging service status"
+	@echo "  make logs            - View production logs"
+	@echo "  make staging-logs    - View staging logs"
 	@echo "  make health-check    - Run health check on server"
 	@echo ""
 	@echo "Dependencies:"
 	@echo "  make install-deps    - Install Ansible dependencies"
+	@echo "  make terraform-outputs - Show Terraform outputs"
 
-# Get VPS IP from inventory (first webserver)
-VPS_IP=$(shell grep -A1 '\[webserver\]' inventory/hosts | tail -1 | awk '{print $$1}')
-DOMAIN=$(shell grep -E '^domain' /etc/hosts 2>/dev/null || echo 'leviosa.care')
+# Deploy user (the non-root user created by the common role)
+DEPLOY_USER ?= leviosa
+APP_NAME ?= leviosa
+
+# Get VPS IP: try Terraform output first, fall back to inventory parsing
+VPS_IP=$(shell cd ../terraform && terraform output -raw server_ipv4_address 2>/dev/null || grep -A1 '\[webserver\]' inventory/hosts | tail -1 | awk '{print $$1}')
+DOMAIN=$(shell cd ../terraform && terraform output -raw domain_name 2>/dev/null || echo 'leviosa.care')
 
 # ============================================
 # Setup Commands
@@ -53,17 +63,44 @@ setup:
 	@read -p "Continue? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo ""
 	@echo "Running setup playbook..."
-	ansible-playbook -i inventory/hosts playbook.yml --ask-vault-pass
+	ansible-playbook -i inventory/hosts playbooks/site.yml --ask-vault-pass
 
 # Deploy production application
 deploy:
 	@echo "==========================================="
-	@echo "Leviosa Deployment"
+	@echo "Leviosa Production Deployment"
 	@echo "==========================================="
 	@echo ""
 	@echo "Deploying to: $(VPS_IP)"
 	@echo ""
-	ansible-playbook -i inventory/hosts deploy.yml --ask-vault-pass
+	ansible-playbook -i inventory/hosts playbooks/deploy.yml --ask-vault-pass
+
+# Deploy staging application
+deploy-staging:
+	@echo "==========================================="
+	@echo "Leviosa Staging Deployment"
+	@echo "==========================================="
+	@echo ""
+	@if [ ! -f "group_vars/leviosa_staging.vault.yml" ]; then \
+		echo "Error: group_vars/leviosa_staging.vault.yml not found."; \
+		echo "Copy the example and encrypt it:"; \
+		echo "  cp group_vars/leviosa_staging.vault.example.yml group_vars/leviosa_staging.vault.yml"; \
+		echo "  ansible-vault encrypt group_vars/leviosa_staging.vault.yml"; \
+		exit 1; \
+	fi
+	@echo "Deploying staging to: $(VPS_IP)"
+	@echo ""
+	ansible-playbook -i inventory/hosts playbooks/deploy-staging.yml --ask-vault-pass
+
+# Quick restart: pull latest app image and restart only the app container
+restart:
+	@echo "Pulling latest prod image and restarting..."
+	@ssh -i ~/.ssh/leviosa $(DEPLOY_USER)@$(VPS_IP) "cd /opt/$(APP_NAME) && docker compose pull && docker compose up -d"
+
+# Quick restart for staging
+restart-staging:
+	@echo "Pulling latest staging image and restarting..."
+	@ssh -i ~/.ssh/leviosa $(DEPLOY_USER)@$(VPS_IP) "cd /opt/$(APP_NAME)-staging && docker compose pull && docker compose up -d"
 
 # Configure database backups
 backup:
@@ -73,7 +110,7 @@ backup:
 	@echo ""
 	@echo "VPS IP: $(VPS_IP)"
 	@echo ""
-	ansible-playbook -i inventory/hosts backup.yml --ask-vault-pass \
+	ansible-playbook -i inventory/hosts playbooks/backup.yml --ask-vault-pass \
 		-e "backup_s3_bucket=$${BACKUP_S3_BUCKET:-staging-leviosa-backups}" \
 		-e "backup_s3_region=$${BACKUP_S3_REGION:-eu-central-1}"
 
@@ -84,21 +121,22 @@ backup:
 # Check playbooks for syntax errors
 check-clean:
 	@echo "Checking playbooks for syntax errors..."
-	@ansible-playbook playbook.yml --syntax-check
-	@ansible-playbook deploy.yml --syntax-check
-	@ansible-playbook backup.yml --syntax-check
+	@ansible-playbook playbooks/site.yml --syntax-check
+	@ansible-playbook playbooks/deploy.yml --syntax-check
+	@ansible-playbook playbooks/deploy-staging.yml --syntax-check
+	@ansible-playbook playbooks/backup.yml --syntax-check
 	@echo "All playbooks are clean!"
 
 # Run ansible-lint (requires installation)
 lint:
 	@echo "Running ansible-lint..."
 	@which ansible-lint > /dev/null || (echo "Install with: pip install ansible-lint" && exit 1)
-	@ansible-lint playbook.yml deploy.yml backup.yml
+	@ansible-lint playbooks/
 
 # Display effective variables
 vars-test:
 	@echo "Displaying effective variables..."
-	@ansible-playbook -i inventory/hosts playbook.yml \
+	@ansible-playbook -i inventory/hosts playbooks/site.yml \
 		-e "ansible_host=$(VPS_IP)" \
 		--tags debug --skip-tags never 2>/dev/null || true
 	@echo "To see all variables, run:"
@@ -124,18 +162,28 @@ ssh-info:
 
 # Check service status
 status:
-	@echo "Checking service status..."
-	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "docker compose ps"
+	@echo "Checking production service status..."
+	@ssh -i ~/.ssh/leviosa $(DEPLOY_USER)@$(VPS_IP) "cd /opt/$(APP_NAME) && docker compose ps"
+
+# Check staging service status
+staging-status:
+	@echo "Checking staging service status..."
+	@ssh -i ~/.ssh/leviosa $(DEPLOY_USER)@$(VPS_IP) "cd /opt/$(APP_NAME)-staging && docker compose ps"
 
 # View application logs
 logs:
-	@echo "Streaming logs (Ctrl+C to exit)..."
-	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "docker compose logs -f"
+	@echo "Streaming production logs (Ctrl+C to exit)..."
+	@ssh -i ~/.ssh/leviosa $(DEPLOY_USER)@$(VPS_IP) "cd /opt/$(APP_NAME) && docker compose logs -f"
+
+# View staging logs
+staging-logs:
+	@echo "Streaming staging logs (Ctrl+C to exit)..."
+	@ssh -i ~/.ssh/leviosa $(DEPLOY_USER)@$(VPS_IP) "cd /opt/$(APP_NAME)-staging && docker compose logs -f"
 
 # Run health check
 health-check:
 	@echo "Running health check..."
-	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "curl -f http://localhost:3000/health || exit 1"
+	@ssh -i ~/.ssh/leviosa $(DEPLOY_USER)@$(VPS_IP) "/opt/$(APP_NAME)/scripts/health-check.sh"
 
 # ============================================
 # Dependencies
