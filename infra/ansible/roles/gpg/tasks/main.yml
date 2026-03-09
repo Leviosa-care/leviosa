@@ -31,7 +31,7 @@
 
 - name: Trust the imported GPG key
   ansible.builtin.shell: |
-    echo "trust" | gpg --command-fd 0 --edit-key "{{ gpg_key_id }}"
+    printf "trust\n5\ny\nquit\n" | gpg --no-tty --command-fd 0 --edit-key "{{ gpg_key_id }}"
   args:
     chdir: /home/{{ user }}
   become_user: "{{ user }}"
