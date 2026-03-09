@@ -1,0 +1,24 @@
+---
+# Leviosa Staging Environment Variables (Non-Sensitive)
+# These variables are specific to the staging environment
+
+# Application
+app_env: staging
+app_base_dir: "/opt/{{ app_name }}-staging"
+app_data_dir: "/opt/{{ app_name }}-staging/data"
+app_logs_dir: "/opt/{{ app_name }}-staging/logs"
+app_backup_dir: "/opt/{{ app_name }}-staging/backups"
+
+# Ports (different from production)
+frontend_port: 3001
+backend_port: 3501
+
+# Shared Services
+use_shared_services: true
+prod_network_name: "{{ app_name }}_network"
+
+# Docker
+app_image_tag: "staging"
+
+# Staging-specific configuration
+app_env_template: true
