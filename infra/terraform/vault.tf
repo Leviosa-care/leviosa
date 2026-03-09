@@ -3,7 +3,6 @@ resource "aws_iam_user" "vault_user" {
   name = "vault-unseal"
 }
 
-# TODO: generate it again since I leaked it in chatgpt.
 resource "aws_iam_access_key" "vault_user_key" {
   user = aws_iam_user.vault_user.name
 }
