@@ -1,0 +1,14 @@
+---
+# Leviosa - Base variables for all hosts
+# Override these in environment-specific group_vars or via --extra-vars
+
+# ============================================
+# Application Identity
+# ============================================
+app_name: leviosa
+app_domain: leviosa.care
+
+# ============================================
+# Rclone Backup
+# ============================================
+rclone_backup_dir: "/var/backups/leviosa"
