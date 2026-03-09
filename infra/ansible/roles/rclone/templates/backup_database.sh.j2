@@ -6,16 +6,16 @@ export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Configuration
 USER="{{ user }}"
-BACKUP_DIR="/var/backups/leviosa"
+BACKUP_DIR="{{ rclone_backup_dir }}"
 VOLUME_NAME="production_backend_data"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="leviosa_backup_$TIMESTAMP.tar.gz"
 RETENTION_DAYS=7
-GPG_RECIPIENT="{{ email }}"
+GPG_RECIPIENT="{{ gpg_recipient }}"
 LOG_FILE="$BACKUP_DIR/backup.log"
 
 REMOTE_NAME="{{ rclone_aws_remote_name }}"
-REMOTE_PATH="{{ rclone_aws_bucketname }}/backups"
+REMOTE_PATH="{{ rclone_aws_bucket_name }}/backups"
 REMOTE_RETENTION_DAYS=30
 
 # Exit on error

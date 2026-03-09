@@ -46,7 +46,7 @@
 
 - name: Deploy the sync script from the files folder
   ansible.builtin.template:
-    src: files/backup_database.sh.j2
+    src: backup_database.sh.j2
     dest: /home/{{ user }}/scripts/backup_database.sh
     owner: "{{ user }}"
     group: "{{ user }}"
@@ -62,7 +62,7 @@
 
 - name: Create backup log directory
   ansible.builtin.file:
-    path: /var/backups/leviosa
+    path: "{{ rclone_backup_dir }}"
     state: directory
     owner: "{{ user }}"
     group: "{{ user }}"
@@ -81,7 +81,7 @@
   ansible.builtin.copy:
     dest: /etc/logrotate.d/leviosa-backup
     content: |
-      /var/backups/leviosa/backup.log {
+      {{ rclone_backup_dir }}/backup.log {
         daily
         rotate 14
         compress

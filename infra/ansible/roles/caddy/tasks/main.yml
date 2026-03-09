@@ -24,11 +24,12 @@
 
 - name: Deploy Caddyfile
   ansible.builtin.template:
-    src: files/Caddyfile.j2
+    src: Caddyfile.j2
     dest: /etc/caddy/Caddyfile
     owner: root
     group: root
     mode: '0644'
+  notify: reload caddy
 
 - name: Ensure Caddy service is enabled and running
   ansible.builtin.service:
