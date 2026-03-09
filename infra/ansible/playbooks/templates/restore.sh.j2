@@ -1,0 +1,106 @@
+#!/bin/bash
+# Leviosa Restore Script
+# Managed by Ansible - DO NOT EDIT MANUALLY
+#
+# Restores: database, Docker volumes from S3 backups
+# Usage: restore.sh <s3-path>
+#   e.g.: restore.sh db/daily/leviosa_db_daily_20250101_020000.sql.gz
+#   e.g.: restore.sh volumes/daily/leviosa_postgres_data_daily_20250101_020000.tar.gz
+
+set -euo pipefail
+
+S3_BUCKET="s3://{{ backup_s3_bucket }}"
+RESTORE_TMP="/tmp/{{ app_name }}_restore_$$"
+
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 <s3-path>"
+  echo ""
+  echo "Available backups:"
+  echo "  Database:  aws s3 ls ${S3_BUCKET}/db/ --recursive"
+  echo "  Volumes:   aws s3 ls ${S3_BUCKET}/volumes/ --recursive"
+  echo "  Configs:   aws s3 ls ${S3_BUCKET}/configs/ --recursive"
+  exit 1
+fi
+
+S3_PATH="$1"
+FILENAME=$(basename "$S3_PATH")
+
+cleanup() {
+  rm -rf "$RESTORE_TMP"
+}
+trap cleanup EXIT
+
+mkdir -p "$RESTORE_TMP"
+
+echo "==========================================="
+echo "Leviosa Restore"
+echo "==========================================="
+echo "Source: ${S3_BUCKET}/${S3_PATH}"
+echo ""
+
+# Download from S3
+echo "Downloading backup..."
+aws s3 cp "${S3_BUCKET}/${S3_PATH}" "$RESTORE_TMP/$FILENAME"
+
+# Determine restore type from path
+if [[ "$S3_PATH" == db/* ]]; then
+  echo ""
+  echo "WARNING: This will replace the current database!"
+  echo "The application will be briefly unavailable."
+  read -r -p "Continue? [y/N] " CONFIRM
+  if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+    echo "Restore cancelled."
+    exit 0
+  fi
+
+  echo "Restoring database..."
+  gunzip -c "$RESTORE_TMP/$FILENAME" | docker exec -i {{ app_name }}_postgres psql -U {{ db_user | default('leviosa') }} {{ db_name | default('leviosa') }}
+  echo "Database restored successfully."
+
+elif [[ "$S3_PATH" == volumes/* ]]; then
+  # Extract volume name from filename pattern: app_volumename_type_timestamp.tar.gz
+  VOLUME_NAME=$(echo "$FILENAME" | sed -E 's/^{{ app_name }}_(.+)_(daily|weekly|monthly)_.+\.tar\.gz$/\1/')
+  DOCKER_VOLUME="{{ app_name }}_${VOLUME_NAME}"
+
+  echo ""
+  echo "WARNING: This will replace Docker volume: $DOCKER_VOLUME"
+  echo "Any running containers using this volume should be stopped first."
+  read -r -p "Continue? [y/N] " CONFIRM
+  if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+    echo "Restore cancelled."
+    exit 0
+  fi
+
+  echo "Restoring volume: $DOCKER_VOLUME"
+  docker run --rm \
+    -v "${DOCKER_VOLUME}:/data" \
+    -v "${RESTORE_TMP}:/backup:ro" \
+    alpine sh -c "rm -rf /data/* && tar xzf /backup/$FILENAME -C /data"
+  echo "Volume $DOCKER_VOLUME restored successfully."
+
+elif [[ "$S3_PATH" == configs/* ]]; then
+  echo "Extracting config files to $RESTORE_TMP/configs..."
+  mkdir -p "$RESTORE_TMP/configs"
+  tar xzf "$RESTORE_TMP/$FILENAME" -C "$RESTORE_TMP/configs"
+
+  echo ""
+  echo "Config files extracted to: $RESTORE_TMP/configs/"
+  echo "Review and copy files manually to {{ app_base_dir }}/"
+  ls -la "$RESTORE_TMP/configs/"
+  echo ""
+  echo "NOTE: Config files are NOT auto-restored to prevent overwriting current settings."
+  echo "Copy them manually after review."
+  exit 0
+
+else
+  echo "Unknown backup type. Expected path starting with: db/, volumes/, or configs/"
+  exit 1
+fi
+
+echo ""
+echo "Restarting application services..."
+cd {{ app_base_dir }} && docker compose restart
+echo ""
+echo "==========================================="
+echo "Restore complete!"
+echo "==========================================="

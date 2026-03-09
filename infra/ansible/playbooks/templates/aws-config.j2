@@ -1,0 +1,6 @@
+# AWS Configuration for Backups
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+[default]
+region = {{ backup_s3_region | default('eu-central-1') }}
+output = json

@@ -1,0 +1,127 @@
+#!/bin/bash
+# Leviosa Comprehensive Backup Script
+# Managed by Ansible - DO NOT EDIT MANUALLY
+#
+# Backs up: database, Docker volumes, config files
+# Usage: backup.sh [daily|weekly|monthly]
+
+set -euo pipefail
+
+TYPE=${1:-daily}
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_TMP="/tmp/{{ app_name }}_backup_${TIMESTAMP}"
+S3_BUCKET="s3://{{ backup_s3_bucket }}"
+LOG_FILE="{{ app_logs_dir }}/backup.log"
+STORAGE_CLASS="{{ backup_s3_storage_class | default('STANDARD') }}"
+
+# Backup retention (days)
+DAILY_RETENTION={{ backup_retention_days | default(7) }}
+WEEKLY_RETENTION=$((DAILY_RETENTION * 2))
+MONTHLY_RETENTION=365
+
+log() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+}
+
+cleanup() {
+  rm -rf "$BACKUP_TMP"
+}
+trap cleanup EXIT
+
+mkdir -p "$BACKUP_TMP"
+
+log "Starting $TYPE backup..."
+
+# ============================================
+# 1. Database Backup
+# ============================================
+log "Dumping database..."
+DB_FILENAME="{{ app_name }}_db_${TYPE}_${TIMESTAMP}.sql.gz"
+docker exec {{ app_name }}_postgres pg_dump -U {{ db_user | default('leviosa') }} {{ db_name | default('leviosa') }} | gzip > "$BACKUP_TMP/$DB_FILENAME"
+aws s3 cp "$BACKUP_TMP/$DB_FILENAME" "${S3_BUCKET}/db/$TYPE/$DB_FILENAME" --storage-class "$STORAGE_CLASS"
+log "Database backup uploaded: db/$TYPE/$DB_FILENAME"
+
+# ============================================
+# 2. Docker Volume Backups
+# ============================================
+{% if backup_volumes_enabled | default(true) %}
+log "Backing up Docker volumes..."
+for VOLUME in postgres redis; do
+  VOLUME_NAME="{{ app_name }}_${VOLUME}_data"
+  VOLUME_FILENAME="{{ app_name }}_${VOLUME}_${TYPE}_${TIMESTAMP}.tar.gz"
+
+  if docker volume inspect "$VOLUME_NAME" >/dev/null 2>&1; then
+    docker run --rm \
+      -v "${VOLUME_NAME}:/data:ro" \
+      -v "${BACKUP_TMP}:/backup" \
+      alpine tar czf "/backup/$VOLUME_FILENAME" -C /data .
+    aws s3 cp "$BACKUP_TMP/$VOLUME_FILENAME" "${S3_BUCKET}/volumes/$TYPE/$VOLUME_FILENAME" --storage-class "$STORAGE_CLASS"
+    log "Volume backup uploaded: volumes/$TYPE/$VOLUME_FILENAME"
+  else
+    log "Volume $VOLUME_NAME does not exist, skipping"
+  fi
+done
+{% endif %}
+
+# ============================================
+# 3. Config Files Backup
+# ============================================
+{% if backup_configs_enabled | default(true) %}
+log "Backing up config files..."
+CONFIG_FILENAME="{{ app_name }}_configs_${TYPE}_${TIMESTAMP}.tar.gz"
+CONFIG_TMP="$BACKUP_TMP/configs"
+mkdir -p "$CONFIG_TMP"
+
+# Copy config files if they exist
+for FILE in docker-compose.yml .env; do
+  if [ -f "{{ app_base_dir }}/$FILE" ]; then
+    cp "{{ app_base_dir }}/$FILE" "$CONFIG_TMP/"
+  fi
+done
+
+if [ -d "{{ app_base_dir }}/monitoring" ]; then
+  cp -r "{{ app_base_dir }}/monitoring" "$CONFIG_TMP/"
+fi
+
+if [ -d "{{ app_base_dir }}/config" ]; then
+  cp -r "{{ app_base_dir }}/config" "$CONFIG_TMP/"
+fi
+
+tar czf "$BACKUP_TMP/$CONFIG_FILENAME" -C "$CONFIG_TMP" .
+aws s3 cp "$BACKUP_TMP/$CONFIG_FILENAME" "${S3_BUCKET}/configs/$TYPE/$CONFIG_FILENAME" --storage-class "$STORAGE_CLASS"
+log "Config backup uploaded: configs/$TYPE/$CONFIG_FILENAME"
+{% endif %}
+
+# ============================================
+# 4. Retention Cleanup
+# ============================================
+log "Cleaning old backups..."
+
+cleanup_s3_path() {
+  local S3_PATH="$1"
+  local RETENTION_DAYS="$2"
+  local CUTOFF_DATE
+  CUTOFF_DATE=$(date -d "-${RETENTION_DAYS} days" +%Y-%m-%d)
+
+  aws s3 ls "$S3_PATH" 2>/dev/null | while read -r line; do
+    FILE_DATE=$(echo "$line" | awk '{print $1}')
+    FILE_NAME=$(echo "$line" | awk '{print $4}')
+    if [ -n "$FILE_NAME" ] && [[ "$FILE_DATE" < "$CUTOFF_DATE" ]]; then
+      aws s3 rm "${S3_PATH}${FILE_NAME}"
+      log "Removed old backup: ${S3_PATH}${FILE_NAME}"
+    fi
+  done
+}
+
+case $TYPE in
+  daily)   RETENTION=$DAILY_RETENTION ;;
+  weekly)  RETENTION=$WEEKLY_RETENTION ;;
+  monthly) RETENTION=$MONTHLY_RETENTION ;;
+  *)       RETENTION=$DAILY_RETENTION ;;
+esac
+
+for PREFIX in db volumes configs; do
+  cleanup_s3_path "${S3_BUCKET}/${PREFIX}/$TYPE/" "$RETENTION"
+done
+
+log "Backup completed successfully ($TYPE)"

@@ -1,0 +1,78 @@
+#!/bin/bash
+# Leviosa Database Backup Script
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+set -e
+
+TYPE=${1:-daily}
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+FILENAME="{{ app_name }}_${TYPE}_${TIMESTAMP}.sql.gz"
+BACKUP_PATH="/tmp/$FILENAME"
+S3_PATH="s3://{{ backup_s3_bucket }}/$TYPE/$FILENAME"
+
+# Backup retention (days)
+DAILY_RETENTION={{ backup_retention_days | default(7) }}
+WEEKLY_RETENTION=$((DAILY_RETENTION * 2))
+MONTHLY_RETENTION=365
+
+echo "Starting $TYPE database backup..."
+
+# Dump and compress database
+echo "Dumping database..."
+docker exec {{ app_name }}_postgres pg_dump -U {{ db_user | default('leviosa') }} {{ db_name | default('leviosa') }} | gzip > "$BACKUP_PATH"
+
+# Upload to S3
+echo "Uploading to S3..."
+aws s3 cp "$BACKUP_PATH" "$S3_PATH"
+
+# Cleanup local file
+rm -f "$BACKUP_PATH"
+
+# Clean old backups based on type
+echo "Cleaning old backups..."
+case $TYPE in
+  daily)
+    aws s3 ls "s3://{{ backup_s3_bucket }}/daily/" | while read -r line; do
+      FILE_DATE=$(echo "$line" | awk '{print $1}' | tr -d '-')
+      FILE_TIME=$(echo "$line" | awk '{print $2}' | cut -d_ -f2 | tr -d ':' | cut -c1-4)
+      FILE_DATETIME="${FILE_DATE}${FILE_TIME}"
+      CURRENT_DATETIME=$(date +%Y%m%d%H%M)
+
+      if (( (CURRENT_DATETIME - FILE_DATETIME) > (DAILY_RETENTION * 10000) )); then
+        FILE_NAME=$(echo "$line" | awk '{print $4}')
+        aws s3 rm "s3://{{ backup_s3_bucket }}/daily/$FILE_NAME"
+        echo "Removed old daily backup: $FILE_NAME"
+      fi
+    done
+    ;;
+  weekly)
+    aws s3 ls "s3://{{ backup_s3_bucket }}/weekly/" | while read -r line; do
+      FILE_DATE=$(echo "$line" | awk '{print $1}' | tr -d '-')
+      FILE_TIME=$(echo "$line" | awk '{print $2}' | cut -d_ -f2 | tr -d ':' | cut -c1-4)
+      FILE_DATETIME="${FILE_DATE}${FILE_TIME}"
+      CURRENT_DATETIME=$(date +%Y%m%d%H%M)
+
+      if (( (CURRENT_DATETIME - FILE_DATETIME) > (WEEKLY_RETENTION * 10000) )); then
+        FILE_NAME=$(echo "$line" | awk '{print $4}')
+        aws s3 rm "s3://{{ backup_s3_bucket }}/weekly/$FILE_NAME"
+        echo "Removed old weekly backup: $FILE_NAME"
+      fi
+    done
+    ;;
+  monthly)
+    aws s3 ls "s3://{{ backup_s3_bucket }}/monthly/" | while read -r line; do
+      FILE_DATE=$(echo "$line" | awk '{print $1}' | tr -d '-')
+      FILE_TIME=$(echo "$line" | awk '{print $2}' | cut -d_ -f2 | tr -d ':' | cut -c1-4)
+      FILE_DATETIME="${FILE_DATE}${FILE_TIME}"
+      CURRENT_DATETIME=$(date +%Y%m%d%H%M)
+
+      if (( (CURRENT_DATETIME - FILE_DATETIME) > (MONTHLY_RETENTION * 10000) )); then
+        FILE_NAME=$(echo "$line" | awk '{print $4}')
+        aws s3 rm "s3://{{ backup_s3_bucket }}/monthly/$FILE_NAME"
+        echo "Removed old monthly backup: $FILE_NAME"
+      fi
+    done
+    ;;
+esac
+
+echo "Backup completed: $S3_PATH"
