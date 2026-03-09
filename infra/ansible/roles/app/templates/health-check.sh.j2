@@ -1,0 +1,57 @@
+#!/bin/bash
+# Leviosa Health Check Script
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+set -e
+
+TIMEOUT=10
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo "Checking {{ app_name }} health..."
+echo ""
+
+# Check frontend
+echo -n "Frontend: "
+if docker exec {{ app_name }}_frontend wget -q -S -O /dev/null --max-time=$TIMEOUT "http://localhost:{{ frontend_port | default('3000') }}/" 2>&1 | grep -q "200\|302"; then
+    echo -e "${GREEN}OK${NC}"
+else
+    echo -e "${RED}FAILED${NC}"
+    exit 1
+fi
+
+# Check backend
+echo -n "Backend: "
+if docker exec {{ app_name }}_backend wget -q -S -O /dev/null --max-time=$TIMEOUT "http://localhost:{{ backend_port | default('3500') }}/health" 2>&1 | grep -q "200\|302"; then
+    echo -e "${GREEN}OK${NC}"
+else
+    echo -e "${RED}FAILED${NC}"
+    exit 1
+fi
+
+{% if not use_shared_services | default(false) %}
+# Check database
+echo -n "Database: "
+if docker exec {{ app_name }}_postgres pg_isready -U {{ db_user | default('leviosa') }} -d {{ db_name | default('leviosa') }} &>/dev/null; then
+    echo -e "${GREEN}OK${NC}"
+else
+    echo -e "${RED}FAILED${NC}"
+    exit 1
+fi
+
+# Check Redis
+echo -n "Redis: "
+if docker exec {{ app_name }}_redis redis-cli --raw incr ping | grep -q "1"; then
+    echo -e "${GREEN}OK${NC}"
+else
+    echo -e "${RED}FAILED${NC}"
+    exit 1
+fi
+{% endif %}
+
+echo ""
+echo -e "${GREEN}All services are healthy!${NC}"

@@ -1,0 +1,30 @@
+#!/bin/bash
+# Leviosa Production Startup Script
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+set -e
+
+echo "Starting {{ app_name }} services..."
+
+cd "{{ app_base_dir }}"
+
+# Pull latest images
+echo "Pulling latest Docker images..."
+docker compose pull
+
+# Start services
+echo "Starting services..."
+docker compose up -d
+
+# Wait for services to be healthy
+echo "Waiting for services to be ready..."
+sleep 10
+
+# Check service status
+echo ""
+echo "Service Status:"
+docker compose ps
+
+echo ""
+echo "{{ app_name }} is now running at https://{{ app_domain }}"
+echo "View logs: docker compose logs -f"

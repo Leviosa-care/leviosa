@@ -1,0 +1,19 @@
+---
+# Default variables for app role
+
+# Application
+app_name: leviosa
+app_docker_image: "{{ docker_registry }}/{{ app_name }}:{{ app_image_tag | default('latest') }}"
+app_base_dir: "/opt/{{ app_name }}"
+app_data_dir: "/opt/{{ app_name }}/data"
+app_logs_dir: "/opt/{{ app_name }}/logs"
+app_backup_dir: "/opt/{{ app_name }}/backups"
+
+# Docker
+docker_registry: "henga"
+app_image_tag: "latest"
+
+# Monitoring
+monitoring_enabled: true
+monitoring_cadvisor_port: 9323
+monitoring_node_exporter_port: 9100

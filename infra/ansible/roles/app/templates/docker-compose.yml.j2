@@ -1,0 +1,168 @@
+# Leviosa Docker Compose Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# Generated: {{ ansible_date_time.iso8601 }}
+
+services:
+  # Frontend Container
+  frontend:
+    image: {{ frontend_docker_image | default(docker_registry + '/' + app_name + ':frontend-' + app_image_tag | default('latest')) }}
+    container_name: {{ app_name }}_frontend
+    restart: unless-stopped
+    # Caddy (on the shared network) handles external access - no host port needed
+    expose:
+      - "{{ frontend_port | default('3000') }}"
+    environment:
+      - NODE_ENV=production
+      - PORT={{ frontend_port | default('3000') }}
+    env_file:
+      - .env
+{% if use_shared_services | default(false) %}
+    depends_on:
+      backend:
+        condition: service_healthy
+{% else %}
+    depends_on:
+      backend:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+{% endif %}
+    networks:
+{% if use_shared_services | default(false) %}
+      # Join prod's network to reach shared postgres, redis, and caddy
+      - {{ prod_network_name | default('leviosa_network') }}
+{% else %}
+      - {{ app_name }}_network
+{% endif %}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:{{ frontend_port | default('3000') }}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Backend Container
+  backend:
+    image: {{ backend_docker_image | default(docker_registry + '/' + app_name + ':backend-' + app_image_tag | default('latest')) }}
+    container_name: {{ app_name }}_backend
+    restart: unless-stopped
+    # Caddy (on the shared network) handles external access - no host port needed
+    expose:
+      - "{{ backend_port | default('3500') }}"
+    env_file:
+      - .env
+{% if not use_shared_services | default(false) %}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+{% endif %}
+    volumes:
+      - {{ app_data_dir }}/uploads:/app/uploads
+    networks:
+{% if use_shared_services | default(false) %}
+      # Join prod's network to reach shared postgres, redis, and caddy
+      - {{ prod_network_name | default('leviosa_network') }}
+{% else %}
+      - {{ app_name }}_network
+{% endif %}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:{{ backend_port | default('3500') }}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+{% if not use_shared_services | default(false) %}
+{% if caddy_enabled | default(true) %}
+  # Caddy Reverse Proxy with automatic TLS (Let's Encrypt)
+  caddy:
+    image: caddy:latest
+    container_name: {{ app_name }}_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    volumes:
+      - {{ caddy_data_dir }}/config/Caddyfile:/etc/caddy/Caddyfile:ro
+      - {{ caddy_data_dir }}/data:/data
+      - {{ caddy_data_dir }}/logs:/var/log/caddy
+    networks:
+      - {{ app_name }}_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+{% endif %}
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17-alpine
+    container_name: {{ app_name }}_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - {{ app_data_dir }}/postgres:/var/lib/postgresql/data
+    networks:
+      - {{ app_name }}_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: {{ app_name }}_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - {{ app_data_dir }}/redis:/data
+    networks:
+      - {{ app_name }}_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+{% endif %}
+
+# Networks
+networks:
+{% if use_shared_services | default(false) %}
+  # Attach to prod's existing network - do not recreate it
+  {{ prod_network_name | default('leviosa_network') }}:
+    external: true
+{% else %}
+  {{ app_name }}_network:
+    external: true
+{% endif %}

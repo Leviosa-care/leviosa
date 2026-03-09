@@ -1,0 +1,51 @@
+---
+# Monitoring Stack Tasks
+# - Deploy cAdvisor for container metrics
+# - Deploy node-exporter for host metrics
+# - Manage via systemd service
+
+- name: Create monitoring directory
+  ansible.builtin.file:
+    path: "{{ app_base_dir }}/monitoring"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0750'
+
+- name: Deploy monitoring Docker Compose configuration
+  ansible.builtin.template:
+    src: docker-compose.monitoring.yml.j2
+    dest: "{{ app_base_dir }}/monitoring/docker-compose.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0640'
+  notify: restart monitoring
+
+- name: Create monitoring systemd service
+  ansible.builtin.template:
+    src: monitoring.service.j2
+    dest: /etc/systemd/system/{{ app_name }}-monitoring.service
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart monitoring
+
+- name: Enable and start monitoring service
+  ansible.builtin.systemd:
+    name: "{{ app_name }}-monitoring"
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Display monitoring configuration summary
+  ansible.builtin.debug:
+    msg:
+      - "==========================================="
+      - "Monitoring Stack Deployed"
+      - "==========================================="
+      - "cAdvisor: 127.0.0.1:{{ monitoring_cadvisor_port | default('9323') }}"
+      - "Node Exporter: 127.0.0.1:{{ monitoring_node_exporter_port | default('9100') }}"
+      - ""
+      - "These endpoints are bound to localhost only."
+      - "Use SSH tunneling or a reverse proxy to access them."
+      - "==========================================="

@@ -1,0 +1,18 @@
+# Monitoring Stack - Systemd Service
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+[Unit]
+Description={{ app_name }} monitoring stack (cAdvisor + node-exporter)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory={{ app_base_dir }}/monitoring
+ExecStart=/usr/bin/docker compose up -d --remove-orphans
+ExecStop=/usr/bin/docker compose down
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

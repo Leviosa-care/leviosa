@@ -1,0 +1,9 @@
+---
+# Handlers for user role
+
+- name: test sudo configuration
+  ansible.builtin.command:
+    cmd: "visudo -cf /etc/sudoers.d/{{ deploy_user }}"
+  register: sudo_test
+  changed_when: false
+  failed_when: sudo_test.rc != 0
