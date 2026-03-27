@@ -3,44 +3,44 @@
 # This is an example file - create leviosa_staging.vault.yml with actual values
 # Encrypt with: ansible-vault encrypt group_vars/leviosa_staging.vault.yml
 
-# Staging Database (uses shared postgres from production)
-staging_db_name: leviosa_staging
-staging_db_user: leviosa
-staging_db_password: "{{ vault_staging_db_password }}"
+# ============================================
+# Staging Database (shared postgres, separate DB)
+# ============================================
+# These override the production vault values for staging
+vault_staging_db_password: "secure_staging_db_password_here"
 
-# Staging Redis (uses shared redis from production, different DB index)
-staging_redis_db: 1
-
+# ============================================
 # Staging Session Secret
-staging_session_secret: "{{ vault_staging_session_secret }}"
+# ============================================
+vault_staging_session_secret: "random_32_char_string_for_staging_here"
 
-# AWS Credentials (can reuse production credentials)
-staging_aws_access_key_id: "{{ vault_aws_access_key_id }}"
-staging_aws_secret_access_key: "{{ vault_aws_secret_access_key }}"
-staging_s3_bucket: "{{ vault_s3_bucket }}-staging"
+# ============================================
+# Staging AWS Credentials (optional - can reuse prod)
+# ============================================
+vault_staging_aws_access_key_id: "AKIAIOSFODNN7EXAMPLE"
+vault_staging_aws_secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 
-# Email Configuration (can reuse production)
-staging_smtp_from_email: "staging@{{ app_domain }}"
-staging_smtp_from_name: "Leviosa Staging"
+# ============================================
+# Staging S3 Configuration
+# ============================================
+vault_staging_s3_bucket: "leviosa-staging"
+vault_staging_s3_region: "eu-central-1"
+vault_staging_s3_public_url: "https://s3.eu-central-1.amazonaws.com/leviosa-staging"
+vault_staging_media_url: "https://s3.eu-central-1.amazonaws.com/leviosa-staging/media"
 
-# Stripe Test Keys
-staging_stripe_secret_key: "sk_test_your_stripe_test_secret_key"
-staging_stripe_publishable_key: "pk_test_your_stripe_test_publishable_key"
-staging_stripe_webhook_secret: "whsec_your_stripe_test_webhook_secret"
+# ============================================
+# Staging Stripe Test Keys
+# ============================================
+vault_staging_stripe_secret_key: "sk_test_your_stripe_test_secret_key"
+vault_staging_stripe_publishable_key: "pk_test_your_stripe_test_publishable_key"
+vault_staging_stripe_webhook_secret: "whsec_your_stripe_test_webhook_secret"
 
-# Google OAuth (can use production or separate staging app)
-staging_google_client_id: "{{ vault_google_client_id }}"
-staging_google_client_secret: "{{ vault_google_client_secret }}"
+# ============================================
+# Staging Cron Secret
+# ============================================
+vault_staging_cron_secret: "change-me-staging-cron-secret-min-32-chars-random"
 
-# Staging-specific encryption
-staging_user_encryption_key: "{{ vault_staging_user_encryption_key }}"
-staging_logging_salt: "{{ vault_staging_logging_salt }}"
-
-# Mock Data Mode (for testing)
-staging_use_mock_data: "false"
-
-# Vault variables (these should be in your main vault)
-# vault_staging_db_password: "secure_password_here"
-# vault_staging_session_secret: "random_32_char_string_here"
-# vault_staging_user_encryption_key: "another_secure_key_here"
-# vault_staging_logging_salt: "random_salt_here"
+# ============================================
+# Staging Sentry (optional)
+# ============================================
+vault_staging_sentry_dsn: ""

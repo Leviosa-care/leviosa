@@ -1,24 +1,91 @@
 ---
-# Leviosa Staging Environment Variables (Non-Sensitive)
-# These variables are specific to the staging environment
+# Leviosa Staging - Group Variables
+# Overrides for the leviosa_staging_servers group.
+# Staging shares postgres, redis, and caddy from the production stack.
+# Only the app container is separate, running in the prod Docker network.
 
+# ============================================
 # Application
+# ============================================
+app_name: leviosa_staging
 app_env: staging
-app_base_dir: "/opt/{{ app_name }}-staging"
-app_data_dir: "/opt/{{ app_name }}-staging/data"
-app_logs_dir: "/opt/{{ app_name }}-staging/logs"
-app_backup_dir: "/opt/{{ app_name }}-staging/backups"
+app_base_dir: /opt/leviosa-staging
+app_data_dir: "{{ app_base_dir }}/data"
+app_logs_dir: "{{ app_base_dir }}/logs"
+app_backup_dir: "{{ app_base_dir }}/backups"
 
-# Ports (different from production)
-frontend_port: 3001
-backend_port: 3501
-
+# ============================================
 # Shared Services
+# ============================================
+# When true, the compose file only deploys the app container and attaches
+# it to prod's Docker network. Postgres and Redis are not created.
 use_shared_services: true
-prod_network_name: "{{ app_name }}_network"
 
-# Docker
-app_image_tag: "staging"
+# Production Docker network the staging app container joins
+prod_network_name: leviosa_network
 
-# Staging-specific configuration
-app_env_template: true
+# ============================================
+# Database (shared postgres, separate DB)
+# ============================================
+# db_user and db_password are inherited from all.vault.yml (same postgres instance)
+db_name: leviosa_staging
+
+# ============================================
+# Redis (shared instance, separate DB index)
+# ============================================
+# 0 = production, 1 = staging
+redis_db: 1
+
+# ============================================
+# Caddy
+# ============================================
+# Caddy is NOT deployed for staging - it is managed by the prod stack.
+# Staging site blocks are added to prod's Caddyfile via staging_enabled=true.
+caddy_enabled: false
+
+# ============================================
+# Application Environment Variables (overrides)
+# ============================================
+# Staging-specific overrides merged on top of all.yml app_env_vars.
+# Most values (AWS, S3, etc.) are inherited from the prod vault.
+# Only secrets that must differ from prod are redefined here.
+app_env_vars:
+  # S3 - dedicated staging bucket (falls back to prod bucket if not set)
+  S3_BUCKET: "{{ vault_staging_s3_bucket | default(vault_s3_bucket) | default('') }}"
+  S3_REGION: "{{ vault_staging_s3_region | default(vault_s3_region) | default('eu-central-1') }}"
+  S3_PUBLIC_URL: "{{ vault_staging_s3_public_url | default(vault_s3_public_url) | default('') }}"
+  MEDIA_URL: "{{ vault_staging_media_url | default(vault_media_url) | default('') }}"
+
+  # AWS credentials - staging-specific IAM user
+  AWS_ACCESS_KEY_ID: "{{ vault_staging_aws_access_key_id | default('') }}"
+  AWS_SECRET_ACCESS_KEY: "{{ vault_staging_aws_secret_access_key | default('') }}"
+  AWS_REGION: "{{ vault_staging_s3_region | default('eu-west-3') }}"
+
+  # Email
+  SMTP_FROM_EMAIL: "staging@{{ app_domain }}"
+  SMTP_FROM_NAME: "Leviosa Staging"
+  CONTACT_EMAIL: "{{ vault_contact_email | default('contact@' + app_domain) }}"
+
+  # Stripe - use staging-specific keys defined in leviosa_staging.vault.yml
+  STRIPE_SECRET_KEY: "{{ vault_staging_stripe_secret_key | default('') }}"
+  STRIPE_WEBHOOK_SECRET: "{{ vault_staging_stripe_webhook_secret | default('') }}"
+  PUBLIC_STRIPE_PUBLISHABLE_KEY: "{{ vault_staging_stripe_publishable_key | default('') }}"
+
+  # Cron secret - staging-specific
+  CRON_SECRET: "{{ vault_staging_cron_secret | default('change-me-staging-cron-secret-min-32-chars') }}"
+
+  # Public URL points to the staging domain
+  PUBLIC_URL: "https://staging.{{ app_domain }}"
+
+  # File Upload Configuration (same limits as prod)
+  MAX_FILE_SIZE: "{{ vault_max_file_size | default('10485760') }}"
+  ALLOWED_IMAGE_TYPES: "{{ vault_allowed_image_types | default('image/jpeg,image/png,image/webp,image/gif') }}"
+  ALLOWED_VIDEO_TYPES: "{{ vault_allowed_video_types | default('video/mp4,video/webm,video/quicktime') }}"
+  BODY_SIZE_LIMIT: "{{ vault_body_size_limit | default('15728640') }}"
+
+  # No mock data in staging - uses real DB
+  USE_MOCK_DATA: "false"
+
+  # Sentry - use a staging DSN if available, otherwise disable
+  SENTRY_DSN: "{{ vault_staging_sentry_dsn | default('') }}"
+  USE_SCHEDULER: "false"
