@@ -1,33 +1,49 @@
 ---
 # Leviosa VPS - Application Deployment
-# Usage: ansible-playbook -i inventory/hosts deploy.yml
+# Usage: ansible-playbook -i inventory/hosts.yml playbooks/deploy.yml
 #
 # This playbook deploys/updates the application without touching system config.
-# Run after the initial playbook.yml setup.
+# Run after the initial site.yml setup.
 
 - name: Leviosa VPS - Deploy Application
-  hosts: webserver, manager
+  hosts: leviosa_servers
   gather_facts: true
-  become: yes
-  remote_user: root
-  vars_files:
-    - group_vars/secrets.yml
+  become: true
+  become_user: "{{ deploy_user }}"
 
   pre_tasks:
     - name: Display deployment info
       ansible.builtin.debug:
-        msg: "Deploying Leviosa to {{ inventory_hostname }}"
+        msg: "Deploying {{ app_name }} to {{ inventory_hostname }}"
 
   roles:
     - role: caddy
       tags: ['caddy', 'deploy']
 
+    - role: app
+      tags: ['app', 'deploy']
+
   post_tasks:
-    - name: Pull latest images and restart services
-      ansible.builtin.shell:
-        cmd: cd /opt/leviosa && docker compose pull && docker compose up -d
+    - name: Pull latest images
+      ansible.builtin.command:
+        cmd: docker compose pull
+        chdir: "{{ app_base_dir }}"
       become: true
-      become_user: "{{ user }}"
+      when: app_deployed | default(false)
+
+    - name: Run database migrations
+      ansible.builtin.command:
+        cmd: docker compose run --rm --no-deps backend go run cmd/migrate/main.go
+        chdir: "{{ app_base_dir }}"
+      become: true
+      when: app_deployed | default(false)
+
+    - name: Restart services
+      ansible.builtin.command:
+        cmd: docker compose up -d --force-recreate
+        chdir: "{{ app_base_dir }}"
+      become: true
+      when: app_deployed | default(false)
 
     - name: Display deployment completion
       ansible.builtin.debug:
@@ -35,6 +51,7 @@
           - "==========================================="
           - "Deployment Complete!"
           - "==========================================="
-          - "Status: sudo -u {{ user }} docker compose ps"
-          - "Logs: sudo -u {{ user }} docker compose logs -f"
+          - "Application: https://{{ app_domain }}"
+          - "Status: sudo -u {{ deploy_user }} docker compose ps"
+          - "Logs: sudo -u {{ deploy_user }} docker compose logs -f"
           - "==========================================="

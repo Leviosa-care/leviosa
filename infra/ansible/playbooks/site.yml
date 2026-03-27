@@ -1,15 +1,26 @@
 ---
+# Leviosa VPS - Complete Setup
+# Usage: ansible-playbook -i inventory/hosts.yml playbooks/site.yml
+#
+# With custom variables:
+#   ansible-playbook -i inventory/hosts.yml playbooks/site.yml \
+#     -e "ansible_host=1.2.3.4" \
+#     -e "deploy_ssh_public_key=$(cat ~/.ssh/leviosa.pub)" \
+#     -e "app_domain=yourdomain.com"
+#
+# Using Terraform outputs:
+#   ansible-playbook -i inventory/hosts.yml playbooks/site.yml \
+#     -e "ansible_host=$(terraform output -raw server_ipv4_address)" \
+#     -e "app_domain=$(terraform output -raw domain_name)"
+
 - name: Leviosa VPS - Complete Setup
-  hosts: webserver
-  become: yes
-  remote_user: root
-  vars_files:
-    - group_vars/secrets.yml
+  hosts: leviosa_servers
+  gather_facts: true
 
   pre_tasks:
     - name: Display target host
       ansible.builtin.debug:
-        msg: "Setting up {{ inventory_hostname }} ({{ ansible_default_ipv4.address | default('unknown') }}) for Leviosa"
+        msg: "Setting up {{ inventory_hostname }} ({{ ansible_default_ipv4.address }}) for {{ app_name }}"
 
     - name: Check if running as root
       ansible.builtin.assert:
@@ -22,6 +33,9 @@
     - role: system
       tags: ['system', 'setup']
 
+    - role: docker
+      tags: ['docker', 'setup']
+
     - role: common
       tags: ['common', 'setup']
 
@@ -34,9 +48,6 @@
     - role: ufw
       tags: ['ufw', 'security']
 
-    - role: docker
-      tags: ['docker', 'setup']
-
     - role: caddy
       tags: ['caddy', 'web']
 
@@ -45,6 +56,13 @@
 
     - role: rclone
       tags: ['rclone', 'backup']
+
+    - role: app
+      tags: ['app', 'deploy']
+
+    - role: monitoring
+      tags: ['monitoring', 'setup']
+      when: monitoring_enabled | default(false)
 
   post_tasks:
     - name: Display setup completion message
@@ -54,88 +72,14 @@
           - "Leviosa VPS Setup Complete!"
           - "==========================================="
           - ""
-          - "Server: {{ ansible_default_ipv4.address | default('unknown') }}"
-          - "Deploy user: {{ user }}"
+          - "Server: {{ ansible_default_ipv4.address }}"
+          - "Domain: {{ app_domain }}"
+          - "Deploy user: {{ deploy_user }}"
+          - "Reverse proxy: {{ 'Caddy' if caddy_enabled | default(false) else 'None' }}"
           - ""
           - "Next steps:"
-          - "  1. Copy your .env file to /opt/leviosa/.env"
-          - "  2. Run: docker compose up -d"
+          - "  1. Copy your .env file to {{ app_base_dir }}/.env"
+          - "  2. Run: ansible-playbook playbooks/deploy.yml"
+          - "  3. Or manually: ssh {{ deploy_user }}@{{ ansible_default_ipv4.address }}"
           - ""
           - "==========================================="
-
-- name: Leviosa Manager - Complete Setup
-  hosts: manager
-  become: yes
-  remote_user: root
-  vars_files:
-    - group_vars/secrets.yml
-
-  pre_tasks:
-    - name: Display target host
-      ansible.builtin.debug:
-        msg: "Setting up {{ inventory_hostname }} ({{ ansible_default_ipv4.address | default('unknown') }}) for Leviosa Manager"
-
-  roles:
-    - role: system
-      tags: ['system', 'setup']
-
-    - role: common
-      tags: ['common', 'setup']
-
-    - role: ssh
-      tags: ['ssh', 'security']
-
-    - role: fail2ban
-      tags: ['fail2ban', 'security']
-
-    - role: ufw
-      tags: ['ufw', 'security']
-
-    - role: docker
-      tags: ['docker', 'setup']
-
-    - role: caddy
-      tags: ['caddy', 'web']
-
-    - role: gpg
-      tags: ['gpg', 'security']
-
-    - role: rclone
-      tags: ['rclone', 'backup']
-
-- name: Leviosa Workers - Complete Setup
-  hosts: workers
-  become: yes
-  remote_user: root
-  vars_files:
-    - group_vars/secrets.yml
-
-  pre_tasks:
-    - name: Display target host
-      ansible.builtin.debug:
-        msg: "Setting up {{ inventory_hostname }} ({{ ansible_default_ipv4.address | default('unknown') }}) for Leviosa Workers"
-
-  roles:
-    - role: system
-      tags: ['system', 'setup']
-
-    - role: common
-      tags: ['common', 'setup']
-
-    - role: ssh
-      tags: ['ssh', 'security']
-
-    - role: fail2ban
-      tags: ['fail2ban', 'security']
-
-    - role: ufw
-      tags: ['ufw', 'security']
-
-    - role: docker
-      tags: ['docker', 'setup']
-
-    - role: gpg
-      tags: ['gpg', 'security']
-
-    - role: rclone
-      tags: ['rclone', 'backup']

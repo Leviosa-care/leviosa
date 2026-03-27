@@ -1,55 +1,50 @@
 ---
 # Leviosa VPS - Staging Application Deployment
-# Usage: ansible-playbook -i inventory/hosts playbooks/deploy-staging.yml
+# Usage: ansible-playbook -i inventory/hosts.yml playbooks/deploy-staging.yml
 #
 # This playbook deploys/updates the staging application without touching system config.
-# Staging uses shared services (postgres, redis) from production to save resources.
+# Staging uses shared services (postgres, redis, caddy) from production to save resources.
 
 - name: Leviosa VPS - Deploy Staging Application
-  hosts: webserver
+  hosts: leviosa_staging_servers
   gather_facts: true
-  become: yes
-  remote_user: root
-  vars_files:
-    - group_vars/secrets.yml
-    - group_vars/leviosa_staging.yml
-    - group_vars/leviosa_staging.vault.yml
+  become: true
+  become_user: "{{ deploy_user }}"
 
   pre_tasks:
     - name: Display deployment info
       ansible.builtin.debug:
-        msg: "Deploying Leviosa STAGING to {{ inventory_hostname }}"
+        msg: "Deploying {{ app_name }} (staging) to {{ inventory_hostname }}"
 
   roles:
-    - role: app
-      tags: ['app', 'deploy']
-      vars:
-        app_env: staging
-        app_base_dir: "/opt/{{ app_name }}-staging"
-        app_data_dir: "/opt/{{ app_name }}-staging/data"
-        app_logs_dir: "/opt/{{ app_name }}-staging/logs"
-        app_backup_dir: "/opt/{{ app_name }}-staging/backups"
-        app_image_tag: "staging"
-        frontend_port: 3001
-        backend_port: 3501
-        use_shared_services: true
-        prod_network_name: "{{ app_name }}_network"
-        app_env_template: true
-
     - role: caddy
       tags: ['caddy', 'deploy']
+      when: staging_enabled | default(false)
+
+    - role: app
+      tags: ['app', 'deploy']
 
   post_tasks:
-    - name: Create staging Docker network (if not exists)
+    - name: Pull latest images
       ansible.builtin.command:
-        cmd: docker network create {{ app_name }}_staging_network 2>/dev/null || echo "Network already exists"
-      changed_when: false
-
-    - name: Pull latest images and restart services
-      ansible.builtin.shell:
-        cmd: cd /opt/{{ app_name }}-staging && docker compose pull && docker compose up -d
+        cmd: docker compose pull
+        chdir: "{{ app_base_dir }}"
       become: true
-      become_user: "{{ user }}"
+      when: app_deployed | default(false)
+
+    - name: Run database migrations
+      ansible.builtin.command:
+        cmd: docker compose run --rm --no-deps backend go run cmd/migrate/main.go
+        chdir: "{{ app_base_dir }}"
+      become: true
+      when: app_deployed | default(false)
+
+    - name: Restart services
+      ansible.builtin.command:
+        cmd: docker compose up -d --force-recreate
+        chdir: "{{ app_base_dir }}"
+      become: true
+      when: app_deployed | default(false)
 
     - name: Display deployment completion
       ansible.builtin.debug:
@@ -58,6 +53,6 @@
           - "Staging Deployment Complete!"
           - "==========================================="
           - "Staging URL: https://staging.{{ app_domain }}"
-          - "Status: sudo -u {{ user }} docker compose -f /opt/{{ app_name }}-staging/docker-compose.yml ps"
-          - "Logs: sudo -u {{ user }} docker compose -f /opt/{{ app_name }}-staging/docker-compose.yml logs -f"
+          - "Status: sudo -u {{ deploy_user }} docker compose ps"
+          - "Logs: sudo -u {{ deploy_user }} docker compose logs -f"
           - "==========================================="

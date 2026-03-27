@@ -1,16 +1,13 @@
 ---
 # Leviosa VPS - Backup Setup
-# Usage: ansible-playbook -i inventory/hosts backup.yml \
+# Usage: ansible-playbook -i inventory/hosts.yml playbooks/backup.yml \
 #       -e "backup_s3_bucket=my-backup-bucket" \
 #       -e "backup_s3_region=eu-central-1"
 
 - name: Leviosa VPS - Configure Backups
-  hosts: webserver, manager, workers
+  hosts: leviosa_servers
   gather_facts: true
-  become: yes
-  remote_user: root
-  vars_files:
-    - group_vars/secrets.yml
+  become: true
 
   vars:
     # Backup S3 configuration (pass via -e or set here)
@@ -31,43 +28,9 @@
           - "S3 Bucket: {{ backup_s3_bucket }}"
           - "S3 Region: {{ backup_s3_region }}"
 
-  tasks:
-    - name: Create backup directory
-      ansible.builtin.file:
-        path: "{{ app_backup_dir | default('/opt/leviosa/backups') }}"
-        state: directory
-        owner: "{{ user }}"
-        group: "{{ user }}"
-        mode: '0750'
-
-    - name: Install AWS CLI
-      ansible.builtin.apt:
-        name: awscli
-        state: present
-        update_cache: true
-
-    - name: Deploy restore script
-      ansible.builtin.template:
-        src: restore.sh.j2
-        dest: /home/{{ user }}/scripts/restore.sh
-        owner: "{{ user }}"
-        group: "{{ user }}"
-        mode: '0750'
-
-    - name: Create logrotate config for backup logs
-      ansible.builtin.copy:
-        dest: /etc/logrotate.d/leviosa-backup
-        content: |
-          {{ app_logs_dir | default('/opt/leviosa/logs') }}/backup.log {
-            daily
-            rotate 14
-            compress
-            delaycompress
-            missingok
-            notifempty
-            create 0640 {{ user }} {{ user }}
-          }
-        mode: '0644'
+  roles:
+    - role: rclone
+      tags: ['rclone', 'backup']
 
   post_tasks:
     - name: Display backup setup completion
@@ -78,13 +41,13 @@
           - "==========================================="
           - ""
           - "S3 Bucket: {{ backup_s3_bucket }}"
-          - "Restore script: /home/{{ user }}/scripts/restore.sh"
+          - "Restore script: /home/{{ deploy_user }}/scripts/restore.sh"
           - ""
           - "Manual backup:"
-          - "  sudo -u {{ user }} /home/{{ user }}/scripts/backup_database.sh"
+          - "  sudo -u {{ deploy_user }} /home/{{ deploy_user }}/scripts/backup_database.sh"
           - ""
           - "Restore:"
-          - "  sudo -u {{ user }} /home/{{ user }}/scripts/restore.sh daily/<filename>"
+          - "  sudo -u {{ deploy_user }} /home/{{ deploy_user }}/scripts/restore.sh daily/<filename>"
           - ""
           - "List backups:"
           - "  aws s3 ls s3://{{ backup_s3_bucket }}/ --recursive"
