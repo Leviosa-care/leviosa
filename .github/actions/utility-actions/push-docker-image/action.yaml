@@ -14,21 +14,29 @@ inputs:
   folder: 
     description: The folder where resides the dockerfile.
     required: true
+  session_cookie_name:
+    description: The name of the session cookie.
+    required: false
+  client_ip_header:
+    description: The header used to determine the client's IP address.
+    required: false
+  backend_port:
+    description: The port of the backend.
+    required: false
 
 runs:
   using: 'composite'
   steps:
     - name: 🧑‍💻 Login to Docker Hub
-      uses: docker/login-action@v3
+      uses: docker/login-action@v2
       with:
-        username: ${{ inputs.dockerhub_username }}
-        password: ${{ inputs.dockerhub_token }}
+        username: ${{ inputs.DOCKERHUB_USERNAME }}
+        password: ${{ inputs.DOCKERHUB_TOKEN }}
         logout: true
     - name: 🐳 Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    # Setup cache
+      uses: docker/setup-buildx-action@v2 # Setup cache
     - name: ⚡️ Cache Docker layers
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: /tmp/.buildx-cache
         key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -36,7 +44,7 @@ runs:
           ${{ runner.os }}-buildx-
 
     - name: 🐳 Build Production Image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v3
       with:
         context: ${{ inputs.folder }}
         file: ./${{ inputs.folder }}/Dockerfile
@@ -44,6 +52,9 @@ runs:
         tags: henga/leviosa:${{ inputs.tag }}
         build-args: |
           COMMIT_SHA=${{ github.sha }} \
+          SESSION_COOKIE_NAME=${{ inputs.session_cookie_name }}
+          CLIENT_IP_HEADER=${{ inputs.client_ip_header }}
+          BACKEND_PORT=${{ inputs.backend_port }}
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
     # This ugly bit is necessary if you don't want your cache to grow forever

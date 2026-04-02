@@ -14,6 +14,15 @@ inputs:
   folder: 
     description: The folder where resides the dockerfile.
     required: true
+  session_cookie_name:
+    description: The name of the session cookie.
+    required: false
+  client_ip_header:
+    description: The header used to determine the client's IP address.
+    required: false
+  backend_port:
+    description: The port of the backend.
+    required: false
 
 runs:
   using: composite
@@ -72,3 +81,6 @@ runs:
           dockerhub_username: ${{ inputs.dockerhub_username }}
           dockerhub_token: ${{ inputs.dockerhub_token }}
           folder: ${{ inputs.folder }}
+          session_cookie_name: ${{ inputs.session_cookie_name }}
+          client_ip_header: ${{ inputs.client_ip_header }}
+          backend_port: ${{ inputs.backend_port }}
