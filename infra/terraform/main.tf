@@ -4,7 +4,7 @@ terraform {
     key            = "terraform.tfstate"
     region         = "eu-central-1"
     encrypt        = true
-    dynamodb_table = "leviosa-terraform-locks"
+    # dynamodb_table = "leviosa-terraform-locks"  # Removed: single-user workflow
     use_lockfile   = true
   }
   required_providers {
