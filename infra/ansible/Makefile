@@ -65,12 +65,11 @@ setup:
 	@echo ""
 	@echo "Running setup playbook..."
 	ansible-playbook -i inventory/hosts.yml playbooks/site.yml \
-		--ask-vault-pass \
 		-e "ansible_host=$(VPS_IP)" \
 		-e "deploy_ssh_public_key=$(SSH_KEY)" \
 		-e "app_domain=$(DOMAIN)" \
 		-e "@group_vars/all.yml" \
-		-e "@group_vars/secrets.yml"
+		-e "@group_vars/leviosa_production.yml"
 
 # Deploy production application
 deploy:
@@ -85,10 +84,9 @@ deploy:
 	@echo "Deploying to: $(VPS_IP)"
 	@echo ""
 	ansible-playbook -i inventory/hosts.yml playbooks/deploy.yml \
-		--ask-vault-pass \
 		-e "ansible_host=$(VPS_IP)" \
 		-e "@group_vars/all.yml" \
-		-e "@group_vars/secrets.yml"
+		-e "@group_vars/leviosa_production.yml"
 
 # Deploy staging application (also updates prod Caddy for staging domains)
 deploy-staging:
@@ -100,22 +98,13 @@ deploy-staging:
 		echo "Error: Could not get VPS IP from Terraform."; \
 		exit 1; \
 	fi
-	@if [ ! -f "group_vars/leviosa_staging.vault.yml" ]; then \
-		echo "Error: group_vars/leviosa_staging.vault.yml not found."; \
-		echo "Copy group_vars/leviosa_staging.vault.example.yml and encrypt it:"; \
-		echo "  cp group_vars/leviosa_staging.vault.example.yml group_vars/leviosa_staging.vault.yml"; \
-		echo "  ansible-vault encrypt group_vars/leviosa_staging.vault.yml"; \
-		exit 1; \
-	fi
 	@echo "Deploying staging to: $(VPS_IP)"
 	@echo ""
 	ansible-playbook -i inventory/hosts.yml playbooks/deploy-staging.yml \
-		--ask-vault-pass \
 		-e "ansible_host=$(VPS_IP)" \
 		-e "@group_vars/all.yml" \
-		-e "@group_vars/secrets.yml" \
-		-e "@group_vars/leviosa_staging.yml" \
-		-e "@group_vars/leviosa_staging.vault.yml"
+		-e "@group_vars/leviosa_production.yml" \
+		-e "@group_vars/leviosa_staging.yml"
 
 # Quick restart: pull latest app image and restart only the app container
 restart:

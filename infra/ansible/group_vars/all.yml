@@ -29,7 +29,7 @@ system_timezone: Etc/UTC
 # Automatic security updates
 auto_security_updates: true
 auto_updates_reboot: false
-auto_updates_email: "{{ vault_contact_email | default('root@localhost') }}"
+auto_updates_email: "{{ contact_email | default('root@localhost') }}"
 auto_updates_blacklist:
   - docker-ce
   - docker-ce-cli
@@ -73,69 +73,53 @@ fail2ban_ssh_bantime: 7200
 fail2ban_ddos_maxretry: 2
 fail2ban_ddos_bantime: 86400
 fail2ban_caddy_maxretry: 5
-fail2ban_notify_email: "{{ vault_contact_email | default('root@localhost') }}"
+fail2ban_notify_email: "{{ contact_email | default('root@localhost') }}"
 
 # ============================================
 # Caddy Reverse Proxy Configuration
 # ============================================
 # Cloudflare API token for DNS-01 challenge (stored in vault)
-caddy_cloudflare_api_token: "{{ vault_caddy_cloudflare_api_token | default('') }}"
+# caddy_cloudflare_api_token is defined in secrets.yml and used directly by the caddy role
 
 # Set to true once staging is deployed to include staging site blocks in Caddyfile
 staging_enabled: false
 
 # ============================================
-# Database and Session Configuration
-# ============================================
-# These are populated from vault variables
-db_user: "{{ vault_db_user | default('leviosa') }}"
-db_password: "{{ vault_db_password | default('change_me') }}"
-db_name: "{{ vault_db_name | default('leviosa') }}"
-session_secret: "{{ vault_session_secret | default('change_me_to_random_string') }}"
-
-# ============================================
 # Application Environment Variables
 # ============================================
-# These are populated from vault variables
+# db_user, db_password, db_name, session_secret are defined in secrets.yml
+# and used directly by templates — no mapping needed here.
 app_env_vars:
-  # S3 Configuration
-  S3_BUCKET: "{{ vault_s3_bucket | default('') }}"
-  S3_REGION: "{{ vault_s3_region | default('eu-central-1') }}"
-  S3_PUBLIC_URL: "{{ vault_s3_public_url | default('') }}"
-  MEDIA_URL: "{{ vault_media_url | default('') }}"
+  S3_BUCKET: "{{ s3_bucket | default('') }}"
+  S3_REGION: "{{ s3_region | default('eu-central-1') }}"
+  S3_PUBLIC_URL: "{{ s3_public_url | default('') }}"
+  MEDIA_URL: "{{ media_url | default('') }}"
 
-  # AWS Credentials
-  AWS_ACCESS_KEY_ID: "{{ vault_aws_access_key_id | default('') }}"
-  AWS_SECRET_ACCESS_KEY: "{{ vault_aws_secret_access_key | default('') }}"
-  AWS_REGION: "{{ vault_aws_region | default('eu-central-1') }}"
+  AWS_ACCESS_KEY_ID: "{{ aws_access_key_id | default('') }}"
+  AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key | default('') }}"
+  AWS_REGION: "{{ aws_region | default('eu-central-1') }}"
 
-  # Email Configuration
-  SMTP_FROM_EMAIL: "{{ vault_smtp_from_email | default('noreply@' + app_domain) }}"
-  SMTP_FROM_NAME: "{{ vault_smtp_from_name | default('Leviosa') }}"
-  CONTACT_EMAIL: "{{ vault_contact_email | default('contact@' + app_domain) }}"
+  SMTP_FROM_EMAIL: "{{ smtp_from_email | default('noreply@' + app_domain) }}"
+  SMTP_FROM_NAME: "{{ smtp_from_name | default('Leviosa') }}"
+  CONTACT_EMAIL: "{{ contact_email | default('contact@' + app_domain) }}"
 
-  # Stripe Configuration
-  STRIPE_SECRET_KEY: "{{ vault_stripe_secret_key | default('') }}"
-  STRIPE_WEBHOOK_SECRET: "{{ vault_stripe_webhook_secret | default('') }}"
+  STRIPE_SECRET_KEY: "{{ stripe_secret_key | default('') }}"
+  STRIPE_WEBHOOK_SECRET: "{{ stripe_webhook_secret | default('') }}"
+  STRIPE_PUBLISHABLE_KEY: "{{ stripe_publishable_key | default('') }}"
 
-  # Cron Security
-  CRON_SECRET: "{{ vault_cron_secret | default('change-me-to-a-secure-random-string-min-32-chars') }}"
+  CRON_SECRET: "{{ cron_secret | default('change-me-to-a-secure-random-string-min-32-chars') }}"
 
-  # Public URL
-  PUBLIC_URL: "{{ vault_public_url | default('https://' + app_domain) }}"
+  PUBLIC_URL: "{{ public_url | default('https://' + app_domain) }}"
 
-  # File Upload Configuration
-  MAX_FILE_SIZE: "{{ vault_max_file_size | default('10485760') }}"
-  ALLOWED_IMAGE_TYPES: "{{ vault_allowed_image_types | default('image/jpeg,image/png,image/webp,image/gif') }}"
-  ALLOWED_VIDEO_TYPES: "{{ vault_allowed_video_types | default('video/mp4,video/webm,video/quicktime') }}"
-  BODY_SIZE_LIMIT: "{{ vault_body_size_limit | default('15728640') }}"
+  MAX_FILE_SIZE: "{{ max_file_size | default('10485760') }}"
+  ALLOWED_IMAGE_TYPES: "{{ allowed_image_types | default('image/jpeg,image/png,image/webp,image/gif') }}"
+  ALLOWED_VIDEO_TYPES: "{{ allowed_video_types | default('video/mp4,video/webm,video/quicktime') }}"
+  BODY_SIZE_LIMIT: "{{ body_size_limit | default('15728640') }}"
 
-  # Mock Data Mode
-  USE_MOCK_DATA: "{{ vault_use_mock_data | default('false') }}"
+  USE_MOCK_DATA: "{{ use_mock_data | default('false') }}"
 
-  # Monitoring (Optional)
-  SENTRY_DSN: "{{ vault_sentry_dsn | default('') }}"
-  USE_SCHEDULER: "{{ vault_use_scheduler | default('false') }}"
+  SENTRY_DSN: "{{ sentry_dsn | default('') }}"
+  USE_SCHEDULER: "{{ use_scheduler | default('false') }}"
 
 # ============================================
 # Backup Configuration
