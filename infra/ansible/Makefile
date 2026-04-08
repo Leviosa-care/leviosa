@@ -235,7 +235,8 @@ health-check:
 # Install Ansible and required collections
 install-deps:
 	@echo "Installing Ansible dependencies..."
-	@pip install ansible
+	@pipx install ansible
+	@pipx inject ansible passlib
 	@ansible-galaxy collection install community.docker community.general
 	@echo "Done! Run 'make check-clean' to verify."
 
