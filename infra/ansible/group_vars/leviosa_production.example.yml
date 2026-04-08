@@ -1,94 +1,83 @@
 ---
-# Ansible Vault - Example Variables
-# Copy this file to secrets.yml and fill in your actual values
-# Then encrypt it with: ansible-vault encrypt group_vars/secrets.yml
-#
-# IMPORTANT: These variables use the "vault_" prefix convention.
-# This allows them to be referenced safely in all.yml like:
-#   db_password: "{{ vault_db_password | default('change_me') }}"
+# Leviosa Production Secrets — Example
+# Copy to leviosa_production.yml and fill in your actual values.
+# Same structure as leviosa_staging.yml — only the values differ.
 
 # ============================================
-# Contact Information
+# Contact
 # ============================================
-vault_contact_email: "admin@leviosa.care"
+contact_email: "admin@leviosa.care"
 
 # ============================================
-# Database Credentials
+# Database
 # ============================================
-vault_db_user: "leviosa"
-vault_db_password: "your_secure_postgres_password_here"
-vault_db_name: "leviosa"
+db_user: "leviosa"
+db_password: "your_secure_postgres_password_here"
+db_name: "leviosa"
 
 # ============================================
-# Session Security
+# Session
 # ============================================
-vault_session_secret: "your_random_32_character_string_here_min_length"
+session_secret: "your_random_32_character_string_here_min_length"
 
 # ============================================
-# AWS S3 Configuration
+# AWS S3
 # ============================================
-vault_s3_bucket: "leviosa-production"
-vault_s3_region: "eu-central-1"
-vault_s3_public_url: "https://s3.eu-central-1.amazonaws.com/leviosa-production"
-vault_media_url: "https://s3.eu-central-1.amazonaws.com/leviosa-production/media"
+s3_bucket: "staging-leviosa-assets"
+s3_region: "eu-central-1"
+s3_public_url: "https://s3.eu-central-1.amazonaws.com/staging-leviosa-assets"
+media_url: "https://s3.eu-central-1.amazonaws.com/staging-leviosa-assets/media"
 
 # ============================================
 # AWS Credentials
 # ============================================
-vault_aws_access_key_id: "AKIAIOSFODNN7EXAMPLE"
-vault_aws_secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-vault_aws_region: "eu-central-1"
+aws_access_key_id: "AKIAIOSFODNN7EXAMPLE"
+aws_secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+aws_region: "eu-central-1"
 
 # ============================================
-# Email Configuration (SES/SMS)
+# Email (SES/SMTP)
 # ============================================
-vault_smtp_from_email: "noreply@leviosa.care"
-vault_smtp_from_name: "Leviosa"
+smtp_from_email: "noreply@leviosa.care"
+smtp_from_name: "Leviosa"
 
 # ============================================
-# Stripe Configuration
+# Stripe (live keys)
 # ============================================
-vault_stripe_secret_key: "sk_live_your_stripe_live_secret_key"
-vault_stripe_webhook_secret: "whsec_your_stripe_webhook_secret"
-vault_stripe_publishable_key: "pk_live_your_stripe_publishable_key"
+stripe_secret_key: "sk_live_your_stripe_live_secret_key"
+stripe_webhook_secret: "whsec_your_stripe_webhook_secret"
+stripe_publishable_key: "pk_live_your_stripe_publishable_key"
 
 # ============================================
 # Cron Security
 # ============================================
-vault_cron_secret: "change-me-to-a-secure-random-string-min-32-chars-production"
+cron_secret: "change-me-to-a-secure-random-string-min-32-chars"
 
 # ============================================
 # Public URL
 # ============================================
-vault_public_url: "https://leviosa.care"
+public_url: "https://leviosa.care"
 
 # ============================================
-# File Upload Configuration
+# File Upload
 # ============================================
-vault_max_file_size: "10485760"
-vault_allowed_image_types: "image/jpeg,image/png,image/webp,image/gif"
-vault_allowed_video_types: "video/mp4,video/webm,video/quicktime"
-vault_body_size_limit: "15728640"
+max_file_size: "10485760"
+allowed_image_types: "image/jpeg,image/png,image/webp,image/gif"
+allowed_video_types: "video/mp4,video/webm,video/quicktime"
+body_size_limit: "15728640"
 
 # ============================================
-# Mock Data Mode (for development/testing)
+# Mock Data Mode
 # ============================================
-vault_use_mock_data: "false"
+use_mock_data: "false"
 
 # ============================================
-# Monitoring (Optional)
+# Monitoring
 # ============================================
-vault_sentry_dsn: ""
-vault_use_scheduler: "false"
+sentry_dsn: ""
+use_scheduler: "false"
 
 # ============================================
 # Caddy Cloudflare API Token (for DNS-01 challenge)
 # ============================================
-vault_caddy_cloudflare_api_token: "your_cloudflare_api_token_here"
-
-# ============================================
-# Vault (HashiCorp) Configuration
-# ============================================
-vault_token: "your-vault-token-here"
-vault_aws_access_key: "AKIAIOSFODNN7EXAMPLE"
-vault_aws_secret_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+caddy_cloudflare_api_token: "your_cloudflare_api_token_here"
