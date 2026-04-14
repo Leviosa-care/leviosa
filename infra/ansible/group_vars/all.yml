@@ -3,6 +3,11 @@
 # These variables apply to all hosts
 
 # ============================================
+# Application Domain
+# ============================================
+app_domain: "leviosa.care"
+
+# ============================================
 # Deploy User Configuration
 # ============================================
 deploy_user: leviosa
