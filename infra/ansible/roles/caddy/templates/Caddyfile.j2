@@ -12,6 +12,10 @@
 # ============================================
 
 leviosa.care, www.leviosa.care {
+        tls {
+                dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+        }
+
         reverse_proxy localhost:3000
 
         # Security headers
@@ -56,6 +60,10 @@ leviosa.care, www.leviosa.care {
 # ============================================
 
 staging.leviosa.care, www.staging.leviosa.care {
+        tls {
+                dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+        }
+
         reverse_proxy localhost:3001
         basicauth / {
                 {{ caddy_basic_auth_username }} {{ caddy_basic_auth_password_hash }}

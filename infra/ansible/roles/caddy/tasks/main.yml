@@ -1,26 +1,89 @@
 ---
-- name: Ensure Caddy is installed
-  ansible.builtin.include_role:
-    name: nvjacobo.caddy
-  vars:
-    caddy_version: "2.6.4"
-    caddy_install_method: "package"
-    caddy_config_dir: "/etc/caddy"
-    caddy_config_file: "/etc/caddy/Caddyfile"
-    caddy_user: "www-data"
-    caddy_group: "www-data"
-    caddy_services:
-      - name: caddy
-        enabled: yes
-        state: started
+- name: Create caddy system group
+  ansible.builtin.group:
+    name: caddy
+    system: yes
+    state: present
 
-- name: Ensure Caddy configuration directory exists
+- name: Create caddy system user
+  ansible.builtin.user:
+    name: caddy
+    group: caddy
+    system: yes
+    shell: /usr/sbin/nologin
+    home: /var/lib/caddy
+    create_home: yes
+    state: present
+
+- name: Check if Caddy has Cloudflare DNS plugin
+  ansible.builtin.command: /usr/bin/caddy list-modules
+  register: caddy_modules
+  failed_when: false
+  changed_when: false
+
+- name: Download Caddy with Cloudflare DNS plugin
+  ansible.builtin.get_url:
+    url: "https://caddyserver.com/api/download?os=linux&arch=amd64&p=github.com/caddy-dns/cloudflare"
+    dest: /usr/bin/caddy
+    mode: '0755'
+    owner: root
+    group: root
+  when: caddy_modules.rc != 0 or 'dns.providers.cloudflare' not in caddy_modules.stdout
+  notify: restart caddy
+
+- name: Create Caddy config directory
   ansible.builtin.file:
     path: /etc/caddy
     state: directory
     owner: root
     group: root
     mode: '0755'
+
+- name: Create Caddy log directory
+  ansible.builtin.file:
+    path: /var/log/caddy
+    state: directory
+    owner: caddy
+    group: caddy
+    mode: '0755'
+
+- name: Create Caddy data directory
+  ansible.builtin.file:
+    path: /var/lib/caddy
+    state: directory
+    owner: caddy
+    group: caddy
+    mode: '0700'
+
+- name: Deploy Caddy systemd service
+  ansible.builtin.template:
+    src: caddy.service.j2
+    dest: /etc/systemd/system/caddy.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - daemon reload
+    - restart caddy
+
+- name: Create systemd override directory for Caddy
+  ansible.builtin.file:
+    path: /etc/systemd/system/caddy.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy Caddy environment override (Cloudflare token)
+  ansible.builtin.template:
+    src: caddy-override.conf.j2
+    dest: /etc/systemd/system/caddy.service.d/override.conf
+    owner: root
+    group: root
+    mode: '0640'
+  notify:
+    - daemon reload
+    - restart caddy
 
 - name: Deploy Caddyfile
   ansible.builtin.template:
@@ -31,7 +94,7 @@
     mode: '0644'
   notify: reload caddy
 
-- name: Ensure Caddy service is enabled and running
+- name: Enable and start Caddy service
   ansible.builtin.service:
     name: caddy
     state: started
