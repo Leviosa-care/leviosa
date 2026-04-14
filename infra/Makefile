@@ -44,10 +44,10 @@ help:
 # ============================================
 
 init-staging:
-	@echo "Initializing staging infrastructure..."
+	@echo "Initializing staging infrastructure (migrating state if needed)..."
 	@cd terraform && \
-	terraform workspace select default 2>/dev/null || true && \
-	terraform init
+	terraform init -migrate-state && \
+	terraform workspace select default 2>/dev/null || true
 
 plan-staging:
 	@echo "Planning staging infrastructure..."
@@ -82,10 +82,10 @@ destroy-staging:
 # ============================================
 
 init-production:
-	@echo "Initializing production infrastructure..."
+	@echo "Initializing production infrastructure (migrating state if needed)..."
 	@cd terraform && \
-	terraform workspace select production 2>/dev/null || terraform workspace new production && \
-	terraform init
+	terraform init -migrate-state && \
+	terraform workspace select production 2>/dev/null || terraform workspace new production
 
 plan-production:
 	@echo "Planning production infrastructure..."

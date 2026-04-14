@@ -7,7 +7,8 @@
 #
 # Each workspace has separate state and AWS resources
 
-.PHONY: help init plan apply output credentials destroy destroy-backend \
+.PHONY: help init init-migrate init-staging init-production \
+        plan apply output credentials destroy destroy-backend \
         fmt validate refresh show graph clean \
         workspace-list workspace-new workspace-select \
         plan-staging apply-staging plan-production apply-production \
@@ -27,6 +28,9 @@ help:
 	@echo ""
 	@echo "Setup:"
 	@echo "  make init                     - Initialize Terraform"
+	@echo "  make init-migrate             - Re-initialize and migrate state (after backend changes)"
+	@echo "  make init-staging             - Initialize + migrate state for staging workspace"
+	@echo "  make init-production          - Initialize + migrate state for production workspace"
 	@echo "  make validate                 - Validate configuration files"
 	@echo ""
 	@echo "Staging Environment (default workspace):"
@@ -97,10 +101,27 @@ workspace-select:
 # Terraform Operations
 # ============================================
 
-# Initialize Terraform
+# Initialize Terraform (standard)
 init:
 	@echo "Initializing Terraform..."
 	terraform init
+
+# Initialize and migrate state to new backend (use after backend config changes)
+init-migrate:
+	@echo "Initializing Terraform with state migration..."
+	terraform init -migrate-state
+
+# Initialize for staging (default workspace) with state migration
+init-staging:
+	@echo "Initializing Terraform for staging (migrating state if needed)..."
+	terraform init -migrate-state
+	@terraform workspace select default 2>/dev/null || true
+
+# Initialize for production workspace with state migration
+init-production:
+	@echo "Initializing Terraform for production (migrating state if needed)..."
+	terraform init -migrate-state
+	@terraform workspace select production 2>/dev/null || terraform workspace new production
 
 # Staging environment targets (uses default workspace)
 plan-staging:
