@@ -80,3 +80,37 @@ use_scheduler: "false"
 # Caddy Cloudflare API Token (for DNS-01 challenge)
 # ============================================
 caddy_cloudflare_api_token: "your_cloudflare_api_token_here"
+
+# ============================================
+# Application Environment Variables
+# ============================================
+app_env_vars:
+  S3_BUCKET: "{{ s3_bucket | default('') }}"
+  S3_REGION: "{{ s3_region | default('eu-central-1') }}"
+  S3_PUBLIC_URL: "{{ s3_public_url | default('') }}"
+  MEDIA_URL: "{{ media_url | default('') }}"
+
+  AWS_ACCESS_KEY_ID: "{{ aws_access_key_id | default('') }}"
+  AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key | default('') }}"
+  AWS_REGION: "{{ aws_region | default('eu-central-1') }}"
+
+  SMTP_FROM_EMAIL: "{{ smtp_from_email | default('noreply@' + app_domain) }}"
+  SMTP_FROM_NAME: "{{ smtp_from_name | default('Leviosa') }}"
+  CONTACT_EMAIL: "{{ contact_email | default('contact@' + app_domain) }}"
+
+  STRIPE_SECRET_KEY: "{{ stripe_secret_key | default('') }}"
+  STRIPE_WEBHOOK_SECRET: "{{ stripe_webhook_secret | default('') }}"
+  STRIPE_PUBLISHABLE_KEY: "{{ stripe_publishable_key | default('') }}"
+
+  CRON_SECRET: "{{ cron_secret | default('change-me-to-a-secure-random-string-min-32-chars') }}"
+
+  PUBLIC_URL: "{{ public_url | default('https://' + app_domain) }}"
+
+  MAX_FILE_SIZE: "{{ max_file_size | default('10485760') }}"
+  ALLOWED_IMAGE_TYPES: "{{ allowed_image_types | default('image/jpeg,image/png,image/webp,image/gif') }}"
+  ALLOWED_VIDEO_TYPES: "{{ allowed_video_types | default('video/mp4,video/webm,video/quicktime') }}"
+  BODY_SIZE_LIMIT: "{{ body_size_limit | default('15728640') }}"
+
+  USE_MOCK_DATA: "{{ use_mock_data | default('false') }}"
+  SENTRY_DSN: "{{ sentry_dsn | default('') }}"
+  USE_SCHEDULER: "{{ use_scheduler | default('false') }}"
