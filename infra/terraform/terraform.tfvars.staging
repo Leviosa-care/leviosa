@@ -1,0 +1,112 @@
+# Leviosa Staging Environment Configuration
+# This configures the staging infrastructure (one VPS for both environments)
+# Deploy with: make plan-staging / make apply-staging
+
+# AWS region for resources
+aws_region = "eu-central-1"
+
+# Project name (used for resource naming)
+project_name = "leviosa"
+
+# Deployment environment
+environment = "staging"
+
+# Allowed CORS origins for S3 uploads
+allowed_origins = [
+  "http://localhost:5173",
+  "https://leviosa.care",
+  "https://staging.leviosa.care",
+]
+
+# ============================================
+# Hetzner Cloud Configuration
+# ============================================
+
+# Hetzner Cloud API token
+hcloud_token = "RH44wF62x0Mgl0TrfbimLqzsscoFSpoLNbIVrQEGlEEhl33ONSiElEkNPB3t7W3Y"
+
+# Server type (cpx11 = 2GB RAM, ~€4/mo; cpx22 = 4GB RAM, ~€8/mo; cpx31 = 8GB RAM, ~€15/mo)
+server_type = "cpx22"
+
+# Datacenter location (nbg1 = Nuremberg, fsn1 = Falkenstein, hil = Hilversum/NL)
+server_location = "nbg1"
+
+# Server OS image
+server_image = "ubuntu-24.04"
+
+# Enable automatic backups (additional 20% of server price)
+enable_backups = true
+
+# ============================================
+# Cloudflare DNS Configuration
+# ============================================
+
+# Cloudflare API token
+cloudflare_token = "cfat_bjDca82UKxJlbvGGRfuSmU0g9h3kj8uCwgyKXXum57776cc1"
+
+# Cloudflare Zone ID for your domain
+zone_id = "21d34caf8707b6977d1ca89537dae9a1"
+
+# Your domain name
+domain_name = "leviosa.care"
+
+# Contact email for DMARC reports
+contact_email = "liviohenry971@gmail.com"
+
+# Create www CNAME record pointing to the root domain
+create_www_dns = true
+
+# ============================================
+# Email Configuration (SES + Hostinger)
+# ============================================
+
+# MX servers (Hostinger defaults)
+mx_servers = [
+  {
+    server   = "mx1.hostinger.com"
+    priority = 10
+  },
+  {
+    server   = "mx2.hostinger.com"
+    priority = 20
+  }
+]
+
+# SPF includes — add providers that send on your behalf
+email_spf_includes = ["amazonses.com"]
+
+# DMARC policy (none, quarantine, reject)
+email_dmarc_policy = "quarantine"
+
+# Hostinger DKIM records
+email_dkim_records = {
+  "hostingermail-a._domainkey" = {
+    type    = "CNAME"
+    content = "hostingermail-a.dkim.mail.hostinger.com"
+  }
+  "hostingermail-b._domainkey" = {
+    type    = "CNAME"
+    content = "hostingermail-b.dkim.mail.hostinger.com"
+  }
+  "hostingermail-c._domainkey" = {
+    type    = "CNAME"
+    content = "hostingermail-c.dkim.mail.hostinger.com"
+  }
+}
+
+# ============================================
+# Database Backup Configuration
+# ============================================
+
+# Number of days to retain daily backups (7-365)
+backup_retention_days = 90
+
+# ============================================
+# S3 Buckets
+# ============================================
+
+# Production S3 bucket for CDN
+production_s3_bucket = "leviosa-assets.s3.amazonaws.com"
+
+# Staging S3 bucket for CDN
+staging_s3_bucket = "staging-leviosa-assets.s3.amazonaws.com"
