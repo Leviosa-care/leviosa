@@ -4,7 +4,9 @@
 *.tfstate
 *.tfstate.*
 *.tfvars
+terraform.tfvars.*
 !terraform.tfvars.example
+!terraform.tfvars.*.example
 .terraform-backup/
 terraform.tfbackup
 crash.log

@@ -1,0 +1,3 @@
+# Ignore actual secret files - keep only .example files in version control
+leviosa_production.yml
+leviosa_staging.yml
