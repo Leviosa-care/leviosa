@@ -1,60 +1,76 @@
 # Leviosa Ansible Makefile
 # Usage: make <target>
+#
+# Workspace-aware deployment for staging and production on the same VPS
 
-.PHONY: help setup deploy deploy-staging restart restart-staging backup check-clean lint \
-        ssh-info status staging-status logs staging-logs health-check \
-        install-deps vars-test
+.PHONY: help help-deploy help-ops \
+        setup setup-staging setup-production \
+        deploy deploy-staging deploy-production \
+        restart restart-staging restart-production \
+        backup check-clean lint \
+        ssh-info status staging-status production-status \
+        logs staging-logs production-logs \
+        health-check install-deps vars-test
 
 # Default target
 help:
 	@echo "Leviosa Ansible Commands"
 	@echo "============================"
 	@echo ""
-	@echo "Setup:"
-	@echo "  make setup           - Complete VPS setup (first time only)"
-	@echo "  make deploy          - Deploy/update production"
-	@echo "  make deploy-staging  - Deploy/update staging (+ update Caddy)"
-	@echo "  make restart         - Pull latest image and restart production (quick)"
-	@echo "  make restart-staging - Pull latest image and restart staging (quick)"
-	@echo "  make backup          - Configure database backups"
+	@echo "Setup (first time only):"
+	@echo "  make setup-staging      - Complete VPS setup for staging"
+	@echo "  make setup-production   - Complete VPS setup for production"
+	@echo ""
+	@echo "Deployment:"
+	@echo "  make deploy-staging     - Deploy/update staging environment"
+	@echo "  make deploy-production  - Deploy/update production environment"
+	@echo ""
+	@echo "Quick Deploy (restart only):"
+	@echo "  make restart-staging    - Pull latest image and restart staging"
+	@echo "  make restart-production - Pull latest image and restart production"
+	@echo ""
+	@echo "Operations:"
+	@echo "  make backup             - Configure database backups"
+	@echo "  make status             - Check production service status"
+	@echo "  make staging-status     - Check staging service status"
+	@echo "  make logs               - View production logs"
+	@echo "  make staging-logs       - View staging logs"
 	@echo ""
 	@echo "Verification:"
-	@echo "  make check-clean     - Check for syntax errors"
-	@echo "  make lint            - Run ansible-lint"
-	@echo "  make vars-test       - Display effective variables"
+	@echo "  make check-clean        - Check for syntax errors"
+	@echo "  make lint               - Run ansible-lint"
+	@echo "  make vars-test          - Display effective variables"
 	@echo ""
-	@echo "Server Operations:"
-	@echo "  make ssh-info        - Display SSH connection details"
-	@echo "  make status          - Check production service status"
-	@echo "  make staging-status  - Check staging service status"
-	@echo "  make logs            - View production logs"
-	@echo "  make staging-logs    - View staging logs"
-	@echo "  make health-check    - Run health check on server"
+	@echo "Server:"
+	@echo "  make ssh-info           - Display SSH connection details"
+	@echo "  make health-check       - Run health check on server"
 	@echo ""
 	@echo "Dependencies:"
-	@echo "  make install-deps    - Install Ansible dependencies"
+	@echo "  make install-deps       - Install Ansible dependencies"
+	@echo ""
+	@echo "For more commands: make help-deploy or make help-ops"
 
-# Get VPS IP from Terraform output
-VPS_IP=$(shell cd ../terraform && terraform output -raw server_ipv4_address 2>/dev/null || echo "")
-DOMAIN=$(shell cd ../terraform && terraform output -raw domain_name 2>/dev/null || echo "")
-BACKUP_BUCKET=$(shell cd ../terraform && terraform output -raw backup_bucket_name 2>/dev/null || echo "")
+# Get VPS IP from Terraform output (uses default workspace)
+VPS_IP=$(shell cd ../terraform && terraform workspace select default >/dev/null 2>&1 && terraform output -raw server_ipv4_address 2>/dev/null || echo "")
+DOMAIN=$(shell cd ../terraform && terraform workspace select default >/dev/null 2>&1 && terraform output -raw domain_name 2>/dev/null || echo "")
+BACKUP_BUCKET=$(shell cd ../terraform && terraform workspace select default >/dev/null 2>&1 && terraform output -raw backup_bucket_name 2>/dev/null || echo "")
 
 # Get SSH public key
 SSH_KEY=$(shell cat ~/.ssh/leviosa.pub 2>/dev/null || cat ~/.ssh/id_rsa.pub 2>/dev/null || echo "")
 
 # ============================================
-# Setup Commands
+# Setup Commands (first time only)
 # ============================================
 
-# Complete VPS setup (run once on fresh server)
-setup:
+# Complete VPS setup for staging (run once on fresh server)
+setup-staging:
 	@echo "==========================================="
-	@echo "Leviosa VPS Setup"
+	@echo "Leviosa Staging VPS Setup"
 	@echo "==========================================="
 	@echo ""
 	@if [ -z "$(VPS_IP)" ]; then \
 		echo "Error: Could not get VPS IP from Terraform."; \
-		echo "Run 'cd ../terraform && terraform output server_ipv4_address'"; \
+		echo "Run 'cd ../terraform && make apply-staging' first"; \
 		exit 1; \
 	fi
 	@echo "VPS IP: $(VPS_IP)"
@@ -63,7 +79,32 @@ setup:
 	@echo ""
 	@read -p "Continue? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo ""
-	@echo "Running setup playbook..."
+	@echo "Running staging setup playbook..."
+	ansible-playbook -i inventory/hosts.yml playbooks/site.yml \
+		-e "ansible_host=$(VPS_IP)" \
+		-e "deploy_ssh_public_key=$(SSH_KEY)" \
+		-e "app_domain=$(DOMAIN)" \
+		-e "@group_vars/all.yml" \
+		-e "@group_vars/leviosa_staging.yml"
+
+# Complete VPS setup for production (run once on fresh server)
+setup-production:
+	@echo "==========================================="
+	@echo "Leviosa Production VPS Setup"
+	@echo "==========================================="
+	@echo ""
+	@if [ -z "$(VPS_IP)" ]; then \
+		echo "Error: Could not get VPS IP from Terraform."; \
+		echo "Run 'cd ../terraform && make apply-production' first"; \
+		exit 1; \
+	fi
+	@echo "VPS IP: $(VPS_IP)"
+	@echo "Domain: $(DOMAIN)"
+	@echo "SSH Key: $(SSH_KEY)"
+	@echo ""
+	@read -p "Continue? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
+	@echo ""
+	@echo "Running production setup playbook..."
 	ansible-playbook -i inventory/hosts.yml playbooks/site.yml \
 		-e "ansible_host=$(VPS_IP)" \
 		-e "deploy_ssh_public_key=$(SSH_KEY)" \
@@ -71,8 +112,12 @@ setup:
 		-e "@group_vars/all.yml" \
 		-e "@group_vars/leviosa_production.yml"
 
+# ============================================
+# Deployment Commands
+# ============================================
+
 # Deploy production application
-deploy:
+deploy-production:
 	@echo "==========================================="
 	@echo "Leviosa Production Deployment"
 	@echo "==========================================="
