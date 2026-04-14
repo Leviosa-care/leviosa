@@ -1,8 +1,12 @@
 # Leviosa Terraform Makefile
-# Usage: make <target>
+# Usage: make <target> or make <target> ENV=staging|production
+
+# Default environment (uses terraform.tfvars if ENV not specified)
+ENV ?=
 
 .PHONY: help init plan apply output credentials destroy destroy-backend \
         fmt validate refresh show graph clean \
+        plan-staging apply-staging plan-production apply-production \
         server-info server-ssh server-deploy \
         dns-info dns-email dns-verify
 
@@ -12,48 +16,84 @@ help:
 	@echo "============================"
 	@echo ""
 	@echo "Setup:"
-	@echo "  make init          - Initialize Terraform"
-	@echo "  make validate      - Validate configuration files"
+	@echo "  make init              - Initialize Terraform"
+	@echo "  make validate          - Validate configuration files"
 	@echo ""
-	@echo "Operations:"
-	@echo "  make plan          - Show planned changes"
-	@echo "  make apply         - Apply changes"
-	@echo "  make refresh       - Refresh state file"
-	@echo "  make show          - Show current state"
+	@echo "Operations (default terraform.tfvars):"
+	@echo "  make plan              - Show planned changes"
+	@echo "  make apply             - Apply changes"
+	@echo ""
+	@echo "Operations (environment-specific):"
+	@echo "  make plan-staging      - Show planned changes for staging"
+	@echo "  make apply-staging     - Apply changes for staging"
+	@echo "  make plan-production   - Show planned changes for production"
+	@echo "  make apply-production  - Apply changes for production"
+	@echo ""
+	@echo "Other:"
+	@echo "  make refresh           - Refresh state file"
+	@echo "  make show              - Show current state"
 	@echo ""
 	@echo "Outputs:"
-	@echo "  make output        - Show all outputs"
-	@echo "  make credentials   - Show AWS S3 credentials"
-	@echo "  make server-info   - Show VPS connection details"
-	@echo "  make dns-info      - Show DNS records"
-	@echo "  make dns-email     - Show email configuration"
+	@echo "  make output            - Show all outputs"
+	@echo "  make credentials       - Show AWS S3 credentials"
+	@echo "  make server-info       - Show VPS connection details"
+	@echo "  make dns-info          - Show DNS records"
+	@echo "  make dns-email         - Show email configuration"
 	@echo ""
 	@echo "Server:"
-	@echo "  make server-ssh    - SSH into the VPS"
-	@echo "  make server-deploy - Show deployment guide"
+	@echo "  make server-ssh        - SSH into the VPS"
+	@echo "  make server-deploy     - Show deployment guide"
 	@echo ""
 	@echo "Destruction:"
-	@echo "  make destroy       - Destroy all resources"
-	@echo "  make destroy-backend - Destroy backend resources (careful!)"
+	@echo "  make destroy           - Destroy all resources"
+	@echo "  make destroy-backend   - Destroy backend resources (careful!)"
 	@echo ""
 	@echo "Utilities:"
-	@echo "  make fmt           - Format Terraform files"
-	@echo "  make graph         - Generate dependency graph"
+	@echo "  make fmt               - Format Terraform files"
+	@echo "  make graph             - Generate dependency graph"
 
 # Initialize Terraform
 init:
 	@echo "Initializing Terraform..."
 	terraform init
 
-# Show planned changes
+# Show planned changes (uses terraform.tfvars or ENV var)
 plan:
-	@echo "Showing planned changes..."
-	terraform plan
+	@if [ -n "$(ENV)" ]; then \
+		echo "Showing planned changes for $(ENV)..."; \
+		terraform plan -var-file=terraform.tfvars.$(ENV); \
+	else \
+		echo "Showing planned changes..."; \
+		terraform plan; \
+	fi
 
-# Apply changes
+# Apply changes (uses terraform.tfvars or ENV var)
 apply:
-	@echo "Applying Terraform changes..."
-	terraform apply
+	@if [ -n "$(ENV)" ]; then \
+		echo "Applying Terraform changes for $(ENV)..."; \
+		terraform apply -var-file=terraform.tfvars.$(ENV); \
+	else \
+		echo "Applying Terraform changes..."; \
+		terraform apply; \
+	fi
+
+# Staging environment targets
+plan-staging:
+	@echo "Showing planned changes for staging..."
+	terraform plan -var-file=terraform.tfvars.staging
+
+apply-staging:
+	@echo "Applying Terraform changes for staging..."
+	terraform apply -var-file=terraform.tfvars.staging
+
+# Production environment targets
+plan-production:
+	@echo "Showing planned changes for production..."
+	terraform plan -var-file=terraform.tfvars.production
+
+apply-production:
+	@echo "Applying Terraform changes for production..."
+	terraform apply -var-file=terraform.tfvars.production
 
 # Validate configuration
 validate:
