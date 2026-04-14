@@ -68,7 +68,7 @@ update-staging-vault:
 deploy-staging: update-staging-vault
 	@echo "Deploying staging application..."
 	@cd ansible && \
-	make deploy-leviosa-staging
+	make deploy-staging
 
 destroy-staging:
 	@echo "⚠️  WARNING: This will destroy staging infrastructure!"
@@ -106,7 +106,7 @@ update-production-vault:
 deploy-production: update-production-vault
 	@echo "Deploying production application..."
 	@cd ansible && \
-	make deploy-leviosa-production
+	make deploy-production
 
 destroy-production:
 	@echo "⚠️  WARNING: This will destroy production infrastructure!"
