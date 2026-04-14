@@ -72,6 +72,13 @@ body_size_limit: "15728640"
 use_mock_data: "false"
 
 # ============================================
+# Coming Soon Mode
+# ============================================
+# Set to "true" to redirect all routes to /coming-soon on production
+# Set to "false" when the app is ready to launch
+coming_soon: "true"
+
+# ============================================
 # Monitoring
 # ============================================
 sentry_dsn: ""
