@@ -1,12 +1,17 @@
 # Leviosa Terraform Makefile
-# Usage: make <target> or make <target> ENV=staging|production
-
-# Default environment (uses terraform.tfvars if ENV not specified)
-ENV ?=
+# Usage: make <target>
+#
+# Workspace Strategy:
+# - default workspace = staging
+# - production workspace = production
+#
+# Each workspace has separate state and AWS resources
 
 .PHONY: help init plan apply output credentials destroy destroy-backend \
         fmt validate refresh show graph clean \
+        workspace-list workspace-new workspace-select \
         plan-staging apply-staging plan-production apply-production \
+        update-staging-vault update-production-vault \
         server-info server-ssh server-deploy \
         dns-info dns-email dns-verify
 
@@ -15,85 +20,120 @@ help:
 	@echo "Leviosa Terraform Commands"
 	@echo "============================"
 	@echo ""
+	@echo "Workspaces:"
+	@echo "  make workspace-list           - List all workspaces"
+	@echo "  make workspace-new NAME=name  - Create new workspace"
+	@echo "  make workspace-select         - Select workspace interactively"
+	@echo ""
 	@echo "Setup:"
-	@echo "  make init              - Initialize Terraform"
-	@echo "  make validate          - Validate configuration files"
+	@echo "  make init                     - Initialize Terraform"
+	@echo "  make validate                 - Validate configuration files"
 	@echo ""
-	@echo "Operations (default terraform.tfvars):"
-	@echo "  make plan              - Show planned changes"
-	@echo "  make apply             - Apply changes"
+	@echo "Staging Environment (default workspace):"
+	@echo "  make plan-staging             - Show planned changes for staging"
+	@echo "  make apply-staging            - Apply changes for staging"
+	@echo "  make update-staging-vault     - Update Ansible vault with staging credentials"
 	@echo ""
-	@echo "Operations (environment-specific):"
-	@echo "  make plan-staging      - Show planned changes for staging"
-	@echo "  make apply-staging     - Apply changes for staging"
-	@echo "  make plan-production   - Show planned changes for production"
-	@echo "  make apply-production  - Apply changes for production"
+	@echo "Production Environment:"
+	@echo "  make plan-production          - Show planned changes for production"
+	@echo "  make apply-production         - Apply changes for production"
+	@echo "  make update-production-vault  - Update Ansible vault with production credentials"
 	@echo ""
 	@echo "Other:"
-	@echo "  make refresh           - Refresh state file"
-	@echo "  make show              - Show current state"
+	@echo "  make refresh                  - Refresh state file"
+	@echo "  make show                     - Show current state"
 	@echo ""
 	@echo "Outputs:"
-	@echo "  make output            - Show all outputs"
-	@echo "  make credentials       - Show AWS S3 credentials"
-	@echo "  make server-info       - Show VPS connection details"
-	@echo "  make dns-info          - Show DNS records"
-	@echo "  make dns-email         - Show email configuration"
+	@echo "  make output                   - Show all outputs"
+	@echo "  make credentials              - Show AWS S3 credentials"
+	@echo "  make server-info              - Show VPS connection details"
+	@echo "  make dns-info                 - Show DNS records"
+	@echo "  make dns-email                - Show email configuration"
 	@echo ""
 	@echo "Server:"
-	@echo "  make server-ssh        - SSH into the VPS"
-	@echo "  make server-deploy     - Show deployment guide"
+	@echo "  make server-ssh               - SSH into the VPS"
+	@echo "  make server-deploy            - Show deployment guide"
 	@echo ""
 	@echo "Destruction:"
-	@echo "  make destroy           - Destroy all resources"
-	@echo "  make destroy-backend   - Destroy backend resources (careful!)"
+	@echo "  make destroy                  - Destroy all resources in current workspace"
+	@echo "  make destroy-backend          - Destroy backend resources (careful!)"
 	@echo ""
 	@echo "Utilities:"
-	@echo "  make fmt               - Format Terraform files"
-	@echo "  make graph             - Generate dependency graph"
+	@echo "  make fmt                      - Format Terraform files"
+	@echo "  make graph                    - Generate dependency graph"
+	@echo ""
+	@echo "Current workspace: $$(terraform workspace show)"
+
+# ============================================
+# Workspace Management
+# ============================================
+
+# List all workspaces
+workspace-list:
+	@echo "Available workspaces:"
+	@terraform workspace list
+	@echo ""
+	@echo "Current workspace: $$(terraform workspace show)"
+
+# Create new workspace
+workspace-new:
+	@if [ -z "$(NAME)" ]; then \
+		echo "Error: NAME parameter is required"; \
+		echo "Usage: make workspace-new NAME=<workspace-name>"; \
+		exit 1; \
+	fi
+	@echo "Creating new workspace: $(NAME)"
+	terraform workspace new $(NAME)
+
+# Select workspace interactively
+workspace-select:
+	@echo "Available workspaces:"
+	@terraform workspace list
+	@echo ""
+	@read -p "Enter workspace name: " workspace; \
+	terraform workspace select $$workspace
+
+# ============================================
+# Terraform Operations
+# ============================================
 
 # Initialize Terraform
 init:
 	@echo "Initializing Terraform..."
 	terraform init
 
-# Show planned changes (uses terraform.tfvars or ENV var)
-plan:
-	@if [ -n "$(ENV)" ]; then \
-		echo "Showing planned changes for $(ENV)..."; \
-		terraform plan -var-file=terraform.tfvars.$(ENV); \
-	else \
-		echo "Showing planned changes..."; \
-		terraform plan; \
-	fi
-
-# Apply changes (uses terraform.tfvars or ENV var)
-apply:
-	@if [ -n "$(ENV)" ]; then \
-		echo "Applying Terraform changes for $(ENV)..."; \
-		terraform apply -var-file=terraform.tfvars.$(ENV); \
-	else \
-		echo "Applying Terraform changes..."; \
-		terraform apply; \
-	fi
-
-# Staging environment targets
+# Staging environment targets (uses default workspace)
 plan-staging:
+	@echo "Switching to staging workspace (default)..."
+	@terraform workspace select default 2>/dev/null || true
 	@echo "Showing planned changes for staging..."
 	terraform plan -var-file=terraform.tfvars.staging
 
 apply-staging:
+	@echo "Switching to staging workspace (default)..."
+	@terraform workspace select default 2>/dev/null || true
 	@echo "Applying Terraform changes for staging..."
 	terraform apply -var-file=terraform.tfvars.staging
 
 # Production environment targets
 plan-production:
+	@echo "Switching to production workspace..."
+	@terraform workspace select production 2>/dev/null || terraform workspace new production
 	@echo "Showing planned changes for production..."
 	terraform plan -var-file=terraform.tfvars.production
 
 apply-production:
+	@echo "Switching to production workspace..."
+	@terraform workspace select production 2>/dev/null || terraform workspace new production
 	@echo "Applying Terraform changes for production..."
 	terraform apply -var-file=terraform.tfvars.production
+
+# Update Ansible vault with credentials
+update-staging-vault:
+	@../scripts/update-staging-vault.sh
+
+update-production-vault:
+	@../scripts/update-production-vault.sh
 
 # Validate configuration
 validate:
