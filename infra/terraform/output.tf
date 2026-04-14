@@ -40,6 +40,45 @@ output "loki_s3_secret_access_key" {
   sensitive   = true
 }
 
+output "loki_s3_bucket_name" {
+  value       = aws_s3_bucket.loki_logs.id
+  description = "Loki S3 bucket name"
+}
+
+output "loki_s3_bucket_arn" {
+  value       = aws_s3_bucket.loki_logs.arn
+  description = "Loki S3 bucket ARN"
+}
+
+output "loki_s3_bucket_region" {
+  value       = aws_s3_bucket.loki_logs.region
+  description = "Loki S3 bucket region"
+}
+
+# ============================================
+# S3 Assets Bucket Outputs
+# ============================================
+
+output "s3_bucket_name" {
+  value       = aws_s3_bucket.bucket.id
+  description = "S3 bucket name for assets"
+}
+
+output "s3_bucket_arn" {
+  value       = aws_s3_bucket.bucket.arn
+  description = "S3 bucket ARN for assets"
+}
+
+output "s3_bucket_region" {
+  value       = aws_s3_bucket.bucket.region
+  description = "S3 bucket region"
+}
+
+output "s3_public_url" {
+  value       = aws_s3_bucket.bucket.bucket_regional_domain_name
+  description = "S3 bucket public URL"
+}
+
 # ============================================
 # CloudFront CDN Outputs
 # ============================================

@@ -60,10 +60,10 @@ resource "aws_iam_user_policy_attachment" "vault_user_attachment" {
 
 # S3 vault storage
 resource "aws_s3_bucket" "vault_storage" {
-  bucket        = "staging-leviosa-vault-storage"
+  bucket        = "${var.environment}-${var.project_name}-vault-storage"
   force_destroy = false
   tags = {
-    Environment = "staging"
+    Environment = var.environment
     Name        = "Vault Storage Bucket"
   }
 }

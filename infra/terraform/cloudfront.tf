@@ -2,15 +2,6 @@
 # This file configures CloudFront with OAC for secure S3 assets access
 
 # ============================================
-# AWS Provider for us-east-1 (required for ACM)
-# ============================================
-
-provider "aws" {
-  alias  = "us_east_1"
-  region = "us-east-1"
-}
-
-# ============================================
 # CloudFront Origin Access Control
 # ============================================
 

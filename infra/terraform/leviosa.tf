@@ -8,9 +8,9 @@ data "hcloud_ssh_key" "default" {
   name = "terraform-leviosa"
 }
 
-# Main VPS server
+# Main VPS server (shared by both environments)
 resource "hcloud_server" "manager" {
-  name        = "${var.project_name}-${var.environment}"
+  name        = var.project_name  # Just "leviosa" - hosts both staging and production
   image       = "ubuntu-24.04"
   server_type = var.server_type
   location    = var.server_location

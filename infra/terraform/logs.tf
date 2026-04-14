@@ -1,11 +1,11 @@
 resource "aws_s3_bucket" "loki_logs" {
-  bucket        = "staging-leviosa-loki-logs"
+  bucket        = "${var.environment}-${var.project_name}-loki-logs"
   force_destroy = false
 
   tags = {
     Name        = "Loki Logs Bucket"
-    Environment = "staging"
-    Project     = "leviosa"
+    Environment = var.environment
+    Project     = var.project_name
   }
 }
 
@@ -67,10 +67,10 @@ resource "aws_s3_bucket_public_access_block" "loki_logs" {
 }
 
 resource "aws_iam_user" "loki_s3_user" {
-  name = "loki-s3-uploader"
+  name = "${var.environment}-${var.project_name}-loki-s3-uploader"
   tags = {
-    Environment = "staging"
-    Project     = "leviosa"
+    Environment = var.environment
+    Project     = var.project_name
   }
 }
 
