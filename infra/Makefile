@@ -2,6 +2,8 @@
 # This Makefile provides commands for managing Leviosa infrastructure
 # including Terraform and Ansible deployments
 
+export AWS_PROFILE := terraform-leviosa
+
 .PHONY: help help-terraform help-ansible \
         init-staging init-production \
         plan-staging plan-production \

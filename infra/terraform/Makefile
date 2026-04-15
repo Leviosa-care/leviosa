@@ -7,6 +7,8 @@
 #
 # Each workspace has separate state and AWS resources
 
+export AWS_PROFILE := terraform-leviosa
+
 .PHONY: help init init-migrate init-staging init-production \
         plan apply output credentials destroy destroy-backend \
         fmt validate refresh show graph clean \
