@@ -2,11 +2,12 @@
 # Usage: make <target>
 
 # Docker image configuration
+# These must match the images defined in infra/ansible/group_vars/leviosa_*.yml
 DOCKER_USER ?= henga
-DOCKER_IMAGE_FRONTEND_PROD ?= $(DOCKER_USER)/leviosa:production-frontend
-DOCKER_IMAGE_BACKEND_PROD ?= $(DOCKER_USER)/leviosa:production-backend
-DOCKER_IMAGE_FRONTEND_STAGING ?= $(DOCKER_USER)/leviosa:staging-frontend
-DOCKER_IMAGE_BACKEND_STAGING ?= $(DOCKER_USER)/leviosa:staging-backend
+DOCKER_IMAGE_FRONTEND_PROD ?= $(DOCKER_USER)/leviosa:frontend-latest
+DOCKER_IMAGE_BACKEND_PROD ?= $(DOCKER_USER)/leviosa:backend-latest
+DOCKER_IMAGE_FRONTEND_STAGING ?= $(DOCKER_USER)/leviosa:frontend-staging
+DOCKER_IMAGE_BACKEND_STAGING ?= $(DOCKER_USER)/leviosa:backend-staging
 
 # VPS connection - resolved from Terraform output
 VPS_IP ?= $(shell cd infra/terraform && terraform output -raw server_ipv4_address 2>/dev/null || echo "")
