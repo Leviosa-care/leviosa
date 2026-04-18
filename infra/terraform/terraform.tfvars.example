@@ -1,107 +1,33 @@
-# Terraform Variables Example
-# Copy this file to terraform.tfvars and update with your values
+# Leviosa Terraform Variables Example
+# Copy to terraform.tfvars.staging or terraform.tfvars.production and fill in values
 
-# AWS region for resources
-aws_region = "eu-central-1"
-
-# Project name (used for resource naming)
+aws_region   = "eu-central-1"
 project_name = "leviosa"
-
-# Deployment environment
-environment = "staging"
+environment  = "staging"
 
 # ============================================
-# Hetzner Cloud Configuration
+# Hetzner Cloud
 # ============================================
 
-# Hetzner Cloud API token
-# Get yours from: https://console.hetzner.cloud/projects/YOUR_PROJECT_ID/security/tokens
-hcloud_token = "your_hetzner_api_token_here"
-
-# Server type (cpx11 = 2GB RAM, ~€4/mo; cpx21 = 4GB RAM, ~€8/mo; cpx31 = 8GB RAM, ~€15/mo)
-server_type = "cpx11"
-
-# Datacenter location (nbg1 = Nuremberg, fsn1 = Falkenstein, hil = Hilversum/NL)
+hcloud_token    = "your_hetzner_api_token_here"
+server_type     = "cpx11"
 server_location = "nbg1"
-
-# Enable automatic backups (additional 20% of server price)
-enable_backups = true
+enable_backups  = true
 
 # ============================================
-# Cloudflare DNS Configuration
+# Cloudflare DNS
 # ============================================
 
-# Cloudflare API token
-# Create at: https://dash.cloudflare.com/profile/api-tokens
-# Required permissions: Zone - DNS - Edit
 cloudflare_token = "your_cloudflare_api_token_here"
-
-# Cloudflare Zone ID for your domain
-# Found in the Cloudflare dashboard: Domain -> Overview -> scroll down to "API" section
-zone_id = "your_zone_id_here"
-
-# Your domain name
-domain_name = "leviosa.care"
-
-# Contact email for DMARC reports (usually your email or admin email)
-contact_email = "admin@leviosa.care"
+zone_id          = "your_zone_id_here"
+domain_name      = "leviosa.care"
 
 # ============================================
-# Email Configuration (SES + existing mailbox provider)
+# CORS
 # ============================================
 
-# MX servers (your current provider - e.g., Hostinger, Gmail, etc.)
-mx_servers = [
-  {
-    server   = "mx1.hostinger.com"
-    priority = 10
-  },
-  {
-    server   = "mx2.hostinger.com"
-    priority = 20
-  }
+allowed_origins = [
+  "http://localhost:5173",
+  "https://leviosa.care",
+  "https://staging.leviosa.care",
 ]
-
-# SPF includes — add providers that send on your behalf
-# Default includes amazonses.com for SES; add your email provider if needed
-email_spf_includes = ["amazonses.com"]
-
-# DMARC policy (none, quarantine, reject)
-email_dmarc_policy = "quarantine"
-
-# Existing DKIM records from your mailbox provider
-# Get these from your email provider's DNS settings page
-# Example for Hostinger: hPanel > Emails > Email DNS Records
-email_dkim_records = {
-  "hostingermail-a._domainkey" = {
-    type    = "CNAME"
-    content = "hostingermail-a.dkim.mail.hostinger.com"
-  }
-  "hostingermail-b._domainkey" = {
-    type    = "CNAME"
-    content = "hostingermail-b.dkim.mail.hostinger.com"
-  }
-  "hostingermail-c._domainkey" = {
-    type    = "CNAME"
-    content = "hostingermail-c.dkim.mail.hostinger.com"
-  }
-}
-
-# ============================================
-# Database Backup Configuration
-# ============================================
-
-# Number of days to retain daily backups (7-365)
-# Weekly backups are retained for 2x this value
-# Monthly backups are retained for 1 year
-backup_retention_days = 90
-
-# ============================================
-# S3 Buckets
-# ============================================
-
-# Production S3 bucket for CDN
-production_s3_bucket = "leviosa-assets.s3.amazonaws.com"
-
-# Staging S3 bucket for CDN
-staging_s3_bucket = "staging-leviosa-assets.s3.amazonaws.com"
