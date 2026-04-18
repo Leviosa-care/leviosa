@@ -90,16 +90,12 @@ init-production:
 	terraform workspace select production 2>/dev/null || terraform workspace new production
 
 plan-production:
-	@echo "Planning production infrastructure..."
-	@cd terraform && \
-	terraform workspace select production 2>/dev/null || terraform workspace new production && \
-	terraform plan -var-file=terraform.tfvars.production
+	@echo "Planning production infrastructure (AWS resources only)..."
+	@cd terraform && make plan-production
 
 apply-production:
-	@echo "Applying production infrastructure..."
-	@cd terraform && \
-	terraform workspace select production 2>/dev/null || terraform workspace new production && \
-	terraform apply -var-file=terraform.tfvars.production
+	@echo "Applying production infrastructure (AWS resources only)..."
+	@cd terraform && make apply-production
 
 update-production-vault:
 	@echo "Updating production vault..."
