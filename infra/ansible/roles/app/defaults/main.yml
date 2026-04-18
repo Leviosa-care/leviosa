@@ -3,17 +3,19 @@
 
 # Application
 app_name: leviosa
-app_docker_image: "{{ docker_registry }}/{{ app_name }}:{{ app_image_tag | default('latest') }}"
 app_base_dir: "/opt/{{ app_name }}"
 app_data_dir: "/opt/{{ app_name }}/data"
 app_logs_dir: "/opt/{{ app_name }}/logs"
 app_backup_dir: "/opt/{{ app_name }}/backups"
 
-# Docker
+# Docker images — override per environment in group_vars
+# Production: henga/leviosa:frontend-latest  / henga/leviosa:backend-latest
+# Staging:    henga/leviosa:frontend-staging / henga/leviosa:backend-staging
 docker_registry: "henga"
-app_image_tag: "latest"
+frontend_docker_image: "{{ docker_registry }}/leviosa:frontend-latest"
+backend_docker_image: "{{ docker_registry }}/leviosa:backend-latest"
 
 # Monitoring
-monitoring_enabled: true
+monitoring_enabled: false
 monitoring_cadvisor_port: 9323
 monitoring_node_exporter_port: 9100

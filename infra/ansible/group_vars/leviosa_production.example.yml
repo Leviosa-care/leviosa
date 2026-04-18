@@ -4,6 +4,12 @@
 # Same structure as leviosa_staging.yml — only the values differ.
 
 # ============================================
+# Docker Images
+# ============================================
+frontend_docker_image: "henga/leviosa:frontend-latest"
+backend_docker_image: "henga/leviosa:backend-latest"
+
+# ============================================
 # Contact
 # ============================================
 contact_email: "admin@leviosa.care"
@@ -14,6 +20,11 @@ contact_email: "admin@leviosa.care"
 db_user: "leviosa"
 db_password: "your_secure_postgres_password_here"
 db_name: "leviosa"
+
+# ============================================
+# Redis
+# ============================================
+redis_password: "your_secure_redis_password_here"
 
 # ============================================
 # Session
@@ -88,3 +99,12 @@ use_scheduler: "false"
 # Caddy Cloudflare API Token (for DNS-01 challenge)
 # ============================================
 caddy_cloudflare_api_token: "your_cloudflare_api_token_here"
+
+# ============================================
+# Caddy Basic Auth (for staging.leviosa.care)
+# Generate hash with:
+#   python3 -c "import bcrypt, base64; h = bcrypt.hashpw(b'your_password', bcrypt.gensalt(14)); print(base64.b64encode(h).decode())"
+# Caddy expects base64(bcrypt(password)), NOT the raw $2b$... string.
+# ============================================
+caddy_basic_auth_username: "admin"
+caddy_basic_auth_password_hash: "your_base64_encoded_bcrypt_hash_here"

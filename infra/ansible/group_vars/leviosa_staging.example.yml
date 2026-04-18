@@ -2,3 +2,9 @@
 # Leviosa Staging Secrets — Example
 # Copy to leviosa_staging.yml and fill in your staging values.
 # Same structure as leviosa_production.example.yml — only the values differ.
+
+# ============================================
+# Docker Images
+# ============================================
+frontend_docker_image: "henga/leviosa:frontend-staging"
+backend_docker_image: "henga/leviosa:backend-staging"
