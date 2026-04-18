@@ -30,13 +30,7 @@
         cmd: docker compose pull
         chdir: "{{ app_base_dir }}"
       become: true
-      when: app_deployed | default(false)
-
-    - name: Run database migrations
-      ansible.builtin.command:
-        cmd: docker compose run --rm --no-deps backend go run cmd/migrate/main.go
-        chdir: "{{ app_base_dir }}"
-      become: true
+      become_user: root
       when: app_deployed | default(false)
 
     - name: Restart services
@@ -44,6 +38,7 @@
         cmd: docker compose up -d --force-recreate
         chdir: "{{ app_base_dir }}"
       become: true
+      become_user: root
       when: app_deployed | default(false)
 
     - name: Display deployment completion
