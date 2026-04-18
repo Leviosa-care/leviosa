@@ -10,13 +10,13 @@
 export AWS_PROFILE := terraform-leviosa
 
 .PHONY: help init init-migrate init-staging init-production \
-        plan apply output credentials destroy destroy-backend \
+        plan apply output credentials destroy destroy-staging destroy-production destroy-backend \
         fmt validate refresh show graph clean \
         workspace-list workspace-new workspace-select \
         plan-staging apply-staging plan-production apply-production \
         update-staging-vault update-production-vault \
         server-info server-ssh server-deploy \
-        dns-info dns-email dns-verify
+        dns-info dns-verify
 
 # Default target
 help:
@@ -54,7 +54,6 @@ help:
 	@echo "  make credentials              - Show AWS S3 credentials"
 	@echo "  make server-info              - Show VPS connection details"
 	@echo "  make dns-info                 - Show DNS records"
-	@echo "  make dns-email                - Show email configuration"
 	@echo ""
 	@echo "Server:"
 	@echo "  make server-ssh               - SSH into the VPS"
@@ -139,17 +138,47 @@ apply-staging:
 	terraform apply -var-file=terraform.tfvars.staging
 
 # Production environment targets
+# Only manages AWS resources (S3 + IAM). The VPS and DNS are shared and already
+# live in the staging/default workspace state — do not recreate them here.
+# Staging targets: VPS + Cloudflare DNS + staging S3/IAM
+# Excludes backend.tf resources (terraform state bucket) which must persist
+STAGING_TARGETS := \
+	-target=hcloud_server.manager \
+	-target=cloudflare_dns_record.leviosa_care_a \
+	-target=cloudflare_dns_record.leviosa_care_aaaa \
+	-target=cloudflare_dns_record.www_leviosa_care \
+	-target=cloudflare_dns_record.staging_leviosa_care \
+	-target=aws_s3_bucket.bucket \
+	-target=aws_s3_bucket_versioning.assets_versioning \
+	-target=aws_s3_bucket_server_side_encryption_configuration.assets_encryption \
+	-target=aws_s3_bucket_public_access_block.assets_block \
+	-target=aws_s3_bucket_cors_configuration.assets_cors \
+	-target=aws_iam_user.app_user \
+	-target=aws_iam_access_key.app_user_key \
+	-target=aws_iam_user_policy.app_s3_policy
+
+# Production targets: production S3 + IAM only (VPS lives in staging workspace)
+PRODUCTION_TARGETS := \
+	-target=aws_s3_bucket.bucket \
+	-target=aws_s3_bucket_versioning.assets_versioning \
+	-target=aws_s3_bucket_server_side_encryption_configuration.assets_encryption \
+	-target=aws_s3_bucket_public_access_block.assets_block \
+	-target=aws_s3_bucket_cors_configuration.assets_cors \
+	-target=aws_iam_user.app_user \
+	-target=aws_iam_access_key.app_user_key \
+	-target=aws_iam_user_policy.app_s3_policy
+
 plan-production:
 	@echo "Switching to production workspace..."
 	@terraform workspace select production 2>/dev/null || terraform workspace new production
-	@echo "Showing planned changes for production..."
-	terraform plan -var-file=terraform.tfvars.production
+	@echo "Showing planned changes for production (AWS resources only)..."
+	terraform plan -var-file=terraform.tfvars.production $(PRODUCTION_TARGETS)
 
 apply-production:
 	@echo "Switching to production workspace..."
 	@terraform workspace select production 2>/dev/null || terraform workspace new production
-	@echo "Applying Terraform changes for production..."
-	terraform apply -var-file=terraform.tfvars.production
+	@echo "Applying Terraform changes for production (AWS resources only)..."
+	terraform apply -var-file=terraform.tfvars.production $(PRODUCTION_TARGETS)
 
 # Update Ansible vault with credentials
 update-staging-vault:
@@ -193,11 +222,11 @@ credentials:
 	@echo ""
 	@echo "S3_BUCKET=$$(terraform output -raw media_bucket_name 2>/dev/null || echo 'staging-leviosa-assets')"
 	@echo "S3_REGION=$$(terraform output -raw media_bucket_region 2>/dev/null || echo 'eu-central-1')"
-	@echo "AWS_ACCESS_KEY_ID=$$(terraform output -raw vault_user_access_key_id)"
-	@echo "AWS_SECRET_ACCESS_KEY=$$(terraform output -raw vault_user_secret_access_key)"
+	@echo "AWS_ACCESS_KEY_ID=$$(terraform output -raw app_user_access_key_id)"
+	@echo "AWS_SECRET_ACCESS_KEY=$$(terraform output -raw app_user_secret_access_key)"
 	@echo ""
 	@echo "==========================================="
-	@echo "⚠️  Save these credentials securely!"
+	@echo "Save these credentials securely!"
 	@echo "==========================================="
 
 # Generate dependency graph (requires graphviz)
@@ -206,10 +235,25 @@ graph:
 	terraform graph | dot -Tpng > terraform-graph.png
 	@echo "Graph saved to terraform-graph.png"
 
-# Destroy all resources
+# Destroy all resources in current workspace
 destroy:
-	@echo "Destroying all Terraform resources..."
+	@echo "Destroying all Terraform resources in current workspace..."
 	terraform destroy
+
+# Destroy staging resources (VPS + Cloudflare DNS + staging S3/IAM)
+# Does NOT destroy the Terraform state backend (backend.tf)
+destroy-staging:
+	@echo "Switching to staging workspace (default)..."
+	@terraform workspace select default 2>/dev/null || true
+	@echo "Destroying staging resources (excluding backend)..."
+	terraform destroy -var-file=terraform.tfvars.staging $(STAGING_TARGETS)
+
+# Destroy production resources (S3 + IAM only — VPS lives in staging workspace)
+destroy-production:
+	@echo "Switching to production workspace..."
+	@terraform workspace select production 2>/dev/null || terraform workspace new production
+	@echo "Destroying production resources (AWS only)..."
+	terraform destroy -var-file=terraform.tfvars.production $(PRODUCTION_TARGETS)
 
 # Destroy backend resources (use with caution!)
 destroy-backend:
@@ -289,10 +333,6 @@ dns-info:
 	@echo "  CNAME (cdn):  cdn.$$(terraform output -raw domain_name 2>/dev/null || echo 'leviosa.care') → $$(terraform output -raw cloudfront_domain_name)"
 	@echo ""
 	@echo "==========================================="
-
-# Show email configuration (SES)
-dns-email:
-	@terraform output -raw email_setup_status
 
 # Show Cloudflare dashboard link for verification
 dns-verify:
