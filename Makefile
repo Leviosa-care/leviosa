@@ -1,6 +1,9 @@
 # Leviosa VPS Deployment Makefile
 # Usage: make <target>
 
+# AWS profile for Terraform operations
+export AWS_PROFILE := terraform-leviosa
+
 # Docker image configuration
 # These must match the images defined in infra/ansible/group_vars/leviosa_*.yml
 DOCKER_USER ?= henga
@@ -10,8 +13,8 @@ DOCKER_IMAGE_FRONTEND_STAGING ?= $(DOCKER_USER)/leviosa:frontend-staging
 DOCKER_IMAGE_BACKEND_STAGING ?= $(DOCKER_USER)/leviosa:backend-staging
 
 # VPS connection - resolved from Terraform output
-VPS_IP ?= $(shell cd infra/terraform && terraform output -raw server_ipv4_address 2>/dev/null || echo "")
-VPS_USER ?= leviosa
+VPS_IP ?= $(shell cd infra/terraform && AWS_PROFILE=terraform-leviosa terraform output -raw server_ipv4_address 2>/dev/null || echo "")
+VPS_USER ?= root
 VPS_SSH = ssh -i ~/.ssh/leviosa $(VPS_USER)@$(VPS_IP)
 
 # App directories on the VPS
