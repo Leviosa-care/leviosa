@@ -13,6 +13,16 @@
   become_user: "{{ deploy_user }}"
   become: true
 
+- name: Create application base directory
+  ansible.builtin.file:
+    path: "{{ app_base_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0755'
+  become: true
+  become_user: root
+
 - name: Create application subdirectories
   ansible.builtin.file:
     path: "{{ item }}"
@@ -21,6 +31,7 @@
     group: "{{ deploy_user }}"
     mode: '0750'
   become: true
+  become_user: root
   loop:
     - "{{ app_base_dir }}/scripts"
     - "{{ app_base_dir }}/config"
@@ -32,7 +43,8 @@
     owner: "{{ deploy_user }}"
     group: "{{ deploy_user }}"
     mode: '0600'
-  when: app_env_template | default(false)
+  become: true
+  become_user: root
 
 - name: Create Docker Compose configuration
   ansible.builtin.template:
@@ -41,6 +53,8 @@
     owner: "{{ deploy_user }}"
     group: "{{ deploy_user }}"
     mode: '0640'
+  become: true
+  become_user: root
 
 - name: Create production startup script
   ansible.builtin.template:
@@ -49,6 +63,8 @@
     owner: "{{ deploy_user }}"
     group: "{{ deploy_user }}"
     mode: '0750'
+  become: true
+  become_user: root
 
 - name: Create logrotate config for application logs
   ansible.builtin.copy:
@@ -74,6 +90,8 @@
     owner: "{{ deploy_user }}"
     group: "{{ deploy_user }}"
     mode: '0750'
+  become: true
+  become_user: root
 
 - name: Mark application as deployed
   ansible.builtin.set_fact:
