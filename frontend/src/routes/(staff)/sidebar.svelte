@@ -54,47 +54,47 @@
      */
     const desktopNavigation: NavItem[] = [
         {
-            href: "/ops",
+            href: "/staff",
             label: "Accueil",
             icon: Home,
             roles: ["admin", "partner"],
         },
         // Catalogue
         {
-            href: "/ops/catalog",
+            href: "/staff/catalog",
             label: "Catalogue",
             icon: Package,
             roles: ["admin", "partner"],
         },
         // Users - admin only
         {
-            href: "/ops/users",
+            href: "/staff/users",
             label: "Utilisateurs",
             icon: Users,
             roles: ["admin"],
         },
         // Agenda section - expanded on desktop
         {
-            href: "/ops/agenda/disponibilites",
+            href: "/staff/agenda/disponibilites",
             label: "Disponibilités",
             icon: CalendarClock,
             roles: ["admin", "partner"],
         },
         {
-            href: "/ops/agenda/reservations",
+            href: "/staff/agenda/reservations",
             label: "Réservations",
             icon: CalendarCheck,
             roles: ["admin", "partner"],
         },
         // Statistics section - expanded on desktop
         {
-            href: "/ops/statistics/analytics",
+            href: "/staff/statistics/analytics",
             label: "Analytics",
             icon: ChartColumn,
             roles: ["admin", "partner"],
         },
         {
-            href: "/ops/statistics/finances",
+            href: "/staff/statistics/finances",
             label: "Finances",
             icon: DollarSign,
             roles: ["admin", "partner"],
@@ -107,31 +107,31 @@
      */
     const mobileNavigation: NavItem[] = [
         {
-            href: "/ops",
+            href: "/staff",
             label: "Accueil",
             icon: Home,
             roles: ["admin", "partner"],
         },
         {
-            href: "/ops/agenda",
+            href: "/staff/agenda",
             label: "Agenda",
             icon: Calendar,
             roles: ["admin", "partner"],
         },
         {
-            href: "/ops/catalog",
+            href: "/staff/catalog",
             label: "Catalogue",
             icon: Package,
             roles: ["admin", "partner"],
         },
         {
-            href: "/ops/statistics",
+            href: "/staff/statistics",
             label: "Statistiques",
             icon: ChartColumn,
             roles: ["admin", "partner"],
         },
         {
-            href: "/ops/users",
+            href: "/staff/users",
             label: "Utilisateurs",
             icon: Users,
             roles: ["admin"],
@@ -158,8 +158,8 @@
      * Exact match for home, starts-with for other routes
      */
     function isActive(href: string, currentPath: string): boolean {
-        if (href === "/ops") {
-            return currentPath === "/ops";
+        if (href === "/staff") {
+            return currentPath === "/staff";
         }
         return currentPath.startsWith(href);
     }
@@ -200,7 +200,7 @@
                     Administration
                 </h1>
                 <a
-                    href="/ops/settings"
+                    href="/staff/settings"
                     class="p-2 rounded-md transition-all duration-200 text-dark-900/50 hover:bg-dark-900/5 hover:text-dark-900"
                     aria-label="Paramètres"
                     title="Paramètres"
@@ -209,7 +209,7 @@
                 </a>
             {:else}
                 <a
-                    href="/ops/settings"
+                    href="/staff/settings"
                     class="p-2 rounded-md transition-all duration-200 text-dark-500 hover:bg-dark-900/2 hover:text-dark-900 mx-auto"
                     aria-label="Paramètres"
                     title="Paramètres"

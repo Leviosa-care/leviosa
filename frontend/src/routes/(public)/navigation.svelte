@@ -35,7 +35,7 @@
             : "S'authentifier";
 
     const secondaryButtonLink = permissions.canAccessOps
-        ? "/ops"
+        ? "/staff"
         : permissions.canAccessApp
           ? "/app"
           : "/auth";

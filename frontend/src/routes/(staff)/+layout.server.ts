@@ -8,7 +8,7 @@ export const load = async ({ locals }) => {
     if (!user) {
         // throw redirect(302, '/auth')
         // TODO: is the way to do this ?
-        throw redirect(302, 'redirectFrom?/ops/auth')
+        throw redirect(302, 'redirectFrom?/staff/auth')
     }
 
     const permissions = computePermissions(user.role)
