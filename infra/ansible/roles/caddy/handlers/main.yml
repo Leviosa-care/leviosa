@@ -1,14 +1,18 @@
 ---
-- name: daemon reload
-  ansible.builtin.systemd:
-    daemon_reload: yes
+- name: reload caddy
+  ansible.builtin.command:
+    cmd: docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+    chdir: "{{ app_base_dir }}"
+  become_user: "{{ deploy_user }}"
+  become: true
+  failed_when: false
+  when: caddy_configured | default(false)
 
 - name: restart caddy
-  ansible.builtin.service:
-    name: caddy
-    state: restarted
-
-- name: reload caddy
-  ansible.builtin.service:
-    name: caddy
-    state: reloaded
+  ansible.builtin.command:
+    cmd: docker compose restart caddy
+    chdir: "{{ app_base_dir }}"
+  become_user: "{{ deploy_user }}"
+  become: true
+  failed_when: false
+  when: caddy_configured | default(false)

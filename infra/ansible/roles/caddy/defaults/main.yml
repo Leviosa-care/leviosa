@@ -1,0 +1,3 @@
+---
+# Caddy data directory (config, data, logs mounted into the Docker container)
+caddy_data_dir: "{{ app_base_dir }}/caddy"
