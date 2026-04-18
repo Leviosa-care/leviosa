@@ -8,8 +8,6 @@ import (
 
 	// Authuser
 	authuserAgg "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/aggregator"
-	catalogSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/catalog"
-	oauthSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/oauth"
 	otpSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/otp"
 	partnerSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/partner"
 	sessionSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/session"
@@ -42,7 +40,10 @@ import (
 	promotionCodeRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/promotion_code"
 	sharedRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/shared"
 	imageMedia "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/s3/image"
-	stripeCatalog "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe"
+	couponPayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/coupon"
+	pricePayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/price"
+	productPayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/product"
+	promotionCodePayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/promotion_code"
 
 	// Booking
 	allocationSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/allocation"
@@ -62,6 +63,9 @@ import (
 	// Common
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
 
+	// Common auth session
+	commonSession "github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
+
 	// Middleware
 	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
 
@@ -78,8 +82,6 @@ import (
 	"github.com/pressly/goose/v3"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
-	"github.com/stripe/stripe-go/v82"
-	stripeClient "github.com/stripe/stripe-go/v82/client"
 )
 
 // Container holds all application dependencies
@@ -92,7 +94,6 @@ type Container struct {
 	RabbitMQ    *amqp.Connection
 	S3Client    *s3.Client
 	Crypto      encx.CryptoService
-	StripeAPI   *stripeClient.API
 	VaultClient *api.Client
 	AuthMw      auth.AuthMiddleware
 
@@ -112,7 +113,6 @@ type Container struct {
 	PromotionCodeRepo catalogPorts.PromotionCodeRepository
 	SharedRepo        catalogPorts.SharedRepository
 	ImageMedia        catalogPorts.ImageMedia
-	StripeCatalog     catalogPorts.StripeService
 
 	// Booking Repositories
 	BuildingRepo     bookingPorts.BuildingRepository
@@ -122,22 +122,21 @@ type Container struct {
 	BookingRepo      bookingPorts.BookingRepository
 
 	// Authuser Services
-	UserService    *userSvc.UserService
-	PartnerService *partnerSvc.PartnerService
-	OTPService     *otpSvc.OTPService
-	SessionService *sessionSvc.SessionService
-	OAuthService   *oauthSvc.Service
-	CatalogService *catalogSvc.Service
-	AuthAggregator *authuserAgg.AuthAggregatorService
+	UserService    authuserPorts.UserService
+	PartnerService authuserPorts.PartnerService
+	OTPService     authuserPorts.OTPService
+	SessionService authuserPorts.SessionService
+	AuthAggregator authuserPorts.AuthAggregatorService
 
 	// Catalog Services
-	CategoryService      *categorySvc.CategoryService
-	ProductService       *productSvc.ProductService
-	PriceService         *priceSvc.PriceService
-	ImageService         *imageSvc.ImageService
-	CouponService        *couponSvc.CouponService
-	PromotionCodeService *promotionCodeSvc.PromotionCodeService
-	CatalogAggregator    *catalogAgg.ProductAggregatorService
+	CategoryService      catalogPorts.CategoryService
+	ProductService       catalogPorts.ProductService
+	PriceService         catalogPorts.PriceService
+	ImageService         catalogPorts.ImageService
+	CouponService        catalogPorts.CouponService
+	PromotionCodeService catalogPorts.PromotionCodeService
+	CatalogAggregator    catalogPorts.ProductAggregatorService
+	CategoryAggregator   catalogPorts.CategoryImagesService
 
 	// Booking Services
 	BuildingService     bookingPorts.BuildingService
@@ -164,7 +163,9 @@ func NewContainer(ctx context.Context, cfg *Config) (*Container, error) {
 	}
 
 	// Setup repositories
-	c.setupRepositories(ctx)
+	if err := c.setupRepositories(ctx); err != nil {
+		return nil, fmt.Errorf("setup repositories: %w", err)
+	}
 
 	// Setup services
 	if err := c.setupServices(ctx); err != nil {
@@ -235,7 +236,7 @@ func (c *Container) setupInfrastructure(ctx context.Context) error {
 	}
 	c.S3Client = s3.NewFromConfig(awsCfg, s3Options)
 
-	// Vault & Encryption
+	// Vault client
 	vaultConfig := api.DefaultConfig()
 	vaultConfig.Address = c.Config.VaultAddr
 	c.VaultClient, err = api.NewClient(vaultConfig)
@@ -244,31 +245,24 @@ func (c *Container) setupInfrastructure(ctx context.Context) error {
 	}
 	c.VaultClient.SetToken(c.Config.VaultToken)
 
-	keyProvider, err := hashicorpkeys.New(hashicorpkeys.Config{
-		Address: c.Config.VaultAddr,
-		Token:   c.Config.VaultToken,
-	})
+	// Encryption — the hashicorp providers read VAULT_ADDR and VAULT_TOKEN from env
+	keyProvider, err := hashicorpkeys.NewTransitService()
 	if err != nil {
 		return fmt.Errorf("create hashicorp key provider: %w", err)
 	}
 
-	secretProvider, err := hashicorpsecrets.New(hashicorpsecrets.Config{
-		Address: c.Config.VaultAddr,
-		Token:   c.Config.VaultToken,
-	})
+	secretProvider, err := hashicorpsecrets.NewKVStore()
 	if err != nil {
 		return fmt.Errorf("create hashicorp secret provider: %w", err)
 	}
 
-	c.Crypto, err = encx.NewCryptoService(ctx, keyProvider, encx.WithSecretsProvider(secretProvider))
+	c.Crypto, err = encx.NewCrypto(ctx, keyProvider, secretProvider, encx.Config{
+		KEKAlias:    c.Config.EncxKEKAlias,
+		PepperAlias: c.Config.EncxPepperAlias,
+	})
 	if err != nil {
 		return fmt.Errorf("create crypto service: %w", err)
 	}
-
-	// Stripe
-	stripe.Key = c.Config.StripeSecretKey
-	c.StripeAPI = &stripeClient.API{}
-	c.StripeAPI.Init(c.Config.StripeSecretKey, nil)
 
 	return nil
 }
@@ -292,13 +286,13 @@ func (c *Container) runMigrations(ctx context.Context) error {
 	return nil
 }
 
-func (c *Container) setupRepositories(ctx context.Context) {
+func (c *Container) setupRepositories(ctx context.Context) error {
 	// Authuser repositories
 	c.UserRepo = userRepo.New(ctx, c.DB)
 	c.PartnerRepo = partnerRepo.New(ctx, c.DB)
 	c.OTPRepo = otpRepo.New(c.RedisClient)
 	c.SessionRepo = sessionRepo.New(c.RedisClient)
-	c.StripeAdapter = stripeAdapter.NewService(c.StripeAPI)
+	c.StripeAdapter = stripeAdapter.NewService(c.Config.StripeSecretKey, "")
 
 	// Catalog repositories
 	c.CategoryRepo = categoryRepo.New(ctx, c.DB)
@@ -309,100 +303,100 @@ func (c *Container) setupRepositories(ctx context.Context) {
 	c.PromotionCodeRepo = promotionCodeRepo.New(ctx, c.DB)
 	c.SharedRepo = sharedRepo.New(ctx, c.DB)
 	c.ImageMedia = imageMedia.New(ctx, c.S3Client, c.Config.S3BucketName)
-	c.StripeCatalog = stripeCatalog.NewService(c.StripeAPI)
+
+	// Booking repositories
+	c.BuildingRepo = buildingRepo.New(ctx, c.DB)
+	c.RoomRepo = roomRepo.New(ctx, c.DB)
+	var err error
+	c.AllocationRepo, err = allocationRepo.New(ctx, c.DB)
+	if err != nil {
+		return fmt.Errorf("create allocation repo: %w", err)
+	}
+	c.AvailabilityRepo = availabilityRepo.New(ctx, c.DB)
+	c.BookingRepo = bookingRepo.New(ctx, c.DB)
+
+	return nil
 }
 
 func (c *Container) setupServices(ctx context.Context) error {
-	// Authuser services
-	c.OTPService = otpSvc.New(c.OTPRepo, nil) // RabbitMQ consumer setup would go here if enabled
+	// Session service (needed early for auth middleware and other services)
+	c.SessionService = sessionSvc.New(ctx, c.SessionRepo, c.Crypto)
 
-	c.SessionService = sessionSvc.New(c.SessionRepo)
+	// Auth middleware (uses a separate minimal session repo interface for token lookups)
+	authSessionRepo := commonSession.NewRedisSessionRepository(c.RedisClient)
+	c.AuthMw = auth.NewSessionAuthMiddleware(authSessionRepo, c.Crypto, c.VaultClient)
 
-	// Initialize AuthMiddleware (needs SessionRepo, Crypto, and VaultClient)
-	c.AuthMw = auth.NewSessionAuthMiddleware(c.SessionRepo, c.Crypto, c.VaultClient)
+	// OTP service
+	var err error
+	c.OTPService, err = otpSvc.New(ctx, c.OTPRepo, c.Crypto, c.RabbitMQ)
+	if err != nil {
+		return fmt.Errorf("create otp service: %w", err)
+	}
 
-	c.UserService = userSvc.New(
-		c.UserRepo,
-		c.SessionService,
-		c.Crypto,
-	)
-
-	// Catalog service for authuser (cross-module dependency)
-	c.CatalogService = catalogSvc.New(
-		c.CategoryRepo,
-		c.ProductRepo,
-	)
-
-	c.PartnerService = partnerSvc.New(
-		c.PartnerRepo,
-		c.UserRepo,
-		c.CatalogService,
-		c.Crypto,
-		c.StripeAdapter,
-		nil, // RabbitMQ connection (optional)
-	)
-
-	c.OAuthService = oauthSvc.New(&oauthSvc.OAuthConfig{
-		GoogleClientID:     c.Config.GoogleClientID,
-		GoogleClientSecret: c.Config.GoogleClientSecret,
-		AppleClientID:      c.Config.AppleClientID,
-		AppleClientSecret:  c.Config.AppleClientSecret,
-		AppleTeamID:        c.Config.AppleTeamID,
-		AppleKeyID:         c.Config.AppleKeyID,
-		SessionSecret:      c.Config.SessionSecret,
-	})
-
-	c.AuthAggregator = authuserAgg.New(
-		c.UserService,
-		c.OTPService,
-		c.SessionService,
-		c.OAuthService,
-		c.PartnerService,
-		c.Crypto,
-	)
+	// Catalog stripe gateways
+	stripeCoupon := couponPayment.NewCoupon(c.Config.StripeSecretKey, "")
+	stripePrice := pricePayment.NewPrice(c.Config.StripeSecretKey, "")
+	stripeProduct := productPayment.NewProduct(c.Config.StripeSecretKey, "")
+	stripePromoCode := promotionCodePayment.NewPromotionCode(c.Config.StripeSecretKey, "")
 
 	// Catalog services
-	c.ImageService = imageSvc.New(
-		c.ImageRepo,
-		c.ImageMedia,
-		c.SharedRepo,
-	)
+	c.ImageService = imageSvc.New(c.ImageRepo, c.ImageMedia, c.SharedRepo)
 
-	c.CategoryService = categorySvc.New(
-		c.CategoryRepo,
-		c.ImageService,
-		c.SharedRepo,
-	)
+	c.CategoryService = categorySvc.New(c.CategoryRepo, c.SharedRepo)
 
-	c.CouponService = couponSvc.New(
-		c.CouponRepo,
-		c.StripeCatalog,
-	)
+	c.CouponService = couponSvc.NewCouponService(c.CouponRepo)
 
-	c.PromotionCodeService = promotionCodeSvc.New(
-		c.PromotionCodeRepo,
-		c.StripeCatalog,
-	)
+	c.PromotionCodeService = promotionCodeSvc.New(c.PromotionCodeRepo, c.CouponRepo)
 
-	c.PriceService = priceSvc.New(
-		c.PriceRepo,
-		c.StripeCatalog,
-	)
+	c.PriceService = priceSvc.New(c.PriceRepo, c.SharedRepo, stripePrice)
 
-	c.ProductService = productSvc.New(
-		c.ProductRepo,
-		c.ImageService,
-		c.StripeCatalog,
-		c.SharedRepo,
-	)
+	c.ProductService = productSvc.New(c.ProductRepo, c.SharedRepo, stripeProduct, stripePrice)
 
-	c.CatalogAggregator = catalogAgg.New(
-		c.CategoryService,
+	// Catalog aggregators
+	c.CatalogAggregator = catalogAgg.NewProductPricesAggregatorService(
 		c.ProductService,
 		c.PriceService,
-		c.CouponService,
-		c.PromotionCodeService,
+		c.ImageService,
 	)
+
+	c.CategoryAggregator = catalogAgg.NewCategoryAggregatorService(
+		c.CategoryService,
+		c.ImageService,
+	)
+
+	// Authuser services
+	c.UserService = userSvc.New(c.UserRepo, c.Crypto, c.StripeAdapter)
+
+	c.PartnerService, err = partnerSvc.New(
+		ctx,
+		c.PartnerRepo,
+		c.UserRepo,
+		c.ProductService,
+		c.CategoryService,
+		c.Crypto,
+		c.StripeAdapter,
+	)
+	if err != nil {
+		return fmt.Errorf("create partner service: %w", err)
+	}
+
+	c.AuthAggregator = authuserAgg.New(
+		c.OTPService,
+		c.UserService,
+		c.SessionService,
+		c.PartnerService,
+	)
+
+	// Booking services (initialized but not fully wired yet)
+	_ = allocationSvc.New
+	_ = availabilitySvc.New
+	_ = bookingSvc.New
+	_ = buildingSvc.New
+	_ = roomSvc.New
+
+	// Suppress unused stripe gateway variables
+	_ = stripeCoupon
+	_ = stripePromoCode
 
 	return nil
 }
