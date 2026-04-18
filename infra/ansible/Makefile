@@ -51,9 +51,8 @@ help:
 	@echo "For more commands: make help-deploy or make help-ops"
 
 # Get VPS IP from Terraform output (uses default workspace)
-VPS_IP=$(shell cd ../terraform && terraform workspace select default >/dev/null 2>&1 && terraform output -raw server_ipv4_address 2>/dev/null || echo "")
-DOMAIN=$(shell cd ../terraform && terraform workspace select default >/dev/null 2>&1 && terraform output -raw domain_name 2>/dev/null || echo "")
-BACKUP_BUCKET=$(shell cd ../terraform && terraform workspace select default >/dev/null 2>&1 && terraform output -raw backup_bucket_name 2>/dev/null || echo "")
+VPS_IP=$(shell cd ../terraform && AWS_PROFILE=terraform-leviosa terraform workspace select default >/dev/null 2>&1 && AWS_PROFILE=terraform-leviosa terraform output -raw server_ipv4_address 2>/dev/null || echo "")
+DOMAIN=$(shell cd ../terraform && AWS_PROFILE=terraform-leviosa terraform workspace select default >/dev/null 2>&1 && AWS_PROFILE=terraform-leviosa terraform output -raw domain_name 2>/dev/null || echo "")
 
 # Get SSH public key
 SSH_KEY=$(shell cat ~/.ssh/leviosa.pub 2>/dev/null || cat ~/.ssh/id_rsa.pub 2>/dev/null || echo "")
@@ -82,10 +81,10 @@ setup-staging:
 	@echo "Running staging setup playbook..."
 	ansible-playbook -i inventory/hosts.yml playbooks/site.yml \
 		-e "ansible_host=$(VPS_IP)" \
-		-e "deploy_ssh_public_key=$(SSH_KEY)" \
 		-e "app_domain=$(DOMAIN)" \
 		-e "@group_vars/all.yml" \
-		-e "@group_vars/leviosa_staging.yml"
+		-e "@group_vars/leviosa_staging.yml" \
+		-e "deploy_ssh_public_key=$(SSH_KEY)"
 
 # Complete VPS setup for production (run once on fresh server)
 setup-production:
@@ -107,10 +106,10 @@ setup-production:
 	@echo "Running production setup playbook..."
 	ansible-playbook -i inventory/hosts.yml playbooks/site.yml \
 		-e "ansible_host=$(VPS_IP)" \
-		-e "deploy_ssh_public_key=$(SSH_KEY)" \
 		-e "app_domain=$(DOMAIN)" \
 		-e "@group_vars/all.yml" \
-		-e "@group_vars/leviosa_production.yml"
+		-e "@group_vars/leviosa_production.yml" \
+		-e "deploy_ssh_public_key=$(SSH_KEY)"
 
 # ============================================
 # Deployment Commands
@@ -161,31 +160,10 @@ restart-staging:
 	@echo "Pulling latest staging image and restarting..."
 	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa-staging && docker compose pull app && docker compose up -d app"
 
-# Configure database backups
+# Configure database backups (not yet configured — add S3 backup bucket to Terraform first)
 backup:
-	@echo "==========================================="
-	@echo "Database Backup Configuration"
-	@echo "==========================================="
-	@echo ""
-	@if [ -z "$(VPS_IP)" ]; then \
-		echo "Error: Could not get VPS IP from Terraform."; \
-		exit 1; \
-	fi
-	@if [ -z "$(BACKUP_BUCKET)" ]; then \
-		echo "Error: Could not get backup bucket from Terraform."; \
-		exit 1; \
-	fi
-	@echo "VPS IP: $(VPS_IP)"
-	@echo "Backup Bucket: $(BACKUP_BUCKET)"
-	@echo ""
-	@read -p "Enter AWS Access Key ID: " aws_key; \
-	read -sp "Enter AWS Secret Access Key: " aws_secret; \
-	echo ""; \
-	ansible-playbook -i inventory/hosts.yml playbooks/backup.yml \
-		-e "ansible_host=$(VPS_IP)" \
-		-e "backup_s3_bucket=$(BACKUP_BUCKET)" \
-		-e "backup_aws_access_key=$$aws_key" \
-		-e "backup_aws_secret_key=$$aws_secret"
+	@echo "Backup not yet configured. Add a backup S3 bucket to Terraform first."
+	@exit 1
 
 # ============================================
 # Verification Commands
