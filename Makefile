@@ -31,7 +31,9 @@ BACKEND_PORT ?= 3500
 		image-release-staging-front image-release-staging-back image-release-staging \
 		deploy deploy-staging \
 		prod-start prod-stop prod-restart prod-logs prod-status prod-ssh \
+		prod-update-front prod-update-back \
 		staging-start staging-stop staging-restart staging-logs staging-status \
+		staging-update-front staging-update-back \
 		infra-init infra-plan infra-apply infra-output infra-destroy \
 		ansible-setup ansible-deploy ansible-deploy-staging \
 		ansible-restart ansible-restart-staging \
@@ -64,6 +66,8 @@ help:
 	@echo "  make prod-logs        - View production logs"
 	@echo "  make prod-status      - Check production container status"
 	@echo "  make prod-ssh         - SSH into the VPS"
+	@echo "  make prod-update-front - Pull latest frontend image and restart container"
+	@echo "  make prod-update-back  - Pull latest backend image and restart container"
 	@echo ""
 	@echo "Staging Operations:"
 	@echo "  make staging-start    - Start staging stack on VPS"
@@ -71,6 +75,8 @@ help:
 	@echo "  make staging-restart  - Restart staging stack on VPS"
 	@echo "  make staging-logs     - View staging logs"
 	@echo "  make staging-status   - Check staging container status"
+	@echo "  make staging-update-front - Pull latest staging frontend image and restart container"
+	@echo "  make staging-update-back  - Pull latest staging backend image and restart container"
 	@echo ""
 	@echo "Infrastructure (Terraform):"
 	@echo "  make infra-init       - Initialize Terraform"
@@ -217,6 +223,14 @@ prod-status:
 prod-ssh:
 	$(VPS_SSH)
 
+prod-update-front:
+	@echo "Pulling latest frontend image and restarting container..."
+	$(VPS_SSH) "cd $(PROD_DIR) && docker compose pull frontend && docker compose up -d --no-deps frontend"
+
+prod-update-back:
+	@echo "Pulling latest backend image and restarting container..."
+	$(VPS_SSH) "cd $(PROD_DIR) && docker compose pull backend && docker compose up -d --no-deps backend"
+
 # ===========================================
 # Staging Commands (VPS)
 # ===========================================
@@ -240,6 +254,14 @@ staging-logs:
 staging-status:
 	@echo "Checking staging container status..."
 	$(VPS_SSH) "cd $(STAGING_DIR) && docker compose ps"
+
+staging-update-front:
+	@echo "Pulling latest staging frontend image and restarting container..."
+	$(VPS_SSH) "cd $(STAGING_DIR) && docker compose pull frontend && docker compose up -d --no-deps frontend"
+
+staging-update-back:
+	@echo "Pulling latest staging backend image and restarting container..."
+	$(VPS_SSH) "cd $(STAGING_DIR) && docker compose pull backend && docker compose up -d --no-deps backend"
 
 # ===========================================
 # Infrastructure Commands (Terraform)
