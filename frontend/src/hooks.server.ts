@@ -1,5 +1,6 @@
 import { redirect, type Handle, type RequestEvent } from '@sveltejs/kit';
-import { NODE_ENV, CLIENT_IP_HEADER, SESSION_COOKIE_NAME, API_URL, COMING_SOON } from "$env/static/private"
+import { NODE_ENV, CLIENT_IP_HEADER, SESSION_COOKIE_NAME, API_URL } from "$env/static/private"
+import { env } from "$env/dynamic/private"
 
 import { handleLoginRedirect } from '$lib/utils/redirect';
 import { mockUser } from '$lib/data/user';
@@ -11,8 +12,11 @@ import { mockUser } from '$lib/data/user';
 // and optionnaly a new refresh  token. This is the rotation step !
 
 export const handle: Handle = async ({ event, resolve }) => {
-    if (COMING_SOON === 'true' && event.url.pathname !== '/coming-soon') {
-        throw redirect(302, '/coming-soon')
+    if (env.COMING_SOON === 'true') {
+        if (event.url.pathname !== '/coming-soon') {
+            throw redirect(302, '/coming-soon')
+        }
+        return await resolve(event)
     }
 
     if (NODE_ENV === 'development' || NODE_ENV === 'staging') {
@@ -28,7 +32,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     const sessionID = event.cookies.get(SESSION_COOKIE_NAME);
     if (!sessionID) {
         let path = handleLoginRedirect(event.url, "expiredSession");
-        const email = event.locals.user.email;
+        const email = event.locals.user?.email;
         if (email) path += `&email=${email}`;
         throw redirect(302, path)
     }
