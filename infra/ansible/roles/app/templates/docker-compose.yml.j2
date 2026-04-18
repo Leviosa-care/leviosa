@@ -16,14 +16,8 @@ services:
       - PORT={{ frontend_port | default('3000') }}
     env_file:
       - .env
-{% if use_shared_services | default(false) %}
+{% if not use_shared_services | default(false) %}
     depends_on:
-      backend:
-        condition: service_healthy
-{% else %}
-    depends_on:
-      backend:
-        condition: service_healthy
       postgres:
         condition: service_healthy
       redis:
@@ -88,15 +82,17 @@ services:
 
 {% if not use_shared_services | default(false) %}
 {% if caddy_enabled | default(true) %}
-  # Caddy Reverse Proxy with automatic TLS (Let's Encrypt)
+  # Caddy Reverse Proxy with Cloudflare DNS challenge
   caddy:
-    image: caddy:latest
+    image: serfriz/caddy-cloudflare:latest
     container_name: {{ app_name }}_caddy
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
       - "443:443/udp"  # HTTP/3
+    environment:
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
     volumes:
       - {{ caddy_data_dir }}/config/Caddyfile:/etc/caddy/Caddyfile:ro
       - {{ caddy_data_dir }}/data:/data
@@ -139,13 +135,18 @@ services:
     image: redis:7-alpine
     container_name: {{ app_name }}_redis
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    command: redis-server --appendonly yes{% if redis_password | default('') %} --requirepass ${REDIS_PASSWORD}{% endif %}
+
     volumes:
       - {{ app_data_dir }}/redis:/data
     networks:
       - {{ app_name }}_network
     healthcheck:
+{% if redis_password | default('') %}
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "--no-auth-warning", "--raw", "incr", "ping"]
+{% else %}
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+{% endif %}
       interval: 10s
       timeout: 5s
       retries: 5
