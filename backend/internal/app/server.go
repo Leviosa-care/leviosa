@@ -135,8 +135,8 @@ func (s *Server) setupCatalogRoutes(router *http.ServeMux) {
 	// Category handler
 	categoryH := categoryHandler.New(
 		s.container.CategoryService,
-		&s.container.ImageService,
-		s.container.CatalogAggregator,
+		s.container.ImageService,
+		s.container.CategoryAggregator,
 		s.container.AuthMw,
 	)
 	categoryH.RegisterRoutes(router)
@@ -223,16 +223,13 @@ func (s *Server) setupBookingRoutes(router *http.ServeMux) {
 	metricsH.RegisterRoutes(router)
 }
 
-// func (s *Server) applyMiddleware(handler http.Handler) http.Handler {
-func (s *Server) applyMiddleware(handler middleware.Handler) middleware.Handler {
+func (s *Server) applyMiddleware(handler http.Handler) http.Handler {
 	// CORS middleware
-	handler = middleware.EnableCORS(handler)
+	corsHandler := middleware.EnableCORS(handler.ServeHTTP)
+	handler = http.HandlerFunc(corsHandler)
 
 	// Logging middleware
 	handler = middleware.AttachLogger(envmode.Prod, s.logger)(handler)
-
-	// Recovery middleware
-	handler = middleware.Recovery(s.logger)(handler)
 
 	return handler
 }
