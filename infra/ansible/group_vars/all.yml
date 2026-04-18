@@ -138,6 +138,24 @@ backup_configs_enabled: true
 backup_s3_storage_class: "STANDARD_IA"
 
 # ============================================
+# Rclone / S3 Backup Configuration
+# ============================================
+gpg_recipient: "{{ contact_email | default('admin@leviosa.care') }}"
+
+postgres_user: "{{ db_user | default('leviosa') }}"
+postgres_db: "{{ db_name | default('leviosa') }}"
+
+rclone_aws_remote_name: "leviosa-s3"
+rclone_aws_access_key: "{{ aws_access_key_id | default('') }}"
+rclone_aws_secret_key: "{{ aws_secret_access_key | default('') }}"
+rclone_aws_region: "{{ aws_region | default('eu-central-1') }}"
+rclone_aws_endpoint: "s3.{{ aws_region | default('eu-central-1') }}.amazonaws.com"
+rclone_aws_location_constraint: "{{ aws_region | default('eu-central-1') }}"
+rclone_aws_storage_class: "{{ backup_s3_storage_class | default('STANDARD_IA') }}"
+rclone_aws_bucket_name: "{{ s3_bucket | default('') }}"
+rclone_backup_dir: "{{ app_backup_dir | default(app_base_dir + '/backups') }}"
+
+# ============================================
 # Monitoring (Optional)
 # ============================================
 monitoring_enabled: false
