@@ -35,8 +35,13 @@ type Config struct {
 	VaultAddr  string
 	VaultToken string
 
+	// Encryption (encx)
+	EncxKEKAlias    string
+	EncxPepperAlias string
+
 	// Stripe
-	StripeSecretKey string
+	StripeSecretKey      string
+	StripeWebhookSecret  string
 
 	// OAuth
 	GoogleClientID     string
@@ -91,8 +96,13 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 		VaultAddr:  getEnv("VAULT_ADDR", "http://localhost:8200"),
 		VaultToken: getEnv("VAULT_TOKEN", ""),
 
+		// Encryption (encx)
+		EncxKEKAlias:    getEnv("ENCX_KEK_ALIAS", "leviosa-kek"),
+		EncxPepperAlias: getEnv("ENCX_PEPPER_ALIAS", "leviosa"),
+
 		// Stripe
-		StripeSecretKey: getEnv("STRIPE_SECRET_KEY", ""),
+		StripeSecretKey:     getEnv("STRIPE_SECRET_KEY", ""),
+		StripeWebhookSecret: getEnv("STRIPE_WEBHOOK_SECRET", ""),
 
 		// OAuth
 		GoogleClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
