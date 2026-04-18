@@ -1,48 +1,48 @@
 ---
 - name: Ensure the user exists
   ansible.builtin.user:
-    name: "{{ user }}"
+    name: "{{ deploy_user }}"
     password: "{{ (user_password | password_hash('sha512')) if (user_password is defined and user_password) else omit }}"
     shell: /bin/bash
-    home: "/home/{{ user }}"
+    home: "/home/{{ deploy_user }}"
     create_home: yes
     state: present
 
-- name: "Ensure the directory /home/{{ user }}/apps exists"
+- name: "Ensure the directory /home/{{ deploy_user }}/apps exists"
   ansible.builtin.file:
-    path: "/home/{{ user }}/apps"
+    path: "/home/{{ deploy_user }}/apps"
     state: directory
-    owner: "{{ user }}"
-    group: "{{ user }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0755'
 
-- name: "Ensure the directory /home/{{ user }}/scripts exists"
+- name: "Ensure the directory /home/{{ deploy_user }}/scripts exists"
   ansible.builtin.file:
-    path: "/home/{{ user }}/scripts"
+    path: "/home/{{ deploy_user }}/scripts"
     state: directory
-    owner: "{{ user }}"
-    group: "{{ user }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0755'
 
-- name: "Ensure {{ user }} is in the sudo group"
+- name: "Ensure {{ deploy_user }} is in the sudo group"
   ansible.builtin.user:
-    name: "{{ user }}"
+    name: "{{ deploy_user }}"
     groups: sudo
     append: yes
 
-- name: Ensure {{ user }} has password-protected sudo access
+- name: Ensure {{ deploy_user }} has password-protected sudo access
   ansible.builtin.lineinfile:
-    path: /etc/sudoers.d/{{ user }}
-    line: "{{ user }} ALL=(ALL) ALL"
+    path: /etc/sudoers.d/{{ deploy_user }}
+    line: "{{ deploy_user }} ALL=(ALL) ALL"
     create: yes
     validate: "visudo -cf %s"
 
-- name: Deploy .vimrc for {{ user }}
+- name: Deploy .vimrc for {{ deploy_user }}
   ansible.builtin.copy:
     src: files/vimrc
-    dest: "/home/{{ user }}/.vimrc"
-    owner: "{{ user }}"
-    group: "{{ user }}"
+    dest: "/home/{{ deploy_user }}/.vimrc"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0644'
 
 - name: Deploy .vimrc for root

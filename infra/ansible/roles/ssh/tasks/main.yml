@@ -13,11 +13,11 @@
     state: present
     update_cache: yes
 
-- name: Disable root login
+- name: Configure root login
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
     regexp: '^#?PermitRootLogin '
-    line: 'PermitRootLogin no'
+    line: 'PermitRootLogin {{ ssh_permit_root_login }}'
     state: present
   notify: Restart SSH
 
@@ -25,7 +25,7 @@
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
     regexp: '^#?AllowUsers '
-    line: 'AllowUsers {{ user }}'
+    line: 'AllowUsers {{ ssh_allowed_users | join(" ") }}'
     state: present
   notify: Restart SSH
 
@@ -92,18 +92,18 @@
 
 - name: Ensure .ssh directory exists for the user
   ansible.builtin.file:
-    path: "/home/{{ user }}/.ssh"
+    path: "/home/{{ deploy_user }}/.ssh"
     state: directory
-    owner: "{{ user }}"
-    group: "{{ user }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0700'
 
 - name: Add public key to authorized_keys
   ansible.builtin.copy:
-    content: "{{ ssh_public_key }}"
-    dest: "/home/{{ user }}/.ssh/authorized_keys"
-    owner: "{{ user }}"
-    group: "{{ user }}"
+    content: "{{ deploy_ssh_public_key }}"
+    dest: "/home/{{ deploy_user }}/.ssh/authorized_keys"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0600'
 
 - name: Test SSH configuration before applying

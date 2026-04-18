@@ -7,32 +7,32 @@
 
 - name: Ensure GPG directory exists
   ansible.builtin.file:
-    path: /home/{{ user }}/.gnupg
+    path: /home/{{ deploy_user }}/.gnupg
     state: directory
-    owner: "{{ user }}"
-    group: "{{ user }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0700'
 
 - name: Deploy GPG public key
   ansible.builtin.copy:
     src: files/public.key
-    dest: /home/{{ user }}/.gnupg/public.key
-    owner: "{{ user }}"
-    group: "{{ user }}"
+    dest: /home/{{ deploy_user }}/.gnupg/public.key
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0600'
 
 - name: Import GPG public key
   ansible.builtin.shell: |
-    gpg --import /home/{{ user }}/.gnupg/public.key
+    gpg --import /home/{{ deploy_user }}/.gnupg/public.key
   args:
-    chdir: /home/{{ user }}
-    creates: /home/{{ user }}/.gnupg/pubring.kbx
-  become_user: "{{ user }}"
+    chdir: /home/{{ deploy_user }}
+    creates: /home/{{ deploy_user }}/.gnupg/pubring.kbx
+  become_user: "{{ deploy_user }}"
 
 - name: Trust the imported GPG key
   ansible.builtin.shell: |
     printf "trust\n5\ny\nquit\n" | gpg --no-tty --command-fd 0 --edit-key "{{ gpg_key_id }}"
   args:
-    chdir: /home/{{ user }}
-  become_user: "{{ user }}"
+    chdir: /home/{{ deploy_user }}
+  become_user: "{{ deploy_user }}"
   when: gpg_key_id is defined

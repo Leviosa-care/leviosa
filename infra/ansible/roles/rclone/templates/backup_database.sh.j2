@@ -5,7 +5,7 @@
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Configuration
-USER="{{ user }}"
+USER="{{ deploy_user }}"
 BACKUP_DIR="{{ rclone_backup_dir }}"
 VOLUME_NAME="production_backend_data"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")

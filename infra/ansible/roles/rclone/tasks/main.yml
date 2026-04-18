@@ -14,10 +14,10 @@
 
 - name: Ensure rclone configuration directory exists
   ansible.builtin.file:
-    path: /home/{{ user }}/.config/rclone
+    path: /home/{{ deploy_user }}/.config/rclone
     state: directory
-    owner: "{{ user }}"
-    group: "{{ user }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0700'
 
 - name: Deploy rclone configuration file for AWS S3
@@ -33,46 +33,46 @@
       location_constraint = {{ rclone_aws_location_constraint }}
       acl = private
       storage_class = {{ rclone_aws_storage_class }}
-    dest: /home/{{ user }}/.config/rclone/rclone.conf
-    owner: "{{ user }}"
-    group: "{{ user }}"
+    dest: /home/{{ deploy_user }}/.config/rclone/rclone.conf
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0600'
 
 - name: Ensure rclone is in the user's PATH
   ansible.builtin.lineinfile:
-    path: /home/{{ user }}/.bashrc
+    path: /home/{{ deploy_user }}/.bashrc
     line: 'export PATH=$PATH:/usr/bin/rclone'
     create: yes
 
 - name: Deploy the sync script from the files folder
   ansible.builtin.template:
     src: backup_database.sh.j2
-    dest: /home/{{ user }}/scripts/backup_database.sh
-    owner: "{{ user }}"
-    group: "{{ user }}"
+    dest: /home/{{ deploy_user }}/scripts/backup_database.sh
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0755'
 
 - name: Deploy restore script
   ansible.builtin.template:
     src: restore.sh.j2
-    dest: /home/{{ user }}/scripts/restore.sh
-    owner: "{{ user }}"
-    group: "{{ user }}"
+    dest: /home/{{ deploy_user }}/scripts/restore.sh
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0750'
 
 - name: Create backup log directory
   ansible.builtin.file:
     path: "{{ rclone_backup_dir }}"
     state: directory
-    owner: "{{ user }}"
-    group: "{{ user }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0750'
 
 - name: Set up a cron job to run the sync script (fixed syntax)
   ansible.builtin.cron:
     name: "rclone sync script to backup application database"
     user: root
-    job: "sudo -u {{ user }} /home/{{ user }}/scripts/backup_database.sh"
+    job: "sudo -u {{ deploy_user }} /home/{{ deploy_user }}/scripts/backup_database.sh"
     minute: "0"
     hour: "*/6"
     state: present
@@ -88,6 +88,6 @@
         delaycompress
         missingok
         notifempty
-        create 0640 {{ user }} {{ user }}
+        create 0640 {{ deploy_user }} {{ deploy_user }}
       }
     mode: '0644'
