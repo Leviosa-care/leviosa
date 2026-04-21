@@ -6,7 +6,8 @@
 .PHONY: help help-deploy help-ops \
         setup setup-staging setup-production \
         deploy deploy-staging deploy-production \
-        restart restart-staging restart-production \
+        restart restart-frontend restart-backend \
+        restart-staging restart-staging-frontend restart-staging-backend \
         backup check-clean lint \
         ssh-info status staging-status production-status \
         logs staging-logs production-logs \
@@ -26,8 +27,12 @@ help:
 	@echo "  make deploy-production  - Deploy/update production environment"
 	@echo ""
 	@echo "Quick Deploy (restart only):"
-	@echo "  make restart-staging    - Pull latest image and restart staging"
-	@echo "  make restart-production - Pull latest image and restart production"
+	@echo "  make restart                    - Pull latest images and restart all production services"
+	@echo "  make restart-frontend           - Pull and restart production frontend only"
+	@echo "  make restart-backend            - Pull and restart production backend only"
+	@echo "  make restart-staging             - Pull latest images and restart all staging services"
+	@echo "  make restart-staging-frontend    - Pull and restart staging frontend only"
+	@echo "  make restart-staging-backend     - Pull and restart staging backend only"
 	@echo ""
 	@echo "Operations:"
 	@echo "  make backup             - Configure database backups"
@@ -150,15 +155,39 @@ deploy-staging:
 		-e "@group_vars/leviosa_production.yml" \
 		-e "@group_vars/leviosa_staging.yml"
 
-# Quick restart: pull latest app image and restart only the app container
-restart:
-	@echo "Pulling latest prod image and restarting..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa && docker compose pull app && docker compose up -d app"
+# ============================================
+# Quick Restart Commands (pull images and restart)
+# ============================================
 
-# Quick restart for staging
+# Production: restart all services
+restart:
+	@echo "Pulling latest production images and restarting all services..."
+	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa && docker compose pull && docker compose up -d"
+
+# Production: restart frontend only
+restart-frontend:
+	@echo "Pulling latest production frontend and restarting..."
+	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa && docker compose pull frontend && docker compose up -d frontend"
+
+# Production: restart backend only
+restart-backend:
+	@echo "Pulling latest production backend and restarting..."
+	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa && docker compose pull backend && docker compose up -d backend"
+
+# Staging: restart all services
 restart-staging:
-	@echo "Pulling latest staging image and restarting..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa-staging && docker compose pull app && docker compose up -d app"
+	@echo "Pulling latest staging images and restarting all services..."
+	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa-staging && docker compose pull && docker compose up -d"
+
+# Staging: restart frontend only
+restart-staging-frontend:
+	@echo "Pulling latest staging frontend and restarting..."
+	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa-staging && docker compose pull frontend && docker compose up -d frontend"
+
+# Staging: restart backend only
+restart-staging-backend:
+	@echo "Pulling latest staging backend and restarting..."
+	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa-staging && docker compose pull backend && docker compose up -d backend"
 
 # Configure database backups (not yet configured — add S3 backup bucket to Terraform first)
 backup:
