@@ -29,7 +29,9 @@ BACKEND_PORT ?= 3500
 .PHONY: help \
 		local-dev local-up local-down \
 		image-build-front image-build-back image-build \
+		image-build-staging-front image-build-staging-back image-build-staging \
 		image-push-front image-push-back image-push \
+		image-push-staging-front image-push-staging-back image-push-staging \
 		image-release-front image-release-back image-release \
 		image-release-staging-front image-release-staging-back image-release-staging \
 		deploy deploy-staging \
@@ -54,7 +56,13 @@ help:
 	@echo ""
 	@echo "Docker Images (build locally):"
 	@echo "  make image-build      - Build frontend and backend images (prod)"
+	@echo "  make image-build-front       - Build production frontend only"
+	@echo "  make image-build-back        - Build production backend only"
+	@echo "  make image-build-staging     - Build frontend and backend images (staging)"
+	@echo "  make image-build-staging-front    - Build staging frontend only"
+	@echo "  make image-build-staging-back     - Build staging backend only"
 	@echo "  make image-push       - Push images to Docker Hub (prod)"
+	@echo "  make image-push-staging    - Push staging images to Docker Hub"
 	@echo "  make image-release    - Build and push images in one step (prod)"
 	@echo "  make image-release-staging - Build and push staging images"
 	@echo ""
@@ -159,8 +167,8 @@ image-release: image-build image-push
 	@echo "Production images released."
 	@echo "Run 'make ansible-deploy' or 'make ansible-restart' to deploy."
 
-# Staging images
-image-release-staging-front:
+# Staging build commands
+image-build-staging-front:
 	@echo "Building staging frontend image..."
 	docker build \
 		-t $(DOCKER_IMAGE_FRONTEND_STAGING) \
@@ -169,16 +177,35 @@ image-release-staging-front:
 		--build-arg CLIENT_IP_HEADER=$(CLIENT_IP_HEADER) \
 		--build-arg BACKEND_PORT=$(BACKEND_PORT) \
 		./frontend
-	docker push $(DOCKER_IMAGE_FRONTEND_STAGING)
-	@echo "Staging frontend image released: $(DOCKER_IMAGE_FRONTEND_STAGING)"
+	@echo "Staging frontend image built: $(DOCKER_IMAGE_FRONTEND_STAGING)"
 
-image-release-staging-back:
+image-build-staging-back:
 	@echo "Building staging backend image..."
 	docker build \
 		-t $(DOCKER_IMAGE_BACKEND_STAGING) \
 		-f backend/Dockerfile \
 		./backend
+	@echo "Staging backend image built: $(DOCKER_IMAGE_BACKEND_STAGING)"
+
+image-build-staging: image-build-staging-front image-build-staging-back
+
+image-push-staging-front:
+	@echo "Pushing staging frontend image to Docker Hub..."
+	docker push $(DOCKER_IMAGE_FRONTEND_STAGING)
+	@echo "Staging frontend image pushed: $(DOCKER_IMAGE_FRONTEND_STAGING)"
+
+image-push-staging-back:
+	@echo "Pushing staging backend image to Docker Hub..."
 	docker push $(DOCKER_IMAGE_BACKEND_STAGING)
+	@echo "Staging backend image pushed: $(DOCKER_IMAGE_BACKEND_STAGING)"
+
+image-push-staging: image-push-staging-front image-push-staging-back
+
+# Staging release commands (build + push)
+image-release-staging-front: image-build-staging-front image-push-staging-front
+	@echo "Staging frontend image released: $(DOCKER_IMAGE_FRONTEND_STAGING)"
+
+image-release-staging-back: image-build-staging-back image-push-staging-back
 	@echo "Staging backend image released: $(DOCKER_IMAGE_BACKEND_STAGING)"
 
 image-release-staging: image-release-staging-front image-release-staging-back
