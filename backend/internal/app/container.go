@@ -9,7 +9,7 @@ import (
 	// Authuser
 	authuserAgg "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/aggregator"
 	otpSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/otp"
-	partnerSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/partner"
+	// partnerSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/partner" // TODO: enable when catalog is ready
 	sessionSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/session"
 	userSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/user"
 
@@ -22,43 +22,45 @@ import (
 	stripeAdapter "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/stripe"
 
 	// Catalog
-	catalogAgg "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/aggregator"
-	categorySvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/category"
-	couponSvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/coupon"
-	imageSvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/image"
-	priceSvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/price"
-	productSvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/product"
-	promotionCodeSvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/promotion_code"
-
-	catalogPorts "github.com/Leviosa-care/leviosa/backend/internal/catalog/ports"
-
-	categoryRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/category"
-	couponRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/coupon"
-	imageRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/image"
-	priceRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/price"
-	productRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/product"
-	promotionCodeRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/promotion_code"
-	sharedRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/shared"
-	imageMedia "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/s3/image"
-	couponPayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/coupon"
-	pricePayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/price"
-	productPayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/product"
-	promotionCodePayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/promotion_code"
+	// TODO: Enable catalog module when ready
+	// catalogAgg "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/aggregator"
+	// categorySvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/category"
+	// couponSvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/coupon"
+	// imageSvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/image"
+	// priceSvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/price"
+	// productSvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/product"
+	// promotionCodeSvc "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/promotion_code"
+	//
+	// catalogPorts "github.com/Leviosa-care/leviosa/backend/internal/catalog/ports"
+	//
+	// categoryRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/category"
+	// couponRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/coupon"
+	// imageRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/image"
+	// priceRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/price"
+	// productRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/product"
+	// promotionCodeRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/promotion_code"
+	// sharedRepo "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/shared"
+	// imageMedia "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/s3/image"
+	// couponPayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/coupon"
+	// pricePayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/price"
+	// productPayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/product"
+	// promotionCodePayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/promotion_code"
 
 	// Booking
-	allocationSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/allocation"
-	availabilitySvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/availability"
-	bookingSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/booking"
-	buildingSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/building"
-	roomSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/room"
-
-	bookingPorts "github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
-
-	allocationRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/allocation"
-	availabilityRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/availability"
-	bookingRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/booking"
-	buildingRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/building"
-	roomRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/room"
+	// TODO: Enable booking module when ready
+	// allocationSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/allocation"
+	// availabilitySvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/availability"
+	// bookingSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/booking"
+	// buildingSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/building"
+	// roomSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/room"
+	//
+	// bookingPorts "github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
+	//
+	// allocationRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/allocation"
+	// availabilityRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/availability"
+	// bookingRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/booking"
+	// buildingRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/building"
+	// roomRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/room"
 
 	// Common
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
@@ -105,21 +107,23 @@ type Container struct {
 	StripeAdapter authuserPorts.StripeService
 
 	// Catalog Repositories
-	CategoryRepo      catalogPorts.CategoryRepository
-	ProductRepo       catalogPorts.ProductRepository
-	PriceRepo         catalogPorts.PriceRepository
-	ImageRepo         catalogPorts.ImageRepository
-	CouponRepo        catalogPorts.CouponRepository
-	PromotionCodeRepo catalogPorts.PromotionCodeRepository
-	SharedRepo        catalogPorts.SharedRepository
-	ImageMedia        catalogPorts.ImageMedia
+	// TODO: Enable catalog module when ready
+	// CategoryRepo      catalogPorts.CategoryRepository
+	// ProductRepo       catalogPorts.ProductRepository
+	// PriceRepo         catalogPorts.PriceRepository
+	// ImageRepo         catalogPorts.ImageRepository
+	// CouponRepo        catalogPorts.CouponRepository
+	// PromotionCodeRepo catalogPorts.PromotionCodeRepository
+	// SharedRepo        catalogPorts.SharedRepository
+	// ImageMedia        catalogPorts.ImageMedia
 
 	// Booking Repositories
-	BuildingRepo     bookingPorts.BuildingRepository
-	RoomRepo         bookingPorts.RoomRepository
-	AllocationRepo   bookingPorts.RoomAllocationRepository
-	AvailabilityRepo bookingPorts.AvailabilityRepository
-	BookingRepo      bookingPorts.BookingRepository
+	// TODO: Enable booking module when ready
+	// BuildingRepo     bookingPorts.BuildingRepository
+	// RoomRepo         bookingPorts.RoomRepository
+	// AllocationRepo   bookingPorts.RoomAllocationRepository
+	// AvailabilityRepo bookingPorts.AvailabilityRepository
+	// BookingRepo      bookingPorts.BookingRepository
 
 	// Authuser Services
 	UserService    authuserPorts.UserService
@@ -129,23 +133,25 @@ type Container struct {
 	AuthAggregator authuserPorts.AuthAggregatorService
 
 	// Catalog Services
-	CategoryService      catalogPorts.CategoryService
-	ProductService       catalogPorts.ProductService
-	PriceService         catalogPorts.PriceService
-	ImageService         catalogPorts.ImageService
-	CouponService        catalogPorts.CouponService
-	PromotionCodeService catalogPorts.PromotionCodeService
-	CatalogAggregator    catalogPorts.ProductAggregatorService
-	CategoryAggregator   catalogPorts.CategoryImagesService
+	// TODO: Enable catalog module when ready
+	// CategoryService      catalogPorts.CategoryService
+	// ProductService       catalogPorts.ProductService
+	// PriceService         catalogPorts.PriceService
+	// ImageService         catalogPorts.ImageService
+	// CouponService        catalogPorts.CouponService
+	// PromotionCodeService catalogPorts.PromotionCodeService
+	// CatalogAggregator    catalogPorts.ProductAggregatorService
+	// CategoryAggregator   catalogPorts.CategoryImagesService
 
 	// Booking Services
-	BuildingService     bookingPorts.BuildingService
-	RoomService         bookingPorts.RoomService
-	AllocationService   bookingPorts.RoomAllocationService
-	AvailabilityService bookingPorts.AvailabilityService
-	BookingService      bookingPorts.BookingService
-	MetricsService      bookingPorts.MetricsService
-	PaymentService      bookingPorts.PaymentService
+	// TODO: Enable booking module when ready
+	// BuildingService     bookingPorts.BuildingService
+	// RoomService         bookingPorts.RoomService
+	// AllocationService   bookingPorts.RoomAllocationService
+	// AvailabilityService bookingPorts.AvailabilityService
+	// BookingService      bookingPorts.BookingService
+	// MetricsService      bookingPorts.MetricsService
+	// PaymentService      bookingPorts.PaymentService
 }
 
 // NewContainer creates and wires all dependencies
@@ -295,25 +301,27 @@ func (c *Container) setupRepositories(ctx context.Context) error {
 	c.StripeAdapter = stripeAdapter.NewService(c.Config.StripeSecretKey, "")
 
 	// Catalog repositories
-	c.CategoryRepo = categoryRepo.New(ctx, c.DB)
-	c.ProductRepo = productRepo.New(ctx, c.DB)
-	c.PriceRepo = priceRepo.New(ctx, c.DB)
-	c.ImageRepo = imageRepo.New(ctx, c.DB)
-	c.CouponRepo = couponRepo.New(ctx, c.DB)
-	c.PromotionCodeRepo = promotionCodeRepo.New(ctx, c.DB)
-	c.SharedRepo = sharedRepo.New(ctx, c.DB)
-	c.ImageMedia = imageMedia.New(ctx, c.S3Client, c.Config.S3BucketName)
+	// TODO: Enable catalog module when ready
+	// c.CategoryRepo = categoryRepo.New(ctx, c.DB)
+	// c.ProductRepo = productRepo.New(ctx, c.DB)
+	// c.PriceRepo = priceRepo.New(ctx, c.DB)
+	// c.ImageRepo = imageRepo.New(ctx, c.DB)
+	// c.CouponRepo = couponRepo.New(ctx, c.DB)
+	// c.PromotionCodeRepo = promotionCodeRepo.New(ctx, c.DB)
+	// c.SharedRepo = sharedRepo.New(ctx, c.DB)
+	// c.ImageMedia = imageMedia.New(ctx, c.S3Client, c.Config.S3BucketName)
 
 	// Booking repositories
-	c.BuildingRepo = buildingRepo.New(ctx, c.DB)
-	c.RoomRepo = roomRepo.New(ctx, c.DB)
-	var err error
-	c.AllocationRepo, err = allocationRepo.New(ctx, c.DB)
-	if err != nil {
-		return fmt.Errorf("create allocation repo: %w", err)
-	}
-	c.AvailabilityRepo = availabilityRepo.New(ctx, c.DB)
-	c.BookingRepo = bookingRepo.New(ctx, c.DB)
+	// TODO: Enable booking module when ready
+	// c.BuildingRepo = buildingRepo.New(ctx, c.DB)
+	// c.RoomRepo = roomRepo.New(ctx, c.DB)
+	// var err error
+	// c.AllocationRepo, err = allocationRepo.New(ctx, c.DB)
+	// if err != nil {
+	// 	return fmt.Errorf("create allocation repo: %w", err)
+	// }
+	// c.AvailabilityRepo = availabilityRepo.New(ctx, c.DB)
+	// c.BookingRepo = bookingRepo.New(ctx, c.DB)
 
 	return nil
 }
@@ -334,69 +342,68 @@ func (c *Container) setupServices(ctx context.Context) error {
 	}
 
 	// Catalog stripe gateways
-	stripeCoupon := couponPayment.NewCoupon(c.Config.StripeSecretKey, "")
-	stripePrice := pricePayment.NewPrice(c.Config.StripeSecretKey, "")
-	stripeProduct := productPayment.NewProduct(c.Config.StripeSecretKey, "")
-	stripePromoCode := promotionCodePayment.NewPromotionCode(c.Config.StripeSecretKey, "")
+	// TODO: Enable catalog module when ready
+	// stripeCoupon := couponPayment.NewCoupon(c.Config.StripeSecretKey, "")
+	// stripePrice := pricePayment.NewPrice(c.Config.StripeSecretKey, "")
+	// stripeProduct := productPayment.NewProduct(c.Config.StripeSecretKey, "")
+	// stripePromoCode := promotionCodePayment.NewPromotionCode(c.Config.StripeSecretKey, "")
 
 	// Catalog services
-	c.ImageService = imageSvc.New(c.ImageRepo, c.ImageMedia, c.SharedRepo)
-
-	c.CategoryService = categorySvc.New(c.CategoryRepo, c.SharedRepo)
-
-	c.CouponService = couponSvc.NewCouponService(c.CouponRepo)
-
-	c.PromotionCodeService = promotionCodeSvc.New(c.PromotionCodeRepo, c.CouponRepo)
-
-	c.PriceService = priceSvc.New(c.PriceRepo, c.SharedRepo, stripePrice)
-
-	c.ProductService = productSvc.New(c.ProductRepo, c.SharedRepo, stripeProduct, stripePrice)
-
-	// Catalog aggregators
-	c.CatalogAggregator = catalogAgg.NewProductPricesAggregatorService(
-		c.ProductService,
-		c.PriceService,
-		c.ImageService,
-	)
-
-	c.CategoryAggregator = catalogAgg.NewCategoryAggregatorService(
-		c.CategoryService,
-		c.ImageService,
-	)
+	// TODO: Enable catalog module when ready
+	// c.ImageService = imageSvc.New(c.ImageRepo, c.ImageMedia, c.SharedRepo)
+	// c.CategoryService = categorySvc.New(c.CategoryRepo, c.SharedRepo)
+	// c.CouponService = couponSvc.NewCouponService(c.CouponRepo)
+	// c.PromotionCodeService = promotionCodeSvc.New(c.PromotionCodeRepo, c.CouponRepo)
+	// c.PriceService = priceSvc.New(c.PriceRepo, c.SharedRepo, stripePrice)
+	// c.ProductService = productSvc.New(c.ProductRepo, c.SharedRepo, stripeProduct, stripePrice)
+	// c.CatalogAggregator = catalogAgg.NewProductPricesAggregatorService(
+	// 	c.ProductService,
+	// 	c.PriceService,
+	// 	c.ImageService,
+	// )
+	// c.CategoryAggregator = catalogAgg.NewCategoryAggregatorService(
+	// 	c.CategoryService,
+	// 	c.ImageService,
+	// )
 
 	// Authuser services
 	c.UserService = userSvc.New(c.UserRepo, c.Crypto, c.StripeAdapter)
 
-	c.PartnerService, err = partnerSvc.New(
-		ctx,
-		c.PartnerRepo,
-		c.UserRepo,
-		c.ProductService,
-		c.CategoryService,
-		c.Crypto,
-		c.StripeAdapter,
-	)
-	if err != nil {
-		return fmt.Errorf("create partner service: %w", err)
-	}
+	// Partner service depends on catalog (ProductService, CategoryService)
+	// TODO: Enable partner module when catalog is ready
+	// c.PartnerService, err = partnerSvc.New(
+	// 	ctx,
+	// 	c.PartnerRepo,
+	// 	c.UserRepo,
+	// 	c.ProductService,
+	// 	c.CategoryService,
+	// 	c.Crypto,
+	// 	c.StripeAdapter,
+	// )
+	// if err != nil {
+	// 	return fmt.Errorf("create partner service: %w", err)
+	// }
 
+	// Auth aggregator (partner service is optional)
 	c.AuthAggregator = authuserAgg.New(
 		c.OTPService,
 		c.UserService,
 		c.SessionService,
-		c.PartnerService,
+		nil, // PartnerService - TODO: enable when catalog is ready
 	)
 
-	// Booking services (initialized but not fully wired yet)
-	_ = allocationSvc.New
-	_ = availabilitySvc.New
-	_ = bookingSvc.New
-	_ = buildingSvc.New
-	_ = roomSvc.New
+	// Booking services
+	// TODO: Enable booking module when ready
+	// _ = allocationSvc.New
+	// _ = availabilitySvc.New
+	// _ = bookingSvc.New
+	// _ = buildingSvc.New
+	// _ = roomSvc.New
 
-	// Suppress unused stripe gateway variables
-	_ = stripeCoupon
-	_ = stripePromoCode
+	// Suppress unused variables
+	// TODO: Remove when catalog/booking are enabled
+	// _ = stripeCoupon
+	// _ = stripePromoCode
 
 	return nil
 }

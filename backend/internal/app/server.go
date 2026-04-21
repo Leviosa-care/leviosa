@@ -9,24 +9,26 @@ import (
 
 	// Authuser HTTP handlers
 	authHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
-	partnerHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/partner"
+	// partnerHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/partner" // TODO: enable when catalog is ready
 	userHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/user"
 
 	// Booking HTTP handlers
-	allocationHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/allocation"
-	availabilityHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/availability"
-	bookingHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/booking"
-	buildingHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/building"
-	metricsHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/metrics"
-	roomHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/room"
+	// TODO: Enable booking module when ready
+	// allocationHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/allocation"
+	// availabilityHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/availability"
+	// bookingHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/booking"
+	// buildingHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/building"
+	// metricsHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/metrics"
+	// roomHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/room"
 
 	// Catalog HTTP handlers
-	categoryHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/category"
-	couponHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/coupon"
-	imageHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/image"
-	priceHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/price"
-	productHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/product"
-	promotionCodeHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/promotion_code"
+	// TODO: Enable catalog module when ready
+	// categoryHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/category"
+	// couponHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/coupon"
+	// imageHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/image"
+	// priceHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/price"
+	// productHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/product"
+	// promotionCodeHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/promotion_code"
 
 	// Common
 	"github.com/Leviosa-care/leviosa/backend/internal/common/envmode"
@@ -102,10 +104,12 @@ func (s *Server) setupRoutes(mux *http.ServeMux) {
 	s.setupAuthuserRoutes(mux)
 
 	// Catalog routes
-	s.setupCatalogRoutes(mux)
+	// TODO: Enable catalog module when ready
+	// s.setupCatalogRoutes(mux)
 
 	// Booking routes
-	s.setupBookingRoutes(mux)
+	// TODO: Enable booking module when ready
+	// s.setupBookingRoutes(mux)
 }
 
 func (s *Server) setupAuthuserRoutes(router *http.ServeMux) {
@@ -123,105 +127,107 @@ func (s *Server) setupAuthuserRoutes(router *http.ServeMux) {
 	)
 	userH.RegisterRoutes(router)
 
-	// Partner handler
-	partnerH := partnerHandler.New(
-		s.container.PartnerService,
-		s.container.AuthMw,
-	)
-	partnerH.RegisterRoutes(router)
+	// Partner handler (depends on catalog - TODO: enable when catalog is ready)
+	// partnerH := partnerHandler.New(
+	// 	s.container.PartnerService,
+	// 	s.container.AuthMw,
+	// )
+	// partnerH.RegisterRoutes(router)
 }
 
-func (s *Server) setupCatalogRoutes(router *http.ServeMux) {
-	// Category handler
-	categoryH := categoryHandler.New(
-		s.container.CategoryService,
-		s.container.ImageService,
-		s.container.CategoryAggregator,
-		s.container.AuthMw,
-	)
-	categoryH.RegisterRoutes(router)
+// TODO: Enable catalog module when ready
+// func (s *Server) setupCatalogRoutes(router *http.ServeMux) {
+// 	// Category handler
+// 	categoryH := categoryHandler.New(
+// 		s.container.CategoryService,
+// 		s.container.ImageService,
+// 		s.container.CategoryAggregator,
+// 		s.container.AuthMw,
+// 	)
+// 	categoryH.RegisterRoutes(router)
+//
+// 	// Product handler
+// 	productH := productHandler.New(
+// 		s.container.ProductService,
+// 		s.container.CatalogAggregator,
+// 		s.container.AuthMw,
+// 	)
+// 	productH.RegisterRoutes(router)
+//
+// 	// Price handler
+// 	priceH := priceHandler.New(
+// 		s.container.PriceService,
+// 		s.container.AuthMw,
+// 	)
+// 	priceH.RegisterRoutes(router)
+//
+// 	// Image handler
+// 	imageH := imageHandler.New(
+// 		s.container.ImageService,
+// 		s.container.AuthMw,
+// 	)
+// 	imageH.RegisterRoutes(router)
+//
+// 	// Coupon handler
+// 	couponH := couponHandler.New(
+// 		s.container.CouponService,
+// 		s.container.AuthMw,
+// 	)
+// 	couponH.RegisterRoutes(router)
+//
+// 	// Promotion code handler
+// 	promotionCodeH := promotionCodeHandler.New(
+// 		s.container.PromotionCodeService,
+// 		s.container.AuthMw,
+// 	)
+// 	promotionCodeH.RegisterRoutes(router)
+// }
 
-	// Product handler
-	productH := productHandler.New(
-		s.container.ProductService,
-		s.container.CatalogAggregator,
-		s.container.AuthMw,
-	)
-	productH.RegisterRoutes(router)
-
-	// Price handler
-	priceH := priceHandler.New(
-		s.container.PriceService,
-		s.container.AuthMw,
-	)
-	priceH.RegisterRoutes(router)
-
-	// Image handler
-	imageH := imageHandler.New(
-		s.container.ImageService,
-		s.container.AuthMw,
-	)
-	imageH.RegisterRoutes(router)
-
-	// Coupon handler
-	couponH := couponHandler.New(
-		s.container.CouponService,
-		s.container.AuthMw,
-	)
-	couponH.RegisterRoutes(router)
-
-	// Promotion code handler
-	promotionCodeH := promotionCodeHandler.New(
-		s.container.PromotionCodeService,
-		s.container.AuthMw,
-	)
-	promotionCodeH.RegisterRoutes(router)
-}
-
-func (s *Server) setupBookingRoutes(router *http.ServeMux) {
-	// Building handler
-	buildingH := buildingHandler.New(
-		s.container.BuildingService,
-		s.container.AuthMw,
-	)
-	buildingH.RegisterRoutes(router)
-
-	// Room handler
-	roomH := roomHandler.New(
-		s.container.RoomService,
-		s.container.AuthMw,
-	)
-	roomH.RegisterRoutes(router)
-
-	// Allocation handler
-	allocationH := allocationHandler.New(
-		s.container.AllocationService,
-		s.container.AuthMw,
-	)
-	allocationH.RegisterRoutes(router)
-
-	// Availability handler
-	availabilityH := availabilityHandler.New(
-		s.container.AvailabilityService,
-		s.container.AuthMw,
-	)
-	availabilityH.RegisterRoutes(router)
-
-	// Booking handler
-	bookingH := bookingHandler.New(
-		s.container.BookingService,
-		s.container.PaymentService,
-		s.container.AuthMw,
-	)
-	bookingH.RegisterRoutes(router)
-
-	// Metrics handler (analytics endpoints)
-	metricsH := metricsHandler.New(
-		s.container.MetricsService,
-		s.container.AuthMw,
-	)
-	metricsH.RegisterRoutes(router)
-}
+// TODO: Enable booking module when ready
+// func (s *Server) setupBookingRoutes(router *http.ServeMux) {
+// 	// Building handler
+// 	buildingH := buildingHandler.New(
+// 		s.container.BuildingService,
+// 		s.container.AuthMw,
+// 	)
+// 	buildingH.RegisterRoutes(router)
+//
+// 	// Room handler
+// 	roomH := roomHandler.New(
+// 		s.container.RoomService,
+// 		s.container.AuthMw,
+// 	)
+// 	roomH.RegisterRoutes(router)
+//
+// 	// Allocation handler
+// 	allocationH := allocationHandler.New(
+// 		s.container.AllocationService,
+// 		s.container.AuthMw,
+// 	)
+// 	allocationH.RegisterRoutes(router)
+//
+// 	// Availability handler
+// 	availabilityH := availabilityHandler.New(
+// 		s.container.AvailabilityService,
+// 		s.container.AuthMw,
+// 	)
+// 	availabilityH.RegisterRoutes(router)
+//
+// 	// Booking handler
+// 	bookingH := bookingHandler.New(
+// 		s.container.BookingService,
+// 		s.container.PaymentService,
+// 		s.container.AuthMw,
+// 	)
+// 	bookingH.RegisterRoutes(router)
+//
+// 	// Metrics handler (analytics endpoints)
+// 	metricsH := metricsHandler.New(
+// 		s.container.MetricsService,
+// 		s.container.AuthMw,
+// 	)
+// 	metricsH.RegisterRoutes(router)
+// }
 
 func (s *Server) applyMiddleware(handler http.Handler) http.Handler {
 	// CORS middleware
