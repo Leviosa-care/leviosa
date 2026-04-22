@@ -1,9 +1,10 @@
 import { redirect, type Handle, type RequestEvent } from '@sveltejs/kit';
-import { NODE_ENV, CLIENT_IP_HEADER, SESSION_COOKIE_NAME, API_URL } from "$env/static/private"
+import { NODE_ENV, CLIENT_IP_HEADER, API_URL } from "$env/static/private"
 import { env } from "$env/dynamic/private"
 
 import { handleLoginRedirect } from '$lib/utils/redirect';
 import { mockUser } from '$lib/data/user';
+import { isAdminDomain, isStaffDomain, getSessionCookieName, getCookieDomain } from '$lib/server/hostname';
 
 // TODO: for the session thing
 // on each request, send the accesstoken or session_token
@@ -12,6 +13,24 @@ import { mockUser } from '$lib/data/user';
 // and optionnaly a new refresh  token. This is the rotation step !
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Detect hostname and set domain context
+	const hostname = event.url.hostname;
+	event.locals.isAdminDomain = isAdminDomain(hostname);
+	event.locals.isStaffDomain = isStaffDomain(hostname);
+	const cookieDomain = getCookieDomain(hostname);
+	const sessionCookieName = getSessionCookieName(hostname);
+
+	// On the admin subdomain (not localhost), redirect bare root to /admin so the auth flow runs
+	const isLocalhost = hostname.startsWith('localhost') || hostname.startsWith('127.0.0.1');
+	if (event.locals.isAdminDomain && !isLocalhost && event.url.pathname === '/') {
+		throw redirect(302, '/admin');
+	}
+
+	// On the staff subdomain (not localhost), redirect bare root to /staff so the auth flow runs
+	if (event.locals.isStaffDomain && !isLocalhost && event.url.pathname === '/') {
+		throw redirect(302, '/staff');
+	}
+
     if (env.COMING_SOON === 'true') {
         if (event.url.pathname !== '/coming-soon') {
             throw redirect(302, '/coming-soon')
@@ -29,7 +48,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         return await resolve(event)
     }
 
-    const sessionID = event.cookies.get(SESSION_COOKIE_NAME);
+    const sessionID = event.cookies.get(sessionCookieName);
     if (!sessionID) {
         let path = handleLoginRedirect(event.url, "expiredSession");
         const email = event.locals.user?.email;
@@ -55,6 +74,10 @@ export const handle: Handle = async ({ event, resolve }) => {
         return fetch(input, init);
     };
 
+    // Store session cookie name for use in layouts/pages
+    event.locals.sessionCookieName = sessionCookieName;
+    event.locals.cookieDomain = cookieDomain ?? undefined;
+
     return await resolve(event);
 };
 
@@ -68,14 +91,15 @@ function getClientIP(request: Request): string {
     );
 }
 
-async function validateSession({ cookies, url }: RequestEvent, sessionID: string): Promise<App.User> {
+async function validateSession(event: RequestEvent, sessionID: string): Promise<App.User> {
     const res = await fetch(`${API_URL}/users/me`, {
         method: "GET",
         headers: { Authorization: `Bearer ${sessionID}` },
     });
     if (!res.ok) {
-        cookies.set(SESSION_COOKIE_NAME, '', {
+        event.cookies.set(event.locals.sessionCookieName, '', {
             path: '/',
+            domain: event.locals.cookieDomain,
             expires: new Date(0)
         });
         switch (res.status) {
@@ -85,7 +109,7 @@ async function validateSession({ cookies, url }: RequestEvent, sessionID: string
                 throw new Error("The server is currently unavailable. We apologize for the inconvenience and are working to resolve the issue as soon as possible.")
         }
         // TODO: maybe add some message to help the user understand what happened ?
-        throw redirect(302, handleLoginRedirect(url));
+        throw redirect(302, handleLoginRedirect(event.url));
     }
     return res.json();
 }

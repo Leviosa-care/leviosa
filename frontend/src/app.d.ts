@@ -21,6 +21,10 @@ declare global {
         interface Error { }
         interface Locals {
             user: User
+            isAdminDomain: boolean
+            isStaffDomain: boolean
+            sessionCookieName: string
+            cookieDomain: string | undefined
         }
         // interface PageData {}
         // interface PageState {}
