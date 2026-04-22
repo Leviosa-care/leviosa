@@ -186,6 +186,7 @@ services:
     image: hashicorp/vault:latest
     container_name: {{ app_name }}_vault
     restart: unless-stopped
+    privileged: true
     environment:
       VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_TOKEN}
       VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
