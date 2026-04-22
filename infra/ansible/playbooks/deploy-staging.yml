@@ -35,6 +35,35 @@
       become_user: root
       when: app_deployed | default(false)
 
+    - name: Create staging vhost in production RabbitMQ
+      ansible.builtin.command:
+        cmd: docker exec leviosa_rabbitmq rabbitmqctl add_vhost {{ rabbitmq_vhost | default('staging') }}
+      register: vhost_create_result
+      failed_when: vhost_create_result.rc != 0 and 'already_exists' not in vhost_create_result.stderr
+      changed_when: vhost_create_result.rc == 0
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
+    - name: Create staging user in production RabbitMQ
+      ansible.builtin.command:
+        cmd: docker exec leviosa_rabbitmq rabbitmqctl add_user {{ rabbitmq_user | default('leviosa_staging') }} {{ rabbitmq_password | default('change_me') }}
+      register: user_create_result
+      failed_when: user_create_result.rc != 0 and 'already_exists' not in user_create_result.stderr
+      changed_when: user_create_result.rc == 0
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
+    - name: Grant staging user permissions on staging vhost
+      ansible.builtin.command:
+        cmd: docker exec leviosa_rabbitmq rabbitmqctl set_permissions -p {{ rabbitmq_vhost | default('staging') }} {{ rabbitmq_user | default('leviosa_staging') }} '.*' '.*' '.*'
+      register: perms_set_result
+      changed_when: perms_set_result.rc == 0
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
     - name: Pull latest images
       ansible.builtin.command:
         cmd: docker compose pull
