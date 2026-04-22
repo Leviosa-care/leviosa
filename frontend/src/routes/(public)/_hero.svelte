@@ -48,7 +48,7 @@
             <!-- Primary CTA -->
             <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-4" use:reveal={{ preset: "fade-up", delay: 250 }}>
                 <button
-                    class="group w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-dark-900 hover:bg-dark-800 text-white text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ring-offset-2 focus:ring-2 focus:ring-dark-900"
+                    class="group w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-dark-900 hover:bg-dark-800 text-white text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ring-offset-2 focus:ring-2 focus:ring-dark-900 cursor-pointer"
                 >
                     Prendre rendez-vous
                     <span
@@ -60,7 +60,7 @@
                 </button>
 
                 <button
-                    class="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white border border-dark-200 hover:border-dark-300 text-dark-600 hover:text-dark-900 text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200"
+                    class="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white border border-dark-200 hover:border-dark-300 text-dark-600 hover:text-dark-900 text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 cursor-pointer"
                 >
                     Comment ça fonctionne
                 </button>
@@ -146,7 +146,7 @@
                 <!-- Date Picker Strip -->
                 <div class="flex justify-between items-center mb-6">
                     <button
-                        class="text-dark-400 hover:text-dark-600"
+                        class="text-dark-400 hover:text-dark-600 cursor-pointer"
                         aria-label="Mois précédent"
                     >
                         <span
@@ -159,7 +159,7 @@
                         >Octobre 2023</span
                     >
                     <button
-                        class="text-dark-400 hover:text-dark-600"
+                        class="text-dark-400 hover:text-dark-600 cursor-pointer"
                         aria-label="Mois suivant"
                     >
                         <span

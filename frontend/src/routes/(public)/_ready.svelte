@@ -27,7 +27,7 @@
         <!-- Primary Action -->
         <div class="flex justify-center" use:reveal={{ preset: "fade-up", delay: 200 }}>
             <button
-                class="bg-white text-dark-900 hover:bg-dark-100 px-8 py-4 rounded-xl font-semibold text-base transition-all duration-200 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] hover:scale-[1.02] active:scale-[0.98]"
+                class="bg-white text-dark-900 hover:bg-dark-100 px-8 py-4 rounded-xl font-semibold text-base transition-all duration-200 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
                 Prendre rendez-vous maintenant
             </button>

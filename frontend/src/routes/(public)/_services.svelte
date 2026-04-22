@@ -193,7 +193,7 @@
                     <!-- Secondary CTA (Discovery) -->
                     <div class="flex flex-col sm:flex-row gap-4">
                         <button
-                            class="inline-flex justify-center items-center gap-2 bg-white text-dark-900 border border-dark-200 hover:border-dark-400 hover:bg-dark-50 text-sm font-medium px-6 py-3 rounded-xl transition-all duration-200"
+                            class="inline-flex justify-center items-center gap-2 bg-white text-dark-900 border border-dark-200 hover:border-dark-400 hover:bg-dark-50 text-sm font-medium px-6 py-3 rounded-xl transition-all duration-200 cursor-pointer"
                         >
                             Découvrir le service
                         </button>

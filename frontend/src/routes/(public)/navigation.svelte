@@ -69,7 +69,7 @@
         onclick={() => (isMobileMenuOpen = true)}
         aria-label="Open navigation menu"
         aria-expanded={isMobileMenuOpen}
-        class="flex items-center justify-center xl:hidden w-11 h-11"
+        class="flex items-center justify-center xl:hidden w-11 h-11 cursor-pointer"
     >
         <Menu size={24} />
     </button>
@@ -116,7 +116,7 @@
             <button
                 onclick={() => (isMobileMenuOpen = false)}
                 aria-label="Close navigation menu"
-                class="w-11 h-11 flex items-center justify-center"
+                class="w-11 h-11 flex items-center justify-center cursor-pointer"
             >
                 <X size={24} />
             </button>
