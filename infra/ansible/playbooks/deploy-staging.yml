@@ -25,6 +25,16 @@
       tags: ['app', 'deploy']
 
   post_tasks:
+    - name: Create staging database in production Postgres
+      ansible.builtin.command:
+        cmd: docker exec leviosa_postgres psql -U {{ db_user | default('leviosa') }} -d postgres -c 'CREATE DATABASE {{ db_name | default('leviosa_staging') }};'
+      register: db_create_result
+      failed_when: db_create_result.rc != 0 and 'already exists' not in db_create_result.stderr
+      changed_when: db_create_result.rc == 0
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
     - name: Pull latest images
       ansible.builtin.command:
         cmd: docker compose pull
