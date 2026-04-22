@@ -1,5 +1,4 @@
 import { redirect, type Handle, type RequestEvent } from '@sveltejs/kit';
-import { NODE_ENV, CLIENT_IP_HEADER, API_URL } from "$env/static/private"
 import { env } from "$env/dynamic/private"
 
 import { handleLoginRedirect } from '$lib/utils/redirect';
@@ -38,7 +37,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         return await resolve(event)
     }
 
-    if (NODE_ENV === 'development' || NODE_ENV === 'staging') {
+    if (env.NODE_ENV === 'development' || env.NODE_ENV === 'staging') {
         event.locals.user = mockUser
         return await resolve(event)
     }
@@ -68,7 +67,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         // Ensure headers object exists
         init.headers = {
             ...(init.headers ?? {}),
-            [CLIENT_IP_HEADER]: getClientIP(event.request),
+            [env.CLIENT_IP_HEADER ?? 'x-client-ip']: getClientIP(event.request),
             Authorization: `Bearer ${sessionID}`
         };
         return fetch(input, init);
@@ -92,7 +91,7 @@ function getClientIP(request: Request): string {
 }
 
 async function validateSession(event: RequestEvent, sessionID: string): Promise<App.User> {
-    const res = await fetch(`${API_URL}/users/me`, {
+    const res = await fetch(`${env.API_URL}/users/me`, {
         method: "GET",
         headers: { Authorization: `Bearer ${sessionID}` },
     });
