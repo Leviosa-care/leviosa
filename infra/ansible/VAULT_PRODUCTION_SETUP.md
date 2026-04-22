@@ -47,7 +47,7 @@ Replace the dev mode Vault service with production configuration:
 ```yaml
   # HashiCorp Vault (secrets management)
   vault:
-    image: hashicorp/vault:latest
+    image: hashicorp/vault:1.15
     container_name: {{ app_name }}_vault
     restart: unless-stopped
     cap_add:
@@ -76,6 +76,8 @@ Replace the dev mode Vault service with production configuration:
         max-size: "10m"
         max-file: "3"
 ```
+
+**Note:** Use a specific version (e.g., `1.15`) instead of `:latest` to avoid unexpected breaking changes. The `disable_mlock = true` in the config file (see below) prevents CAP_SETFCAP errors.
 
 ### 4. Create Vault Configuration File
 
@@ -243,6 +245,30 @@ make prod-logs | grep vault
 - [ ] Network policies restrict access to Vault port 8200
 
 ## Troubleshooting
+
+### CAP_SETFCAP Error (Vault Restart Loop)
+
+**Symptom:** Vault container stuck in restart loop with logs showing:
+```
+unable to set CAP_SETFCAP effective capability: Operation not permitted
+```
+
+**Solution:** This occurs when Vault tries to use memory locking (mlock) without proper capabilities. Fix by adding `disable_mlock = true` to Vault config:
+
+```hcl
+# In vault.hcl
+disable_mlock = true
+```
+
+**Note:** The development setup uses `privileged: true` as a workaround. For production, use `disable_mlock = true` in the config file instead (already included in the template above).
+
+**Important:** If using Vault 1.16+, always pin to a specific version instead of `:latest` to avoid breaking changes:
+
+```yaml
+# Use specific version
+image: hashicorp/vault:1.15
+# NOT: image: hashicorp/vault:latest
+```
 
 ### Vault Sealed After Restart
 
