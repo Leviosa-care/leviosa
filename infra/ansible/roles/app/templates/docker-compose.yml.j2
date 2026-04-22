@@ -12,7 +12,7 @@ services:
     expose:
       - "{{ frontend_port | default('3000') }}"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV={{ app_env | default('production') }}
       - PORT={{ frontend_port | default('3000') }}
     env_file:
       - .env
