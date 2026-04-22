@@ -1,21 +1,24 @@
-import { redirect } from '@sveltejs/kit'
-import { computePermissions } from '$lib/security/permissions'
-
+import { redirect, error } from '@sveltejs/kit';
+import { computePermissions } from '$lib/security/permissions';
 
 export const load = async ({ locals }) => {
-    const user = locals.user
+	const user = locals.user;
 
-    if (!user) {
-        // throw redirect(302, '/auth')
-        // TODO: is the way to do this ?
-        throw redirect(302, 'redirectFrom?/staff/auth')
-    }
+	// Check if user is authenticated
+	if (!user) {
+		throw redirect(302, '/auth?redirect=' + encodeURIComponent('/staff'));
+	}
 
-    const permissions = computePermissions(user.role)
+	// Compute permissions to check access
+	const permissions = computePermissions(user.role);
 
-    return {
-        user,
-        permissions
-    }
-}
+	// Check if user has staff or admin role
+	if (!permissions.canAccessOps) {
+		throw error(403, 'Accès non autorisé');
+	}
 
+	return {
+		user,
+		permissions,
+	};
+};
