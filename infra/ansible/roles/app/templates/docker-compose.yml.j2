@@ -195,6 +195,7 @@ services:
       - {{ app_data_dir }}/vault:/vault/data
     networks:
       - {{ app_name }}_network
+    command: server -dev -dev-root-token-id=${VAULT_TOKEN} -dev-listen-address=0.0.0.0:8200
     healthcheck:
       test: ["CMD", "vault", "status"]
       interval: 10s
