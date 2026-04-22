@@ -13,6 +13,38 @@
 # Production sites
 # ============================================
 
+# Admin and staff subdomains share the same frontend container
+admin.leviosa.care, staff.leviosa.care {
+        tls {
+                dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+        }
+
+        reverse_proxy {{ app_name }}_frontend:{{ frontend_port | default('3000') }}
+
+        # Security headers
+        header {
+                Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+                X-Content-Type-Options "nosniff"
+                X-Frame-Options "SAMEORIGIN"
+                X-XSS-Protection "1; mode=block"
+                Referrer-Policy "strict-origin-when-cross-origin"
+                -Server
+        }
+
+        request_body {
+                max_size 100M
+        }
+
+        log {
+                output file /var/log/caddy/access.log {
+                        roll_size 100mb
+                        roll_keep 5
+                        roll_keep_for 720h
+                }
+                format json
+        }
+}
+
 leviosa.care, www.leviosa.care {
         tls {
                 dns cloudflare {env.CLOUDFLARE_API_TOKEN}
@@ -47,6 +79,43 @@ leviosa.care, www.leviosa.care {
 # ============================================
 # Staging sites
 # ============================================
+
+# Admin and staff staging subdomains
+admin-staging.leviosa.care, staff-staging.leviosa.care {
+        tls {
+                dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+        }
+
+        reverse_proxy {{ app_name }}_staging_frontend:{{ frontend_port | default('3000') }}
+
+{% if caddy_staging_basic_auth_username | default('') != '' %}
+        basicauth / {
+                {{ caddy_staging_basic_auth_username }} {{ caddy_staging_basic_auth_password_hash }}
+        }
+{% endif %}
+
+        header {
+                Strict-Transport-Security "max-age=31536000; includeSubDomains"
+                X-Content-Type-Options "nosniff"
+                X-Frame-Options "DENY"
+                X-XSS-Protection "1; mode=block"
+                Referrer-Policy "strict-origin-when-cross-origin"
+                -Server
+        }
+
+        request_body {
+                max_size 100M
+        }
+
+        log {
+                output file /var/log/caddy/staging-access.log {
+                        roll_size 100mb
+                        roll_keep 5
+                        roll_keep_for 720h
+                }
+                format json
+        }
+}
 
 staging.leviosa.care, www.staging.leviosa.care {
         tls {
