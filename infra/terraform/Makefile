@@ -69,6 +69,13 @@ help:
 	@echo ""
 	@echo "Current workspace: $$(terraform workspace show)"
 
+# Generic plan/apply (defaults to staging)
+plan:
+	@$(MAKE) plan-staging
+
+apply:
+	@$(MAKE) apply-staging
+
 # ============================================
 # Workspace Management
 # ============================================
@@ -129,13 +136,13 @@ plan-staging:
 	@echo "Switching to staging workspace (default)..."
 	@terraform workspace select default 2>/dev/null || true
 	@echo "Showing planned changes for staging..."
-	terraform plan -var-file=terraform.tfvars.staging
+	terraform plan -var-file=terraform.tfvars.staging $(STAGING_TARGETS)
 
 apply-staging:
 	@echo "Switching to staging workspace (default)..."
 	@terraform workspace select default 2>/dev/null || true
 	@echo "Applying Terraform changes for staging..."
-	terraform apply -var-file=terraform.tfvars.staging
+	terraform apply -var-file=terraform.tfvars.staging $(STAGING_TARGETS)
 
 # Production environment targets
 # Only manages AWS resources (S3 + IAM). The VPS and DNS are shared and already
@@ -148,6 +155,10 @@ STAGING_TARGETS := \
 	-target=cloudflare_dns_record.leviosa_care_aaaa \
 	-target=cloudflare_dns_record.www_leviosa_care \
 	-target=cloudflare_dns_record.staging_leviosa_care \
+	-target=cloudflare_dns_record.admin_leviosa_care \
+	-target=cloudflare_dns_record.staff_leviosa_care \
+	-target=cloudflare_dns_record.admin_staging_leviosa_care \
+	-target=cloudflare_dns_record.staff_staging_leviosa_care \
 	-target=aws_s3_bucket.bucket \
 	-target=aws_s3_bucket_versioning.assets_versioning \
 	-target=aws_s3_bucket_server_side_encryption_configuration.assets_encryption \
