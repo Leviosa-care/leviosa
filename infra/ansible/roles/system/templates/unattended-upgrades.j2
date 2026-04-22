@@ -20,9 +20,11 @@ Unattended-Upgrade::Verbose "false";
 // Unattended-Upgrade::Mail "{{ auto_updates_email | default('root@localhost') }}";
 Unattended-Upgrade::MailOnlyOnError "true";
 
-// Blacklist packages from auto-upgrade (Docker to prevent disruptions)
+// Blacklist packages from auto-upgrade (Docker and SSH to prevent disruptions)
 Unattended-Upgrade::Package-Blacklist {
   "docker-ce";
   "docker-ce-cli";
   "containerd.io";
+  "openssh-server";
+  "openssh-client";
 };
