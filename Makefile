@@ -327,7 +327,7 @@ ansible-setup:
 
 ansible-deploy:
 	@echo "Deploying production via Ansible..."
-	cd infra/ansible && $(MAKE) deploy
+	cd infra/ansible && $(MAKE) deploy-production
 
 ansible-deploy-staging:
 	@echo "Deploying staging via Ansible..."
