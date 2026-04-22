@@ -35,12 +35,29 @@
       become_user: root
       when: app_deployed | default(false)
 
+    - name: Check if staging vhost exists in RabbitMQ
+      ansible.builtin.command:
+        cmd: docker exec leviosa_rabbitmq rabbitmqctl list_vhosts
+      register: rabbitmq_vhosts
+      changed_when: false
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
     - name: Create staging vhost in production RabbitMQ
       ansible.builtin.command:
         cmd: docker exec leviosa_rabbitmq rabbitmqctl add_vhost {{ rabbitmq_vhost | default('staging') }}
       register: vhost_create_result
-      failed_when: vhost_create_result.rc != 0 and 'already_exists' not in vhost_create_result.stderr
+      when: app_deployed | default(false) and (rabbitmq_vhosts.stdout | default('') is not search(rabbitmq_vhost | default('staging')))
       changed_when: vhost_create_result.rc == 0
+      become: true
+      become_user: root
+
+    - name: Check if staging user exists in RabbitMQ
+      ansible.builtin.command:
+        cmd: docker exec leviosa_rabbitmq rabbitmqctl list_users
+      register: rabbitmq_users
+      changed_when: false
       become: true
       become_user: root
       when: app_deployed | default(false)
@@ -49,11 +66,10 @@
       ansible.builtin.command:
         cmd: docker exec leviosa_rabbitmq rabbitmqctl add_user {{ rabbitmq_user | default('leviosa_staging') }} {{ rabbitmq_password | default('change_me') }}
       register: user_create_result
-      failed_when: user_create_result.rc != 0 and 'already_exists' not in user_create_result.stderr
+      when: app_deployed | default(false) and (rabbitmq_users.stdout | default('') is not search(rabbitmq_user | default('leviosa_staging')))
       changed_when: user_create_result.rc == 0
       become: true
       become_user: root
-      when: app_deployed | default(false)
 
     - name: Grant staging user permissions on staging vhost
       ansible.builtin.command:
