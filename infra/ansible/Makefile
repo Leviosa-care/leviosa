@@ -162,32 +162,32 @@ deploy-staging:
 # Production: restart all services
 restart:
 	@echo "Pulling latest production images and restarting all services..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa && docker compose pull && docker compose up -d"
+	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "cd /opt/leviosa && docker compose pull && docker compose up -d"
 
 # Production: restart frontend only
 restart-frontend:
 	@echo "Pulling latest production frontend and restarting..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa && docker compose pull frontend && docker compose up -d frontend"
+	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "cd /opt/leviosa && docker compose pull frontend && docker compose up -d frontend"
 
 # Production: restart backend only
 restart-backend:
 	@echo "Pulling latest production backend and restarting..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa && docker compose pull backend && docker compose up -d backend"
+	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "cd /opt/leviosa && docker compose pull backend && docker compose up -d backend"
 
 # Staging: restart all services
 restart-staging:
 	@echo "Pulling latest staging images and restarting all services..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa-staging && docker compose pull && docker compose up -d"
+	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "cd /opt/leviosa-staging && docker compose pull && docker compose up -d"
 
 # Staging: restart frontend only
 restart-staging-frontend:
 	@echo "Pulling latest staging frontend and restarting..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa-staging && docker compose pull frontend && docker compose up -d frontend"
+	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "cd /opt/leviosa-staging && docker compose pull frontend && docker compose up -d frontend"
 
 # Staging: restart backend only
 restart-staging-backend:
 	@echo "Pulling latest staging backend and restarting..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa-staging && docker compose pull backend && docker compose up -d backend"
+	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "cd /opt/leviosa-staging && docker compose pull backend && docker compose up -d backend"
 
 # Configure database backups (not yet configured — add S3 backup bucket to Terraform first)
 backup:
@@ -247,27 +247,27 @@ ssh-info:
 # Check production service status
 status:
 	@echo "Checking production service status..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa && docker compose ps"
+	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "cd /opt/leviosa && docker compose ps"
 
 # Check staging service status
 staging-status:
 	@echo "Checking staging service status..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa-staging && docker compose ps"
+	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "cd /opt/leviosa-staging && docker compose ps"
 
 # View production logs
 logs:
 	@echo "Streaming production logs (Ctrl+C to exit)..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa && docker compose logs -f"
+	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "cd /opt/leviosa && docker compose logs -f"
 
 # View staging logs
 staging-logs:
 	@echo "Streaming staging logs (Ctrl+C to exit)..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "cd /opt/leviosa-staging && docker compose logs -f"
+	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "cd /opt/leviosa-staging && docker compose logs -f"
 
 # Run health check
 health-check:
 	@echo "Running health check..."
-	@ssh -i ~/.ssh/leviosa leviosa@$(VPS_IP) "/opt/leviosa/scripts/health-check.sh"
+	@ssh -i ~/.ssh/leviosa root@$(VPS_IP) "/opt/leviosa/scripts/health-check.sh"
 
 # ============================================
 # Dependencies
