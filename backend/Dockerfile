@@ -14,13 +14,22 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -v -o leviosa ./cmd/app/main.go
 
-FROM scratch
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates
+
 WORKDIR /app
+
+# Create non-root user
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
 
 COPY --from=builder /app/leviosa /app/leviosa
 
-EXPOSE 3500 3501
+# Change ownership of /app to appuser
+RUN chown -R appuser:appuser /app
 
-USER 1000
+USER appuser
+
+EXPOSE 3500 3501
 
 CMD ["./leviosa"]
