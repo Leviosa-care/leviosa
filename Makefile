@@ -167,6 +167,13 @@ image-release: image-build image-push
 	@echo "Production images released."
 	@echo "Run 'make ansible-deploy' or 'make ansible-restart' to deploy."
 
+# Production release commands (build + push)
+image-release-front: image-build-front image-push-front
+	@echo "Production frontend image released: $(DOCKER_IMAGE_FRONTEND_PROD)"
+
+image-release-back: image-build-back image-push-back
+	@echo "Production backend image released: $(DOCKER_IMAGE_BACKEND_PROD)"
+
 # Staging build commands
 image-build-staging-front:
 	@echo "Building staging frontend image..."
