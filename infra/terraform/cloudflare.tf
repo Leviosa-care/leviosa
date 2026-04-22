@@ -37,3 +37,43 @@ resource "cloudflare_dns_record" "staging_leviosa_care" {
   proxied = true
   ttl     = 1
 }
+
+# Admin subdomain
+resource "cloudflare_dns_record" "admin_leviosa_care" {
+  zone_id = var.zone_id
+  name    = "admin.${var.domain_name}"
+  type    = "CNAME"
+  content = var.domain_name
+  proxied = true
+  ttl     = 1
+}
+
+# Staff subdomain
+resource "cloudflare_dns_record" "staff_leviosa_care" {
+  zone_id = var.zone_id
+  name    = "staff.${var.domain_name}"
+  type    = "CNAME"
+  content = var.domain_name
+  proxied = true
+  ttl     = 1
+}
+
+# Admin staging subdomain
+resource "cloudflare_dns_record" "admin_staging_leviosa_care" {
+  zone_id = var.zone_id
+  name    = "admin-staging.${var.domain_name}"
+  type    = "CNAME"
+  content = var.domain_name
+  proxied = true
+  ttl     = 1
+}
+
+# Staff staging subdomain
+resource "cloudflare_dns_record" "staff_staging_leviosa_care" {
+  zone_id = var.zone_id
+  name    = "staff-staging.${var.domain_name}"
+  type    = "CNAME"
+  content = var.domain_name
+  proxied = true
+  ttl     = 1
+}
