@@ -180,6 +180,34 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  # HashiCorp Vault (secrets management)
+  vault:
+    image: hashicorp/vault:latest
+    container_name: {{ app_name }}_vault
+    restart: unless-stopped
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_TOKEN}
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    ports:
+      - "8200:8200"
+    volumes:
+      - {{ app_data_dir }}/vault:/vault/data
+    networks:
+      - {{ app_name }}_network
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 {% endif %}
 
 # Networks
