@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.4
 
 FROM golang:1.24.2-alpine AS builder
-RUN apk update && apk add --no-cache git
+RUN apk update && apk add --no-cache git gcc musl-dev
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -v -o leviosa ./cmd/app/main.go
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -v -o leviosa ./cmd/app/main.go
 
 FROM alpine:latest
 RUN apk add --no-cache ca-certificates
