@@ -3,7 +3,7 @@ import { fail, redirect } from "@sveltejs/kit";
 import { setError, superValidate } from 'sveltekit-superforms';
 import { arktype } from 'sveltekit-superforms/adapters';
 import { type } from "arktype"
-import { API_URL } from "$env/static/private";
+import { env } from "$env/dynamic/private";
 
 // Step 1: Request password reset
 const requestSchema = type({
@@ -74,7 +74,7 @@ export const actions = {
             return setError(form, "email", "L'adresse email n'est pas valide.");
         }
 
-        const res = await fetch(`${API_URL}/auth/password/reset/request`, {
+        const res = await fetch(`${env.API_URL}/auth/password/reset/request`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: form.data.email })
@@ -123,7 +123,7 @@ export const actions = {
             form.data.otp5,
         ].join("");
 
-        const res = await fetch(`${API_URL}/auth/password/reset/validate`, {
+        const res = await fetch(`${env.API_URL}/auth/password/reset/validate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -180,7 +180,7 @@ export const actions = {
             return setError(form, "confirmPassword", "Les mots de passe ne correspondent pas.");
         }
 
-        const res = await fetch(`${API_URL}/auth/password/reset/confirm`, {
+        const res = await fetch(`${env.API_URL}/auth/password/reset/confirm`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

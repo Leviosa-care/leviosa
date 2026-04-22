@@ -1,6 +1,6 @@
 import type { Actions, PageServerLoad } from "./$types"
 import { fail, redirect } from "@sveltejs/kit"
-import { API_URL } from "$env/static/private"
+import { env } from "$env/dynamic/private"
 
 import { setError, superValidate } from 'sveltekit-superforms';
 import { arktype } from 'sveltekit-superforms/adapters';
@@ -89,7 +89,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         const sessionCookie = cookies.get('session');
 
         // Fetch all categories (admin endpoint to see all statuses)
-        const categoriesRes = await fetch(`${API_URL}/admin/categories`, {
+        const categoriesRes = await fetch(`${env.API_URL}/admin/categories`, {
             headers: {
                 'Authorization': `Bearer ${sessionCookie}`,
             }
@@ -100,7 +100,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         }
 
         // Fetch all products (admin endpoint to see all statuses)
-        const productsRes = await fetch(`${API_URL}/admin/products`, {
+        const productsRes = await fetch(`${env.API_URL}/admin/products`, {
             headers: {
                 'Authorization': `Bearer ${sessionCookie}`,
             }
@@ -114,7 +114,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         // Note: We could fetch prices per product, but for the catalog management page
         // it's more efficient to get all prices at once
         for (const product of products) {
-            const pricesRes = await fetch(`${API_URL}/admin/products/${product.id}/prices`, {
+            const pricesRes = await fetch(`${env.API_URL}/admin/products/${product.id}/prices`, {
                 headers: {
                     'Authorization': `Bearer ${sessionCookie}`,
                 }
@@ -127,7 +127,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         }
 
         // Fetch all coupons
-        const couponsRes = await fetch(`${API_URL}/admin/coupons`, {
+        const couponsRes = await fetch(`${env.API_URL}/admin/coupons`, {
             headers: {
                 'Authorization': `Bearer ${sessionCookie}`,
             }
@@ -138,7 +138,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         }
 
         // Fetch all promotion codes
-        const promotionCodesRes = await fetch(`${API_URL}/admin/promotion-codes`, {
+        const promotionCodesRes = await fetch(`${env.API_URL}/admin/promotion-codes`, {
             headers: {
                 'Authorization': `Bearer ${sessionCookie}`,
             }
@@ -202,7 +202,7 @@ export const actions = {
         const sessionCookie = cookies.get('session');
 
         // Create category
-        const res = await fetch(`${API_URL}/admin/categories`, {
+        const res = await fetch(`${env.API_URL}/admin/categories`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -248,7 +248,7 @@ export const actions = {
             imageFormData.append('title', `${form.data.name} - Image`)
             imageFormData.append('is_active', 'true')
 
-            const imageRes = await fetch(`${API_URL}/admin/images`, {
+            const imageRes = await fetch(`${env.API_URL}/admin/images`, {
                 method: "POST",
                 headers: {
                     'Authorization': `Bearer ${sessionCookie}`,
@@ -297,7 +297,7 @@ export const actions = {
         const sessionCookie = cookies.get('session');
 
         // Update category
-        const res = await fetch(`${API_URL}/admin/categories/${form.data.id}`, {
+        const res = await fetch(`${env.API_URL}/admin/categories/${form.data.id}`, {
             method: "PATCH",
             headers: {
                 'Content-Type': "application/json",
@@ -342,7 +342,7 @@ export const actions = {
             imageFormData.append('title', `${form.data.name} - Image`)
             imageFormData.append('is_active', 'true')
 
-            const imageRes = await fetch(`${API_URL}/admin/images`, {
+            const imageRes = await fetch(`${env.API_URL}/admin/images`, {
                 method: "POST",
                 headers: {
                     'Authorization': `Bearer ${sessionCookie}`,
@@ -377,7 +377,7 @@ export const actions = {
 
         const sessionCookie = cookies.get('session');
 
-        const res = await fetch(`${API_URL}/admin/categories/${form.data.id}`, {
+        const res = await fetch(`${env.API_URL}/admin/categories/${form.data.id}`, {
             method: "DELETE",
             headers: {
                 'Authorization': `Bearer ${sessionCookie}`,
@@ -456,7 +456,7 @@ export const actions = {
         const sessionCookie = cookies.get('session');
 
         // Create product
-        const res = await fetch(`${API_URL}/admin/products`, {
+        const res = await fetch(`${env.API_URL}/admin/products`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -508,7 +508,7 @@ export const actions = {
             imageFormData.append('title', `${form.data.name} - Image`)
             imageFormData.append('is_active', 'true')
 
-            const imageRes = await fetch(`${API_URL}/admin/images`, {
+            const imageRes = await fetch(`${env.API_URL}/admin/images`, {
                 method: "POST",
                 headers: {
                     'Authorization': `Bearer ${sessionCookie}`,
@@ -580,7 +580,7 @@ export const actions = {
         const sessionCookie = cookies.get('session');
 
         // Update product
-        const res = await fetch(`${API_URL}/admin/products/${form.data.id}`, {
+        const res = await fetch(`${env.API_URL}/admin/products/${form.data.id}`, {
             method: "PATCH",
             headers: {
                 'Content-Type': "application/json",
@@ -631,7 +631,7 @@ export const actions = {
             imageFormData.append('title', `${form.data.name} - Image`)
             imageFormData.append('is_active', 'true')
 
-            const imageRes = await fetch(`${API_URL}/admin/images`, {
+            const imageRes = await fetch(`${env.API_URL}/admin/images`, {
                 method: "POST",
                 headers: {
                     'Authorization': `Bearer ${sessionCookie}`,
@@ -666,7 +666,7 @@ export const actions = {
 
         const sessionCookie = cookies.get('session');
 
-        const res = await fetch(`${API_URL}/admin/products/${form.data.id}`, {
+        const res = await fetch(`${env.API_URL}/admin/products/${form.data.id}`, {
             method: "DELETE",
             headers: {
                 'Authorization': `Bearer ${sessionCookie}`,
@@ -731,7 +731,7 @@ export const actions = {
         const sessionCookie = cookies.get('session');
 
         // Create price via product endpoint
-        const res = await fetch(`${API_URL}/admin/products/${form.data.productId}/prices`, {
+        const res = await fetch(`${env.API_URL}/admin/products/${form.data.productId}/prices`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -802,7 +802,7 @@ export const actions = {
         const sessionCookie = cookies.get('session');
 
         // Update price
-        const res = await fetch(`${API_URL}/admin/prices/${form.data.id}`, {
+        const res = await fetch(`${env.API_URL}/admin/prices/${form.data.id}`, {
             method: "PATCH",
             headers: {
                 'Content-Type': "application/json",
@@ -921,7 +921,7 @@ export const actions = {
         requestBody.metadata = {}
 
         // Create coupon
-        const res = await fetch(`${API_URL}/admin/coupons`, {
+        const res = await fetch(`${env.API_URL}/admin/coupons`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -982,7 +982,7 @@ export const actions = {
         const sessionCookie = cookies.get('session');
 
         // Update coupon
-        const res = await fetch(`${API_URL}/admin/coupons/${form.data.id}`, {
+        const res = await fetch(`${env.API_URL}/admin/coupons/${form.data.id}`, {
             method: "PATCH",
             headers: {
                 'Content-Type': "application/json",
@@ -1039,7 +1039,7 @@ export const actions = {
         const sessionCookie = cookies.get('session');
 
         // Delete coupon
-        const res = await fetch(`${API_URL}/admin/coupons/${form.data.id}`, {
+        const res = await fetch(`${env.API_URL}/admin/coupons/${form.data.id}`, {
             method: "DELETE",
             headers: {
                 'Authorization': `Bearer ${sessionCookie}`,
@@ -1133,7 +1133,7 @@ export const actions = {
         }
 
         // Create promotion code
-        const res = await fetch(`${API_URL}/admin/promotion-codes`, {
+        const res = await fetch(`${env.API_URL}/admin/promotion-codes`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -1198,7 +1198,7 @@ export const actions = {
         const sessionCookie = cookies.get('session');
 
         // Update promotion code
-        const res = await fetch(`${API_URL}/admin/promotion-codes/${form.data.id}`, {
+        const res = await fetch(`${env.API_URL}/admin/promotion-codes/${form.data.id}`, {
             method: "PATCH",
             headers: {
                 'Content-Type': "application/json",
@@ -1255,7 +1255,7 @@ export const actions = {
         const sessionCookie = cookies.get('session');
 
         // Delete promotion code
-        const res = await fetch(`${API_URL}/admin/promotion-codes/${form.data.id}`, {
+        const res = await fetch(`${env.API_URL}/admin/promotion-codes/${form.data.id}`, {
             method: "DELETE",
             headers: {
                 'Authorization': `Bearer ${sessionCookie}`,

@@ -1,4 +1,4 @@
-import { API_URL, } from "$env/static/private"
+import { env } from "$env/dynamic/private"
 import type { PageServerLoad } from './$types';
 import type { Actions, RequestEvent } from "./$types"
 import { arktype } from 'sveltekit-superforms/adapters';
@@ -29,7 +29,7 @@ export const actions = {
         }
 
         const { id, ...data } = form.data
-        const res = await fetch(`${API_URL}/admin/products`, {
+        const res = await fetch(`${env.API_URL}/admin/products`, {
             method: "POST",
             headers: { 'Content-Type': "application/json" },
             body: JSON.stringify(data),
@@ -76,7 +76,7 @@ export const load: PageServerLoad = async (): Promise<Props> => {
 
     // TODO: find how I am going to organise these products
     // try {
-    // const res = await fetch(`${API_URL}/products`, {
+    // const res = await fetch(`${env.API_URL}/products`, {
     //     method: "GET",
     //     headers: { 'Content-Type': "application/json" },
     // })

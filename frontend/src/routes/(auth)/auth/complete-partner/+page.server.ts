@@ -1,7 +1,7 @@
 import type { Actions, RequestEvent } from "./$types"
 import { fail, redirect } from "@sveltejs/kit"
 
-import { API_URL } from "$env/static/private";
+import { env } from "$env/dynamic/private";
 
 import { setError, superValidate } from 'sveltekit-superforms';
 import { arktype } from 'sveltekit-superforms/adapters';
@@ -169,7 +169,7 @@ export const actions = {
         }
 
         // Call /auth/complete/partner endpoint
-        const res = await fetch(`${API_URL}/auth/complete/partner`, {
+        const res = await fetch(`${env.API_URL}/auth/complete/partner`, {
             method: "POST",
             headers: { 'Content-Type': "application/json" },
             body: JSON.stringify(requestBody)

@@ -1,6 +1,6 @@
 import type { Actions, RequestEvent } from "./$types"
 import { error, fail, redirect } from "@sveltejs/kit"
-import { API_URL, SESSION_COOKIE_NAME } from "$env/static/private"
+import { env } from "$env/dynamic/private"
 
 import { message, setError, superValidate } from 'sveltekit-superforms';
 import { arktype } from 'sveltekit-superforms/adapters';
@@ -62,7 +62,7 @@ export const actions = {
 
         if (!form.valid) return setError(form, "registerEmail", "L'adresse email saisie n'est pas valide. Veuillez vérifier et réessayer.")
 
-        const res = await fetch(`${API_URL}/auth/email`, {
+        const res = await fetch(`${env.API_URL}/auth/email`, {
             method: "POST",
             headers: { 'Content-Type': "application/json" },
             body: JSON.stringify({ email: form.data.registerEmail }),
@@ -103,7 +103,7 @@ export const actions = {
             return fail(400, { loginForm: form })
         }
 
-        const res = await fetch(`${API_URL}/auth/login`, {
+        const res = await fetch(`${env.API_URL}/auth/login`, {
             method: "POST",
             headers: { 'Content-Type': "application/json" },
             body: JSON.stringify({
@@ -153,6 +153,6 @@ export const actions = {
         // The backend GET endpoint will redirect to the provider's authorization screen
         // After authorization, the provider will redirect back to /auth/oauth/{provider}/callback
         // The backend callback handler will set cookies and redirect to the app
-        redirect(302, `${API_URL}/auth/oauth/${form.data.provider}`)
+        redirect(302, `${env.API_URL}/auth/oauth/${form.data.provider}`)
     }
 } satisfies Actions

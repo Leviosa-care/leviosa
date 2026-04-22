@@ -2,7 +2,7 @@ import { type } from 'arktype';
 import { superValidate, setError } from 'sveltekit-superforms';
 import { arktype } from 'sveltekit-superforms/adapters';
 import type { RequestEvent } from './$types';
-import { API_URL } from "$env/static/private"
+import { env } from "$env/dynamic/private"
 import { redirect } from '@sveltejs/kit';
 
 const schema = type({
@@ -52,7 +52,7 @@ export const actions = {
             form.data.otp5,
         ].join("");
 
-        const res = await fetch(`${API_URL}/auth/otp`, {
+        const res = await fetch(`${env.API_URL}/auth/otp`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

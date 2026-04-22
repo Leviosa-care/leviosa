@@ -2,7 +2,7 @@ import type { RequestEvent } from "./$types"
 import { superValidate, setError } from 'sveltekit-superforms';
 import { fail } from "@sveltejs/kit";
 import { arktype } from 'sveltekit-superforms/adapters';
-import { API_URL, } from "$env/static/private"
+import { env } from "$env/dynamic/private"
 
 import {
     productSchema,
@@ -26,7 +26,7 @@ export async function createCategory({ request, fetch }: RequestEvent) {
         if (formValidated.errors.description) return setError(formValidated, "description", "La description est requise.")
     }
     formData.delete("id")
-    const res = await fetch(`${API_URL}/admin/categories`, {
+    const res = await fetch(`${env.API_URL}/admin/categories`, {
         method: "POST",
         body: formData,
     })
@@ -62,7 +62,7 @@ export async function deleteCategory({ request, fetch }: RequestEvent) {
         console.log("invalid from")
         return setError(form, "id", "L'ID saisi fourni n'est pas valide.")
     }
-    const res = await fetch(`${API_URL}/admin/categories/${form.data.id}`, {
+    const res = await fetch(`${env.API_URL}/admin/categories/${form.data.id}`, {
         method: "DELETE",
     })
     console.log("fetch to golang backend done")
@@ -131,7 +131,7 @@ export async function createProduct({ request, fetch }: RequestEvent) {
     formData.delete("id")
     formData.delete("updatedAt")
 
-    const res = await fetch(`${API_URL}/admin/products`, {
+    const res = await fetch(`${env.API_URL}/admin/products`, {
         method: "POST",
         body: formData,
     })
@@ -168,7 +168,7 @@ export async function deleteProduct({ request, fetch }: RequestEvent) {
     console.log("here in the delete action")
     if (!form.valid) return setError(form, "id", "L'ID saisie n'est pas valide. Veuillez vérifier et réessayer.")
 
-    const res = await fetch(`${API_URL}/admin/products/${form.data.id}`, {
+    const res = await fetch(`${env.API_URL}/admin/products/${form.data.id}`, {
         method: "DELETE",
     })
 

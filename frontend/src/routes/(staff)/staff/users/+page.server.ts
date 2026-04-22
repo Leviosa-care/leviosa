@@ -1,6 +1,6 @@
 import type { Actions, PageServerLoad } from "./$types"
 import { fail, redirect } from "@sveltejs/kit"
-import { API_URL } from "$env/static/private"
+import { env } from "$env/dynamic/private"
 
 import { setError, superValidate } from 'sveltekit-superforms';
 import { arktype } from 'sveltekit-superforms/adapters';
@@ -39,7 +39,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         const sessionCookie = cookies.get('session');
 
         // Fetch all users (admin endpoint)
-        const usersRes = await fetch(`${API_URL}/admin/users`, {
+        const usersRes = await fetch(`${env.API_URL}/admin/users`, {
             headers: {
                 'Authorization': `Bearer ${sessionCookie}`,
             }
@@ -50,7 +50,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         }
 
         // Fetch pending users (admin endpoint)
-        const pendingUsersRes = await fetch(`${API_URL}/admin/auth/admin/users/pending`, {
+        const pendingUsersRes = await fetch(`${env.API_URL}/admin/auth/admin/users/pending`, {
             headers: {
                 'Authorization': `Bearer ${sessionCookie}`,
             }
@@ -91,7 +91,7 @@ export const actions = {
         const sessionCookie = cookies.get('session');
 
         // Approve user
-        const res = await fetch(`${API_URL}/admin/users/approve`, {
+        const res = await fetch(`${env.API_URL}/admin/users/approve`, {
             method: "PATCH",
             headers: {
                 'Content-Type': "application/json",
@@ -148,7 +148,7 @@ export const actions = {
         const sessionCookie = cookies.get('session');
 
         // Update user role
-        const res = await fetch(`${API_URL}/admin/users/${form.data.user_id}/role`, {
+        const res = await fetch(`${env.API_URL}/admin/users/${form.data.user_id}/role`, {
             method: "PATCH",
             headers: {
                 'Content-Type': "application/json",

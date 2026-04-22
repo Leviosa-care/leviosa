@@ -1,6 +1,6 @@
 import type { Actions, PageServerLoad } from "./$types"
 import { fail, redirect } from "@sveltejs/kit"
-import { API_URL } from "$env/static/private"
+import { env } from "$env/dynamic/private"
 
 import { setError, superValidate } from 'sveltekit-superforms';
 import { arktype } from 'sveltekit-superforms/adapters';
@@ -74,7 +74,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
             'refresh_token_duration'
         ].join(',')
 
-        const settingsRes = await fetch(`${API_URL}/admin/settings/bulk?keys=${bulkKeys}`, {
+        const settingsRes = await fetch(`${env.API_URL}/admin/settings/bulk?keys=${bulkKeys}`, {
             headers: {
                 'Authorization': `Bearer ${sessionCookie}`,
             }
@@ -137,7 +137,7 @@ export const actions = {
 
         const sessionCookie = cookies.get('session');
 
-        const res = await fetch(`${API_URL}/admin/settings/name`, {
+        const res = await fetch(`${env.API_URL}/admin/settings/name`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -182,7 +182,7 @@ export const actions = {
 
         const sessionCookie = cookies.get('session');
 
-        const res = await fetch(`${API_URL}/admin/settings/email`, {
+        const res = await fetch(`${env.API_URL}/admin/settings/email`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -227,7 +227,7 @@ export const actions = {
 
         const sessionCookie = cookies.get('session');
 
-        const res = await fetch(`${API_URL}/admin/settings/phone`, {
+        const res = await fetch(`${env.API_URL}/admin/settings/phone`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -272,7 +272,7 @@ export const actions = {
 
         const sessionCookie = cookies.get('session');
 
-        const res = await fetch(`${API_URL}/admin/settings/address`, {
+        const res = await fetch(`${env.API_URL}/admin/settings/address`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -317,7 +317,7 @@ export const actions = {
 
         const sessionCookie = cookies.get('session');
 
-        const res = await fetch(`${API_URL}/admin/settings/instagram`, {
+        const res = await fetch(`${env.API_URL}/admin/settings/instagram`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -362,7 +362,7 @@ export const actions = {
 
         const sessionCookie = cookies.get('session');
 
-        const res = await fetch(`${API_URL}/admin/settings/otp/duration`, {
+        const res = await fetch(`${env.API_URL}/admin/settings/otp/duration`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -407,7 +407,7 @@ export const actions = {
 
         const sessionCookie = cookies.get('session');
 
-        const res = await fetch(`${API_URL}/admin/settings/otp/length`, {
+        const res = await fetch(`${env.API_URL}/admin/settings/otp/length`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -452,7 +452,7 @@ export const actions = {
 
         const sessionCookie = cookies.get('session');
 
-        const res = await fetch(`${API_URL}/admin/settings/otp/max-attempts`, {
+        const res = await fetch(`${env.API_URL}/admin/settings/otp/max-attempts`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -497,7 +497,7 @@ export const actions = {
 
         const sessionCookie = cookies.get('session');
 
-        const res = await fetch(`${API_URL}/admin/settings/tokens/access-duration`, {
+        const res = await fetch(`${env.API_URL}/admin/settings/tokens/access-duration`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
@@ -542,7 +542,7 @@ export const actions = {
 
         const sessionCookie = cookies.get('session');
 
-        const res = await fetch(`${API_URL}/admin/settings/tokens/refresh-duration`, {
+        const res = await fetch(`${env.API_URL}/admin/settings/tokens/refresh-duration`, {
             method: "POST",
             headers: {
                 'Content-Type': "application/json",
