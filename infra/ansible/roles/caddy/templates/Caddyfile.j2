@@ -55,9 +55,9 @@ staging.leviosa.care, www.staging.leviosa.care {
 
         reverse_proxy {{ app_name }}_staging_frontend:{{ frontend_port | default('3000') }}
 
-{% if caddy_basic_auth_username | default('') != '' %}
+{% if caddy_staging_basic_auth_username | default('') != '' %}
         basicauth / {
-                {{ caddy_basic_auth_username }} {{ caddy_basic_auth_password_hash }}
+                {{ caddy_staging_basic_auth_username }} {{ caddy_staging_basic_auth_password_hash }}
         }
 {% endif %}
 
