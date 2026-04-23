@@ -325,8 +325,16 @@
 
     - name: Get Vault container IP address
       ansible.builtin.shell: |
-        docker inspect {{ app_name }}_vault | \
-        python3 -c "import json,sys; d=json.load(sys.stdin); print(list(d[0]['NetworkSettings']['Networks'].values())[0]['IPAddress'])"
+        docker network inspect {{ app_name }}_network | \
+        python3 -c "
+        import json, sys
+        data = json.load(sys.stdin)
+        for c in data[0]['Containers'].values():
+            if c['Name'] == '{{ app_name }}_vault':
+                print(c['IPv4Address'].split('/')[0])
+                sys.exit(0)
+        sys.exit(1)
+        "
       register: vault_ip
       changed_when: false
       become: true
