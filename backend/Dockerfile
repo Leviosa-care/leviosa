@@ -13,6 +13,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 COPY . .
 
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -v -o leviosa ./cmd/app/main.go
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -v -o seed ./cmd/seed/main.go
 
 FROM alpine:latest
 RUN apk add --no-cache ca-certificates
@@ -24,6 +25,7 @@ RUN addgroup -g 1000 appuser && \
     adduser -D -u 1000 -G appuser appuser
 
 COPY --from=builder /app/leviosa /app/leviosa
+COPY --from=builder /app/seed /app/seed
 
 # Change ownership of /app to appuser
 RUN chown -R appuser:appuser /app
