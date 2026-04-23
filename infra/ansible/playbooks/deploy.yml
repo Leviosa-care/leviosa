@@ -85,11 +85,20 @@
       become_user: root
       when: app_deployed | default(false)
 
+    - name: Set Vault status defaults
+      ansible.builtin.set_fact:
+        vault_initialized: false
+        vault_sealed: true
+      when: app_deployed | default(false)
+
     - name: Parse Vault status
       ansible.builtin.set_fact:
         vault_initialized: "{{ (vault_status_json.stdout | from_json).initialized | bool }}"
         vault_sealed: "{{ (vault_status_json.stdout | from_json).sealed | bool }}"
-      when: app_deployed | default(false) and vault_status_json.stdout is defined
+      when:
+        - app_deployed | default(false)
+        - vault_status_json.stdout is defined
+        - vault_status_json.stdout | length > 0
 
     - name: Initialize Vault (first time only)
       ansible.builtin.command:
