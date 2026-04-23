@@ -37,7 +37,7 @@
 
     - name: Generate Vault HCL configuration
       ansible.builtin.template:
-        src: vault.hcl.j2
+        src: "{{ playbook_dir }}/../roles/app/templates/vault.hcl.j2"
         dest: "{{ app_data_dir }}/vault/config/vault.hcl"
         owner: "{{ deploy_user }}"
         group: "{{ deploy_user }}"
