@@ -323,6 +323,16 @@
       become_user: root
       when: app_deployed | default(false)
 
+    - name: Get Vault container IP address
+      ansible.builtin.shell: |
+        docker inspect {{ app_name }}_vault | \
+        python3 -c "import json,sys; d=json.load(sys.stdin); print(list(d[0]['NetworkSettings']['Networks'].values())[0]['IPAddress'])"
+      register: vault_ip
+      changed_when: false
+      become: true
+      become_user: root
+      when: app_deployed | default(false) and seed_admins is defined
+
     - name: Seed admin users
       when: app_deployed | default(false) and seed_admins is defined
       become: true
@@ -343,6 +353,7 @@
               --env-file {{ app_base_dir }}/.env \
               -v {{ app_base_dir }}/seed_data.json:/app/seed_data.json:ro \
               -e SEED_DATA_PATH=/app/seed_data.json \
+              -e VAULT_ADDR=http://{{ vault_ip.stdout }}:8200 \
               {{ backend_docker_image }} ./seed
 
       always:
