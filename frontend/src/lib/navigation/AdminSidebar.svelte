@@ -1,13 +1,17 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import {
-		LayoutDashboard,
-		Package,
-		CalendarCheck,
+		Home,
 		Users,
-		Settings,
-		ChevronLeft,
-		ChevronRight,
+		CalendarDays,
+		NotebookPen,
+		Mail,
+		Ticket,
+		Package,
+		ChartSpline,
+		Server,
+		HandCoins,
+		ExternalLink,
 	} from "@lucide/svelte";
 	import type { Component } from "svelte";
 	import type { Permissions } from "$lib/security/permissions";
@@ -22,8 +26,19 @@
 	// Sidebar collapse state
 	let isCollapsed = $state(false);
 
+	// User menu state
+	let userMenuOpen = $state(false);
+
 	function toggleSidebar() {
 		isCollapsed = !isCollapsed;
+	}
+
+	function toggleUserMenu() {
+		userMenuOpen = !userMenuOpen;
+	}
+
+	function closeUserMenu() {
+		userMenuOpen = false;
 	}
 
 	/**
@@ -40,18 +55,58 @@
 
 	/**
 	 * Desktop Navigation Structure
-	 * Routes are under /admin/admin/ due to directory structure
+	 * Using the original links from the old NavigationBar
 	 */
 	const desktopNavigation: NavItem[] = [
 		{
+			href: "/admin/admin",
+			label: "Accueil",
+			icon: Home,
+		},
+		{
+			href: "/admin/admin/users",
+			label: "Utilisateurs",
+			icon: Users,
+		},
+		{
+			href: "/admin/admin/planning",
+			label: "Planning",
+			icon: CalendarDays,
+		},
+		{
+			href: "/admin/admin/bookings/consultations",
+			label: "Notes de seance",
+			icon: NotebookPen,
+		},
+		{
+			href: "/admin/admin/messages",
+			label: "Messages",
+			icon: Mail,
+		},
+		{
+			href: "/admin/admin/bookings/events",
+			label: "Evenements",
+			icon: Ticket,
+		},
+		{
 			href: "/admin/admin/products",
-			label: "Produits",
+			label: "Catalogue",
 			icon: Package,
 		},
 		{
-			href: "/admin/admin/bookings",
-			label: "Réservations",
-			icon: CalendarCheck,
+			href: "/admin/admin/analytics",
+			label: "Analytics",
+			icon: ChartSpline,
+		},
+		{
+			href: "/admin/admin/infra",
+			label: "Infrastructure",
+			icon: Server,
+		},
+		{
+			href: "/admin/admin/compta",
+			label: "Comptabilite",
+			icon: HandCoins,
 		},
 	];
 
@@ -61,14 +116,29 @@
 	 */
 	const mobileNavigation: NavItem[] = [
 		{
-			href: "/admin/admin/products",
-			label: "Produits",
-			icon: Package,
+			href: "/admin/admin",
+			label: "Accueil",
+			icon: Home,
 		},
 		{
-			href: "/admin/admin/bookings",
-			label: "Réservations",
-			icon: CalendarCheck,
+			href: "/admin/admin/users",
+			label: "Utilisateurs",
+			icon: Users,
+		},
+		{
+			href: "/admin/admin/planning",
+			label: "Planning",
+			icon: CalendarDays,
+		},
+		{
+			href: "/admin/admin/bookings/consultations",
+			label: "Notes",
+			icon: NotebookPen,
+		},
+		{
+			href: "/admin/admin/products",
+			label: "Catalogue",
+			icon: Package,
 		},
 	];
 
@@ -77,6 +147,9 @@
 	 */
 	function isActive(href: string): boolean {
 		const currentPath = page.url.pathname;
+		if (href === "/admin/admin") {
+			return currentPath === "/admin/admin" || currentPath === "/admin/admin/";
+		}
 		return currentPath.startsWith(href);
 	}
 </script>
@@ -84,22 +157,46 @@
 {#if permissions.canAccessOps}
 	<!-- Desktop Sidebar Navigation -->
 	<aside
-		class="hidden lg:flex lg:flex-col lg:border-r bg-white border-dark-100 relative transition-all duration-300 min-h-screen
-	               {isCollapsed ? 'lg:w-20' : 'lg:w-64'}"
+		class="hidden lg:flex lg:flex-col lg:border-r bg-white border-dark-100 sticky top-0 h-screen transition-all duration-300 {isCollapsed
+			? 'lg:w-20'
+			: 'lg:w-64'}"
 		aria-label="Sidebar navigation"
 	>
 		<!-- Collapse Toggle Button -->
 		<button
 			onclick={toggleSidebar}
-			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-white flex items-center justify-center
-	               text-dark-700 hover:text-dark-900 hover:bg-dark-100 transition-all duration-200 border border-dark-200"
-			aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-			title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-white flex items-center justify-center text-dark-700 hover:text-dark-900 hover:bg-dark-100 transition-all duration-200 border border-dark-200 shadow-sm"
+			aria-label={isCollapsed ? "Agrandir la barre laterale" : "Reduire la barre laterale"}
+			title={isCollapsed ? "Agrandir la barre laterale" : "Reduire la barre laterale"}
 		>
 			{#if isCollapsed}
-				<ChevronRight size={16} strokeWidth={2} />
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<polyline points="9 18 15 12 9 6"></polyline>
+				</svg>
 			{:else}
-				<ChevronLeft size={16} strokeWidth={2} />
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<polyline points="15 18 9 12 15 6"></polyline>
+				</svg>
 			{/if}
 		</button>
 
@@ -111,39 +208,35 @@
 		>
 			{#if !isCollapsed}
 				<div>
-					<h1 class="text-sm font-semibold tracking-tight text-dark-900 uppercase">
-						Admin
-					</h1>
-					<p class="text-xs text-dark-500">Leviosa</p>
+					<h1 class="text-sm font-semibold tracking-tight text-dark-900 uppercase">Leviosa</h1>
+					<p class="text-xs text-dark-500">Panneau d'Administration</p>
 				</div>
 			{:else}
 				<div class="mx-auto">
-					<span class="text-xs font-bold text-dark-900">A</span>
+					<span class="text-lg font-bold text-dark-900">L</span>
 				</div>
 			{/if}
 		</div>
 
 		<!-- Navigation Items -->
-		<nav class="flex-1 py-6 {isCollapsed ? 'px-3' : 'px-4'}">
+		<nav class="flex-1 py-6 overflow-y-auto {isCollapsed ? 'px-3' : 'px-4'}">
 			<ul class="space-y-1">
 				{#each desktopNavigation as item (item.href)}
 					{@const active = isActive(item.href)}
 					<li>
 						<a
 							href={item.href}
-							class="flex items-center text-sm font-medium transition-all duration-200 rounded-md
-	                               {isCollapsed
+							class="flex items-center text-sm font-medium transition-all duration-200 rounded-lg {isCollapsed
 								? 'justify-center px-3 py-3'
-								: 'gap-3 px-3 py-2.5'}
-	                               {active
+								: 'gap-3 px-3 py-2.5'} {active
 								? 'text-dark-900 bg-dark-100'
 								: 'text-dark-600 hover:text-dark-900 hover:bg-dark-50'}"
 							aria-current={active ? "page" : undefined}
 							title={isCollapsed ? item.label : undefined}
 						>
-							<item.icon strokeWidth={active ? 2 : 1.5} size={18} />
+							<item.icon strokeWidth={active ? 2 : 1.5} size={20} />
 							{#if !isCollapsed}
-								<span>{item.label}</span>
+								<span class="tracking-tight">{item.label}</span>
 							{/if}
 						</a>
 					</li>
@@ -154,29 +247,105 @@
 		<!-- Sidebar Footer -->
 		<div class="py-5 border-t border-dark-100 {isCollapsed ? 'px-3' : 'px-6'}">
 			{#if !isCollapsed}
-				<div class="flex items-center gap-3">
+				<!-- User row with kebab menu -->
+				<div class="relative">
+					{#if userMenuOpen}
+						<!-- Backdrop -->
+						<div class="fixed inset-0 z-10" onclick={closeUserMenu}></div>
+						<!-- Dropdown (opens upward) -->
+						<div
+							class="absolute bottom-full left-0 right-0 mb-2 z-20 bg-white border border-dark-200 rounded-lg shadow-lg py-1 overflow-hidden"
+						>
+							<a
+								href="https://leviosa.com"
+								target="_blank"
+								rel="noopener noreferrer"
+								onclick={closeUserMenu}
+								class="flex items-center gap-2.5 px-3 py-2 text-sm text-dark-600 hover:text-dark-900 hover:bg-dark-50 transition-colors"
+							>
+								<ExternalLink size={15} />
+								<span>Voir le site</span>
+							</a>
+							<div class="my-1 border-t border-dark-100"></div>
+							<form method="POST" action="/logout">
+								<button
+									type="submit"
+									class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="15"
+										height="15"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									>
+										<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+										<polyline points="16 17 21 12 16 7"></polyline>
+										<line x1="21" x2="9" y1="12" y2="12"></line>
+									</svg>
+									<span>Deconnexion</span>
+								</button>
+							</form>
+						</div>
+					{/if}
+					<div class="flex items-center gap-3">
+						<div
+							class="w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center bg-dark-100 border border-dark-200"
+						>
+							<span class="text-xs font-semibold text-dark-700 uppercase">
+								{user.email?.[0]?.toUpperCase() ?? "A"}
+							</span>
+						</div>
+						<div class="flex-1 min-w-0">
+							<p class="text-sm font-medium text-dark-900 truncate tracking-tight">
+								{user.email}
+							</p>
+							<p class="text-xs text-dark-500 capitalize">{user.role}</p>
+						</div>
+						<button
+							onclick={toggleUserMenu}
+							class="flex-shrink-0 p-1.5 rounded-md text-dark-600 hover:text-dark-900 hover:bg-dark-100 transition-colors"
+							aria-label="Options utilisateur"
+							title="Options"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="currentColor"
+								stroke="none"
+							>
+								<circle cx="12" cy="5" r="1.5" />
+								<circle cx="12" cy="12" r="1.5" />
+								<circle cx="12" cy="19" r="1.5" />
+							</svg>
+						</button>
+					</div>
+				</div>
+			{:else}
+				<div class="flex flex-col items-center gap-2">
 					<div
-						class="w-9 h-9 rounded-full flex items-center justify-center bg-dark-100"
+						class="w-9 h-9 rounded-full flex items-center justify-center bg-dark-100 border border-dark-200"
+						title={user.email}
 					>
 						<span class="text-xs font-semibold text-dark-700 uppercase">
 							{user.email?.[0]?.toUpperCase() ?? "A"}
 						</span>
 					</div>
-					<div class="flex-1 min-w-0">
-						<p class="text-sm font-medium text-dark-900 truncate">
-							{user.email}
-						</p>
-						<p class="text-xs text-dark-500">Administrateur</p>
-					</div>
-				</div>
-			{:else}
-				<div
-					class="w-9 h-9 mx-auto rounded-full flex items-center justify-center bg-dark-100"
-					title={user.email}
-				>
-					<span class="text-xs font-semibold text-dark-700 uppercase">
-						{user.email?.[0]?.toUpperCase() ?? "A"}
-					</span>
+					<a
+						href="https://leviosa.com"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="flex items-center justify-center w-9 h-9 text-dark-600 hover:text-dark-900 hover:bg-dark-100 rounded-lg transition-colors"
+						title="Voir le site public"
+					>
+						<ExternalLink size={14} />
+					</a>
 				</div>
 			{/if}
 		</div>
@@ -193,14 +362,13 @@
 				<li class="flex-1">
 					<a
 						href={item.href}
-						class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg transition-all duration-200
-	                           {active ? 'text-dark-900' : 'text-dark-500'}"
+						class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg transition-all duration-200 {active
+							? 'text-dark-900'
+							: 'text-dark-500'}"
 						aria-current={active ? "page" : undefined}
 					>
 						<item.icon size={20} strokeWidth={active ? 2 : 1.5} />
-						<span class="text-xs font-medium">
-							{item.label}
-						</span>
+						<span class="text-xs font-medium">{item.label}</span>
 					</a>
 				</li>
 			{/each}
