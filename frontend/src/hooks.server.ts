@@ -31,7 +31,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
     if (env.COMING_SOON === 'true') {
-        if (event.url.pathname !== '/coming-soon') {
+        if (event.url.pathname !== '/coming-soon' && event.url.pathname !== '/healthz') {
             throw redirect(302, '/coming-soon')
         }
         return await resolve(event)
