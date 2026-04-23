@@ -225,6 +225,21 @@
       changed_when: false
       no_log: true
 
+    - name: Enable KV v2 secrets engine
+      ansible.builtin.shell: |
+        docker exec \
+          -e VAULT_ADDR=http://127.0.0.1:8200 \
+          -e VAULT_TOKEN={{ vault_root_token }} \
+          {{ app_name }}_vault \
+          vault secrets enable -path=secret kv-v2 2>&1 || true
+      become: true
+      become_user: root
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
+      changed_when: false
+      no_log: true
+
     - name: Create encryption keys for ENCX
       ansible.builtin.shell: |
         docker exec \
