@@ -37,7 +37,9 @@ export const handle: Handle = async ({ event, resolve }) => {
         return await resolve(event)
     }
 
-    if (env.NODE_ENV === 'development' || env.NODE_ENV === 'staging') {
+    // USE_MOCK_DATA allows bypassing authentication for development/testing
+    // Set via environment variable (e.g., in Ansible staging config)
+    if (env.USE_MOCK_DATA === 'true') {
         event.locals.user = mockUser
         return await resolve(event)
     }
