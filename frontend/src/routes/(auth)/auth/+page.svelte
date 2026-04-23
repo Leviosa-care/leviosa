@@ -45,7 +45,7 @@
             }
         },
     });
-    import SuperDebug from "sveltekit-superforms";
+    // import SuperDebug from "sveltekit-superforms";
 
     type AuthState = "login" | "register";
     let authState = $state<AuthState>("login");
@@ -53,14 +53,14 @@
     let oauthState = $state<OauthState>("google");
 </script>
 
-<SuperDebug
-    data={{
-        form: $registerForm.registerEmail,
-        errors: $registerErrors.registerEmail,
-        constraints: $registerConstraints,
-        state: authState,
-    }}
-/>
+<!-- <SuperDebug -->
+<!--     data={{ -->
+<!--         form: $registerForm.registerEmail, -->
+<!--         errors: $registerErrors.registerEmail, -->
+<!--         constraints: $registerConstraints, -->
+<!--         state: authState, -->
+<!--     }} -->
+<!-- /> -->
 
 <div class="grid place-content-center h-[100vh]">
     <div class="pt-6">
