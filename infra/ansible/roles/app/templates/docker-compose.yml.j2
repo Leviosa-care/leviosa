@@ -195,7 +195,7 @@ services:
       VAULT_ADDR: http://0.0.0.0:8200
       VAULT_API_ADDR: http://0.0.0.0:8200
     ports:
-      - "8200:8200"
+      - "{{ vault_host_port | default('8200') }}:8200"
     volumes:
       - {{ app_data_dir }}/vault:/vault/file
       - {{ app_data_dir }}/vault/config:/vault/config:ro
