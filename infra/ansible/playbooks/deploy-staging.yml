@@ -124,7 +124,7 @@
         - name: Run database seeder
           ansible.builtin.shell: |
             docker run --rm \
-              --network {{ app_name }}_network \
+              --network {{ prod_network_name | default(app_name + '_network') }} \
               --env-file {{ app_base_dir }}/.env \
               -v {{ app_base_dir }}/seed_data.json:/app/seed_data.json:ro \
               -e SEED_DATA_PATH=/app/seed_data.json \
