@@ -107,7 +107,7 @@
             dest: "{{ app_base_dir }}/seed_data.json"
             owner: root
             group: root
-            mode: '0600'
+            mode: '0644'
 
         - name: Run database seeder
           ansible.builtin.shell: |
