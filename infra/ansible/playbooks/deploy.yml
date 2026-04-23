@@ -277,6 +277,52 @@
       when: app_deployed | default(false)
       changed_when: false
 
+    - name: Wait for Vault to be ready after service restart
+      ansible.builtin.command:
+        cmd: docker exec {{ app_name }}_vault vault status
+      register: vault_post_restart_status
+      until: vault_post_restart_status.rc != 1
+      retries: 10
+      delay: 3
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
+    - name: Re-unseal Vault after service restart (key 1)
+      ansible.builtin.command:
+        cmd: docker exec {{ app_name }}_vault vault operator unseal {{ vault_unseal_key_1 }}
+      when:
+        - app_deployed | default(false)
+        - vault_unseal_key_1 is defined
+      become: true
+      become_user: root
+      no_log: true
+
+    - name: Re-unseal Vault after service restart (key 2)
+      ansible.builtin.command:
+        cmd: docker exec {{ app_name }}_vault vault operator unseal {{ vault_unseal_key_2 }}
+      when:
+        - app_deployed | default(false)
+        - vault_unseal_key_2 is defined
+      become: true
+      become_user: root
+      no_log: true
+
+    - name: Wait for Vault to be unsealed after service restart
+      ansible.builtin.command:
+        cmd: docker exec {{ app_name }}_vault vault status
+      register: vault_post_unseal
+      until: vault_post_unseal.rc == 0
+      retries: 10
+      delay: 3
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
     - name: Seed admin users
       when: app_deployed | default(false) and seed_admins is defined
       become: true
