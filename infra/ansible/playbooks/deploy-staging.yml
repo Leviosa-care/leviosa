@@ -370,16 +370,7 @@
 
     - name: Get Vault container IP address
       ansible.builtin.shell: |
-        docker network inspect {{ prod_network_name | default(app_name + '_network') }} | \
-        python3 -c "
-        import json, sys
-        data = json.load(sys.stdin)
-        for c in data[0]['Containers'].values():
-            if c['Name'] == '{{ app_name }}_vault':
-                print(c['IPv4Address'].split('/')[0])
-                sys.exit(0)
-        sys.exit(1)
-        "
+        docker exec {{ app_name }}_vault hostname -I | awk '{print $1}'
       register: vault_ip
       changed_when: false
       become: true
