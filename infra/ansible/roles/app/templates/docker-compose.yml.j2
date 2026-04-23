@@ -200,7 +200,11 @@ services:
       - {{ app_data_dir }}/vault:/vault/file
       - {{ app_data_dir }}/vault/config:/vault/config:ro
     networks:
+{% if use_shared_services | default(false) %}
+      - {{ prod_network_name | default('leviosa_network') }}
+{% else %}
       - {{ app_name }}_network
+{% endif %}
     command: server -config=/vault/config/vault.hcl
     healthcheck:
       test: ["CMD", "vault", "status"]
