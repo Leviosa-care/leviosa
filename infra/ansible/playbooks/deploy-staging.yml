@@ -96,6 +96,18 @@
       become_user: root
       when: app_deployed | default(false)
 
+    - name: Enable Vault Transit secrets engine
+      ansible.builtin.shell: |
+        docker exec \
+          -e VAULT_ADDR=http://127.0.0.1:8200 \
+          -e VAULT_TOKEN={{ vault_token }} \
+          {{ app_name }}_vault \
+          vault secrets enable -path=transit transit 2>&1 || true
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+      changed_when: false
+
     - name: Seed admin users
       when: app_deployed | default(false) and seed_admins is defined
       become: true
