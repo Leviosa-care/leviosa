@@ -24,6 +24,28 @@
       tags: ['app', 'deploy']
 
   post_tasks:
+    - name: Create Vault config directory
+      ansible.builtin.file:
+        path: "{{ app_data_dir }}/vault/config"
+        state: directory
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0755'
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
+    - name: Generate Vault HCL configuration
+      ansible.builtin.template:
+        src: vault.hcl.j2
+        dest: "{{ app_data_dir }}/vault/config/vault.hcl"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0644'
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
     - name: Pull latest images
       ansible.builtin.command:
         cmd: docker compose pull
@@ -32,7 +54,173 @@
       become_user: root
       when: app_deployed | default(false)
 
-    - name: Restart services
+    - name: Start Vault container
+      ansible.builtin.command:
+        cmd: docker compose up -d vault
+        chdir: "{{ app_base_dir }}"
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
+    - name: Wait for Vault to be ready
+      ansible.builtin.command:
+        cmd: docker exec {{ app_name }}_vault vault status
+      register: vault_status
+      until: vault_status.rc != 1
+      retries: 10
+      delay: 3
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
+    - name: Check Vault status
+      ansible.builtin.command:
+        cmd: docker exec {{ app_name }}_vault vault status -format=json
+      register: vault_status_json
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
+    - name: Parse Vault status
+      ansible.builtin.set_fact:
+        vault_initialized: "{{ (vault_status_json.stdout | from_json).initialized | bool }}"
+        vault_sealed: "{{ (vault_status_json.stdout | from_json).sealed | bool }}"
+      when: app_deployed | default(false) and vault_status_json.stdout is defined
+
+    - name: Initialize Vault (first time only)
+      ansible.builtin.command:
+        cmd: docker exec {{ app_name }}_vault vault operator init -key-shares=3 -key-threshold=2 -format=json
+      register: vault_init_output
+      when:
+        - app_deployed | default(false)
+        - not (vault_initialized | default(false) | bool)
+      become: true
+      become_user: root
+      no_log: true
+
+    - name: Save Vault unseal keys and root token
+      ansible.builtin.copy:
+        content: |
+          VAULT_UNSEAL_KEY_1: {{ vault_init_output.stdout | from_json | json_query('unseal_keys_b64[0]') }}
+          VAULT_UNSEAL_KEY_2: {{ vault_init_output.stdout | from_json | json_query('unseal_keys_b64[1]') }}
+          VAULT_UNSEAL_KEY_3: {{ vault_init_output.stdout | from_json | json_query('unseal_keys_b64[2]') }}
+          VAULT_ROOT_TOKEN: {{ vault_init_output.stdout | from_json | json_query('root_token') }}
+        dest: "{{ app_data_dir }}/vault/vault-keys.txt"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0600'
+      when:
+        - app_deployed | default(false)
+        - vault_init_output.stdout is defined
+      become: true
+      become_user: root
+      no_log: true
+
+    - name: Load Vault credentials from file
+      ansible.builtin.slurp:
+        src: "{{ app_data_dir }}/vault/vault-keys.txt"
+      register: vault_keys_file
+      failed_when: false
+      when: app_deployed | default(false)
+      no_log: true
+
+    - name: Parse Vault credentials
+      ansible.builtin.set_fact:
+        vault_unseal_key_1: "{{ vault_keys_file.content | b64decode | regex_search('VAULT_UNSEAL_KEY_1: ([^\\n]+)', '\\1') | first }}"
+        vault_unseal_key_2: "{{ vault_keys_file.content | b64decode | regex_search('VAULT_UNSEAL_KEY_2: ([^\\n]+)', '\\1') | first }}"
+        vault_root_token: "{{ vault_keys_file.content | b64decode | regex_search('VAULT_ROOT_TOKEN: ([^\\n]+)', '\\1') | first }}"
+      when:
+        - app_deployed | default(false)
+        - vault_keys_file.content is defined
+      no_log: true
+
+    - name: Unseal Vault with key 1
+      ansible.builtin.command:
+        cmd: docker exec {{ app_name }}_vault vault operator unseal {{ vault_unseal_key_1 }}
+      when:
+        - app_deployed | default(false)
+        - vault_sealed | default(false) | bool
+        - vault_unseal_key_1 is defined
+      become: true
+      become_user: root
+      no_log: true
+
+    - name: Unseal Vault with key 2
+      ansible.builtin.command:
+        cmd: docker exec {{ app_name }}_vault vault operator unseal {{ vault_unseal_key_2 }}
+      when:
+        - app_deployed | default(false)
+        - vault_sealed | default(false) | bool
+        - vault_unseal_key_2 is defined
+      become: true
+      become_user: root
+      no_log: true
+
+    - name: Wait for Vault to be unsealed
+      ansible.builtin.command:
+        cmd: docker exec {{ app_name }}_vault vault status -format=json
+      register: vault_unsealed_status
+      until: vault_unsealed_status.stdout is defined and not (vault_unsealed_status.stdout | from_json | json_query('sealed') | bool)
+      retries: 5
+      delay: 2
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
+    - name: Create vault-token file for root token
+      ansible.builtin.copy:
+        content: "{{ vault_root_token }}"
+        dest: "{{ app_base_dir }}/.vault-token"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0600'
+      become: true
+      become_user: root
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
+      no_log: true
+
+    - name: Enable Transit secrets engine
+      ansible.builtin.shell: |
+        docker exec \
+          -e VAULT_ADDR=http://127.0.0.1:8200 \
+          -e VAULT_TOKEN={{ vault_root_token }} \
+          {{ app_name }}_vault \
+          vault secrets enable -path=transit transit 2>&1 || true
+      become: true
+      become_user: root
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
+      changed_when: false
+      no_log: true
+
+    - name: Create encryption keys for ENCX
+      ansible.builtin.shell: |
+        docker exec \
+          -e VAULT_ADDR=http://127.0.0.1:8200 \
+          -e VAULT_TOKEN={{ vault_root_token }} \
+          {{ app_name }}_vault \
+          vault write -f transit/keys/{{ item }} 2>&1 || true
+      loop:
+        - "{{ encx_kek_alias | default('leviosa-kek') }}"
+        - "{{ encx_pepper_alias | default('leviosa') }}"
+      become: true
+      become_user: root
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
+      changed_when: false
+      no_log: true
+
+    - name: Restart all services
       ansible.builtin.command:
         cmd: docker compose up -d --force-recreate
         chdir: "{{ app_base_dir }}"
@@ -46,18 +234,6 @@
       ansible.builtin.command:
         cmd: docker compose ps
         chdir: "{{ app_base_dir }}"
-      become: true
-      become_user: root
-      when: app_deployed | default(false)
-      changed_when: false
-
-    - name: Enable Vault Transit secrets engine
-      ansible.builtin.shell: |
-        docker exec \
-          -e VAULT_ADDR=http://127.0.0.1:8200 \
-          -e VAULT_TOKEN={{ vault_token }} \
-          {{ app_name }}_vault \
-          vault secrets enable -path=transit transit 2>&1 || true
       become: true
       become_user: root
       when: app_deployed | default(false)
