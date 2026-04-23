@@ -21,9 +21,12 @@
 
     const { form, errors, enhance, constraints } = superForm(data.loginForm, {
         resetForm: true,
-        onUpdated() {
-            const path = redirectFrom ? redirectFrom : "/";
-            goto(path);
+        onUpdated({ form }) {
+            // Only redirect if the form is valid (successful login)
+            if (form.valid) {
+                const path = redirectFrom ? redirectFrom : "/";
+                goto(path);
+            }
         },
     });
 
