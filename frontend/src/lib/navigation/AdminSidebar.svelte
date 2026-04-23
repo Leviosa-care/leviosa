@@ -158,7 +158,7 @@
 {#if permissions.canAccessOps}
 	<!-- Desktop Sidebar Navigation -->
 	<aside
-		class="hidden lg:flex lg:flex-col lg:border-r bg-white dark:bg-dark-50 border-dark-100 dark:border-dark-300 sticky top-0 h-screen transition-all duration-300 {isCollapsed
+		class="hidden lg:flex lg:flex-col lg:border-r bg-background border-border-card sticky top-0 h-screen transition-all duration-300 {isCollapsed
 			? 'lg:w-20'
 			: 'lg:w-64'}"
 		aria-label="Sidebar navigation"
@@ -166,7 +166,7 @@
 		<!-- Collapse Toggle Button -->
 		<button
 			onclick={toggleSidebar}
-			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-white dark:bg-dark-100 flex items-center justify-center text-dark-700 hover:text-dark-900 dark:text-dark-800 dark:hover:text-dark-900 hover:bg-dark-100 dark:hover:bg-dark-200 transition-all duration-200 border border-dark-200 dark:border-dark-300 shadow-sm"
+			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-background flex items-center justify-center text-foreground-alt hover:text-foreground hover:bg-muted transition-all duration-200 border border-border-card shadow-sm"
 			aria-label={isCollapsed ? "Agrandir la barre laterale" : "Reduire la barre laterale"}
 			title={isCollapsed ? "Agrandir la barre laterale" : "Reduire la barre laterale"}
 		>
@@ -203,19 +203,19 @@
 
 		<!-- Sidebar Header -->
 		<div
-			class="flex items-center justify-between border-b border-dark-100 dark:border-dark-300 py-6 {isCollapsed
+			class="flex items-center justify-between border-b border-border-card py-6 {isCollapsed
 				? 'px-3'
 				: 'px-6'}"
 		>
 			{#if !isCollapsed}
 				<div>
-					<h1 class="text-sm font-semibold tracking-tight text-dark-900 dark:text-dark-100 uppercase">Leviosa</h1>
-					<p class="text-xs text-dark-500 dark:text-dark-400">Panneau d'Administration</p>
+					<h1 class="text-sm font-semibold tracking-tight text-foreground uppercase">Leviosa</h1>
+					<p class="text-xs text-muted-foreground">Panneau d'Administration</p>
 				</div>
 				<ThemeToggle />
 			{:else}
 				<div class="mx-auto flex flex-col items-center gap-2">
-					<span class="text-lg font-bold text-dark-900 dark:text-dark-100">L</span>
+					<span class="text-lg font-bold text-foreground">L</span>
 					<ThemeToggle />
 				</div>
 			{/if}
@@ -232,8 +232,8 @@
 							class="flex items-center text-sm font-medium transition-all duration-200 rounded-lg {isCollapsed
 								? 'justify-center px-3 py-3'
 								: 'gap-3 px-3 py-2.5'} {active
-								? 'text-dark-900 dark:text-dark-900 bg-dark-100 dark:bg-dark-100'
-								: 'text-dark-600 dark:text-dark-500 hover:text-dark-900 dark:hover:text-dark-800 hover:bg-dark-50 dark:hover:bg-dark-100'}"
+								? 'text-foreground bg-muted'
+								: 'text-foreground-alt hover:text-foreground hover:bg-muted'}"
 							aria-current={active ? "page" : undefined}
 							title={isCollapsed ? item.label : undefined}
 						>
@@ -248,7 +248,7 @@
 		</nav>
 
 		<!-- Sidebar Footer -->
-		<div class="py-5 border-t border-dark-100 dark:border-dark-300 {isCollapsed ? 'px-3' : 'px-6'}">
+		<div class="py-5 border-t border-border-card {isCollapsed ? 'px-3' : 'px-6'}">
 			{#if !isCollapsed}
 				<!-- User row with kebab menu -->
 				<div class="relative">
@@ -257,19 +257,19 @@
 						<div class="fixed inset-0 z-10" onclick={closeUserMenu}></div>
 						<!-- Dropdown (opens upward) -->
 						<div
-							class="absolute bottom-full left-0 right-0 mb-2 z-20 bg-white dark:bg-dark-100 border border-dark-200 dark:border-dark-300 rounded-lg shadow-lg py-1 overflow-hidden"
+							class="absolute bottom-full left-0 right-0 mb-2 z-20 bg-background border border-border-card rounded-lg shadow-lg py-1 overflow-hidden"
 						>
 							<a
 								href="https://leviosa.com"
 								target="_blank"
 								rel="noopener noreferrer"
 								onclick={closeUserMenu}
-								class="flex items-center gap-2.5 px-3 py-2 text-sm text-dark-600 dark:text-dark-500 hover:text-dark-900 dark:hover:text-dark-800 hover:bg-dark-50 dark:hover:bg-dark-200 transition-colors"
+								class="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground-alt hover:text-foreground hover:bg-muted transition-colors"
 							>
 								<ExternalLink size={15} />
 								<span>Voir le site</span>
 							</a>
-							<div class="my-1 border-t border-dark-100 dark:border-dark-300"></div>
+							<div class="my-1 border-t border-border-card"></div>
 							<form method="POST" action="/logout">
 								<button
 									type="submit"
@@ -297,21 +297,21 @@
 					{/if}
 					<div class="flex items-center gap-3">
 						<div
-							class="w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center bg-dark-100 dark:bg-dark-200 border border-dark-200 dark:border-dark-300"
+							class="w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center bg-muted border border-border-card"
 						>
-							<span class="text-xs font-semibold text-dark-700 uppercase">
+							<span class="text-xs font-semibold text-foreground-alt uppercase">
 								{user.email?.[0]?.toUpperCase() ?? "A"}
 							</span>
 						</div>
 						<div class="flex-1 min-w-0">
-							<p class="text-sm font-medium text-dark-900 dark:text-dark-100 truncate tracking-tight">
+							<p class="text-sm font-medium text-foreground truncate tracking-tight">
 								{user.email}
 							</p>
-							<p class="text-xs text-dark-500 dark:text-dark-400 capitalize">{user.role}</p>
+							<p class="text-xs text-muted-foreground capitalize">{user.role}</p>
 						</div>
 						<button
 							onclick={toggleUserMenu}
-							class="flex-shrink-0 p-1.5 rounded-md text-dark-600 dark:text-dark-500 hover:text-dark-900 dark:hover:text-dark-800 hover:bg-dark-100 dark:hover:bg-dark-200 transition-colors"
+							class="flex-shrink-0 p-1.5 rounded-md text-foreground-alt hover:text-foreground hover:bg-muted transition-colors"
 							aria-label="Options utilisateur"
 							title="Options"
 						>
@@ -333,10 +333,10 @@
 			{:else}
 				<div class="flex flex-col items-center gap-2">
 					<div
-						class="w-9 h-9 rounded-full flex items-center justify-center bg-dark-100 dark:bg-dark-200 border border-dark-200 dark:border-dark-300"
+						class="w-9 h-9 rounded-full flex items-center justify-center bg-muted border border-border-card"
 						title={user.email}
 					>
-						<span class="text-xs font-semibold text-dark-700 dark:text-dark-900 uppercase">
+						<span class="text-xs font-semibold text-foreground-alt uppercase">
 							{user.email?.[0]?.toUpperCase() ?? "A"}
 						</span>
 					</div>
@@ -344,7 +344,7 @@
 						href="https://leviosa.com"
 						target="_blank"
 						rel="noopener noreferrer"
-						class="flex items-center justify-center w-9 h-9 text-dark-600 dark:text-dark-500 hover:text-dark-900 dark:hover:text-dark-800 hover:bg-dark-100 dark:hover:bg-dark-200 rounded-lg transition-colors"
+						class="flex items-center justify-center w-9 h-9 text-foreground-alt hover:text-foreground hover:bg-muted rounded-lg transition-colors"
 						title="Voir le site public"
 					>
 						<ExternalLink size={14} />
@@ -366,8 +366,8 @@
 					<a
 						href={item.href}
 						class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg transition-all duration-200 {active
-							? 'text-dark-900 dark:text-dark-800'
-							: 'text-dark-500 dark:text-dark-500'}"
+							? 'text-foreground'
+							: 'text-muted-foreground'}"
 						aria-current={active ? "page" : undefined}
 					>
 						<item.icon size={20} strokeWidth={active ? 2 : 1.5} />
