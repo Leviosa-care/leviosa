@@ -181,6 +181,8 @@ services:
         max-size: "10m"
         max-file: "3"
 
+{% endif %}
+
   # HashiCorp Vault (secrets management)
   # Production-grade setup with persistent Raft storage
   vault:
@@ -211,7 +213,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-{% endif %}
 
 # Networks
 networks:
