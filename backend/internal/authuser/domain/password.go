@@ -32,6 +32,20 @@ const (
 	PasswordPwnedMsg      = "password has been found in data breaches and cannot be used"
 )
 
+// ValidatePasswordFormat validates only the password format (length)
+// Used for login where we only need to verify the password is well-formed
+func ValidatePasswordFormat(p string) error {
+	var errs errsx.Map
+
+	if len(p) < PasswordMinLength {
+		errs.Set(PasswordLengthKey, PasswordLengthMsg)
+	}
+
+	return errs.AsError()
+}
+
+// ValidatePassword validates password format AND checks if it has been pwned
+// Used for registration and password resets where we want to enforce strong passwords
 func ValidatePassword(p string) error {
 	var errs errsx.Map
 

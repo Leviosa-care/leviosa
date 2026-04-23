@@ -50,7 +50,9 @@ func (r *SignInRequest) Valid(ctx context.Context) error {
 	if err := validation.ValidateEmail(r.Email); err != nil {
 		errs.Set("email", err)
 	}
-	if err := ValidatePassword(r.Password); err != nil {
+	// Only validate password format (length) for login
+	// Pwned password check only applies to registration/password reset
+	if err := ValidatePasswordFormat(r.Password); err != nil {
 		errs.Set("password", err)
 	}
 	return errs.AsError()
