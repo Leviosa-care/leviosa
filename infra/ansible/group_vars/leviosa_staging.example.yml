@@ -24,3 +24,13 @@ seed_admins:
     city: "Paris"
     address1: "1 Rue Example"
     address2: ""
+
+# ============================================
+# Frontend Environment Variables
+# ============================================
+# Enable mock authentication mode (bypasses real auth)
+# - true: Use mock user, skip authentication checks
+# - false: Use real authentication via API
+# - Default: false (recommended for staging)
+# - Set to 'true' only for testing without real backend/auth
+USE_MOCK_DATA: "false"
