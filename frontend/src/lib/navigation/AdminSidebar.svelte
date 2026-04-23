@@ -15,6 +15,7 @@
 	} from "@lucide/svelte";
 	import type { Component } from "svelte";
 	import type { Permissions } from "$lib/security/permissions";
+	import ThemeToggle from "$lib/components/admin/ThemeToggle.svelte";
 
 	interface SidebarProps {
 		user: App.User;
@@ -59,52 +60,52 @@
 	 */
 	const desktopNavigation: NavItem[] = [
 		{
-			href: "/admin/admin",
+			href: "/admin",
 			label: "Accueil",
 			icon: Home,
 		},
 		{
-			href: "/admin/admin/users",
+			href: "/admin/users",
 			label: "Utilisateurs",
 			icon: Users,
 		},
 		{
-			href: "/admin/admin/planning",
+			href: "/admin/planning",
 			label: "Planning",
 			icon: CalendarDays,
 		},
 		{
-			href: "/admin/admin/bookings/consultations",
+			href: "/admin/bookings/consultations",
 			label: "Notes de seance",
 			icon: NotebookPen,
 		},
 		{
-			href: "/admin/admin/messages",
+			href: "/admin/messages",
 			label: "Messages",
 			icon: Mail,
 		},
 		{
-			href: "/admin/admin/bookings/events",
+			href: "/admin/bookings/events",
 			label: "Evenements",
 			icon: Ticket,
 		},
 		{
-			href: "/admin/admin/products",
+			href: "/admin/products",
 			label: "Catalogue",
 			icon: Package,
 		},
 		{
-			href: "/admin/admin/analytics",
+			href: "/admin/analytics",
 			label: "Analytics",
 			icon: ChartSpline,
 		},
 		{
-			href: "/admin/admin/infra",
+			href: "/admin/infra",
 			label: "Infrastructure",
 			icon: Server,
 		},
 		{
-			href: "/admin/admin/compta",
+			href: "/admin/compta",
 			label: "Comptabilite",
 			icon: HandCoins,
 		},
@@ -116,27 +117,27 @@
 	 */
 	const mobileNavigation: NavItem[] = [
 		{
-			href: "/admin/admin",
+			href: "/admin",
 			label: "Accueil",
 			icon: Home,
 		},
 		{
-			href: "/admin/admin/users",
+			href: "/admin/users",
 			label: "Utilisateurs",
 			icon: Users,
 		},
 		{
-			href: "/admin/admin/planning",
+			href: "/admin/planning",
 			label: "Planning",
 			icon: CalendarDays,
 		},
 		{
-			href: "/admin/admin/bookings/consultations",
+			href: "/admin/bookings/consultations",
 			label: "Notes",
 			icon: NotebookPen,
 		},
 		{
-			href: "/admin/admin/products",
+			href: "/admin/products",
 			label: "Catalogue",
 			icon: Package,
 		},
@@ -147,8 +148,8 @@
 	 */
 	function isActive(href: string): boolean {
 		const currentPath = page.url.pathname;
-		if (href === "/admin/admin") {
-			return currentPath === "/admin/admin" || currentPath === "/admin/admin/";
+		if (href === "/admin") {
+			return currentPath === "/admin" || currentPath === "/admin/";
 		}
 		return currentPath.startsWith(href);
 	}
@@ -157,7 +158,7 @@
 {#if permissions.canAccessOps}
 	<!-- Desktop Sidebar Navigation -->
 	<aside
-		class="hidden lg:flex lg:flex-col lg:border-r bg-white border-dark-100 sticky top-0 h-screen transition-all duration-300 {isCollapsed
+		class="hidden lg:flex lg:flex-col lg:border-r bg-white dark:bg-dark-900 border-dark-100 dark:border-dark-700 sticky top-0 h-screen transition-all duration-300 {isCollapsed
 			? 'lg:w-20'
 			: 'lg:w-64'}"
 		aria-label="Sidebar navigation"
@@ -165,7 +166,7 @@
 		<!-- Collapse Toggle Button -->
 		<button
 			onclick={toggleSidebar}
-			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-white flex items-center justify-center text-dark-700 hover:text-dark-900 hover:bg-dark-100 transition-all duration-200 border border-dark-200 shadow-sm"
+			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-white dark:bg-dark-800 flex items-center justify-center text-dark-700 hover:text-dark-900 dark:hover:text-dark-100 hover:bg-dark-100 dark:hover:bg-dark-700 transition-all duration-200 border border-dark-200 dark:border-dark-700 shadow-sm"
 			aria-label={isCollapsed ? "Agrandir la barre laterale" : "Reduire la barre laterale"}
 			title={isCollapsed ? "Agrandir la barre laterale" : "Reduire la barre laterale"}
 		>
@@ -202,18 +203,20 @@
 
 		<!-- Sidebar Header -->
 		<div
-			class="flex items-center justify-between border-b border-dark-100 py-6 {isCollapsed
+			class="flex items-center justify-between border-b border-dark-100 dark:border-dark-700 py-6 {isCollapsed
 				? 'px-3'
 				: 'px-6'}"
 		>
 			{#if !isCollapsed}
 				<div>
-					<h1 class="text-sm font-semibold tracking-tight text-dark-900 uppercase">Leviosa</h1>
-					<p class="text-xs text-dark-500">Panneau d'Administration</p>
+					<h1 class="text-sm font-semibold tracking-tight text-dark-900 dark:text-dark-100 uppercase">Leviosa</h1>
+					<p class="text-xs text-dark-500 dark:text-dark-400">Panneau d'Administration</p>
 				</div>
+				<ThemeToggle />
 			{:else}
-				<div class="mx-auto">
-					<span class="text-lg font-bold text-dark-900">L</span>
+				<div class="mx-auto flex flex-col items-center gap-2">
+					<span class="text-lg font-bold text-dark-900 dark:text-dark-100">L</span>
+					<ThemeToggle />
 				</div>
 			{/if}
 		</div>
@@ -229,8 +232,8 @@
 							class="flex items-center text-sm font-medium transition-all duration-200 rounded-lg {isCollapsed
 								? 'justify-center px-3 py-3'
 								: 'gap-3 px-3 py-2.5'} {active
-								? 'text-dark-900 bg-dark-100'
-								: 'text-dark-600 hover:text-dark-900 hover:bg-dark-50'}"
+								? 'text-dark-900 dark:text-dark-100 bg-dark-100 dark:bg-dark-700'
+								: 'text-dark-600 dark:text-dark-300 hover:text-dark-900 dark:hover:text-dark-100 hover:bg-dark-50 dark:hover:bg-dark-800'}"
 							aria-current={active ? "page" : undefined}
 							title={isCollapsed ? item.label : undefined}
 						>
@@ -245,7 +248,7 @@
 		</nav>
 
 		<!-- Sidebar Footer -->
-		<div class="py-5 border-t border-dark-100 {isCollapsed ? 'px-3' : 'px-6'}">
+		<div class="py-5 border-t border-dark-100 dark:border-dark-700 {isCollapsed ? 'px-3' : 'px-6'}">
 			{#if !isCollapsed}
 				<!-- User row with kebab menu -->
 				<div class="relative">
@@ -254,19 +257,19 @@
 						<div class="fixed inset-0 z-10" onclick={closeUserMenu}></div>
 						<!-- Dropdown (opens upward) -->
 						<div
-							class="absolute bottom-full left-0 right-0 mb-2 z-20 bg-white border border-dark-200 rounded-lg shadow-lg py-1 overflow-hidden"
+							class="absolute bottom-full left-0 right-0 mb-2 z-20 bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-700 rounded-lg shadow-lg py-1 overflow-hidden"
 						>
 							<a
 								href="https://leviosa.com"
 								target="_blank"
 								rel="noopener noreferrer"
 								onclick={closeUserMenu}
-								class="flex items-center gap-2.5 px-3 py-2 text-sm text-dark-600 hover:text-dark-900 hover:bg-dark-50 transition-colors"
+								class="flex items-center gap-2.5 px-3 py-2 text-sm text-dark-600 dark:text-dark-300 hover:text-dark-900 dark:hover:text-dark-100 dark:text-dark-100 hover:bg-dark-50 dark:hover:bg-dark-800 transition-colors"
 							>
 								<ExternalLink size={15} />
 								<span>Voir le site</span>
 							</a>
-							<div class="my-1 border-t border-dark-100"></div>
+							<div class="my-1 border-t border-dark-100 dark:border-dark-700"></div>
 							<form method="POST" action="/logout">
 								<button
 									type="submit"
@@ -294,21 +297,21 @@
 					{/if}
 					<div class="flex items-center gap-3">
 						<div
-							class="w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center bg-dark-100 border border-dark-200"
+							class="w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center bg-dark-100 dark:bg-dark-700 border border-dark-200 dark:border-dark-700"
 						>
 							<span class="text-xs font-semibold text-dark-700 uppercase">
 								{user.email?.[0]?.toUpperCase() ?? "A"}
 							</span>
 						</div>
 						<div class="flex-1 min-w-0">
-							<p class="text-sm font-medium text-dark-900 truncate tracking-tight">
+							<p class="text-sm font-medium text-dark-900 dark:text-dark-100 truncate tracking-tight">
 								{user.email}
 							</p>
-							<p class="text-xs text-dark-500 capitalize">{user.role}</p>
+							<p class="text-xs text-dark-500 dark:text-dark-400 capitalize">{user.role}</p>
 						</div>
 						<button
 							onclick={toggleUserMenu}
-							class="flex-shrink-0 p-1.5 rounded-md text-dark-600 hover:text-dark-900 hover:bg-dark-100 transition-colors"
+							class="flex-shrink-0 p-1.5 rounded-md text-dark-600 dark:text-dark-300 hover:text-dark-900 dark:hover:text-dark-100 dark:text-dark-100 hover:bg-dark-100 dark:bg-dark-700 dark:hover:bg-dark-700 transition-colors"
 							aria-label="Options utilisateur"
 							title="Options"
 						>
@@ -330,7 +333,7 @@
 			{:else}
 				<div class="flex flex-col items-center gap-2">
 					<div
-						class="w-9 h-9 rounded-full flex items-center justify-center bg-dark-100 border border-dark-200"
+						class="w-9 h-9 rounded-full flex items-center justify-center bg-dark-100 dark:bg-dark-700 border border-dark-200 dark:border-dark-700"
 						title={user.email}
 					>
 						<span class="text-xs font-semibold text-dark-700 uppercase">
@@ -341,7 +344,7 @@
 						href="https://leviosa.com"
 						target="_blank"
 						rel="noopener noreferrer"
-						class="flex items-center justify-center w-9 h-9 text-dark-600 hover:text-dark-900 hover:bg-dark-100 rounded-lg transition-colors"
+						class="flex items-center justify-center w-9 h-9 text-dark-600 dark:text-dark-300 hover:text-dark-900 dark:hover:text-dark-100 dark:text-dark-100 hover:bg-dark-100 dark:bg-dark-700 dark:hover:bg-dark-700 rounded-lg transition-colors"
 						title="Voir le site public"
 					>
 						<ExternalLink size={14} />
@@ -353,7 +356,7 @@
 
 	<!-- Mobile Bottom Navigation -->
 	<nav
-		class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white backdrop-blur-sm border-t border-dark-100"
+		class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-dark-900 backdrop-blur-sm border-t border-dark-100 dark:border-dark-700"
 		aria-label="Bottom navigation"
 	>
 		<ul class="flex items-center justify-around px-1 py-1">
@@ -363,8 +366,8 @@
 					<a
 						href={item.href}
 						class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg transition-all duration-200 {active
-							? 'text-dark-900'
-							: 'text-dark-500'}"
+							? 'text-dark-900 dark:text-dark-100'
+							: 'text-dark-500 dark:text-dark-400'}"
 						aria-current={active ? "page" : undefined}
 					>
 						<item.icon size={20} strokeWidth={active ? 2 : 1.5} />
