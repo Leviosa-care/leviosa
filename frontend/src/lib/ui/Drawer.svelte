@@ -1,129 +1,147 @@
 <script lang="ts">
-    import { run, createBubbler } from "svelte/legacy";
-    import { onDestroy } from "svelte";
-    import { browser } from "$app/environment";
-    import { slide, fade } from "svelte/transition";
+	import { onDestroy, getContext } from 'svelte';
+	import { browser } from '$app/environment';
+	import { createVerticalSwipeHandler } from '$lib/scripts/swipe';
 
-    const bubble = function (e: MouseEvent) {
-        e.stopPropagation();
-        createBubbler()("click");
-    };
+	interface Props {
+		isOpen?: boolean;
+		children?: import('svelte').Snippet;
+	}
 
-    let scrollPosition: number = 0;
+	let { children, isOpen = $bindable(false) }: Props = $props();
 
-    // =======================
-    // Store and State Imports
-    // =======================
-    import { createVerticalSwipeHandler } from "$lib/scripts/swipe";
-    interface Props {
-        isOpen?: boolean;
-        children?: import("svelte").Snippet;
-    }
+	// Layouts that use a scroll-jail (overflow on a container, not body) should set
+	// this context to false so we don't apply scroll locking at all.
+	const lockBodyScroll = (getContext<boolean>('drawer-lock-body-scroll') ?? true);
 
-    let { children, isOpen = $bindable(false) }: Props = $props();
+	let drawerEl: HTMLElement | null = null;
+	let renderChildren = $state(false);
+	let closeTimer: ReturnType<typeof setTimeout> | undefined;
+	let scrollLocked = false;
 
-    // =======================
-    // Helper Functions
-    // =======================
-    const onSwipe = (direction: "top" | "bottom") => {
-        if (direction === "bottom") isOpen = false;
-    };
+	const TRANSITION_MS = 300;
 
-    const closeSwipeAction = createVerticalSwipeHandler(onSwipe);
-    function handleKeydown(event: KeyboardEvent) {
-        event.stopPropagation();
-        if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            isOpen = false;
-        }
-    }
+	function handleKeydown(event: KeyboardEvent) {
+		event.stopPropagation();
+		if (event.key === 'Escape') {
+			isOpen = false;
+		}
+	}
 
-    function toggleBodyScroll(isOpen: boolean) {
-        if (!browser) return;
-        if (isOpen) {
-            // save the current position
-            scrollPosition = window.scrollY;
-            document.body.style.position = "fixed";
-            document.body.style.top = `-${scrollPosition}px`;
-            document.body.style.width = "100%";
-        } else {
-            document.body.style.position = "";
-            document.body.style.top = "";
-            document.body.style.width = "";
-            window.scrollTo(0, scrollPosition);
-        }
-    }
+	function preventBodyTouchMove(e: TouchEvent) {
+		if (drawerEl && drawerEl.contains(e.target as Node)) return;
+		e.preventDefault();
+	}
 
-    $effect(() => {
-        toggleBodyScroll(isOpen);
-    });
+	function lockScroll() {
+		document.body.style.overflow = 'hidden'; // desktop fallback
+		document.addEventListener('touchmove', preventBodyTouchMove, { passive: false });
+		scrollLocked = true;
+	}
 
-    onDestroy(() => {
-        if (!browser) return;
-        document.body.style.position = "";
-        document.body.style.top = "";
-        window.scrollTo(0, scrollPosition);
-    });
+	function unlockScroll() {
+		document.body.style.overflow = '';
+		document.removeEventListener('touchmove', preventBodyTouchMove);
+		// Flush iOS Safari's touch hit-test cache after unlocking.
+		void document.body.getBoundingClientRect();
+		scrollLocked = false;
+	}
+
+	$effect(() => {
+		if (!browser) return;
+		if (isOpen) {
+			clearTimeout(closeTimer);
+			renderChildren = true;
+			if (lockBodyScroll) lockScroll();
+		} else if (scrollLocked || renderChildren) {
+			closeTimer = setTimeout(() => {
+				if (lockBodyScroll) unlockScroll();
+				renderChildren = false;
+			}, TRANSITION_MS);
+		}
+	});
+
+	onDestroy(() => {
+		clearTimeout(closeTimer);
+		if (!browser) return;
+		if (scrollLocked) unlockScroll();
+	});
+
+	const onSwipe = (direction: 'top' | 'bottom') => {
+		if (direction === 'bottom') isOpen = false;
+	};
+
+	const closeSwipeAction = createVerticalSwipeHandler(onSwipe);
 </script>
 
-{#if isOpen}
-    <div
-        transition:fade={{ duration: 300 }}
-        class="overlay"
-        onclick={() => (isOpen = false)}
-        onkeydown={handleKeydown}
-        class:visible={isOpen}
-        tabindex="0"
-        role="button"
-    ></div>
-    <div
-        transition:slide={{ duration: 300 }}
-        class="drawer bg-white"
-        class:visible={isOpen}
-        onclick={bubble}
-        onkeydown={handleKeydown}
-        use:closeSwipeAction.action
-        tabindex="0"
-        role="button"
-    >
-        {@render children?.()}
-    </div>
-{/if}
+<!--
+	Overlay and drawer are always in the DOM (not inside {#if}).
+	CSS transitions handle animation. pointer-events:none when closed ensures
+	touches are never dispatched to the hidden elements — removing a DOM node
+	mid-touch-sequence on iOS Safari corrupts the entire touch-dispatch state
+	until the page is reloaded.
+-->
+<div
+	class="overlay"
+	class:visible={isOpen}
+	onclick={() => (isOpen = false)}
+	aria-hidden="true"
+></div>
+<div
+	class="drawer"
+	bind:this={drawerEl}
+	class:visible={isOpen}
+	use:closeSwipeAction.action
+	role="dialog"
+	aria-modal={isOpen}
+	aria-hidden={!isOpen}
+	tabindex="-1"
+	onkeydown={handleKeydown}
+>
+	{#if renderChildren}
+		{@render children?.()}
+	{/if}
+</div>
 
 <style>
-    .overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 100vw;
-        background: rgba(0, 0, 0, 0.2);
-        opacity: 0;
-        visibility: hidden;
-    }
-    .overlay.visible {
-        opacity: 1;
-        visibility: visible;
-    }
+	.overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		height: 100%;
+		width: 100vw;
+		background: rgba(0, 0, 0, 0.5);
+		opacity: 0;
+		pointer-events: none;
+		z-index: 9998;
+		transition: opacity 300ms;
+	}
+	.overlay.visible {
+		opacity: 1;
+		pointer-events: auto;
+	}
 
-    .drawer {
-        --border-top-radius: 1.2rem;
-        position: fixed;
-        bottom: -100%;
-        left: 0;
-        width: 100%;
-        max-height: 85vh;
-        overflow-y: auto;
-        padding-inline: 1rem;
-        padding-bottom: 1rem;
-        box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.2);
-        border-top-left-radius: var(--border-top-radius);
-        border-top-right-radius: var(--border-top-radius);
-        /* TODO: should the drawer be on top of the navigation, it makes sense but it is weird right? */
-        z-index: 9999;
-        color: hsl(var(--dark-900));
-    }
-    .drawer.visible {
-        bottom: 0;
-    }
+	.drawer {
+		--border-top-radius: 1rem;
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		max-height: 90vh;
+		overflow-y: auto;
+		padding: 1rem;
+		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+		border-top-left-radius: var(--border-top-radius);
+		border-top-right-radius: var(--border-top-radius);
+		z-index: 9999;
+		background: hsl(var(--color-background));
+		outline: none;
+		pointer-events: none;
+		transform: translateY(100%);
+		transition: transform 300ms;
+	}
+	.drawer.visible {
+		pointer-events: auto;
+		transform: translateY(0);
+	}
 </style>
