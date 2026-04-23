@@ -173,9 +173,9 @@
 
     - name: Wait for Vault to be unsealed
       ansible.builtin.command:
-        cmd: docker exec {{ app_name }}_vault vault status -format=json
+        cmd: docker exec {{ app_name }}_vault vault status
       register: vault_unsealed_status
-      until: vault_unsealed_status.stdout is defined and not (vault_unsealed_status.stdout | from_json | json_query('sealed') | bool)
+      until: vault_unsealed_status.rc == 0
       retries: 5
       delay: 2
       changed_when: false
