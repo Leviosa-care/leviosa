@@ -108,3 +108,19 @@ caddy_cloudflare_api_token: "your_cloudflare_api_token_here"
 # ============================================
 caddy_basic_auth_username: "admin"
 caddy_basic_auth_password_hash: "your_base64_encoded_bcrypt_hash_here"
+
+# ============================================
+# Admin seed users (encrypted by Ansible Vault)
+# These are upserted on every deploy via the seed binary.
+# ============================================
+seed_admins:
+  - email: "admin@leviosa.care"
+    password: "ChangeMe123!"
+    first_name: "Admin"
+    last_name: "User"
+    role: "admin"
+    telephone: "+33600000000"
+    postal_code: "75001"
+    city: "Paris"
+    address1: "1 Rue Example"
+    address2: ""

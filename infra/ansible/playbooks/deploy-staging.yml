@@ -96,6 +96,36 @@
       become_user: root
       when: app_deployed | default(false)
 
+    - name: Seed admin users
+      when: app_deployed | default(false) and seed_admins is defined
+      become: true
+      become_user: root
+      block:
+        - name: Write seed data file
+          ansible.builtin.copy:
+            content: "{{ seed_admins | to_json }}"
+            dest: "{{ app_base_dir }}/seed_data.json"
+            owner: root
+            group: root
+            mode: '0600'
+
+        - name: Run database seeder
+          ansible.builtin.shell: |
+            docker run --rm \
+              --network {{ app_name }}_network \
+              --env-file {{ app_base_dir }}/.env \
+              -v {{ app_base_dir }}/seed_data.json:/app/seed_data.json:ro \
+              -e SEED_DATA_PATH=/app/seed_data.json \
+              {{ backend_docker_image }} ./seed
+
+      always:
+        - name: Remove seed data file
+          ansible.builtin.file:
+            path: "{{ app_base_dir }}/seed_data.json"
+            state: absent
+          become: true
+          become_user: root
+
     - name: Display deployment completion
       ansible.builtin.debug:
         msg:

@@ -8,3 +8,19 @@
 # ============================================
 frontend_docker_image: "henga/leviosa:frontend-staging"
 backend_docker_image: "henga/leviosa:backend-staging"
+
+# ============================================
+# Admin seed users (encrypted by Ansible Vault)
+# These are upserted on every deploy via the seed binary.
+# ============================================
+seed_admins:
+  - email: "admin@staging.leviosa.care"
+    password: "ChangeMe123!"
+    first_name: "Admin"
+    last_name: "User"
+    role: "admin"
+    telephone: "+33600000000"
+    postal_code: "75001"
+    city: "Paris"
+    address1: "1 Rue Example"
+    address2: ""
