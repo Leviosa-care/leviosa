@@ -187,6 +187,18 @@
         - vault_root_token is defined
       no_log: true
 
+    - name: Update VAULT_TOKEN in .env with actual root token
+      ansible.builtin.lineinfile:
+        path: "{{ app_base_dir }}/.env"
+        regexp: '^VAULT_TOKEN='
+        line: "VAULT_TOKEN={{ vault_root_token }}"
+      become: true
+      become_user: root
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
+      no_log: true
+
     - name: Enable Transit secrets engine
       ansible.builtin.shell: |
         docker exec \
