@@ -314,58 +314,25 @@
       changed_when: false
       no_log: true
 
-    - name: Restart all services
-      ansible.builtin.command:
-        cmd: docker compose up -d --force-recreate
+    - name: Restart all services except Vault
+      ansible.builtin.shell: |
+        services=$(docker compose config --services | grep -v '^vault$' | tr '\n' ' ')
+        docker compose up -d --force-recreate $services
+      args:
         chdir: "{{ app_base_dir }}"
       become: true
       become_user: root
       when: app_deployed | default(false)
 
-    - name: Wait for Vault to be ready after service restart
-      ansible.builtin.command:
-        cmd: docker exec {{ app_name }}_vault vault status
-      register: vault_post_restart_status
-      until: vault_post_restart_status.rc != 1
-      retries: 10
-      delay: 3
+    - name: Get Vault IP on production network
+      ansible.builtin.shell: |
+        docker network inspect {{ prod_network_name | default('leviosa_network') }} | \
+          python3 -c "import json,sys; d=json.load(sys.stdin)[0]; cs=[c for c in d.get('Containers',{}).values() if '{{ app_name }}_vault' in c.get('Name','')]; print(cs[0]['IPv4Address'].split('/')[0] if cs else '')"
+      register: vault_network_ip
+      become: true
+      become_user: root
       changed_when: false
       failed_when: false
-      become: true
-      become_user: root
-      when: app_deployed | default(false)
-
-    - name: Re-unseal Vault after service restart (key 1)
-      ansible.builtin.command:
-        cmd: docker exec {{ app_name }}_vault vault operator unseal {{ vault_unseal_key_1 }}
-      when:
-        - app_deployed | default(false)
-        - vault_unseal_key_1 is defined
-      become: true
-      become_user: root
-      no_log: true
-
-    - name: Re-unseal Vault after service restart (key 2)
-      ansible.builtin.command:
-        cmd: docker exec {{ app_name }}_vault vault operator unseal {{ vault_unseal_key_2 }}
-      when:
-        - app_deployed | default(false)
-        - vault_unseal_key_2 is defined
-      become: true
-      become_user: root
-      no_log: true
-
-    - name: Wait for Vault to be unsealed after service restart
-      ansible.builtin.command:
-        cmd: docker exec {{ app_name }}_vault vault status
-      register: vault_post_unseal
-      until: vault_post_unseal.rc == 0
-      retries: 10
-      delay: 3
-      changed_when: false
-      failed_when: false
-      become: true
-      become_user: root
       when: app_deployed | default(false)
 
     - name: Seed admin users
@@ -385,11 +352,10 @@
           ansible.builtin.shell: |
             docker run --rm \
               --network {{ prod_network_name | default(app_name + '_network') }} \
-              --add-host=host.docker.internal:host-gateway \
+              --add-host={{ vault_addr | default('http://vault:8200') | regex_replace('^https?://([^:/]+).*', '\\1') }}:{{ vault_network_ip.stdout | trim }} \
               --env-file {{ app_base_dir }}/.env \
               -v {{ app_base_dir }}/seed_data.json:/app/seed_data.json:ro \
               -e SEED_DATA_PATH=/app/seed_data.json \
-              -e VAULT_ADDR=http://host.docker.internal:{{ vault_host_port | default('8200') }} \
               {{ backend_docker_image }} ./seed
 
       always:
