@@ -1,0 +1,19 @@
+# Vault Configuration for Leviosa {{ app_env | default('production') }}
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+ui = true
+
+listener "tcp" {
+  address     = "0.0.0.0:8200"
+  tls_disable = "true"
+}
+
+# Raft storage for persistent, production-grade state
+storage "raft" {
+  path    = "/vault/file"
+  node_id = "{{ app_name }}_vault_1"
+}
+
+api_addr      = "http://0.0.0.0:8200"
+disable_mlock = false
+log_level     = "info"
