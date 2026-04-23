@@ -39,6 +39,9 @@ export const load = async ({ url }: RequestEvent) => {
         message(registerForm, MESSAGES[queryMessage])
     }
 
+    // Store the redirect target for use after successful login
+    const redirectTo = url.searchParams.get("redirect");
+
     // NOTE: on the oauth implementation
     // provider
     // auth state
@@ -53,7 +56,7 @@ export const load = async ({ url }: RequestEvent) => {
 
     const loginForm = await superValidate(init, arktype(loginSchema, { defaults: loginDefaults }))
     console.log("the register form from the load function:", registerForm)
-    return { loginForm, registerForm, oauthForm }
+    return { loginForm, registerForm, oauthForm, redirectTo }
 }
 
 export const actions = {
@@ -90,7 +93,7 @@ export const actions = {
         // Success - redirect to verify email page with email as query param
         redirect(302, `/auth/verify-email?email=${encodeURIComponent(form.data.registerEmail)}`)
     },
-    login: async ({ request, cookies }: RequestEvent) => {
+    login: async ({ request, cookies, url }: RequestEvent) => {
         const form = await superValidate(request, arktype(loginSchema, { defaults: loginDefaults }))
 
         if (!form.valid) {
@@ -138,8 +141,45 @@ export const actions = {
         // Extract and forward authentication cookies from backend response to client
         forwardAuthCookies(res, cookies);
 
-        // Success - redirect to app
-        redirect(302, "/");
+        // Get redirect target from URL params
+        const redirectTo = url.searchParams.get("redirect");
+
+        // Fetch user to determine role-based redirect
+        // Note: We need to make a fresh request since we just received the session cookie
+        let finalRedirect = "/";
+        try {
+            const userRes = await fetch(`${env.API_URL}/users/me`, {
+                headers: {
+                    'Cookie': cookies.get("leviosa_session") || ""
+                }
+            });
+
+            if (userRes.ok) {
+                const user = await userRes.json();
+
+                // Role-based redirect: always send users to the appropriate page for their role
+                // This prevents staff users from getting 403 errors if they tried to access /admin
+                if (user.role === "admin") {
+                    finalRedirect = "/admin";
+                } else if (user.role === "partner") {
+                    finalRedirect = "/staff";
+                } else if (redirectTo) {
+                    // For other roles, respect the redirect param if provided
+                    finalRedirect = redirectTo;
+                }
+            } else if (redirectTo) {
+                // Fallback: use redirect param if user fetch fails
+                finalRedirect = redirectTo;
+            }
+        } catch (e) {
+            // If user fetch fails, use redirect param or default to home
+            if (redirectTo) {
+                finalRedirect = redirectTo;
+            }
+        }
+
+        // Success - redirect to appropriate destination
+        redirect(302, finalRedirect);
     },
     oauth: async ({ request }: RequestEvent) => {
         const form = await superValidate(request, arktype(oauthSchema, { defaults: oauthDefaults }))
