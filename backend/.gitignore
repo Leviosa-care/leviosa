@@ -22,4 +22,7 @@ notes
 
 .encx
 
+# seed data (contains real admin credentials — never commit)
+cmd/seed/seed_data.json
+
 *.md
