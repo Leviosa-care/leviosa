@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { goto } from "$app/navigation";
-	import { ArrowLeft, Package, Clock, MapPin, Calendar, FileText, Tag, DollarSign } from "@lucide/svelte";
+	import { ArrowLeft, Package, Clock, MapPin, Calendar, FileText, Tag, DollarSign, Upload, X, ImageIcon } from "@lucide/svelte";
 	import type { PageData } from "./$types";
 	import { getToastContext } from "$lib/components/toast";
 
@@ -22,6 +22,10 @@
 	let stripeProductId = $state("");
 	let imageUrl = $state("");
 
+	// Image upload state
+	let imagePreview = $state<string | null>(null);
+	let isUploading = $state(false);
+
 	function createProductEnhance() {
 		return async ({ result }: { result: import('@sveltejs/kit').ActionResult }) => {
 			if (result.type === 'success') {
@@ -34,6 +38,39 @@
 	}
 
 	const categoriesWithoutDefault = data.categories.filter(c => c.id !== "default");
+
+	// Handle image file selection
+	function handleImageSelect(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (file) {
+			// For now, just create a preview URL
+			// TODO: Implement actual upload to backend/S3
+			imagePreview = URL.createObjectURL(file);
+			imageUrl = imagePreview; // This would be the uploaded URL in production
+		}
+	}
+
+	// Handle paste of image URL
+	function handleImagePaste(event: ClipboardEvent) {
+		const items = event.clipboardData?.items;
+		if (items) {
+			for (const item of items) {
+				if (item.type.indexOf('image') !== -1) {
+					const file = item.getAsFile();
+					if (file) {
+						imagePreview = URL.createObjectURL(file);
+						imageUrl = imagePreview;
+					}
+				}
+			}
+		}
+	}
+
+	function removeImage() {
+		imagePreview = null;
+		imageUrl = "";
+	}
 </script>
 
 <svelte:head>
@@ -55,30 +92,66 @@
 		</p>
 	</div>
 
-	<div class="bg-background rounded-lg border border-border-card p-6 lg:p-8 max-w-4xl">
+	<div class="bg-background rounded-lg border border-border-card p-6 lg:p-8">
 		<form method="POST" use:enhance={createProductEnhance} class="space-y-6">
 			<!-- Image Upload -->
 			<div>
-				<label for="imageUrl" class="block text-sm font-medium text-foreground-alt mb-2">
+				<label class="block text-sm font-medium text-foreground-alt mb-2">
 					Image du Produit
 				</label>
 				<p class="text-xs text-muted-foreground mb-3">
-					URL de l'image principale du produit
+					Téléchargez une image ou collez une URL. Max 10 Mo.
 				</p>
-				<div class="relative">
-					<Package
-						size={18}
-						class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-					/>
-					<input
-						id="imageUrl"
-						name="imageUrl"
-						type="url"
-						bind:value={imageUrl}
-						placeholder="https://example.com/image.jpg"
-						class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
-					/>
-				</div>
+
+				{#if imagePreview}
+					<div class="relative w-full aspect-video max-h-96 bg-muted rounded-lg overflow-hidden border border-border-card">
+						<img
+							src={imagePreview}
+							alt="Aperçu de l'image"
+							class="w-full h-full object-contain"
+						/>
+						<button
+							type="button"
+							onclick={removeImage}
+							class="absolute top-3 right-3 p-2 bg-black/60 hover:bg-red-600 text-white rounded-lg transition-colors"
+							aria-label="Supprimer l'image"
+						>
+							<X size={16} />
+						</button>
+					</div>
+					<input type="hidden" name="imageUrl" value={imageUrl} />
+				{:else}
+					<div
+						class="relative w-full aspect-video max-h-96 bg-muted rounded-lg border-2 border-dashed border-border-card flex flex-col items-center justify-center cursor-pointer hover:border-foreground/30 transition-colors"
+						onpaste={handleImagePaste}
+					>
+						<input
+							type="file"
+							name="imageFile"
+							accept="image/*"
+							onchange={handleImageSelect}
+							class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+							aria-label="Télécharger une image"
+						/>
+						<div class="flex flex-col items-center gap-3 pointer-events-none">
+							<div class="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center">
+								<ImageIcon size={32} class="text-foreground-alt" />
+							</div>
+							<div class="text-center">
+								<p class="text-sm font-medium text-foreground">
+									Cliquez pour télécharger ou collez une image
+								</p>
+								<p class="text-xs text-muted-foreground mt-1">
+									ou glissez-déposez un fichier ici
+								</p>
+							</div>
+							<p class="text-xs text-muted-foreground">
+								JPEG, PNG, WebP · max 10 Mo
+							</p>
+						</div>
+					</div>
+					<input type="hidden" name="imageUrl" value={imageUrl} />
+				{/if}
 			</div>
 
 			<!-- Name -->
