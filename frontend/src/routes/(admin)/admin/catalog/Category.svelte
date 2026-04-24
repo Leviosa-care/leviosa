@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus, Tag, MoreVertical, Pencil, Trash2, Search } from "@lucide/svelte";
+	import { Plus, Tag, Pencil, Trash2, Search } from "@lucide/svelte";
 	import type { SuperValidated } from "sveltekit-superforms";
 	import type { category } from "./schemas";
 	import CategoryModal from "./CategoryModal.svelte";
@@ -14,6 +14,8 @@
 
 	let searchQuery = $state("");
 	let statusFilter = $state("all");
+	let editDialogOpen = $state(false);
+	let selectedCategory = $state<Category | null>(null);
 
 	let filteredCategories = $derived(
 		categories.filter(
@@ -23,8 +25,6 @@
 				c.name.toLowerCase().includes(searchQuery.toLowerCase())
 		)
 	);
-
-	let categoryList = $state(categories);
 
 	function getStatusBadge(status: string) {
 		switch (status) {
@@ -38,6 +38,16 @@
 				return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400";
 		}
 	}
+
+	function openEditDialog(category: Category) {
+		selectedCategory = category;
+		editDialogOpen = true;
+	}
+
+	function closeEditDialog() {
+		editDialogOpen = false;
+		selectedCategory = null;
+	}
 </script>
 
 <div class="flex flex-col gap-6">
@@ -46,7 +56,7 @@
 		<div>
 			<h2 class="text-lg font-semibold text-foreground">Catégories</h2>
 			<p class="text-sm text-foreground-alt">
-				{categoryList.filter((c) => c.id !== "default").length} catégorie{categoryList.filter((c) => c.id !== "default").length > 1
+				{categories.filter((c) => c.id !== "default").length} catégorie{categories.filter((c) => c.id !== "default").length > 1
 					? 's'
 					: ''} au total
 			</p>
@@ -132,14 +142,6 @@
 								</span>
 							</div>
 						</div>
-						<div class="relative">
-							<button
-								class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-								aria-label="Options"
-							>
-								<MoreVertical size={16} />
-							</button>
-						</div>
 					</div>
 					{#if cat.description}
 						<p class="text-sm text-foreground-alt line-clamp-2 mb-3">
@@ -153,6 +155,7 @@
 						</span>
 						<div class="flex gap-1">
 							<button
+								onclick={() => openEditDialog(cat)}
 								class="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
 								aria-label="Modifier"
 							>
@@ -171,3 +174,94 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Edit Category Modal -->
+{#if selectedCategory && editDialogOpen}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+		onclick={closeEditDialog}
+	>
+		<div
+			class="bg-background border border-border-card rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+			onclick={(e) => e.stopPropagation()}
+		>
+			<div class="px-6 py-4 border-b border-border-card">
+				<h3 class="text-lg font-semibold text-foreground">
+					Modifier la Catégorie
+				</h3>
+				<p class="text-sm text-foreground-alt mt-1">
+					Modifier "{selectedCategory.name}"
+				</p>
+			</div>
+			<div class="p-6 space-y-4">
+				<div>
+					<label
+						for="edit-name"
+						class="block text-sm font-medium text-foreground mb-1.5"
+					>
+						Nom
+					</label>
+					<input
+						id="edit-name"
+						type="text"
+						value={selectedCategory.name}
+						class="w-full px-3 py-2 border border-border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+					/>
+				</div>
+				<div>
+					<label
+						for="edit-description"
+						class="block text-sm font-medium text-foreground mb-1.5"
+					>
+						Description
+					</label>
+					<textarea
+						id="edit-description"
+						rows="3"
+						class="w-full px-3 py-2 border border-border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+					>
+						{selectedCategory.description || ""}
+					</textarea>
+				</div>
+				<div>
+					<label
+						for="edit-status"
+						class="block text-sm font-medium text-foreground mb-1.5"
+					>
+						Statut
+					</label>
+					<select
+						id="edit-status"
+						class="w-full px-3 py-2 border border-border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+					>
+						<option value="published" selected={selectedCategory.status === "published"}
+						>Publié</option
+						>
+						<option value="draft" selected={selectedCategory.status === "draft"}
+						>Brouillon</option
+						>
+						<option
+							value="archived"
+							selected={selectedCategory.status === "archived"}>Archivé</option
+						>
+					</select>
+				</div>
+			</div>
+			<div class="px-6 py-4 bg-muted/30 border-t border-border-card flex justify-end gap-3">
+				<button
+					type="button"
+					onclick={closeEditDialog}
+					class="px-4 py-2 border border-border-input text-foreground-alt rounded-lg hover:bg-muted transition-colors font-medium text-sm"
+				>
+					Annuler
+				</button>
+				<button
+					type="button"
+					class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm"
+				>
+					Enregistrer
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
