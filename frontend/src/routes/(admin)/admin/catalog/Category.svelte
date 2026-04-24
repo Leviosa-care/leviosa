@@ -17,6 +17,11 @@
 	let editDialogOpen = $state(false);
 	let selectedCategory = $state<Category | null>(null);
 
+	// Form state for edit
+	let editName = $state("");
+	let editDescription = $state("");
+	let editStatus = $state<"published" | "draft" | "archived">("published");
+
 	let filteredCategories = $derived(
 		categories.filter(
 			(c) =>
@@ -41,12 +46,26 @@
 
 	function openEditDialog(category: Category) {
 		selectedCategory = category;
+		editName = category.name;
+		editDescription = category.description || "";
+		editStatus = category.status || "draft";
 		editDialogOpen = true;
 	}
 
 	function closeEditDialog() {
 		editDialogOpen = false;
 		selectedCategory = null;
+	}
+
+	function handleSave() {
+		// TODO: Connect to backend action
+		console.log("Saving category:", {
+			id: selectedCategory?.id,
+			name: editName,
+			description: editDescription,
+			status: editStatus
+		});
+		closeEditDialog();
 	}
 </script>
 
@@ -190,60 +209,53 @@
 					Modifier la Catégorie
 				</h3>
 				<p class="text-sm text-foreground-alt mt-1">
-					Modifier "{selectedCategory.name}"
+					{selectedCategory.name}
 				</p>
 			</div>
-			<div class="p-6 space-y-4">
+			<div class="p-6 grid gap-4">
 				<div>
 					<label
 						for="edit-name"
-						class="block text-sm font-medium text-foreground mb-1.5"
+						class="block text-sm font-medium text-foreground-alt mb-1"
 					>
 						Nom
 					</label>
 					<input
 						id="edit-name"
 						type="text"
-						value={selectedCategory.name}
-						class="w-full px-3 py-2 border border-border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+						bind:value={editName}
+						class="w-full px-4 py-2.5 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent text-sm"
 					/>
 				</div>
 				<div>
 					<label
 						for="edit-description"
-						class="block text-sm font-medium text-foreground mb-1.5"
+						class="block text-sm font-medium text-foreground-alt mb-1"
 					>
 						Description
 					</label>
 					<textarea
 						id="edit-description"
+						bind:value={editDescription}
 						rows="3"
-						class="w-full px-3 py-2 border border-border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-					>
-						{selectedCategory.description || ""}
-					</textarea>
+						class="w-full px-4 py-2.5 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent text-sm resize-none"
+					></textarea>
 				</div>
 				<div>
 					<label
 						for="edit-status"
-						class="block text-sm font-medium text-foreground mb-1.5"
+						class="block text-sm font-medium text-foreground-alt mb-1"
 					>
 						Statut
 					</label>
 					<select
 						id="edit-status"
-						class="w-full px-3 py-2 border border-border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+						bind:value={editStatus}
+						class="w-full px-4 py-2.5 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent text-sm"
 					>
-						<option value="published" selected={selectedCategory.status === "published"}
-						>Publié</option
-						>
-						<option value="draft" selected={selectedCategory.status === "draft"}
-						>Brouillon</option
-						>
-						<option
-							value="archived"
-							selected={selectedCategory.status === "archived"}>Archivé</option
-						>
+						<option value="published">Publié</option>
+						<option value="draft">Brouillon</option>
+						<option value="archived">Archivé</option>
 					</select>
 				</div>
 			</div>
@@ -251,13 +263,14 @@
 				<button
 					type="button"
 					onclick={closeEditDialog}
-					class="px-4 py-2 border border-border-input text-foreground-alt rounded-lg hover:bg-muted transition-colors font-medium text-sm"
+					class="px-6 py-2.5 border border-border-input text-foreground-alt rounded-lg hover:bg-muted transition-colors font-medium"
 				>
 					Annuler
 				</button>
 				<button
 					type="button"
-					class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm"
+					onclick={handleSave}
+					class="px-6 py-2.5 bg-foreground text-background rounded-lg hover:opacity-90 transition-colors font-medium"
 				>
 					Enregistrer
 				</button>
