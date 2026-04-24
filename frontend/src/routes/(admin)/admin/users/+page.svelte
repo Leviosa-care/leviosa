@@ -38,6 +38,7 @@
 	// Dialog states
 	let deleteDialogOpen = $state(false);
 	let editDialogOpen = $state(false);
+	let approveDialogOpen = $state(false);
 	let selectedUser = $state<typeof data.users[0] | null>(null);
 	let selectedRole = $state<string>("");
 
@@ -94,6 +95,11 @@
 		editDialogOpen = true;
 	}
 
+	function openApproveDialog(user: typeof data.users[0]) {
+		selectedUser = user;
+		approveDialogOpen = true;
+	}
+
 	const availableRoles = Object.entries(ROLES).map(([key, value]) => ({
 		label: key.charAt(0).toUpperCase() + key.slice(1),
 		value: value
@@ -104,6 +110,7 @@
 		if (form?.success) {
 			deleteDialogOpen = false;
 			editDialogOpen = false;
+			approveDialogOpen = false;
 		}
 	});
 </script>
@@ -286,17 +293,14 @@
 										</td>
 										<td class="px-4 py-3">
 											<div class="flex items-center justify-end gap-1">
-												<form method="POST" action="?/approveUser" class="inline">
-													<input type="hidden" name="id" value={user.id} />
-													<button
-														type="submit"
-														class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-700 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50 rounded-md transition-colors"
-														title="Approuver"
-													>
-														<UserCheck size={14} />
-														Approuver
-													</button>
-												</form>
+												<button
+													onclick={() => openApproveDialog(user)}
+													class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-700 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50 rounded-md transition-colors"
+													title="Approuver"
+												>
+													<UserCheck size={14} />
+													Approuver
+												</button>
 												<button
 													onclick={() => openDeleteDialog(user)}
 													class="p-2 rounded-md text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -508,4 +512,84 @@
 			</form>
 		</Modal>
 	{/if}
+
+	<!-- Approve User Dialog/Drawer -->
+	{#if isMobile}
+		<Drawer bind:isOpen={approveDialogOpen}>
+			<div class="sticky top-0 bg-background pb-4 border-b border-border-card -mx-4 px-4 -mt-4 pt-4 z-10">
+				<div class="flex items-center justify-between mb-2">
+					<h2 class="text-xl font-semibold tracking-tight">
+						Approuver l'Utilisateur
+					</h2>
+					<button
+						type="button"
+						onclick={() => (approveDialogOpen = false)}
+						class="p-2 hover:bg-muted rounded-md transition-colors"
+					>
+						<X class="text-foreground size-5" />
+					</button>
+				</div>
+				<p class="text-muted-foreground text-sm">
+					Êtes-vous sûr de vouloir approuver "{selectedUser?.email}" ?
+				</p>
+			</div>
+
+			<div class="pt-4">
+				<form method="POST" action="?/approveUser" use:enhance={() => {
+					return async ({ result }) => {
+						if (result.type === "success") {
+							approveDialogOpen = false;
+						}
+					};
+				}} class="flex w-full justify-end gap-3">
+					<input type="hidden" name="id" value={selectedUser?.id} />
+					<button
+						type="button"
+						onclick={() => (approveDialogOpen = false)}
+						class="px-4 py-2 border border-border-input text-foreground-alt rounded-lg hover:bg-muted transition-colors font-medium text-sm"
+					>
+						Annuler
+					</button>
+					<button
+						type="submit"
+						class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+					>
+						Approuver
+					</button>
+				</form>
+			</div>
+		</Drawer>
+	{:else}
+		<Modal
+			bind:isOpen={approveDialogOpen}
+			title="Approuver l'Utilisateur"
+			description="Êtes-vous sûr de vouloir approuver '{selectedUser?.email}' ?"
+		>
+			<form method="POST" action="?/approveUser" use:enhance={() => {
+				return async ({ result }) => {
+					if (result.type === "success") {
+						approveDialogOpen = false;
+					}
+				};
+			}} class="mt-6">
+				<input type="hidden" name="id" value={selectedUser?.id} />
+				<div class="flex w-full justify-end gap-3">
+					<button
+						type="button"
+						onclick={() => (approveDialogOpen = false)}
+						class="px-6 py-2.5 border border-border-input text-foreground-alt rounded-lg hover:bg-muted transition-colors font-medium"
+					>
+						Annuler
+					</button>
+					<button
+						type="submit"
+						class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+					>
+						Approuver
+					</button>
+				</div>
+			</form>
+		</Modal>
+	{/if}
 {/if}
+
