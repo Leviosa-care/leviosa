@@ -1,0 +1,349 @@
+<script lang="ts">
+	import { enhance } from "$app/forms";
+	import { goto } from "$app/navigation";
+	import { ArrowLeft, Package, Clock, MapPin, Calendar, FileText, Tag, DollarSign } from "@lucide/svelte";
+	import type { PageData } from "./$types";
+	import { getToastContext } from "$lib/components/toast/state.svelte";
+
+	let { data }: { data: PageData } = $props();
+
+	const toast = getToastContext();
+
+	// Form state
+	let name = $state("");
+	let description = $state("");
+	let categoryId = $state("");
+	let duration = $state(60);
+	let price = $state("");
+	let status = $state<"published" | "draft" | "archived">("draft");
+	let availability = $state<"online" | "in-person" | "hybrid">("hybrid");
+	let bufferTime = $state(15);
+	let cancellationHours = $state(24);
+	let stripeProductId = $state("");
+	let imageUrl = $state("");
+
+	function createProductEnhance() {
+		return async ({ result }: { result: import('@sveltejs/kit').ActionResult }) => {
+			if (result.type === 'success') {
+				toast.success('Succès', 'Produit créé avec succès');
+				goto('/admin/catalog');
+			} else if (result.type === 'failure') {
+				toast.error('Erreur', (result.data as { error?: string })?.error ?? 'Une erreur est survenue');
+			}
+		};
+	}
+
+	const categoriesWithoutDefault = data.categories.filter(c => c.id !== "default");
+</script>
+
+<svelte:head>
+	<title>Nouveau Produit | Admin</title>
+</svelte:head>
+
+<div class="px-4 py-8 lg:py-12">
+	<div class="mb-8">
+		<a
+			href="/admin/catalog"
+			class="inline-flex items-center gap-2 text-foreground-alt hover:text-foreground transition-colors mb-4"
+		>
+			<ArrowLeft size={20} />
+			<span>Retour au Catalogue</span>
+		</a>
+		<h1 class="text-3xl lg:text-4xl font-bold mb-2">Créer un Nouveau Produit</h1>
+		<p class="text-muted-foreground">
+			Remplissez les détails pour créer un nouveau produit
+		</p>
+	</div>
+
+	<div class="bg-background rounded-lg border border-border-card p-6 lg:p-8 max-w-4xl">
+		<form method="POST" use:enhance={createProductEnhance} class="space-y-6">
+			<!-- Image Upload -->
+			<div>
+				<label for="imageUrl" class="block text-sm font-medium text-foreground-alt mb-2">
+					Image du Produit
+				</label>
+				<p class="text-xs text-muted-foreground mb-3">
+					URL de l'image principale du produit
+				</p>
+				<div class="relative">
+					<Package
+						size={18}
+						class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+					/>
+					<input
+						id="imageUrl"
+						name="imageUrl"
+						type="url"
+						bind:value={imageUrl}
+						placeholder="https://example.com/image.jpg"
+						class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
+					/>
+				</div>
+			</div>
+
+			<!-- Name -->
+			<div>
+				<label for="name" class="block text-sm font-medium text-foreground-alt mb-2">
+					Nom du Produit <span class="text-red-500">*</span>
+				</label>
+				<div class="relative">
+					<Package
+						size={18}
+						class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+					/>
+					<input
+						id="name"
+						name="name"
+						type="text"
+						bind:value={name}
+						required
+						placeholder="Massage Relaxant"
+						class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
+					/>
+				</div>
+			</div>
+
+			<!-- Description -->
+			<div>
+				<label for="description" class="block text-sm font-medium text-foreground-alt mb-2">
+					Description <span class="text-red-500">*</span>
+				</label>
+				<div class="relative">
+					<FileText
+						size={18}
+						class="absolute left-3 top-3 text-muted-foreground"
+					/>
+					<textarea
+						id="description"
+						name="description"
+						bind:value={description}
+						required
+						rows="4"
+						placeholder="Décrivez ce produit..."
+						class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent resize-none"
+					></textarea>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<!-- Category -->
+				<div>
+					<label for="categoryId" class="block text-sm font-medium text-foreground-alt mb-2">
+						Catégorie <span class="text-red-500">*</span>
+					</label>
+					<div class="relative">
+						<Tag
+							size={18}
+							class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+						/>
+						<select
+							id="categoryId"
+							name="categoryId"
+							bind:value={categoryId}
+							required
+							class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent appearance-none bg-background"
+						>
+							<option value="">Sélectionner une catégorie</option>
+							{#each categoriesWithoutDefault as cat}
+								<option value={cat.id}>{cat.name}</option>
+							{/each}
+						</select>
+					</div>
+				</div>
+
+				<!-- Duration -->
+				<div>
+					<label for="duration" class="block text-sm font-medium text-foreground-alt mb-2">
+						Durée (minutes) <span class="text-red-500">*</span>
+					</label>
+					<div class="relative">
+						<Clock
+							size={18}
+							class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+						/>
+						<input
+							id="duration"
+							name="duration"
+							type="number"
+							bind:value={duration}
+							required
+							min="20"
+							step="10"
+							placeholder="60"
+							class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
+						/>
+					</div>
+					<p class="mt-1 text-xs text-muted-foreground">
+						Minimum 20 minutes, par incréments de 10
+					</p>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<!-- Price -->
+				<div>
+					<label for="price" class="block text-sm font-medium text-foreground-alt mb-2">
+						Prix (€) <span class="text-red-500">*</span>
+					</label>
+					<div class="relative">
+						<DollarSign
+							size={18}
+							class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+						/>
+						<input
+							id="price"
+							name="price"
+							type="number"
+							bind:value={price}
+							required
+							min="0"
+							step="0.01"
+							placeholder="75.00"
+							class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
+						/>
+					</div>
+				</div>
+
+				<!-- Stripe Product ID -->
+				<div>
+					<label for="stripeProductId" class="block text-sm font-medium text-foreground-alt mb-2">
+						Stripe Product ID (Optionnel)
+					</label>
+					<div class="relative">
+						<DollarSign
+							size={18}
+							class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+						/>
+						<input
+							id="stripeProductId"
+							name="stripeProductId"
+							type="text"
+							bind:value={stripeProductId}
+							placeholder="prod_xxxxxxxxx"
+							class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
+						/>
+					</div>
+					<p class="mt-1 text-xs text-muted-foreground">
+						ID du produit Stripe pour les paiements
+					</p>
+				</div>
+			</div>
+
+			<!-- Availability -->
+			<div>
+				<label for="availability" class="block text-sm font-medium text-foreground-alt mb-2">
+					Disponibilité <span class="text-red-500">*</span>
+				</label>
+				<div class="relative">
+					<MapPin
+						size={18}
+						class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+					/>
+					<select
+						id="availability"
+						name="availability"
+						bind:value={availability}
+						required
+						class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent appearance-none bg-background"
+					>
+						<option value="online">En ligne</option>
+						<option value="in-person">En présentiel</option>
+						<option value="hybrid">Hybride</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<!-- Buffer Time -->
+				<div>
+					<label for="bufferTime" class="block text-sm font-medium text-foreground-alt mb-2">
+						Tampon (minutes)
+					</label>
+					<div class="relative">
+						<Clock
+							size={18}
+							class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+						/>
+						<input
+							id="bufferTime"
+							name="bufferTime"
+							type="number"
+							bind:value={bufferTime}
+							min="0"
+							placeholder="15"
+							class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
+						/>
+					</div>
+					<p class="mt-1 text-xs text-muted-foreground">
+						Temps de pause entre les réservations
+					</p>
+				</div>
+
+				<!-- Cancellation Hours -->
+				<div>
+					<label for="cancellationHours" class="block text-sm font-medium text-foreground-alt mb-2">
+						Annulation (heures)
+					</label>
+					<div class="relative">
+						<Calendar
+							size={18}
+							class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+						/>
+						<input
+							id="cancellationHours"
+							name="cancellationHours"
+							type="number"
+							bind:value={cancellationHours}
+							min="0"
+							placeholder="24"
+							class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
+						/>
+					</div>
+					<p class="mt-1 text-xs text-muted-foreground">
+						Délai d'annulation avant le service
+					</p>
+				</div>
+
+				<!-- Status -->
+				<div>
+					<label for="status" class="block text-sm font-medium text-foreground-alt mb-2">
+						Statut <span class="text-red-500">*</span>
+					</label>
+					<div class="relative">
+						<Tag
+							size={18}
+							class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+						/>
+						<select
+							id="status"
+							name="status"
+							bind:value={status}
+							required
+							class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent appearance-none bg-background"
+						>
+							<option value="draft">Brouillon</option>
+							<option value="published">Publié</option>
+							<option value="archived">Archivé</option>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			<!-- Submit Buttons -->
+			<div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border-card">
+				<button
+					type="submit"
+					class="flex-1 px-6 py-3 bg-foreground text-background rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2 transition-colors font-medium"
+				>
+					Créer le Produit
+				</button>
+				<a
+					href="/admin/catalog"
+					class="flex-1 px-6 py-3 bg-background border border-border-input text-foreground-alt rounded-lg hover:bg-muted focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2 transition-colors font-medium text-center"
+				>
+					Annuler
+				</a>
+			</div>
+		</form>
+	</div>
+</div>

@@ -12,7 +12,6 @@
 		categories,
 		availabilities,
 		deleteProductForm,
-		createProductForm,
 		updateProductForm,
 		createCategoryForm,
 	} = data;
@@ -74,7 +73,6 @@
 				{categories}
 				{availabilities}
 				{deleteProductForm}
-				{createProductForm}
 				{updateProductForm}
 			/>
 		</Tabs.Content>

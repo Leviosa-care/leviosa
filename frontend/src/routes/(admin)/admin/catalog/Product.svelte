@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Plus, Search, Package } from "@lucide/svelte";
 	import ProductCard from "./ProductCard.svelte";
-	import ProductModal from "./ProductModal.svelte";
 	import { type CardType, type Category } from "./products";
 	import { type SuperValidated } from "sveltekit-superforms";
 	import type { DeleteProduct, product } from "./schemas";
@@ -17,7 +16,6 @@
 		categories: Category[];
 		availabilities: Set<string>;
 		deleteProductForm: SuperValidated<DeleteProduct>;
-		createProductForm: SuperValidated<product>;
 		updateProductForm: SuperValidated<product>;
 	};
 
@@ -27,7 +25,6 @@
 		categories,
 		availabilities,
 		deleteProductForm,
-		createProductForm,
 		updateProductForm,
 	}: Props = $props();
 
@@ -65,20 +62,13 @@
 			</p>
 		</div>
 
-		<ProductModal
-			{statuses}
-			{categories}
-			{availabilities}
-			modalForm={createProductForm}
+		<a
+			href="/admin/catalog/products/new"
+			class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors"
 		>
-			<button
-				type="button"
-				class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors"
-			>
-				<Plus size={16} />
-				<span>Nouveau produit</span>
-			</button>
-		</ProductModal>
+			<Plus size={16} />
+			<span>Nouveau produit</span>
+		</a>
 	</div>
 
 	<!-- Filters and search -->

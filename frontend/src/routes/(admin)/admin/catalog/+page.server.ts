@@ -21,10 +21,9 @@ import {
 	defaultAvailability,
 } from "./default";
 
-import { createProduct, updateProduct, deleteProduct, createCategory } from "./actions"
+import { updateProduct, deleteProduct, createCategory } from "./actions"
 
 export const actions = {
-	createProduct,
 	deleteProduct,
 	updateProduct,
 	createCategory,
@@ -36,13 +35,11 @@ type Props = {
 	categories: Category[];
 	availabilities: Set<string>;
 	deleteProductForm: SuperValidated<DeleteProduct>;
-	createProductForm: SuperValidated<product>;
 	updateProductForm: SuperValidated<product>;
 	createCategoryForm: SuperValidated<category>;
 }
 
 export const load: PageServerLoad = async (): Promise<Props> => {
-	const createProductForm = await superValidate(arktype(productSchema, { defaults: productDefaults }))
 	const deleteProductForm = await superValidate({ id: "e3eb8aaa-a255-4059-8013-6fbfb97442c0" }, arktype(deleteProductSchema, { defaults: deleteProductDefaults }))
 	const updateProductForm = await superValidate(arktype(productSchema, { defaults: productDefaults }))
 	const createCategoryForm = await superValidate(arktype(categorySchema, { defaults: categoryDefaults }))
@@ -73,7 +70,6 @@ export const load: PageServerLoad = async (): Promise<Props> => {
 		categories: allCategories,
 		availabilities,
 		deleteProductForm,
-		createProductForm,
 		updateProductForm,
 		createCategoryForm,
 	}
