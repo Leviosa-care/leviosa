@@ -2,7 +2,6 @@
 	import { Clock, Calendar, MapPin, SquarePen, Trash2, Archive } from "@lucide/svelte";
 	import { type SuperValidated } from "sveltekit-superforms";
 	import { superForm } from "sveltekit-superforms";
-	import ProductModal from "./ProductModal.svelte";
 	import AlertDialog from "./AlertDialog.svelte";
 	import { type CardType, type Category } from "./products";
 	import type { DeleteProduct, product } from "./schemas";
@@ -122,21 +121,13 @@
 		</div>
 
 		<div class="flex items-center justify-between pt-3 border-t border-border-card">
-			<ProductModal
-				{statuses}
-				{categories}
-				{availabilities}
-				{card}
-				modalForm={updateProductForm}
+			<a
+				href="/admin/catalog/products/{card.id}"
+				class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-foreground-alt hover:text-foreground hover:bg-muted rounded-lg transition-colors"
 			>
-				<button
-					type="button"
-					class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-foreground-alt hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-				>
-					<SquarePen size={14} />
-					<span>Modifier</span>
-				</button>
-			</ProductModal>
+				<SquarePen size={14} />
+				<span>Modifier</span>
+			</a>
 
 			<div class="flex gap-1">
 				<button
