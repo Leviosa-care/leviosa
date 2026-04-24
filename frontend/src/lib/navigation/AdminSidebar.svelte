@@ -90,7 +90,7 @@
 			icon: Ticket,
 		},
 		{
-			href: "/admin/products",
+			href: "/admin/catalog",
 			label: "Catalogue",
 			icon: Package,
 		},
@@ -137,7 +137,7 @@
 			icon: NotebookPen,
 		},
 		{
-			href: "/admin/products",
+			href: "/admin/catalog",
 			label: "Catalogue",
 			icon: Package,
 		},
