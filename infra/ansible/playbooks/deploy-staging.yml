@@ -316,23 +316,41 @@
 
     - name: Restart all services except Vault
       ansible.builtin.shell: |
-        services=$(docker compose config --services | grep -v '^vault$' | tr '\n' ' ')
-        docker compose up -d --force-recreate $services
+        services=$(docker compose config --services | grep -v '^vault$' | tr '\n' ' ' | xargs)
+        if [ -z "$services" ]; then
+          echo "No non-vault services to restart"
+        else
+          docker compose up -d --force-recreate $services
+        fi
       args:
         chdir: "{{ app_base_dir }}"
       become: true
       become_user: root
       when: app_deployed | default(false)
 
+    - name: Ensure Vault is connected to production network
+      ansible.builtin.shell: |
+        docker network connect {{ prod_network_name | default('leviosa_network') }} {{ app_name }}_vault 2>/dev/null || true
+      become: true
+      become_user: root
+      changed_when: false
+      when: app_deployed | default(false)
+
     - name: Get Vault IP on production network
       ansible.builtin.shell: |
-        docker network inspect {{ prod_network_name | default('leviosa_network') }} | \
-          python3 -c "import json,sys; d=json.load(sys.stdin)[0]; cs=[c for c in d.get('Containers',{}).values() if '{{ app_name }}_vault' in c.get('Name','')]; print(cs[0]['IPv4Address'].split('/')[0] if cs else '')"
+        docker inspect {{ app_name }}_vault 2>/dev/null | \
+          python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['NetworkSettings']['Networks'].get('{{ prod_network_name | default('leviosa_network') }}',{}).get('IPAddress',''))" \
+          2>/dev/null || true
       register: vault_network_ip
       become: true
       become_user: root
       changed_when: false
       failed_when: false
+      when: app_deployed | default(false)
+
+    - name: Show Vault IP (for diagnostics)
+      ansible.builtin.debug:
+        msg: "Vault IP on {{ prod_network_name | default('leviosa_network') }}: '{{ vault_network_ip.stdout | trim }}'"
       when: app_deployed | default(false)
 
     - name: Seed admin users
@@ -350,10 +368,16 @@
 
         - name: Run database seeder
           ansible.builtin.shell: |
+            VAULT_IP="{{ vault_network_ip.stdout | trim }}"
+            if [ -z "$VAULT_IP" ]; then
+              echo "ERROR: Could not determine Vault IP on {{ prod_network_name | default('leviosa_network') }}"
+              docker inspect {{ app_name }}_vault 2>&1 | head -20 || echo "Container not found"
+              exit 1
+            fi
             docker run --rm \
               --network {{ prod_network_name | default(app_name + '_network') }} \
-              --add-host={{ vault_addr | default('http://vault:8200') | regex_replace('^https?://([^:/]+).*', '\\1') }}:{{ vault_network_ip.stdout | trim }} \
               --env-file {{ app_base_dir }}/.env \
+              -e VAULT_ADDR=http://${VAULT_IP}:8200 \
               -v {{ app_base_dir }}/seed_data.json:/app/seed_data.json:ro \
               -e SEED_DATA_PATH=/app/seed_data.json \
               {{ backend_docker_image }} ./seed

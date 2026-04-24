@@ -260,8 +260,12 @@
 
     - name: Restart all services except Vault
       ansible.builtin.shell: |
-        services=$(docker compose config --services | grep -v '^vault$' | tr '\n' ' ')
-        docker compose up -d --force-recreate $services
+        services=$(docker compose config --services | grep -v '^vault$' | tr '\n' ' ' | xargs)
+        if [ -z "$services" ]; then
+          echo "No non-vault services to restart"
+        else
+          docker compose up -d --force-recreate $services
+        fi
       args:
         chdir: "{{ app_base_dir }}"
       become: true
@@ -277,12 +281,19 @@
       when: app_deployed | default(false)
       changed_when: false
 
+    - name: Ensure Vault is connected to app network
+      ansible.builtin.shell: |
+        docker network connect {{ app_name }}_network {{ app_name }}_vault 2>/dev/null || true
+      become: true
+      become_user: root
+      changed_when: false
+      when: app_deployed | default(false)
+
     - name: Get Vault IP on app network
       ansible.builtin.shell: |
-        NETWORK="{{ app_name }}_network"
-        docker inspect {{ app_name }}_vault \
-          --format='{{ '{{' }}json .NetworkSettings.Networks{{ '}}' }}' | \
-          python3 -c "import json,sys; nets=json.load(sys.stdin); print(nets.get('$NETWORK', {}).get('IPAddress', ''))"
+        docker inspect {{ app_name }}_vault 2>/dev/null | \
+          python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['NetworkSettings']['Networks'].get('{{ app_name }}_network',{}).get('IPAddress',''))" \
+          2>/dev/null || true
       register: vault_network_ip
       become: true
       become_user: root
@@ -305,10 +316,16 @@
 
         - name: Run database seeder
           ansible.builtin.shell: |
+            VAULT_IP="{{ vault_network_ip.stdout | trim }}"
+            if [ -z "$VAULT_IP" ]; then
+              echo "ERROR: Could not determine Vault IP on {{ app_name }}_network"
+              docker inspect {{ app_name }}_vault 2>&1 | head -20 || echo "Container not found"
+              exit 1
+            fi
             docker run --rm \
               --network {{ app_name }}_network \
-              --add-host={{ vault_addr | default('http://vault:8200') | regex_replace('^https?://([^:/]+).*', '\\1') }}:{{ vault_network_ip.stdout | trim }} \
               --env-file {{ app_base_dir }}/.env \
+              -e VAULT_ADDR=http://${VAULT_IP}:8200 \
               -v {{ app_base_dir }}/seed_data.json:/app/seed_data.json:ro \
               -e SEED_DATA_PATH=/app/seed_data.json \
               {{ backend_docker_image }} ./seed
