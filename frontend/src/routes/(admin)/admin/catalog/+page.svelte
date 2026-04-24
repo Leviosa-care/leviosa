@@ -54,64 +54,63 @@
 	);
 </script>
 
-<div class="flex flex-col h-full bg-background">
-	<!-- Header -->
-	<div class="border-b border-border-card px-6 py-5">
-		<div class="flex flex-col gap-1">
-			<h1 class="text-2xl font-semibold tracking-tight text-foreground">
-				Catalogue
-			</h1>
-			<p class="text-sm text-foreground-alt">
-				Gérez vos produits et catégories disponibles à la réservation
-			</p>
-		</div>
+<svelte:head>
+	<title>Catalogue | Admin</title>
+</svelte:head>
+
+<div class="container mx-auto px-4 py-8 lg:py-12">
+	<div class="mb-8">
+		<h1 class="text-3xl lg:text-4xl font-bold mb-2 text-foreground">
+			Catalogue
+		</h1>
+		<p class="text-muted-foreground">
+			Gérez vos produits et catégories disponibles à la réservation
+		</p>
 	</div>
 
 	<!-- Tabs Navigation -->
-	<div class="border-b border-border-card px-6">
-		<Tabs.Root bind:value={activeTab} class="w-full">
-			<Tabs.List
-				class="inline-flex gap-1 bg-muted/30 rounded-lg p-1 -mb-px"
+	<Tabs.Root bind:value={activeTab} class="space-y-4">
+		<Tabs.List
+			class="inline-flex items-center w-fit bg-transparent gap-2 text-sm font-semibold border-b border-border-card p-1"
+		>
+			<Tabs.Trigger
+				value="products"
+				class="px-4 py-2 rounded-none bg-transparent border-b-2 data-[state=active]:shadow-none mb-[-2px] data-[state=active]:border-b-foreground data-[state=active]:text-foreground data-[state=inactive]:border-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-transparent data-[state=inactive]:hover:text-foreground-alt transition-colors cursor-pointer flex items-center gap-2"
 			>
-				<Tabs.Trigger
-					value="products"
-					class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-foreground-alt"
-				>
-					<Package size={16} />
-					<span>Produits</span>
-					<span class="text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded">
-						{cards.length}
-					</span>
-				</Tabs.Trigger>
-				<Tabs.Trigger
-					value="categories"
-					class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-foreground-alt"
-				>
-					<Tag size={16} />
-					<span>Catégories</span>
-					<span class="text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded">
-						{categories.length - 1}
-					</span>
-				</Tabs.Trigger>
-			</Tabs.List>
+				<Package size={16} />
+				<span>Produits</span>
+				<span class="text-xs bg-muted px-2 py-0.5 rounded-full">
+					{cards.length}
+				</span>
+			</Tabs.Trigger>
+			<Tabs.Trigger
+				value="categories"
+				class="px-4 py-2 rounded-none bg-transparent border-b-2 data-[state=active]:shadow-none mb-[-2px] data-[state=active]:border-b-foreground data-[state=active]:text-foreground data-[state=inactive]:border-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-transparent data-[state=inactive]:hover:text-foreground-alt transition-colors cursor-pointer flex items-center gap-2"
+			>
+				<Tag size={16} />
+				<span>Catégories</span>
+				<span class="text-xs bg-muted px-2 py-0.5 rounded-full">
+					{categories.length - 1}
+				</span>
+			</Tabs.Trigger>
+		</Tabs.List>
 
-			<!-- Products Tab -->
-			<Tabs.Content value="products" class="mt-6">
-				<Product
-					{cards}
-					{statuses}
-					{categories}
-					{availabilities}
-					{deleteProductForm}
-					{createProductForm}
-					{updateProductForm}
-				/>
-			</Tabs.Content>
+		<!-- Products Tab -->
+		<Tabs.Content value="products" class="p-6">
+			<Product
+				{cards}
+				{statuses}
+				{categories}
+				{availabilities}
+				{deleteProductForm}
+				{createProductForm}
+				{updateProductForm}
+			/>
+		</Tabs.Content>
 
-			<!-- Categories Tab -->
-			<Tabs.Content value="categories" class="mt-6">
-				<Category {createCategoryForm} />
-			</Tabs.Content>
-		</Tabs.Root>
-	</div>
+		<!-- Categories Tab -->
+		<Tabs.Content value="categories" class="p-6">
+			<Category {createCategoryForm} />
+		</Tabs.Content>
+	</Tabs.Root>
 </div>
