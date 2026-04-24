@@ -8,12 +8,11 @@ listener "tcp" {
   tls_disable = "true"
 }
 
-# Raft storage for persistent, production-grade state
-storage "raft" {
-  path    = "/vault/file"
-  node_id = "{{ app_name }}_vault_1"
+# File storage for single-node vault (no raft needed for single VPS)
+storage "file" {
+  path = "/vault/file/data"
 }
 
 api_addr      = "http://0.0.0.0:8200"
-disable_mlock = false
+disable_mlock = true
 log_level     = "info"

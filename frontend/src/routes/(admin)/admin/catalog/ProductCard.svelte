@@ -5,7 +5,7 @@
 	import ProductModal from "./ProductModal.svelte";
 	import AlertDialog from "./AlertDialog.svelte";
 	import { type CardType, type Category } from "./products";
-	import type { DeleteProduct, type product } from "./schemas";
+	import type { DeleteProduct, product } from "./schemas";
 
 	type Props = {
 		card: CardType;
