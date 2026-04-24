@@ -51,8 +51,9 @@
 				enctype="multipart/form-data"
 			>
 				<div>
-					<Label.Root for="name" class="text-sm font-medium text-foreground-alt"
-						>Nom</Label.Root
+					<Label.Root for="name" class="text-sm font-medium text-foreground-alt">
+						Nom
+					</Label.Root>
 					<div class="relative w-full">
 						<input
 							id="name"
@@ -67,8 +68,9 @@
 				</div>
 
 				<div>
-					<Label.Root for="description" class="text-sm font-medium text-foreground-alt"
-						>Description</Label.Root
+					<Label.Root for="description" class="text-sm font-medium text-foreground-alt">
+						Description
+					</Label.Root>
 					<div class="relative w-full">
 						<textarea
 							id="description"
@@ -83,8 +85,9 @@
 				</div>
 
 				<div>
-					<Label.Root for="status" class="text-sm font-medium text-foreground-alt"
-						Statut</Label.Root
+					<Label.Root for="status" class="text-sm font-medium text-foreground-alt">
+						Statut
+					</Label.Root>
 					<div class="relative w-full">
 						<select
 							id="status"
