@@ -51,13 +51,19 @@ terraform workspace select "$WORKSPACE" 2>/dev/null || {
 }
 
 echo "Reading Terraform outputs..."
-ACCESS_KEY_ID=$(terraform output -raw app_user_access_key_id)
-SECRET_ACCESS_KEY=$(terraform output -raw app_user_secret_access_key)
-S3_BUCKET=$(terraform output -raw media_bucket_name)
-S3_REGION=$(terraform output -raw media_bucket_region)
+ACCESS_KEY_ID=$(terraform output -no-color -raw app_user_access_key_id 2>/dev/null) \
+  || { echo "ERROR: failed to read app_user_access_key_id — run 'make apply-production' first"; exit 1; }
+SECRET_ACCESS_KEY=$(terraform output -no-color -raw app_user_secret_access_key 2>/dev/null) \
+  || { echo "ERROR: failed to read app_user_secret_access_key — run 'make apply-production' first"; exit 1; }
+S3_BUCKET=$(terraform output -no-color -raw media_bucket_name 2>/dev/null) \
+  || { echo "ERROR: failed to read media_bucket_name — run 'make apply-production' first"; exit 1; }
+S3_REGION=$(terraform output -no-color -raw media_bucket_region 2>/dev/null) \
+  || { echo "ERROR: failed to read media_bucket_region — run 'make apply-production' first"; exit 1; }
 
-[ -n "$ACCESS_KEY_ID" ]    || { echo "ERROR: failed to read app_user_access_key_id";    exit 1; }
-[ -n "$SECRET_ACCESS_KEY" ] || { echo "ERROR: failed to read app_user_secret_access_key"; exit 1; }
+[ -n "$ACCESS_KEY_ID" ]     || { echo "ERROR: app_user_access_key_id is empty";     exit 1; }
+[ -n "$SECRET_ACCESS_KEY" ] || { echo "ERROR: app_user_secret_access_key is empty"; exit 1; }
+[ -n "$S3_BUCKET" ]         || { echo "ERROR: media_bucket_name is empty";          exit 1; }
+[ -n "$S3_REGION" ]         || { echo "ERROR: media_bucket_region is empty";        exit 1; }
 
 echo ""
 echo "S3 Bucket : $S3_BUCKET"
