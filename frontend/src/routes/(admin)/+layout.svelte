@@ -30,7 +30,17 @@
 	});
 </script>
 
-<div class="flex flex-col lg:flex-row">
+<!-- Mobile Layout -->
+<div class="lg:hidden flex flex-col min-h-screen bg-muted/25">
+	<main class="flex-1">
+		{@render children()}
+	</main>
+</div>
+
+<!-- Desktop Layout -->
+<div class="hidden lg:flex min-h-screen bg-muted/25">
 	<AdminSidebar user={data.user} permissions={data.permissions} />
-	{@render children()}
+	<main class="flex-1 bg-background">
+		{@render children()}
+	</main>
 </div>
