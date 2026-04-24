@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus, Tag, Pencil, Trash2, Search } from "@lucide/svelte";
+	import { Plus, Tag, Pencil, Trash2, Search, AlertTriangle } from "@lucide/svelte";
 	import type { SuperValidated } from "sveltekit-superforms";
 	import type { category } from "./schemas";
 	import CategoryModal from "./CategoryModal.svelte";
@@ -15,6 +15,7 @@
 	let searchQuery = $state("");
 	let statusFilter = $state("all");
 	let editDialogOpen = $state(false);
+	let deleteDialogOpen = $state(false);
 	let selectedCategory = $state<Category | null>(null);
 
 	// Form state for edit
@@ -57,6 +58,16 @@
 		selectedCategory = null;
 	}
 
+	function openDeleteDialog(category: Category) {
+		selectedCategory = category;
+		deleteDialogOpen = true;
+	}
+
+	function closeDeleteDialog() {
+		deleteDialogOpen = false;
+		selectedCategory = null;
+	}
+
 	function handleSave() {
 		// TODO: Connect to backend action
 		console.log("Saving category:", {
@@ -66,6 +77,12 @@
 			status: editStatus
 		});
 		closeEditDialog();
+	}
+
+	function handleDelete() {
+		// TODO: Connect to backend action
+		console.log("Deleting category:", selectedCategory?.id);
+		closeDeleteDialog();
 	}
 </script>
 
@@ -181,6 +198,7 @@
 								<Pencil size={14} />
 							</button>
 							<button
+								onclick={() => openDeleteDialog(cat)}
 								class="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors"
 								aria-label="Supprimer"
 							>
@@ -274,6 +292,54 @@
 				>
 					Enregistrer
 				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Delete Category Modal -->
+{#if selectedCategory && deleteDialogOpen}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+		onclick={closeDeleteDialog}
+	>
+		<div
+			class="bg-background border border-border-card rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+			onclick={(e) => e.stopPropagation()}
+		>
+			<div class="p-6">
+				<div class="flex items-center gap-4 mb-4">
+					<div
+						class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0"
+					>
+						<AlertTriangle class="text-red-600" size={24} />
+					</div>
+					<div>
+						<h3 class="text-lg font-semibold text-foreground">
+							Supprimer la Catégorie
+						</h3>
+						<p class="text-sm text-foreground-alt mt-1">
+							Êtes-vous sûr de vouloir supprimer "{selectedCategory.name}" ? Cette
+							action ne peut pas être annulée.
+						</p>
+					</div>
+				</div>
+				<div class="flex justify-end gap-3 pt-2">
+					<button
+						type="button"
+						onclick={closeDeleteDialog}
+						class="px-6 py-2.5 border border-border-input text-foreground-alt rounded-lg hover:bg-muted transition-colors font-medium"
+					>
+						Annuler
+					</button>
+					<button
+						type="button"
+						onclick={handleDelete}
+						class="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+					>
+						Supprimer
+					</button>
+				</div>
 			</div>
 		</div>
 	</div>
