@@ -3,7 +3,7 @@
 	import { goto } from "$app/navigation";
 	import { ArrowLeft, Package, Clock, MapPin, Calendar, FileText, Tag, DollarSign } from "@lucide/svelte";
 	import type { PageData } from "./$types";
-	import { getToastContext } from "$lib/components/toast/state.svelte";
+	import { getToastContext } from "$lib/components/toast";
 
 	let { data }: { data: PageData } = $props();
 
