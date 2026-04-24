@@ -59,9 +59,7 @@ plan-staging:
 
 apply-staging:
 	@echo "Applying staging infrastructure..."
-	@cd terraform && \
-	terraform workspace select default 2>/dev/null || true && \
-	terraform apply -var-file=terraform.tfvars.staging
+	@cd terraform && make apply-staging
 
 update-staging-vault:
 	@echo "Updating staging vault..."
@@ -75,9 +73,7 @@ deploy-staging: update-staging-vault
 destroy-staging:
 	@echo "⚠️  WARNING: This will destroy staging infrastructure!"
 	@read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
-	@cd terraform && \
-	terraform workspace select default 2>/dev/null || true && \
-	terraform destroy -var-file=terraform.tfvars.staging
+	@cd terraform && make destroy-staging
 
 # ============================================
 # Production Environment
@@ -109,9 +105,7 @@ deploy-production: update-production-vault
 destroy-production:
 	@echo "⚠️  WARNING: This will destroy production infrastructure!"
 	@read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
-	@cd terraform && \
-	terraform workspace select production 2>/dev/null || terraform workspace new production && \
-	terraform destroy -var-file=terraform.tfvars.production
+	@cd terraform && make destroy-production
 
 # ============================================
 # Help Targets
