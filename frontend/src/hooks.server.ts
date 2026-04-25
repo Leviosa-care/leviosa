@@ -44,9 +44,14 @@ export const handle: Handle = async ({ event, resolve }) => {
         return await resolve(event)
     }
 
-    // Protected routes are any routes that does not start with '/auth' or '/legal'.
-    if (event.url.pathname.startsWith("/auth") || event.url.pathname.startsWith("/legal")) {
-        return await resolve(event)
+    // Routes that require authentication - all others are public
+    const requiresAuth = (pathname: string) => {
+        const protectedPrefixes = ['/staff', '/admin', '/premium'];
+        return protectedPrefixes.some(prefix => pathname.startsWith(prefix));
+    };
+
+    if (!requiresAuth(event.url.pathname)) {
+        return await resolve(event);
     }
 
     const sessionID = event.cookies.get(sessionCookieName);
