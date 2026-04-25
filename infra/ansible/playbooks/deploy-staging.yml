@@ -80,6 +80,17 @@
       become_user: root
       when: app_deployed | default(false)
 
+    - name: Create Vault storage directory with correct ownership
+      ansible.builtin.file:
+        path: "{{ app_data_dir }}/vault"
+        state: directory
+        owner: "100"
+        group: "1000"
+        mode: '0750'
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
     - name: Create Vault config directory
       ansible.builtin.file:
         path: "{{ app_data_dir }}/vault/config"
@@ -110,13 +121,65 @@
       become_user: root
       when: app_deployed | default(false)
 
+    - name: Check current Vault health
+      ansible.builtin.shell: |
+        RUNNING=$(docker inspect {{ app_name }}_vault 2>/dev/null | \
+          python3 -c "import json,sys; print(json.load(sys.stdin)[0]['State']['Running'])" 2>/dev/null || echo "False")
+        if [ "$RUNNING" != "True" ]; then echo "stopped"; exit 0; fi
+        STATUS=$(docker exec {{ app_name }}_vault vault status -format=json 2>/dev/null || echo '{"sealed":true}')
+        SEALED=$(echo "$STATUS" | python3 -c "import json,sys; print(json.loads(sys.stdin.read()).get('sealed', True))" 2>/dev/null || echo "True")
+        if [ "$SEALED" = "False" ]; then echo "healthy"; else echo "sealed"; fi
+      register: vault_health_check
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
+    - name: Print Vault health check result
+      ansible.builtin.debug:
+        msg: "Vault pre-check: {{ vault_health_check.stdout | default('unknown') }} — {{ 'skipping stop/start' if vault_health_check.stdout | default('') == 'healthy' else 'will restart vault' }}"
+      when: app_deployed | default(false)
+
+    - name: Stop existing Vault container before recreating
+      ansible.builtin.shell: |
+        docker stop {{ app_name }}_vault 2>/dev/null || true
+        docker rm {{ app_name }}_vault 2>/dev/null || true
+      become: true
+      become_user: root
+      changed_when: false
+      when:
+        - app_deployed | default(false)
+        - vault_health_check.stdout | default('stopped') != 'healthy'
+
+    - name: Check if Vault was previously initialized successfully
+      ansible.builtin.stat:
+        path: "{{ app_data_dir }}/vault/vault-keys.txt"
+      register: vault_keys_stat
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
+    - name: Wipe stale Vault data for clean initialization
+      ansible.builtin.shell: |
+        rm -rf {{ app_data_dir }}/vault/data
+        echo "Wiped stale vault data — will initialize fresh"
+      become: true
+      become_user: root
+      when:
+        - app_deployed | default(false)
+        - vault_health_check.stdout | default('stopped') != 'healthy'
+        - not vault_keys_stat.stat.exists
+
     - name: Start Vault container
       ansible.builtin.command:
         cmd: docker compose up -d vault
         chdir: "{{ app_base_dir }}"
       become: true
       become_user: root
-      when: app_deployed | default(false)
+      when:
+        - app_deployed | default(false)
+        - vault_health_check.stdout | default('stopped') != 'healthy'
 
     - name: Wait for Vault to be ready
       ansible.builtin.command:
@@ -129,7 +192,9 @@
       failed_when: false
       become: true
       become_user: root
-      when: app_deployed | default(false)
+      when:
+        - app_deployed | default(false)
+        - vault_health_check.stdout | default('stopped') != 'healthy'
 
     - name: Check Vault status
       ansible.builtin.command:
@@ -187,12 +252,43 @@
       become_user: root
       no_log: true
 
+    - name: Restart Vault after init for clean state
+      ansible.builtin.shell: |
+        docker restart {{ app_name }}_vault
+      become: true
+      become_user: root
+      changed_when: true
+      when:
+        - app_deployed | default(false)
+        - vault_init_output is defined
+        - vault_init_output.stdout is defined
+        - vault_init_output.stdout | length > 0
+
+    - name: Wait for Vault to be ready after init-restart
+      ansible.builtin.command:
+        cmd: docker exec {{ app_name }}_vault vault status
+      register: vault_post_restart_status
+      until: vault_post_restart_status.rc != 1
+      retries: 20
+      delay: 3
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: root
+      when:
+        - app_deployed | default(false)
+        - vault_init_output is defined
+        - vault_init_output.stdout is defined
+        - vault_init_output.stdout | length > 0
+
     - name: Load Vault credentials from file
       ansible.builtin.slurp:
         src: "{{ app_data_dir }}/vault/vault-keys.txt"
       register: vault_keys_file
       failed_when: false
       when: app_deployed | default(false)
+      become: true
+      become_user: root
       no_log: true
 
     - name: Parse Vault credentials
@@ -205,6 +301,18 @@
         - vault_keys_file.content is defined
       no_log: true
 
+    - name: Override Vault credentials with fresh init values
+      ansible.builtin.set_fact:
+        vault_unseal_key_1: "{{ vault_init_output.stdout | from_json | json_query('unseal_keys_b64[0]') }}"
+        vault_unseal_key_2: "{{ vault_init_output.stdout | from_json | json_query('unseal_keys_b64[1]') }}"
+        vault_root_token: "{{ vault_init_output.stdout | from_json | json_query('root_token') }}"
+      when:
+        - app_deployed | default(false)
+        - vault_init_output is defined
+        - vault_init_output.stdout is defined
+        - vault_init_output.stdout | length > 0
+      no_log: true
+
     - name: Unseal Vault with key 1
       ansible.builtin.command:
         cmd: docker exec {{ app_name }}_vault vault operator unseal {{ vault_unseal_key_1 }}
@@ -214,6 +322,7 @@
         - vault_unseal_key_1 is defined
       become: true
       become_user: root
+      failed_when: false
       no_log: true
 
     - name: Unseal Vault with key 2
@@ -225,20 +334,32 @@
         - vault_unseal_key_2 is defined
       become: true
       become_user: root
+      failed_when: false
       no_log: true
 
     - name: Wait for Vault to be unsealed
-      ansible.builtin.command:
-        cmd: docker exec {{ app_name }}_vault vault status
-      register: vault_unsealed_status
-      until: vault_unsealed_status.rc == 0
-      retries: 5
-      delay: 2
+      ansible.builtin.shell: |
+        for i in $(seq 1 15); do
+          STATUS=$(docker exec {{ app_name }}_vault vault status -format=json 2>/dev/null || echo '{"sealed":true}')
+          SEALED=$(echo "$STATUS" | python3 -c "import json,sys; print(json.loads(sys.stdin.read()).get('sealed', True))" 2>/dev/null || echo "True")
+          if [ "$SEALED" = "False" ]; then echo "vault_unsealed"; exit 0; fi
+          sleep 2
+        done
+        echo "vault_still_sealed_after_30s"
+        exit 0
+      register: post_unseal_wait
       changed_when: false
       failed_when: false
       become: true
       become_user: root
       when: app_deployed | default(false)
+
+    - name: Fail if Vault is still sealed
+      ansible.builtin.fail:
+        msg: "Vault is still sealed after unseal attempt — check vault-keys.txt and vault data integrity."
+      when:
+        - app_deployed | default(false)
+        - post_unseal_wait.stdout | default('') == 'vault_still_sealed_after_30s'
 
     - name: Create vault-token file for root token
       ansible.builtin.copy:
