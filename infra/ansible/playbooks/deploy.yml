@@ -505,6 +505,41 @@
       changed_when: false
       no_log: true
 
+    - name: Check if pepper secret exists in Vault KV
+      ansible.builtin.shell: |
+        docker exec \
+          -e VAULT_ADDR=http://127.0.0.1:8200 \
+          -e VAULT_TOKEN={{ vault_root_token }} \
+          {{ app_name }}_vault \
+          vault kv get secret/data/{{ encx_pepper_alias | default('leviosa') }} 2>&1
+      register: pepper_check
+      failed_when: false
+      changed_when: false
+      become: true
+      become_user: root
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
+      no_log: true
+
+    - name: Generate and store pepper secret in Vault KV (if not exists)
+      ansible.builtin.shell: |
+        # Generate a 32-byte pepper value and base64 encode it
+        PEPPER_VALUE=$(openssl rand -base64 32 | tr -d '\n')
+        # Store in Vault KV v2 format
+        docker exec \
+          -e VAULT_ADDR=http://127.0.0.1:8200 \
+          -e VAULT_TOKEN={{ vault_root_token }} \
+          {{ app_name }}_vault \
+          vault kv put secret/data/{{ encx_pepper_alias | default('leviosa') }} value="$PEPPER_VALUE"
+      become: true
+      become_user: root
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
+        - pepper_check.rc != 0
+      no_log: true
+
     - name: Restart all services except Vault
       ansible.builtin.shell: |
         services=$(docker compose config --services | grep -v '^vault$' | tr '\n' ' ' | xargs)
