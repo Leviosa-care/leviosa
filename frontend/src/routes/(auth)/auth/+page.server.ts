@@ -27,9 +27,7 @@ const oauthDefaults = {
 } as typeof oauthSchema.infer
 
 export const load = async ({ url }: RequestEvent) => {
-    // const registerForm = await superValidate(arktype(registerSchema, { defaults: registerDefaults }))
-    // TODO: just for testing purposes remove that later
-    const registerForm = await superValidate({ registerEmail: "jean.dupont@leviosa.care" }, arktype(registerSchema, { defaults: registerDefaults }))
+    const registerForm = await superValidate(arktype(registerSchema, { defaults: registerDefaults }))
     const oauthForm = await superValidate(arktype(oauthSchema, { defaults: oauthDefaults }))
 
     // that part should be handled client side to be honest
@@ -55,7 +53,6 @@ export const load = async ({ url }: RequestEvent) => {
     // const registerForm = await superValidate(invalidUser, arktype(registerSchema, { defaults: registerDefaults }))
 
     const loginForm = await superValidate(init, arktype(loginSchema, { defaults: loginDefaults }))
-    console.log("the register form from the load function:", registerForm)
     return { loginForm, registerForm, oauthForm, redirectTo }
 }
 
