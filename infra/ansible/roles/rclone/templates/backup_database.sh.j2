@@ -8,8 +8,10 @@ export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 USER="{{ deploy_user }}"
 BACKUP_DIR="{{ rclone_backup_dir }}"
 VOLUME_NAME="production_backend_data"
+VAULT_DATA_DIR="{{ app_data_dir }}/vault"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="leviosa_backup_$TIMESTAMP.tar.gz"
+VAULT_BACKUP_FILE="leviosa_vault_$TIMESTAMP.tar.gz"
 RETENTION_DAYS=7
 GPG_RECIPIENT="{{ gpg_recipient }}"
 LOG_FILE="$BACKUP_DIR/backup.log"
@@ -32,24 +34,37 @@ echo "[$(date)] Backup started."
 # Stop leviosa containers
 echo "[$(date)] Stopping leviosa related production containers..."
 docker ps -a --format {% raw %}{{.Names}}{% endraw %} | grep "^production-" | xargs -r docker stop
-# TODO: I need to find a way to do some sort of graceful shutdown of the application so that the user are notified that they can not use the application for some time
-# use the sigterm signal to the application to see what it does ?
 
 # Get the Docker volume path
 VOLUME_PATH=$(docker volume inspect -f {% raw %}'{{ .Mountpoint }}'{% endraw %} $VOLUME_NAME)
 
 # Create a tar.gz of the entire data directory
-echo "[$(date)] Creating tar.gz archive..."
+echo "[$(date)] Creating database archive..."
 if ! tar -czf $BACKUP_DIR/$BACKUP_FILE -C $VOLUME_PATH .; then
-  echo "[$(date)] Error: Failed to create tar.gz archive."
+  echo "[$(date)] Error: Failed to create database archive."
   docker ps -a --format {% raw %}{{.Names}}{% endraw %} | grep "^production-" | xargs -r docker start
   exit 1
 fi
 
 # Verify the integrity of the tar.gz archive
-echo "[$(date)] Verifying tar.gz archive integrity..."
+echo "[$(date)] Verifying database archive integrity..."
 if ! tar -tzf $BACKUP_DIR/$BACKUP_FILE > /dev/null; then
-  echo "[$(date)] Error: tar.gz archive is corrupted."
+  echo "[$(date)] Error: Database archive is corrupted."
+  docker ps -a --format {% raw %}{{.Names}}{% endraw %} | grep "^production-" | xargs -r docker start
+  exit 1
+fi
+
+# Create a tar.gz of the vault data directory (while containers are stopped for consistency)
+echo "[$(date)] Creating vault archive..."
+if ! tar -czf $BACKUP_DIR/$VAULT_BACKUP_FILE -C $VAULT_DATA_DIR .; then
+  echo "[$(date)] Error: Failed to create vault archive."
+  docker ps -a --format {% raw %}{{.Names}}{% endraw %} | grep "^production-" | xargs -r docker start
+  exit 1
+fi
+
+echo "[$(date)] Verifying vault archive integrity..."
+if ! tar -tzf $BACKUP_DIR/$VAULT_BACKUP_FILE > /dev/null; then
+  echo "[$(date)] Error: Vault archive is corrupted."
   docker ps -a --format {% raw %}{{.Names}}{% endraw %} | grep "^production-" | xargs -r docker start
   exit 1
 fi
@@ -58,41 +73,48 @@ fi
 echo "[$(date)] Starting containers..."
 docker ps -a --format {% raw %}{{.Names}}{% endraw %} | grep "^production-" | xargs -r docker start
 
-# Encrypt backup
-echo "[$(date)] Encrypting backup..."
+# Encrypt database backup
+echo "[$(date)] Encrypting database backup..."
 if ! gpg --encrypt --recipient $GPG_RECIPIENT $BACKUP_DIR/$BACKUP_FILE; then
-  echo "[$(date)] Error: GPG encryption failed."
+  echo "[$(date)] Error: GPG encryption of database backup failed."
   exit 1
 fi
-
-# Delete the unencrypted backup file
-echo "[$(date)] Deleting unencrypted backup file..."
 rm -f $BACKUP_DIR/$BACKUP_FILE
 
-# Delete backups older than RETENTION_DAYS
-echo "[$(date)] Removing backups older than $RETENTION_DAYS days..."
+# Encrypt vault backup
+echo "[$(date)] Encrypting vault backup..."
+if ! gpg --encrypt --recipient $GPG_RECIPIENT $BACKUP_DIR/$VAULT_BACKUP_FILE; then
+  echo "[$(date)] Error: GPG encryption of vault backup failed."
+  exit 1
+fi
+rm -f $BACKUP_DIR/$VAULT_BACKUP_FILE
+
+# Delete local backups older than RETENTION_DAYS
+echo "[$(date)] Removing local backups older than $RETENTION_DAYS days..."
 find $BACKUP_DIR -name "leviosa_backup_*.tar.gz.gpg" -type f -mtime +$RETENTION_DAYS -delete
+find $BACKUP_DIR -name "leviosa_vault_*.tar.gz.gpg" -type f -mtime +$RETENTION_DAYS -delete
 
-echo "[$(date)] Local backup completed: $BACKUP_DIR/$BACKUP_FILE.gpg"
-
-# Find the most recent backup file
-LATEST_BACKUP=$(ls -t $BACKUP_DIR/leviosa_backup_*.tar.gz.gpg | head -1)
-
-if [ -z "$LATEST_BACKUP" ]; then
-  echo "[$(date)] Error: No backup files found in $BACKUP_DIR"
+# Upload database backup to S3
+LATEST_DB_BACKUP=$(ls -t $BACKUP_DIR/leviosa_backup_*.tar.gz.gpg 2>/dev/null | head -1)
+if [ -z "$LATEST_DB_BACKUP" ]; then
+  echo "[$(date)] Error: No database backup file found in $BACKUP_DIR"
   exit 1
 fi
+echo "[$(date)] Uploading database backup to S3: $LATEST_DB_BACKUP"
+rclone copy "$LATEST_DB_BACKUP" $REMOTE_NAME:$REMOTE_PATH/ --s3-region eu-central-1 --s3-location-constraint eu-central-1 --s3-no-check-bucket
 
-# Copy to remote storage
-echo "[$(date)] Copying latest backup to remote storage: $LATEST_BACKUP"
-rclone copy "$LATEST_BACKUP" $REMOTE_NAME:$REMOTE_PATH/ --s3-region eu-central-1 --s3-location-constraint eu-central-1 --s3-no-check-bucket
-if [ $? -ne 0 ]; then
-  echo "[$(date)] Error: Failed to copy backup to remote storage."
+# Upload vault backup to S3
+LATEST_VAULT_BACKUP=$(ls -t $BACKUP_DIR/leviosa_vault_*.tar.gz.gpg 2>/dev/null | head -1)
+if [ -z "$LATEST_VAULT_BACKUP" ]; then
+  echo "[$(date)] Error: No vault backup file found in $BACKUP_DIR"
   exit 1
 fi
+echo "[$(date)] Uploading vault backup to S3: $LATEST_VAULT_BACKUP"
+rclone copy "$LATEST_VAULT_BACKUP" $REMOTE_NAME:$REMOTE_PATH/ --s3-region eu-central-1 --s3-location-constraint eu-central-1 --s3-no-check-bucket
 
-# Clean up old backups in remote storage
+# Clean up old S3 backups
 echo "[$(date)] Cleaning up old backups in remote storage..."
-rclone delete $REMOTE_NAME:$REMOTE_PATH/ --min-age ${REMOTE_RETENTION_DAYS}d
+rclone delete $REMOTE_NAME:$REMOTE_PATH/ --include "leviosa_backup_*.tar.gz.gpg" --min-age ${REMOTE_RETENTION_DAYS}d
+rclone delete $REMOTE_NAME:$REMOTE_PATH/ --include "leviosa_vault_*.tar.gz.gpg" --min-age ${REMOTE_RETENTION_DAYS}d
 
-echo "[$(date)] Offsite backup completed."
+echo "[$(date)] Backup complete. DB: $LATEST_DB_BACKUP  Vault: $LATEST_VAULT_BACKUP"

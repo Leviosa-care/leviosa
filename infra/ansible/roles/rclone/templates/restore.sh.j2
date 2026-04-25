@@ -1,53 +1,112 @@
 #!/bin/bash
-# Database Restore Script
-# Usage: ./restore.sh <backup-file>
-# Example: ./restore.sh daily/leviosa_daily_20250224_020000.sql.gz
+# Leviosa Restore Script
+#
+# Usage:
+#   ./restore.sh db    <timestamp>   — restore database only
+#   ./restore.sh vault <timestamp>   — restore vault data only
+#   ./restore.sh all   <timestamp>   — restore both (recommended after key loss)
+#
+# <timestamp> is the YYYYMMDD_HHMMSS suffix of the backup pair, e.g. 20260425_020000
+#
+# After restoring vault you must re-deploy to unseal it:
+#   ansible-playbook -i inventory/hosts.yml playbooks/deploy.yml
 
 set -e
 
-BACKUP_FILE="$1"
-BACKUP_DIR="/var/backups/leviosa"
-LOG_FILE="/var/log/leviosa/restore.log"
+MODE="$1"
+TIMESTAMP="$2"
 
-# Function to log messages
+BACKUP_DIR="{{ rclone_backup_dir }}"
+VAULT_DATA_DIR="{{ app_data_dir }}/vault"
+LOG_FILE="$BACKUP_DIR/restore.log"
+REMOTE_NAME="{{ rclone_aws_remote_name }}"
+REMOTE_PATH="{{ rclone_aws_bucket_name }}/backups"
+VOLUME_NAME="production_backend_data"
+GPG_RECIPIENT="{{ gpg_recipient }}"
+
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
 
-# Function to show usage
 usage() {
-    echo "Usage: $0 <backup-file>"
-    echo "Example: $0 daily/leviosa_daily_20250224_020000.sql.gz"
+    echo "Usage: $0 <db|vault|all> <timestamp>"
+    echo "  timestamp format: YYYYMMDD_HHMMSS"
     echo ""
-    echo "Available backups:"
-    rclone ls {{ rclone_aws_remote_name }}:{{ rclone_aws_bucket_name }}/ --include "*.sql.gz" || echo "No backups found in S3"
+    echo "Available backups in S3:"
+    rclone ls $REMOTE_NAME:$REMOTE_PATH/ --include "leviosa_*.tar.gz.gpg" 2>/dev/null || echo "  (could not list S3 — check rclone config)"
     exit 1
 }
 
-# Check if backup file is provided
-if [ -z "$BACKUP_FILE" ]; then
+if [ -z "$MODE" ] || [ -z "$TIMESTAMP" ]; then
     usage
 fi
 
-log "Starting database restore from: $BACKUP_FILE"
+if [[ "$MODE" != "db" && "$MODE" != "vault" && "$MODE" != "all" ]]; then
+    echo "Error: mode must be db, vault, or all"
+    usage
+fi
 
-# Download backup from S3
 TEMP_DIR=$(mktemp -d)
 trap "rm -rf $TEMP_DIR" EXIT
 
-log "Downloading backup from S3..."
-rclone copy {{ rclone_aws_remote_name }}:{{ rclone_aws_bucket_name }}/$BACKUP_FILE "$TEMP_DIR/"
+restore_db() {
+    local file="leviosa_backup_${TIMESTAMP}.tar.gz.gpg"
+    log "Downloading database backup: $file"
+    rclone copy "$REMOTE_NAME:$REMOTE_PATH/$file" "$TEMP_DIR/"
 
-# Get local filename
-LOCAL_FILE=$(basename "$BACKUP_FILE")
+    log "Decrypting database backup..."
+    gpg --decrypt --recipient $GPG_RECIPIENT "$TEMP_DIR/$file" > "$TEMP_DIR/leviosa_backup_${TIMESTAMP}.tar.gz"
 
-# Restore database
-log "Restoring database..."
-gunzip -c "$TEMP_DIR/$LOCAL_FILE" | docker exec -i postgres psql -U {{ postgres_user }} -d {{ postgres_db }}
+    log "Stopping production containers..."
+    docker ps -a --format {% raw %}{{.Names}}{% endraw %} | grep "^production-" | xargs -r docker stop
 
-log "Database restore completed successfully"
+    log "Restoring database volume..."
+    VOLUME_PATH=$(docker volume inspect -f {% raw %}'{{ .Mountpoint }}'{% endraw %} $VOLUME_NAME)
+    rm -rf "${VOLUME_PATH:?}"/*
+    tar -xzf "$TEMP_DIR/leviosa_backup_${TIMESTAMP}.tar.gz" -C "$VOLUME_PATH"
 
-# Clean up
-rm -rf "$TEMP_DIR"
+    log "Starting containers..."
+    docker ps -a --format {% raw %}{{.Names}}{% endraw %} | grep "^production-" | xargs -r docker start
 
-log "Restore complete. Backup file: $BACKUP_FILE"
+    log "Database restore complete."
+}
+
+restore_vault() {
+    local file="leviosa_vault_${TIMESTAMP}.tar.gz.gpg"
+    log "Downloading vault backup: $file"
+    rclone copy "$REMOTE_NAME:$REMOTE_PATH/$file" "$TEMP_DIR/"
+
+    log "Decrypting vault backup..."
+    gpg --decrypt --recipient $GPG_RECIPIENT "$TEMP_DIR/$file" > "$TEMP_DIR/leviosa_vault_${TIMESTAMP}.tar.gz"
+
+    log "Stopping vault container..."
+    docker stop production_vault 2>/dev/null || true
+    docker rm production_vault 2>/dev/null || true
+
+    log "Restoring vault data to $VAULT_DATA_DIR..."
+    rm -rf "${VAULT_DATA_DIR:?}/data" "${VAULT_DATA_DIR:?}/vault-keys.txt"
+    tar -xzf "$TEMP_DIR/leviosa_vault_${TIMESTAMP}.tar.gz" -C "$VAULT_DATA_DIR"
+
+    log "Vault data restored."
+    log ""
+    log "NEXT STEP: run the deploy playbook to start and unseal vault:"
+    log "  ansible-playbook -i inventory/hosts.yml playbooks/deploy.yml"
+}
+
+log "Starting restore — mode=$MODE timestamp=$TIMESTAMP"
+
+case "$MODE" in
+    db)
+        restore_db
+        ;;
+    vault)
+        restore_vault
+        ;;
+    all)
+        # Restore vault first so keys match the DB we're about to restore
+        restore_vault
+        restore_db
+        ;;
+esac
+
+log "Restore finished."
