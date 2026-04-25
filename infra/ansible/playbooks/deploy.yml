@@ -124,16 +124,15 @@
       become_user: root
       when: app_deployed | default(false)
 
-    - name: Wipe stale Vault data for clean initialization
+    - name: Wipe Vault data (first-time setup or explicit override only)
       ansible.builtin.shell: |
         rm -rf {{ app_data_dir }}/vault/data
-        echo "Wiped stale vault data — will initialize fresh"
+        echo "Wiped vault data — will initialize fresh"
       become: true
       become_user: root
       when:
         - app_deployed | default(false)
-        - vault_health_check.stdout | default('stopped') != 'healthy'
-        - not vault_keys_stat.stat.exists
+        - not vault_keys_stat.stat.exists or (vault_force_wipe | default(false) | bool)
 
     - name: Start Vault container
       ansible.builtin.command:
