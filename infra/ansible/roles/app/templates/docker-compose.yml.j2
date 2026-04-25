@@ -26,9 +26,13 @@ services:
     networks:
 {% if use_shared_services | default(false) %}
       # Join prod's network to reach shared postgres, redis, and caddy
-      - {{ prod_network_name | default('leviosa_network') }}
+      {{ prod_network_name | default('leviosa_network') }}:
+        aliases:
+          - frontend
 {% else %}
-      - {{ app_name }}_network
+      {{ app_name }}_network:
+        aliases:
+          - frontend
 {% endif %}
     healthcheck:
       test: ["CMD", "/nodejs/bin/node", "-e", "require('http').get('http://localhost:{{ frontend_port | default('3000') }}/healthz', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
@@ -64,9 +68,13 @@ services:
     networks:
 {% if use_shared_services | default(false) %}
       # Join prod's network to reach shared postgres, redis, and caddy
-      - {{ prod_network_name | default('leviosa_network') }}
+      {{ prod_network_name | default('leviosa_network') }}:
+        aliases:
+          - backend
 {% else %}
-      - {{ app_name }}_network
+      {{ app_name }}_network:
+        aliases:
+          - backend
 {% endif %}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:{{ backend_port | default('3500') }}/health"]
