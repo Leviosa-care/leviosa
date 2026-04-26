@@ -511,7 +511,7 @@
           -e VAULT_ADDR=http://127.0.0.1:8200 \
           -e VAULT_TOKEN={{ vault_root_token }} \
           {{ app_name }}_vault \
-          vault kv get secret/data/{{ encx_pepper_alias | default('leviosa') }} 2>&1
+          vault kv get secret/encx/{{ encx_pepper_alias | default('leviosa') }}/pepper 2>&1
       register: pepper_check
       failed_when: false
       changed_when: false
@@ -525,14 +525,14 @@
     - name: Generate and store pepper secret in Vault KV (if not exists)
       ansible.builtin.shell: |
         # Generate a 32-byte pepper value and base64 encode it
+        # encx reads from secret/data/encx/{alias}/pepper (VaultPepperPathTemplate)
+        # vault kv put prepends data/ automatically, so use secret/encx/{alias}/pepper
         PEPPER_VALUE=$(openssl rand -base64 32 | tr -d '\n')
-        # Store in Vault KV v2 format
         docker exec \
           -e VAULT_ADDR=http://127.0.0.1:8200 \
           -e VAULT_TOKEN={{ vault_root_token }} \
           {{ app_name }}_vault \
-          vault kv put secret/data/{{ encx_pepper_alias | default('leviosa') }} value="$PEPPER_VALUE"
-        # Wait a moment for Vault to fully commit the write
+          vault kv put secret/encx/{{ encx_pepper_alias | default('leviosa') }}/pepper value="$PEPPER_VALUE"
         sleep 2
       become: true
       become_user: root
@@ -548,7 +548,7 @@
           -e VAULT_ADDR=http://127.0.0.1:8200 \
           -e VAULT_TOKEN={{ vault_root_token }} \
           {{ app_name }}_vault \
-          vault kv get secret/data/{{ encx_pepper_alias | default('leviosa') }} 2>&1 | grep -E "^value\s" | head -1
+          vault kv get secret/encx/{{ encx_pepper_alias | default('leviosa') }}/pepper 2>&1 | grep -E "^value\s" | head -1
       register: pepper_verify
       changed_when: false
       failed_when: false
@@ -560,7 +560,7 @@
 
     - name: Display pepper verification result
       ansible.builtin.debug:
-        msg: "Pepper status at secret/data/{{ encx_pepper_alias | default('leviosa') }}: {{ 'EXISTS' if pepper_verify.rc == 0 else 'NOT FOUND' }}"
+        msg: "Pepper status at secret/encx/{{ encx_pepper_alias | default('leviosa') }}/pepper: {{ 'EXISTS' if pepper_verify.rc == 0 else 'NOT FOUND' }}"
       when:
         - app_deployed | default(false)
         - vault_root_token is defined
