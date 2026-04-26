@@ -532,6 +532,8 @@
           -e VAULT_TOKEN={{ vault_root_token }} \
           {{ app_name }}_vault \
           vault kv put secret/data/{{ encx_pepper_alias | default('leviosa') }} value="$PEPPER_VALUE"
+        # Wait a moment for Vault to fully commit the write
+        sleep 2
       become: true
       become_user: root
       when:
@@ -539,6 +541,29 @@
         - vault_root_token is defined
         - pepper_check.rc != 0
       no_log: true
+
+    - name: Verify pepper exists in Vault
+      ansible.builtin.shell: |
+        docker exec \
+          -e VAULT_ADDR=http://127.0.0.1:8200 \
+          -e VAULT_TOKEN={{ vault_root_token }} \
+          {{ app_name }}_vault \
+          vault kv get secret/data/{{ encx_pepper_alias | default('leviosa') }} 2>&1 | grep -E "^value\s" | head -1
+      register: pepper_verify
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: root
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
+
+    - name: Display pepper verification result
+      ansible.builtin.debug:
+        msg: "Pepper status at secret/data/{{ encx_pepper_alias | default('leviosa') }}: {{ 'EXISTS' if pepper_verify.rc == 0 else 'NOT FOUND' }}"
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
 
     - name: Restart all services except Vault
       ansible.builtin.shell: |
