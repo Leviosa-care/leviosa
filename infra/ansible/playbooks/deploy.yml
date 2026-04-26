@@ -590,8 +590,26 @@
       failed_when: vault_network_ip.rc != 0
       when: app_deployed | default(false)
 
-    - name: Seed admin users
-      when: app_deployed | default(false) and seed_admins is defined
+    - name: Check if admin users already exist in database
+      ansible.builtin.shell: |
+        docker exec {{ app_name }}_postgres psql -U {{ db_user | default('leviosa') }} -d {{ db_name | default('leviosa') }} -tAc "SELECT COUNT(*) FROM auth.users WHERE state = 'active' LIMIT 1"
+      register: admin_users_count
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: root
+      when: app_deployed | default(false)
+
+    - name: Display admin users check result
+      ansible.builtin.debug:
+        msg: "Active users in database: {{ admin_users_count.stdout | default('0') | trim }}"
+      when: app_deployed | default(false)
+
+    - name: Seed admin users (only if no active users exist)
+      when:
+        - app_deployed | default(false)
+        - seed_admins is defined
+        - admin_users_count.stdout | default('0') | int == 0
       become: true
       become_user: root
       block:
