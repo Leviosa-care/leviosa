@@ -16,6 +16,5 @@ storage "file" {
 # api_addr must be a reachable address for clients
 # Use the container name which resolves on Docker networks
 api_addr      = "http://{{ app_name }}_vault:8200"
-cluster_addr  = "http://{{ app_name }}_vault:8201"
 disable_mlock = true
 log_level     = "info"

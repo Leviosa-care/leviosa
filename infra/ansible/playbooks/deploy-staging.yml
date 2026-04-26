@@ -543,14 +543,27 @@
           echo "ERROR: Vault IP is empty"
           exit 1
         fi
-        # Check if we can reach Vault from the production network and retrieve the pepper
-        docker run --rm \
+        # Test basic Vault connectivity first
+        if ! docker run --rm \
           --network {{ prod_network_name | default('leviosa_network') }} \
-          --env-file {{ app_base_dir }}/.env \
-          -e VAULT_ADDR=http://${VAULT_IP}:8200 \
-          -e VAULT_TOKEN={{ vault_root_token }} \
+          --env VAULT_ADDR=http://${VAULT_IP}:8200 \
+          --env VAULT_TOKEN={{ vault_root_token }} \
           {{ backend_docker_image }} \
-          sh -c 'apk add --no-cache curl >/dev/null 2>&1 && curl -s -f -X GET "http://${VAULT_ADDR}:8200/v1/secret/data/'"$PEPPER_ALIAS"'" -H "X-Vault-Token: ${VAULT_TOKEN}" | grep -q "\"data\"" && echo "Pepper accessible" || echo "Pepper NOT accessible"'
+          wget -q -O- --timeout=5 http://${VAULT_IP}:8200/v1/sys/health 2>/dev/null | grep -q "\"initialized\""; then
+          echo "Vault not accessible from network"
+          exit 1
+        fi
+        # Test KV secret access
+        if docker run --rm \
+          --network {{ prod_network_name | default('leviosa_network') }} \
+          --env VAULT_ADDR=http://${VAULT_IP}:8200 \
+          --env VAULT_TOKEN={{ vault_root_token }} \
+          {{ backend_docker_image }} \
+          wget -q -O- --timeout=5 "http://${VAULT_IP}:8200/v1/secret/data/${PEPPER_ALIAS}" 2>/dev/null | grep -q "\"data\""; then
+          echo "Pepper accessible"
+        else
+          echo "Pepper NOT accessible"
+        fi
       register: pepper_network_check
       changed_when: false
       failed_when: false
