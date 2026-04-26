@@ -156,7 +156,7 @@ export const actions = {
 
                 // Role-based redirect: always send users to the appropriate page for their role
                 // This prevents staff users from getting 403 errors if they tried to access /admin
-                if (user.role === "admin") {
+                if (user.role === "administrator") {
                     finalRedirect = "/admin";
                 } else if (user.role === "partner") {
                     finalRedirect = "/staff";
