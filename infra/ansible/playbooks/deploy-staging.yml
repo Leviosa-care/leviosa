@@ -461,6 +461,8 @@
           -e VAULT_TOKEN={{ vault_root_token }} \
           {{ app_name }}_vault \
           vault kv put secret/data/{{ encx_pepper_alias | default('leviosa') }} value="$PEPPER_VALUE"
+        # Wait a moment for Vault to fully commit the write
+        sleep 2
       become: true
       become_user: root
       when:
@@ -468,6 +470,29 @@
         - vault_root_token is defined
         - pepper_check.rc != 0
       no_log: true
+
+    - name: Verify pepper exists in Vault
+      ansible.builtin.shell: |
+        docker exec \
+          -e VAULT_ADDR=http://127.0.0.1:8200 \
+          -e VAULT_TOKEN={{ vault_root_token }} \
+          {{ app_name }}_vault \
+          vault kv get secret/data/{{ encx_pepper_alias | default('leviosa') }} 2>&1 | grep -E "^value\s" | head -1
+      register: pepper_verify
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: root
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
+
+    - name: Display pepper verification result
+      ansible.builtin.debug:
+        msg: "Pepper status at secret/data/{{ encx_pepper_alias | default('leviosa') }}: {{ 'EXISTS' if pepper_verify.rc == 0 else 'NOT FOUND' }}"
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
 
     - name: Restart all services except Vault
       ansible.builtin.shell: |
@@ -486,6 +511,8 @@
     - name: Ensure Vault is connected to production network
       ansible.builtin.shell: |
         docker network connect {{ prod_network_name | default('leviosa_network') }} {{ app_name }}_vault 2>/dev/null || true
+        # Give Vault a moment to be fully accessible on the network
+        sleep 3
       become: true
       become_user: root
       changed_when: false
@@ -507,6 +534,38 @@
       ansible.builtin.debug:
         msg: "Vault IP on {{ prod_network_name | default('leviosa_network') }}: '{{ vault_network_ip.stdout | trim }}'"
       when: app_deployed | default(false)
+
+    - name: Verify pepper is accessible from production network (seeder perspective)
+      ansible.builtin.shell: |
+        VAULT_IP="{{ vault_network_ip.stdout | trim }}"
+        if [ -z "$VAULT_IP" ]; then
+          echo "ERROR: Vault IP is empty"
+          exit 1
+        fi
+        # Check if we can reach Vault from the production network and retrieve the pepper
+        docker run --rm \
+          --network {{ prod_network_name | default('leviosa_network') }} \
+          --env-file {{ app_base_dir }}/.env \
+          -e VAULT_ADDR=http://${VAULT_IP}:8200 \
+          -e VAULT_TOKEN={{ vault_root_token }} \
+          {{ backend_docker_image }} \
+          sh -c 'apk add --no-cache curl >/dev/null 2>&1 && curl -s -f -X GET "http://${VAULT_ADDR}:8200/v1/secret/data/{{ encx_pepper_alias | default(''leviosa'') }}" -H "X-Vault-Token: ${VAULT_TOKEN}" | grep -q "\"data\"" && echo "Pepper accessible" || echo "Pepper NOT accessible"'
+      register: pepper_network_check
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: root
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
+        - vault_network_ip.stdout | default('') | trim != ''
+
+    - name: Display pepper network check result
+      ansible.builtin.debug:
+        msg: "Pepper accessibility from production network: {{ pepper_network_check.stdout | default('CHECK_FAILED') }}"
+      when:
+        - app_deployed | default(false)
+        - vault_root_token is defined
 
     - name: Check if admin users already exist in database
       ansible.builtin.shell: |
