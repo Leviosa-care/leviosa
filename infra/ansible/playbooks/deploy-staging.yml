@@ -538,6 +538,7 @@
     - name: Verify pepper is accessible from production network (seeder perspective)
       ansible.builtin.shell: |
         VAULT_IP="{{ vault_network_ip.stdout | trim }}"
+        PEPPER_ALIAS="{{ encx_pepper_alias | default('leviosa') }}"
         if [ -z "$VAULT_IP" ]; then
           echo "ERROR: Vault IP is empty"
           exit 1
@@ -549,7 +550,7 @@
           -e VAULT_ADDR=http://${VAULT_IP}:8200 \
           -e VAULT_TOKEN={{ vault_root_token }} \
           {{ backend_docker_image }} \
-          sh -c 'apk add --no-cache curl >/dev/null 2>&1 && curl -s -f -X GET "http://${VAULT_ADDR}:8200/v1/secret/data/{{ encx_pepper_alias | default(''leviosa'') }}" -H "X-Vault-Token: ${VAULT_TOKEN}" | grep -q "\"data\"" && echo "Pepper accessible" || echo "Pepper NOT accessible"'
+          sh -c 'apk add --no-cache curl >/dev/null 2>&1 && curl -s -f -X GET "http://${VAULT_ADDR}:8200/v1/secret/data/'"$PEPPER_ALIAS"'" -H "X-Vault-Token: ${VAULT_TOKEN}" | grep -q "\"data\"" && echo "Pepper accessible" || echo "Pepper NOT accessible"'
       register: pepper_network_check
       changed_when: false
       failed_when: false
