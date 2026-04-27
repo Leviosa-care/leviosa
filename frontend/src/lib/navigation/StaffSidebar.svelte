@@ -2,7 +2,6 @@
 	import { page } from "$app/state";
 	import {
 		Home,
-		Calendar,
 		CalendarClock,
 		CalendarCheck,
 		Package,
@@ -12,6 +11,10 @@
 		Settings,
 		ChevronLeft,
 		ChevronRight,
+		Mail,
+		UserRound,
+		LogOut,
+		ExternalLink,
 	} from "@lucide/svelte";
 	import type { Component } from "svelte";
 	import type { Permissions } from "$lib/security/permissions";
@@ -25,9 +28,18 @@
 
 	// Sidebar collapse state
 	let isCollapsed = $state(false);
+	let userMenuOpen = $state(false);
 
 	function toggleSidebar() {
 		isCollapsed = !isCollapsed;
+	}
+
+	function toggleUserMenu() {
+		userMenuOpen = !userMenuOpen;
+	}
+
+	function closeUserMenu() {
+		userMenuOpen = false;
 	}
 
 	/**
@@ -54,20 +66,6 @@
 			label: "Accueil",
 			icon: Home,
 		},
-		// Catalogue
-		{
-			href: "/staff/catalog",
-			label: "Catalogue",
-			icon: Package,
-		},
-		// Users - admin only
-		{
-			href: "/staff/users",
-			label: "Utilisateurs",
-			icon: Users,
-			adminOnly: true,
-		},
-		// Agenda section
 		{
 			href: "/staff/agenda/disponibilites",
 			label: "Disponibilités",
@@ -78,16 +76,38 @@
 			label: "Réservations",
 			icon: CalendarCheck,
 		},
-		// Statistics section
+		{
+			href: "/staff/messages",
+			label: "Messages",
+			icon: Mail,
+		},
+		{
+			href: "/staff/profile",
+			label: "Mon profil",
+			icon: UserRound,
+		},
 		{
 			href: "/staff/statistics/analytics",
-			label: "Analytics",
+			label: "Statistiques",
 			icon: ChartColumn,
 		},
 		{
 			href: "/staff/statistics/finances",
 			label: "Finances",
 			icon: DollarSign,
+		},
+		// Admin only
+		{
+			href: "/staff/catalog",
+			label: "Catalogue",
+			icon: Package,
+			adminOnly: true,
+		},
+		{
+			href: "/staff/users",
+			label: "Utilisateurs",
+			icon: Users,
+			adminOnly: true,
 		},
 	];
 
@@ -107,20 +127,19 @@
 			icon: CalendarCheck,
 		},
 		{
-			href: "/staff/catalog",
-			label: "Catalogue",
-			icon: Package,
+			href: "/staff/agenda/disponibilites",
+			label: "Agenda",
+			icon: CalendarClock,
 		},
 		{
-			href: "/staff/statistics/analytics",
-			label: "Statistiques",
-			icon: ChartColumn,
+			href: "/staff/messages",
+			label: "Messages",
+			icon: Mail,
 		},
 		{
-			href: "/staff/users",
-			label: "Utilisateurs",
-			icon: Users,
-			adminOnly: true,
+			href: "/staff/profile",
+			label: "Profil",
+			icon: UserRound,
 		},
 	];
 
@@ -233,21 +252,59 @@
 		<!-- Sidebar Footer -->
 		<div class="py-5 border-t border-dark-100 {isCollapsed ? 'px-3' : 'px-6'}">
 			{#if !isCollapsed}
-				<div class="flex items-center gap-3">
-					<div
-						class="w-9 h-9 rounded-full flex items-center justify-center bg-dark-100"
-					>
-						<span class="text-xs font-semibold text-dark-700 uppercase">
-							{user.firstname?.[0] ?? user.email?.[0]?.toUpperCase() ?? "A"}
-						</span>
-					</div>
-					<div class="flex-1 min-w-0">
-						<p class="text-sm font-medium text-dark-900 truncate">
-							{user.firstname ?? user.email?.split("@")[0] ?? "Staff"}
-						</p>
-						<p class="text-xs text-dark-500">
-							{user.role === "admin" ? "Administrateur" : "Partenaire"}
-						</p>
+				<div class="relative">
+					{#if userMenuOpen}
+						<div class="fixed inset-0 z-10" onclick={closeUserMenu}></div>
+						<div
+							class="absolute bottom-full left-0 right-0 mb-2 z-20 bg-white border border-dark-100 rounded-lg shadow-lg py-1 overflow-hidden"
+						>
+							<a
+								href="/"
+								onclick={closeUserMenu}
+								class="flex items-center gap-2.5 px-3 py-2 text-sm text-dark-600 hover:text-dark-900 hover:bg-dark-50 transition-colors"
+							>
+								<ExternalLink size={15} />
+								<span>Voir le site</span>
+							</a>
+							<div class="my-1 border-t border-dark-100"></div>
+							<form method="POST" action="/logout">
+								<button
+									type="submit"
+									class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+								>
+									<LogOut size={15} />
+									<span>Déconnexion</span>
+								</button>
+							</form>
+						</div>
+					{/if}
+					<div class="flex items-center gap-3">
+						<div class="w-9 h-9 rounded-full flex items-center justify-center bg-dark-100">
+							<span class="text-xs font-semibold text-dark-700 uppercase">
+								{user.firstname?.[0] ?? user.email?.[0]?.toUpperCase() ?? "A"}
+							</span>
+						</div>
+						<div class="flex-1 min-w-0">
+							<p class="text-sm font-medium text-dark-900 truncate">
+								{user.firstname
+									? `${user.firstname} ${user.lastname ?? ""}`.trim()
+									: user.email?.split("@")[0] ?? "Staff"}
+							</p>
+							<p class="text-xs text-dark-500">
+								{user.role === "admin" ? "Administrateur" : "Partenaire"}
+							</p>
+						</div>
+						<button
+							onclick={toggleUserMenu}
+							class="flex-shrink-0 p-1.5 rounded-md text-dark-400 hover:text-dark-900 hover:bg-dark-100 transition-colors"
+							aria-label="Options utilisateur"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+								<circle cx="12" cy="5" r="1.5" />
+								<circle cx="12" cy="12" r="1.5" />
+								<circle cx="12" cy="19" r="1.5" />
+							</svg>
+						</button>
 					</div>
 				</div>
 			{:else}
