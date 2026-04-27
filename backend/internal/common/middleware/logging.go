@@ -38,7 +38,7 @@ type LoggingConfig struct {
 func DefaultLoggingConfig() *LoggingConfig {
 	return &LoggingConfig{
 		IPHeaders:       []string{"X-Forwarded-For", "X-Real-IP", "CF-Connecting-IP"},
-		SkipPaths:       []string{"/healthz", "/metrics"},
+		SkipPaths:       []string{"/health", "/healthz", "/metrics"},
 		EnableIPLog:     true,
 		SampleRate:      1.0, // Log all requests by default
 		CustomFields:    make(map[string]string),
