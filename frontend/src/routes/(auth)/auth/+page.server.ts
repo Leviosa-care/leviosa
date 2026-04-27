@@ -147,7 +147,7 @@ export const actions = {
         try {
             const userRes = await fetch(`${env.API_URL}/users/me`, {
                 headers: {
-                    'Cookie': `leviosa_session=${cookies.get("leviosa_session") || ""}`
+                    'Cookie': `leviosa_access_token=${cookies.get("leviosa_access_token") || ""}`
                 }
             });
 

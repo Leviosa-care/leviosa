@@ -75,7 +75,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         init.headers = {
             ...(init.headers ?? {}),
             [env.CLIENT_IP_HEADER ?? 'x-client-ip']: getClientIP(event.request),
-            Authorization: `Bearer ${sessionID}`
+            Cookie: `leviosa_access_token=${sessionID}`
         };
         return fetch(input, init);
     };
@@ -100,7 +100,7 @@ function getClientIP(request: Request): string {
 async function validateSession(event: RequestEvent, sessionID: string): Promise<App.User> {
     const res = await fetch(`${env.API_URL}/users/me`, {
         method: "GET",
-        headers: { Authorization: `Bearer ${sessionID}` },
+        headers: { Cookie: `leviosa_access_token=${sessionID}` },
     });
     if (!res.ok) {
         event.cookies.set(event.locals.sessionCookieName, '', {
