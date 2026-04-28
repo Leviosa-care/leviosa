@@ -3,6 +3,53 @@ import type { PageServerLoad, Actions } from "./$types";
 import { redirect } from "@sveltejs/kit";
 import { mockUsers } from "$lib/data/mockUsers";
 
+interface BackendUserResponse {
+	id: string;
+	state: string;
+	email: string;
+	picture?: string;
+	created_at: string;
+	logged_in_at: string;
+	role?: string;
+	birthdate?: string;
+	last_name?: string;
+	first_name?: string;
+	gender?: string;
+	telephone?: string;
+	postal_code?: string;
+	city?: string;
+	address1?: string;
+	address2?: string;
+	google_id?: string;
+	apple_id?: string;
+}
+
+interface FrontendUser {
+	id: string;
+	status: string;
+	email: string;
+	picture?: string;
+	createdAt: string;
+	role: string;
+	firstname?: string;
+	lastname?: string;
+	telephone?: string;
+}
+
+function mapBackendUserToFrontend(user: BackendUserResponse): FrontendUser {
+	return {
+		id: user.id,
+		status: user.state === "active" ? "approved" : user.state,
+		email: user.email,
+		picture: user.picture,
+		createdAt: user.created_at,
+		role: user.role || "standard",
+		firstname: user.first_name,
+		lastname: user.last_name,
+		telephone: user.telephone
+	};
+}
+
 export const load: PageServerLoad = async ({ fetch }) => {
 	if (env.USE_MOCK_DATA === "true") {
 		return {
@@ -16,13 +63,15 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		if (!usersRes.ok) {
 			throw new Error(`Failed to fetch users: ${usersRes.statusText}`);
 		}
-		const users = await usersRes.json();
+		const backendUsers: BackendUserResponse[] = await usersRes.json();
+		const users = backendUsers.map(mapBackendUserToFrontend);
 
 		const pendingRes = await fetch(`${env.API_URL}/admin/auth/users/pending`);
 		if (!pendingRes.ok) {
 			throw new Error(`Failed to fetch pending users: ${pendingRes.statusText}`);
 		}
-		const pendingUsers = await pendingRes.json();
+		const backendPendingUsers: BackendUserResponse[] = await pendingRes.json();
+		const pendingUsers = backendPendingUsers.map(mapBackendUserToFrontend);
 
 		return { users, pendingUsers };
 	} catch (error) {
@@ -41,7 +90,6 @@ export const actions: Actions = {
 		}
 
 		if (env.USE_MOCK_DATA === "true") {
-			// Mock delete - just log it
 			console.log("Mock delete user:", id);
 			return { success: "User deleted successfully" };
 		}
@@ -52,7 +100,8 @@ export const actions: Actions = {
 			});
 
 			if (!res.ok) {
-				throw new Error(`Failed to delete user: ${res.statusText}`);
+				const errorText = await res.text();
+				throw new Error(`Failed to delete user: ${res.statusText} - ${errorText}`);
 			}
 
 			return { success: "User deleted successfully" };
@@ -72,20 +121,20 @@ export const actions: Actions = {
 		}
 
 		if (env.USE_MOCK_DATA === "true") {
-			// Mock update - just log it
 			console.log("Mock update role:", id, "to", role);
 			return { success: "User role updated successfully" };
 		}
 
 		try {
 			const res = await fetch(`${env.API_URL}/admin/users/${id}/role`, {
-				method: "PUT",
+				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ role })
 			});
 
 			if (!res.ok) {
-				throw new Error(`Failed to update role: ${res.statusText}`);
+				const errorText = await res.text();
+				throw new Error(`Failed to update role: ${res.statusText} - ${errorText}`);
 			}
 
 			return { success: "User role updated successfully" };
@@ -104,20 +153,21 @@ export const actions: Actions = {
 		}
 
 		if (env.USE_MOCK_DATA === "true") {
-			// Mock approve - just log it
 			console.log("Mock approve user:", id);
 			return { success: "User approved successfully" };
 		}
 
 		try {
+			// Default to "standard" role for approved users if not specified
 			const res = await fetch(`${env.API_URL}/admin/users/approve`, {
-				method: "POST",
+				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ user_id: id })
+				body: JSON.stringify({ user_id: id, role: "standard" })
 			});
 
 			if (!res.ok) {
-				throw new Error(`Failed to approve user: ${res.statusText}`);
+				const errorText = await res.text();
+				throw new Error(`Failed to approve user: ${res.statusText} - ${errorText}`);
 			}
 
 			return { success: "User approved successfully" };
