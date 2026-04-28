@@ -42,6 +42,23 @@
 		userMenuOpen = false;
 	}
 
+	async function handleLogout() {
+		try {
+			const response = await fetch("/auth/logout", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+
+			if (response.ok) {
+				window.location.href = "/auth/login";
+			}
+		} catch (error) {
+			console.error("Logout failed:", error);
+		}
+	}
+
 	/**
 	 * Navigation item definition
 	 * - href: Route path
@@ -270,29 +287,27 @@
 								<span>Voir le site</span>
 							</a>
 							<div class="my-1 border-t border-border-card"></div>
-							<form method="POST" action="/logout">
-								<button
-									type="submit"
-									class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+							<button
+								onclick={handleLogout}
+								class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="15"
+									height="15"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
 								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="15"
-										height="15"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									>
-										<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-										<polyline points="16 17 21 12 16 7"></polyline>
-										<line x1="21" x2="9" y1="12" y2="12"></line>
-									</svg>
-									<span>Deconnexion</span>
-								</button>
-							</form>
+									<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+									<polyline points="16 17 21 12 16 7"></polyline>
+									<line x1="21" x2="9" y1="12" y2="12"></line>
+								</svg>
+								<span>Déconnexion</span>
+							</button>
 						</div>
 					{/if}
 					<div class="flex items-center gap-3">

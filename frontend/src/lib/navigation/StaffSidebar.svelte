@@ -42,6 +42,23 @@
 		userMenuOpen = false;
 	}
 
+	async function handleLogout() {
+		try {
+			const response = await fetch("/auth/logout", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+
+			if (response.ok) {
+				window.location.href = "/auth/login";
+			}
+		} catch (error) {
+			console.error("Logout failed:", error);
+		}
+	}
+
 	/**
 	 * Navigation item definition
 	 * - href: Route path
@@ -170,14 +187,14 @@
 	<!-- Desktop Sidebar Navigation -->
 	<aside
 		class="hidden lg:flex lg:flex-col lg:border-r bg-white border-dark-100 relative transition-all duration-300 min-h-screen
-	               {isCollapsed ? 'lg:w-20' : 'lg:w-64'}"
+		           {isCollapsed ? 'lg:w-20' : 'lg:w-64'}"
 		aria-label="Sidebar navigation"
 	>
 		<!-- Collapse Toggle Button -->
 		<button
 			onclick={toggleSidebar}
 			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-white flex items-center justify-center
-	               text-dark-700 hover:text-dark-900 hover:bg-dark-100 transition-all duration-200 border border-dark-200"
+		           text-dark-700 hover:text-dark-900 hover:bg-dark-100 transition-all duration-200 border border-dark-200"
 			aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
 			title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
 		>
@@ -230,10 +247,10 @@
 						<a
 							href={item.href}
 							class="flex items-center text-sm font-medium transition-all duration-200 rounded-md
-	                               {isCollapsed
+			                       {isCollapsed
 								? 'justify-center px-3 py-3'
 								: 'gap-3 px-3 py-2.5'}
-	                               {active
+			                       {active
 								? 'text-dark-900 bg-dark-100'
 								: 'text-dark-600 hover:text-dark-900 hover:bg-dark-50'}"
 							aria-current={active ? "page" : undefined}
@@ -267,15 +284,13 @@
 								<span>Voir le site</span>
 							</a>
 							<div class="my-1 border-t border-dark-100"></div>
-							<form method="POST" action="/logout">
-								<button
-									type="submit"
-									class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
-								>
-									<LogOut size={15} />
-									<span>Déconnexion</span>
-								</button>
-							</form>
+							<button
+								onclick={handleLogout}
+								class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+							>
+								<LogOut size={15} />
+								<span>Déconnexion</span>
+							</button>
 						</div>
 					{/if}
 					<div class="flex items-center gap-3">
@@ -332,7 +347,7 @@
 					<a
 						href={item.href}
 						class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg transition-all duration-200
-	                           {active ? 'text-dark-900' : 'text-dark-500'}"
+		                   {active ? 'text-dark-900' : 'text-dark-500'}"
 						aria-current={active ? "page" : undefined}
 					>
 						<item.icon size={20} strokeWidth={active ? 2 : 1.5} />
