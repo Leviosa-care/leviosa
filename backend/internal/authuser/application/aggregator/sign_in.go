@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
@@ -96,6 +97,7 @@ func (s AuthAggregatorService) SignIn(ctx context.Context, request *domain.SignI
 	token, err := s.session.CreateSession(ctx, &domain.CreateSessionRequest{
 		UserID: user.ID.String(),
 		Role:   role,
+		State:  session.SessionActive,
 	})
 	if err != nil {
 		logger.DebugContext(ctx, "Service: Error creating session",

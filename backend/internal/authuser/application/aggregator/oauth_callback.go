@@ -8,6 +8,7 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/application/oauth"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
@@ -77,6 +78,7 @@ func (s *AuthAggregatorService) OAuthCallback(ctx context.Context, w http.Respon
 	token, err := s.session.CreateSession(ctx, &domain.CreateSessionRequest{
 		UserID: userUUID.String(),
 		Role:   role,
+		State:  session.SessionActive,
 	})
 	if err != nil {
 		if errors.Is(err, errs.ErrInvalidValue) {
