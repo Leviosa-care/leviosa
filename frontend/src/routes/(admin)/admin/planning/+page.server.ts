@@ -63,8 +63,13 @@ async function getMockWeeklyEvents(): Promise<DayEvents[]> {
 }
 
 export const load: PageServerLoad = async () => {
-	if (env.USE_MOCK_DATA === 'true') {
+	const isDevelopment = env.NODE_ENV === 'development' || env.APP_ENV === 'development';
+
+	if (isDevelopment) {
 		return { weekEvents: await getMockWeeklyEvents() };
 	}
+
+	// In staging/production, return empty week structure
+	// TODO: When backend is ready, fetch real events from API
 	return { weekEvents: [] };
 };
