@@ -3,6 +3,7 @@ package aggregatorHandler
 import (
 	"net/http"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/cookies"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
@@ -42,6 +43,9 @@ func (h *handler) SignOut(w http.ResponseWriter, r *http.Request) {
 		httpx.RespondWithServiceError(w, logger, ctx, err, "sign out")
 		return
 	}
+
+	// Clear the session cookies on the client
+	cookies.ClearTokenCookies(w)
 
 	// Log successful operation
 	logger.InfoContext(ctx, "Handler: Sign-out request completed successfully",
