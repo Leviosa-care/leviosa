@@ -10,9 +10,7 @@ import (
 
 	"github.com/hengadev/errsx"
 	"github.com/hengadev/encx"
-	
-	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
-	
+
 	"github.com/google/uuid"
 	
 )
@@ -396,13 +394,11 @@ func DecryptTokenPairEncx(ctx context.Context, crypto encx.CryptoService, source
 	
 
 	// Decrypt DEK
-	dek, err := crypto.DecryptDEKWithVersion(ctx, source.DEKEncrypted, source.KeyVersion)
+	_, err := crypto.DecryptDEKWithVersion(ctx, source.DEKEncrypted, source.KeyVersion)
 	if err != nil {
 		errs.Set("DEK decryption", err)
 		return result, errs.AsError()
 	}
-
-	
 
 	return result, errs.AsError()
 }
