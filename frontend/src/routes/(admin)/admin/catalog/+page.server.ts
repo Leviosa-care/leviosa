@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import type { Actions } from "./$types"
 import { arktype } from 'sveltekit-superforms/adapters';
 import { superValidate, type SuperValidated } from 'sveltekit-superforms';
+import { env } from "$env/dynamic/private";
 
 import {
 	deleteProductSchema,
@@ -14,7 +15,7 @@ import {
 	categoryDefaults,
 	type category,
 } from './schemas'
-import { type CardType, cards, categories, type Category } from "./products"
+import { type CardType, cards as mockCards, categories as mockCategories, type Category } from "./products"
 import {
 	defaultStatus,
 	defaultCategory,
@@ -22,6 +23,55 @@ import {
 } from "./default";
 
 import { updateProduct, deleteProduct, createCategory } from "./actions"
+
+interface BackendCategory {
+	id: string;
+	name: string;
+	description: string;
+	status: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+interface BackendProduct {
+	id: string;
+	name: string;
+	description: string;
+	category: BackendCategory;
+	duration: number;
+	createdAt: string;
+	updatedAt: string;
+	publishedStatus: string;
+	availability: string;
+	bufferTime: number;
+	cancellationHours: number;
+}
+
+function mapBackendCategoryToFrontend(cat: BackendCategory): Category {
+	return {
+		id: cat.id,
+		name: cat.name,
+		description: cat.description,
+		status: cat.status as 'published' | 'draft' | 'archived',
+	};
+}
+
+function mapBackendProductToFrontend(prod: BackendProduct): CardType {
+	return {
+		id: prod.id,
+		name: prod.name,
+		price: "0.00", // Price is not in the base product response
+		category: prod.category.name,
+		description: prod.description,
+		duration: prod.duration,
+		image: "", // Image is not in the base product response
+		updatedAt: prod.updatedAt,
+		published: prod.publishedStatus as 'published' | 'draft' | 'archived',
+		availability: prod.availability as 'online' | 'in-person' | 'hybrid',
+		bufferTime: prod.bufferTime,
+		cancellationHours: prod.cancellationHours,
+	};
+}
 
 export const actions = {
 	deleteProduct,
@@ -39,7 +89,7 @@ type Props = {
 	createCategoryForm: SuperValidated<category>;
 }
 
-export const load: PageServerLoad = async (): Promise<Props> => {
+export const load: PageServerLoad = async ({ fetch }): Promise<Props> => {
 	const deleteProductForm = await superValidate({ id: "e3eb8aaa-a255-4059-8013-6fbfb97442c0" }, arktype(deleteProductSchema, { defaults: deleteProductDefaults }))
 	const updateProductForm = await superValidate(arktype(productSchema, { defaults: productDefaults }))
 	const createCategoryForm = await superValidate(arktype(categorySchema, { defaults: categoryDefaults }))
@@ -57,6 +107,42 @@ export const load: PageServerLoad = async (): Promise<Props> => {
 		"draft",
 		"archived",
 	]);
+
+	let categories: Category[];
+	let cards: CardType[];
+
+	if (env.USE_MOCK_DATA === "true") {
+		// Use hardcoded mock data
+		categories = mockCategories;
+		cards = mockCards;
+	} else {
+		try {
+			// Fetch categories from API
+			const categoriesRes = await fetch(`${env.API_URL}/admin/categories`);
+			if (categoriesRes.ok) {
+				const backendCategories: BackendCategory[] = await categoriesRes.json();
+				categories = backendCategories.map(mapBackendCategoryToFrontend);
+			} else {
+				console.error("Failed to fetch categories:", categoriesRes.statusText);
+				categories = mockCategories;
+			}
+
+			// Fetch products from API
+			const productsRes = await fetch(`${env.API_URL}/admin/products`);
+			if (productsRes.ok) {
+				const backendProducts: BackendProduct[] = await productsRes.json();
+				cards = backendProducts.map(mapBackendProductToFrontend);
+			} else {
+				console.error("Failed to fetch products:", productsRes.statusText);
+				cards = mockCards;
+			}
+		} catch (error) {
+			console.error("Error loading catalog data:", error);
+			// Fallback to mock data on error
+			categories = mockCategories;
+			cards = mockCards;
+		}
+	}
 
 	// Combine the default category with the actual categories
 	const allCategories: Category[] = [
