@@ -147,11 +147,11 @@
 	 * Filter navigation items based on user role
 	 */
 	const desktopItems = $derived(
-		desktopNavigation.filter((item) => !item.adminOnly || user.role === "admin"),
+		desktopNavigation.filter((item) => !item.adminOnly || user.role === "administrator"),
 	);
 
 	const mobileItems = $derived(
-		mobileNavigation.filter((item) => !item.adminOnly || user.role === "admin"),
+		mobileNavigation.filter((item) => !item.adminOnly || user.role === "administrator"),
 	);
 
 	/**
@@ -197,7 +197,7 @@
 			{#if !isCollapsed}
 				<div>
 					<h1 class="text-sm font-semibold tracking-tight text-dark-900 uppercase">
-						{user.role === "admin" ? "Admin" : "Staff"}
+						{user.role === "administrator" ? "Admin" : "Staff"}
 					</h1>
 					<p class="text-xs text-dark-500">Leviosa</p>
 				</div>
@@ -291,7 +291,7 @@
 									: user.email?.split("@")[0] ?? "Staff"}
 							</p>
 							<p class="text-xs text-dark-500">
-								{user.role === "admin" ? "Administrateur" : "Partenaire"}
+								{user.role === "administrator" ? "Administrateur" : "Partenaire"}
 							</p>
 						</div>
 						<button

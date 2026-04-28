@@ -45,7 +45,7 @@
         href: string;
         label: string;
         icon: Component;
-        roles: Array<"admin" | "partner">;
+        roles: Array<"administrator" | "partner">;
     }
 
     /**
@@ -57,47 +57,47 @@
             href: "/staff",
             label: "Accueil",
             icon: Home,
-            roles: ["admin", "partner"],
+            roles: ["administrator", "partner"],
         },
         // Catalogue
         {
             href: "/staff/catalog",
             label: "Catalogue",
             icon: Package,
-            roles: ["admin", "partner"],
+            roles: ["administrator", "partner"],
         },
         // Users - admin only
         {
             href: "/staff/users",
             label: "Utilisateurs",
             icon: Users,
-            roles: ["admin"],
+            roles: ["administrator"],
         },
         // Agenda section - expanded on desktop
         {
             href: "/staff/agenda/disponibilites",
             label: "Disponibilités",
             icon: CalendarClock,
-            roles: ["admin", "partner"],
+            roles: ["administrator", "partner"],
         },
         {
             href: "/staff/agenda/reservations",
             label: "Réservations",
             icon: CalendarCheck,
-            roles: ["admin", "partner"],
+            roles: ["administrator", "partner"],
         },
         // Statistics section - expanded on desktop
         {
             href: "/staff/statistics/analytics",
             label: "Analytics",
             icon: ChartColumn,
-            roles: ["admin", "partner"],
+            roles: ["administrator", "partner"],
         },
         {
             href: "/staff/statistics/finances",
             label: "Finances",
             icon: DollarSign,
-            roles: ["admin", "partner"],
+            roles: ["administrator", "partner"],
         },
     ];
 
@@ -110,31 +110,31 @@
             href: "/staff",
             label: "Accueil",
             icon: Home,
-            roles: ["admin", "partner"],
+            roles: ["administrator", "partner"],
         },
         {
             href: "/staff/agenda",
             label: "Agenda",
             icon: Calendar,
-            roles: ["admin", "partner"],
+            roles: ["administrator", "partner"],
         },
         {
             href: "/staff/catalog",
             label: "Catalogue",
             icon: Package,
-            roles: ["admin", "partner"],
+            roles: ["administrator", "partner"],
         },
         {
             href: "/staff/statistics",
             label: "Statistiques",
             icon: ChartColumn,
-            roles: ["admin", "partner"],
+            roles: ["administrator", "partner"],
         },
         {
             href: "/staff/users",
             label: "Utilisateurs",
             icon: Users,
-            roles: ["admin"],
+            roles: ["administrator"],
         },
     ];
 
@@ -143,13 +143,13 @@
      */
     const desktopItems = $derived(
         desktopNavigation.filter((item) =>
-            item.roles.includes(user.role as "admin" | "partner"),
+            item.roles.includes(user.role as "administrator" | "partner"),
         ),
     );
 
     const mobileItems = $derived(
         mobileNavigation.filter((item) =>
-            item.roles.includes(user.role as "admin" | "partner"),
+            item.roles.includes(user.role as "administrator" | "partner"),
         ),
     );
 
@@ -269,7 +269,7 @@
                             {user.firstname ?? "Admin"}
                         </p>
                         <p class="text-xs text-dark-400 truncate">
-                            {user.role === "admin"
+                            {user.role === "administrator"
                                 ? "Administrateur"
                                 : "Partenaire"}
                         </p>

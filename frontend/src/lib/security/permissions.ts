@@ -41,7 +41,7 @@ export function computePermissions(role: Role): Permissions {
                 canAccessOps: true,
                 canAccessApp: true,
             }
-        case "admin":
+        case "administrator":
             return {
 
                 canAccessOps: true,

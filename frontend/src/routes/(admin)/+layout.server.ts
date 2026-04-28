@@ -10,7 +10,7 @@ export const load = async ({ locals, parent }) => {
 	}
 
 	// Check if user has admin role
-	if (user.role !== 'admin') {
+	if (user.role !== 'administrator') {
 		throw error(403, 'Accès non autorisé');
 	}
 
