@@ -1,4 +1,5 @@
 import type { PageServerLoad } from './$types';
+import { env } from '$env/dynamic/private';
 
 interface RecentBooking {
     id: string;
@@ -117,10 +118,27 @@ async function getMockDashboardData(): Promise<{
 }
 
 export const load: PageServerLoad = async () => {
-    // TODO: When backend is ready, switch to real API calls:
+    const isDevelopment = env.NODE_ENV === 'development' || env.APP_ENV === 'development';
+
+    if (isDevelopment) {
+        return await getMockDashboardData();
+    }
+
+    // In staging/production, return empty data until backend endpoints are ready
+    // TODO: When backend admin endpoints are ready, switch to real API calls:
     // const stats = await fetch(`${API_URL}/admin/stats`).then(r => r.json());
     // const recentBookings = await fetch(`${API_URL}/admin/bookings?recent=5`).then(r => r.json());
     // const upcomingBookings = await fetch(`${API_URL}/admin/bookings?upcoming=3`).then(r => r.json());
 
-    return await getMockDashboardData();
+    return {
+        stats: {
+            revenueThisWeek: 0,
+            bookingsThisWeek: 0,
+            upcomingBookingsCount: 0,
+            pendingBookingsCount: 0,
+            activeProductsCount: 0
+        },
+        recentBookings: [],
+        upcomingBookings: []
+    };
 };
