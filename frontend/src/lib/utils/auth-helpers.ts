@@ -26,7 +26,10 @@ export function forwardAuthCookies(response: Response, cookies: Cookies): void {
     for (const cookieString of cookieStrings) {
         // Parse cookie name and value
         const [nameValue, ...attributes] = cookieString.split(';').map(part => part.trim());
-        const [name, value] = nameValue.split('=');
+        const eqIdx = nameValue.indexOf('=');
+        if (eqIdx === -1) continue;
+        const name = nameValue.slice(0, eqIdx);
+        const value = nameValue.slice(eqIdx + 1);
 
         if (!name || !value) continue;
 
