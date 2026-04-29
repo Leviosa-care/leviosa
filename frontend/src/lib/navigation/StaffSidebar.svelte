@@ -267,7 +267,7 @@
 								<span>Voir le site</span>
 							</a>
 							<div class="my-1 border-t border-dark-100"></div>
-							<form method="POST" action="/staff/logout?/logout" class="contents">
+							<form method="POST" action="/logout?/logout" class="contents">
 								<button
 									type="submit"
 									onclick={closeUserMenu}
