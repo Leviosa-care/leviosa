@@ -2,31 +2,100 @@ import type { Actions, PageServerLoad } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { arktype } from 'sveltekit-superforms/adapters';
 import { superValidate } from 'sveltekit-superforms';
+import { env } from '$env/dynamic/private';
 import { productSchema, productDefaults } from '../../schemas';
-import type { product } from '../../schemas';
-import { cards, type CardType, categories, type Category } from '../../products';
+import { cards as mockCards, categories as mockCategories, type CardType, type Category } from '../../products';
 
-export const load: PageServerLoad = async ({ params }) => {
+interface BackendCategory {
+	id: string;
+	name: string;
+	description: string;
+	status: string;
+}
+
+interface BackendProduct {
+	id: string;
+	name: string;
+	description: string;
+	category: BackendCategory;
+	duration: number;
+	createdAt: string;
+	updatedAt: string;
+	publishedStatus: string;
+	availability: string;
+	bufferTime: number;
+	cancellationHours: number;
+}
+
+function mapBackendCategoryToFrontend(cat: BackendCategory): Category {
+	return {
+		id: cat.id,
+		name: cat.name,
+		description: cat.description,
+		status: cat.status as 'published' | 'draft' | 'archived',
+	};
+}
+
+function mapBackendProductToFrontend(prod: BackendProduct): CardType {
+	return {
+		id: prod.id,
+		name: prod.name,
+		price: "0.00",
+		category: prod.category.name,
+		description: prod.description,
+		duration: prod.duration,
+		image: "",
+		updatedAt: prod.updatedAt,
+		published: prod.publishedStatus as 'published' | 'draft' | 'archived',
+		availability: prod.availability as 'online' | 'in-person' | 'hybrid',
+		bufferTime: prod.bufferTime,
+		cancellationHours: prod.cancellationHours,
+	};
+}
+
+export const load: PageServerLoad = async ({ params, fetch }) => {
 	const productId = params.id;
 
-	// Find product by ID
-	const product = cards.find(c => c.id === productId);
+	let product: CardType;
+	let categories: Category[];
 
-	if (!product) {
-		throw error(404, 'Product not found');
+	if (env.USE_MOCK_DATA === 'true') {
+		const found = mockCards.find(c => c.id === productId);
+		if (!found) throw error(404, 'Product not found');
+		product = found;
+		categories = mockCategories;
+	} else {
+		try {
+			const [productRes, categoriesRes] = await Promise.all([
+				fetch(`${env.API_URL}/admin/products/${productId}`),
+				fetch(`${env.API_URL}/admin/categories`),
+			]);
+
+			if (productRes.status === 404) throw error(404, 'Product not found');
+			if (!productRes.ok) throw new Error(`Failed to fetch product: ${productRes.status} ${productRes.statusText}`);
+			const backendProduct: BackendProduct = await productRes.json();
+			product = mapBackendProductToFrontend(backendProduct);
+
+			if (!categoriesRes.ok) throw new Error(`Failed to fetch categories: ${categoriesRes.status} ${categoriesRes.statusText}`);
+			const backendCategories: BackendCategory[] = await categoriesRes.json();
+			categories = backendCategories.map(mapBackendCategoryToFrontend);
+		} catch (err) {
+			// Re-throw SvelteKit errors (like 404) directly
+			if (err && typeof err === 'object' && 'status' in err) throw err;
+			console.error('Error loading product:', err);
+			throw error(500, 'Failed to load product');
+		}
 	}
 
-	// Get the category ID for this product
 	const category = categories.find(c => c.name === product.category);
 	const categoryId = category?.id || '';
 
-	// Create form with existing product data
 	const updateProductForm = await superValidate(
 		{
 			id: product.id,
 			name: product.name,
 			description: product.description,
-			categoryId: categoryId,
+			categoryId,
 			duration: product.duration,
 			price: parseFloat(product.price),
 			status: product.published,
@@ -38,15 +107,9 @@ export const load: PageServerLoad = async ({ params }) => {
 		arktype(productSchema, { defaults: productDefaults })
 	);
 
-	// Combine default category with actual categories
-	const allCategories: Category[] = [
-		{ id: "default", name: "Toutes les catégories" },
-		...categories
-	];
-
 	return {
 		product,
-		categories: allCategories,
+		categories: [{ id: "default", name: "Toutes les catégories" }, ...categories],
 		updateProductForm,
 	};
 };

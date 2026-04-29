@@ -2,22 +2,47 @@ import type { Actions, PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { arktype } from 'sveltekit-superforms/adapters';
 import { superValidate } from 'sveltekit-superforms';
+import { env } from '$env/dynamic/private';
 import { productSchema, productDefaults } from '../../schemas';
-import type { product } from '../../schemas';
-import { categories } from '../../products';
-import type { Category } from '../../products';
+import { categories as mockCategories, type Category } from '../../products';
 
-export const load: PageServerLoad = async () => {
+interface BackendCategory {
+	id: string;
+	name: string;
+	description: string;
+	status: string;
+}
+
+function mapBackendCategoryToFrontend(cat: BackendCategory): Category {
+	return {
+		id: cat.id,
+		name: cat.name,
+		description: cat.description,
+		status: cat.status as 'published' | 'draft' | 'archived',
+	};
+}
+
+export const load: PageServerLoad = async ({ fetch }) => {
 	const createProductForm = await superValidate(arktype(productSchema, { defaults: productDefaults }));
 
-	// Combine default category with actual categories
-	const allCategories: Category[] = [
-		{ id: "default", name: "Toutes les catégories" },
-		...categories
-	];
+	let categories: Category[];
+
+	if (env.USE_MOCK_DATA === 'true') {
+		categories = mockCategories;
+	} else {
+		try {
+			const res = await fetch(`${env.API_URL}/admin/categories`);
+			if (!res.ok) throw new Error(`Failed to fetch categories: ${res.status} ${res.statusText}`);
+			const backendCategories: BackendCategory[] = await res.json();
+			categories = backendCategories.map(mapBackendCategoryToFrontend);
+		} catch (error) {
+			console.error('Error loading categories:', error);
+			categories = [];
+		}
+	}
 
 	return {
-		categories: allCategories,
+		categories: [{ id: "default", name: "Toutes les catégories" }, ...categories],
 		createProductForm,
 	};
 };
