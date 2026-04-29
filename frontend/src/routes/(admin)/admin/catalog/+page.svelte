@@ -62,7 +62,7 @@
 
 		<!-- Categories Tab -->
 		<Tabs.Content value="categories" class="p-6">
-			<Category {createCategoryForm} />
+			<Category {createCategoryForm} {categories} />
 		</Tabs.Content>
 
 		<!-- Products Tab -->

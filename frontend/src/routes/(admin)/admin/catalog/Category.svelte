@@ -3,14 +3,14 @@
 	import type { SuperValidated } from "sveltekit-superforms";
 	import type { category } from "./schemas";
 	import CategoryModal from "./CategoryModal.svelte";
-	import { categories } from "./products";
 	import type { Category } from "./products";
 
 	type Props = {
 		createCategoryForm: SuperValidated<category>;
+		categories: Category[];
 	};
 
-	let { createCategoryForm }: Props = $props();
+	let { createCategoryForm, categories }: Props = $props();
 
 	let searchQuery = $state("");
 	let statusFilter = $state("all");
