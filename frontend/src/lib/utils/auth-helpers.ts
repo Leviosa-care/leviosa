@@ -13,15 +13,7 @@ import type { Cookies } from '@sveltejs/kit';
  * @param cookies - SvelteKit's cookies object to set cookies on the client
  */
 export function forwardAuthCookies(response: Response, cookies: Cookies): void {
-    const setCookieHeader = response.headers.get('set-cookie');
-
-    if (!setCookieHeader) {
-        return;
-    }
-
-    // Parse Set-Cookie header(s)
-    // Note: If multiple cookies are set, they may be in separate headers or comma-separated
-    const cookieStrings = setCookieHeader.split(',').map(c => c.trim());
+    const cookieStrings: string[] = response.headers.getSetCookie();
 
     for (const cookieString of cookieStrings) {
         // Parse cookie name and value
@@ -63,8 +55,9 @@ export function forwardAuthCookies(response: Response, cookies: Cookies): void {
             }
         }
 
-        // Set cookie on client
-        cookies.set(name, value, options);
+        if (!options.path) continue;
+
+        cookies.set(name, value, { ...options, path: options.path });
     }
 }
 
