@@ -260,7 +260,7 @@
 							class="absolute bottom-full left-0 right-0 mb-2 z-20 bg-background border border-border-card rounded-lg shadow-lg py-1 overflow-hidden"
 						>
 							<a
-								href="https://leviosa.com"
+								href="https://leviosa.care"
 								target="_blank"
 								rel="noopener noreferrer"
 								onclick={closeUserMenu}
@@ -341,7 +341,7 @@
 						</span>
 					</div>
 					<a
-						href="https://leviosa.com"
+						href="https://leviosa.care"
 						target="_blank"
 						rel="noopener noreferrer"
 						class="flex items-center justify-center w-9 h-9 text-foreground-alt hover:text-foreground hover:bg-muted rounded-lg transition-colors"

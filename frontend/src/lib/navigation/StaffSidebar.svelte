@@ -259,7 +259,9 @@
 							class="absolute bottom-full left-0 right-0 mb-2 z-20 bg-white border border-dark-100 rounded-lg shadow-lg py-1 overflow-hidden"
 						>
 							<a
-								href="/"
+								href="https://leviosa.care"
+								target="_blank"
+								rel="noopener noreferrer"
 								onclick={closeUserMenu}
 								class="flex items-center gap-2.5 px-3 py-2 text-sm text-dark-600 hover:text-dark-900 hover:bg-dark-50 transition-colors"
 							>
