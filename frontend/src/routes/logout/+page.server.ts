@@ -7,7 +7,6 @@ export const actions = {
 
 		if (sessionID) {
 			try {
-				// Call backend logout endpoint
 				await fetch(`${env.API_URL}/auth/logout`, {
 					method: 'POST',
 					headers: {
@@ -18,7 +17,6 @@ export const actions = {
 				console.error('Backend logout failed:', error);
 			}
 
-			// Clear the session cookie regardless of backend response
 			cookies.set(locals.sessionCookieName, '', {
 				path: '/',
 				domain: locals.cookieDomain,
@@ -26,6 +24,6 @@ export const actions = {
 			});
 		}
 
-		throw redirect(302, '/auth/login');
+		throw redirect(302, '/auth');
 	}
 };
