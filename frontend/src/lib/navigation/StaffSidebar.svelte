@@ -42,23 +42,6 @@
 		userMenuOpen = false;
 	}
 
-	async function handleLogout() {
-		try {
-			const response = await fetch("/auth/logout", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-			});
-
-			if (response.ok) {
-				window.location.href = "/auth/login";
-			}
-		} catch (error) {
-			console.error("Logout failed:", error);
-		}
-	}
-
 	/**
 	 * Navigation item definition
 	 * - href: Route path
@@ -284,13 +267,16 @@
 								<span>Voir le site</span>
 							</a>
 							<div class="my-1 border-t border-dark-100"></div>
-							<button
-								onclick={handleLogout}
-								class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
-							>
-								<LogOut size={15} />
-								<span>Déconnexion</span>
-							</button>
+							<form method="POST" action="/staff?/logout" class="contents">
+								<button
+									type="submit"
+									onclick={closeUserMenu}
+									class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
+								>
+									<LogOut size={15} />
+									<span>Déconnexion</span>
+								</button>
+							</form>
 						</div>
 					{/if}
 					<div class="flex items-center gap-3">
