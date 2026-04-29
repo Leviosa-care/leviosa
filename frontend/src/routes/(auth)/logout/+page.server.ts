@@ -2,7 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 
 export const actions = {
-	logout: async ({ cookies, locals }) => {
+	default: async ({ cookies, locals }) => {
 		const sessionID = cookies.get(locals.sessionCookieName);
 
 		if (sessionID) {

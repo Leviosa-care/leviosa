@@ -270,10 +270,9 @@
 								<span>Voir le site</span>
 							</a>
 							<div class="my-1 border-t border-border-card"></div>
-							<form method="POST" action="/logout?/logout" class="contents">
+							<form method="POST" action="/logout" class="contents">
 								<button
 									type="submit"
-									onclick={closeUserMenu}
 									class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
 								>
 									<svg
