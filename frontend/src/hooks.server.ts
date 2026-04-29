@@ -102,10 +102,9 @@ async function validateSession(event: RequestEvent, sessionID: string): Promise<
         headers: { Cookie: `leviosa_access_token=${sessionID}` },
     });
     if (!res.ok) {
-        event.cookies.set(event.locals.sessionCookieName, '', {
+        event.cookies.delete(event.locals.sessionCookieName, {
             path: '/',
-            domain: event.locals.cookieDomain,
-            expires: new Date(0)
+            domain: event.locals.cookieDomain
         });
         switch (res.status) {
             case 404: // here the user is not found in the database for some reason

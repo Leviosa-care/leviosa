@@ -17,10 +17,9 @@ export const actions = {
 				console.error('Backend logout failed:', error);
 			}
 
-			cookies.set(locals.sessionCookieName, '', {
+			cookies.delete(locals.sessionCookieName, {
 				path: '/',
-				domain: locals.cookieDomain,
-				expires: new Date(0)
+				domain: locals.cookieDomain
 			});
 		}
 
