@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import type { Actions } from "./$types"
+import { error } from '@sveltejs/kit';
 import { arktype } from 'sveltekit-superforms/adapters';
 import { superValidate, type SuperValidated } from 'sveltekit-superforms';
 import { env } from "$env/dynamic/private";
@@ -125,10 +126,9 @@ export const load: PageServerLoad = async ({ fetch }): Promise<Props> => {
 			if (!productsRes.ok) throw new Error(`Failed to fetch products: ${productsRes.status} ${productsRes.statusText}`);
 			const backendProducts: BackendProduct[] = await productsRes.json();
 			cards = backendProducts.map(mapBackendProductToFrontend);
-		} catch (error) {
-			console.error("Error loading catalog data:", error);
-			categories = [];
-			cards = [];
+		} catch (err) {
+			console.error("Error loading catalog data:", err);
+			throw error(503, "Impossible de charger le catalogue. Veuillez réessayer.");
 		}
 	}
 
