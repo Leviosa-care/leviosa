@@ -39,6 +39,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     // USE_MOCK_DATA allows bypassing authentication for development/testing
     // Set via environment variable (e.g., in Ansible staging config)
+    event.locals.sessionCookieName = sessionCookieName;
+    event.locals.cookieDomain = cookieDomain ?? undefined;
+
     if (env.USE_MOCK_DATA === 'true') {
         event.locals.user = mockUser
         return await resolve(event)
@@ -79,10 +82,6 @@ export const handle: Handle = async ({ event, resolve }) => {
         };
         return fetch(input, init);
     };
-
-    // Store session cookie name for use in layouts/pages
-    event.locals.sessionCookieName = sessionCookieName;
-    event.locals.cookieDomain = cookieDomain ?? undefined;
 
     return await resolve(event);
 };
