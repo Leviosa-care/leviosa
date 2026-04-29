@@ -112,35 +112,23 @@ export const load: PageServerLoad = async ({ fetch }): Promise<Props> => {
 	let cards: CardType[];
 
 	if (env.USE_MOCK_DATA === "true") {
-		// Use hardcoded mock data
 		categories = mockCategories;
 		cards = mockCards;
 	} else {
 		try {
-			// Fetch categories from API
 			const categoriesRes = await fetch(`${env.API_URL}/admin/categories`);
-			if (categoriesRes.ok) {
-				const backendCategories: BackendCategory[] = await categoriesRes.json();
-				categories = backendCategories.map(mapBackendCategoryToFrontend);
-			} else {
-				console.error("Failed to fetch categories:", categoriesRes.statusText);
-				categories = mockCategories;
-			}
+			if (!categoriesRes.ok) throw new Error(`Failed to fetch categories: ${categoriesRes.status} ${categoriesRes.statusText}`);
+			const backendCategories: BackendCategory[] = await categoriesRes.json();
+			categories = backendCategories.map(mapBackendCategoryToFrontend);
 
-			// Fetch products from API
 			const productsRes = await fetch(`${env.API_URL}/admin/products`);
-			if (productsRes.ok) {
-				const backendProducts: BackendProduct[] = await productsRes.json();
-				cards = backendProducts.map(mapBackendProductToFrontend);
-			} else {
-				console.error("Failed to fetch products:", productsRes.statusText);
-				cards = mockCards;
-			}
+			if (!productsRes.ok) throw new Error(`Failed to fetch products: ${productsRes.status} ${productsRes.statusText}`);
+			const backendProducts: BackendProduct[] = await productsRes.json();
+			cards = backendProducts.map(mapBackendProductToFrontend);
 		} catch (error) {
 			console.error("Error loading catalog data:", error);
-			// Fallback to mock data on error
-			categories = mockCategories;
-			cards = mockCards;
+			categories = [];
+			cards = [];
 		}
 	}
 
