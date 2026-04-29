@@ -289,7 +289,7 @@
 							<div class="my-1 border-t border-border-card"></div>
 							<button
 								onclick={handleLogout}
-								class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+								class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
