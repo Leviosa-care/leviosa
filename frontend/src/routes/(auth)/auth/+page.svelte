@@ -13,21 +13,14 @@
     let { data }: PageProps = $props();
 
     import { goto } from "$app/navigation";
-
     import { page } from "$app/state";
     const redirectFrom = page.url.searchParams.get("redirectFrom");
     import { MESSAGES } from "$lib/utils/redirect";
     import { capitalizeFirstWord } from "$lib/utils/capitalize";
 
+
     const { form, errors, enhance, constraints } = superForm(data.loginForm, {
         resetForm: true,
-        onUpdated({ form }) {
-            // Only redirect if the form is valid (successful login)
-            if (form.valid) {
-                const path = redirectFrom ? redirectFrom : "/";
-                goto(path);
-            }
-        },
     });
 
     const {
