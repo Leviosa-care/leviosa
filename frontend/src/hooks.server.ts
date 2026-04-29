@@ -1,4 +1,4 @@
-import { redirect, type Handle, type RequestEvent } from '@sveltejs/kit';
+import { redirect, isRedirect, type Handle, type RequestEvent } from '@sveltejs/kit';
 import { env } from "$env/dynamic/private"
 
 import { handleLoginRedirect } from '$lib/utils/redirect';
@@ -69,6 +69,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         const user = await validateSession(event, sessionID)
         event.locals.user = user;
     } catch (err) {
+        if (isRedirect(err)) throw err;
         console.error("Error validating session:", err)
     }
 
@@ -102,17 +103,21 @@ async function validateSession(event: RequestEvent, sessionID: string): Promise<
         headers: { Cookie: `leviosa_access_token=${sessionID}` },
     });
     if (!res.ok) {
-        event.cookies.delete(event.locals.sessionCookieName, {
-            path: '/',
-            domain: event.locals.cookieDomain
-        });
+        // Only wipe the cookie when the backend definitively rejects the token.
+        // For transient errors (5xx) the token may still be valid — preserve it
+        // so the user isn't logged out by a momentary backend hiccup (e.g. right
+        // after a container restart).
+        if (res.status === 401 || res.status === 404) {
+            event.cookies.delete(event.locals.sessionCookieName, {
+                path: '/',
+                domain: event.locals.cookieDomain
+            });
+        }
         switch (res.status) {
-            case 404: // here the user is not found in the database for some reason
-            // this is when I should send something to admin to solve that issue
+            case 404: // user not found in the database
             case 500:
                 throw new Error("The server is currently unavailable. We apologize for the inconvenience and are working to resolve the issue as soon as possible.")
         }
-        // TODO: maybe add some message to help the user understand what happened ?
         throw redirect(302, handleLoginRedirect(event.url));
     }
     return res.json();
