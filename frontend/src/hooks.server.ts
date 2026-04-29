@@ -1,4 +1,4 @@
-import { redirect, isRedirect, type Handle, type RequestEvent } from '@sveltejs/kit';
+import { redirect, isRedirect, error, isHttpError, type Handle, type RequestEvent } from '@sveltejs/kit';
 import { env } from "$env/dynamic/private"
 
 import { handleLoginRedirect } from '$lib/utils/redirect';
@@ -70,6 +70,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         event.locals.user = user;
     } catch (err) {
         if (isRedirect(err)) throw err;
+        if (isHttpError(err)) throw err;
         console.error("Error validating session:", err)
     }
 
@@ -103,22 +104,18 @@ async function validateSession(event: RequestEvent, sessionID: string): Promise<
         headers: { Cookie: `leviosa_access_token=${sessionID}` },
     });
     if (!res.ok) {
-        // Only wipe the cookie when the backend definitively rejects the token.
-        // For transient errors (5xx) the token may still be valid — preserve it
-        // so the user isn't logged out by a momentary backend hiccup (e.g. right
-        // after a container restart).
         if (res.status === 401 || res.status === 404) {
+            // Definitive rejection — wipe the cookie and send to login
             event.cookies.delete(event.locals.sessionCookieName, {
                 path: '/',
                 domain: event.locals.cookieDomain
             });
+            throw redirect(302, handleLoginRedirect(event.url));
         }
-        switch (res.status) {
-            case 404: // user not found in the database
-            case 500:
-                throw new Error("The server is currently unavailable. We apologize for the inconvenience and are working to resolve the issue as soon as possible.")
-        }
-        throw redirect(302, handleLoginRedirect(event.url));
+        // Transient server error (5xx, etc.) — don't redirect to /auth, that
+        // would mislead the user into thinking their session expired. Show an
+        // error page instead so they can retry.
+        throw error(503, "Le serveur est temporairement indisponible. Veuillez réessayer dans quelques instants.");
     }
     return res.json();
 }
