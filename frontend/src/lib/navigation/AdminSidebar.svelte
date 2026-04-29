@@ -270,7 +270,7 @@
 								<span>Voir le site</span>
 							</a>
 							<div class="my-1 border-t border-border-card"></div>
-							<form method="POST" action="?/logout" class="contents">
+							<form method="POST" action="/admin/logout?/logout" class="contents">
 								<button
 									type="submit"
 									onclick={closeUserMenu}
