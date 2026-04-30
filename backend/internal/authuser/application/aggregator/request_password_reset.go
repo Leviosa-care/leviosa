@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"context"
-	"errors"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
@@ -21,7 +20,8 @@ func (s *AuthAggregatorService) RequestPasswordReset(ctx context.Context, reques
 	}
 
 	if available {
-		return errs.NewNotFoundErr(errors.New("email is not registered"), "user")
+		// Email not registered — return success silently to prevent enumeration
+		return nil
 	}
 
 	if err := s.otp.RequestOTP(ctx, request.Email); err != nil {
