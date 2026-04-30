@@ -22,13 +22,12 @@ import (
 	// roomHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/room"
 
 	// Catalog HTTP handlers
-	// TODO: Enable catalog module when ready
-	// categoryHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/category"
-	// couponHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/coupon"
-	// imageHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/image"
-	// priceHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/price"
-	// productHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/product"
-	// promotionCodeHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/promotion_code"
+	categoryHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/category"
+	couponHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/coupon"
+	imageHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/image"
+	priceHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/price"
+	productHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/product"
+	promotionCodeHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/promotion_code"
 
 	// Common
 	"github.com/Leviosa-care/leviosa/backend/internal/common/envmode"
@@ -104,8 +103,7 @@ func (s *Server) setupRoutes(mux *http.ServeMux) {
 	s.setupAuthuserRoutes(mux)
 
 	// Catalog routes
-	// TODO: Enable catalog module when ready
-	// s.setupCatalogRoutes(mux)
+	s.setupCatalogRoutes(mux)
 
 	// Booking routes
 	// TODO: Enable booking module when ready
@@ -135,53 +133,52 @@ func (s *Server) setupAuthuserRoutes(router *http.ServeMux) {
 	// partnerH.RegisterRoutes(router)
 }
 
-// TODO: Enable catalog module when ready
-// func (s *Server) setupCatalogRoutes(router *http.ServeMux) {
-// 	// Category handler
-// 	categoryH := categoryHandler.New(
-// 		s.container.CategoryService,
-// 		s.container.ImageService,
-// 		s.container.CategoryAggregator,
-// 		s.container.AuthMw,
-// 	)
-// 	categoryH.RegisterRoutes(router)
-//
-// 	// Product handler
-// 	productH := productHandler.New(
-// 		s.container.ProductService,
-// 		s.container.CatalogAggregator,
-// 		s.container.AuthMw,
-// 	)
-// 	productH.RegisterRoutes(router)
-//
-// 	// Price handler
-// 	priceH := priceHandler.New(
-// 		s.container.PriceService,
-// 		s.container.AuthMw,
-// 	)
-// 	priceH.RegisterRoutes(router)
-//
-// 	// Image handler
-// 	imageH := imageHandler.New(
-// 		s.container.ImageService,
-// 		s.container.AuthMw,
-// 	)
-// 	imageH.RegisterRoutes(router)
-//
-// 	// Coupon handler
-// 	couponH := couponHandler.New(
-// 		s.container.CouponService,
-// 		s.container.AuthMw,
-// 	)
-// 	couponH.RegisterRoutes(router)
-//
-// 	// Promotion code handler
-// 	promotionCodeH := promotionCodeHandler.New(
-// 		s.container.PromotionCodeService,
-// 		s.container.AuthMw,
-// 	)
-// 	promotionCodeH.RegisterRoutes(router)
-// }
+func (s *Server) setupCatalogRoutes(router *http.ServeMux) {
+	// Category handler
+	categoryH := categoryHandler.New(
+		s.container.CategoryService,
+		s.container.ImageService,
+		s.container.CategoryAggregator,
+		s.container.AuthMw,
+	)
+	categoryH.RegisterRoutes(router)
+
+	// Product handler
+	productH := productHandler.New(
+		s.container.ProductService,
+		s.container.CatalogAggregator,
+		s.container.AuthMw,
+	)
+	productH.RegisterRoutes(router)
+
+	// Price handler
+	priceH := priceHandler.New(
+		s.container.PriceService,
+		s.container.AuthMw,
+	)
+	priceH.RegisterRoutes(router)
+
+	// Image handler
+	imageH := imageHandler.New(
+		s.container.ImageService,
+		s.container.AuthMw,
+	)
+	imageH.RegisterRoutes(router)
+
+	// Coupon handler
+	couponH := couponHandler.New(
+		s.container.CouponService,
+		s.container.AuthMw,
+	)
+	couponH.RegisterRoutes(router)
+
+	// Promotion code handler
+	promotionCodeH := promotionCodeHandler.New(
+		s.container.PromotionCodeService,
+		s.container.AuthMw,
+	)
+	promotionCodeH.RegisterRoutes(router)
+}
 
 // TODO: Enable booking module when ready
 // func (s *Server) setupBookingRoutes(router *http.ServeMux) {
