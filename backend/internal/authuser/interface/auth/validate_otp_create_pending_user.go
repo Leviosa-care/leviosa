@@ -50,7 +50,6 @@ func (h *handler) ValidateOTPCreatePendingUser(w http.ResponseWriter, r *http.Re
 
 	session, err := h.svc.ValidateOTPCreatePendingUser(ctx, &payload)
 	if err != nil {
-		println("HERE IS THE ERROR THAT I GET:", err.Error())
 		httpx.RespondWithServiceError(w, logger, ctx, err, "validate OTP and create pending user")
 		return
 	}

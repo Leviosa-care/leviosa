@@ -49,7 +49,6 @@ func (h *handler) CheckEmailSendOTP(w http.ResponseWriter, r *http.Request) {
 		"user_agent", r.Header.Get("User-Agent"))
 
 	if err := h.svc.CheckEmailSendOTP(ctx, &payload); err != nil {
-		println("THERE IS AN ERROR:", err.Error())
 		httpx.RespondWithServiceError(w, logger, ctx, err, "check email send OTP")
 		return
 	}
