@@ -13,10 +13,10 @@ func ValidateToken(token string) error {
 	if token == "" {
 		errs.Set("token missing", "token is required")
 	}
-	if _, err := base64.URLEncoding.DecodeString(token); err != nil {
+	decoded, err := base64.URLEncoding.DecodeString(token)
+	if err != nil {
 		errs.Set("invalid format", "token must be a valid base64 string")
 	}
-	decoded, err := base64.URLEncoding.DecodeString(token)
 	if err == nil && len(decoded) != cookies.TokenLength {
 		errs.Set("token invalid", "token has invalid length")
 	}
