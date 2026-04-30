@@ -4,6 +4,7 @@ import { arktype } from 'sveltekit-superforms/adapters';
 import type { RequestEvent } from './$types';
 import { env } from "$env/dynamic/private"
 import { redirect } from '@sveltejs/kit';
+import { forwardAuthCookies } from '$lib/utils/auth-helpers';
 
 const schema = type({
     email: "string.email",
@@ -33,7 +34,7 @@ export const load = async ({ url }: RequestEvent) => {
 };
 
 export const actions = {
-    default: async ({ request, fetch }: RequestEvent) => {
+    default: async ({ request, fetch, cookies }: RequestEvent) => {
         const form = await superValidate(request, arktype(schema, { defaults }));
 
         if (!form.valid) {
@@ -83,6 +84,9 @@ export const actions = {
                     return setError(form, "Une erreur inattendue est survenue. Veuillez réessayer.");
             }
         }
+
+        // Forward authentication cookies from backend response to client
+        forwardAuthCookies(res, cookies);
 
         // Success - redirect to general info page
         redirect(302, "/auth/general");
