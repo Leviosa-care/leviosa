@@ -124,7 +124,7 @@ async function validateSession(event: RequestEvent, sessionID: string): Promise<
             domain: event.locals.cookieDomain
         });
         event.cookies.delete("leviosa_refresh_token", {
-            path: '/auth/refresh',
+            path: '/',
             domain: event.locals.cookieDomain
         });
         throw redirect(302, handleLoginRedirect(event.url));
