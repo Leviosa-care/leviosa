@@ -4,6 +4,7 @@ import { setError, superValidate } from 'sveltekit-superforms';
 import { arktype } from 'sveltekit-superforms/adapters';
 import { type } from "arktype"
 import { env } from "$env/dynamic/private";
+import { forwardAuthCookies } from "$lib/utils/auth-helpers";
 
 // Step 1: Request password reset
 const requestSchema = type({
@@ -35,24 +36,22 @@ const validateDefaults = {
 
 // Step 3: Confirm new password
 const confirmSchema = type({
-    token: "string",
     newPassword: "8 < string < 64",
     confirmPassword: "8 < string < 64",
 })
 
-const confirmDefaults = { token: "", newPassword: "", confirmPassword: "" }
+const confirmDefaults = { newPassword: "", confirmPassword: "" }
 
 export const load: PageServerLoad = async ({ url }: RequestEvent) => {
     const step = url.searchParams.get("step") || "request"; // request, validate, or confirm
     const email = url.searchParams.get("email") || "";
-    const token = url.searchParams.get("token") || "";
 
     let requestForm, validateForm, confirmForm;
 
     if (step === "validate") {
         validateForm = await superValidate({ ...validateDefaults, email }, arktype(validateSchema, { defaults: validateDefaults }));
     } else if (step === "confirm") {
-        confirmForm = await superValidate({ ...confirmDefaults, token }, arktype(confirmSchema, { defaults: confirmDefaults }));
+        confirmForm = await superValidate(confirmDefaults, arktype(confirmSchema, { defaults: confirmDefaults }));
     } else {
         requestForm = await superValidate(arktype(requestSchema, { defaults: requestDefaults }));
     }
@@ -84,8 +83,6 @@ export const actions = {
             switch (res.status) {
                 case 400:
                     return setError(form, "email", "Format d'email invalide.");
-                case 404:
-                    return setError(form, "email", "Aucun compte trouvé avec cet email.");
                 case 415:
                     return setError(form, "email", "Type de contenu non supporté. Veuillez réessayer.");
                 case 429:
@@ -104,7 +101,7 @@ export const actions = {
     },
 
     // Step 2: Validate OTP
-    validate: async ({ request, fetch }: RequestEvent) => {
+    validate: async ({ request, fetch, cookies }: RequestEvent) => {
         const form = await superValidate(request, arktype(validateSchema, { defaults: validateDefaults }));
 
         if (!form.valid) {
@@ -153,16 +150,15 @@ export const actions = {
             }
         }
 
-        // Get reset token from response
-        const data = await res.json();
-        const token = data.token;
+        // Forward auth cookies (leviosa_password_reset_token) from backend response
+        forwardAuthCookies(res, cookies);
 
         // Success - redirect to password confirmation step
-        redirect(302, `/auth/forgotten-password?step=confirm&token=${encodeURIComponent(token)}`);
+        redirect(302, `/auth/forgotten-password?step=confirm`);
     },
 
     // Step 3: Confirm new password
-    confirm: async ({ request, fetch }: RequestEvent) => {
+    confirm: async ({ request, fetch, cookies }: RequestEvent) => {
         const form = await superValidate(request, arktype(confirmSchema, { defaults: confirmDefaults }));
 
         if (!form.valid) {
@@ -182,9 +178,11 @@ export const actions = {
 
         const res = await fetch(`${env.API_URL}/auth/password/reset/confirm`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "Cookie": `leviosa_password_reset_token=${cookies.get("leviosa_password_reset_token") ?? ""}`,
+            },
             body: JSON.stringify({
-                token: form.data.token,
                 new_password: form.data.newPassword
             })
         });
@@ -194,7 +192,7 @@ export const actions = {
                 case 400:
                     return setError(form, "newPassword", "Le mot de passe ne respecte pas les exigences de sécurité.");
                 case 401:
-                    return setError(form, "token", "Token de réinitialisation invalide ou expiré.");
+                    return setError(form, "Token de réinitialisation invalide ou expiré.");
                 case 415:
                     return setError(form, "Type de contenu non supporté. Veuillez réessayer.");
                 case 500:
