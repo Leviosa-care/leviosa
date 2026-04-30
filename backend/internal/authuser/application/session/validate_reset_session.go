@@ -16,10 +16,10 @@ func (s *SessionService) ValidateResetSession(ctx context.Context, token string)
 	}
 	tokenHash := s.crypto.HashBasic(ctx, tokenBytes)
 
-	userEmailHash, err := s.repo.ValidateResetSession(ctx, tokenHash)
+	userEmail, err := s.repo.ValidateResetSession(ctx, tokenHash)
 	if err != nil {
 		return "", fmt.Errorf("validate reset session: %w", err)
 	}
 
-	return userEmailHash, nil
+	return userEmail, nil
 }
