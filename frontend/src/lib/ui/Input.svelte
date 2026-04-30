@@ -13,6 +13,7 @@
         value: string;
         error: string;
         showForgotPasswordbutton?: boolean;
+        autocomplete?: string;
     };
     let {
         name,
@@ -21,6 +22,7 @@
         value = $bindable(""),
         error = $bindable(""),
         showForgotPasswordbutton = false,
+        autocomplete,
     }: Props = $props();
 
     let invalid = $derived(error != "");
@@ -52,6 +54,7 @@
             id={name}
             type={resolvedInputType}
             {name}
+            {autocomplete}
             bind:value
             aria-invalid={invalid}
             onfocus={() => (isFocused = true)}

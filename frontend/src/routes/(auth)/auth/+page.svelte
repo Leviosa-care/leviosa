@@ -105,6 +105,7 @@
                                 label="email"
                                 name="email"
                                 type="email"
+                                autocomplete="email"
                                 bind:value={$form.email}
                                 error={$errors.email ? $errors.email[0] : ""}
                                 {...$constraints.email}
@@ -115,6 +116,7 @@
                                 name="password"
                                 label="Mot de passe"
                                 type="password"
+                                autocomplete="current-password"
                                 bind:value={$form.password}
                                 error={$errors.password
                                     ? $errors.password[0]
@@ -139,6 +141,7 @@
                             name="registerEmail"
                             label="email"
                             type="email"
+                            autocomplete="email"
                             bind:value={$registerForm.registerEmail}
                             {...$registerConstraints.registerEmail}
                             error={$registerForm.registerEmail
