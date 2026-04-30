@@ -26,6 +26,7 @@ func (h *handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 			"method", r.Method,
 			"path", r.URL.Path)
 		httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusBadRequest)
+		return
 	}
 
 	logger.InfoContext(ctx, "Handler: Processing session refresh request",
