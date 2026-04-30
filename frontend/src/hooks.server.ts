@@ -4,12 +4,7 @@ import { env } from "$env/dynamic/private"
 import { handleLoginRedirect } from '$lib/utils/redirect';
 import { mockUser } from '$lib/data/user';
 import { isAdminDomain, isStaffDomain, getSessionCookieName, getCookieDomain } from '$lib/server/hostname';
-
-// TODO: for the session thing
-// on each request, send the accesstoken or session_token
-// when the access token is no longer valid, use will receive 401 status code
-// then make a request to a dedicated refresh endpoint on the server and the server resend an access token
-// and optionnaly a new refresh  token. This is the rotation step !
+import { forwardAuthCookies } from '$lib/utils/auth-helpers';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	// Detect hostname and set domain context
@@ -103,9 +98,41 @@ async function validateSession(event: RequestEvent, sessionID: string): Promise<
         method: "GET",
         headers: { Cookie: `leviosa_access_token=${sessionID}` },
     });
+
+    if (res.status === 401) {
+        // Try to refresh the token
+        const refreshCookie = event.cookies.get("leviosa_refresh_token");
+        if (refreshCookie) {
+            const refreshRes = await fetch(`${env.API_URL}/auth/refresh`, {
+                method: "POST",
+                headers: { Cookie: `leviosa_refresh_token=${refreshCookie}` },
+            });
+            if (refreshRes.ok) {
+                forwardAuthCookies(refreshRes, event.cookies);
+                const newToken = event.cookies.get("leviosa_access_token") ?? "";
+                if (newToken) {
+                    const retryRes = await fetch(`${env.API_URL}/users/me`, {
+                        headers: { Cookie: `leviosa_access_token=${newToken}` },
+                    });
+                    if (retryRes.ok) return retryRes.json();
+                }
+            }
+        }
+        // Refresh failed or no refresh token — wipe and redirect
+        event.cookies.delete(event.locals.sessionCookieName, {
+            path: '/',
+            domain: event.locals.cookieDomain
+        });
+        event.cookies.delete("leviosa_refresh_token", {
+            path: '/auth/refresh',
+            domain: event.locals.cookieDomain
+        });
+        throw redirect(302, handleLoginRedirect(event.url));
+    }
+
     if (!res.ok) {
-        if (res.status === 401 || res.status === 404) {
-            // Definitive rejection — wipe the cookie and send to login
+        if (res.status === 404) {
+            // User not found — wipe and redirect
             event.cookies.delete(event.locals.sessionCookieName, {
                 path: '/',
                 domain: event.locals.cookieDomain
