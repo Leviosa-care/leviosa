@@ -9,6 +9,13 @@ import { type } from "arktype"
 import { MESSAGES, type MessageType } from "$lib/utils/redirect";
 import { forwardAuthCookies } from "$lib/utils/auth-helpers";
 
+function sanitizeRedirect(value: string | null): string | null {
+    if (!value) return null;
+    // Accept only paths starting with / but not // (protocol-relative)
+    if (value.startsWith('/') && !value.startsWith('//')) return value;
+    return null;
+}
+
 const loginSchema = type({
     email: "string.email",
     password: "8 < string < 64",
@@ -38,7 +45,7 @@ export const load = async ({ url }: RequestEvent) => {
     }
 
     // Store the redirect target for use after successful login
-    const redirectTo = url.searchParams.get("redirect");
+    const redirectTo = sanitizeRedirect(url.searchParams.get("redirect"));
 
     // NOTE: on the oauth implementation
     // provider
@@ -139,7 +146,7 @@ export const actions = {
         forwardAuthCookies(res, cookies);
 
         // Get redirect target from URL params
-        const redirectTo = url.searchParams.get("redirect");
+        const redirectTo = sanitizeRedirect(url.searchParams.get("redirect"));
 
         // Fetch user to determine role-based redirect
         // Note: We need to make a fresh request since we just received the session cookie
