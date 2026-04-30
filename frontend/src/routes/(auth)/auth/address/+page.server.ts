@@ -5,6 +5,7 @@ import { fail, redirect } from "@sveltejs/kit"
 import { setError, superValidate } from 'sveltekit-superforms';
 import { arktype } from 'sveltekit-superforms/adapters';
 import { type } from "arktype"
+import { getCookieDomain } from "$lib/server/hostname";
 
 const schema = type({
     address1: "string",
@@ -20,23 +21,25 @@ const defaults = {
 }
 
 
-export const load = async ({ url }: RequestEvent) => {
-    // Get form data from URL search params (passed from general page)
-    const address1 = url.searchParams.get("address1") || defaults.address1;
-    const address2 = url.searchParams.get("address2") || defaults.address2;
-    const postalCode = url.searchParams.get("postalCode") || defaults.postalCode;
-    const city = url.searchParams.get("city") || defaults.city;
+export const load = async ({ cookies, url }: RequestEvent) => {
+    // Try to get address data from registration cookie (if user is coming back from a later step)
+    const regAddressCookie = cookies.get("reg_address");
+    let initialData = { ...defaults };
 
-    const form = await superValidate(
-        { address1, address2, postalCode, city },
-        arktype(schema, { defaults })
-    );
+    if (regAddressCookie) {
+        try {
+            initialData = JSON.parse(regAddressCookie) as typeof defaults;
+        } catch {
+            // Invalid cookie, use defaults
+        }
+    }
 
+    const form = await superValidate(initialData, arktype(schema, { defaults }));
     return { form }
 }
 
 export const actions = {
-    default: async ({ request, url }: RequestEvent) => {
+    default: async ({ request, cookies, url }: RequestEvent) => {
         const form = await superValidate(request, arktype(schema, { defaults: defaults }))
 
         if (!form.valid) {
@@ -55,26 +58,18 @@ export const actions = {
             return fail(400, { form })
         }
 
-        // Get data from general page (passed via URL search params)
-        const firstname = url.searchParams.get("firstname") || "";
-        const lastname = url.searchParams.get("lastname") || "";
-        const gender = url.searchParams.get("gender") || "";
-        const birthdate = url.searchParams.get("birthdate") || "";
-        const telephone = url.searchParams.get("telephone") || "";
-
-        // Combine general + address data and pass to password page
-        const params = new URLSearchParams({
-            firstname,
-            lastname,
-            gender,
-            birthdate,
-            telephone,
-            address1: form.data.address1,
-            address2: form.data.address2,
-            postalCode: form.data.postalCode,
-            city: form.data.city,
+        // Store address form data in HTTP-only cookie (30 min expiry)
+        const hostname = url.hostname;
+        const cookieDomain = getCookieDomain(hostname);
+        cookies.set("reg_address", JSON.stringify(form.data), {
+            path: "/auth",
+            maxAge: 1800,
+            httpOnly: true,
+            secure: !hostname.startsWith('localhost'),
+            sameSite: "strict",
+            ...(cookieDomain && { domain: cookieDomain })
         });
 
-        redirect(302, `/auth/password?${params.toString()}`);
+        redirect(302, "/auth/password");
     },
 } satisfies Actions

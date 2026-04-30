@@ -10,6 +10,7 @@ import { parseDate } from "@internationalized/date";
 
 import { pad } from "$lib/utils/pad"
 import { mapGenderToBackend, formatPhoneToE164 } from "$lib/utils/auth-helpers";
+import { getCookieDomain } from "$lib/server/hostname";
 
 
 const schema = type({
@@ -50,19 +51,43 @@ const defaults = {
     product_ids: [],
 } as typeof schema.infer
 
-export const load = async ({ url }: RequestEvent) => {
-    // Get all data from URL search params (passed from address page)
-    const firstname = url.searchParams.get("firstname") || defaults.firstname;
-    const lastname = url.searchParams.get("lastname") || defaults.lastname;
-    const gender = url.searchParams.get("gender") || defaults.gender;
-    const birthdate = url.searchParams.get("birthdate") || defaults.birthdate;
-    const telephone = url.searchParams.get("telephone") || defaults.telephone;
-    const address1 = url.searchParams.get("address1") || defaults.address1;
-    const address2 = url.searchParams.get("address2") || defaults.address2;
-    const city = url.searchParams.get("city") || defaults.city;
-    const postalCode = url.searchParams.get("postalCode") || defaults.postalCode;
+export const load = async ({ cookies, url }: RequestEvent) => {
+    // Get all data from registration cookies (set by previous steps)
+    const regGeneralCookie = cookies.get("reg_general");
+    const regAddressCookie = cookies.get("reg_address");
 
-    // Partner-specific data
+    let generalData = {
+        firstname: defaults.firstname,
+        lastname: defaults.lastname,
+        gender: defaults.gender,
+        birthdate: defaults.birthdate,
+        telephone: defaults.telephone,
+    };
+
+    let addressData = {
+        address1: defaults.address1,
+        address2: defaults.address2,
+        city: defaults.city,
+        postalCode: defaults.postalCode,
+    };
+
+    if (regGeneralCookie) {
+        try {
+            generalData = JSON.parse(regGeneralCookie);
+        } catch {
+            // Invalid cookie, use defaults
+        }
+    }
+
+    if (regAddressCookie) {
+        try {
+            addressData = JSON.parse(regAddressCookie);
+        } catch {
+            // Invalid cookie, use defaults
+        }
+    }
+
+    // Partner-specific data from URL params (set by partner-selection page)
     const bio = url.searchParams.get("bio") || defaults.bio;
     const experience = url.searchParams.get("experience") || defaults.experience;
     const categoryIdsParam = url.searchParams.get("category_ids");
@@ -74,15 +99,8 @@ export const load = async ({ url }: RequestEvent) => {
     const form = await superValidate(
         {
             ...defaults,
-            firstname,
-            lastname,
-            gender,
-            birthdate,
-            telephone,
-            address1,
-            address2,
-            city,
-            postalCode,
+            ...generalData,
+            ...addressData,
             bio,
             experience,
             category_ids,
@@ -95,7 +113,7 @@ export const load = async ({ url }: RequestEvent) => {
 
 
 export const actions = {
-    default: async ({ request, fetch }: RequestEvent) => {
+    default: async ({ request, fetch, cookies, url }: RequestEvent) => {
         const form = await superValidate(request, arktype(schema, { defaults }))
 
         // Validate form
@@ -171,7 +189,10 @@ export const actions = {
         // Call /auth/complete/partner endpoint
         const res = await fetch(`${env.API_URL}/auth/complete/partner`, {
             method: "POST",
-            headers: { 'Content-Type': "application/json" },
+            headers: {
+                'Content-Type': "application/json",
+                'Cookie': `leviosa_access_token=${cookies.get("leviosa_access_token") ?? ""}`,
+            },
             body: JSON.stringify(requestBody)
         });
 
@@ -195,6 +216,18 @@ export const actions = {
                     return setError(form, "Une erreur inattendue est survenue. Veuillez réessayer.");
             }
         }
+
+        // Clear registration cookies on success
+        const hostname = url.hostname;
+        const cookieDomain = getCookieDomain(hostname);
+        cookies.delete("reg_general", {
+            path: "/auth",
+            ...(cookieDomain && { domain: cookieDomain })
+        });
+        cookies.delete("reg_address", {
+            path: "/auth",
+            ...(cookieDomain && { domain: cookieDomain })
+        });
 
         // Success (200 OK) - redirect to app
         redirect(302, "/");

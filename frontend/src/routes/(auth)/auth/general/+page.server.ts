@@ -4,6 +4,7 @@ import { superValidate, setError } from "sveltekit-superforms"
 import { arktype } from 'sveltekit-superforms/adapters';
 import { type } from "arktype"
 import { redirect } from "@sveltejs/kit";
+import { isAdminDomain, isStaffDomain, getCookieDomain } from "$lib/server/hostname";
 
 const schema = type({
     firstname: "string > 1",
@@ -21,23 +22,25 @@ const defaults = {
     telephone: ""
 } as typeof schema.infer
 
-export const load: PageServerLoad = async ({ url }: RequestEvent) => {
-    // Get form data from URL search params (if user is coming back from a later step)
-    const firstname = url.searchParams.get("firstname") || defaults.firstname;
-    const lastname = url.searchParams.get("lastname") || defaults.lastname;
-    const gender = url.searchParams.get("gender") || defaults.gender;
-    const birthdate = url.searchParams.get("birthdate") || defaults.birthdate;
-    const telephone = url.searchParams.get("telephone") || defaults.telephone;
+export const load: PageServerLoad = async ({ cookies, url }: RequestEvent) => {
+    // Try to get form data from registration cookie (if user is coming back from a later step)
+    const regGeneralCookie = cookies.get("reg_general");
+    let initialData = { ...defaults };
 
-    const form = await superValidate(
-        { firstname, lastname, gender, birthdate, telephone },
-        arktype(schema, { defaults })
-    );
+    if (regGeneralCookie) {
+        try {
+            initialData = JSON.parse(regGeneralCookie) as typeof defaults;
+        } catch {
+            // Invalid cookie, use defaults
+        }
+    }
+
+    const form = await superValidate(initialData, arktype(schema, { defaults }));
     return { form };
 }
 
 export const actions: Actions = {
-    default: async ({ request }: RequestEvent) => {
+    default: async ({ request, cookies, url }: RequestEvent) => {
         const form = await superValidate(request, arktype(schema, { defaults }))
 
         if (!form.valid) {
@@ -59,15 +62,18 @@ export const actions: Actions = {
             return { form };
         }
 
-        // Redirect to address page with form data as URL params
-        const params = new URLSearchParams({
-            firstname: form.data.firstname,
-            lastname: form.data.lastname,
-            gender: form.data.gender,
-            birthdate: form.data.birthdate,
-            telephone: form.data.telephone,
+        // Store form data in HTTP-only cookie (30 min expiry)
+        const hostname = url.hostname;
+        const cookieDomain = getCookieDomain(hostname);
+        cookies.set("reg_general", JSON.stringify(form.data), {
+            path: "/auth",
+            maxAge: 1800,
+            httpOnly: true,
+            secure: !hostname.startsWith('localhost'),
+            sameSite: "strict",
+            ...(cookieDomain && { domain: cookieDomain })
         });
 
-        redirect(302, `/auth/address?${params.toString()}`);
+        redirect(302, "/auth/address");
     }
 }
