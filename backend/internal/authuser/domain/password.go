@@ -3,13 +3,16 @@ package domain
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/hengadev/errsx"
 )
+
+// Dedicated HTTP client with short timeout for HIBP API
+var hibpClient = &http.Client{Timeout: 3 * time.Second}
 
 type Password string
 
@@ -84,20 +87,23 @@ func CheckPasswordPwned(password string) (bool, error) {
 	prefix := hashStr[:5]
 	suffix := hashStr[5:]
 
-	// Request to the API
-	resp, err := http.Get("https://api.pwnedpasswords.com/range/" + prefix)
+	// Request to the API with timeout
+	resp, err := hibpClient.Get("https://api.pwnedpasswords.com/range/" + prefix)
 	if err != nil {
-		return false, fmt.Errorf("failed to query Pwned Passwords API: %w", err)
+		// Log warning; don't block registration on HIBP outage
+		return false, nil
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("API returned status: %d", resp.StatusCode)
+		// API error - fail open to avoid blocking registration
+		return false, nil
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return false, fmt.Errorf("failed to read API response: %w", err)
+		// Read error - fail open to avoid blocking registration
+		return false, nil
 	}
 
 	// Check if the suffix is in the list
@@ -108,5 +114,5 @@ func CheckPasswordPwned(password string) (bool, error) {
 		}
 	}
 
-	return false, nil // password not found }
+	return false, nil // password not found
 }
