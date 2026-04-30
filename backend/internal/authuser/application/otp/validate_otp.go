@@ -85,7 +85,7 @@ func (s *OTPService) ValidateOTP(ctx context.Context, request *domain.ValidateOT
 			return s.handleRepositoryError(err, "update OTP attempts")
 		}
 
-		return errs.NewValueMismatchErr(otp.Code, request.Code)
+		return errs.NewInvalidValueErr("provided OTP code does not match")
 	}
 
 	// OTP is valid - try to claim it exclusively by deleting it
