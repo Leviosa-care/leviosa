@@ -64,7 +64,7 @@ type ChangePasswordRequest struct {
 
 func (r *ChangePasswordRequest) Valid(ctx context.Context) error {
 	var errs errsx.Map
-	if err := ValidatePassword(r.OldPassword); err != nil {
+	if err := ValidatePasswordFormat(r.OldPassword); err != nil {
 		errs.Set("old_password", err)
 	}
 	if err := ValidatePassword(r.NewPassword); err != nil {
