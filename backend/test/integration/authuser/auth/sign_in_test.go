@@ -98,7 +98,7 @@ func TestSignIn(t *testing.T) {
 		assert.True(t, refreshTokenCookie.HttpOnly, "Refresh token cookie should be HttpOnly")
 		assert.True(t, refreshTokenCookie.Secure, "Refresh token cookie should be Secure")
 		assert.Equal(t, http.SameSiteStrictMode, refreshTokenCookie.SameSite, "Refresh token cookie should have SameSite=Strict")
-		assert.Equal(t, ck.RefreshEndpoint, refreshTokenCookie.Path, "Refresh token cookie path should be /")
+		assert.Equal(t, "/", refreshTokenCookie.Path, "Refresh token cookie path should be /")
 		assert.NotEmpty(t, refreshTokenCookie.Value, "Refresh token cookie should have a value")
 	})
 

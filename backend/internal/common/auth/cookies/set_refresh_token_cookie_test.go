@@ -27,7 +27,7 @@ func TestSetRefreshTokenCookie(t *testing.T) {
 	cookie := responseCookies[0]
 	assert.Equal(t, cookies.RefreshTokenCookieName, cookie.Name)
 	assert.Equal(t, refreshToken, cookie.Value)
-	assert.Equal(t, cookies.RefreshEndpoint, cookie.Path)
+	assert.Equal(t, "/", cookie.Path)
 	assert.True(t, cookie.HttpOnly)
 	assert.True(t, cookie.Secure)
 	assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)

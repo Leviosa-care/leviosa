@@ -22,7 +22,7 @@ func SetTokenCookies(w http.ResponseWriter, accessToken, refreshToken string, ac
 	http.SetCookie(w, &http.Cookie{
 		Name:     RefreshTokenCookieName,
 		Value:    refreshToken,
-		Path:     RefreshEndpoint, // Restrict to refresh endpoint only
+		Path:     "/",
 		HttpOnly: true,
 		Secure:   true, // Only sent over HTTPS
 		SameSite: http.SameSiteStrictMode,

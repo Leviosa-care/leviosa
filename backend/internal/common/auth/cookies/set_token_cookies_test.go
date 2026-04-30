@@ -48,7 +48,7 @@ func TestSetTokenCookies(t *testing.T) {
 	// Verify refresh token cookie
 	require.NotNil(t, refreshCookie, "Refresh token cookie should be set")
 	assert.Equal(t, refreshToken, refreshCookie.Value)
-	assert.Equal(t, cookies.RefreshEndpoint, refreshCookie.Path)
+	assert.Equal(t, "/", refreshCookie.Path)
 	assert.True(t, refreshCookie.HttpOnly)
 	assert.True(t, refreshCookie.Secure)
 	assert.Equal(t, http.SameSiteStrictMode, refreshCookie.SameSite)

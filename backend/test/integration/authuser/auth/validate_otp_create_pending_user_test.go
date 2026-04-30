@@ -92,7 +92,7 @@ func TestValidateOTPCreatePendingUser(t *testing.T) {
 		assert.True(t, refreshTokenCookie.HttpOnly, "Refresh cookie should be HttpOnly")
 		assert.True(t, refreshTokenCookie.Secure, "Refresh cookie should be Secure")
 		assert.Equal(t, http.SameSiteStrictMode, refreshTokenCookie.SameSite, "Refresh cookie should have SameSite=Strict")
-		assert.Equal(t, ck.RefreshEndpoint, refreshTokenCookie.Path, "Refresh cookie path should be /auth/refresh")
+		assert.Equal(t, "/", refreshTokenCookie.Path, "Refresh cookie path should be /")
 		assert.NotEmpty(t, refreshTokenCookie.Value, "Refresh cookie should have a value (token)")
 
 		// Verify session exists in Redis using raw Redis queries

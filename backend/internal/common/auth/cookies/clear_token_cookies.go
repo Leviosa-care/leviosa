@@ -19,7 +19,7 @@ func ClearTokenCookies(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     RefreshTokenCookieName,
 		Value:    "",
-		Path:     RefreshEndpoint,
+		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
