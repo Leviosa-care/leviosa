@@ -44,20 +44,24 @@ import (
 	productPayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/product"
 
 	// Booking
-	// TODO: Enable booking module when ready
-	// allocationSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/allocation"
-	// availabilitySvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/availability"
-	// bookingSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/booking"
-	// buildingSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/building"
-	// roomSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/room"
-	//
-	// bookingPorts "github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
-	//
-	// allocationRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/allocation"
-	// availabilityRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/availability"
-	// bookingRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/booking"
-	// buildingRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/building"
-	// roomRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/room"
+	allocationSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/allocation"
+	availabilitySvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/availability"
+	bookingSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/booking"
+	buildingSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/building"
+	metricsSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/metrics"
+	roomSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/room"
+
+	bookingPorts "github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
+
+	allocationRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/allocation"
+	availabilityRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/availability"
+	bookingRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/booking"
+	buildingRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/building"
+	metricsRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/metrics"
+	roomRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/room"
+	roomScheduleRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/adapters/postgres"
+	bookingAuthuser "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/authuser"
+	bookingStripe "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/stripe"
 
 	// Common
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
@@ -114,12 +118,14 @@ type Container struct {
 	ImageMedia        catalogPorts.ImageMedia
 
 	// Booking Repositories
-	// TODO: Enable booking module when ready
-	// BuildingRepo     bookingPorts.BuildingRepository
-	// RoomRepo         bookingPorts.RoomRepository
-	// AllocationRepo   bookingPorts.RoomAllocationRepository
-	// AvailabilityRepo bookingPorts.AvailabilityRepository
-	// BookingRepo      bookingPorts.BookingRepository
+	BuildingRepo       bookingPorts.BuildingRepository
+	RoomRepo           bookingPorts.RoomRepository
+	AllocationRepo     bookingPorts.RoomAllocationRepository
+	AvailabilityRepo   bookingPorts.AvailabilityRepository
+	BookingRepo        bookingPorts.BookingRepository
+	MetricsRepo        bookingPorts.MetricsRepository
+	RoomScheduleRepo   bookingPorts.RoomScheduleRepository
+	BookingAuthuserCLi bookingPorts.AuthUserClient
 
 	// Authuser Services
 	UserService    authuserPorts.UserService
@@ -139,14 +145,13 @@ type Container struct {
 	CategoryAggregator   catalogPorts.CategoryImagesService
 
 	// Booking Services
-	// TODO: Enable booking module when ready
-	// BuildingService     bookingPorts.BuildingService
-	// RoomService         bookingPorts.RoomService
-	// AllocationService   bookingPorts.RoomAllocationService
-	// AvailabilityService bookingPorts.AvailabilityService
-	// BookingService      bookingPorts.BookingService
-	// MetricsService      bookingPorts.MetricsService
-	// PaymentService      bookingPorts.PaymentService
+	BuildingService     bookingPorts.BuildingService
+	RoomService         bookingPorts.RoomService
+	AllocationService   bookingPorts.RoomAllocationService
+	AvailabilityService bookingPorts.AvailabilityService
+	BookingService      bookingPorts.BookingService
+	MetricsService      bookingPorts.MetricsService
+	PaymentService      bookingPorts.PaymentService
 }
 
 // NewContainer creates and wires all dependencies
@@ -306,16 +311,17 @@ func (c *Container) setupRepositories(ctx context.Context) error {
 	c.ImageMedia = imageMedia.New(ctx, c.S3Client, c.Config.S3BucketName)
 
 	// Booking repositories
-	// TODO: Enable booking module when ready
-	// c.BuildingRepo = buildingRepo.New(ctx, c.DB)
-	// c.RoomRepo = roomRepo.New(ctx, c.DB)
-	// var err error
-	// c.AllocationRepo, err = allocationRepo.New(ctx, c.DB)
-	// if err != nil {
-	// 	return fmt.Errorf("create allocation repo: %w", err)
-	// }
-	// c.AvailabilityRepo = availabilityRepo.New(ctx, c.DB)
-	// c.BookingRepo = bookingRepo.New(ctx, c.DB)
+	c.BuildingRepo = buildingRepo.New(ctx, c.DB)
+	c.RoomRepo = roomRepo.New(ctx, c.DB)
+	var err error
+	c.AllocationRepo, err = allocationRepo.New(ctx, c.DB)
+	if err != nil {
+		return fmt.Errorf("create allocation repo: %w", err)
+	}
+	c.AvailabilityRepo = availabilityRepo.New(ctx, c.DB)
+	c.BookingRepo = bookingRepo.New(ctx, c.DB)
+	c.MetricsRepo = metricsRepo.New(c.DB)
+	c.RoomScheduleRepo = roomScheduleRepo.NewRoomScheduleRepository(c.DB)
 
 	return nil
 }
@@ -382,12 +388,26 @@ func (c *Container) setupServices(ctx context.Context) error {
 	)
 
 	// Booking services
-	// TODO: Enable booking module when ready
-	// _ = allocationSvc.New
-	// _ = availabilitySvc.New
-	// _ = bookingSvc.New
-	// _ = buildingSvc.New
-	// _ = roomSvc.New
+	// Stripe payment gateway for bookings
+	bookingStripe := bookingStripe.NewService(c.Config.StripeSecretKey, "", "")
+
+	// AuthUser client for booking module
+	c.BookingAuthuserCLi = bookingAuthuser.NewInProcessClient(c.PartnerService)
+
+	c.MetricsService = metricsSvc.New(c.MetricsRepo, c.Crypto)
+
+	c.BuildingService = buildingSvc.New(c.BuildingRepo, c.Crypto)
+
+	c.RoomService = roomSvc.New(c.RoomRepo, c.BuildingRepo, c.Crypto)
+
+	c.AllocationService = allocationSvc.New(c.AllocationRepo, c.RoomRepo, c.BookingAuthuserCLi, c.Crypto)
+
+	c.AvailabilityService = availabilitySvc.New(c.AvailabilityRepo, c.AllocationRepo, c.RoomRepo, c.RoomScheduleRepo, c.ProductService, c.Crypto)
+
+	// Note: notificationService is nil - not implemented yet
+	c.BookingService = bookingSvc.New(c.BookingRepo, c.AvailabilityRepo, bookingStripe, c.ProductService, c.PriceService, nil, c.Crypto)
+
+	c.PaymentService = bookingStripe
 
 	return nil
 }
