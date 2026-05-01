@@ -54,7 +54,6 @@ func (s *Service) CreatePaymentIntent(ctx context.Context, amount int, currency,
 			Enabled: stripe.Bool(true),
 		},
 	}
-	params.SetContext(ctx)
 
 	pi, err := paymentintent.New(params)
 	if err != nil {
@@ -67,7 +66,6 @@ func (s *Service) CreatePaymentIntent(ctx context.Context, amount int, currency,
 // ConfirmPaymentIntent confirms a payment intent
 func (s *Service) ConfirmPaymentIntent(ctx context.Context, paymentIntentID string) error {
 	params := &stripe.PaymentIntentConfirmParams{}
-	params.SetContext(ctx)
 
 	_, err := paymentintent.Confirm(paymentIntentID, params)
 	if err != nil {
@@ -79,10 +77,7 @@ func (s *Service) ConfirmPaymentIntent(ctx context.Context, paymentIntentID stri
 
 // RetrievePaymentIntent retrieves a payment intent to check its status
 func (s *Service) RetrievePaymentIntent(ctx context.Context, paymentIntentID string) (*ports.PaymentIntentInfo, error) {
-	params := &stripe.PaymentIntentParams{}
-	params.SetContext(ctx)
-
-	pi, err := paymentintent.Get(paymentIntentID, params)
+	pi, err := paymentintent.Get(paymentIntentID, &stripe.PaymentIntentParams{})
 	if err != nil {
 		return nil, s.classifyStripeError("retrieve payment intent", err)
 	}
@@ -102,7 +97,7 @@ func (s *Service) RetrievePaymentIntent(ctx context.Context, paymentIntentID str
 		info.LastError = &ports.PaymentIntentError{
 			Code:        string(pi.LastPaymentError.Code),
 			DeclineCode: string(pi.LastPaymentError.DeclineCode),
-			Message:     pi.LastPaymentError.Message,
+			Message:     pi.LastPaymentError.Msg,
 			Type:        string(pi.LastPaymentError.Type),
 		}
 	}
@@ -122,20 +117,17 @@ func (s *Service) RefundPayment(ctx context.Context, paymentIntentID string, amo
 		params.Amount = stripe.Int64(int64(amount))
 	}
 
-	params.SetContext(ctx)
-
-	refund, err := refund.New(params)
+	ref, err := refund.New(params)
 	if err != nil {
 		return "", s.classifyStripeError("create refund", err)
 	}
 
-	return refund.ID, nil
+	return ref.ID, nil
 }
 
 // CancelPaymentIntent cancels a payment intent
 func (s *Service) CancelPaymentIntent(ctx context.Context, paymentIntentID string) error {
 	params := &stripe.PaymentIntentCancelParams{}
-	params.SetContext(ctx)
 
 	_, err := paymentintent.Cancel(paymentIntentID, params)
 	if err != nil {
@@ -213,13 +205,11 @@ func (s *Service) classifyStripeError(operation string, err error) error {
 		case stripe.ErrorCodeExpiredCard:
 			return fmt.Errorf("%s: expired card - %s", operation, stripeErr.Msg)
 		case stripe.ErrorCodeProcessingError:
-			return errs.NewConnectionFailure(fmt.Sprintf("%s: payment processing error", operation), err)
-		case stripe.ErrorCodeRateLimitError:
-			return errs.NewResourceExhausted(fmt.Sprintf("%s: rate limit exceeded", operation), err)
+			return errs.NewExternalServiceErr(err, fmt.Sprintf("%s: payment processing error", operation))
+		case stripe.ErrorCodeRateLimit:
+			return errs.NewRateLimitErr(err, operation)
 		case stripe.ErrorCodeResourceMissing:
-			return errs.NewNotFoundErr("payment_intent", "")
-		case stripe.ErrorCodeAPIKeyExpired, stripe.ErrorCodeInvalidAPIKey:
-			return errs.NewPermissionDenied(fmt.Sprintf("%s: invalid API key", operation))
+			return errs.NewNotFoundErr(err, "payment_intent")
 		default:
 			return fmt.Errorf("%s: payment error - %s", operation, stripeErr.Msg)
 		}
