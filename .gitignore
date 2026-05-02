@@ -17,3 +17,5 @@ terraform.tfvars
 
 backend/app
 frontend/.env
+
+IMPLEMENTATION_CHECKLIST.md
