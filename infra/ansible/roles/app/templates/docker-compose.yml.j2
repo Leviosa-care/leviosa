@@ -26,9 +26,8 @@ services:
     networks:
 {% if use_shared_services | default(false) %}
       # Join prod's network to reach shared postgres, redis, and caddy
+      # No alias — frontend is reached by container_name to avoid shadowing prod's 'frontend' alias
       {{ prod_network_name | default('leviosa_network') }}:
-        aliases:
-          - frontend
 {% else %}
       {{ app_name }}_network:
         aliases:
@@ -68,9 +67,8 @@ services:
     networks:
 {% if use_shared_services | default(false) %}
       # Join prod's network to reach shared postgres, redis, and caddy
+      # No alias — backend is reached by container_name to avoid shadowing prod's 'backend' alias
       {{ prod_network_name | default('leviosa_network') }}:
-        aliases:
-          - backend
 {% else %}
       {{ app_name }}_network:
         aliases:
