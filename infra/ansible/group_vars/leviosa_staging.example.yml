@@ -2,6 +2,7 @@
 # Leviosa Staging Secrets — Example
 # Copy to leviosa_staging.yml and fill in your staging values.
 # Same structure as leviosa_production.example.yml — only the values differ.
+# IMPORTANT: leviosa_staging.yml is gitignored — never commit the real file.
 
 # ============================================
 # Docker Images
@@ -10,15 +11,135 @@ frontend_docker_image: "henga/leviosa:frontend-staging"
 backend_docker_image: "henga/leviosa:backend-staging"
 
 # ============================================
-# Admin seed users (encrypted by Ansible Vault)
-# These are upserted on every deploy via the seed binary.
+# Contact
+# ============================================
+contact_email: "admin@leviosa.care"
+
+# ============================================
+# Database — SHARED with production
+# db_user and db_password MUST match leviosa_production.yml since staging
+# connects to prod's postgres container (leviosa_postgres) over leviosa_network.
+# ============================================
+db_user: "leviosa"
+db_password: "copy_from_leviosa_production_yml"
+# db_name is set in hosts.yml as leviosa_staging — do not override here
+
+# ============================================
+# Redis — SHARED with production
+# No password set on prod's redis — match here.
+# redis_db is set to 1 in hosts.yml (prod uses db 0).
+# ============================================
+redis_password: ""
+
+# ============================================
+# RabbitMQ — staging-specific user and vhost on prod's rabbitmq container
+# Created automatically by deploy-staging.yml post_tasks.
+# ============================================
+rabbitmq_user: "leviosa_staging"
+rabbitmq_password: "your_staging_rabbitmq_password_here"
+rabbitmq_vhost: "staging"
+
+# ============================================
+# Session — must differ from production
+# ============================================
+session_secret: "your_random_32_character_staging_session_secret"
+
+# ============================================
+# AWS S3
+# ============================================
+s3_bucket: "staging-leviosa-assets"
+s3_region: "eu-central-1"
+s3_public_url: "https://s3.eu-central-1.amazonaws.com/staging-leviosa-assets"
+media_url: "https://s3.eu-central-1.amazonaws.com/staging-leviosa-assets/media"
+
+# ============================================
+# AWS Credentials
+# ============================================
+aws_access_key_id: "AKIAIOSFODNN7EXAMPLE"
+aws_secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+aws_region: "eu-central-1"
+
+# ============================================
+# Email (SMTP)
+# ============================================
+smtp_from_email: "noreply@leviosa.care"
+smtp_from_name: "Leviosa Staging"
+
+# ============================================
+# Stripe — use TEST keys for staging
+# ============================================
+stripe_secret_key: "sk_test_your_stripe_test_secret_key"
+stripe_webhook_secret: "whsec_your_stripe_test_webhook_secret"
+stripe_publishable_key: "pk_test_your_stripe_test_publishable_key"
+
+# ============================================
+# Cron Security
+# ============================================
+cron_secret: "change-me-to-a-secure-random-string-min-32-chars"
+
+# ============================================
+# Public URL
+# ============================================
+public_url: "https://staging.leviosa.care"
+
+# ============================================
+# File Upload
+# ============================================
+max_file_size: "10485760"
+allowed_image_types: "image/jpeg,image/png,image/webp,image/gif"
+allowed_video_types: "video/mp4,video/webm,video/quicktime"
+body_size_limit: "15728640"
+
+# ============================================
+# Mock Data Mode
+# ============================================
+use_mock_data: "false"
+
+# ============================================
+# Coming Soon Mode
+# ============================================
+coming_soon: "false"
+
+# ============================================
+# Monitoring
+# ============================================
+sentry_dsn: ""
+use_scheduler: "false"
+
+# ============================================
+# Logging
+# ============================================
+log_level: "debug"
+log_format: "json"
+
+# ============================================
+# Caddy (shared with prod — caddy_enabled is false for staging itself)
+# Copy caddy_cloudflare_api_token and basic auth values from production.
+# ============================================
+caddy_cloudflare_api_token: "your_cloudflare_api_token_here"
+caddy_basic_auth_username: "admin"
+caddy_basic_auth_password_hash: "your_base64_encoded_bcrypt_hash_here"
+
+# ============================================
+# HashiCorp Vault (staging has its own Vault instance)
+# vault_token is set automatically by deploy-staging.yml after vault init.
+# ============================================
+vault_addr: ""
+vault_token: ""
+
+# ENCX Encryption key aliases — use separate keys from production
+encx_kek_alias: "leviosa-staging-kek"
+encx_pepper_alias: "leviosa-staging"
+
+# ============================================
+# Admin seed users
 # ============================================
 seed_admins:
   - email: "admin@staging.leviosa.care"
     password: "ChangeMe123!"
     first_name: "Admin"
     last_name: "User"
-    role: "admin"
+    role: "administrator"
     telephone: "+33600000000"
     postal_code: "75001"
     city: "Paris"
@@ -26,11 +147,39 @@ seed_admins:
     address2: ""
 
 # ============================================
-# Frontend Environment Variables
+# App environment variable overrides
+# Overrides all.yml app_env_vars entirely (Ansible replaces dicts, no merge).
+# Must include ALL keys that env.j2 references via app_env_vars.*.
 # ============================================
-# Enable mock authentication mode (bypasses real auth)
-# - true: Use mock user, skip authentication checks
-# - false: Use real authentication via API
-# - Default: false (recommended for staging)
-# - Set to 'true' only for testing without real backend/auth
-USE_MOCK_DATA: "false"
+app_env_vars:
+  S3_BUCKET: "{{ s3_bucket }}"
+  S3_REGION: "{{ s3_region | default('eu-central-1') }}"
+  S3_PUBLIC_URL: "{{ s3_public_url | default('') }}"
+  MEDIA_URL: "{{ media_url | default('') }}"
+
+  AWS_ACCESS_KEY_ID: "{{ aws_access_key_id | default('') }}"
+  AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key | default('') }}"
+  AWS_REGION: "{{ aws_region | default('eu-central-1') }}"
+
+  SMTP_FROM_EMAIL: "{{ smtp_from_email }}"
+  SMTP_FROM_NAME: "{{ smtp_from_name }}"
+  CONTACT_EMAIL: "{{ contact_email | default('contact@' + app_domain) }}"
+
+  STRIPE_SECRET_KEY: "{{ stripe_secret_key | default('') }}"
+  STRIPE_WEBHOOK_SECRET: "{{ stripe_webhook_secret | default('') }}"
+  STRIPE_PUBLISHABLE_KEY: "{{ stripe_publishable_key | default('') }}"
+
+  CRON_SECRET: "{{ cron_secret }}"
+  PUBLIC_URL: "{{ public_url }}"
+
+  MAX_FILE_SIZE: "{{ max_file_size | default('10485760') }}"
+  ALLOWED_IMAGE_TYPES: "{{ allowed_image_types | default('image/jpeg,image/png,image/webp,image/gif') }}"
+  ALLOWED_VIDEO_TYPES: "{{ allowed_video_types | default('video/mp4,video/webm,video/quicktime') }}"
+  BODY_SIZE_LIMIT: "{{ body_size_limit | default('15728640') }}"
+
+  USE_MOCK_DATA: "{{ use_mock_data | default('false') }}"
+  USE_SCHEDULER: "{{ use_scheduler | default('false') }}"
+  SENTRY_DSN: "{{ sentry_dsn | default('') }}"
+
+  USER_ENCRYPTION_KEY: "your_staging_user_encryption_key_min_32_chars"
+  LOGGING_SALT: "your_staging_logging_salt_random_string"
