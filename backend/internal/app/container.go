@@ -389,7 +389,7 @@ func (c *Container) setupServices(ctx context.Context) error {
 
 	// Booking services
 	// Stripe payment gateway for bookings
-	bookingStripe := bookingStripe.NewService(c.Config.StripeSecretKey, "", "")
+	bookingStripe := bookingStripe.NewService(c.Config.StripeSecretKey, "", c.Config.StripeWebhookSecret)
 
 	// AuthUser client for booking module
 	c.BookingAuthuserCLi = bookingAuthuser.NewInProcessClient(c.PartnerService)
