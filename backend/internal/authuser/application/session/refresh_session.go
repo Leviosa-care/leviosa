@@ -77,8 +77,9 @@ func (s *SessionService) RefreshSession(ctx context.Context, sessionID uuid.UUID
 	// Perform token rotation - replace old tokens with new ones
 	if err := s.repo.RefreshTokenPair(
 		ctx,
-		sessionEncx.RefreshTokenHash,        // oldRefreshTokenHash
-		updatedSessionEncx.AccessTokenHash,  // newAccessTokenHash
+		sessionEncx.RefreshTokenHash,       // oldRefreshTokenHash
+		sessionEncx.AccessTokenHash,        // oldAccessTokenHash
+		updatedSessionEncx.AccessTokenHash, // newAccessTokenHash
 		updatedSessionEncx.RefreshTokenHash, // newRefreshTokenHash
 		session.ID,                          // sessionID (uuid.UUID)
 		updatedSessionData,                  // updatedSessionData

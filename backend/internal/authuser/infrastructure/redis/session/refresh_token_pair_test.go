@@ -43,7 +43,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		baseSession.RefreshTokenHash = newRefreshTokenHash
 		updatedSessionData := td.EncodeSessionEncx(t, baseSession)
 
-		err := repo.RefreshTokenPair(ctx, refreshTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, accessTTL, refreshTTL)
+		err := repo.RefreshTokenPair(ctx, refreshTokenHash, oldAccessTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, accessTTL, refreshTTL)
 		assert.NoError(t, err)
 
 		// Old access token should be removed
@@ -65,54 +65,42 @@ func TestRefreshTokenPair(t *testing.T) {
 		assert.Equal(t, []byte(baseSession.ID.String()), sessionIDFound)
 	})
 
-	t.Run("should clean up stale access tokens for the same session", func(t *testing.T) {
+	t.Run("should delete old access and refresh tokens by their known hashes", func(t *testing.T) {
 		// Clean state
 		td.ClearSessionsRedis(t, ctx, testClient)
 
 		// Create initial token pair
 		baseSession := td.NewTestSessionEncx(t)
-		oldAccessTokenHash1 := "old_access_token_1"
-		oldAccessTokenHash2 := "old_access_token_2"
-		baseSession.AccessTokenHash = oldAccessTokenHash1
+		oldAccessTokenHash := "old_access_token_1"
 		oldRefreshTokenHash := "old_refresh_token"
+		baseSession.AccessTokenHash = oldAccessTokenHash
 		baseSession.RefreshTokenHash = oldRefreshTokenHash
 
 		accessTTL := 1 * time.Hour
 		refreshTTL := 24 * time.Hour
 
-		// Create multiple access tokens for the same session (simulating multiple devices)
 		td.InsertSessionEncx(t, ctx, testClient, baseSession, accessTTL)
 
-		// Manually create additional access token for same session
-		accessTokenKey2 := session.FormatAccessTokenKey(oldAccessTokenHash2)
-		err := testClient.Set(ctx, accessTokenKey2, baseSession.ID.String(), accessTTL).Err()
+		// Verify old tokens exist
+		_, err := td.FindSessionByAccessTokenHash(t, ctx, oldAccessTokenHash, testClient)
 		require.NoError(t, err)
-
-		// Verify both old access tokens work initially
-		_, err = td.FindSessionByAccessTokenHash(t, ctx, oldAccessTokenHash1, testClient)
-		require.NoError(t, err)
-		_, err = td.FindSessionByAccessTokenHash(t, ctx, oldAccessTokenHash2, testClient)
+		_, err = td.FindSessionByRefreshTokenHash(t, ctx, oldRefreshTokenHash, testClient)
 		require.NoError(t, err)
 
 		// Refresh tokens
 		newAccessTokenHash := "new_access_token"
 		newRefreshTokenHash := "new_refresh_token"
 
-		// Update session with new token hashes for test
 		baseSession.AccessTokenHash = newAccessTokenHash
 		baseSession.RefreshTokenHash = newRefreshTokenHash
 		updatedSessionData := td.EncodeSessionEncx(t, baseSession)
 
-		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, accessTTL, refreshTTL)
+		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, oldAccessTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, accessTTL, refreshTTL)
 		assert.NoError(t, err)
 
-		// All old access tokens should be cleaned up
-		_, err = td.FindSessionByAccessTokenHash(t, ctx, oldAccessTokenHash1, testClient)
-		assert.Error(t, err, "Old access token 1 should be removed")
-		_, err = td.FindSessionByAccessTokenHash(t, ctx, oldAccessTokenHash2, testClient)
-		assert.Error(t, err, "Old access token 2 should be removed")
-
-		// Old refresh token should be removed
+		// Old tokens should be deleted
+		_, err = td.FindSessionByAccessTokenHash(t, ctx, oldAccessTokenHash, testClient)
+		assert.Error(t, err, "Old access token should be removed")
 		_, err = td.FindSessionByRefreshTokenHash(t, ctx, oldRefreshTokenHash, testClient)
 		assert.Error(t, err, "Old refresh token should be removed")
 
@@ -155,7 +143,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		baseSession.RefreshTokenHash = newRefreshTokenHash
 		updatedSessionData := td.EncodeSessionEncx(t, baseSession)
 
-		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, time.Hour, 24*time.Hour)
+		err = repo.RefreshTokenPair(ctx, oldRefreshTokenHash, oldAccessTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, time.Hour, 24*time.Hour)
 		assert.Error(t, err)
 
 		// Reconnect and verify state
@@ -196,7 +184,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		baseSession.RefreshTokenHash = newRefreshTokenHash
 		updatedSessionData := td.EncodeSessionEncx(t, baseSession)
 
-		err := repo.RefreshTokenPair(ctx, refreshTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, newTTL, longTTL)
+		err := repo.RefreshTokenPair(ctx, refreshTokenHash, oldAccessTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, newTTL, longTTL)
 		assert.NoError(t, err)
 
 		// Verify new access token has longer TTL
@@ -227,7 +215,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		baseSession.RefreshTokenHash = newRefreshTokenHash
 		updatedSessionData := td.EncodeSessionEncx(t, baseSession)
 
-		err := repo.RefreshTokenPair(ctx, oldRefreshTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, time.Hour, 24*time.Hour)
+		err := repo.RefreshTokenPair(ctx, oldRefreshTokenHash, oldAccessTokenHash, newAccessTokenHash, newRefreshTokenHash, baseSession.ID, updatedSessionData, time.Hour, 24*time.Hour)
 		assert.NoError(t, err)
 
 		// Verify new tokens work
@@ -249,7 +237,7 @@ func TestRefreshTokenPair(t *testing.T) {
 		sessionID := uuid.New()
 		// For this error case, we just need some valid session data
 		updatedSessionData := []byte("{\"id\":\"test\",\"access_token_hash\":\"new_access\",\"refresh_token_hash\":\"new_refresh\"}")
-		err := repo.RefreshTokenPair(ctx, "old_refresh", "new_access", "new_refresh", sessionID, updatedSessionData, time.Hour, 24*time.Hour)
+		err := repo.RefreshTokenPair(ctx, "old_refresh", "old_access", "new_access", "new_refresh", sessionID, updatedSessionData, time.Hour, 24*time.Hour)
 		assert.Error(t, err)
 
 		// Reconnect for subsequent tests
