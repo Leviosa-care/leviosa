@@ -17,7 +17,7 @@ import type { Cookies } from '@sveltejs/kit';
 // staging and production sessions don't collide on the shared .leviosa.care domain.
 const BACKEND_ACCESS_COOKIE = 'leviosa_access_token';
 
-export function forwardAuthCookies(response: Response, cookies: Cookies, sessionCookieName = BACKEND_ACCESS_COOKIE): void {
+export function forwardAuthCookies(response: Response, cookies: Cookies, sessionCookieName = BACKEND_ACCESS_COOKIE, cookieDomain?: string): void {
     const cookieStrings: string[] = response.headers.getSetCookie();
 
     for (const cookieString of cookieStrings) {
@@ -63,6 +63,10 @@ export function forwardAuthCookies(response: Response, cookies: Cookies, session
         }
 
         if (!options.path) continue;
+
+        // The backend runs as an internal service so its domain attribute is irrelevant.
+        // Use the environment-aware cookieDomain so set and delete always use the same scope.
+        if (cookieDomain !== undefined) options.domain = cookieDomain;
 
         cookies.set(name, value, { ...options, path: options.path });
     }

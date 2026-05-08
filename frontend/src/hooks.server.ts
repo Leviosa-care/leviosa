@@ -111,7 +111,7 @@ async function validateSession(event: RequestEvent, sessionID: string): Promise<
                 headers: { Cookie: `leviosa_refresh_token=${refreshCookie}` },
             });
             if (refreshRes.ok) {
-                forwardAuthCookies(refreshRes, event.cookies, event.locals.sessionCookieName);
+                forwardAuthCookies(refreshRes, event.cookies, event.locals.sessionCookieName, event.locals.cookieDomain);
                 const newToken = event.cookies.get("leviosa_access_token") ?? "";
                 if (newToken) {
                     const retryRes = await fetch(`${env.API_URL}/users/me`, {

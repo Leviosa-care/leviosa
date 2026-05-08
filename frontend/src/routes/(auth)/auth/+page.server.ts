@@ -145,7 +145,7 @@ export const actions = {
         // Extract and forward authentication cookies from backend response to client.
         // The access token is stored under locals.sessionCookieName so staging and
         // production sessions don't collide on the shared .leviosa.care domain.
-        forwardAuthCookies(res, cookies, locals.sessionCookieName);
+        forwardAuthCookies(res, cookies, locals.sessionCookieName, locals.cookieDomain);
 
         // Get redirect target from URL params
         const redirectTo = sanitizeRedirect(url.searchParams.get("redirect"));

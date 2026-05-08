@@ -21,6 +21,10 @@ export const actions = {
 				path: '/',
 				domain: locals.cookieDomain
 			});
+			cookies.delete('leviosa_refresh_token', {
+				path: '/',
+				domain: locals.cookieDomain
+			});
 		}
 
 		throw redirect(302, '/auth');
