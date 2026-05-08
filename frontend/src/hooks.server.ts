@@ -72,11 +72,13 @@ export const handle: Handle = async ({ event, resolve }) => {
     // enrich fetch with custom header with client IP
     event.fetch = async (input, init = {}) => {
         // Read lazily so a token refreshed inside validateSession() is picked up.
+        // The browser stores the token under sessionCookieName but the backend always
+        // expects it as leviosa_access_token.
         const currentToken = event.cookies.get(event.locals.sessionCookieName) ?? "";
         init.headers = {
             ...(init.headers ?? {}),
             [env.CLIENT_IP_HEADER ?? 'x-client-ip']: getClientIP(event.request),
-            Cookie: `${event.locals.sessionCookieName}=${currentToken}`
+            Cookie: `leviosa_access_token=${currentToken}`
         };
         return fetch(input, init);
     };
@@ -109,7 +111,7 @@ async function validateSession(event: RequestEvent, sessionID: string): Promise<
                 headers: { Cookie: `leviosa_refresh_token=${refreshCookie}` },
             });
             if (refreshRes.ok) {
-                forwardAuthCookies(refreshRes, event.cookies);
+                forwardAuthCookies(refreshRes, event.cookies, event.locals.sessionCookieName);
                 const newToken = event.cookies.get("leviosa_access_token") ?? "";
                 if (newToken) {
                     const retryRes = await fetch(`${env.API_URL}/users/me`, {

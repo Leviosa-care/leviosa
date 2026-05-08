@@ -12,7 +12,12 @@ import type { Cookies } from '@sveltejs/kit';
  * @param response - The fetch Response object from the backend API
  * @param cookies - SvelteKit's cookies object to set cookies on the client
  */
-export function forwardAuthCookies(response: Response, cookies: Cookies): void {
+// BACKEND_ACCESS_COOKIE is the cookie name the backend always sets and expects.
+// The browser may store it under a different name (sessionCookieName) so that
+// staging and production sessions don't collide on the shared .leviosa.care domain.
+const BACKEND_ACCESS_COOKIE = 'leviosa_access_token';
+
+export function forwardAuthCookies(response: Response, cookies: Cookies, sessionCookieName = BACKEND_ACCESS_COOKIE): void {
     const cookieStrings: string[] = response.headers.getSetCookie();
 
     for (const cookieString of cookieStrings) {
@@ -20,8 +25,10 @@ export function forwardAuthCookies(response: Response, cookies: Cookies): void {
         const [nameValue, ...attributes] = cookieString.split(';').map(part => part.trim());
         const eqIdx = nameValue.indexOf('=');
         if (eqIdx === -1) continue;
-        const name = nameValue.slice(0, eqIdx);
+        const backendName = nameValue.slice(0, eqIdx);
         const value = nameValue.slice(eqIdx + 1);
+        // Rename the access token to the environment-specific browser cookie name.
+        const name = backendName === BACKEND_ACCESS_COOKIE ? sessionCookieName : backendName;
 
         if (!name || !value) continue;
 

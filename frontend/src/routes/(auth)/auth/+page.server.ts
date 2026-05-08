@@ -97,7 +97,7 @@ export const actions = {
         // Success - redirect to verify email page with email as query param
         redirect(302, `/auth/verify-email?email=${encodeURIComponent(form.data.registerEmail)}`)
     },
-    login: async ({ request, cookies, url }: RequestEvent) => {
+    login: async ({ request, cookies, url, locals }: RequestEvent) => {
         const form = await superValidate(request, arktype(loginSchema, { defaults: loginDefaults }))
 
         if (!form.valid) {
@@ -142,19 +142,21 @@ export const actions = {
             }
         }
 
-        // Extract and forward authentication cookies from backend response to client
-        forwardAuthCookies(res, cookies);
+        // Extract and forward authentication cookies from backend response to client.
+        // The access token is stored under locals.sessionCookieName so staging and
+        // production sessions don't collide on the shared .leviosa.care domain.
+        forwardAuthCookies(res, cookies, locals.sessionCookieName);
 
         // Get redirect target from URL params
         const redirectTo = sanitizeRedirect(url.searchParams.get("redirect"));
 
-        // Fetch user to determine role-based redirect
-        // Note: We need to make a fresh request since we just received the session cookie
+        // Fetch user to determine role-based redirect.
+        // Read from sessionCookieName but always send as leviosa_access_token to backend.
         let finalRedirect = "/";
         try {
             const userRes = await fetch(`${env.API_URL}/users/me`, {
                 headers: {
-                    'Cookie': `leviosa_access_token=${cookies.get("leviosa_access_token") || ""}`
+                    'Cookie': `leviosa_access_token=${cookies.get(locals.sessionCookieName) || ""}`
                 }
             });
 

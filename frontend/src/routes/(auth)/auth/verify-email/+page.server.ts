@@ -34,7 +34,7 @@ export const load = async ({ url }: RequestEvent) => {
 };
 
 export const actions = {
-    default: async ({ request, fetch, cookies }: RequestEvent) => {
+    default: async ({ request, fetch, cookies, locals }: RequestEvent) => {
         const form = await superValidate(request, arktype(schema, { defaults }));
 
         if (!form.valid) {
@@ -85,8 +85,9 @@ export const actions = {
             }
         }
 
-        // Forward authentication cookies from backend response to client
-        forwardAuthCookies(res, cookies);
+        // Forward authentication cookies from backend response to client.
+        // Store the access token under sessionCookieName (environment-aware).
+        forwardAuthCookies(res, cookies, locals.sessionCookieName);
 
         // Success - redirect to general info page
         redirect(302, "/auth/general");
