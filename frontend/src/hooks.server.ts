@@ -71,11 +71,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     // enrich fetch with custom header with client IP
     event.fetch = async (input, init = {}) => {
-        // Ensure headers object exists
+        // Read lazily so a token refreshed inside validateSession() is picked up.
+        const currentToken = event.cookies.get(event.locals.sessionCookieName) ?? "";
         init.headers = {
             ...(init.headers ?? {}),
             [env.CLIENT_IP_HEADER ?? 'x-client-ip']: getClientIP(event.request),
-            Cookie: `leviosa_access_token=${sessionID}`
+            Cookie: `${event.locals.sessionCookieName}=${currentToken}`
         };
         return fetch(input, init);
     };

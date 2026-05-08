@@ -87,8 +87,8 @@ export function isStagingHost(hostname: string): boolean {
  * Staging uses a distinct name so it never conflicts with the production
  * cookie that shares the same `.leviosa.care` domain.
  */
-export function getSessionCookieName(_hostname: string): string {
-	return 'leviosa_access_token';
+export function getSessionCookieName(hostname: string): string {
+	return isStagingHost(hostname) ? 'leviosa_access_token_staging' : 'leviosa_access_token';
 }
 
 /**
