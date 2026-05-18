@@ -9,7 +9,7 @@ import (
 
 	// Authuser HTTP handlers
 	authHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
-	// partnerHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/partner" // TODO: enable when catalog is ready
+	partnerHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/partner"
 	userHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/user"
 
 	// Booking HTTP handlers
@@ -123,12 +123,11 @@ func (s *Server) setupAuthuserRoutes(router *http.ServeMux) {
 	)
 	userH.RegisterRoutes(router)
 
-	// Partner handler (depends on catalog - TODO: enable when catalog is ready)
-	// partnerH := partnerHandler.New(
-	// 	s.container.PartnerService,
-	// 	s.container.AuthMw,
-	// )
-	// partnerH.RegisterRoutes(router)
+	partnerH := partnerHandler.New(
+		s.container.PartnerService,
+		s.container.AuthMw,
+	)
+	partnerH.RegisterRoutes(router)
 }
 
 func (s *Server) setupCatalogRoutes(router *http.ServeMux) {
