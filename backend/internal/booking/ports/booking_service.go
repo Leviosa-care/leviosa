@@ -9,6 +9,7 @@ import (
 )
 
 type EarningsSummary = domain.EarningsSummary
+type DashboardStats = domain.DashboardStats
 
 // BookingService defines the interface for booking business logic
 type BookingService interface {
@@ -50,4 +51,7 @@ type BookingService interface {
 
 	// GetPartnerEarnings retrieves earnings summary and transactions for a partner
 	GetPartnerEarnings(ctx context.Context, partnerID uuid.UUID) (*EarningsSummary, error)
+
+	// GetDashboardStats retrieves aggregated dashboard statistics for admins
+	GetDashboardStats(ctx context.Context) (*DashboardStats, error)
 }
