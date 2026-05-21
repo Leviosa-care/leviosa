@@ -13,6 +13,7 @@ type Handler interface {
 	GetBooking(w http.ResponseWriter, r *http.Request)
 	GetClientBookings(w http.ResponseWriter, r *http.Request)
 	GetPartnerBookings(w http.ResponseWriter, r *http.Request)
+	GetPartnerEarnings(w http.ResponseWriter, r *http.Request)
 	GetUpcomingBookings(w http.ResponseWriter, r *http.Request)
 	UpdateBookingNotes(w http.ResponseWriter, r *http.Request)
 	CancelBooking(w http.ResponseWriter, r *http.Request)

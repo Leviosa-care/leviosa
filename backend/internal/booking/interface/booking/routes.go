@@ -17,6 +17,7 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /bookings/{id}", RequireStandard(mw.EnableCORS(h.GetBooking)))
 	router.HandleFunc("GET /clients/{clientId}/bookings", RequireStandard(mw.EnableCORS(h.GetClientBookings)))
 	router.HandleFunc("GET /partners/{partnerId}/bookings", RequirePartner(mw.EnableCORS(h.GetPartnerBookings)))
+	router.HandleFunc("GET /partners/{partnerId}/earnings", RequirePartner(mw.EnableCORS(h.GetPartnerEarnings)))
 	router.HandleFunc("GET /bookings", RequirePartner(mw.EnableCORS(h.GetUpcomingBookings)))
 	router.HandleFunc("PUT /bookings/{id}/notes", RequireStandard(mw.EnableCORS(h.UpdateBookingNotes)))
 	router.HandleFunc("POST /bookings/{id}/cancel", RequireStandard(mw.EnableCORS(h.CancelBooking)))
