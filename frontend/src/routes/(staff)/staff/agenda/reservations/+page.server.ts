@@ -1,4 +1,6 @@
 import type { PageServerLoad } from './$types';
+import { redirect, isRedirect } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 
 export interface Booking {
 	id: string;
@@ -13,53 +15,71 @@ export interface Booking {
 	notes?: string;
 }
 
-function getMockBookings(): Booking[] {
-	const now = new Date();
-
-	function booking(
-		id: string,
-		client: string,
-		initials: string,
-		product: string,
-		offsetHours: number,
-		durationMin: number,
-		room: string,
-		status: Booking['status'],
-		cents: number,
-		notes?: string,
-	): Booking {
-		const start = new Date(now.getTime() + offsetHours * 60 * 60 * 1000);
-		const end = new Date(start.getTime() + durationMin * 60 * 1000);
-		return {
-			id,
-			clientName: client,
-			clientInitials: initials,
-			productName: product,
-			startTime: start.toISOString(),
-			endTime: end.toISOString(),
-			roomName: room,
-			status,
-			amountInCents: cents,
-			notes,
-		};
+export const load: PageServerLoad = async ({ locals, url, fetch }) => {
+	if (!locals.user?.id) {
+		throw redirect(302, '/auth');
 	}
 
-	return [
-		booking('b1', 'Marie Dupont', 'MD', 'Massage Relaxant 60min', 2, 60, 'Salle Sérénité', 'upcoming', 7500),
-		booking('b2', 'Jean Durand', 'JD', 'Drainage Lymphatique 90min', 5, 90, 'Salle Harmonie', 'upcoming', 11000),
-		booking('b3', 'Claire Bernard', 'CB', 'Massage Relaxant 60min', 8, 60, 'Salle Sérénité', 'upcoming', 7500),
-		booking('b4', 'Lucas Petit', 'LP', 'Soin du Dos 60min', 24, 60, 'Salle Harmonie', 'upcoming', 9000),
-		booking('b5', 'Emma Moreau', 'EM', 'Massage Sportif 60min', 26, 60, 'Salle Vitalité', 'upcoming', 8500),
-		booking('b6', 'Thomas Richard', 'TR', 'Drainage Lymphatique 90min', -3, 90, 'Salle Sérénité', 'completed', 11000, 'Bonne séance, à revoir dans 3 semaines.'),
-		booking('b7', 'Camille Simon', 'CS', 'Massage Relaxant 60min', -26, 60, 'Salle Harmonie', 'completed', 7500, 'Tension dans le dos et les épaules. Protocole standard.'),
-		booking('b8', 'Hugo Michel', 'HM', 'Soin du Dos 60min', -50, 60, 'Salle Harmonie', 'no_show', 9000),
-		booking('b9', 'Léa Fontaine', 'LF', 'Massage Relaxant 60min', -74, 60, 'Salle Sérénité', 'completed', 7500),
-		booking('b10', 'Antoine Garnier', 'AG', 'Massage Sportif 60min', -98, 60, 'Salle Vitalité', 'cancelled', 8500),
-	];
-}
+	const partnerId = locals.user.id;
+	const statusFilter = url.searchParams.get('status');
 
-export const load: PageServerLoad = async () => {
-	// TODO: Replace with GET /partners/{partnerId}/bookings
-	const bookings = getMockBookings();
-	return { bookings };
+	try {
+		const apiUrl = new URL(`${env.API_URL}/partners/${partnerId}/bookings`);
+		if (statusFilter) {
+			apiUrl.searchParams.set('status', statusFilter);
+		}
+
+		const res = await fetch(apiUrl.toString(), {
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
+
+		if (res.status === 401) {
+			throw redirect(302, '/auth');
+		}
+
+		if (!res.ok) {
+			console.error(`Failed to fetch bookings: ${res.status} ${res.statusText}`);
+			return { bookings: [] };
+		}
+
+		const data = await res.json();
+
+		if (!Array.isArray(data)) {
+			console.error('Invalid response format: expected array');
+			return { bookings: [] };
+		}
+
+		const bookings: Booking[] = data.map((booking: any) => {
+			const clientInitials = booking.client_id
+				? booking.client_id
+						.split('-')
+						.slice(-2)
+						.map((s: string) => s[0]?.toUpperCase() || '')
+						.join('')
+				: '??';
+
+			return {
+				id: booking.id,
+				clientName: booking.client_name || 'Client inconnu',
+				clientInitials,
+				productName: booking.product_name || 'Produit inconnu',
+				startTime: booking.slot_start_time,
+				endTime: booking.slot_end_time,
+				roomName: booking.room_name || 'Salle inconnue',
+				status: booking.status || 'upcoming',
+				amountInCents: booking.total_price_cents || 0,
+				notes: booking.client_notes || booking.partner_notes || undefined,
+			};
+		});
+
+		bookings.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+		return { bookings };
+	} catch (err) {
+		if (isRedirect(err)) throw err;
+		console.error('Error loading bookings:', err);
+		return { bookings: [] };
+	}
 };
