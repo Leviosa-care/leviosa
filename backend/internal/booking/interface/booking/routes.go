@@ -12,6 +12,9 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	RequirePartner := h.authmw.RequireMinimumRole(identity.Partner)
 	RequireStandard := h.authmw.RequireMinimumRole(identity.Standard)
 
+	// Admin endpoints
+	router.HandleFunc("GET /admin/dashboard/stats", RequireAdmin(mw.EnableCORS(h.GetDashboardStats)))
+
 	// Booking management endpoints
 	router.HandleFunc("POST /bookings", RequireStandard(mw.EnableCORS(h.CreateBooking)))
 	router.HandleFunc("GET /bookings/{id}", RequireStandard(mw.EnableCORS(h.GetBooking)))
