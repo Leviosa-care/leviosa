@@ -6,6 +6,17 @@ import { type } from "arktype"
 import { redirect } from "@sveltejs/kit";
 import { isAdminDomain, isStaffDomain, getCookieDomain } from "$lib/server/hostname";
 
+function calculateAge(birthdate: string): number {
+    const birth = new Date(birthdate);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+    }
+    return age;
+}
+
 const schema = type({
     firstname: "string > 1",
     lastname: "string > 1",
@@ -59,6 +70,12 @@ export const actions: Actions = {
             if (form.errors.telephone) {
                 setError(form, "telephone", "Le numéro de téléphone doit contenir exactement 10 chiffres.");
             }
+            return { form };
+        }
+
+        const age = calculateAge(form.data.birthdate);
+        if (age < 18) {
+            setError(form, "birthdate", "Vous devez avoir au moins 18 ans pour vous inscrire.");
             return { form };
         }
 
