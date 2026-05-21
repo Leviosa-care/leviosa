@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
+type EarningsSummary = domain.EarningsSummary
+
 // BookingService defines the interface for booking business logic
 type BookingService interface {
 	// CreateBooking creates a new booking with product and time slot information
@@ -45,4 +47,7 @@ type BookingService interface {
 
 	// HandlePaymentWebhook processes a Stripe payment webhook event and updates the booking status
 	HandlePaymentWebhook(ctx context.Context, event *WebhookEvent) error
+
+	// GetPartnerEarnings retrieves earnings summary and transactions for a partner
+	GetPartnerEarnings(ctx context.Context, partnerID uuid.UUID) (*EarningsSummary, error)
 }
