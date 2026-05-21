@@ -37,8 +37,9 @@ These are the canonical terms used in code, documentation, and conversation. Use
 | **Room** | A treatment space within a building. Has a name, capacity, and allocation type. |
 | **Allocation** | The assignment of a room to a partner. Two types: `dedicated` (fixed time period, one partner) or `shared` (ongoing availability pool). |
 | **Availability** | A time window a partner offers for bookings. Can be a single occurrence or a recurring pattern (daily/weekly/monthly) with an optional end date. |
-| **Booking** | A confirmed reservation by a client for a partner's service in a room. The core transactional entity. Tracks payment and progresses through a lifecycle. |
+| **Booking** | A confirmed reservation by a client for a partner's service in a room. The core transactional entity. Tracks payment and progresses through a lifecycle. In client-facing UI the word "consultation" is used as a synonym, but the domain term and API surface always use "booking". |
 | **Booking status** | The FSM governing a booking's lifecycle: `confirmed → completed | cancelled | no_show`. |
+| **Earnings** | A read-only financial summary for a partner, derived by aggregating their completed bookings. Includes current-month revenue, last-month revenue, pending amounts, and a per-transaction history. Not a stored entity — computed on demand from the Booking table. |
 | **Gap** | Unused time between bookings in a room schedule. The system detects gaps to surface upselling opportunities. |
 | **Utilization** | A metric measuring how efficiently a room's time is used (utilization % minus fragmentation penalty). Computed via a materialized view. |
 | **10-minute alignment** | All time slots are aligned to 10-minute boundaries for scheduling consistency. |
