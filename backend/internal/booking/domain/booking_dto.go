@@ -45,3 +45,20 @@ type UpdateBookingNotesRequest struct {
 type CancelBookingRequest struct {
 	Reason string `json:"reason" validate:"required,min=1,max=500"`
 }
+
+type Transaction struct {
+	ID              uuid.UUID     `json:"id"`
+	SlotStartTime   string        `json:"slot_start_time"`
+	ProductID       uuid.UUID     `json:"product_id"`
+	AmountCents     int           `json:"amount_cents"`
+	PaymentStatus   PaymentStatus `json:"payment_status"`
+}
+
+type EarningsSummary struct {
+	CurrentMonthCents int    `json:"current_month_cents"`
+	LastMonthCents    int    `json:"last_month_cents"`
+	PendingCents      int    `json:"pending_cents"`
+	NextPayoutDate    string `json:"next_payout_date"`
+	NextPayoutCents   int    `json:"next_payout_cents"`
+	Transactions      []Transaction `json:"transactions"`
+}
