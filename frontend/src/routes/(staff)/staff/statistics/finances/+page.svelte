@@ -4,6 +4,14 @@
 
 	let { data }: PageProps = $props();
 
+	interface Transaction {
+		id: string;
+		slotStartTime: string;
+		productId: string;
+		amountCents: number;
+		paymentStatus: 'paid' | 'pending' | 'refunded';
+	}
+
 	function formatCents(cents: number): string {
 		return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(
 			cents / 100,
@@ -46,16 +54,43 @@
 	}
 
 	const growthPct = $derived(
-		data.summary.lastMonthInCents > 0
+		data.summary?.lastMonthCents && data.summary.lastMonthCents > 0
 			? Math.round(
-					((data.summary.currentMonthInCents - data.summary.lastMonthInCents) /
-						data.summary.lastMonthInCents) *
+					((data.summary.currentMonthCents - data.summary.lastMonthCents) /
+						data.summary.lastMonthCents) *
 						100,
 				)
 			: 0,
 	);
 
-	const maxEarning = $derived(Math.max(...data.monthlyEarnings.map((m) => m.amountInCents)));
+	// Derive monthly earnings from transactions
+	interface MonthlyEarning {
+		month: string;
+		amountInCents: number;
+	}
+
+	const monthlyEarnings = $derived(() => {
+		if (!data.summary?.transactions) return [];
+		const byMonth = new Map<string, number>();
+		data.summary.transactions.forEach((tx: Transaction) => {
+			const date = new Date(tx.slotStartTime);
+			const monthKey = date.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+			const current = byMonth.get(monthKey) || 0;
+			byMonth.set(monthKey, current + tx.amountCents);
+		});
+		// Get last 6 months of data
+		const sorted = Array.from(byMonth.entries()).sort((a, b) => {
+			const [monthA, yearA] = a[0].split(' ');
+			const [monthB, yearB] = b[0].split(' ');
+			// Simple sort by the key string - works for last 6 months
+			return a[0].localeCompare(b[0], 'fr');
+		});
+		return sorted.slice(-6).map(([month, amount]) => ({ month, amountInCents: amount }));
+	});
+
+	const maxEarning = $derived(
+		monthlyEarnings().length > 0 ? Math.max(...monthlyEarnings().map((m) => m.amountInCents)) : 1
+	);
 </script>
 
 <svelte:head>
@@ -68,117 +103,131 @@
 		<p class="text-muted-foreground">Suivi de vos revenus et paiements</p>
 	</div>
 
-	<!-- Summary Cards -->
-	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-		<div class="bg-card rounded-lg border border-border p-6">
-			<div class="flex items-center justify-between mb-4">
-				<div class="p-3 bg-green-100 rounded-lg">
-					<Banknote size={22} class="text-green-600" />
-				</div>
-				<span
-					class="text-xs font-medium px-2 py-1 rounded-full {growthPct >= 0
-						? 'bg-green-100 text-green-700'
-						: 'bg-red-100 text-red-700'}"
-				>
-					{growthPct >= 0 ? '+' : ''}{growthPct}%
-				</span>
-			</div>
-			<p class="text-2xl font-bold text-foreground mb-1">
-				{formatCents(data.summary.currentMonthInCents)}
-			</p>
-			<p class="text-sm text-muted-foreground">Revenus ce mois</p>
+	{#if data.error}
+		<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-8">
+			{data.error}
 		</div>
-
-		<div class="bg-card rounded-lg border border-border p-6">
-			<div class="flex items-center justify-between mb-4">
-				<div class="p-3 bg-blue-100 rounded-lg">
-					<TrendingUp size={22} class="text-blue-600" />
-				</div>
-				<span class="text-xs text-muted-foreground">Mois dernier</span>
-			</div>
-			<p class="text-2xl font-bold text-foreground mb-1">
-				{formatCents(data.summary.lastMonthInCents)}
-			</p>
-			<p class="text-sm text-muted-foreground">Revenus mois précédent</p>
-		</div>
-
-		<div class="bg-card rounded-lg border border-border p-6">
-			<div class="flex items-center justify-between mb-4">
-				<div class="p-3 bg-yellow-100 rounded-lg">
-					<Clock size={22} class="text-yellow-600" />
-				</div>
-				<span class="text-xs text-muted-foreground">En cours</span>
-			</div>
-			<p class="text-2xl font-bold text-foreground mb-1">
-				{formatCents(data.summary.pendingInCents)}
-			</p>
-			<p class="text-sm text-muted-foreground">Paiements en attente</p>
-		</div>
-
-		<div class="bg-card rounded-lg border border-border p-6">
-			<div class="flex items-center justify-between mb-4">
-				<div class="p-3 bg-purple-100 rounded-lg">
-					<ArrowDownToLine size={22} class="text-purple-600" />
-				</div>
-				<span class="text-xs text-muted-foreground">
-					{formatDate(data.summary.nextPayoutDate)}
-				</span>
-			</div>
-			<p class="text-2xl font-bold text-foreground mb-1">
-				{formatCents(data.summary.nextPayoutInCents)}
-			</p>
-			<p class="text-sm text-muted-foreground">Prochain virement</p>
-		</div>
-	</div>
-
-	<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-		<!-- Monthly Chart -->
-		<div class="bg-card rounded-lg border border-border p-6">
-			<h2 class="text-lg font-semibold text-foreground mb-6">Revenus mensuels</h2>
-			<div class="space-y-3">
-				{#each data.monthlyEarnings as month (month.month)}
-					<div class="flex items-center gap-4">
-						<span class="w-10 text-sm text-muted-foreground">{month.month}</span>
-						<div class="flex-1 h-7 bg-muted rounded-md overflow-hidden relative">
-							<div
-								class="h-full bg-foreground/80 rounded-md absolute top-0 left-0 transition-all"
-								style="width: {maxEarning > 0 ? (month.amountInCents / maxEarning) * 100 : 0}%"
-							></div>
-						</div>
-						<span class="w-24 text-right text-sm font-medium text-foreground">
-							{formatCents(month.amountInCents)}
-						</span>
+	{:else if data.summary}
+		<!-- Summary Cards -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+			<div class="bg-card rounded-lg border border-border p-6">
+				<div class="flex items-center justify-between mb-4">
+					<div class="p-3 bg-green-100 rounded-lg">
+						<Banknote size={22} class="text-green-600" />
 					</div>
-				{/each}
+					<span
+						class="text-xs font-medium px-2 py-1 rounded-full {growthPct >= 0
+							? 'bg-green-100 text-green-700'
+							: 'bg-red-100 text-red-700'}"
+					>
+						{growthPct >= 0 ? '+' : ''}{growthPct}%
+					</span>
+				</div>
+				<p class="text-2xl font-bold text-foreground mb-1">
+					{formatCents(data.summary.currentMonthCents)}
+				</p>
+				<p class="text-sm text-muted-foreground">Revenus ce mois</p>
+			</div>
+
+			<div class="bg-card rounded-lg border border-border p-6">
+				<div class="flex items-center justify-between mb-4">
+					<div class="p-3 bg-blue-100 rounded-lg">
+						<TrendingUp size={22} class="text-blue-600" />
+					</div>
+					<span class="text-xs text-muted-foreground">Mois dernier</span>
+				</div>
+				<p class="text-2xl font-bold text-foreground mb-1">
+					{formatCents(data.summary.lastMonthCents)}
+				</p>
+				<p class="text-sm text-muted-foreground">Revenus mois précédent</p>
+			</div>
+
+			<div class="bg-card rounded-lg border border-border p-6">
+				<div class="flex items-center justify-between mb-4">
+					<div class="p-3 bg-yellow-100 rounded-lg">
+						<Clock size={22} class="text-yellow-600" />
+					</div>
+					<span class="text-xs text-muted-foreground">En cours</span>
+				</div>
+				<p class="text-2xl font-bold text-foreground mb-1">
+					{formatCents(data.summary.pendingCents)}
+				</p>
+				<p class="text-sm text-muted-foreground">Paiements en attente</p>
+			</div>
+
+			<div class="bg-card rounded-lg border border-border p-6">
+				<div class="flex items-center justify-between mb-4">
+					<div class="p-3 bg-purple-100 rounded-lg">
+						<ArrowDownToLine size={22} class="text-purple-600" />
+					</div>
+					<span class="text-xs text-muted-foreground">
+						{formatDate(data.summary.nextPayoutDate)}
+					</span>
+				</div>
+				<p class="text-2xl font-bold text-foreground mb-1">
+					{formatCents(data.summary.nextPayoutCents)}
+				</p>
+				<p class="text-sm text-muted-foreground">Prochain virement</p>
 			</div>
 		</div>
 
-		<!-- Transaction History -->
-		<div class="bg-card rounded-lg border border-border p-6">
-			<h2 class="text-lg font-semibold text-foreground mb-6">Transactions récentes</h2>
-			<div class="space-y-3">
-				{#each data.transactions as tx (tx.id)}
-					<div class="flex items-center gap-3">
-						<div class="flex-1 min-w-0">
-							<p class="text-sm font-medium text-foreground truncate">{tx.clientName}</p>
-							<p class="text-xs text-muted-foreground truncate">{tx.productName}</p>
-							<p class="text-xs text-muted-foreground">{formatDateTime(tx.date)}</p>
-						</div>
-						<div class="flex flex-col items-end gap-1 flex-shrink-0">
-							<p
-								class="text-sm font-semibold {tx.status === 'refunded'
-									? 'text-red-600'
-									: 'text-foreground'}"
-							>
-								{tx.status === 'refunded' ? '-' : ''}{formatCents(tx.amountInCents)}
-							</p>
-							<span class="px-2 py-0.5 rounded-full text-xs font-medium {statusBadge(tx.status)}">
-								{statusLabel(tx.status)}
-							</span>
-						</div>
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+			<!-- Monthly Chart (derived from transactions) -->
+			{#if monthlyEarnings().length > 0}
+				<div class="bg-card rounded-lg border border-border p-6">
+					<h2 class="text-lg font-semibold text-foreground mb-6">Revenus mensuels</h2>
+					<div class="space-y-3">
+						{#each monthlyEarnings() as month (month.month)}
+							<div class="flex items-center gap-4">
+								<span class="w-10 text-sm text-muted-foreground">{month.month}</span>
+								<div class="flex-1 h-7 bg-muted rounded-md overflow-hidden relative">
+									<div
+										class="h-full bg-foreground/80 rounded-md absolute top-0 left-0 transition-all"
+										style="width: {(month.amountInCents / maxEarning) * 100}%"
+									></div>
+								</div>
+								<span class="w-24 text-right text-sm font-medium text-foreground">
+									{formatCents(month.amountInCents)}
+								</span>
+							</div>
+						{/each}
 					</div>
-				{/each}
+				</div>
+			{/if}
+
+			<!-- Transaction History -->
+			<div class="bg-card rounded-lg border border-border p-6">
+				<h2 class="text-lg font-semibold text-foreground mb-6">Transactions récentes</h2>
+				{#if data.summary.transactions.length === 0}
+					<p class="text-sm text-muted-foreground">Aucune transaction</p>
+				{:else}
+					<div class="space-y-3">
+						{#each data.summary.transactions as tx (tx.id)}
+							<div class="flex items-center gap-3">
+								<div class="flex-1 min-w-0">
+									<p class="text-sm font-medium text-foreground truncate">
+										Réservation #{tx.id.slice(0, 8)}
+									</p>
+									<p class="text-xs text-muted-foreground truncate">Produit: {tx.productId}</p>
+									<p class="text-xs text-muted-foreground">{formatDateTime(tx.slotStartTime)}</p>
+								</div>
+								<div class="flex flex-col items-end gap-1 flex-shrink-0">
+									<p
+										class="text-sm font-semibold {tx.paymentStatus === 'refunded'
+											? 'text-red-600'
+											: 'text-foreground'}"
+									>
+										{tx.paymentStatus === 'refunded' ? '-' : ''}{formatCents(tx.amountCents)}
+									</p>
+									<span class="px-2 py-0.5 rounded-full text-xs font-medium {statusBadge(tx.paymentStatus)}">
+										{statusLabel(tx.paymentStatus)}
+									</span>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
 			</div>
 		</div>
-	</div>
+	{/if}
 </div>
