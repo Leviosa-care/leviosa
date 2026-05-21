@@ -4,6 +4,7 @@ const USER_KEY = Symbol("user")
 
 export class UserState {
     readonly user: App.User = $state({
+        id: "",
         email: "",
         firstname: "",
         lastname: "",

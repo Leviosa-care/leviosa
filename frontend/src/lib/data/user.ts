@@ -1,6 +1,7 @@
 import { ROLES } from "$lib/types/role";
 
 export const mockUser: App.User = {
+    id: "123e4567-e89b-12d3-a456-426614174000",
     email: "john.doe@example.com",
     picture: "",
     role: ROLES.admin,
