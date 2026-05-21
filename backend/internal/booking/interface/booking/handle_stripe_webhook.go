@@ -3,6 +3,7 @@ package bookingHandler
 import (
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
@@ -41,6 +42,9 @@ func (h *handler) HandleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 	// Limit payload size to prevent abuse
 	body, err := io.ReadAll(io.LimitReader(r.Body, MaxWebhookPayloadSize))
 	if err != nil {
+		slog.ErrorContext(ctx, "failed to read webhook payload",
+			"error", err,
+		)
 		httpx.RespondWithError(w, errors.New("failed to read webhook payload"), http.StatusBadRequest)
 		return
 	}
@@ -49,6 +53,7 @@ func (h *handler) HandleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 	// Get the Stripe signature header
 	signature := r.Header.Get(StripeSignatureHeader)
 	if signature == "" {
+		slog.ErrorContext(ctx, "missing Stripe signature header")
 		httpx.RespondWithError(w, errors.New("missing Stripe signature header"), http.StatusBadRequest)
 		return
 	}
@@ -57,6 +62,9 @@ func (h *handler) HandleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 	event, err := h.paymentService.VerifyWebhookSignature(body, signature)
 	if err != nil {
 		// Signature verification failed - could be spoofed request or configuration issue
+		slog.ErrorContext(ctx, "webhook signature verification failed",
+			"error", err,
+		)
 		httpx.RespondWithError(w, errors.New("webhook signature verification failed"), http.StatusBadRequest)
 		return
 	}

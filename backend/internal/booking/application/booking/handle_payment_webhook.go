@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
@@ -31,6 +32,11 @@ func (s *BookingService) HandlePaymentWebhook(ctx context.Context, event *ports.
 
 	bookingID, err := uuid.Parse(bookingIDStr)
 	if err != nil {
+		slog.ErrorContext(ctx, "invalid booking ID in webhook metadata",
+			"stripe_event_id", event.ID,
+			"stripe_event_type", event.Type,
+			"error", err,
+		)
 		return errs.NewInvalidValueErr(fmt.Sprintf("invalid booking ID in webhook metadata: %s", bookingIDStr))
 	}
 
@@ -39,14 +45,32 @@ func (s *BookingService) HandlePaymentWebhook(ctx context.Context, event *ports.
 	if err != nil {
 		if errors.Is(err, errs.ErrRepositoryNotFound) {
 			// Booking might have been deleted, log and continue
+			slog.ErrorContext(ctx, "booking not found for webhook",
+				"booking_id", bookingID,
+				"stripe_event_id", event.ID,
+				"stripe_event_type", event.Type,
+				"error", err,
+			)
 			return fmt.Errorf("booking not found for webhook: %w", errs.ErrRepositoryNotFound)
 		}
+		slog.ErrorContext(ctx, "failed to get booking for webhook",
+			"booking_id", bookingID,
+			"stripe_event_id", event.ID,
+			"stripe_event_type", event.Type,
+			"error", err,
+		)
 		return fmt.Errorf("get booking for webhook: %w", err)
 	}
 
 	// Decrypt booking
 	booking, err := domain.DecryptBookingEncx(ctx, s.crypto, bookingEncx)
 	if err != nil {
+		slog.ErrorContext(ctx, "failed to decrypt booking for webhook",
+			"booking_id", bookingID,
+			"stripe_event_id", event.ID,
+			"stripe_event_type", event.Type,
+			"error", err,
+		)
 		return fmt.Errorf("decrypt booking for webhook: %w", err)
 	}
 
@@ -122,21 +146,36 @@ func (s *BookingService) HandlePaymentWebhook(ctx context.Context, event *ports.
 		if sendPaymentConfirmation {
 			if err := s.notificationService.SendPaymentConfirmation(ctx, notificationData); err != nil {
 				// Log error but don't fail the webhook processing
-				_ = err // TODO: Add proper logging
+				slog.ErrorContext(ctx, "failed to send payment confirmation notification",
+					"booking_id", booking.ID,
+					"stripe_event_id", event.ID,
+					"stripe_event_type", event.Type,
+					"error", err,
+				)
 			}
 		}
 
 		if sendPaymentFailed {
 			if err := s.notificationService.SendPaymentFailed(ctx, notificationData); err != nil {
 				// Log error but don't fail the webhook processing
-				_ = err // TODO: Add proper logging
+				slog.ErrorContext(ctx, "failed to send payment failed notification",
+					"booking_id", booking.ID,
+					"stripe_event_id", event.ID,
+					"stripe_event_type", event.Type,
+					"error", err,
+				)
 			}
 		}
 
 		// Send cancellation notification if booking was cancelled due to payment failure
 		if booking.Status == domain.BookingStatusCancelled {
 			if err := s.notificationService.SendBookingCancellation(ctx, notificationData); err != nil {
-				_ = err // TODO: Add proper logging
+				slog.ErrorContext(ctx, "failed to send booking cancellation notification",
+					"booking_id", booking.ID,
+					"stripe_event_id", event.ID,
+					"stripe_event_type", event.Type,
+					"error", err,
+				)
 			}
 		}
 	}
