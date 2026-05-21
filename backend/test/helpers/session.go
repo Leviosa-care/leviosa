@@ -388,13 +388,13 @@ func GetSessionByIDNonEncrypted(t *testing.T, ctx context.Context, sessionID uui
 
 // SessionTestDataNonEncrypted holds test data for non-encrypted session operations
 type SessionTestDataNonEncrypted struct {
-	Session     *session.Session
-	RawData     []byte
-	AccessToken string
+	Session      *session.Session
+	RawData      []byte
+	AccessToken  string
 	RefreshToken string
-	UserID      string
-	Email       string
-	Role        string
+	UserID       string
+	Email        string
+	Role         string
 }
 
 // FindSessionByAccessTokenHash retrieves a session by its access token hash, returns nil if not found
