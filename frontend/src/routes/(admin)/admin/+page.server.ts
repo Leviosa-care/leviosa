@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { env } from '$env/dynamic/private';
+import { error, redirect, isRedirect } from '@sveltejs/kit';
 
 interface RecentBooking {
     id: string;
@@ -27,22 +28,45 @@ interface DashboardStats {
     activeProductsCount: number;
 }
 
-// TODO: Replace with real API calls when backend is ready
+export const load: PageServerLoad = async ({ fetch }) => {
+    if (env.USE_MOCK_DATA === 'true') {
+        return getMockDashboardData();
+    }
+
+    try {
+        const statsRes = await fetch(`${env.API_URL}/admin/dashboard/stats`);
+        if (statsRes.status === 401) {
+            throw redirect(302, '/auth');
+        }
+        if (!statsRes.ok) {
+            throw new Error(`Failed to fetch dashboard stats: ${statsRes.status} ${statsRes.statusText}`);
+        }
+        const stats: DashboardStats = await statsRes.json();
+        return {
+            stats,
+            recentBookings: [],
+            upcomingBookings: []
+        };
+    } catch (err) {
+        if (isRedirect(err)) throw err;
+        console.error('Error loading dashboard data:', err);
+        throw error(503, 'Impossible de charger les données du tableau de bord. Veuillez réessayer.');
+    }
+};
+
 async function getMockDashboardData(): Promise<{
     stats: DashboardStats;
     recentBookings: RecentBooking[];
     upcomingBookings: UpcomingBooking[];
 }> {
-    // Mock stats
     const stats: DashboardStats = {
-        revenueThisWeek: 12500, // cents (€125.00)
+        revenueThisWeek: 12500,
         bookingsThisWeek: 12,
         upcomingBookingsCount: 8,
         pendingBookingsCount: 3,
         activeProductsCount: 15
     };
 
-    // Mock recent bookings
     const recentBookings: RecentBooking[] = [
         {
             id: '1',
@@ -86,7 +110,6 @@ async function getMockDashboardData(): Promise<{
         }
     ];
 
-    // Mock upcoming bookings
     const upcomingBookings: UpcomingBooking[] = [
         {
             id: '6',
@@ -117,28 +140,3 @@ async function getMockDashboardData(): Promise<{
     return { stats, recentBookings, upcomingBookings };
 }
 
-export const load: PageServerLoad = async () => {
-    const isDevelopment = env.NODE_ENV === 'development' || env.APP_ENV === 'development';
-
-    if (isDevelopment) {
-        return await getMockDashboardData();
-    }
-
-    // In staging/production, return empty data until backend endpoints are ready
-    // TODO: When backend admin endpoints are ready, switch to real API calls:
-    // const stats = await fetch(`${API_URL}/admin/stats`).then(r => r.json());
-    // const recentBookings = await fetch(`${API_URL}/admin/bookings?recent=5`).then(r => r.json());
-    // const upcomingBookings = await fetch(`${API_URL}/admin/bookings?upcoming=3`).then(r => r.json());
-
-    return {
-        stats: {
-            revenueThisWeek: 0,
-            bookingsThisWeek: 0,
-            upcomingBookingsCount: 0,
-            pendingBookingsCount: 0,
-            activeProductsCount: 0
-        },
-        recentBookings: [],
-        upcomingBookings: []
-    };
-};
