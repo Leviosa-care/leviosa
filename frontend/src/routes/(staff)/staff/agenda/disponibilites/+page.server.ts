@@ -1,4 +1,6 @@
 import type { PageServerLoad } from './$types';
+import { redirect, isRedirect } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 
 export interface Availability {
 	id: string;
@@ -17,65 +19,85 @@ export interface AvailabilityDay {
 	slots: Availability[];
 }
 
-function getMockAvailabilities(): AvailabilityDay[] {
-	const today = new Date();
-	today.setHours(0, 0, 0, 0);
-
-	function makeSlot(
-		dayOffset: number,
-		hour: number,
-		durationMin: number,
-		status: Availability['status'],
-		room: string,
-		clientName?: string,
-		productName?: string,
-	): Availability {
-		const d = new Date(today);
-		d.setDate(d.getDate() + dayOffset);
-		const start = new Date(d);
-		start.setHours(hour, 0, 0, 0);
-		const end = new Date(start.getTime() + durationMin * 60 * 1000);
-		return {
-			id: `slot-${dayOffset}-${hour}`,
-			date: d.toISOString().split('T')[0],
-			startTime: start.toISOString(),
-			endTime: end.toISOString(),
-			status,
-			roomName: room,
-			clientName,
-			productName,
-		};
+export const load: PageServerLoad = async ({ locals, url, fetch }) => {
+	if (!locals.user?.id) {
+		throw redirect(302, '/auth');
 	}
 
-	const days: AvailabilityDay[] = [];
-	const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+	const partnerId = locals.user.id;
 
-	for (let i = 0; i < 7; i++) {
-		const d = new Date(today);
-		d.setDate(d.getDate() + i);
-		const dayName = dayNames[d.getDay()];
-		const slots: Availability[] = [];
+	try {
+		const res = await fetch(`${env.API_URL}/partners/${partnerId}/availabilities`, {
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
 
-		if (d.getDay() !== 0) {
-			// Skip Sundays
-			slots.push(makeSlot(i, 9, 60, i === 0 ? 'booked' : 'available', 'Salle Sérénité', i === 0 ? 'Marie Dupont' : undefined, i === 0 ? 'Massage Relaxant 60min' : undefined));
-			slots.push(makeSlot(i, 10, 90, i <= 1 ? 'booked' : 'available', 'Salle Sérénité', i <= 1 ? 'Jean Durand' : undefined, i <= 1 ? 'Drainage Lymphatique 90min' : undefined));
-			slots.push(makeSlot(i, 14, 60, i === 2 ? 'cancelled' : 'available', 'Salle Harmonie', i === 2 ? 'Claire Bernard' : undefined, i === 2 ? 'Massage Relaxant 60min' : undefined));
-			slots.push(makeSlot(i, 15, 60, 'available', 'Salle Harmonie'));
-			slots.push(makeSlot(i, 17, 60, 'available', 'Salle Sérénité'));
+		if (res.status === 401) {
+			throw redirect(302, '/auth');
 		}
 
-		if (slots.length > 0) {
-			days.push({ date: d.toISOString().split('T')[0], dayName, slots });
+		if (!res.ok) {
+			console.error(`Failed to fetch availabilities: ${res.status} ${res.statusText}`);
+			return { availabilities: [] };
 		}
+
+		const data = await res.json();
+
+		if (!Array.isArray(data)) {
+			console.error('Invalid response format: expected array');
+			return { availabilities: [] };
+		}
+
+		const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
+		const slotsByDate = new Map<string, Availability[]>();
+
+		for (const slot of data) {
+			const startDate = new Date(slot.start_time);
+			const dateKey = startDate.toISOString().split('T')[0];
+
+			const availability: Availability = {
+				id: slot.id,
+				date: dateKey,
+				startTime: slot.start_time,
+				endTime: slot.end_time,
+				status: slot.status,
+				roomName: slot.room_id || 'Salle inconnue',
+				clientName: undefined,
+				productName: undefined,
+			};
+
+			if (!slotsByDate.has(dateKey)) {
+				slotsByDate.set(dateKey, []);
+			}
+			slotsByDate.get(dateKey)!.push(availability);
+		}
+
+		const availabilities: AvailabilityDay[] = [];
+		for (let i = 0; i < 7; i++) {
+			const d = new Date(today.getTime());
+			d.setDate(d.getDate() + i);
+			const dateKey = d.toISOString().split('T')[0];
+			const dayName = dayNames[d.getDay()];
+
+			const slots = slotsByDate.get(dateKey) || [];
+
+			if (slots.length > 0 || d.getDay() !== 0) {
+				availabilities.push({
+					date: dateKey,
+					dayName,
+					slots,
+				});
+			}
+		}
+
+		return { availabilities };
+	} catch (err) {
+		if (isRedirect(err)) throw err;
+		console.error('Error loading availabilities:', err);
+		return { availabilities: [] };
 	}
-
-	return days;
-}
-
-export const load: PageServerLoad = async () => {
-	// TODO: Replace with GET /partners/{partnerId}/availabilities
-	return {
-		availabilities: getMockAvailabilities(),
-	};
 };
