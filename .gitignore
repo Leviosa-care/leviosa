@@ -19,3 +19,5 @@ backend/app
 frontend/.env
 
 IMPLEMENTATION_CHECKLIST.md
+
+docs/issues/
