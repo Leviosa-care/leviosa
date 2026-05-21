@@ -1,4 +1,6 @@
 import type { PageServerLoad } from './$types';
+import { redirect } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 
 export interface PartnerProfile {
 	id: string;
@@ -11,33 +13,102 @@ export interface PartnerProfile {
 	joinedAt: string;
 }
 
-function getMockProfile(): PartnerProfile {
-	return {
-		id: 'partner-1',
-		bio: 'Praticienne spécialisée en massage bien-être et drainage lymphatique, diplômée de l\'Institut Supérieur de Bien-Être de Paris. Passionnée par les thérapies manuelles et le soin du corps, j\'accompagne mes clients vers un équilibre physique et mental durable.',
-		experience:
-			'Plus de 8 ans d\'expérience en massage thérapeutique et bien-être. Formée aux techniques suédoises, californienne, et drainage lymphatique selon la méthode Vodder. Certifiée en aromathérapie appliquée. Ancienne praticienne au spa de l\'hôtel Le Royal Monceau (2016–2020), puis en cabinet libéral depuis 2020. Formation continue annuelle en techniques corporelles avancées.',
-		isVerified: true,
-		stripeOnboardingComplete: true,
-		categories: [
-			{ id: 'cat-1', name: 'Massage Bien-Être' },
-			{ id: 'cat-2', name: 'Drainage Lymphatique' },
-			{ id: 'cat-3', name: 'Thérapies Corporelles' },
-		],
-		products: [
-			{ id: 'prod-1', name: 'Massage Relaxant 60min' },
-			{ id: 'prod-2', name: 'Massage Relaxant 90min' },
-			{ id: 'prod-3', name: 'Drainage Lymphatique 90min' },
-			{ id: 'prod-4', name: 'Soin du Dos 60min' },
-		],
-		joinedAt: new Date(Date.now() - 420 * 24 * 3600 * 1000).toISOString(),
-	};
+interface PartnerResponse {
+	id: string;
+	bio: string;
+	experience: string;
+	created_at: string;
+	category_ids: string[];
+	product_ids: string[];
+	stripe_onboarding_complete: boolean;
 }
 
-export const load: PageServerLoad = async ({ locals }) => {
-	// TODO: Replace with GET /partners/me
+interface Category {
+	id: string;
+	name: string;
+}
+
+interface Product {
+	id: string;
+	name: string;
+}
+
+export const load: PageServerLoad = async ({ fetch }) => {
+	const partnerRes = await fetch(`${env.API_URL}/partners/me`, {
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	});
+
+	if (partnerRes.status === 401) {
+		throw redirect(302, '/auth');
+	}
+
+	if (!partnerRes.ok) {
+		if (partnerRes.status === 500) {
+			return {
+				profile: null,
+				error: 'Erreur serveur. Veuillez réessayer dans quelques instants.',
+			};
+		}
+		throw redirect(302, '/auth');
+	}
+
+	const partner: PartnerResponse = await partnerRes.json();
+
+	// Fetch all categories (public endpoint)
+	const categoriesRes = await fetch(`${env.API_URL}/categories`, {
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	});
+
+	let allCategories: Category[] = [];
+	if (categoriesRes.ok) {
+		allCategories = await categoriesRes.json();
+	}
+
+	// Fetch all products (public endpoint)
+	const productsRes = await fetch(`${env.API_URL}/products`, {
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	});
+
+	let allProducts: Product[] = [];
+	if (productsRes.ok) {
+		allProducts = await productsRes.json();
+	}
+
+	// Map category IDs to category objects with names
+	const partnerCategories = allCategories
+		.filter((cat) => partner.category_ids.includes(cat.id))
+		.map((cat) => ({
+			id: cat.id,
+			name: cat.name,
+		}));
+
+	// Map product IDs to product objects with names
+	const partnerProducts = allProducts
+		.filter((prod) => partner.product_ids.includes(prod.id))
+		.map((prod) => ({
+			id: prod.id,
+			name: prod.name,
+		}));
+
+	// Transform to frontend's expected shape
+	const profile: PartnerProfile = {
+		id: partner.id,
+		bio: partner.bio || '',
+		experience: partner.experience || '',
+		isVerified: true,
+		stripeOnboardingComplete: partner.stripe_onboarding_complete,
+		categories: partnerCategories,
+		products: partnerProducts,
+		joinedAt: partner.created_at,
+	};
+
 	return {
-		user: locals.user,
-		profile: getMockProfile(),
+		profile,
 	};
 };

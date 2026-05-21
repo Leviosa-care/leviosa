@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
-	import { BadgeCheck, Pencil, Mail, MapPin, Phone, Tag, Package } from '@lucide/svelte';
+	import { BadgeCheck, Pencil, Mail, MapPin, Phone, Tag, Package, AlertCircle } from '@lucide/svelte';
 
 	let { data }: PageProps = $props();
 
 	let editingBio = $state(false);
 	let editingExperience = $state(false);
-	let bioValue = $state(data.profile.bio);
-	let experienceValue = $state(data.profile.experience);
+	let bioValue = $state(data.profile?.bio ?? '');
+	let experienceValue = $state(data.profile?.experience ?? '');
 
 	function formatDate(iso: string): string {
 		return new Date(iso).toLocaleDateString('fr-FR', {
@@ -33,6 +33,28 @@
 		<h1 class="text-3xl lg:text-4xl font-bold mb-1 text-foreground">Mon profil</h1>
 		<p class="text-muted-foreground">Gérez vos informations de praticien</p>
 	</div>
+
+	{#if data.error}
+		<div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+			<div class="flex items-center gap-3">
+				<AlertCircle class="text-red-600" size={20} />
+				<div>
+					<h2 class="font-semibold text-red-900">Erreur de chargement</h2>
+					<p class="text-sm text-red-700">{data.error}</p>
+				</div>
+			</div>
+		</div>
+	{:else if !data.profile}
+		<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+			<div class="flex items-center gap-3">
+				<AlertCircle class="text-yellow-600" size={20} />
+				<div>
+					<h2 class="font-semibold text-yellow-900">Profil non disponible</h2>
+					<p class="text-sm text-yellow-700">Votre profil n'a pas pu être chargé. Veuillez réessayer.</p>
+				</div>
+			</div>
+		</div>
+	{:else}
 
 	<!-- Profile Header -->
 	<div class="bg-card rounded-lg border border-border p-6 mb-6">
@@ -235,4 +257,5 @@
 			</div>
 		</div>
 	</div>
+	{/if}
 </div>
