@@ -35,11 +35,13 @@ func NewSMTPClient(config SMTPConfig) ports.EmailService {
 
 func (c *SMTPClient) SendOTPEmail(ctx context.Context, req domain.OTPEmailRequest) error {
 	data := struct {
-		OTP  string
-		Year int
+		OTP     string
+		Year    int
+		LogoURL string
 	}{
-		OTP:  req.OTP,
-		Year: time.Now().Year(),
+		OTP:     req.OTP,
+		Year:    time.Now().Year(),
+		LogoURL: req.LogoURL,
 	}
 
 	emailReq := &domain.EmailRequest{
@@ -58,11 +60,13 @@ func (c *SMTPClient) SendWelcomeEmail(ctx context.Context, req domain.WelcomeEma
 		LastName    string
 		CompanyName string
 		Year        int
+		LogoURL     string
 	}{
 		FirstName:   req.ToFirstName,
 		LastName:    req.ToLastName,
 		CompanyName: req.CompanyName,
 		Year:        time.Now().Year(),
+		LogoURL:     req.LogoURL,
 	}
 
 	emailReq := &domain.EmailRequest{
@@ -81,11 +85,13 @@ func (c *SMTPClient) SendVerifyEmailEmail(ctx context.Context, req domain.Verify
 		LastName    string
 		CompanyName string
 		Year        int
+		LogoURL     string
 	}{
 		FirstName:   req.ToFirstName,
 		LastName:    req.ToLastName,
 		CompanyName: req.CompanyName,
 		Year:        time.Now().Year(),
+		LogoURL:     req.LogoURL,
 	}
 
 	emailReq := &domain.EmailRequest{
@@ -106,6 +112,7 @@ func (c *SMTPClient) SendEventNotificationEmail(ctx context.Context, req domain.
 		Details     string
 		CompanyName string
 		Year        int
+		LogoURL     string
 	}{
 		FirstName:   req.ToFirstName,
 		LastName:    req.ToLastName,
@@ -113,6 +120,7 @@ func (c *SMTPClient) SendEventNotificationEmail(ctx context.Context, req domain.
 		Details:     req.Details,
 		CompanyName: req.CompanyName,
 		Year:        time.Now().Year(),
+		LogoURL:     req.LogoURL,
 	}
 
 	emailReq := &domain.EmailRequest{
@@ -134,6 +142,7 @@ func (c *SMTPClient) SendPaymentNotificationEmail(ctx context.Context, req domai
 		PaymentDate string
 		CompanyName string
 		Year        int
+		LogoURL     string
 	}{
 		FirstName:   req.ToFirstName,
 		LastName:    req.ToLastName,
@@ -142,6 +151,7 @@ func (c *SMTPClient) SendPaymentNotificationEmail(ctx context.Context, req domai
 		PaymentDate: req.PaymentDate,
 		CompanyName: req.CompanyName,
 		Year:        time.Now().Year(),
+		LogoURL:     req.LogoURL,
 	}
 
 	emailReq := &domain.EmailRequest{

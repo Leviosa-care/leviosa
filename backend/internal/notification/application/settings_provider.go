@@ -68,11 +68,18 @@ func (sp *settingsProvider) GetCompanyInstagram(ctx context.Context) (string, er
 	return resp.Instagram, nil
 }
 
-func (sp *settingsProvider) GetCompanyLogo(ctx context.Context) ([]byte, error) {
-	// TODO: Settings service returns LogoURL not LogoData
-	// Need to implement fetching logo from S3/URL or change interface to return URL
-	// For now, return empty to allow compilation
-	return nil, nil
+func (sp *settingsProvider) GetCompanyLogo(ctx context.Context) (string, error) {
+	if cached, valid := sp.cache.Get("company_logo"); valid {
+		return cached.(string), nil
+	}
+
+	resp, err := sp.settingsService.GetCompanyLogo(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get company logo: %w", err)
+	}
+
+	sp.cache.Set("company_logo", resp.LogoURL, sp.cacheTTL)
+	return resp.LogoURL, nil
 }
 
 func (sp *settingsProvider) GetCompanyTelephone(ctx context.Context) (string, error) {

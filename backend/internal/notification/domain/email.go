@@ -5,6 +5,7 @@ type OTPEmailRequest struct {
 	ToEmail   string `json:"to_email"`
 	OTP       string `json:"otp"`
 	FromEmail string `json:"from_email"`
+	LogoURL   string `json:"logo_url"`
 }
 
 // Welcome Email
@@ -14,6 +15,7 @@ type WelcomeEmailRequest struct {
 	ToLastName  string `json:"to_last_name"`
 	FromEmail   string `json:"from_email"`
 	CompanyName string `json:"company_name"`
+	LogoURL     string `json:"logo_url"`
 }
 
 // Verify Email
@@ -23,6 +25,7 @@ type VerifyEmailRequest struct {
 	ToLastName  string `json:"to_last_name"`
 	FromEmail   string `json:"from_email"`
 	CompanyName string `json:"company_name"`
+	LogoURL     string `json:"logo_url"`
 }
 
 // Event Notification
@@ -34,6 +37,7 @@ type EventNotificationRequest struct {
 	Details     string `json:"details"`
 	FromEmail   string `json:"from_email"`
 	CompanyName string `json:"company_name"`
+	LogoURL     string `json:"logo_url"`
 }
 
 // Payment Notification
@@ -46,6 +50,7 @@ type PaymentNotificationRequest struct {
 	PaymentDate string `json:"payment_date"`
 	FromEmail   string `json:"from_email"`
 	CompanyName string `json:"company_name"`
+	LogoURL     string `json:"logo_url"`
 }
 
 // EmailRequest is the generic email structure used by SMTP client

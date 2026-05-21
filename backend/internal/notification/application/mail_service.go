@@ -27,10 +27,16 @@ func (s *MailService) SendOTPEmail(ctx context.Context, email, otp string) error
 		return fmt.Errorf("failed to get company email for OTP: %w", err)
 	}
 
+	logoURL, err := s.settingsProvider.GetCompanyLogo(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get company logo for OTP: %w", err)
+	}
+
 	request := domain.OTPEmailRequest{
 		ToEmail:   email,
 		OTP:       otp,
 		FromEmail: companyEmail,
+		LogoURL:   logoURL,
 	}
 
 	if err := s.emailClient.SendOTPEmail(ctx, request); err != nil {
@@ -51,12 +57,18 @@ func (s *MailService) SendWelcomeEmail(ctx context.Context, email, firstName, la
 		return fmt.Errorf("failed to get company name for welcome: %w", err)
 	}
 
+	logoURL, err := s.settingsProvider.GetCompanyLogo(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get company logo for welcome: %w", err)
+	}
+
 	request := domain.WelcomeEmailRequest{
 		ToEmail:     email,
 		ToFirstName: firstName,
 		ToLastName:  lastName,
 		FromEmail:   companyEmail,
 		CompanyName: companyName,
+		LogoURL:     logoURL,
 	}
 
 	if err := s.emailClient.SendWelcomeEmail(ctx, request); err != nil {
@@ -77,12 +89,18 @@ func (s *MailService) SendVerifyEmailEmail(ctx context.Context, email, firstName
 		return fmt.Errorf("failed to get company name for verification: %w", err)
 	}
 
+	logoURL, err := s.settingsProvider.GetCompanyLogo(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get company logo for verification: %w", err)
+	}
+
 	request := domain.VerifyEmailRequest{
 		ToEmail:     email,
 		ToFirstName: firstName,
 		ToLastName:  lastName,
 		FromEmail:   companyEmail,
 		CompanyName: companyName,
+		LogoURL:     logoURL,
 	}
 
 	if err := s.emailClient.SendVerifyEmailEmail(ctx, request); err != nil {
@@ -103,6 +121,11 @@ func (s *MailService) SendEventNotificationEmail(ctx context.Context, email, fir
 		return fmt.Errorf("failed to get company name for event notification: %w", err)
 	}
 
+	logoURL, err := s.settingsProvider.GetCompanyLogo(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get company logo for event notification: %w", err)
+	}
+
 	request := domain.EventNotificationRequest{
 		ToEmail:     email,
 		ToFirstName: firstName,
@@ -111,6 +134,7 @@ func (s *MailService) SendEventNotificationEmail(ctx context.Context, email, fir
 		Details:     eventDetails,
 		FromEmail:   companyEmail,
 		CompanyName: companyName,
+		LogoURL:     logoURL,
 	}
 
 	if err := s.emailClient.SendEventNotificationEmail(ctx, request); err != nil {
@@ -131,6 +155,11 @@ func (s *MailService) SendPaymentNotificationEmail(ctx context.Context, email, f
 		return fmt.Errorf("failed to get company name for payment notification: %w", err)
 	}
 
+	logoURL, err := s.settingsProvider.GetCompanyLogo(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get company logo for payment notification: %w", err)
+	}
+
 	request := domain.PaymentNotificationRequest{
 		ToEmail:     email,
 		ToFirstName: firstName,
@@ -140,6 +169,7 @@ func (s *MailService) SendPaymentNotificationEmail(ctx context.Context, email, f
 		PaymentDate: paymentDate,
 		FromEmail:   companyEmail,
 		CompanyName: companyName,
+		LogoURL:     logoURL,
 	}
 
 	if err := s.emailClient.SendPaymentNotificationEmail(ctx, request); err != nil {
