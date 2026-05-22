@@ -2,10 +2,10 @@
 	import { enhance } from "$app/forms";
 	import { goto } from "$app/navigation";
 	import { ArrowLeft, Package, Clock, MapPin, Calendar, FileText, Tag, DollarSign, Upload, X, ImageIcon } from "@lucide/svelte";
-	import type { PageData } from "./$types";
+	import type { PageData, ActionData } from "./$types";
 	import { getToastContext } from "$lib/components/toast";
 
-	let { data }: { data: PageData } = $props();
+	let { data, form }: { data: PageData, form: ActionData } = $props();
 
 	const toast = getToastContext();
 
@@ -44,10 +44,7 @@
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) {
-			// For now, just create a preview URL
-			// TODO: Implement actual upload to backend/S3
 			imagePreview = URL.createObjectURL(file);
-			imageUrl = imagePreview; // This would be the uploaded URL in production
 		}
 	}
 

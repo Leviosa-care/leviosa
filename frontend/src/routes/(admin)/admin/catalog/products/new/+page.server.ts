@@ -1,5 +1,5 @@
 import type { Actions, PageServerLoad } from './$types';
-import { redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { arktype } from 'sveltekit-superforms/adapters';
 import { superValidate } from 'sveltekit-superforms';
 import { env } from '$env/dynamic/private';
@@ -22,6 +22,32 @@ function mapBackendCategoryToFrontend(cat: BackendCategory): Category {
 	};
 }
 
+interface CreateProductRequest {
+	name: string;
+	description: string;
+	categoryId: string;
+	duration: number;
+	price: number;
+	status: 'published' | 'draft' | 'archived';
+	availability: 'online' | 'in-person' | 'hybrid';
+	bufferTime: number;
+	cancellationHours: number;
+	stripeProductId?: string;
+}
+
+interface CreateProductResponse {
+	id: string;
+	name: string;
+	description: string;
+	categoryId: string;
+	duration: number;
+	price: number;
+	status: string;
+	availability: string;
+	bufferTime: number;
+	cancellationHours: number;
+}
+
 export const load: PageServerLoad = async ({ fetch }) => {
 	const createProductForm = await superValidate(arktype(productSchema, { defaults: productDefaults }));
 
@@ -35,8 +61,8 @@ export const load: PageServerLoad = async ({ fetch }) => {
 			if (!res.ok) throw new Error(`Failed to fetch categories: ${res.status} ${res.statusText}`);
 			const backendCategories: BackendCategory[] = await res.json();
 			categories = backendCategories.map(mapBackendCategoryToFrontend);
-		} catch (error) {
-			console.error('Error loading categories:', error);
+		} catch (err) {
+			console.error('Error loading categories:', err);
 			categories = [];
 		}
 	}
@@ -48,36 +74,74 @@ export const load: PageServerLoad = async ({ fetch }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request }) => {
+	default: async ({ request, fetch }) => {
 		const formData = await request.formData();
-		const name = formData.get('name');
-		const description = formData.get('description');
-		const categoryId = formData.get('categoryId');
-		const duration = formData.get('duration');
-		const price = formData.get('price');
-		const status = formData.get('status');
-		const availability = formData.get('availability');
-		const bufferTime = formData.get('bufferTime');
-		const cancellationHours = formData.get('cancellationHours');
-		const imageUrl = formData.get('imageUrl');
-		const stripeProductId = formData.get('stripeProductId');
 
-		// TODO: Connect to backend API
-		console.log('Creating product:', {
+		const name = formData.get('name') as string;
+		const description = formData.get('description') as string;
+		const categoryId = formData.get('categoryId') as string;
+		const duration = formData.get('duration') as string;
+		const price = formData.get('price') as string;
+		const status = formData.get('status') as 'published' | 'draft' | 'archived';
+		const availability = formData.get('availability') as 'online' | 'in-person' | 'hybrid';
+		const bufferTime = formData.get('bufferTime') as string;
+		const cancellationHours = formData.get('cancellationHours') as string;
+		const stripeProductId = formData.get('stripeProductId') as string | null;
+
+		const requestBody: CreateProductRequest = {
 			name,
 			description,
 			categoryId,
-			duration,
-			price,
+			duration: parseInt(duration, 10),
+			price: parseFloat(price),
 			status,
 			availability,
-			bufferTime,
-			cancellationHours,
-			imageUrl,
-			stripeProductId
-		});
+			bufferTime: parseInt(bufferTime, 10),
+			cancellationHours: parseInt(cancellationHours, 10),
+		};
 
-		// For now, just redirect back to catalog
-		throw redirect(303, '/admin/catalog?success=true');
+		if (stripeProductId) {
+			requestBody.stripeProductId = stripeProductId;
+		}
+
+		try {
+			const res = await fetch(`${env.API_URL}/admin/products`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(requestBody),
+			});
+
+			if (!res.ok) {
+				if (res.status === 401) return fail(401, { error: 'Session expirée. Veuillez vous reconnecter.' });
+				if (res.status === 403) return fail(403, { error: "Vous n'avez pas les droits pour effectuer cette action." });
+				if (res.status === 404) return fail(404, { error: "La ressource demandée est introuvable." });
+				if (res.status === 409) return fail(409, { error: "Cette ressource est déjà utilisée." });
+				if (res.status === 500) return fail(500, { error: "Une erreur serveur est survenue. Veuillez réessayer." });
+				const errorData = await res.json().catch(() => ({ msg: 'Erreur inconnue' }));
+				return fail(400, { error: `Erreur: ${errorData.msg || res.status}` });
+			}
+
+			const product: CreateProductResponse = await res.json();
+
+			const imageFile = formData.get('imageFile') as File | null;
+			if (imageFile && imageFile.size > 0) {
+				const imageFormData = new FormData();
+				imageFormData.append('image', imageFile);
+
+				const imageRes = await fetch(`${env.API_URL}/admin/products/${product.id}/images`, {
+					method: 'POST',
+					body: imageFormData,
+				});
+
+				if (!imageRes.ok) {
+					console.error('Image upload failed after product creation:', imageRes.status);
+				}
+			}
+
+			return { success: true };
+		} catch (e) {
+			console.error('Product creation failed:', e);
+			return fail(500, { error: 'Une erreur est survenue lors de la création du produit.' });
+		}
 	},
 };
