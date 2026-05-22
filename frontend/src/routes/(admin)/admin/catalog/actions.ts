@@ -33,20 +33,19 @@ export async function createCategory({ request, fetch }: RequestEvent) {
     console.log("fetch to golang backend done")
     if (!res.ok) {
         switch (res.status) {
-            // 409 (conflit) : if the ressource already exists
-            // 201 (created) : if the ressource already exists
-            // 400 (bad request) : mal formed input, invalid format
-            // 403 (forbidden) : request is valid but user is not allowed
-            // 401 (unauthorized) : user is not authenticated
-            // 405 (Method not allowed) : method not allowed
-            // 500 (Internal Server error) : server error, something broke
+            case 403:
+                return setError(formValidated, "Vous n'avez pas les droits pour effectuer cette action.")
+            case 404:
+                return setError(formValidated, "La ressource demandée est introuvable.")
+            case 409:
+                return setError(formValidated, "Cette ressource est déjà utilisée et ne peut pas être supprimée.")
             case 500:
                 return setError(formValidated, "Une erreur serveur est survenue. Le service semble momentanément indisponible.")
             case 400:
                 const errorMsg = await res.json()
                 return setError(formValidated, "La requête que vous avez soumise contient des données incorrectes ou incomplètes. Veuillez vérifier les champs saisis et réessayer.", errorMsg.msg);
             default:
-                return setError(formValidated, "Une error sauvage apparait");
+                return setError(formValidated, "Une erreur est survenue. Veuillez réessayer.");
         }
     }
     console.log("Category successfully created. The status found is:", res.status)
@@ -68,21 +67,19 @@ export async function deleteCategory({ request, fetch }: RequestEvent) {
     console.log("fetch to golang backend done")
     if (!res.ok) {
         switch (res.status) {
-            // TODO: handle the status for this
-            // 204 (no content) : if the ressource is removed
-            // 400 (bad request) : mal formed input, invalid format for the UUID for example
-            // 401 (unauthorized) : user is not authenticated
-            // 403 (forbidden) : request is valid but user is not allowed
-            // 404 (not found) : can not delete something that does not exists already
-            // 409 (conflict) : if the ressource is used somewhere and that it would create a conflit
-            // 500 (Internal Server error) : server error, something broke
+            case 403:
+                return setError(form, "Vous n'avez pas les droits pour effectuer cette action.")
+            case 404:
+                return setError(form, "La ressource demandée est introuvable.")
+            case 409:
+                return setError(form, "Cette ressource est déjà utilisée et ne peut pas être supprimée.")
             case 500:
                 return setError(form, "Une erreur serveur est survenue. Le service semble momentanément indisponible.")
             case 400:
                 const errorMsg = await res.json()
                 return setError(form, "La requête que vous avez soumise contient des données incorrectes ou incomplètes. Veuillez vérifier les champs saisis et réessayer.", errorMsg.msg);
             default:
-                return setError(form, "Une error sauvage apparait");
+                return setError(form, "Une erreur est survenue. Veuillez réessayer.");
         }
     }
     console.log("Category successfully removed. The status found is:", res.status)
@@ -138,20 +135,20 @@ export async function createProduct({ request, fetch }: RequestEvent) {
 
     if (!res.ok) {
         console.log("Something went wrong with the API response, status:", res.status)
-        // TODO: find the best status here because this is what I need
         switch (res.status) {
+            case 403:
+                return setError(formValidated, "Vous n'avez pas les droits pour effectuer cette action.")
+            case 404:
+                return setError(formValidated, "La ressource demandée est introuvable.")
+            case 409:
+                return setError(formValidated, "Cette ressource est déjà utilisée et ne peut pas être supprimée.")
             case 500:
                 return setError(formValidated, "Une erreur serveur est survenue. Le service semble momentanément indisponible.")
-            // TODO: use some of these because there might be somewhat useful
-            // case 422:
-            // // something went wrong with validating the data. I might need to parse that thing
-            // case 429:
-            //     return setError(formValidated, "Trop de tentatives. Veuillez réessayer plus tard.");
-            // case 409:
-            // the product exists and so there is no need to create one
             case 400:
                 const errorMsg = await res.json()
                 return setError(formValidated, "La requête que vous avez soumise contient des données incorrectes ou incomplètes. Veuillez vérifier les champs saisis et réessayer.", errorMsg);
+            default:
+                return setError(formValidated, "Une erreur est survenue. Veuillez réessayer.");
         }
     }
     console.log("Product successfully created.")
@@ -160,8 +157,6 @@ export async function createProduct({ request, fetch }: RequestEvent) {
         success: true,
     }
 }
-
-// TODO: Not done yet
 
 export async function deleteProduct({ request, fetch }: RequestEvent) {
     const form = await superValidate(request, arktype(deleteProductSchema, { defaults: deleteProductDefaults }))
@@ -174,17 +169,19 @@ export async function deleteProduct({ request, fetch }: RequestEvent) {
 
     if (!res.ok) {
         switch (res.status) {
-            // TODO: find the best status here because this is what I need
+            case 403:
+                return setError(form, "Vous n'avez pas les droits pour effectuer cette action.")
+            case 404:
+                return setError(form, "La ressource demandée est introuvable.")
+            case 409:
+                return setError(form, "Cette ressource est déjà utilisée et ne peut pas être supprimée.")
             case 500:
                 return setError(form, "Une erreur serveur est survenue. Le service semble momentanément indisponible.")
-            case 422:
-            // something went wrong with validating the data. I might need to parse that thing
-            case 429:
-                return setError(form, "Trop de tentatives. Veuillez réessayer plus tard.");
-            case 409:
-            // the user exists
             case 400:
-                return setError(form, "Format d'adresse e-mail invalide. Veuillez vérifier.");
+                const errorMsg = await res.json()
+                return setError(form, "La requête que vous avez soumise contient des données incorrectes ou incomplètes. Veuillez vérifier les champs saisis et réessayer.", errorMsg.msg);
+            default:
+                return setError(form, "Une erreur est survenue. Veuillez réessayer.");
         }
     }
     return {
