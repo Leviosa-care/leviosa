@@ -1,4 +1,4 @@
-// import type { LayoutServerLoad, RequestEvent } from './$types'; import type { RequestEvent } from "@sveltejs/kit"
+import type { RequestEvent } from "@sveltejs/kit";
 import { mockUser } from "$lib/data/user";
 
 

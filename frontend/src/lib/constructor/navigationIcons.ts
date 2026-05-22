@@ -117,11 +117,11 @@ export const admin: IconsByRole = {
 
 export const navigationBarIcons: NavigationBarIcons = {
     visitor,
-    standard,
+    standard: basic,
     premium,
     guest,
-    partners,
-    admin
+    partner: partners,
+    administrator: admin,
     // TODO: add as many role as needed
     // bodyguard: {},
     // photograph: {},
