@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-    <title>Leviosa — Mes Réservations</title>
+    <title>Leviosa — Mes réservations</title>
     <meta name="robots" content="noindex" />
     <meta http-equiv={httpEquivCacheControl} content="no-store, no-cache, must-revalidate" />
     <meta http-equiv={httpEquivPragma} content="no-cache" />
@@ -18,7 +18,7 @@
             Leviosa
         </h1>
         <p class="text-xl font-semibold mb-4">
-            Mes Réservations
+            Mes réservations
         </p>
         <p class="text-sm tracking-wide" style="color: var(--dark-300);">
             Cette fonctionnalité est en cours de développement.

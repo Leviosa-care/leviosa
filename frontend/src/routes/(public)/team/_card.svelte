@@ -33,7 +33,7 @@
             <Button
                 class="border border-dark-900 px-6 py-3 md:px-12 md:py-6 bg-transparent text-dark-900 hover:text-dark-800 rounded-2xl text-sm md:text-base"
             >
-                <p>Reserver</p>
+                <p>Réserver</p>
             </Button>
         </div>
     </div>

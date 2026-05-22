@@ -21,8 +21,8 @@
     const items: NavItem[] = [
         { link: "/services", title: "Services" },
         { link: "/team", title: "L’équipe" },
-        { link: "/about", title: "À propos " },
-        { link: "/bookings", title: "Mes Réservations" },
+        { link: "/about", title: "À propos" },
+        { link: "/bookings", title: "Mes réservations" },
     ];
     // Services · L’équipe · À propos · Réserver
 
@@ -99,7 +99,7 @@
 
     <!-- Desktop Actions (hidden below 1280px) -->
     <div class="hidden xl:flex xl:gap-4 xl:items-center xl:justify-end">
-        <Button class="text-white">Reserver maintenant</Button>
+        <Button class="text-white">Réserver maintenant</Button>
         <Button class="bg-white border border-dark-900 hover:bg-dark-50">
             <a href={secondaryButtonLink}>
                 {secondaryButtonText}
@@ -150,7 +150,7 @@
         <div class="flex flex-col gap-3">
             <Button
                 class="w-full inline-flex justify-center items-center px-8 py-3.5 bg-dark-900 hover:bg-dark-800 text-background text-sm sm:text-base font-medium transition-all duration-200 shadow-sm hover:shadow-md ring-offset-2 focus:ring-2 focus:ring-dark-900"
-                >Reserver maintenant</Button
+                >Réserver maintenant</Button
             >
             <Button
                 class="w-full bg-background border border-dark-900 hover:bg-dark-50 px-8 py-3.5 rounded-xl"
