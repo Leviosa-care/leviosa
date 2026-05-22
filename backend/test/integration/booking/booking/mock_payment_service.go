@@ -84,3 +84,17 @@ func (m *MockPaymentService) CancelPaymentIntent(ctx context.Context, paymentInt
 	intent.Status = ports.PaymentIntentStatusCanceled
 	return nil
 }
+
+// VerifyWebhookSignature mocks verifying a webhook signature
+func (m *MockPaymentService) VerifyWebhookSignature(payload []byte, signature string) (*ports.WebhookEvent, error) {
+	// For testing purposes, always return a valid webhook event
+	return &ports.WebhookEvent{
+		ID:              "evt_test_" + uuid.New().String(),
+		Type:            "payment_intent.succeeded",
+		PaymentIntentID: "pi_test_" + uuid.New().String(),
+		Status:          "succeeded",
+		Amount:          1000,
+		Currency:        "usd",
+		Metadata:        make(map[string]string),
+	}, nil
+}

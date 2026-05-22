@@ -19,7 +19,9 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
 
 	productService "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/product"
+	priceService "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/price"
 	productPostgres "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/product"
+	pricePostgres "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/price"
 	sharedPostgres "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/postgres/shared"
 	pricePayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/price"
 	productPayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/product"
@@ -193,14 +195,17 @@ func TestMain(m *testing.M) {
 	productStripe := productPayment.NewProduct(stripeTestKey, stripeBaseURL)
 	priceStripe := pricePayment.NewPrice(stripeTestKey, stripeBaseURL)
 
-	catalogProductService := productService.New(productRepo, sharedRepo, productStripe, priceStripe)
+	catalogProductService := productService.New(productRepo, sharedRepo, productStripe, priceStripe, nil)
 
-	service = bookingService.New(bookingRepo, availabilityRepo, paymentService, catalogProductService, crypto)
+	catalogPriceRepo := pricePostgres.New(ctx, testPool)
+	catalogPriceService := priceService.New(catalogPriceRepo, sharedRepo, priceStripe)
+
+	service = bookingService.New(bookingRepo, availabilityRepo, paymentService, catalogProductService, catalogPriceService, nil, crypto)
 
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
 
-	handler = bookingHandler.New(service, authmw)
+	handler = bookingHandler.New(service, paymentService, authmw)
 
 	// Set required environment variables for logger middleware
 	os.Setenv("CLIENT_IP_HEADER", "X-Forwarded-For")

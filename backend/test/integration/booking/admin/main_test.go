@@ -170,7 +170,7 @@ func TestMain(m *testing.M) {
 	productStripe := productPayment.NewProduct(stripeTestKey, stripeBaseURL)
 	priceStripe := pricePayment.NewPrice(stripeTestKey, stripeBaseURL)
 
-	catalogProductService := productService.New(productRepo, sharedRepo, productStripe, priceStripe)
+	catalogProductService := productService.New(productRepo, sharedRepo, productStripe, priceStripe, nil)
 
 	priceRepo := pricePostgres.New(ctx, testPool)
 	catalogPriceService := priceService.New(priceRepo, sharedRepo, priceStripe)

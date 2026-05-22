@@ -197,7 +197,7 @@ func TestMain(m *testing.M) {
 	productRepo := productPostgres.New(ctx, testPool)
 	sharedRepo := sharedPostgres.New(ctx, testPool)
 	// Pass nil for Stripe gateways - not needed for read-only product queries in availability tests
-	productService = productSvc.New(productRepo, sharedRepo, nil, nil)
+	productService = productSvc.New(productRepo, sharedRepo, nil, nil, nil)
 
 	service = availabilityService.New(availabilityRepo, allocationRepo, roomRepo, roomScheduleRepo, productService, crypto)
 
