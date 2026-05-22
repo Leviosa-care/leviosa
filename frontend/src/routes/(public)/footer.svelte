@@ -16,7 +16,7 @@
             <Instagram class="w-5 h-5" />
         </a>
         <p class="text-dark-900 font-medium text-xs sm:text-base">
-            © Leviosa Care. All rights reserved
+            © Leviosa Care. Tous droits réservés
         </p>
     </div>
 </div>

@@ -1,5 +1,5 @@
 <svelte:head>
-    <title>Leviosa — Coming Soon</title>
+    <title>Leviosa — À Venir</title>
     <meta name="robots" content="noindex" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -11,7 +11,7 @@
             Leviosa
         </h1>
         <p class="text-sm tracking-widest uppercase" style="color: var(--dark-300);">
-            Something is being prepared &mdash; coming soon
+            Quelque chose est en préparation &mdash; à venir
         </p>
     </div>
 </div>
