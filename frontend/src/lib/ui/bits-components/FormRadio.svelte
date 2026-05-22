@@ -1,5 +1,5 @@
 <script lang="ts">
-    import * as RadioGroup from "bits-ui";
+    import { RadioGroup } from "bits-ui";
     import { cn } from "$lib/utils/design-system";
 
     interface Option {
@@ -38,7 +38,12 @@
     // Generate unique ID if not provided
     name = name || `radio-${Math.random().toString(36).substring(2, 9)}`;
 
-    let valueBinding = $bindable(value);
+    let valueBinding = $state(value);
+
+    // Sync valueBinding with the bindable value
+    $effect(() => {
+        value = valueBinding;
+    });
 </script>
 
 <div class="space-y-3">
@@ -70,13 +75,11 @@
                     value={option.value}
                     disabled={option.disabled}
                     id={`${name}-${option.value}`}
-                    class="aspect-square h-4 w-4 rounded-full border border-input text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    class="aspect-square h-4 w-4 rounded-full border border-input text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:border-primary relative"
                 >
-                    <RadioGroup.Indicator
-                        class="flex items-center justify-center"
-                    >
-                        <div class="h-2 w-2 rounded-full bg-foreground" />
-                    </RadioGroup.Indicator>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="h-2 w-2 rounded-full bg-foreground opacity-0 data-[state=checked]:opacity-100" />
+                    </div>
                 </RadioGroup.Item>
                 <label
                     for={`${name}-${option.value}`}
@@ -106,4 +109,3 @@
         margin-left: 0.25rem;
     }
 </style>
-

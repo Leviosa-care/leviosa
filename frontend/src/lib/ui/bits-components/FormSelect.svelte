@@ -2,6 +2,12 @@
     import { Select } from "bits-ui";
     import { cn } from "$lib/utils/design-system";
     import { ChevronDown } from "@lucide/svelte";
+    import {
+        INPUT_VARIANTS,
+        INPUT_SIZES,
+        type InputVariantType,
+        type InputSizeType,
+    } from "./constants";
 
     interface Option {
         value: string;
@@ -19,8 +25,8 @@
         disabled?: boolean;
         required?: boolean;
         error?: string;
-        variant?: "default" | "error";
-        size?: "default" | "sm" | "lg";
+        variant?: InputVariantType;
+        size?: InputSizeType;
         class?: string;
     }
 
@@ -43,7 +49,15 @@
     // Generate unique ID if not provided
     id = id || `select-${Math.random().toString(36).substring(2, 9)}`;
 
-    let valueBinding = $bindable(value);
+    let valueBinding = $state(value);
+
+    // Sync valueBinding with the bindable value
+    $effect(() => {
+        value = valueBinding;
+    });
+
+    // Get the selected option label for display
+    let selectedLabel = $derived(options.find(opt => opt.value === valueBinding)?.label ?? "");
 </script>
 
 <div class="space-y-2">
@@ -60,7 +74,7 @@
         </label>
     {/if}
 
-    <Select.Root bind:value={valueBinding} {disabled}>
+    <Select.Root type="single" value={valueBinding} onValueChange={(v: string) => { valueBinding = v; }} {disabled}>
         <Select.Trigger
             {id}
             {name}
@@ -81,15 +95,18 @@
             )}
             {...restProps}
         >
-            <Select.Value {placeholder} />
-            <Select.Icon class="h-4 w-4 opacity-50">
-                <ChevronDown />
-            </Select.Icon>
+            <span class="flex-1 truncate">
+                {#if selectedLabel}
+                    {selectedLabel}
+                {:else}
+                    <span class="text-muted-foreground">{placeholder}</span>
+                {/if}
+            </span>
+            <ChevronDown class="h-4 w-4 opacity-50 pointer-events-none" />
         </Select.Trigger>
         <Select.Portal>
             <Select.Content
                 class="relative z-50 min-w-[8rem] overflow-hidden rounded-card border border-card bg-background text-foreground shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
-                position="popper"
                 sideOffset={4}
             >
                 <Select.Viewport class="p-1">
@@ -98,20 +115,11 @@
                             <Select.Item
                                 value={option.value}
                                 disabled={option.disabled}
-                                class="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                                class="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                             >
-                                <span
-                                    class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center"
-                                >
-                                    <Select.ItemIndicator>
-                                        <div
-                                            class="h-1.5 w-1.5 rounded-full bg-accent-foreground"
-                                        />
-                                    </Select.ItemIndicator>
-                                </span>
-                                <Select.ItemText>
+                                <span class="flex-1 truncate">
                                     {option.label}
-                                </Select.ItemText>
+                                </span>
                             </Select.Item>
                         {/each}
                     </Select.Group>

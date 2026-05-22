@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { Input } from "bits-ui";
     import { cn } from "$lib/utils/design-system";
     import {
         INPUT_VARIANTS,
@@ -58,7 +57,7 @@
     {/if}
 
     <div class="relative">
-        <Input.Root
+        <input
             bind:value
             {id}
             {name}

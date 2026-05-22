@@ -1,6 +1,5 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-
     import { Button } from "bits-ui";
     import { Eye, EyeOff } from "@lucide/svelte";
 
@@ -13,7 +12,7 @@
         value: string;
         error: string;
         showForgotPasswordbutton?: boolean;
-        autocomplete?: string;
+        autocomplete?: string | null | undefined;
     };
     let {
         name,
@@ -54,7 +53,7 @@
             id={name}
             type={resolvedInputType}
             {name}
-            {autocomplete}
+            autocomplete={autocomplete as any}
             bind:value
             aria-invalid={invalid}
             onfocus={() => (isFocused = true)}
