@@ -2,10 +2,10 @@
 	import { enhance } from "$app/forms";
 	import { goto } from "$app/navigation";
 	import { ArrowLeft, Package, Clock, MapPin, Calendar, FileText, Tag, DollarSign, X, ImageIcon } from "@lucide/svelte";
-	import type { PageData } from "./$types";
+	import type { PageData, ActionData } from "./$types";
 	import { getToastContext } from "$lib/components/toast";
 
-	let { data }: { data: PageData } = $props();
+	let { data, form }: { data: PageData, form: ActionData } = $props();
 
 	const toast = getToastContext();
 
@@ -33,6 +33,7 @@
 	// Image upload state
 	let imagePreview = $state<string | null>(data.product.image || null);
 	let isUploading = $state(false);
+	let imageFileInput = $state<HTMLInputElement>();
 
 	function updateProductEnhance() {
 		return async ({ result }: { result: import('@sveltejs/kit').ActionResult }) => {
@@ -45,6 +46,22 @@
 		};
 	}
 
+	function uploadImageEnhance() {
+		return async ({ result }: { result: import('@sveltejs/kit').ActionResult }) => {
+			isUploading = false;
+			if (result.type === 'redirect') {
+				goto(result.location);
+			} else if (result.type === 'success' && result.data && typeof result.data === 'object' && 'url' in result.data) {
+				imageUrl = (result.data as { url: string }).url;
+				imagePreview = imageUrl;
+				toast.success('Succès', 'Image téléchargée avec succès');
+			} else if (result.type === 'failure') {
+				toast.error('Erreur', 'Le téléchargement de l\'image a échoué');
+				imagePreview = null;
+			}
+		};
+	}
+
 	const categoriesWithoutDefault = data.categories.filter(c => c.id !== "default");
 
 	// Handle image file selection
@@ -52,10 +69,9 @@
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) {
-			// For now, just create a preview URL
-			// TODO: Implement actual upload to backend/S3
+			isUploading = true;
+			// Preview immediately
 			imagePreview = URL.createObjectURL(file);
-			imageUrl = imagePreview; // This would be the uploaded URL in production
 		}
 	}
 
@@ -66,9 +82,14 @@
 			for (const item of items) {
 				if (item.type.indexOf('image') !== -1) {
 					const file = item.getAsFile();
-					if (file) {
+					if (file && imageFileInput) {
+						const dataTransfer = new DataTransfer();
+						dataTransfer.items.add(file);
+						imageFileInput.files = dataTransfer.files;
+						isUploading = true;
 						imagePreview = URL.createObjectURL(file);
-						imageUrl = imagePreview;
+						// Trigger form submission
+						imageFileInput.form?.requestSubmit();
 					}
 				}
 			}
@@ -100,42 +121,25 @@
 		</p>
 	</div>
 
-	<div class="bg-background rounded-lg border border-border-card p-6 lg:p-8">
-		<form method="POST" use:enhance={updateProductEnhance} class="space-y-6">
-			<!-- Image Upload -->
-			<div>
-				<label class="block text-sm font-medium text-foreground-alt mb-2">
-					Image du Produit
-				</label>
-				<p class="text-xs text-muted-foreground mb-3">
-					Téléchargez une image ou collez une URL. Max 10 Mo.
-				</p>
-
-				{#if imagePreview}
-					<div class="relative w-full aspect-video max-h-96 bg-muted rounded-lg overflow-hidden border border-border-card">
-						<img
-							src={imagePreview}
-							alt="Aperçu de l'image"
-							class="w-full h-full object-contain"
-						/>
-						<button
-							type="button"
-							onclick={removeImage}
-							class="absolute top-3 right-3 p-2 bg-black/60 hover:bg-red-600 text-white rounded-lg transition-colors"
-							aria-label="Supprimer l'image"
-						>
-							<X size={16} />
-						</button>
-					</div>
-					<input type="hidden" name="imageUrl" value={imageUrl} />
-				{:else}
+	<!-- Image Upload Form (separate from main form) -->
+	{#if !imagePreview}
+		<div class="mb-6">
+			<form method="POST" action="?/uploadImage" use:enhance={uploadImageEnhance}>
+				<div class="bg-background rounded-lg border border-border-card p-6">
+					<label class="block text-sm font-medium text-foreground-alt mb-2">
+						Image du Produit
+					</label>
+					<p class="text-xs text-muted-foreground mb-3">
+						Téléchargez une image ou collez une URL. Max 10 Mo.
+					</p>
 					<div
 						class="relative w-full aspect-video max-h-96 bg-muted rounded-lg border-2 border-dashed border-border-card flex flex-col items-center justify-center cursor-pointer hover:border-foreground/30 transition-colors"
 						onpaste={handleImagePaste}
 					>
 						<input
+							bind:this={imageFileInput}
 							type="file"
-							name="imageFile"
+							name="image"
 							accept="image/*"
 							onchange={handleImageSelect}
 							class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -156,11 +160,42 @@
 							<p class="text-xs text-muted-foreground">
 								JPEG, PNG, WebP · max 10 Mo
 							</p>
+							{#if isUploading}
+								<p class="text-xs text-foreground">Téléchargement en cours...</p>
+							{/if}
 						</div>
 					</div>
+				</div>
+			</form>
+		</div>
+	{/if}
+
+	<div class="bg-background rounded-lg border border-border-card p-6 lg:p-8">
+		<form method="POST" use:enhance={updateProductEnhance} class="space-y-6">
+			<!-- Image Display (when uploaded) -->
+			{#if imagePreview}
+				<div>
+					<label class="block text-sm font-medium text-foreground-alt mb-2">
+						Image du Produit
+					</label>
+					<div class="relative w-full aspect-video max-h-96 bg-muted rounded-lg overflow-hidden border border-border-card">
+						<img
+							src={imagePreview}
+							alt="Aperçu de l'image"
+							class="w-full h-full object-contain"
+						/>
+						<button
+							type="button"
+							onclick={removeImage}
+							class="absolute top-3 right-3 p-2 bg-black/60 hover:bg-red-600 text-white rounded-lg transition-colors"
+							aria-label="Supprimer l'image"
+						>
+							<X size={16} />
+						</button>
+					</div>
 					<input type="hidden" name="imageUrl" value={imageUrl} />
-				{/if}
-			</div>
+				</div>
+			{/if}
 
 			<!-- Name -->
 			<div>

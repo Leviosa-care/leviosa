@@ -1,5 +1,5 @@
 import type { Actions, PageServerLoad } from './$types';
-import { redirect, error } from '@sveltejs/kit';
+import { redirect, error, fail } from '@sveltejs/kit';
 import { arktype } from 'sveltekit-superforms/adapters';
 import { superValidate } from 'sveltekit-superforms';
 import { env } from '$env/dynamic/private';
@@ -115,6 +115,33 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 };
 
 export const actions: Actions = {
+	uploadImage: async ({ request, params, fetch }) => {
+		const productId = params.id;
+		const formData = await request.formData();
+		const imageFile = formData.get('image');
+
+		if (!imageFile || !(imageFile instanceof File)) {
+			return { success: false, error: 'Invalid image file' };
+		}
+
+		const uploadFormData = new FormData();
+		uploadFormData.append('image', imageFile);
+
+		const res = await fetch(`${env.API_URL}/admin/products/${productId}/images`, {
+			method: 'POST',
+			body: uploadFormData,
+		});
+
+		if (!res.ok) {
+			if (res.status === 401) throw redirect(303, '/auth');
+			const errorText = await res.text();
+			console.error('Image upload failed:', res.status, errorText);
+			return fail(res.status, { error: `Upload failed: ${res.status}` });
+		}
+
+		const result = await res.json();
+		return { success: true, url: result.url };
+	},
 	default: async ({ request, params }) => {
 		const productId = params.id;
 		const formData = await request.formData();
