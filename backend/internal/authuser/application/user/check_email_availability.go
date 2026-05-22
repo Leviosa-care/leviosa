@@ -18,7 +18,7 @@ func (s *UserService) CheckEmailAvailability(ctx context.Context, request *domai
 
 	emailBytes, err := encx.SerializeValue(request.Email)
 	if err != nil {
-		return false, errs.NewInvalidValueErr(fmt.Sprintf("failed to serialize userID: %w", err))
+		return false, errs.NewInvalidValueErr(fmt.Sprintf("failed to serialize userID: %v", err))
 	}
 	emailHash := s.crypto.HashBasic(ctx, emailBytes)
 

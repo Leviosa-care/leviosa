@@ -3,6 +3,7 @@ package user_test
 import (
 	"context"
 	"errors"
+	"io"
 	"testing"
 
 	userService "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/user"
@@ -10,6 +11,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 
 	"github.com/google/uuid"
+	"github.com/hengadev/encx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -92,19 +94,92 @@ type MockCryptoService struct {
 	mock.Mock
 }
 
-func (m *MockCryptoService) DecryptStruct(ctx context.Context, data interface{}) error {
-	args := m.Called(ctx, data)
+func (m *MockCryptoService) GetPepper() []byte {
+	args := m.Called()
+	return args.Get(0).([]byte)
+}
+
+func (m *MockCryptoService) GetArgon2Params() *encx.Argon2Params {
+	args := m.Called()
+	if v := args.Get(0); v != nil {
+		return v.(*encx.Argon2Params)
+	}
+	return nil
+}
+
+func (m *MockCryptoService) GetAlias() string {
+	args := m.Called()
+	return args.String(0)
+}
+
+func (m *MockCryptoService) GenerateDEK() ([]byte, error) {
+	args := m.Called()
+	return args.Get(0).([]byte), args.Error(1)
+}
+
+func (m *MockCryptoService) EncryptData(ctx context.Context, plaintext []byte, dek []byte) ([]byte, error) {
+	args := m.Called(ctx, plaintext, dek)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
+func (m *MockCryptoService) DecryptData(ctx context.Context, ciphertext []byte, dek []byte) ([]byte, error) {
+	args := m.Called(ctx, ciphertext, dek)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
+func (m *MockCryptoService) EncryptDEK(ctx context.Context, plaintextDEK []byte) ([]byte, error) {
+	args := m.Called(ctx, plaintextDEK)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
+func (m *MockCryptoService) DecryptDEKWithVersion(ctx context.Context, ciphertextDEK []byte, kekVersion int) ([]byte, error) {
+	args := m.Called(ctx, ciphertextDEK, kekVersion)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
+func (m *MockCryptoService) RotateKEK(ctx context.Context) error {
+	args := m.Called(ctx)
 	return args.Error(0)
 }
 
-func (m *MockCryptoService) ProcessStruct(ctx context.Context, data interface{}) error {
+func (m *MockCryptoService) HashBasic(ctx context.Context, data []byte) string {
 	args := m.Called(ctx, data)
+	return args.String(0)
+}
+
+func (m *MockCryptoService) HashSecure(ctx context.Context, value []byte) (string, error) {
+	args := m.Called(ctx, value)
+	return args.String(0), args.Error(1)
+}
+
+func (m *MockCryptoService) CompareSecureHashAndValue(ctx context.Context, value any, hashValue string) (bool, error) {
+	args := m.Called(ctx, value, hashValue)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockCryptoService) CompareBasicHashAndValue(ctx context.Context, value any, hashValue string) (bool, error) {
+	args := m.Called(ctx, value, hashValue)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockCryptoService) EncryptStream(ctx context.Context, reader io.Reader, writer io.Writer, dek []byte) error {
+	args := m.Called(ctx, reader, writer, dek)
 	return args.Error(0)
 }
 
-func (m *MockCryptoService) EncryptStruct(ctx context.Context, data interface{}) error {
-	args := m.Called(ctx, data)
+func (m *MockCryptoService) DecryptStream(ctx context.Context, reader io.Reader, writer io.Writer, dek []byte) error {
+	args := m.Called(ctx, reader, writer, dek)
 	return args.Error(0)
+}
+
+func (m *MockCryptoService) GetCurrentKEKVersion(ctx context.Context, alias string) (int, error) {
+	args := m.Called(ctx, alias)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *MockCryptoService) GetKMSKeyIDForVersion(ctx context.Context, alias string, version int) (string, error) {
+	args := m.Called(ctx, alias, version)
+	return args.String(0), args.Error(1)
 }
 
 type MockStripeService struct {

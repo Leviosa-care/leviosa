@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/services"
+	"github.com/hengadev/encx"
 	"github.com/hashicorp/vault/api"
 )
 
@@ -50,7 +52,7 @@ func main() {
 	// Print generated keys (in production, these should be securely distributed)
 	fmt.Println("\n=== GENERATED SERVICE API KEYS ===")
 	fmt.Println("IMPORTANT: Store these keys securely and distribute to respective services")
-	fmt.Println("These keys will not be displayed again!\n")
+	fmt.Println("These keys will not be displayed again!")
 
 	for serviceName, apiKey := range serviceKeys {
 		fmt.Printf("%s_SERVICE_API_KEY=%s\n",
@@ -100,18 +102,67 @@ func (m *MockCryptoService) HashBasic(ctx context.Context, data []byte) string {
 }
 
 // Implement other required encx.CryptoService methods as no-ops
-func (m *MockCryptoService) ProcessStruct(ctx context.Context, v interface{}) error {
-	return nil
+func (m *MockCryptoService) GetPepper() []byte {
+	return []byte("mock-pepper")
 }
 
-func (m *MockCryptoService) DecryptStruct(ctx context.Context, v interface{}) error {
-	return nil
+func (m *MockCryptoService) GetArgon2Params() *encx.Argon2Params {
+	params, _ := encx.NewArgon2Params(64*1024, 2, 4, 16, 32)
+	return params
 }
 
-func (m *MockCryptoService) Encrypt(ctx context.Context, plaintext []byte) ([]byte, error) {
+func (m *MockCryptoService) GetAlias() string {
+	return "mock-alias"
+}
+
+func (m *MockCryptoService) GenerateDEK() ([]byte, error) {
+	return []byte("mock-dek"), nil
+}
+
+func (m *MockCryptoService) EncryptData(ctx context.Context, plaintext []byte, dek []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
-func (m *MockCryptoService) Decrypt(ctx context.Context, ciphertext []byte) ([]byte, error) {
+func (m *MockCryptoService) DecryptData(ctx context.Context, ciphertext []byte, dek []byte) ([]byte, error) {
 	return ciphertext, nil
+}
+
+func (m *MockCryptoService) EncryptDEK(ctx context.Context, plaintextDEK []byte) ([]byte, error) {
+	return plaintextDEK, nil
+}
+
+func (m *MockCryptoService) DecryptDEKWithVersion(ctx context.Context, ciphertextDEK []byte, kekVersion int) ([]byte, error) {
+	return ciphertextDEK, nil
+}
+
+func (m *MockCryptoService) RotateKEK(ctx context.Context) error {
+	return nil
+}
+
+func (m *MockCryptoService) HashSecure(ctx context.Context, value []byte) (string, error) {
+	return fmt.Sprintf("%x", value), nil
+}
+
+func (m *MockCryptoService) CompareSecureHashAndValue(ctx context.Context, value any, hashValue string) (bool, error) {
+	return true, nil
+}
+
+func (m *MockCryptoService) CompareBasicHashAndValue(ctx context.Context, value any, hashValue string) (bool, error) {
+	return true, nil
+}
+
+func (m *MockCryptoService) EncryptStream(ctx context.Context, reader io.Reader, writer io.Writer, dek []byte) error {
+	return nil
+}
+
+func (m *MockCryptoService) DecryptStream(ctx context.Context, reader io.Reader, writer io.Writer, dek []byte) error {
+	return nil
+}
+
+func (m *MockCryptoService) GetCurrentKEKVersion(ctx context.Context, alias string) (int, error) {
+	return 1, nil
+}
+
+func (m *MockCryptoService) GetKMSKeyIDForVersion(ctx context.Context, alias string, version int) (string, error) {
+	return "mock-key-id", nil
 }

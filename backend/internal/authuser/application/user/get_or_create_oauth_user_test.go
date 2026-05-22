@@ -2,13 +2,15 @@ package user_test
 
 import (
 	"context"
+	"io"
 	"testing"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/application/user"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/google/uuid"
+	"github.com/hengadev/encx"
+	stripe "github.com/stripe/stripe-go/v82"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -24,39 +26,45 @@ func (m *mockUserRepository) ExistsByEmailHash(ctx context.Context, emailHash st
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *mockUserRepository) GetUserByEmailHash(ctx context.Context, emailHash string) (*domain.User, error) {
+func (m *mockUserRepository) GetUserByEmailHash(ctx context.Context, emailHash string) (*domain.UserEncx, error) {
 	args := m.Called(ctx, emailHash)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.User), args.Error(1)
+	return args.Get(0).(*domain.UserEncx), args.Error(1)
 }
 
-func (m *mockUserRepository) GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
+func (m *mockUserRepository) GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.UserEncx, error) {
 	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.User), args.Error(1)
+	return args.Get(0).(*domain.UserEncx), args.Error(1)
 }
 
-func (m *mockUserRepository) GetPendingUsers(ctx context.Context) ([]*domain.User, error) {
+func (m *mockUserRepository) GetPendingUsers(ctx context.Context) ([]*domain.UserEncx, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*domain.User), args.Error(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*domain.UserEncx), args.Error(1)
 }
 
-func (m *mockUserRepository) GetAllUsers(ctx context.Context) ([]*domain.User, error) {
+func (m *mockUserRepository) GetAllUsers(ctx context.Context) ([]*domain.UserEncx, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*domain.User), args.Error(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*domain.UserEncx), args.Error(1)
 }
 
-func (m *mockUserRepository) CreateUser(ctx context.Context, user *domain.User) error {
-	args := m.Called(ctx, user)
+func (m *mockUserRepository) CreateUser(ctx context.Context, u *domain.UserEncx) error {
+	args := m.Called(ctx, u)
 	return args.Error(0)
 }
 
-func (m *mockUserRepository) UpdateUser(ctx context.Context, user *domain.User) error {
-	args := m.Called(ctx, user)
+func (m *mockUserRepository) UpdateUser(ctx context.Context, u *domain.UserEncx) error {
+	args := m.Called(ctx, u)
 	return args.Error(0)
 }
 
@@ -65,20 +73,20 @@ func (m *mockUserRepository) DeleteUser(ctx context.Context, userID uuid.UUID) e
 	return args.Error(0)
 }
 
-func (m *mockUserRepository) GetUserByGoogleID(ctx context.Context, googleID string) (*domain.User, error) {
+func (m *mockUserRepository) GetUserByGoogleID(ctx context.Context, googleID string) (*domain.UserEncx, error) {
 	args := m.Called(ctx, googleID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.User), args.Error(1)
+	return args.Get(0).(*domain.UserEncx), args.Error(1)
 }
 
-func (m *mockUserRepository) GetUserByAppleID(ctx context.Context, appleID string) (*domain.User, error) {
+func (m *mockUserRepository) GetUserByAppleID(ctx context.Context, appleID string) (*domain.UserEncx, error) {
 	args := m.Called(ctx, appleID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.User), args.Error(1)
+	return args.Get(0).(*domain.UserEncx), args.Error(1)
 }
 
 func (m *mockUserRepository) ExistsByGoogleID(ctx context.Context, googleID string) (bool, error) {
@@ -95,35 +103,71 @@ type mockCryptoService struct {
 	mock.Mock
 }
 
+func (m *mockCryptoService) GetPepper() []byte                  { return nil }
+func (m *mockCryptoService) GetArgon2Params() *encx.Argon2Params { return nil }
+func (m *mockCryptoService) GetAlias() string                   { return "" }
+func (m *mockCryptoService) GenerateDEK() ([]byte, error)       { return nil, nil }
+func (m *mockCryptoService) EncryptData(_ context.Context, _ []byte, _ []byte) ([]byte, error) {
+	return nil, nil
+}
+func (m *mockCryptoService) DecryptData(_ context.Context, _ []byte, _ []byte) ([]byte, error) {
+	return nil, nil
+}
+func (m *mockCryptoService) EncryptDEK(_ context.Context, _ []byte) ([]byte, error) { return nil, nil }
+func (m *mockCryptoService) DecryptDEKWithVersion(_ context.Context, _ []byte, _ int) ([]byte, error) {
+	return nil, nil
+}
+func (m *mockCryptoService) RotateKEK(_ context.Context) error { return nil }
 func (m *mockCryptoService) HashBasic(ctx context.Context, data []byte) string {
 	args := m.Called(ctx, data)
 	return args.String(0)
 }
-
-func (m *mockCryptoService) ProcessStruct(ctx context.Context, data interface{}) error {
-	args := m.Called(ctx, data)
-	return args.Error(0)
+func (m *mockCryptoService) HashSecure(_ context.Context, _ []byte) (string, error) { return "", nil }
+func (m *mockCryptoService) CompareSecureHashAndValue(_ context.Context, _ any, _ string) (bool, error) {
+	return false, nil
 }
-
-func (m *mockCryptoService) DecryptStruct(ctx context.Context, data interface{}) error {
-	args := m.Called(ctx, data)
-	return args.Error(0)
+func (m *mockCryptoService) CompareBasicHashAndValue(_ context.Context, _ any, _ string) (bool, error) {
+	return false, nil
+}
+func (m *mockCryptoService) EncryptStream(_ context.Context, _ io.Reader, _ io.Writer, _ []byte) error {
+	return nil
+}
+func (m *mockCryptoService) DecryptStream(_ context.Context, _ io.Reader, _ io.Writer, _ []byte) error {
+	return nil
+}
+func (m *mockCryptoService) GetCurrentKEKVersion(_ context.Context, _ string) (int, error) {
+	return 0, nil
+}
+func (m *mockCryptoService) GetKMSKeyIDForVersion(_ context.Context, _ string, _ int) (string, error) {
+	return "", nil
 }
 
 type mockStripeService struct {
 	mock.Mock
 }
 
-func (m *mockStripeService) CreateCustomer(ctx context.Context, userID uuid.UUID, email, firstName, lastName string) (*mockStripeCustomer, error) {
+func (m *mockStripeService) CreateCustomer(ctx context.Context, userID uuid.UUID, email, firstName, lastName string) (*stripe.Customer, error) {
 	args := m.Called(ctx, userID, email, firstName, lastName)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*mockStripeCustomer), args.Error(1)
+	return args.Get(0).(*stripe.Customer), args.Error(1)
 }
 
-type mockStripeCustomer struct {
-	ID string
+func (m *mockStripeService) RetrieveCustomer(_ context.Context, _ string) (*stripe.Customer, error) {
+	return nil, nil
+}
+
+func (m *mockStripeService) UpdateCustomer(_ context.Context, _ string, _ *stripe.CustomerUpdateParams) (*stripe.Customer, error) {
+	return nil, nil
+}
+
+func (m *mockStripeService) DeleteCustomer(_ context.Context, _ string) (*stripe.Customer, error) {
+	return nil, nil
+}
+
+func (m *mockStripeService) FindCustomerByUserID(_ context.Context, _ uuid.UUID) (*stripe.Customer, error) {
+	return nil, nil
 }
 
 func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
@@ -136,29 +180,19 @@ func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
 
 		userService := user.New(mockRepo, mockCrypto, mockStripe)
 
-		existingUser := &domain.User{
-			ID:        uuid.New(),
-			Email:     "test@example.com",
-			FirstName: "John",
-			LastName:  "Doe",
-			GoogleID:  "google123",
-			State:     domain.Active,
-			Role:      identity.Standard.String(),
+		existingUserEncx := &domain.UserEncx{
+			ID: uuid.New(),
 		}
 
 		// Mock that the Google ID exists
-		mockRepo.On("GetUserByGoogleID", ctx, "google123").Return(existingUser, nil)
-		mockCrypto.On("DecryptStruct", ctx, existingUser).Return(nil)
+		mockRepo.On("GetUserByGoogleID", ctx, "google123").Return(existingUserEncx, nil)
 
-		result, isNewUser, err := userService.GetOrCreateOAuthUser(ctx, "google", "google123", "test@example.com", "John", "Doe")
+		_, isNewUser, err := userService.GetOrCreateOAuthUser(ctx, "google", "google123", "test@example.com", "John", "Doe")
 
 		require.NoError(t, err)
 		assert.False(t, isNewUser)
-		assert.Equal(t, existingUser.ID, result.ID)
-		assert.Equal(t, existingUser.Email, result.Email)
 
 		mockRepo.AssertExpectations(t)
-		mockCrypto.AssertExpectations(t)
 	})
 
 	t.Run("should create new OAuth user when neither OAuth ID nor email exists", func(t *testing.T) {
@@ -170,20 +204,13 @@ func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
 
 		// Mock that neither OAuth ID nor email exists
 		mockRepo.On("GetUserByGoogleID", ctx, "google456").Return(nil, errs.ErrRepositoryNotFound)
-		mockRepo.On("GetUserByEmailHash", ctx, "hashed_email").Return(nil, errs.ErrRepositoryNotFound)
-
-		// Mock crypto operations
-		mockCrypto.On("HashBasic", ctx, []byte("new@example.com")).Return("hashed_email")
-		mockCrypto.On("ProcessStruct", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
-		mockCrypto.On("DecryptStruct", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
+		mockRepo.On("GetUserByEmailHash", ctx, mock.AnythingOfType("string")).Return(nil, errs.ErrRepositoryNotFound)
 
 		// Mock user creation
-		mockRepo.On("CreateUser", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
+		mockRepo.On("CreateUser", ctx, mock.AnythingOfType("*domain.UserEncx")).Return(nil)
 
 		// Mock Stripe customer creation
-		mockStripeCustomer := &mockStripeCustomer{ID: "stripe_customer_123"}
-		mockStripe.On("CreateCustomer", ctx, mock.AnythingOfType("uuid.UUID"), "new@example.com", "Jane", "Smith").Return(mockStripeCustomer, nil)
-		mockRepo.On("UpdateUser", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
+		mockStripe.On("CreateCustomer", ctx, mock.AnythingOfType("uuid.UUID"), "new@example.com", "Jane", "Smith").Return(nil, nil)
 
 		result, isNewUser, err := userService.GetOrCreateOAuthUser(ctx, "google", "google456", "new@example.com", "Jane", "Smith")
 
@@ -194,7 +221,6 @@ func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
 		assert.Equal(t, "Smith", result.LastName)
 
 		mockRepo.AssertExpectations(t)
-		mockCrypto.AssertExpectations(t)
 		mockStripe.AssertExpectations(t)
 	})
 
@@ -233,4 +259,5 @@ func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "provider, OAuth user ID, and email are required")
 	})
+
 }

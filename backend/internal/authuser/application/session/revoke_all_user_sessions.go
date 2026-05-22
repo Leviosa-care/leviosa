@@ -14,7 +14,7 @@ import (
 func (s *SessionService) RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error {
 	userIDBytes, err := encx.SerializeValue(userID)
 	if err != nil {
-		return errs.NewInvalidValueErr(fmt.Sprintf("failed to serialize userID: %w", err))
+		return errs.NewInvalidValueErr(fmt.Sprintf("failed to serialize userID: %v", err))
 	}
 	userIDHash := s.crypto.HashBasic(ctx, userIDBytes)
 
