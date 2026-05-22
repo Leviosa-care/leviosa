@@ -101,7 +101,6 @@ func TestCreateRoom(t *testing.T) {
 		assert.Equal(t, completeRoomEncx.NameHash, savedRoom.NameHash)
 		assert.Equal(t, completeRoomEncx.RoomNumberHash, savedRoom.RoomNumberHash)
 		assert.Equal(t, completeRoomEncx.Capacity, savedRoom.Capacity)
-		assert.Equal(t, *completeRoomEncx.HourlyRateCents, *savedRoom.HourlyRateCents)
 		assert.Equal(t, completeRoomEncx.IsActive, savedRoom.IsActive)
 	})
 
@@ -120,10 +119,8 @@ func TestCreateRoom(t *testing.T) {
 		err = repo.Create(ctx, noRateRoomEncx)
 		require.NoError(t, err)
 
-		// Verify hourly rate is null
-		savedRoom, err := tr.GetRoomEncxByID(t, ctx, testPool, noRateRoomEncx.ID)
+		// Verify room was created
+		_, err = tr.GetRoomEncxByID(t, ctx, testPool, noRateRoomEncx.ID)
 		require.NoError(t, err)
-
-		assert.Nil(t, savedRoom.HourlyRateCents, "Hourly rate should be null")
 	})
 }

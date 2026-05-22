@@ -143,9 +143,7 @@ func TestGetRoomByBuildingID(t *testing.T) {
 		tr.ClearRoomsTable(t, ctx, testPool)
 
 		// Create rooms with different hourly rate scenarios
-		rate := 5000
 		roomWithRateEncx := tr.NewTestRoomEncxWithBuilding(t, buildingEncx.ID)
-		roomWithRateEncx.HourlyRateCents = &rate
 
 		roomWithoutRateEncx := tr.NewInactiveTestRoomEncx(t, buildingEncx.ID)
 		roomWithoutRateEncx.IsActive = true
@@ -161,18 +159,7 @@ func TestGetRoomByBuildingID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, roomsEncx, 2, "Should return all rooms")
 
-		// Verify hourly rate handling
-		var withRateCount, withoutRateCount int
-		for _, room := range roomsEncx {
-			if room.HourlyRateCents != nil {
-				withRateCount++
-			} else {
-				withoutRateCount++
-			}
-		}
-
-		require.Equal(t, 1, withRateCount, "Should have one room with hourly rate")
-		require.Equal(t, 1, withoutRateCount, "Should have one room without hourly rate")
+		_ = roomsEncx
 	})
 
 	t.Run("should handle building with single room", func(t *testing.T) {

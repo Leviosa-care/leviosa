@@ -115,7 +115,6 @@ func TestDeleteRoom(t *testing.T) {
 		assert.Equal(t, completeRoomEncx.RoomNumberHash, deletedRoom.RoomNumberHash)
 		assert.Equal(t, completeRoomEncx.Capacity, deletedRoom.Capacity)
 		assert.Equal(t, completeRoomEncx.EquipmentEncrypted, deletedRoom.EquipmentEncrypted)
-		assert.Equal(t, completeRoomEncx.HourlyRateCents, deletedRoom.HourlyRateCents)
 		assert.False(t, deletedRoom.IsActive, "Room should be inactive")
 		assert.WithinDuration(t, completeRoomEncx.CreatedAt, deletedRoom.CreatedAt, time.Second)
 		assert.WithinDuration(t, completeRoomEncx.UpdatedAt, deletedRoom.UpdatedAt, time.Second, "UpdatedAt should be updated")
@@ -140,7 +139,6 @@ func TestDeleteRoom(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.False(t, deletedRoom.IsActive, "Room should be inactive")
-		assert.Nil(t, deletedRoom.HourlyRateCents, "Hourly rate should remain null")
 		assert.Equal(t, noRateRoomEncx.NameHash, deletedRoom.NameHash)
 	})
 

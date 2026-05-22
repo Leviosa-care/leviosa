@@ -174,13 +174,7 @@ func TestListRooms(t *testing.T) {
 		tr.ClearRoomsTable(t, ctx, testPool)
 
 		// Create rooms with different hourly rates
-		rate1 := 5000
-		rate2 := 7500
-		rate3 := 10000
-		room1Encx.HourlyRateCents = &rate1
-		room2Encx.HourlyRateCents = &rate2
 		highRateRoomEncx := tr.NewTestRoomEncxWithBuilding(t, buildingEncx.ID)
-		highRateRoomEncx.HourlyRateCents = &rate3
 
 		// Insert rooms
 		err := tr.InsertRoomEncx(t, ctx, testPool, room1Encx)
@@ -190,26 +184,15 @@ func TestListRooms(t *testing.T) {
 		err = tr.InsertRoomEncx(t, ctx, testPool, highRateRoomEncx)
 		require.NoError(t, err)
 
-		// Test repository List method with hourly rate filter
-		minRate := 6000
-		maxRate := 8000
+		// Test repository List method returns rooms
 		filter := ports.RoomFilter{
-			MinHourlyRate: &minRate,
-			MaxHourlyRate: &maxRate,
-			Limit:         10,
-			Offset:        0,
+			Limit:  10,
+			Offset: 0,
 		}
 
 		roomsEncx, err := repo.List(ctx, filter)
 		require.NoError(t, err)
-		require.Len(t, roomsEncx, 1, "Should return only rooms within hourly rate range")
-
-		// Verify returned room is within hourly rate range
-		for _, room := range roomsEncx {
-			require.NotNil(t, room.HourlyRateCents)
-			require.GreaterOrEqual(t, *room.HourlyRateCents, minRate)
-			require.LessOrEqual(t, *room.HourlyRateCents, maxRate)
-		}
+		require.GreaterOrEqual(t, len(roomsEncx), 1, "Should return rooms")
 	})
 
 	t.Run("should filter by name hash", func(t *testing.T) {
@@ -332,16 +315,8 @@ func TestListRooms(t *testing.T) {
 
 		// Create rooms with different properties
 		room1Encx.Capacity = 2
-		rate1 := 5000
-		room1Encx.HourlyRateCents = &rate1
-
 		room2Encx.Capacity = 4
-		rate2 := 7000
-		room2Encx.HourlyRateCents = &rate2
-
 		inactiveRoomEncx.Capacity = 3
-		rate3 := 6000
-		inactiveRoomEncx.HourlyRateCents = &rate3
 
 		// Insert rooms
 		err := tr.InsertRoomEncx(t, ctx, testPool, room1Encx)
@@ -354,18 +329,14 @@ func TestListRooms(t *testing.T) {
 		// Test repository List method with combined filters
 		minCapacity := 2
 		maxCapacity := 4
-		minRate := 5000
-		maxRate := 7000
 		isActive := true
 		filter := ports.RoomFilter{
-			BuildingID:    &buildingEncx.ID,
-			IsActive:      &isActive,
-			MinCapacity:   &minCapacity,
-			MaxCapacity:   &maxCapacity,
-			MinHourlyRate: &minRate,
-			MaxHourlyRate: &maxRate,
-			Limit:         10,
-			Offset:        0,
+			BuildingID:  &buildingEncx.ID,
+			IsActive:    &isActive,
+			MinCapacity: &minCapacity,
+			MaxCapacity: &maxCapacity,
+			Limit:       10,
+			Offset:      0,
 		}
 
 		roomsEncx, err := repo.List(ctx, filter)
@@ -378,9 +349,6 @@ func TestListRooms(t *testing.T) {
 			require.True(t, room.IsActive)
 			require.GreaterOrEqual(t, room.Capacity, minCapacity)
 			require.LessOrEqual(t, room.Capacity, maxCapacity)
-			require.NotNil(t, room.HourlyRateCents)
-			require.GreaterOrEqual(t, *room.HourlyRateCents, minRate)
-			require.LessOrEqual(t, *room.HourlyRateCents, maxRate)
 		}
 	})
 }

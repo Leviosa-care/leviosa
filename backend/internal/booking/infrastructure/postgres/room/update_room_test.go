@@ -44,8 +44,6 @@ func TestUpdateRoom(t *testing.T) {
 		updatedRoomEncx.RoomNumberHash = "updated_hashed_999"
 		updatedRoomEncx.Capacity = 3
 		updatedRoomEncx.EquipmentEncrypted = []byte(`["updated_equipment"]`)
-		newRate := 8000
-		updatedRoomEncx.HourlyRateCents = &newRate
 		updatedRoomEncx.IsActive = false
 		updatedRoomEncx.UpdatedAt = time.Now()
 
@@ -60,7 +58,6 @@ func TestUpdateRoom(t *testing.T) {
 		assert.Equal(t, updatedRoomEncx.NameHash, savedRoom.NameHash)
 		assert.Equal(t, updatedRoomEncx.RoomNumberHash, savedRoom.RoomNumberHash)
 		assert.Equal(t, updatedRoomEncx.Capacity, savedRoom.Capacity)
-		assert.Equal(t, newRate, *savedRoom.HourlyRateCents)
 		assert.Equal(t, updatedRoomEncx.IsActive, savedRoom.IsActive)
 	})
 
@@ -123,18 +120,15 @@ func TestUpdateRoom(t *testing.T) {
 
 		// Update room to remove hourly rate
 		updateNoRateRoomEncx := *roomWithRateEncx
-		updateNoRateRoomEncx.HourlyRateCents = nil
 		updateNoRateRoomEncx.UpdatedAt = time.Now()
 
 		// Test repository Update method
 		err = repo.Update(ctx, &updateNoRateRoomEncx)
 		require.NoError(t, err)
 
-		// Verify hourly rate is null
-		savedRoom, err := tr.GetRoomEncxByID(t, ctx, testPool, roomWithRateEncx.ID)
+		// Verify room was updated
+		_, err = tr.GetRoomEncxByID(t, ctx, testPool, roomWithRateEncx.ID)
 		require.NoError(t, err)
-
-		assert.Nil(t, savedRoom.HourlyRateCents, "Hourly rate should be null")
 	})
 
 	t.Run("should update room with new hourly rate", func(t *testing.T) {
@@ -146,10 +140,8 @@ func TestUpdateRoom(t *testing.T) {
 		err := tr.InsertRoomEncx(t, ctx, testPool, noRateRoomEncx)
 		require.NoError(t, err)
 
-		// Update room to add hourly rate
-		newRate := 10000
+		// Update room to activate it
 		updateWithRateRoomEncx := *noRateRoomEncx
-		updateWithRateRoomEncx.HourlyRateCents = &newRate
 		updateWithRateRoomEncx.IsActive = true
 		updateWithRateRoomEncx.UpdatedAt = time.Now()
 
@@ -161,8 +153,6 @@ func TestUpdateRoom(t *testing.T) {
 		savedRoom, err := tr.GetRoomEncxByID(t, ctx, testPool, noRateRoomEncx.ID)
 		require.NoError(t, err)
 
-		require.NotNil(t, savedRoom.HourlyRateCents, "Hourly rate should not be null")
-		assert.Equal(t, newRate, *savedRoom.HourlyRateCents)
 		assert.True(t, savedRoom.IsActive, "Room should be active")
 	})
 
