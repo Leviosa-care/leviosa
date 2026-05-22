@@ -19,16 +19,18 @@ func (s *ImageService) AddImage(ctx context.Context, req *domain.CreateImageRequ
 		return "", errs.NewInvalidValueErr(err.Error())
 	}
 
-	// file validation
 	var fileErrs errsx.Map
 	if file == nil {
 		fileErrs.Set("file", "image file is required")
 	}
 	if fileSize <= 0 {
-		fileErrs.Set("file size", "image file cannot be empty")
+		fileErrs.Set("file_size", "image file cannot be empty")
 	}
-	if !isValidImageContentType(contentType) { // Basic content type validation (you might want a more exhaustive list)
-		fileErrs.Set("file content type", fmt.Sprintf("unsupported image content type: %s", contentType))
+	if fileSize > MaxImageSize {
+		fileErrs.Set("file_size", fmt.Sprintf("image file exceeds maximum size of 5 MB (got %.2f MB)", float64(fileSize)/(1024*1024)))
+	}
+	if !isValidImageContentType(contentType) {
+		fileErrs.Set("content_type", fmt.Sprintf("unsupported image content type: %s (allowed: image/jpeg, image/png, image/webp)", contentType))
 	}
 	if fileErrs != nil {
 		return "", errs.NewInvalidValueErr(fileErrs.Error())

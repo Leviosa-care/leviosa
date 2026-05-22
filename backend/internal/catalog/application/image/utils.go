@@ -12,6 +12,7 @@ import (
 const (
 	ProductPrefix  = "public/assets/products"
 	CategoryPrefix = "public/assets/categories"
+	MaxImageSize   = 5 * 1024 * 1024 // 5 MB
 )
 
 func CreateParentPrefix(parentID uuid.UUID, parentType domain.ParentType) (string, error) {
@@ -38,24 +39,18 @@ func CreateParentImagePrefix(parentID, imageID uuid.UUID, parentType domain.Pare
 }
 
 func isValidImageContentType(contentType string) bool {
-	// IsValidImageContentType checks if the provided content type is a valid image type.
-	// Basic check. Extend as needed (e.g., image/png, image/gif, image/webp)
-	return contentType == "image/jpeg" || contentType == "image/png" || contentType == "image/gif"
+	return contentType == "image/jpeg" || contentType == "image/png" || contentType == "image/webp"
 }
 
-// GetFileExtensionFromContentType determines a common file extension from a content type.
 func getFileExtensionFromContentType(contentType string) string {
 	switch contentType {
 	case "image/jpeg":
 		return ".jpg"
 	case "image/png":
 		return ".png"
-	case "image/gif":
-		return ".gif"
 	case "image/webp":
 		return ".webp"
-	// Add more as needed
 	default:
-		return "" // Or ".bin" for unknown types, or return an error earlier
+		return ""
 	}
 }
