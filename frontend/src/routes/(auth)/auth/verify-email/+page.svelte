@@ -33,8 +33,7 @@
 
             // Fill the inputs with the digits
             digits.forEach((digit: string, index: number) => {
-                const key = `otp${index}` as keyof typeof $form;
-                $form[key] = digit;
+                ($form as Record<string, string>)[`otp${index}`] = digit;
             });
 
             // Focus the appropriate input based on how many digits were pasted

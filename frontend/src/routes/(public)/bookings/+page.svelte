@@ -1,8 +1,15 @@
+<script lang="ts">
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const httpEquivCacheControl: any = "Cache-Control";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const httpEquivPragma: any = "Pragma";
+</script>
+
 <svelte:head>
     <title>Leviosa — Mes Réservations</title>
     <meta name="robots" content="noindex" />
-    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv={httpEquivCacheControl} content="no-store, no-cache, must-revalidate" />
+    <meta http-equiv={httpEquivPragma} content="no-cache" />
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center px-4" style="background-color: var(--dark-900);">

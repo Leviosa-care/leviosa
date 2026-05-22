@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { PageProps } from "./types";
+    import type { PageProps } from "./$types";
     import { goto } from "$app/navigation";
 
     import { Button } from "bits-ui";

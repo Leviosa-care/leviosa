@@ -32,7 +32,7 @@ const validateDefaults = {
     otp3: '',
     otp4: '',
     otp5: '',
-}
+} as unknown as typeof validateSchema.infer
 
 // Step 3: Confirm new password
 const confirmSchema = type({

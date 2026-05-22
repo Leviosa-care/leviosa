@@ -16,6 +16,7 @@ import { getCookieDomain } from "$lib/server/hostname";
 const schema = type({
     password: "8 < string < 64",
     confirm: "string",
+    email: "string",
     // Data from previous steps
     firstname: "string",
     lastname: "string",
@@ -31,6 +32,7 @@ const schema = type({
 const defaults = {
     password: "",
     confirm: "",
+    email: "",
     firstname: "",
     lastname: "",
     gender: '',

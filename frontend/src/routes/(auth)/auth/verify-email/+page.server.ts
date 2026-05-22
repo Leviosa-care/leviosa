@@ -24,7 +24,7 @@ const defaults = {
     otp3: '',
     otp4: '',
     otp5: '',
-};
+} as unknown as typeof schema.infer;
 
 export const load = async ({ url }: RequestEvent) => {
     // Get email from URL search params (passed from register action)
