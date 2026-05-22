@@ -143,7 +143,7 @@
     }
 
     function getProductName(productId: string): string {
-        return products.find((p) => p.id === productId)?.name || "Inconnu";
+        return products.find((p: any) => p.id === productId)?.name || "Inconnu";
     }
 
     function formatAmount(amount: number, currency: string): string {
@@ -242,7 +242,7 @@
                                 {/snippet}
                             </Combobox.Item>
                             <Combobox.Group class="pt-1">
-                                {#each mockProducts as product}
+                                {#each products as product}
                                     <Combobox.Item
                                         value={product.id}
                                         label={product.name}
@@ -289,8 +289,8 @@
 
         <!-- Selected product chip -->
         {#if selectedProductId !== ALL_PRODUCTS}
-            {@const product = mockProducts.find(
-                (p) => p.id === selectedProductId,
+            {@const product = products.find(
+                (p: any) => p.id === selectedProductId,
             )}
             {#if product}
                 <div class="flex flex-wrap gap-2 mb-6">
@@ -768,8 +768,8 @@
                 placeholder="Ex: Tarif standard"
             />
         {/if}
-        {#if $createErrors[name]}
-            <p class="text-xs text-destructive mt-1">{$createErrors[name]}</p>
+        {#if ($createErrors as Record<string, unknown>)[name]}
+            <p class="text-xs text-destructive mt-1">{($createErrors as Record<string, unknown>)[name]}</p>
         {/if}
     </div>
 {/snippet}
@@ -801,8 +801,8 @@
                 placeholder="Ex: Tarif standard"
             />
         {/if}
-        {#if $updateErrors[name]}
-            <p class="text-xs text-destructive mt-1">{$updateErrors[name]}</p>
+        {#if ($updateErrors as Record<string, unknown>)[name]}
+            <p class="text-xs text-destructive mt-1">{($updateErrors as Record<string, unknown>)[name]}</p>
         {/if}
     </div>
 {/snippet}

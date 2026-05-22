@@ -7,6 +7,7 @@ export const categorySchema = type({
     id: "string",
     name: "string",
     description: "string",
+    status: "'draft' | 'published' | 'archived'",
 })
 
 export type category = Infer<typeof categorySchema>
@@ -15,6 +16,7 @@ export const categoryDefaults: category = {
     id: "",
     name: "massage",
     description: "Un petit massage pour tester l'application",
+    status: "draft",
 }
 
 // NOTE: the delete thing is shared across ressources

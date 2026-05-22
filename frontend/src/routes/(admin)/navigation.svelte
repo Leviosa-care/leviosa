@@ -51,7 +51,7 @@
 
         // Exact match for /app home
         if (href === "/app") {
-            return currentPath === "/app";
+            return (currentPath as string) === "/app";
         }
 
         // For other routes, check if current path starts with href

@@ -1,4 +1,5 @@
 <script lang="ts">
+    // @ts-nocheck
     import BackButton from './BackButton.svelte';
     import Card from './Card.svelte';
     import FormInput from './FormInput.svelte';

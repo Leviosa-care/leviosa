@@ -95,14 +95,14 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 			id: product.id,
 			name: product.name,
 			description: product.description,
-			categoryId,
+			category: categoryId,
 			duration: product.duration,
-			price: parseFloat(product.price),
-			status: product.published,
+			price: product.price,
+			updatedAt: product.updatedAt,
+			published: product.published,
 			availability: product.availability,
 			bufferTime: product.bufferTime,
 			cancellationHours: product.cancellationHours,
-			imageUrl: product.image
 		},
 		arktype(productSchema, { defaults: productDefaults })
 	);

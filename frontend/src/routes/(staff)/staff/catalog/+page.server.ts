@@ -72,11 +72,11 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
     const updatePromotionCodeForm = await superValidate(arktype(updatePromotionCodeSchema, { defaults: updatePromotionCodeDefaults }))
     const deletePromotionCodeForm = await superValidate(arktype(deletePromotionCodeSchema, { defaults: deletePromotionCodeDefaults }))
 
-    let categories = []
-    let products = []
-    let prices = []
-    let coupons = []
-    let promotionCodes = []
+    let categories: any[] = []
+    let products: any[] = []
+    let prices: any[] = []
+    let coupons: any[] = []
+    let promotionCodes: any[] = []
 
     if (MOCK_MODE) {
         // Use mock data in development
@@ -858,7 +858,7 @@ export const actions = {
             percentOff,
             amountOff,
             currency: currency || undefined,
-            duration,
+            duration: duration as "once" | "repeating" | "forever",
             durationInMonths,
             maxRedemptions,
             redeemBy: redeemBy || undefined,

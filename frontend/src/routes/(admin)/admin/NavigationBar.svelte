@@ -13,7 +13,7 @@
         isLargeScreen = mediaQuery.matches;
 
         // Listen for changes
-        const handleChange = (e) => {
+        const handleChange = (e: MediaQueryListEvent) => {
             isLargeScreen = e.matches;
         };
 

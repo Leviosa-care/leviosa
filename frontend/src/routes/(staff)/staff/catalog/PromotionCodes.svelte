@@ -997,8 +997,8 @@
                 <span class="text-sm">Nouveaux clients uniquement</span>
             </label>
         {/if}
-        {#if $createErrors[name]}
-            <p class="text-xs text-destructive mt-1">{$createErrors[name]}</p>
+        {#if ($createErrors as Record<string, unknown>)[name]}
+            <p class="text-xs text-destructive mt-1">{($createErrors as Record<string, unknown>)[name]}</p>
         {/if}
     </div>
 {/snippet}
@@ -1019,8 +1019,8 @@
                 <span class="text-sm">Actif</span>
             </label>
         {/if}
-        {#if $updateErrors[name]}
-            <p class="text-xs text-destructive mt-1">{$updateErrors[name]}</p>
+        {#if ($updateErrors as Record<string, unknown>)[name]}
+            <p class="text-xs text-destructive mt-1">{($updateErrors as Record<string, unknown>)[name]}</p>
         {/if}
     </div>
 {/snippet}

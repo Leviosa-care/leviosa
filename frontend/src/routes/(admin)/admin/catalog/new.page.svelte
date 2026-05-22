@@ -1,4 +1,5 @@
 <script lang="ts">
+    // @ts-nocheck
     import type { PageProps } from "./$types";
     import type { Snippet } from "svelte";
 

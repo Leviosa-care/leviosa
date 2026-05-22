@@ -1014,8 +1014,8 @@
                 class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
             />
         {/if}
-        {#if $createErrors[name]}
-            <p class="text-xs text-destructive mt-1">{$createErrors[name]}</p>
+        {#if ($createErrors as Record<string, unknown>)[name]}
+            <p class="text-xs text-destructive mt-1">{($createErrors as Record<string, unknown>)[name]}</p>
         {/if}
     </div>
 {/snippet}
@@ -1034,8 +1034,8 @@
                 placeholder="Ex: Bienvenue 2025"
             />
         {/if}
-        {#if $updateErrors[name]}
-            <p class="text-xs text-destructive mt-1">{$updateErrors[name]}</p>
+        {#if ($updateErrors as Record<string, unknown>)[name]}
+            <p class="text-xs text-destructive mt-1">{($updateErrors as Record<string, unknown>)[name]}</p>
         {/if}
     </div>
 {/snippet}
