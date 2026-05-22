@@ -26,6 +26,16 @@ func (s *ProductService) UpdateProduct(ctx context.Context, productIDStr string,
 		return errs.NewInvalidValueErr("product")
 	}
 
+	if product.Status != nil && *product.Status == "published" {
+		images, err := s.imageRepo.GetImagesByParentID(ctx, productID, domain.ProductType)
+		if err != nil {
+			return fmt.Errorf("check product images before publish: %w", err)
+		}
+		if len(images) == 0 {
+			return errs.NewUnprocessableEntityErr("Un produit doit avoir au moins une image avant d'être publié.")
+		}
+	}
+
 	stripeUpdateNeeded := product.Name != nil || product.Description != nil
 	if stripeUpdateNeeded {
 		stripeReq := &domain.UpdateStripeProductRequest{
@@ -37,8 +47,6 @@ func (s *ProductService) UpdateProduct(ctx context.Context, productIDStr string,
 			return errs.NewExternalServiceErr(err, "failed to update product in Stripe")
 		}
 	}
-
-	// TODO: make a rule so that if the status is published, then we need to find if there is a price, and an image
 
 	if err := s.repo.UpdateProduct(ctx, productID, product); err != nil {
 		// 5. This is the rollback step: If the DB update fails, revert the Stripe update.

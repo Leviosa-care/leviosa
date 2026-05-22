@@ -351,7 +351,7 @@ func (c *Container) setupServices(ctx context.Context) error {
 	c.CouponService = couponSvc.NewCouponService(c.CouponRepo)
 	c.PromotionCodeService = promotionCodeSvc.New(c.PromotionCodeRepo, c.CouponRepo)
 	c.PriceService = priceSvc.New(c.PriceRepo, c.SharedRepo, stripePrice)
-	c.ProductService = productSvc.New(c.ProductRepo, c.SharedRepo, stripeProduct, stripePrice)
+	c.ProductService = productSvc.New(c.ProductRepo, c.SharedRepo, stripeProduct, stripePrice, c.ImageRepo)
 	c.CatalogAggregator = catalogAgg.NewProductPricesAggregatorService(
 		c.ProductService,
 		c.PriceService,

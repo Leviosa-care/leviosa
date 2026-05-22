@@ -12,13 +12,15 @@ type ProductService struct {
 	sharedRepo  ports.SharedRepository
 	stripe      ports.ProductPaymentGateway
 	priceStripe ports.PricePaymentGateway
+	imageRepo   ports.ImageRepository
 }
 
-func New(repo ports.ProductRepository, sharedRepo ports.SharedRepository, stripe ports.ProductPaymentGateway, priceStripe ports.PricePaymentGateway) ports.ProductService {
+func New(repo ports.ProductRepository, sharedRepo ports.SharedRepository, stripe ports.ProductPaymentGateway, priceStripe ports.PricePaymentGateway, imageRepo ports.ImageRepository) ports.ProductService {
 	return &ProductService{
 		repo:        repo,
 		sharedRepo:  sharedRepo,
 		stripe:      stripe,
 		priceStripe: priceStripe,
+		imageRepo:   imageRepo,
 	}
 }
