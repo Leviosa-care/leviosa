@@ -11,10 +11,10 @@ import {
     updateUserRoleSchema,
     updateUserRoleDefaults,
 } from "./schemas"
-import { mockUsers, mockPendingUsers } from "./mockData"
+import { mockUsers } from "$lib/data/mockData"
 
 // Enable mock mode for development
-const MOCK_MODE = true
+const MOCK_MODE = env.USE_MOCK_DATA === 'true'
 
 export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
     // ⬅️ pulls data from (ops)/+layout.server.ts
@@ -34,7 +34,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
     if (MOCK_MODE) {
         // Use mock data in development
         users = mockUsers
-        pendingUsers = mockPendingUsers
+        pendingUsers = mockUsers.filter(u => u.state === 'pending')
     } else {
         const sessionCookie = cookies.get('session');
 

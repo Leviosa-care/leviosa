@@ -35,10 +35,10 @@ import {
     deletePromotionCodeSchema,
     deletePromotionCodeDefaults,
 } from "./schemas"
-import { mockCategories, mockProducts, mockPrices, mockCoupons, mockPromotionCodes } from "./mockData"
+import { mockCategories, mockProducts, mockPrices, mockCoupons, mockPromotionCodes } from "$lib/data/mockData"
 
 // Enable mock mode for development
-const MOCK_MODE = true
+const MOCK_MODE = env.USE_MOCK_DATA === 'true'
 
 export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
     // ⬅️ pulls data from (ops)/+layout.server.ts

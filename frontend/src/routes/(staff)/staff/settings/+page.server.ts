@@ -27,10 +27,10 @@ import {
     refreshTokenDurationSchema,
     refreshTokenDurationDefaults,
 } from "./schemas"
-import { mockSettings } from "./mockData"
+import { mockSettings } from "$lib/data/mockData"
 
 // Enable mock mode for development
-const MOCK_MODE = true
+const MOCK_MODE = env.USE_MOCK_DATA === 'true'
 
 export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
     // ⬅️ pulls data from (ops)/+layout.server.ts

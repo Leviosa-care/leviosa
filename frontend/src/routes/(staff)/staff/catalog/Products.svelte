@@ -16,7 +16,7 @@
     import Drawer from "$lib/ui/Drawer.svelte";
 
     import { browser } from "$app/environment";
-    import { mockProducts, mockCategories } from "./mockData";
+    import { mockProducts, mockCategories } from "$lib/data/mockData";
 
     // Detect if we're on mobile
     let isMobile = $state(false);
