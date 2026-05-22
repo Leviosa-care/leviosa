@@ -31,12 +31,12 @@
             class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center"
         >
             <Button class="text-white px-8 py-4 md:px-12 md:py-6 rounded-2xl"
-                >Book Session</Button
+                >Réserver</Button
             >
             <Button
                 class="bg-transparent hover:bg-dark-50/30 px-8 py-4 md:px-4 md:py-2"
             >
-                <p>More details</p>
+                <p>Plus de détails</p>
                 <ChevronDown />
             </Button>
         </div>
