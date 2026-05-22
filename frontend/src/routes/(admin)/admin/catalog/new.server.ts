@@ -9,7 +9,7 @@ import {
     productDefaults,
     type product,
 } from './schemas'
-import { type CardType, cards } from "./products"
+import { type CardType, mockAdminCards } from "$lib/data/mockData"
 import {
     defaultStatus,
     defaultCategory,
@@ -115,7 +115,7 @@ export const load: PageServerLoad = async (): Promise<Props> => {
     ]);
 
     return {
-        cards,
+        cards: mockAdminCards,
         statuses,
         categories,
         availabilities,

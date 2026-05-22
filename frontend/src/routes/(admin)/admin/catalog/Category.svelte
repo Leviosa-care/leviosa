@@ -3,7 +3,7 @@
 	import type { SuperValidated } from "sveltekit-superforms";
 	import type { category } from "./schemas";
 	import CategoryModal from "./CategoryModal.svelte";
-	import type { Category } from "./products";
+	import type { Category } from "$lib/data/mockData";
 
 	type Props = {
 		createCategoryForm: SuperValidated<category>;

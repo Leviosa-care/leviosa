@@ -4,7 +4,7 @@ import { arktype } from 'sveltekit-superforms/adapters';
 import { superValidate } from 'sveltekit-superforms';
 import { env } from '$env/dynamic/private';
 import { productSchema, productDefaults } from '../../schemas';
-import { categories as mockCategories, type Category } from '../../products';
+import { mockAdminCategories, type Category } from "$lib/data/mockData";
 
 interface BackendCategory {
 	id: string;
@@ -54,7 +54,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 	let categories: Category[];
 
 	if (env.USE_MOCK_DATA === 'true') {
-		categories = mockCategories;
+		categories = mockAdminCategories;
 	} else {
 		try {
 			const res = await fetch(`${env.API_URL}/admin/categories`);

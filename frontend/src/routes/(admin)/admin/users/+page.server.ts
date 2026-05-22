@@ -1,7 +1,7 @@
 import { env } from "$env/dynamic/private";
 import type { PageServerLoad, Actions } from "./$types";
 import { redirect } from "@sveltejs/kit";
-import { mockUsers } from "$lib/data/mockUsers";
+import { mockUsers } from "$lib/data/mockData";
 
 interface BackendUserResponse {
 	id: string;
@@ -9,7 +9,7 @@ interface BackendUserResponse {
 	email: string;
 	picture?: string;
 	created_at: string;
-	logged_in_at: string;
+	logged_in_at: string | null;
 	role?: string;
 	birthdate?: string;
 	last_name?: string;
@@ -53,8 +53,8 @@ function mapBackendUserToFrontend(user: BackendUserResponse): FrontendUser {
 export const load: PageServerLoad = async ({ fetch }) => {
 	if (env.USE_MOCK_DATA === "true") {
 		return {
-			users: mockUsers,
-			pendingUsers: mockUsers.filter((u) => u.status === "pending")
+			users: mockUsers.map(mapBackendUserToFrontend),
+			pendingUsers: mockUsers.filter((u) => u.state === "pending").map(mapBackendUserToFrontend)
 		};
 	}
 

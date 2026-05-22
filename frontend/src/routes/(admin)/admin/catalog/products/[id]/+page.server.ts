@@ -4,7 +4,7 @@ import { arktype } from 'sveltekit-superforms/adapters';
 import { superValidate } from 'sveltekit-superforms';
 import { env } from '$env/dynamic/private';
 import { productSchema, productDefaults } from '../../schemas';
-import { cards as mockCards, categories as mockCategories, type CardType, type Category } from '../../products';
+import { mockAdminCards, mockAdminCategories, type CardType, type Category } from "$lib/data/mockData";
 
 interface BackendCategory {
 	id: string;
@@ -60,10 +60,10 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 	let categories: Category[];
 
 	if (env.USE_MOCK_DATA === 'true') {
-		const found = mockCards.find(c => c.id === productId);
+		const found = mockAdminCards.find(c => c.id === productId);
 		if (!found) throw error(404, 'Product not found');
 		product = found;
-		categories = mockCategories;
+		categories = mockAdminCategories;
 	} else {
 		try {
 			const [productRes, categoriesRes] = await Promise.all([

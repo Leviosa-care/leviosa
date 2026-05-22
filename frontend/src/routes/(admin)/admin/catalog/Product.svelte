@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Plus, Search, Package } from "@lucide/svelte";
 	import ProductCard from "./ProductCard.svelte";
-	import { type CardType, type Category } from "./products";
+	import { type CardType, type Category } from "$lib/data/mockData";
 	import { type SuperValidated } from "sveltekit-superforms";
 	import type { DeleteProduct, product } from "./schemas";
 	import {

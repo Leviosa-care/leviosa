@@ -3,7 +3,7 @@
 	import { type SuperValidated } from "sveltekit-superforms";
 	import { superForm } from "sveltekit-superforms";
 	import AlertDialog from "./AlertDialog.svelte";
-	import { type CardType, type Category } from "./products";
+	import { type CardType, type Category } from "$lib/data/mockData";
 	import type { DeleteProduct, product } from "./schemas";
 
 	type Props = {

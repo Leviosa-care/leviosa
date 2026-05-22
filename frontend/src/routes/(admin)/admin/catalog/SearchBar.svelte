@@ -9,9 +9,9 @@
     } from "@lucide/svelte";
 
     import { capitalizeFirstWord } from "$lib/utils/capitalize";
-    import { type Card } from "./products";
+    import type { CardType } from "$lib/data/mockData";
     interface Props {
-        cards: Card[];
+        cards: CardType[];
         searchValue: string;
     }
     let { cards, searchValue = $bindable() }: Props = $props();

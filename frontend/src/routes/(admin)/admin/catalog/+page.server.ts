@@ -16,7 +16,7 @@ import {
 	categoryDefaults,
 	type category,
 } from './schemas'
-import { type CardType, cards as mockCards, categories as mockCategories, type Category } from "./products"
+import { type CardType, mockAdminCards, mockAdminCategories, type Category } from "$lib/data/mockData"
 import {
 	defaultStatus,
 	defaultCategory,
@@ -113,8 +113,8 @@ export const load: PageServerLoad = async ({ fetch }): Promise<Props> => {
 	let cards: CardType[];
 
 	if (env.USE_MOCK_DATA === "true") {
-		categories = mockCategories;
-		cards = mockCards;
+		categories = mockAdminCategories;
+		cards = mockAdminCards;
 	} else {
 		try {
 			const categoriesRes = await fetch(`${env.API_URL}/admin/categories`);

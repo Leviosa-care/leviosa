@@ -17,7 +17,7 @@
     import { X, ChevronDown, Check } from "@lucide/svelte";
 
     import { capitalizeFirstWord } from "$lib/utils/capitalize";
-    import type { CardType, Category } from "./products";
+    import type { CardType, Category } from "$lib/data/mockData";
     import {
         defaultStatus,
         defaultCategory,
