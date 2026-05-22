@@ -10,7 +10,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	// "github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	// "github.com/Leviosa-care/leviosa/backend/internal/common/middleware"
-	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
 	"github.com/stretchr/testify/assert"
 )
@@ -25,7 +25,7 @@ import (
 // 4. Handling expired sessions
 // 5. Verifying database state
 // 6. Proper cleanup
-func ExampleIntegrationTest() {
+func exampleIntegrationTest() {
 	// This is an example - in real tests you would have actual test dependencies
 	t := &testing.T{}
 	ctx := context.Background()
@@ -48,7 +48,7 @@ func ExampleIntegrationTest() {
 	// Mock admin handler
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Verify user context was set by middleware
-		_, found := auth.SessionInfoFromContext(r.Context())
+		_, found := session.SessionInfoFromContext(r.Context())
 		if !found {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -125,7 +125,7 @@ func TestCatalogServiceAuth(t *testing.T) {
 
 	// Test public catalog access (no authentication required)
 	t.Run("PublicCatalogAccess", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/api/catalog/products", nil)
+		_ = httptest.NewRequest("GET", "/api/catalog/products", nil)
 		resp := httptest.NewRecorder()
 
 		// catalogHandler.ServeHTTP(resp, req)
@@ -148,7 +148,7 @@ func TestCatalogServiceAuth(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				token := tc.setupFunc(t, ctx, authCtx)
-				req := testutils.CreateAuthenticatedRequest("GET", "/api/catalog/premium-products", token)
+				_ = testutils.CreateAuthenticatedRequest("GET", "/api/catalog/premium-products", token)
 				resp := httptest.NewRecorder()
 
 				// premiumHandler.ServeHTTP(resp, req)
@@ -162,7 +162,7 @@ func TestCatalogServiceAuth(t *testing.T) {
 	// Test partner special access
 	t.Run("PartnerSpecialAccess", func(t *testing.T) {
 		partnerToken := testutils.SetupPartnerUser(t, ctx, authCtx)
-		req := testutils.CreateAuthenticatedRequest("GET", "/api/catalog/partner-products", partnerToken)
+		_ = testutils.CreateAuthenticatedRequest("GET", "/api/catalog/partner-products", partnerToken)
 		resp := httptest.NewRecorder()
 
 		// partnerHandler.ServeHTTP(resp, req)
@@ -192,23 +192,20 @@ func TestSettingsServiceAuth(t *testing.T) {
 		adminToken := testutils.SetupAdminUser(t, ctx, authCtx)
 
 		// Test GET company settings
-		req := testutils.CreateAuthenticatedRequest("GET", "/api/settings/company", adminToken)
+		_ = testutils.CreateAuthenticatedRequest("GET", "/api/settings/company", adminToken)
 		resp := httptest.NewRecorder()
-		// settingsHandler.ServeHTTP(resp, req)
 		_ = resp // Assert 200 OK
 
 		// Test PUT company settings
 		body := strings.NewReader(`{"company_name": "New Company Name", "address": "123 Main St"}`)
-		req = testutils.CreateAuthenticatedRequestWithBody("PUT", "/api/settings/company", adminToken, body)
+		_ = testutils.CreateAuthenticatedRequestWithBody("PUT", "/api/settings/company", adminToken, body)
 		resp = httptest.NewRecorder()
-		// settingsHandler.ServeHTTP(resp, req)
 		_ = resp // Assert 200 OK
 
 		// Verify standard user cannot update company settings
 		standardToken := testutils.SetupStandardUser(t, ctx, authCtx)
-		req = testutils.CreateAuthenticatedRequestWithBody("PUT", "/api/settings/company", standardToken, body)
+		_ = testutils.CreateAuthenticatedRequestWithBody("PUT", "/api/settings/company", standardToken, body)
 		resp = httptest.NewRecorder()
-		// settingsHandler.ServeHTTP(resp, req)
 		_ = resp // Assert 403 Forbidden
 	})
 
@@ -227,7 +224,7 @@ func TestSettingsServiceAuth(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				token := testutils.SetupUserWithRole(t, ctx, tc.role, authCtx)
-				req := testutils.CreateAuthenticatedRequest("GET", "/api/settings/profile", token)
+				_ = testutils.CreateAuthenticatedRequest("GET", "/api/settings/profile", token)
 				resp := httptest.NewRecorder()
 				// profileHandler.ServeHTTP(resp, req)
 				_ = resp // Assert expected status
@@ -259,10 +256,8 @@ func TestSessionManagement(t *testing.T) {
 	t.Run("ActiveSessionWorks", func(t *testing.T) {
 		token := testutils.SetupStandardUser(t, ctx, authCtx)
 
-		req := testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", token)
+		_ = testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", token)
 		resp := httptest.NewRecorder()
-
-		// userHandler.ServeHTTP(resp, req)
 		_ = resp // Assert 200 OK
 
 		// Verify session exists
@@ -274,11 +269,8 @@ func TestSessionManagement(t *testing.T) {
 	t.Run("ExpiredSessionRejected", func(t *testing.T) {
 		expiredToken := testutils.SetupExpiredUserWithRole(t, ctx, identity.Standard, authCtx)
 
-		req := testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", expiredToken)
+		_ = testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", expiredToken)
 		resp := httptest.NewRecorder()
-
-		// This would normally be handled by auth middleware
-		// In real implementation, middleware would return 401 Unauthorized
 		_ = resp
 	})
 
@@ -286,22 +278,19 @@ func TestSessionManagement(t *testing.T) {
 	t.Run("PendingSessionBehavior", func(t *testing.T) {
 		pendingToken := testutils.SetupPendingUserWithRole(t, ctx, identity.Standard, authCtx)
 
-		req := testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", pendingToken)
+		_ = testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", pendingToken)
 		resp := httptest.NewRecorder()
-
-		// Your application might allow pending sessions for some endpoints
-		// but require email verification for others
 		_ = resp
 	})
 
 	// Test session refresh flow
 	t.Run("SessionRefreshFlow", func(t *testing.T) {
 		// Setup user with active session
-		accessToken := testutils.SetupStandardUser(t, ctx, authCtx)
+		_ = testutils.SetupStandardUser(t, ctx, authCtx)
 
 		// Simulate refresh request
 		req := httptest.NewRequest("POST", "/auth/refresh", nil)
-		req.AddCookie(testutils.CreateRefreshToken("dummy_refresh_token"))
+		req.AddCookie(testutils.CreateRefreshCookie("dummy_refresh_token"))
 		resp := httptest.NewRecorder()
 
 		// refreshHandler.ServeHTTP(resp, req)
@@ -345,7 +334,7 @@ func TestRoleHierarchy(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				token := testutils.SetupUserWithRole(t, ctx, tc.role, authCtx)
-				req := testutils.CreateAuthenticatedRequest("GET", "/api/premium-content", token)
+				_ = testutils.CreateAuthenticatedRequest("GET", "/api/premium-content", token)
 				resp := httptest.NewRecorder()
 
 				// premiumHandler.ServeHTTP(resp, req)
@@ -370,7 +359,7 @@ func TestRoleHierarchy(t *testing.T) {
 		for _, role := range roles {
 			t.Run(role.String()+" access", func(t *testing.T) {
 				token := testutils.SetupUserWithRole(t, ctx, role, authCtx)
-				req := testutils.CreateAuthenticatedRequest("GET", "/api/admin/system", token)
+				_ = testutils.CreateAuthenticatedRequest("GET", "/api/admin/system", token)
 				resp := httptest.NewRecorder()
 
 				// adminHandler.ServeHTTP(resp, req)
@@ -415,17 +404,17 @@ func TestCustomScenarios(t *testing.T) {
 		standardToken := tokens[identity.Standard]
 
 		// Admin can perform admin operations
-		req := testutils.CreateAuthenticatedRequest("POST", "/api/admin/users", adminToken)
+		_ = testutils.CreateAuthenticatedRequest("POST", "/api/admin/users", adminToken)
 		resp := httptest.NewRecorder()
 		_ = resp // Assert 200 OK
 
 		// Premium user can access premium features
-		req = testutils.CreateAuthenticatedRequest("GET", "/api/premium/features", premiumToken)
+		_ = testutils.CreateAuthenticatedRequest("GET", "/api/premium/features", premiumToken)
 		resp = httptest.NewRecorder()
 		_ = resp // Assert 200 OK
 
 		// Standard user has limited access
-		req = testutils.CreateAuthenticatedRequest("GET", "/api/standard/features", standardToken)
+		_ = testutils.CreateAuthenticatedRequest("GET", "/api/standard/features", standardToken)
 		resp = httptest.NewRecorder()
 		_ = resp // Assert 200 OK
 	})
@@ -447,7 +436,7 @@ func TestCustomScenarios(t *testing.T) {
 		assert.True(t, exists)
 
 		// Test that custom user can authenticate
-		req := testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", token)
+		_ = testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", token)
 		resp := httptest.NewRecorder()
 		_ = resp // Assert 200 OK
 	})
@@ -457,10 +446,8 @@ func TestCustomScenarios(t *testing.T) {
 		// Create user with session that will expire soon
 		token := testutils.SetupExpiredUserWithRole(t, ctx, identity.Standard, authCtx)
 
-		req := testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", token)
+		_ = testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", token)
 		resp := httptest.NewRecorder()
-
-		// Middleware should reject expired session
 		_ = resp // Assert 401 Unauthorized
 	})
 
@@ -475,11 +462,11 @@ func TestCustomScenarios(t *testing.T) {
 		token2 := testutils.SetupUserWithCustomData(t, ctx, identity.Standard, userID, "Test", "User", "", authCtx)
 
 		// Both tokens should work (depending on your session policy)
-		req1 := testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", token1)
+		_ = testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", token1)
 		resp1 := httptest.NewRecorder()
 		_ = resp1 // Assert based on your session policy
 
-		req2 := testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", token2)
+		_ = testutils.CreateAuthenticatedRequest("GET", "/api/user/profile", token2)
 		resp2 := httptest.NewRecorder()
 		_ = resp2 // Assert based on your session policy
 	})

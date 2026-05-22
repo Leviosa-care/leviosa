@@ -221,7 +221,7 @@ func TestMain(m *testing.M) {
 	catalogStripePrice := pricePayment.NewPrice("sk_test_123456789012345678901234", stripeContainer.URL)
 
 	// Initialize product service with Stripe dependencies
-	productSvc = catalogProduct.New(productRepo, sharedRepo, catalogStripeProduct, catalogStripePrice)
+	productSvc = catalogProduct.New(productRepo, sharedRepo, catalogStripeProduct, catalogStripePrice, nil)
 
 	// Initialize partner service (includes catalog consumer)
 	partnerSvc, err = partner.New(

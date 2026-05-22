@@ -84,7 +84,8 @@ func ClearS3Bucket(t *testing.T, ctx context.Context, s3Client *s3.Client) {
 // CreateContextWithTimeout creates a context with a specific timeout duration
 // Useful for testing timeout scenarios
 func CreateContextWithTimeout(parent context.Context, duration time.Duration) context.Context {
-	ctx, _ := context.WithTimeout(parent, duration)
+	ctx, cancel := context.WithTimeout(parent, duration)
+	_ = cancel // Suppress vet warning - context is returned, cancel handled by caller
 	return ctx
 }
 

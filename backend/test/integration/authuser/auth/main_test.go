@@ -253,7 +253,7 @@ func TestMain(m *testing.M) {
 
 	// Initialize catalog services
 	categoryService = catalogApp.New(categoryRepo, sharedRepo)
-	productService = catalogProductApp.New(productRepo, sharedRepo, catalogStripeService, catalogPriceStripeService)
+	productService = catalogProductApp.New(productRepo, sharedRepo, catalogStripeService, catalogPriceStripeService, nil)
 
 	otpRepo = otpRepository.New(redisClient)
 	otpService, err := otp.New(ctx, otpRepo, crypto, testMQConn)
