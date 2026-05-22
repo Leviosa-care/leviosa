@@ -41,6 +41,9 @@ var (
 	// Booking-specific errors
 	ErrInvalidAvailabilityDuration = errors.New("availability duration does not align with product offerings")
 	ErrCancellationWindowClosed    = errors.New("cancellation window has closed")
+
+	// Business rule violations (semantically valid request that violates a domain rule)
+	ErrUnprocessableEntity = errors.New("unprocessable entity")
 )
 
 func NewCancellationWindowClosedErr(hoursRequired int, hoursRemaining int) error {
@@ -87,6 +90,10 @@ func NewNotDecryptedErr(resource string, err error) error {
 
 func NewInvalidValueErr(description string) error {
 	return fmt.Errorf("%w: %s", ErrInvalidValue, description)
+}
+
+func NewUnprocessableEntityErr(description string) error {
+	return fmt.Errorf("%w: %s", ErrUnprocessableEntity, description)
 }
 
 func NewLockedAccountErr(err error, name string) error {

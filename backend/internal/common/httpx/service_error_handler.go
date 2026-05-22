@@ -115,6 +115,10 @@ func classifyServiceError(err error) int {
 		errors.Is(err, errs.ErrUniqueViolation):
 		return http.StatusConflict
 
+	// 422 Unprocessable Entity - Request is valid but violates a domain business rule
+	case errors.Is(err, errs.ErrUnprocessableEntity):
+		return http.StatusUnprocessableEntity
+
 	// 423 Locked - Resource is locked (e.g., account locked)
 	case errors.Is(err, errs.ErrAccountLocked):
 		return http.StatusLocked
