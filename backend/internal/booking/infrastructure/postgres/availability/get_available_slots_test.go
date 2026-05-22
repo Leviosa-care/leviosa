@@ -416,6 +416,5 @@ func TestGetAvailableSlots(t *testing.T) {
 		assert.Equal(t, domain.AvailabilityStatusAvailable, retrieved.Status)
 		assert.Equal(t, original.ServiceTypeEncrypted, retrieved.ServiceTypeEncrypted)
 		assert.Equal(t, original.NotesEncrypted, retrieved.NotesEncrypted)
-		assert.Equal(t, original.RecurrencePatternEncrypted, retrieved.RecurrencePatternEncrypted)
 	})
 }

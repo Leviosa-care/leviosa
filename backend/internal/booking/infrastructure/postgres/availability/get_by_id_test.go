@@ -62,7 +62,6 @@ func TestGetByID(t *testing.T) {
 		assert.Equal(t, original.Status, retrieved.Status)
 		assert.Equal(t, original.ServiceTypeEncrypted, retrieved.ServiceTypeEncrypted)
 		assert.Equal(t, original.NotesEncrypted, retrieved.NotesEncrypted)
-		assert.Equal(t, original.RecurrencePatternEncrypted, retrieved.RecurrencePatternEncrypted)
 	})
 
 	t.Run("should return not found when availability does not exist", func(t *testing.T) {
@@ -113,8 +112,6 @@ func TestGetByID(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, retrieved)
 		assert.True(t, retrieved.IsRecurring)
-		assert.NotNil(t, retrieved.RecurrencePatternEncrypted)
-		assert.Equal(t, original.RecurrencePatternEncrypted, retrieved.RecurrencePatternEncrypted)
 	})
 
 	t.Run("should get availability with different statuses", func(t *testing.T) {
@@ -233,7 +230,6 @@ func TestGetByID(t *testing.T) {
 		assert.NotNil(t, retrieved)
 		assert.Equal(t, original.ServiceTypeEncrypted, retrieved.ServiceTypeEncrypted)
 		assert.Equal(t, original.NotesEncrypted, retrieved.NotesEncrypted)
-		assert.Equal(t, original.RecurrencePatternEncrypted, retrieved.RecurrencePatternEncrypted)
 		assert.Equal(t, original.DEKEncrypted, retrieved.DEKEncrypted)
 		assert.Equal(t, original.KeyVersion, retrieved.KeyVersion)
 		assert.Equal(t, original.Metadata, retrieved.Metadata)
@@ -302,7 +298,6 @@ func TestGetByID(t *testing.T) {
 		original := availabilityHelpers.NewTestAvailabilityEncxWithPartnerAndRoom(t, partnerEncx.ID, roomEncx.ID)
 		original.ServiceTypeEncrypted = []byte{}
 		original.NotesEncrypted = []byte{}
-		original.RecurrencePatternEncrypted = nil // Non-recurring
 		availabilityHelpers.InsertAvailabilityEncx(t, ctx, original, testPool)
 
 		// Execute
@@ -313,6 +308,5 @@ func TestGetByID(t *testing.T) {
 		assert.NotNil(t, retrieved)
 		assert.Empty(t, retrieved.ServiceTypeEncrypted)
 		assert.Empty(t, retrieved.NotesEncrypted)
-		assert.Nil(t, retrieved.RecurrencePatternEncrypted)
 	})
 }

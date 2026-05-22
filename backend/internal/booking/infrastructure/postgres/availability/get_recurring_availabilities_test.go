@@ -88,7 +88,6 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 		retrieved := result[0]
 		assert.Equal(t, recurring.ID, retrieved.ID)
 		assert.True(t, retrieved.IsRecurring)
-		assert.NotNil(t, retrieved.RecurrencePatternEncrypted)
 	})
 
 	t.Run("should return only available recurring availabilities", func(t *testing.T) {
@@ -312,7 +311,6 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 		for _, avail := range result {
 			assert.Equal(t, domain.AvailabilityStatusAvailable, avail.Status)
 			assert.True(t, avail.IsRecurring)
-			assert.NotNil(t, avail.RecurrencePatternEncrypted)
 		}
 	})
 
@@ -359,7 +357,6 @@ func TestGetRecurringAvailabilities(t *testing.T) {
 		assert.Equal(t, original.ID, retrieved.ID)
 		assert.Equal(t, original.ServiceTypeEncrypted, retrieved.ServiceTypeEncrypted)
 		assert.Equal(t, original.NotesEncrypted, retrieved.NotesEncrypted)
-		assert.Equal(t, original.RecurrencePatternEncrypted, retrieved.RecurrencePatternEncrypted)
 		assert.Equal(t, original.DEKEncrypted, retrieved.DEKEncrypted)
 		assert.Equal(t, original.KeyVersion, retrieved.KeyVersion)
 		assert.Equal(t, original.Metadata, retrieved.Metadata)

@@ -133,7 +133,6 @@ func TestUpdate(t *testing.T) {
 		updated.StartTime = original.StartTime
 		updated.EndTime = original.EndTime
 		updated.IsRecurring = false
-		updated.RecurrencePatternEncrypted = nil
 
 		// Execute
 		err = repo.Update(ctx, updated)
@@ -142,7 +141,6 @@ func TestUpdate(t *testing.T) {
 		require.NoError(t, err)
 		retrieved := availabilityHelpers.GetAvailabilityEncxFromDB(t, ctx, original.ID, testPool)
 		assert.False(t, retrieved.IsRecurring)
-		assert.Nil(t, retrieved.RecurrencePatternEncrypted)
 	})
 
 	t.Run("should update encrypted fields", func(t *testing.T) {
