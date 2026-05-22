@@ -245,7 +245,8 @@ func TestUploadImage(t *testing.T) {
 		}
 
 		req2 := th.NewUploadImageRequest(t, ctx, testServerURL, fileContent, "image", "image2.jpg", additionalFields2, accessToken)
-		resp2, _ := client.Do(req2)
+		resp2, err2 := client.Do(req2)
+		require.NoError(t, err2)
 		defer resp2.Body.Close()
 
 		assert.Equal(t, http.StatusCreated, resp2.StatusCode)

@@ -94,7 +94,7 @@ func TestCreatePrice(t *testing.T) {
 	t.Run("create price with different currencies", func(t *testing.T) {
 		testCases := []struct {
 			currency string
-			amount   int
+			amount   int64
 		}{
 			{"EUR", 2500},
 			{"GBP", 2000},

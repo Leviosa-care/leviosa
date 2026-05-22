@@ -41,7 +41,7 @@ func (s *ImageService) GetActiveImage(ctx context.Context, parentIDStr string, p
 
 	image, err := s.repo.GetActiveImage(ctx, parentID, parentType)
 	if err != nil {
-		fmt.Errorf("get active image: %w", err)
+		return nil, fmt.Errorf("get active image: %w", err)
 	}
 
 	return image, nil

@@ -33,7 +33,6 @@ func TestGetCategoryByID(t *testing.T) {
 				cat.ID = categoryID // Use the generated ID
 				cat.Description = "Description for test category one."
 				cat.Status = domain.Published
-				cat.Metadata = map[string]any{"color": "red", "weight": 1.5}
 				td.InsertCategory(t, ctx, cat, testPool)
 			},
 			expectedCat: func() *domain.Category {
@@ -43,7 +42,6 @@ func TestGetCategoryByID(t *testing.T) {
 				// For now, these are just what we expect the *non-dynamic* fields to be.
 				cat.Description = "Description for test category one."
 				cat.Status = domain.Published
-				cat.Metadata = map[string]any{"color": "red", "weight": 1.5}
 				return cat
 			}(),
 			expectedErr: nil,

@@ -239,7 +239,7 @@ func TestMain(m *testing.M) {
 	priceRepo := priceRepository.New(ctx, testPool)
 	mediaRepo := imageMedia.New(ctx, s3Client, td.BUCKETNAME)
 
-	productService := product.New(repo, sharedRepo, productPaymentGateway, pricePaymentGateway)
+	productService := product.New(repo, sharedRepo, productPaymentGateway, pricePaymentGateway, nil)
 	imageService := image.New(imageRepo, mediaRepo, sharedRepo)
 	priceService := price.New(priceRepo, sharedRepo, pricePaymentGateway)
 

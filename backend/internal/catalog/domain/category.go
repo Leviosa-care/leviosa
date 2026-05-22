@@ -15,6 +15,7 @@ type Category struct {
 	Status      PublishedStatus `json:"status"`
 	CreatedAt   time.Time       `json:"createdAt"`
 	UpdatedAt   time.Time       `json:"updatedAt"`
+	Metadata    map[string]any  `json:"metadata,omitempty"`
 }
 
 func (c Category) Valid(ctx context.Context) error {

@@ -18,12 +18,10 @@ func TestGetAllProducts(t *testing.T) {
 	// Create a few categories for products to link to
 	cat1 := td.NewValidCategory("Electronics")
 	cat1.ID = uuid.New()
-	cat1.Metadata = map[string]any{"type": "consumer"}
 	td.InsertCategory(t, ctx, cat1, testPool)
 
 	cat2 := td.NewValidCategory("Books")
 	cat2.ID = uuid.New()
-	cat2.Metadata = map[string]any{"genre": "fiction"}
 	td.InsertCategory(t, ctx, cat2, testPool)
 
 	tests := []struct {

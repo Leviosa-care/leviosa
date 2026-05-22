@@ -122,7 +122,7 @@ func TestGetPromotionCode(t *testing.T) {
 			CouponID:             couponID,
 			Code:                 "EUROPE20",
 			FirstTimeTransaction: false,
-			Restrictions: &domain.PromotionCodeRestrictions{
+			Restrictions: &domain.PromotionCodeRestrictionsRequest{
 				CurrencyOptions: currencyOptions,
 			},
 		}

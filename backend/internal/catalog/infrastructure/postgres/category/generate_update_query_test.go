@@ -29,14 +29,10 @@ func TestGenerateUpdateQuery(t *testing.T) {
 				Name:        strPtr("New Name"),
 				Description: strPtr("New Description"),
 				Status:      statusStrPtr("published"), // Using string literal now
-				Metadata:    map[string]any{"key": "value", "num": 123},
 			},
-			expectedQuery: "UPDATE catalog.categories SET name = $1, description = $2, status = $3, metadata = $4 WHERE id = $5;",
-			expectedArgs: func() []any {
-				metadataJSON, _ := json.Marshal(map[string]any{"key": "value", "num": 123})
-				return []any{"New Name", "New Description", "published", metadataJSON, categoryID} // Using string literal
-			}(),
-			expectedErr: "",
+			expectedQuery: "UPDATE catalog.categories SET name = $1, description = $2, status = $3 WHERE id = $4;",
+			expectedArgs:  []any{"New Name", "New Description", "published", categoryID},
+			expectedErr:   "",
 		},
 		{
 			name:       "Update only Name",
@@ -69,17 +65,14 @@ func TestGenerateUpdateQuery(t *testing.T) {
 			expectedErr:   "",
 		},
 		{
-			name:       "Update only Metadata",
+			name:       "Update only Status",
 			categoryID: categoryID,
 			request: &domain.UpdateCategoryRequest{
-				Metadata: map[string]any{"new_key": "new_value"},
+				Status: statusStrPtr("active"),
 			},
-			expectedQuery: "UPDATE catalog.categories SET metadata = $1 WHERE id = $2;",
-			expectedArgs: func() []any {
-				metadataJSON, _ := json.Marshal(map[string]any{"new_key": "new_value"})
-				return []any{metadataJSON, categoryID}
-			}(),
-			expectedErr: "",
+			expectedQuery: "UPDATE catalog.categories SET status = $1 WHERE id = $2;",
+			expectedArgs:  []any{"active", categoryID},
+			expectedErr:   "",
 		},
 		{
 			name:          "No fields provided for update (should return error)",

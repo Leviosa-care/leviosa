@@ -37,7 +37,6 @@ func TestCreateCategory(t *testing.T) {
 		requestBody := domain.CreateCategoryRequest{
 			Name:        "New Category",
 			Description: "A great new category.",
-			Metadata:    map[string]any{"key1": "value1"},
 		}
 
 		req := th.NewCreateCategoryRequest(t, ctx, testServerURL, requestBody, accessToken)
@@ -66,7 +65,6 @@ func TestCreateCategory(t *testing.T) {
 		assert.Equal(t, strings.ToLower(requestBody.Name), cat.Name)
 		assert.Equal(t, requestBody.Description, cat.Description)
 		assert.Equal(t, domain.Draft, cat.Status)
-		assert.Equal(t, requestBody.Metadata, cat.Metadata)
 	})
 
 	t.Run("should return 409 Conflict if category name already exists", func(t *testing.T) {

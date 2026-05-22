@@ -36,7 +36,7 @@ func TestCreatePromotionCode(t *testing.T) {
 			FirstTimeTransaction:  true,
 			MinimumAmount:         &minimumAmount,
 			MinimumAmountCurrency: &minimumAmountCurrency,
-			Restrictions: &domain.PromotionCodeRestrictions{
+			Restrictions: &domain.PromotionCodeRestrictionsRequest{
 				CurrencyOptions: []string{"USD", "EUR"},
 			},
 			Metadata: map[string]string{
@@ -163,7 +163,7 @@ func TestCreatePromotionCode(t *testing.T) {
 			CouponID:             couponID,
 			Code:                 "INTL15",
 			FirstTimeTransaction: false,
-			Restrictions: &domain.PromotionCodeRestrictions{
+			Restrictions: &domain.PromotionCodeRestrictionsRequest{
 				CurrencyOptions: currencyOptions,
 			},
 			Metadata: map[string]string{

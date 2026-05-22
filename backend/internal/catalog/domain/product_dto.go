@@ -84,4 +84,5 @@ type ProductRes struct {
 	BufferTime        int              `json:"bufferTime"`         // in minutes
 	CancellationHours int              `json:"cancellationHours"`  // in hours
 	Metadata          map[string]any   `json:"metadata,omitempty"` // Flexible storage for type-specific attributes
+	StripeProductID   string           `json:"stripeProductId,omitempty"`
 }

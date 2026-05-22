@@ -31,10 +31,11 @@ func (c CreateCategoryRequest) Valid(ctx context.Context) error {
 }
 
 type UpdateCategoryRequest struct {
-	ID          string  `json:"id"`
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Status      *string `json:"status,omitempty"`
+	ID          string         `json:"id"`
+	Name        *string        `json:"name,omitempty"`
+	Description *string        `json:"description,omitempty"`
+	Status      *string        `json:"status,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
 func (c UpdateCategoryRequest) Valid(ctx context.Context) error {
