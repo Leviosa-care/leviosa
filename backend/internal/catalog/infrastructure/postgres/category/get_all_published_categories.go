@@ -2,7 +2,6 @@ package categoryRepository
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/catalog/domain"
@@ -12,7 +11,7 @@ import (
 
 func (r *CategoryRepository) GetAllPublishedCategories(ctx context.Context) ([]*domain.Category, error) {
 	query := `
-	SELECT id, name, description, status, metadata, created_at, updated_at
+	SELECT id, name, description, status, created_at, updated_at
 	FROM catalog.categories
 	WHERE status = $1
 	ORDER BY name ASC`
@@ -26,27 +25,17 @@ func (r *CategoryRepository) GetAllPublishedCategories(ctx context.Context) ([]*
 	var categories []*domain.Category
 
 	for rows.Next() {
-		var (
-			cat          domain.Category
-			metadataJSON []byte
-		)
+		var cat domain.Category
 
 		if err := rows.Scan(
 			&cat.ID,
 			&cat.Name,
 			&cat.Description,
 			&cat.Status,
-			&metadataJSON,
 			&cat.CreatedAt,
 			&cat.UpdatedAt,
 		); err != nil {
 			return nil, errs.NewDBQueryErr(fmt.Errorf("failed to scan row: %w", err))
-		}
-
-		if metadataJSON != nil {
-			if err := json.Unmarshal(metadataJSON, &cat.Metadata); err != nil {
-				return nil, errs.NewInvalidInputErr(fmt.Errorf("failed to unmarshal category metadata: %w", err))
-			}
 		}
 
 		categories = append(categories, &cat)

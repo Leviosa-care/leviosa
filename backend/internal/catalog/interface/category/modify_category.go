@@ -56,7 +56,7 @@ func (h *handler) ModifyCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Name == nil && req.Description == nil && req.Status == nil && req.Metadata == nil {
+	if req.Name == nil && req.Description == nil && req.Status == nil {
 		httpx.RespondWithError(w, errors.New("no updatable fields provided in request body"), http.StatusBadRequest)
 		return
 	}

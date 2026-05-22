@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -41,21 +40,15 @@ func InsertCategory(t *testing.T, ctx context.Context, category *domain.Category
 			name,
 			description,
 			status,
-			created_at,
-			metadata
-		) VALUES ($1, $2, $3, $4, $5, $6)`
+			created_at
+		) VALUES ($1, $2, $3, $4, $5)`
 
-	// Marshal metadata to JSONB for insertion
-	metadataJSON, err := json.Marshal(category.Metadata)
-	require.NoError(t, err, "Failed to marshal metadata for test insertion")
-
-	_, err = pool.Exec(ctx, query,
+	_, err := pool.Exec(ctx, query,
 		category.ID,
 		category.Name,
 		category.Description,
 		category.Status,
 		category.CreatedAt,
-		metadataJSON,
 	)
 	require.NoError(t, err, fmt.Sprintf("Failed to pre-insert category '%s'", category.Name))
 }
@@ -72,14 +65,12 @@ func GetCategoryByID(t *testing.T, ctx context.Context, categoryID uuid.UUID, po
 			description,
 			status,
 			created_at,
-			updated_at,
-			metadata
+			updated_at
 		FROM catalog.categories
 		WHERE id = $1
 	`
 
 	var cat domain.Category
-	var metadataJSON []byte
 
 	err := pool.QueryRow(ctx, query, categoryID).Scan(
 		&cat.ID,
@@ -88,7 +79,6 @@ func GetCategoryByID(t *testing.T, ctx context.Context, categoryID uuid.UUID, po
 		&cat.Status,
 		&cat.CreatedAt,
 		&cat.UpdatedAt,
-		&metadataJSON,
 	)
 
 	if err != nil {
@@ -96,11 +86,6 @@ func GetCategoryByID(t *testing.T, ctx context.Context, categoryID uuid.UUID, po
 			return nil, fmt.Errorf("category with ID %s not found", categoryID)
 		}
 		return nil, fmt.Errorf("failed to get category from database: %w", err)
-	}
-
-	if metadataJSON != nil {
-		err = json.Unmarshal(metadataJSON, &cat.Metadata)
-		require.NoError(t, err, "Failed to unmarshal metadata from database")
 	}
 
 	return &cat, nil

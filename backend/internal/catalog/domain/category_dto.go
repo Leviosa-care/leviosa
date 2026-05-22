@@ -9,9 +9,8 @@ import (
 )
 
 type CreateCategoryRequest struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Metadata    map[string]any `json:"metadata,omitempty"` // For category-specific attributes or configurations
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 func (c CreateCategoryRequest) Valid(ctx context.Context) error {
@@ -32,11 +31,10 @@ func (c CreateCategoryRequest) Valid(ctx context.Context) error {
 }
 
 type UpdateCategoryRequest struct {
-	ID          string         `json:"id"`
-	Name        *string        `json:"name,omitempty"`
-	Description *string        `json:"description,omitempty"`
-	Status      *string        `json:"status,omitempty"`
-	Metadata    map[string]any `json:"metadata"` // For category-specific attributes or configurations
+	ID          string  `json:"id"`
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Status      *string `json:"status,omitempty"`
 }
 
 func (c UpdateCategoryRequest) Valid(ctx context.Context) error {
@@ -60,13 +58,11 @@ func (c UpdateCategoryRequest) Valid(ctx context.Context) error {
 	return errs.AsError()
 }
 
-// TODO: add the image thing ?
 type CategoryRes struct {
-	ID          uuid.UUID      `json:"id"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Status      string         `json:"status"`
-	CreatedAt   time.Time      `json:"createdAt"`
-	UpdatedAt   time.Time      `json:"updatedAt"`
-	Metadata    map[string]any `json:"metadata,omitempty"` // For category-specific attributes or configurations
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }

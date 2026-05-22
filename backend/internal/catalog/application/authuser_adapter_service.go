@@ -34,27 +34,25 @@ func NewAuthUserCatalogAdapter(
 // CachedCategory represents a simplified category for in-memory caching in authuser service.
 // This type mirrors the authuser domain.CachedCategory to avoid import cycles.
 type CachedCategory struct {
-	ID          uuid.UUID      `json:"id"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Status      string         `json:"status"`
-	Metadata    map[string]any `json:"metadata"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Status      string    `json:"status"`
 }
 
 // CachedProduct represents a simplified product for in-memory caching in authuser service.
 // This type mirrors the authuser domain.CachedProduct to avoid import cycles.
 type CachedProduct struct {
-	ID                uuid.UUID      `json:"id"`
-	Name              string         `json:"name"`
-	Description       string         `json:"description"`
-	CategoryID        uuid.UUID      `json:"category_id"`
-	Duration          int            `json:"duration"`
-	Status            string         `json:"status"`
-	Availability      string         `json:"availability"`
-	BufferTime        int            `json:"buffer_time"`
-	CancellationHours int            `json:"cancellation_hours"`
-	StripeProductID   string         `json:"stripe_product_id"`
-	Metadata          map[string]any `json:"metadata"`
+	ID                uuid.UUID `json:"id"`
+	Name              string    `json:"name"`
+	Description       string    `json:"description"`
+	CategoryID        uuid.UUID `json:"category_id"`
+	Duration          int       `json:"duration"`
+	Status            string    `json:"status"`
+	Availability      string    `json:"availability"`
+	BufferTime        int       `json:"buffer_time"`
+	CancellationHours int       `json:"cancellation_hours"`
+	StripeProductID   string    `json:"stripe_product_id"`
 }
 
 // ListPublishedCategories returns all published categories converted to cached format.
@@ -93,8 +91,7 @@ func convertCategoryToCached(cat *catalogDomain.Category) CachedCategory {
 		ID:          cat.ID,
 		Name:        cat.Name,
 		Description: cat.Description,
-		Status:      string(cat.Status), // Convert PublishedStatus to string
-		Metadata:    cat.Metadata,
+		Status:      string(cat.Status),
 	}
 }
 
@@ -104,13 +101,11 @@ func convertProductToCached(prod *catalogDomain.ProductRes) CachedProduct {
 		ID:          prod.ID,
 		Name:        prod.Name,
 		Description: prod.Description,
-		// CategoryID:        prod.CategoryID,
-		Duration:          prod.Duration,
-		Status:            string(prod.Status), // Convert PublishedStatus to string
-		Availability:      string(prod.Availability),
-		BufferTime:        prod.BufferTime,
+		Duration:    prod.Duration,
+		Status:      string(prod.Status),
+		Availability: string(prod.Availability),
+		BufferTime:   prod.BufferTime,
 		CancellationHours: prod.CancellationHours,
 		StripeProductID:   prod.StripeProductID,
-		Metadata:          prod.Metadata,
 	}
 }

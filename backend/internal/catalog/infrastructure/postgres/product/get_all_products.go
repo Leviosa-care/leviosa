@@ -13,7 +13,7 @@ import (
 
 func (r *ProductRepository) GetAllProducts(ctx context.Context) ([]*domain.ProductRes, error) {
 	query := fmt.Sprintf(`
-	SELECT 
+	SELECT
 		p.id,
 		p.name,
 		p.description,
@@ -27,8 +27,7 @@ func (r *ProductRepository) GetAllProducts(ctx context.Context) ([]*domain.Produ
 		p.metadata,
 		c.id,
 		c.name,
-		c.description,
-		c.metadata
+		c.description
 	FROM %s.products p
 	JOIN %s.categories c ON p.category_id = c.id
 	ORDER BY p.created_at DESC
@@ -46,7 +45,6 @@ func (r *ProductRepository) GetAllProducts(ctx context.Context) ([]*domain.Produ
 		var (
 			pr          domain.ProductRes
 			metaProd    []byte
-			metaCat     []byte
 			cat         domain.Category
 			description sql.NullString
 		)
@@ -66,12 +64,10 @@ func (r *ProductRepository) GetAllProducts(ctx context.Context) ([]*domain.Produ
 			&cat.ID,
 			&cat.Name,
 			&cat.Description,
-			&metaCat,
 		); err != nil {
 			return nil, errs.NewDBQueryErr(fmt.Errorf("failed to scan row: %w", err))
 		}
 
-		// convert description
 		if description.Valid {
 			pr.Description = description.String
 		} else {
@@ -84,14 +80,6 @@ func (r *ProductRepository) GetAllProducts(ctx context.Context) ([]*domain.Produ
 			}
 		} else {
 			pr.Metadata = nil
-		}
-
-		if metaCat != nil {
-			if err := json.Unmarshal(metaCat, &cat.Metadata); err != nil {
-				return nil, errs.NewInvalidInputErr(fmt.Errorf("failed to unmarshal category metadata for product: %w", err))
-			}
-		} else {
-			cat.Metadata = nil
 		}
 
 		pr.Category = cat

@@ -24,7 +24,6 @@ func (s *CategoryService) CreateCategory(ctx context.Context, request *domain.Cr
 		ID:          uuid.New(),
 		Name:        strings.ToLower(request.Name),
 		Description: request.Description,
-		Metadata:    request.Metadata,
 		Status:      domain.Draft,
 		CreatedAt:   now,
 		UpdatedAt:   now,
