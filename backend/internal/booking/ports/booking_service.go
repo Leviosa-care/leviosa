@@ -54,4 +54,18 @@ type BookingService interface {
 
 	// GetDashboardStats retrieves aggregated dashboard statistics for admins
 	GetDashboardStats(ctx context.Context) (*DashboardStats, error)
+
+	// GetAdminBookings retrieves a paginated list of all bookings with enriched
+	// fields (client name, partner name, product name, room name) for the admin UI.
+	GetAdminBookings(ctx context.Context, filter AdminBookingsFilter) (*domain.AdminBookingsListResponse, error)
+}
+
+// AdminBookingsFilter holds query parameters for the admin bookings list endpoint.
+type AdminBookingsFilter struct {
+	Status    *domain.BookingStatus
+	PartnerID *uuid.UUID
+	From      *time.Time
+	To        *time.Time
+	Page      int
+	Limit     int
 }
