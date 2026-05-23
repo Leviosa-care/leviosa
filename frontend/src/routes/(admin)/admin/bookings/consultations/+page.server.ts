@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import { error, redirect, isRedirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 interface Consultation {
@@ -8,8 +9,30 @@ interface Consultation {
 	productName: string;
 	date: string;
 	duration: number;
-	status: 'completed' | 'pending' | 'cancelled';
+	status: 'completed' | 'pending' | 'cancelled' | 'confirmed' | 'no_show';
 	hasNotes: boolean;
+}
+
+interface APIBooking {
+	id: string;
+	client_name: string;
+	partner_name: string;
+	product_name: string;
+	room_name: string;
+	slot_start_time: string;
+	slot_end_time: string;
+	status: string;
+	payment_status: string;
+	total_price_cents: number;
+	currency: string;
+	created_at: string;
+}
+
+interface APIBookingsResponse {
+	bookings: APIBooking[];
+	total: number;
+	page: number;
+	limit: number;
 }
 
 async function getMockConsultations(): Promise<Consultation[]> {
@@ -31,9 +54,65 @@ async function getMockConsultations(): Promise<Consultation[]> {
 	];
 }
 
-export const load: PageServerLoad = async () => {
+function mapStatus(status: string): Consultation['status'] {
+	// 'confirmed' maps to 'pending' because the UI vocabulary treats an upcoming
+	// confirmed booking as "À venir" rather than showing raw API status names.
+	if (status === 'confirmed') return 'pending';
+	return status as Consultation['status'];
+}
+
+export const load: PageServerLoad = async ({ fetch, url }) => {
 	if (env.USE_MOCK_DATA === 'true') {
 		return { consultations: await getMockConsultations() };
 	}
-	return { consultations: [] };
+
+	try {
+		const params = new URLSearchParams();
+		const status = url.searchParams.get('status');
+		const partnerId = url.searchParams.get('therapist');
+		const page = url.searchParams.get('page') || '1';
+
+		if (status) params.set('status', status);
+		if (partnerId) params.set('partner_id', partnerId);
+		params.set('page', page);
+		params.set('limit', '20');
+
+		const res = await fetch(`${env.API_URL}/admin/bookings?${params.toString()}`);
+		if (res.status === 401) {
+			throw redirect(302, '/auth');
+		}
+		if (!res.ok) {
+			throw new Error(`Failed to fetch bookings: ${res.status} ${res.statusText}`);
+		}
+
+		const data: APIBookingsResponse = await res.json();
+
+		const consultations: Consultation[] = data.bookings.map((b): Consultation => {
+			const start = new Date(b.slot_start_time);
+			const end = new Date(b.slot_end_time);
+			const durationMin = Math.round((end.getTime() - start.getTime()) / 60000);
+
+			return {
+				id: b.id,
+				clientName: b.client_name,
+				therapistName: b.partner_name,
+				productName: b.product_name,
+				date: b.slot_start_time,
+				duration: durationMin,
+				status: mapStatus(b.status),
+				hasNotes: false // notes not exposed in admin list for privacy
+			};
+		});
+
+		return {
+			consultations,
+			total: data.total,
+			page: data.page,
+			limit: data.limit
+		};
+	} catch (err) {
+		if (isRedirect(err)) throw err;
+		console.error('Error loading consultations:', err);
+		throw error(503, 'Impossible de charger les consultations. Veuillez réessayer.');
+	}
 };
