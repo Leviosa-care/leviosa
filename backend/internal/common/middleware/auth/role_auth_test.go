@@ -39,7 +39,7 @@ func TestRequireAnyRole(t *testing.T) {
 			shouldCallNext: true,
 		},
 		{
-			name:           "partner matches staff in multiple roles",
+			name:           "partner matches in multiple roles",
 			userRole:       identity.Partner,
 			allowedRoles:   []identity.Role{identity.Partner, identity.Administrator},
 			expectedStatus: http.StatusOK,
