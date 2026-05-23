@@ -2,6 +2,8 @@ package authuser
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	authuserPorts "github.com/Leviosa-care/leviosa/backend/internal/authuser/ports"
 	bookingPorts "github.com/Leviosa-care/leviosa/backend/internal/booking/ports"
@@ -18,12 +20,14 @@ import (
 // interface or business logic.
 type InProcessClient struct {
 	partnerService authuserPorts.PublicPartnerService
+	userService    authuserPorts.UserService
 }
 
 // NewInProcessClient creates a new in-process AuthUserClient implementation.
-func NewInProcessClient(partnerService authuserPorts.PublicPartnerService) bookingPorts.AuthUserClient {
+func NewInProcessClient(partnerService authuserPorts.PublicPartnerService, userService authuserPorts.UserService) bookingPorts.AuthUserClient {
 	return &InProcessClient{
 		partnerService: partnerService,
+		userService:    userService,
 	}
 }
 
@@ -52,4 +56,14 @@ func (c *InProcessClient) GetPartnerByUserID(ctx context.Context, userID uuid.UU
 		UserID:     partnerResponse.UserID,
 		IsVerified: isVerified,
 	}, nil
+}
+
+// GetUserName retrieves the display name for a user by their ID.
+func (c *InProcessClient) GetUserName(ctx context.Context, userID uuid.UUID) (string, error) {
+	user, err := c.userService.GetUserByID(ctx, userID)
+	if err != nil {
+		return "", fmt.Errorf("get user by id %s: %w", userID, err)
+	}
+	name := strings.TrimSpace(fmt.Sprintf("%s %s", user.FirstName, user.LastName))
+	return name, nil
 }
