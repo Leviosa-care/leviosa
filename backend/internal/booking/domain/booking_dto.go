@@ -62,3 +62,27 @@ type EarningsSummary struct {
 	NextPayoutCents   int    `json:"next_payout_cents"`
 	Transactions      []Transaction `json:"transactions"`
 }
+
+// AdminBookingResponse is the enriched booking DTO returned by the admin list endpoint.
+type AdminBookingResponse struct {
+	ID              uuid.UUID     `json:"id"`
+	ClientName      string        `json:"client_name"`
+	PartnerName     string        `json:"partner_name"`
+	ProductName     string        `json:"product_name"`
+	RoomName        string        `json:"room_name"`
+	SlotStartTime   time.Time     `json:"slot_start_time"`
+	SlotEndTime     time.Time     `json:"slot_end_time"`
+	Status          BookingStatus `json:"status"`
+	PaymentStatus   PaymentStatus `json:"payment_status"`
+	TotalPriceCents int           `json:"total_price_cents"`
+	Currency        string        `json:"currency"`
+	CreatedAt       time.Time     `json:"created_at"`
+}
+
+// AdminBookingsListResponse is the paginated response for the admin bookings list.
+type AdminBookingsListResponse struct {
+	Bookings []AdminBookingResponse `json:"bookings"`
+	Total    int                    `json:"total"`
+	Page     int                    `json:"page"`
+	Limit    int                    `json:"limit"`
+}
