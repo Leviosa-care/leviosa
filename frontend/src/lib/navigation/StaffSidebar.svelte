@@ -7,7 +7,6 @@
 		Package,
 		ChartColumn,
 		DollarSign,
-		Users,
 		Settings,
 		ChevronLeft,
 		ChevronRight,
@@ -101,12 +100,6 @@
 			href: "/staff/catalog",
 			label: "Catalogue",
 			icon: Package,
-			adminOnly: true,
-		},
-		{
-			href: "/staff/users",
-			label: "Utilisateurs",
-			icon: Users,
 			adminOnly: true,
 		},
 	];

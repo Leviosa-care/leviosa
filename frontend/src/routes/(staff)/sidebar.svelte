@@ -8,7 +8,6 @@
         Package,
         ChartColumn,
         DollarSign,
-        Users,
         Settings,
         ChevronLeft,
         ChevronRight,
@@ -66,13 +65,6 @@
             icon: Package,
             roles: ["administrator", "partner"],
         },
-        // Users - admin only
-        {
-            href: "/staff/users",
-            label: "Utilisateurs",
-            icon: Users,
-            roles: ["administrator"],
-        },
         // Agenda section - expanded on desktop
         {
             href: "/staff/agenda/disponibilites",
@@ -129,12 +121,6 @@
             label: "Statistiques",
             icon: ChartColumn,
             roles: ["administrator", "partner"],
-        },
-        {
-            href: "/staff/users",
-            label: "Utilisateurs",
-            icon: Users,
-            roles: ["administrator"],
         },
     ];
 

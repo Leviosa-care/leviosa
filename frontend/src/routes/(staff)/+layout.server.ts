@@ -12,7 +12,7 @@ export const load = async ({ locals }) => {
 	// Compute permissions to check access
 	const permissions = computePermissions(user.role);
 
-	// Check if user has staff or admin role
+	// Check if user has partner or admin role
 	if (!permissions.canAccessOps) {
 		throw error(403, 'Accès non autorisé');
 	}
