@@ -21,6 +21,10 @@ type AuthUserClient interface {
 	// This is needed because allocations are created using user IDs, not partner IDs.
 	// Returns error if partner not found or if there's a system error.
 	GetPartnerByUserID(ctx context.Context, userID uuid.UUID) (*PartnerInfo, error)
+
+	// GetUserName returns the display name ("FirstName LastName") for a user.
+	// Returns an empty string if the user is not found.
+	GetUserName(ctx context.Context, userID uuid.UUID) (string, error)
 }
 
 // PartnerInfo represents basic partner information needed by booking module

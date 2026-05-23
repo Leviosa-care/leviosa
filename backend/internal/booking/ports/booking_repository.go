@@ -73,6 +73,6 @@ type BookingFilter struct {
 	Offset int
 
 	// Sorting
-	OrderBy        string // "created_at", "start_time", "total_price_cents"
+	OrderBy        string // "created_at", "total_price_cents"
 	OrderDirection string // "asc", "desc"
 }
