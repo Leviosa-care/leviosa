@@ -13,6 +13,8 @@ type BookingService struct {
 	productService      catalogPorts.PublicProductService
 	priceService        catalogPorts.PublicPriceService
 	notificationService ports.BookingNotificationService
+	roomService         ports.RoomService
+	authUserClient      ports.AuthUserClient
 	crypto              encx.CryptoService
 }
 
@@ -25,8 +27,9 @@ func New(
 	priceService catalogPorts.PublicPriceService,
 	notificationService ports.BookingNotificationService,
 	crypto encx.CryptoService,
+	opts ...Option,
 ) ports.BookingService {
-	return &BookingService{
+	svc := &BookingService{
 		bookingRepo:         bookingRepo,
 		availabilityRepo:    availabilityRepo,
 		paymentService:      paymentService,
@@ -35,4 +38,21 @@ func New(
 		notificationService: notificationService,
 		crypto:              crypto,
 	}
+	for _, opt := range opts {
+		opt(svc)
+	}
+	return svc
+}
+
+// Option configures optional BookingService dependencies.
+type Option func(*BookingService)
+
+// WithRoomService injects the room service dependency.
+func WithRoomService(rs ports.RoomService) Option {
+	return func(s *BookingService) { s.roomService = rs }
+}
+
+// WithAuthUserClient injects the auth-user client dependency.
+func WithAuthUserClient(c ports.AuthUserClient) Option {
+	return func(s *BookingService) { s.authUserClient = c }
 }
