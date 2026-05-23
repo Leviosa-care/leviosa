@@ -392,7 +392,7 @@ func (c *Container) setupServices(ctx context.Context) error {
 	bookingStripe := bookingStripe.NewService(c.Config.StripeSecretKey, "", c.Config.StripeWebhookSecret)
 
 	// AuthUser client for booking module
-	c.BookingAuthuserCLi = bookingAuthuser.NewInProcessClient(c.PartnerService)
+	c.BookingAuthuserCLi = bookingAuthuser.NewInProcessClient(c.PartnerService, c.UserService)
 
 	c.MetricsService = metricsSvc.New(c.MetricsRepo, c.Crypto)
 
@@ -405,7 +405,17 @@ func (c *Container) setupServices(ctx context.Context) error {
 	c.AvailabilityService = availabilitySvc.New(c.AvailabilityRepo, c.AllocationRepo, c.RoomRepo, c.RoomScheduleRepo, c.ProductService, c.Crypto)
 
 	// Note: notificationService is nil - not implemented yet
-	c.BookingService = bookingSvc.New(c.BookingRepo, c.AvailabilityRepo, bookingStripe, c.ProductService, c.PriceService, nil, c.Crypto)
+	c.BookingService = bookingSvc.New(
+		c.BookingRepo,
+		c.AvailabilityRepo,
+		bookingStripe,
+		c.ProductService,
+		c.PriceService,
+		nil,
+		c.Crypto,
+		bookingSvc.WithRoomService(c.RoomService),
+		bookingSvc.WithAuthUserClient(c.BookingAuthuserCLi),
+	)
 
 	c.PaymentService = bookingStripe
 
