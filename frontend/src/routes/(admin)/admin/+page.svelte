@@ -12,6 +12,7 @@
 		Circle
 	} from '@lucide/svelte';
 	import type { PageData } from './$types';
+	import type { RecentBookingUI } from './+page.server';
 
 	let { data }: { data: PageData } = $props();
 
@@ -46,14 +47,18 @@
 		return `il y a ${days}j`;
 	}
 
-	function getStatusBadge(status: 'confirmed' | 'pending' | 'cancelled') {
+	function getStatusBadge(status: RecentBookingUI['status']) {
 		switch (status) {
 			case 'confirmed':
 				return { label: 'Confirmé', class: 'text-green-700 bg-green-50', icon: CheckCircle2 };
+			case 'completed':
+				return { label: 'Terminé', class: 'text-blue-700 bg-blue-50', icon: CheckCircle2 };
 			case 'pending':
 				return { label: 'En attente', class: 'text-yellow-700 bg-yellow-50', icon: Clock };
 			case 'cancelled':
 				return { label: 'Annulé', class: 'text-red-700 bg-red-50', icon: Circle };
+			case 'no_show':
+				return { label: 'Absent', class: 'text-gray-700 bg-gray-100', icon: Circle };
 		}
 	}
 </script>
@@ -130,7 +135,7 @@
 					<p class="text-xs text-muted-foreground mt-0.5">Réservations récentes</p>
 				</div>
 				<a
-					href="/admin/admin/bookings"
+					href="/admin/bookings"
 					class="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-medium"
 				>
 					Voir tout
@@ -184,7 +189,7 @@
 					<p class="text-xs text-muted-foreground mt-0.5">Réservations à venir</p>
 				</div>
 				<a
-					href="/admin/admin/bookings"
+					href="/admin/bookings"
 					class="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-medium"
 				>
 					Voir tout
@@ -231,14 +236,14 @@
 	<!-- Quick Actions -->
 	<div class="flex flex-wrap gap-3">
 		<a
-			href="/admin/admin/products"
+			href="/admin/products"
 			class="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border-input text-foreground-alt rounded-lg hover:bg-muted transition-colors text-sm font-medium"
 		>
 			<Package size={15} />
 			<span class="whitespace-nowrap">Gérer les produits</span>
 		</a>
 		<a
-			href="/admin/admin/bookings"
+			href="/admin/bookings"
 			class="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border-input text-foreground-alt rounded-lg hover:bg-muted transition-colors text-sm font-medium"
 		>
 			<Calendar size={15} />

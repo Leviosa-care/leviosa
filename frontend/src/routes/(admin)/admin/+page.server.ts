@@ -4,20 +4,30 @@ import { error, redirect, isRedirect } from '@sveltejs/kit';
 
 interface RecentBooking {
     id: string;
-    clientName: string;
-    productName: string;
-    therapistName: string;
-    startTime: string;
-    status: 'confirmed' | 'pending' | 'cancelled';
+    client_name: string;
+    product_name: string;
+    partner_name: string;
+    start_time: string;
+    status: string;
 }
 
 interface UpcomingBooking {
     id: string;
-    clientName: string;
-    productName: string;
-    roomName: string;
-    startTime: string;
-    duration: number;
+    client_name: string;
+    product_name: string;
+    room_name: string;
+    start_time: string;
+    duration_min: number;
+}
+
+interface DashboardStatsAPI {
+    bookings_this_week: number;
+    revenue_this_week: number;
+    upcoming_bookings_count: number;
+    pending_bookings_count: number;
+    active_products_count: number;
+    recent_bookings: RecentBooking[];
+    upcoming_bookings: UpcomingBooking[];
 }
 
 interface DashboardStats {
@@ -26,6 +36,24 @@ interface DashboardStats {
     upcomingBookingsCount: number;
     pendingBookingsCount: number;
     activeProductsCount: number;
+}
+
+export interface RecentBookingUI {
+    id: string;
+    clientName: string;
+    productName: string;
+    therapistName: string;
+    startTime: string;
+    status: 'confirmed' | 'pending' | 'cancelled' | 'completed' | 'no_show';
+}
+
+export interface UpcomingBookingUI {
+    id: string;
+    clientName: string;
+    productName: string;
+    roomName: string;
+    startTime: string;
+    duration: number;
 }
 
 export const load: PageServerLoad = async ({ fetch }) => {
@@ -41,11 +69,41 @@ export const load: PageServerLoad = async ({ fetch }) => {
         if (!statsRes.ok) {
             throw new Error(`Failed to fetch dashboard stats: ${statsRes.status} ${statsRes.statusText}`);
         }
-        const stats: DashboardStats = await statsRes.json();
+        const apiData: DashboardStatsAPI = await statsRes.json();
+        const stats: DashboardStats = {
+            revenueThisWeek: apiData.revenue_this_week,
+            bookingsThisWeek: apiData.bookings_this_week,
+            upcomingBookingsCount: apiData.upcoming_bookings_count,
+            pendingBookingsCount: apiData.pending_bookings_count,
+            activeProductsCount: apiData.active_products_count
+        };
+
+        const recentBookings: RecentBookingUI[] = (apiData.recent_bookings ?? []).map(
+            (b: RecentBooking): RecentBookingUI => ({
+                id: b.id,
+                clientName: b.client_name,
+                productName: b.product_name,
+                therapistName: b.partner_name,
+                startTime: b.start_time,
+                status: b.status as RecentBookingUI['status']
+            })
+        );
+
+        const upcomingBookings: UpcomingBookingUI[] = (apiData.upcoming_bookings ?? []).map(
+            (b: UpcomingBooking): UpcomingBookingUI => ({
+                id: b.id,
+                clientName: b.client_name,
+                productName: b.product_name,
+                roomName: b.room_name,
+                startTime: b.start_time,
+                duration: b.duration_min
+            })
+        );
+
         return {
             stats,
-            recentBookings: [],
-            upcomingBookings: []
+            recentBookings,
+            upcomingBookings
         };
     } catch (err) {
         if (isRedirect(err)) throw err;
@@ -56,8 +114,8 @@ export const load: PageServerLoad = async ({ fetch }) => {
 
 async function getMockDashboardData(): Promise<{
     stats: DashboardStats;
-    recentBookings: RecentBooking[];
-    upcomingBookings: UpcomingBooking[];
+    recentBookings: RecentBookingUI[];
+    upcomingBookings: UpcomingBookingUI[];
 }> {
     const stats: DashboardStats = {
         revenueThisWeek: 12500,
@@ -67,7 +125,7 @@ async function getMockDashboardData(): Promise<{
         activeProductsCount: 15
     };
 
-    const recentBookings: RecentBooking[] = [
+    const recentBookings: RecentBookingUI[] = [
         {
             id: '1',
             clientName: 'Marie Dupont',
@@ -110,7 +168,7 @@ async function getMockDashboardData(): Promise<{
         }
     ];
 
-    const upcomingBookings: UpcomingBooking[] = [
+    const upcomingBookings: UpcomingBookingUI[] = [
         {
             id: '6',
             clientName: 'Thomas Richard',
