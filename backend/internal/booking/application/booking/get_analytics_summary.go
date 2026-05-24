@@ -112,8 +112,15 @@ func (s *BookingService) countNewClients(ctx context.Context, currentMonthBookin
 	}
 
 	thisMonthClients := make(map[uuid.UUID]struct{}, len(currentMonthBookings))
+	guestBookingsCount := 0
 	for _, b := range currentMonthBookings {
-		thisMonthClients[b.ClientID] = struct{}{}
+		if b.ClientID != nil {
+			thisMonthClients[*b.ClientID] = struct{}{}
+		} else {
+			// Each guest booking is treated as a new client: guests have no persistent
+			// identity so we cannot deduplicate them across bookings.
+			guestBookingsCount++
+		}
 	}
 
 	// Query for any paid booking created before this month to identify pre-existing clients.
@@ -135,10 +142,12 @@ func (s *BookingService) countNewClients(ctx context.Context, currentMonthBookin
 
 	priorClients := make(map[uuid.UUID]struct{}, len(priorEncx))
 	for _, encx := range priorEncx {
-		priorClients[encx.ClientID] = struct{}{}
+		if encx.ClientID != nil {
+			priorClients[*encx.ClientID] = struct{}{}
+		}
 	}
 
-	count := 0
+	count := guestBookingsCount
 	for clientID := range thisMonthClients {
 		if _, existed := priorClients[clientID]; !existed {
 			count++

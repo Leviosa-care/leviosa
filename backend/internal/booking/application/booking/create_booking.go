@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
@@ -38,9 +39,12 @@ import (
 //   - Error if validation fails or slot is unavailable
 func (s *BookingService) CreateBooking(
 	ctx context.Context,
-	availabilityID, clientID, productID uuid.UUID,
+	availabilityID uuid.UUID,
+	clientID *uuid.UUID,
+	productID uuid.UUID,
 	slotStartTime time.Time,
 	clientNotes string,
+	guestFirstName, guestLastName, guestEmail, guestPhone string,
 ) (*domain.Booking, error) {
 	// 1. Fetch and decrypt availability
 	availabilityEncx, err := s.availabilityRepo.GetByID(ctx, availabilityID)
@@ -132,6 +136,10 @@ func (s *BookingService) CreateBooking(
 		availability.RoomID,
 		totalPriceCents,
 		price.Currency,
+		guestFirstName,
+		guestLastName,
+		guestEmail,
+		guestPhone,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create booking entity: %w", err)
@@ -157,11 +165,18 @@ func (s *BookingService) CreateBooking(
 		metadata := map[string]string{
 			"booking_id":      booking.ID.String(),
 			"availability_id": availabilityID.String(),
-			"client_id":       clientID.String(),
 			"partner_id":      availability.UserID.String(),
 			"product_id":      productID.String(),
 			"slot_start":      slotStartTime.Format(time.RFC3339),
 			"slot_end":        slotEndTime.Format(time.RFC3339),
+		}
+		if clientID != nil {
+			metadata["client_id"] = clientID.String()
+		}
+		if booking.IsGuestBooking() {
+			metadata["guest_name"]  = booking.GuestDisplayName()
+			metadata["guest_email"] = guestEmail
+			metadata["guest_phone"] = guestPhone
 		}
 
 		paymentIntentID, _, err := s.paymentService.CreatePaymentIntent(
@@ -192,9 +207,10 @@ func (s *BookingService) CreateBooking(
 	if s.notificationService != nil {
 		notificationData := s.buildNotificationData(booking, product.Name)
 		if err := s.notificationService.SendBookingConfirmation(ctx, notificationData); err != nil {
-			// Log error but don't fail the booking
-			// The booking was created successfully, notification is secondary
-			_ = err // TODO: Add proper logging
+			slog.WarnContext(ctx, "failed to send booking confirmation notification",
+				"booking_id", booking.ID,
+				"is_guest", booking.IsGuestBooking(),
+				"err", err)
 		}
 	}
 

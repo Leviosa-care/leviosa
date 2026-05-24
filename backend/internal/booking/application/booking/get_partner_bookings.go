@@ -34,8 +34,10 @@ func (s *BookingService) GetPartnerBookingsEnriched(ctx context.Context, partner
 			CompletedAt:     b.CompletedAt,
 		}
 
-		if s.authUserClient != nil {
-			resp.ClientName = s.resolveUserName(ctx, b.ClientID, "Utilisateur inconnu")
+		if b.IsGuestBooking() {
+			resp.ClientName = b.GuestDisplayName()
+		} else if s.authUserClient != nil {
+			resp.ClientName = s.resolveUserName(ctx, *b.ClientID, "Utilisateur inconnu")
 		}
 		if s.productService != nil {
 			resp.ProductName = s.resolveProductName(ctx, b.ProductID)

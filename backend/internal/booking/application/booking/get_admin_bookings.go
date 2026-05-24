@@ -136,8 +136,14 @@ func (s *BookingService) enrichBooking(ctx context.Context, b *domain.Booking) d
 	}
 
 	if s.authUserClient != nil {
-		resp.ClientName = s.resolveUserName(ctx, b.ClientID, "Utilisateur inconnu")
+		if b.IsGuestBooking() {
+			resp.ClientName = b.GuestDisplayName()
+		} else {
+			resp.ClientName = s.resolveUserName(ctx, *b.ClientID, "Utilisateur inconnu")
+		}
 		resp.PartnerName = s.resolveUserName(ctx, b.PartnerID, "Praticien inconnu")
+	} else if b.IsGuestBooking() {
+		resp.ClientName = b.GuestDisplayName()
 	}
 
 	if s.productService != nil {

@@ -9,10 +9,9 @@ import (
 // The notification service implementation is responsible for fetching
 // additional details (user emails, room names, etc.) based on the IDs.
 func (s *BookingService) buildNotificationData(booking *domain.Booking, productName string) ports.BookingNotificationData {
-	return ports.BookingNotificationData{
+	data := ports.BookingNotificationData{
 		// Required identifiers
 		BookingID:  booking.ID,
-		ClientID:   booking.ClientID,
 		PartnerID:  booking.PartnerID,
 		RoomID:     booking.RoomID,
 		ProductID:  booking.ProductID,
@@ -32,4 +31,19 @@ func (s *BookingService) buildNotificationData(booking *domain.Booking, productN
 		CancellationReason: booking.CancellationReason,
 		CancelledAt:        booking.CancelledAt,
 	}
+
+	if booking.ClientID != nil {
+		data.ClientID = *booking.ClientID
+	}
+
+	// Populate guest contact fields for guest bookings
+	if booking.IsGuestBooking() {
+		data.IsGuestBooking = true
+		data.GuestEmail    = booking.GuestEmail
+		data.GuestPhone    = booking.GuestPhone
+		data.ClientName    = booking.GuestDisplayName()
+		data.ClientEmail   = booking.GuestEmail
+	}
+
+	return data
 }

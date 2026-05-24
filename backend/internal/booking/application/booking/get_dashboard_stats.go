@@ -106,7 +106,12 @@ func (s *BookingService) buildRecentBookings(ctx context.Context) ([]domain.Rece
 			continue
 		}
 
-		clientName := s.resolveUserName(ctx, booking.ClientID, "Utilisateur inconnu")
+		clientName := "Utilisateur inconnu"
+		if booking.IsGuestBooking() {
+			clientName = booking.GuestDisplayName()
+		} else if s.authUserClient != nil {
+			clientName = s.resolveUserName(ctx, *booking.ClientID, "Utilisateur inconnu")
+		}
 		partnerName := s.resolveUserName(ctx, booking.PartnerID, "Praticien inconnu")
 		productName := s.resolveProductName(ctx, booking.ProductID)
 
@@ -150,7 +155,12 @@ func (s *BookingService) buildUpcomingBookings(ctx context.Context, now time.Tim
 
 	result := make([]domain.UpcomingBooking, 0, len(future))
 	for _, b := range future {
-		clientName := s.resolveUserName(ctx, b.ClientID, "Utilisateur inconnu")
+		clientName := "Utilisateur inconnu"
+		if b.IsGuestBooking() {
+			clientName = b.GuestDisplayName()
+		} else {
+			clientName = s.resolveUserName(ctx, *b.ClientID, "Utilisateur inconnu")
+		}
 		productName := s.resolveProductName(ctx, b.ProductID)
 		roomName := s.resolveRoomName(ctx, b.RoomID)
 		durationMin := int(b.SlotEndTime.Sub(b.SlotStartTime).Minutes())

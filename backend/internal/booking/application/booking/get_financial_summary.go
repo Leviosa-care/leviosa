@@ -95,8 +95,14 @@ func (s *BookingService) GetFinancialSummary(ctx context.Context, from, to time.
 		}
 
 		if s.authUserClient != nil {
-			t.ClientName = s.resolveUserName(ctx, b.ClientID, "Utilisateur inconnu")
+			if b.IsGuestBooking() {
+				t.ClientName = b.GuestDisplayName()
+			} else {
+				t.ClientName = s.resolveUserName(ctx, *b.ClientID, "Utilisateur inconnu")
+			}
 			t.PartnerName = s.resolveUserName(ctx, b.PartnerID, "Praticien inconnu")
+		} else if b.IsGuestBooking() {
+			t.ClientName = b.GuestDisplayName()
 		}
 		if s.productService != nil {
 			t.ProductName = s.resolveProductName(ctx, b.ProductID)
