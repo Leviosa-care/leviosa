@@ -54,14 +54,16 @@ func (s *PartnerService) UpdatePartner(ctx context.Context, partnerID uuid.UUID,
 
 	// Return updated partner response
 	return &domain.PartnerResponse{
-		ID:         partner.ID,
-		UserID:     partner.UserID,
-		Bio:        partner.Bio,
-		Experience: partner.Experience,
+		ID:                      partner.ID,
+		UserID:                  partner.UserID,
+		Bio:                     partner.Bio,
+		Experience:              partner.Experience,
 		// Certifications: partner.Certifications,
-		CategoryIDs: partner.CategoryIDs,
-		ProductIDs:  partner.ProductIDs,
-		CreatedAt:   partner.CreatedAt,
-		UpdatedAt:   partner.UpdatedAt,
+		CategoryIDs:             partner.CategoryIDs,
+		ProductIDs:              partner.ProductIDs,
+		StripeAccountStatus:     partner.StripeAccountStatus,
+		StripeOnboardingComplete: partner.StripeOnboardingComplete,
+		CreatedAt:               partner.CreatedAt,
+		UpdatedAt:               partner.UpdatedAt,
 	}, nil
 }

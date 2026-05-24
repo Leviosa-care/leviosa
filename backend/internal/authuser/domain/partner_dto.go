@@ -11,14 +11,16 @@ import (
 
 type PartnerResponse struct {
 	ID         uuid.UUID `json:"id"`
-	UserID     uuid.UUID `json:"-"`
+	UserID     uuid.UUID `json:"user_id"`
 	Bio        string    `json:"bio"`
 	Experience string    `json:"experience"`
 	// Certifications []string    `json:"certifications"`
-	CategoryIDs []uuid.UUID `json:"category_ids,omitempty"`
-	ProductIDs  []uuid.UUID `json:"product_ids,omitempty"`
-	CreatedAt   time.Time   `json:"created_at"`
-	UpdatedAt   time.Time   `json:"updated_at"`
+	CategoryIDs             []uuid.UUID       `json:"category_ids,omitempty"`
+	ProductIDs              []uuid.UUID       `json:"product_ids,omitempty"`
+	StripeAccountStatus     StripeAccountStatus `json:"stripe_account_status"`
+	StripeOnboardingComplete bool              `json:"stripe_onboarding_complete"`
+	CreatedAt               time.Time         `json:"created_at"`
+	UpdatedAt               time.Time         `json:"updated_at"`
 }
 type UpdatePartnerRequest struct {
 	Bio        *string `json:"bio,omitempty"`

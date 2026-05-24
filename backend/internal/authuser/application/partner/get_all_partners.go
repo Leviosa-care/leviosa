@@ -32,10 +32,12 @@ func (s *PartnerService) GetAllPartners(ctx context.Context) ([]*domain.PartnerR
 			Bio:        partner.Bio,
 			Experience: partner.Experience,
 			// Certifications: partner.Certifications,
-			CategoryIDs: partner.CategoryIDs,
-			ProductIDs:  partner.ProductIDs,
-			CreatedAt:   partner.CreatedAt,
-			UpdatedAt:   partner.UpdatedAt,
+			CategoryIDs:             partner.CategoryIDs,
+			ProductIDs:              partner.ProductIDs,
+			StripeAccountStatus:     partner.StripeAccountStatus,
+			StripeOnboardingComplete: partner.StripeOnboardingComplete,
+			CreatedAt:               partner.CreatedAt,
+			UpdatedAt:               partner.UpdatedAt,
 		})
 	}
 
