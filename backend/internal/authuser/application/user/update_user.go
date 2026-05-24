@@ -57,6 +57,12 @@ func (s *UserService) UpdateUser(ctx context.Context, userID uuid.UUID, request 
 	if request.Address2 != nil {
 		user.Address2 = *request.Address2
 	}
+	if request.GoogleID != nil {
+		user.GoogleID = *request.GoogleID
+	}
+	if request.AppleID != nil {
+		user.AppleID = *request.AppleID
+	}
 
 	// Encrypt the user data using the new generated function
 	updatedUserEncx, err := domain.ProcessUserEncx(ctx, s.crypto, user)
