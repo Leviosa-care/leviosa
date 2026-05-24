@@ -63,6 +63,25 @@ type EarningsSummary struct {
 	Transactions      []Transaction `json:"transactions"`
 }
 
+// PartnerBookingResponse is the enriched booking DTO returned by the partner bookings endpoint.
+// It includes resolved names for display in the partner agenda UI.
+type PartnerBookingResponse struct {
+	ID              uuid.UUID     `json:"id"`
+	ClientID        uuid.UUID     `json:"client_id"`
+	ClientName      string        `json:"client_name"`
+	ProductName     string        `json:"product_name"`
+	RoomName        string        `json:"room_name"`
+	SlotStartTime   time.Time     `json:"slot_start_time"`
+	SlotEndTime     time.Time     `json:"slot_end_time"`
+	Status          BookingStatus `json:"status"`
+	PaymentStatus   PaymentStatus `json:"payment_status"`
+	TotalPriceCents int           `json:"total_price_cents"`
+	Currency        string        `json:"currency"`
+	ClientNotes     string        `json:"client_notes,omitempty"`
+	PartnerNotes    string        `json:"partner_notes,omitempty"`
+	CompletedAt     *time.Time    `json:"completed_at,omitempty"`
+}
+
 // AdminBookingResponse is the enriched booking DTO returned by the admin list endpoint.
 type AdminBookingResponse struct {
 	ID              uuid.UUID     `json:"id"`

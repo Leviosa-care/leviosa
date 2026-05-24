@@ -44,6 +44,10 @@ type BookingService interface {
 	// GetPartnerBookings retrieves bookings for a partner
 	GetPartnerBookings(ctx context.Context, partnerID uuid.UUID, filter BookingFilter) ([]*domain.Booking, error)
 
+	// GetPartnerBookingsEnriched retrieves bookings for a partner with resolved
+	// names (client, product, room) for display in the partner agenda.
+	GetPartnerBookingsEnriched(ctx context.Context, partnerID uuid.UUID, filter BookingFilter) ([]domain.PartnerBookingResponse, error)
+
 	// GetUpcomingBookings retrieves upcoming confirmed bookings
 	GetUpcomingBookings(ctx context.Context, filter BookingFilter) ([]*domain.Booking, error)
 
