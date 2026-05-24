@@ -18,6 +18,9 @@ declare global {
             city: string;
             address1: string;
             address2: string;
+            google_id?: string;
+            apple_id?: string;
+            has_password?: boolean;
         }
         interface Error { }
         interface Locals {

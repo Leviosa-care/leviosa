@@ -14,4 +14,7 @@ export const mockUser: App.User = {
     city: "Paris",
     address1: "01 Rue du capitaine framework",
     address2: "Chez monsieur Truc",
+    google_id: "mock-google-id-12345",
+    apple_id: "",
+    has_password: true,
 };
