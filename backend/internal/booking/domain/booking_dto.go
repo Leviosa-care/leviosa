@@ -9,7 +9,7 @@ import (
 type BookingResponse struct {
 	ID                 uuid.UUID             `json:"id"`
 	AvailabilityID     uuid.UUID             `json:"availability_id"`
-	ClientID           uuid.UUID             `json:"client_id"`
+	ClientID           *uuid.UUID            `json:"client_id,omitempty"`
 	PartnerID          uuid.UUID             `json:"partner_id"`
 	RoomID             uuid.UUID             `json:"room_id"`
 	ProductID          uuid.UUID             `json:"product_id"`
@@ -26,15 +26,27 @@ type BookingResponse struct {
 	CancelledAt        *time.Time            `json:"cancelled_at,omitempty"`
 	CompletedAt        *time.Time            `json:"completed_at,omitempty"`
 	Availability       *AvailabilityResponse `json:"availability,omitempty"`
+
+	// Guest contact fields (populated for guest bookings)
+	GuestFirstName string `json:"guest_first_name,omitempty"`
+	GuestLastName  string `json:"guest_last_name,omitempty"`
+	GuestEmail     string `json:"guest_email,omitempty"`
+	GuestPhone     string `json:"guest_phone,omitempty"`
 }
 
 // Booking DTOs
 type CreateBookingRequest struct {
 	AvailabilityID uuid.UUID `json:"availability_id" validate:"required"`
-	ClientID       uuid.UUID `json:"client_id" validate:"required"`
+	ClientID       *uuid.UUID `json:"client_id,omitempty"`
 	ProductID      uuid.UUID `json:"product_id" validate:"required"`
 	SlotStartTime  time.Time `json:"slot_start_time" validate:"required"`
 	ClientNotes    string    `json:"client_notes,omitempty" validate:"max=1000"`
+
+	// Guest fields (required when client_id is omitted)
+	GuestFirstName string `json:"guest_first_name,omitempty"`
+	GuestLastName  string `json:"guest_last_name,omitempty"`
+	GuestEmail     string `json:"guest_email,omitempty"`
+	GuestPhone     string `json:"guest_phone,omitempty"`
 }
 
 type UpdateBookingNotesRequest struct {
@@ -68,7 +80,7 @@ type EarningsSummary struct {
 // It includes resolved names for display in the partner agenda UI.
 type PartnerBookingResponse struct {
 	ID              uuid.UUID     `json:"id"`
-	ClientID        uuid.UUID     `json:"client_id"`
+	ClientID        *uuid.UUID    `json:"client_id,omitempty"`
 	ClientName      string        `json:"client_name"`
 	ProductName     string        `json:"product_name"`
 	RoomName        string        `json:"room_name"`

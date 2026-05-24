@@ -22,7 +22,7 @@ type BookingEncx struct {
 	
 	AvailabilityID uuid.UUID `db:"availabilityid" json:"availabilityid"`
 	
-	ClientID uuid.UUID `db:"clientid" json:"clientid"`
+	ClientID *uuid.UUID `db:"clientid" json:"clientid"`
 	
 	PartnerID uuid.UUID `db:"partnerid" json:"partnerid"`
 	
@@ -59,6 +59,13 @@ type BookingEncx struct {
 	
 	CancellationReasonEncrypted []byte `db:"cancellationreason_encrypted" json:"cancellationreason_encrypted"`
 	
+	GuestFirstNameEncrypted []byte `db:"guestfirstname_encrypted" json:"guestfirstname_encrypted"`
+	
+	GuestLastNameEncrypted []byte `db:"guestlastname_encrypted" json:"guestlastname_encrypted"`
+	
+	GuestEmailEncrypted []byte `db:"guestemail_encrypted" json:"guestemail_encrypted"`
+	
+	GuestPhoneEncrypted []byte `db:"guestphone_encrypted" json:"guestphone_encrypted"`
 
 	// Essential encryption fields
 	DEKEncrypted  []byte `db:"dek_encrypted" json:"dek_encrypted"`
@@ -203,6 +210,65 @@ func ProcessBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 		}
 	}
 	
+	
+	
+	// Process GuestFirstName (encrypt)
+	if source.GuestFirstName != "" {
+	GuestFirstNameBytes, err := encx.SerializeValue(source.GuestFirstName)
+	if err != nil {
+		errs.Set("GuestFirstName serialization", err)
+	} else {
+		result.GuestFirstNameEncrypted, err = crypto.EncryptData(ctx, GuestFirstNameBytes, dek)
+		if err != nil {
+			errs.Set("GuestFirstName encryption", err)
+		}
+	}
+	}
+
+
+
+	// Process GuestLastName (encrypt)
+	if source.GuestLastName != "" {
+	GuestLastNameBytes, err := encx.SerializeValue(source.GuestLastName)
+	if err != nil {
+		errs.Set("GuestLastName serialization", err)
+	} else {
+		result.GuestLastNameEncrypted, err = crypto.EncryptData(ctx, GuestLastNameBytes, dek)
+		if err != nil {
+			errs.Set("GuestLastName encryption", err)
+		}
+	}
+	}
+
+
+
+	// Process GuestEmail (encrypt)
+	if source.GuestEmail != "" {
+	GuestEmailBytes, err := encx.SerializeValue(source.GuestEmail)
+	if err != nil {
+		errs.Set("GuestEmail serialization", err)
+	} else {
+		result.GuestEmailEncrypted, err = crypto.EncryptData(ctx, GuestEmailBytes, dek)
+		if err != nil {
+			errs.Set("GuestEmail encryption", err)
+		}
+	}
+	}
+
+
+
+	// Process GuestPhone (encrypt)
+	if source.GuestPhone != "" {
+	GuestPhoneBytes, err := encx.SerializeValue(source.GuestPhone)
+	if err != nil {
+		errs.Set("GuestPhone serialization", err)
+	} else {
+		result.GuestPhoneEncrypted, err = crypto.EncryptData(ctx, GuestPhoneBytes, dek)
+		if err != nil {
+			errs.Set("GuestPhone encryption", err)
+		}
+	}
+	}
 	
 
 	// Encrypt and store DEK
@@ -350,6 +416,61 @@ func DecryptBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 		}
 	}
 	
+	
+	// Decrypt GuestFirstName
+	if len(source.GuestFirstNameEncrypted) > 0 {
+		GuestFirstNameBytes, err := crypto.DecryptData(ctx, source.GuestFirstNameEncrypted, dek)
+		if err != nil {
+			errs.Set("GuestFirstName decryption", err)
+		} else {
+			err = encx.DeserializeValue(GuestFirstNameBytes, &result.GuestFirstName)
+			if err != nil {
+				errs.Set("GuestFirstName deserialization", err)
+			}
+		}
+	}
+	
+	
+	// Decrypt GuestLastName
+	if len(source.GuestLastNameEncrypted) > 0 {
+		GuestLastNameBytes, err := crypto.DecryptData(ctx, source.GuestLastNameEncrypted, dek)
+		if err != nil {
+			errs.Set("GuestLastName decryption", err)
+		} else {
+			err = encx.DeserializeValue(GuestLastNameBytes, &result.GuestLastName)
+			if err != nil {
+				errs.Set("GuestLastName deserialization", err)
+			}
+		}
+	}
+	
+	
+	// Decrypt GuestEmail
+	if len(source.GuestEmailEncrypted) > 0 {
+		GuestEmailBytes, err := crypto.DecryptData(ctx, source.GuestEmailEncrypted, dek)
+		if err != nil {
+			errs.Set("GuestEmail decryption", err)
+		} else {
+			err = encx.DeserializeValue(GuestEmailBytes, &result.GuestEmail)
+			if err != nil {
+				errs.Set("GuestEmail deserialization", err)
+			}
+		}
+	}
+	
+	
+	// Decrypt GuestPhone
+	if len(source.GuestPhoneEncrypted) > 0 {
+		GuestPhoneBytes, err := crypto.DecryptData(ctx, source.GuestPhoneEncrypted, dek)
+		if err != nil {
+			errs.Set("GuestPhone decryption", err)
+		} else {
+			err = encx.DeserializeValue(GuestPhoneBytes, &result.GuestPhone)
+			if err != nil {
+				errs.Set("GuestPhone deserialization", err)
+			}
+		}
+	}
 
 	return result, errs.AsError()
 }

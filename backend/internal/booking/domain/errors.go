@@ -44,6 +44,7 @@ var (
 // Booking errors
 var (
 	ErrInvalidClientID              = errors.New("invalid client ID")
+	ErrAmbiguousBookingIdentity     = errors.New("booking must have either a client ID or guest fields, not both")
 	ErrInvalidBookingPrice          = errors.New("booking price cannot be negative")
 	ErrCannotMarkRefundedAsPaid     = errors.New("cannot mark refunded payment as paid")
 	ErrCannotRefundUnpaidBooking    = errors.New("cannot refund unpaid booking")

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,11 +29,11 @@ const (
 
 // Booking represents a client reservation of partner availability
 type Booking struct {
-	ID             uuid.UUID `json:"id"`
-	AvailabilityID uuid.UUID `json:"availability_id"`
-	ClientID       uuid.UUID `json:"client_id"`
-	PartnerID      uuid.UUID `json:"partner_id"`
-	RoomID         uuid.UUID `json:"room_id"`
+	ID             uuid.UUID  `json:"id"`
+	AvailabilityID uuid.UUID  `json:"availability_id"`
+	ClientID       *uuid.UUID `json:"client_id,omitempty"`
+	PartnerID      uuid.UUID  `json:"partner_id"`
+	RoomID         uuid.UUID  `json:"room_id"`
 
 	// Slot information (product and time boundaries)
 	ProductID     uuid.UUID `json:"product_id" encx:"encrypt"`               // Link to catalog product
@@ -42,6 +43,12 @@ type Booking struct {
 	// Booking details (encrypted for GDPR compliance)
 	ClientNotes  string `json:"client_notes,omitempty" encx:"encrypt"`
 	PartnerNotes string `json:"partner_notes,omitempty" encx:"encrypt"`
+
+	// Guest contact fields (encrypted for GDPR compliance, used when ClientID is nil)
+	GuestFirstName string `json:"guest_first_name,omitempty" encx:"encrypt"`
+	GuestLastName  string `json:"guest_last_name,omitempty" encx:"encrypt"`
+	GuestEmail     string `json:"guest_email,omitempty" encx:"encrypt"`
+	GuestPhone     string `json:"guest_phone,omitempty" encx:"encrypt"`
 
 	// Pricing information
 	TotalPriceCents int    `json:"total_price_cents"`
@@ -62,13 +69,12 @@ type Booking struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// NewBooking creates a new booking
-func NewBooking(availabilityID, clientID, partnerID, roomID uuid.UUID, totalPriceCents int, currency string) (*Booking, error) {
+// NewBooking creates a new booking.
+// Either clientID must be non-nil, or guest contact fields must be provided.
+// For guest bookings: guestFirstName, guestLastName, and at least one of guestEmail or guestPhone are required.
+func NewBooking(availabilityID uuid.UUID, clientID *uuid.UUID, partnerID, roomID uuid.UUID, totalPriceCents int, currency string, guestFirstName, guestLastName, guestEmail, guestPhone string) (*Booking, error) {
 	if availabilityID == uuid.Nil {
 		return nil, ErrInvalidAvailabilityID
-	}
-	if clientID == uuid.Nil {
-		return nil, ErrInvalidClientID
 	}
 	if partnerID == uuid.Nil {
 		return nil, ErrInvalidPartnerID
@@ -79,6 +85,18 @@ func NewBooking(availabilityID, clientID, partnerID, roomID uuid.UUID, totalPric
 	if totalPriceCents < 0 {
 		return nil, ErrInvalidBookingPrice
 	}
+
+	// Validate identity: either a registered client or guest contact info
+	isRegisteredClient := clientID != nil && *clientID != uuid.Nil
+	isGuest := guestFirstName != "" && guestLastName != "" && (guestEmail != "" || guestPhone != "")
+
+	if !isRegisteredClient && !isGuest {
+		return nil, ErrInvalidClientID
+	}
+	if isRegisteredClient && isGuest {
+		return nil, ErrAmbiguousBookingIdentity
+	}
+
 	if currency == "" {
 		currency = "EUR" // Default currency
 	}
@@ -93,6 +111,10 @@ func NewBooking(availabilityID, clientID, partnerID, roomID uuid.UUID, totalPric
 		Currency:        currency,
 		PaymentStatus:   PaymentStatusPending,
 		Status:          BookingStatusConfirmed,
+		GuestFirstName:  guestFirstName,
+		GuestLastName:   guestLastName,
+		GuestEmail:      guestEmail,
+		GuestPhone:      guestPhone,
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}, nil
@@ -187,6 +209,23 @@ func (b *Booking) MarkNoShow() error {
 	b.Status = BookingStatusNoShow
 	b.UpdatedAt = time.Now()
 	return nil
+}
+
+// IsGuestBooking returns true if this booking was made without a registered account.
+func (b *Booking) IsGuestBooking() bool {
+	return b.ClientID == nil
+}
+
+// GuestDisplayName returns the full name of the guest, or empty string if not a guest booking.
+func (b *Booking) GuestDisplayName() string {
+	parts := make([]string, 0, 2)
+	if b.GuestFirstName != "" {
+		parts = append(parts, b.GuestFirstName)
+	}
+	if b.GuestLastName != "" {
+		parts = append(parts, b.GuestLastName)
+	}
+	return strings.Join(parts, " ")
 }
 
 // IsActive checks if the booking is in an active state
