@@ -25,6 +25,7 @@ interface PartnerResponse {
 	created_at: string;
 	category_ids: string[];
 	product_ids: string[];
+	stripe_account_status: string;
 	stripe_onboarding_complete: boolean;
 }
 
@@ -62,24 +63,17 @@ export const load: PageServerLoad = async ({ fetch }) => {
 
 	const partner: PartnerResponse = await partnerRes.json();
 
-	// Fetch all categories (public endpoint)
-	const categoriesRes = await fetch(`${env.API_URL}/categories`, {
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	});
+	// Fetch categories, products and user data in parallel — all independent of each other.
+	const [categoriesRes, productsRes, userRes] = await Promise.all([
+		fetch(`${env.API_URL}/categories`, { headers: { 'Content-Type': 'application/json' } }),
+		fetch(`${env.API_URL}/products`, { headers: { 'Content-Type': 'application/json' } }),
+		fetch(`${env.API_URL}/users/me`, { headers: { 'Content-Type': 'application/json' } }),
+	]);
 
 	let allCategories: Category[] = [];
 	if (categoriesRes.ok) {
 		allCategories = await categoriesRes.json();
 	}
-
-	// Fetch all products (public endpoint)
-	const productsRes = await fetch(`${env.API_URL}/products`, {
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	});
 
 	let allProducts: Product[] = [];
 	if (productsRes.ok) {
@@ -107,20 +101,15 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		id: partner.id,
 		bio: partner.bio || '',
 		experience: partner.experience || '',
-		isVerified: true,
+		isVerified: partner.stripe_account_status === 'active',
 		stripeOnboardingComplete: partner.stripe_onboarding_complete,
 		categories: partnerCategories,
 		products: partnerProducts,
 		joinedAt: partner.created_at,
 	};
 
-	// Fetch current user data to determine OAuth linking status
+	// Derive OAuth linking status from the user fetch done above in Promise.all.
 	let linkedProviders: LinkedProviders = { google: false, apple: false };
-	const userRes = await fetch(`${env.API_URL}/users/me`, {
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	});
 	if (userRes.ok) {
 		const userData = await userRes.json();
 		linkedProviders = {

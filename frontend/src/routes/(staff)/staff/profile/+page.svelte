@@ -8,9 +8,14 @@
 	let editingExperience = $state(false);
 	let bioValue = $state(data.profile?.bio ?? '');
 	let experienceValue = $state(data.profile?.experience ?? '');
+	// Track last successfully saved values so cancel reverts to the last save, not page load.
+	let savedBio = $state(data.profile?.bio ?? '');
+	let savedExperience = $state(data.profile?.experience ?? '');
 	let bioSaving = $state(false);
 	let experienceSaving = $state(false);
+	let saveError = $state<string | null>(null);
 	let oauthLoading = $state<string | null>(null);
+	let oauthError = $state<string | null>(null);
 	let linkedProviders = $state(data.linkedProviders ?? { google: false, apple: false });
 
 	function formatDate(iso: string): string {
@@ -29,6 +34,7 @@
 
 	async function saveBio() {
 		bioSaving = true;
+		saveError = null;
 		try {
 			const res = await fetch(`/api/partners/me`, {
 				method: 'PUT',
@@ -36,10 +42,13 @@
 				body: JSON.stringify({ bio: bioValue }),
 			});
 			if (res.ok) {
+				savedBio = bioValue;
 				editingBio = false;
+			} else {
+				saveError = 'Impossible d\'enregistrer. Veuillez réessayer.';
 			}
 		} catch {
-			// silently fail
+			saveError = 'Une erreur est survenue. Veuillez réessayer.';
 		} finally {
 			bioSaving = false;
 		}
@@ -47,6 +56,7 @@
 
 	async function saveExperience() {
 		experienceSaving = true;
+		saveError = null;
 		try {
 			const res = await fetch(`/api/partners/me`, {
 				method: 'PUT',
@@ -54,10 +64,13 @@
 				body: JSON.stringify({ experience: experienceValue }),
 			});
 			if (res.ok) {
+				savedExperience = experienceValue;
 				editingExperience = false;
+			} else {
+				saveError = 'Impossible d\'enregistrer. Veuillez réessayer.';
 			}
 		} catch {
-			// silently fail
+			saveError = 'Une erreur est survenue. Veuillez réessayer.';
 		} finally {
 			experienceSaving = false;
 		}
@@ -65,18 +78,21 @@
 
 	async function linkProvider(provider: string) {
 		oauthLoading = provider;
+		oauthError = null;
 		try {
 			const res = await fetch(`/api/users/me/oauth/${provider}/link`, {
 				method: 'POST',
 			});
 			if (res.ok) {
-				const data = await res.json();
-				if (data.authorization_url) {
-					window.location.href = data.authorization_url;
+				const linkData = await res.json();
+				if (linkData.authorization_url) {
+					window.location.href = linkData.authorization_url;
 				}
+			} else {
+				oauthError = `Impossible de lier le compte ${provider}. Veuillez réessayer.`;
 			}
 		} catch {
-			// silently fail
+			oauthError = 'Une erreur est survenue. Veuillez réessayer.';
 		} finally {
 			oauthLoading = null;
 		}
@@ -84,15 +100,18 @@
 
 	async function unlinkProvider(provider: string) {
 		oauthLoading = provider;
+		oauthError = null;
 		try {
 			const res = await fetch(`/api/users/me/oauth/${provider}/unlink`, {
 				method: 'DELETE',
 			});
 			if (res.ok) {
 				linkedProviders = { ...linkedProviders, [provider]: false };
+			} else {
+				oauthError = `Impossible de délier le compte ${provider}. Veuillez réessayer.`;
 			}
 		} catch {
-			// silently fail
+			oauthError = 'Une erreur est survenue. Veuillez réessayer.';
 		} finally {
 			oauthLoading = null;
 		}
@@ -204,12 +223,15 @@
 							maxlength="1000"
 							class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-foreground/20"
 						></textarea>
+						{#if saveError && editingBio}
+							<p class="text-xs text-red-600">{saveError}</p>
+						{/if}
 						<div class="flex items-center justify-between">
 							<span class="text-xs text-muted-foreground">{bioValue.length}/1000</span>
 							<div class="flex gap-2">
 								<button
 									class="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted transition-colors"
-									onclick={() => { bioValue = data.profile.bio; editingBio = false; }}
+									onclick={() => { bioValue = savedBio; editingBio = false; saveError = null; }}
 									disabled={bioSaving}
 								>
 									Annuler
@@ -249,12 +271,15 @@
 							maxlength="2000"
 							class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-foreground/20"
 						></textarea>
+						{#if saveError && editingExperience}
+							<p class="text-xs text-red-600">{saveError}</p>
+						{/if}
 						<div class="flex items-center justify-between">
 							<span class="text-xs text-muted-foreground">{experienceValue.length}/2000</span>
 							<div class="flex gap-2">
 								<button
 									class="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted transition-colors"
-									onclick={() => { experienceValue = data.profile.experience; editingExperience = false; }}
+									onclick={() => { experienceValue = savedExperience; editingExperience = false; saveError = null; }}
 									disabled={experienceSaving}
 								>
 									Annuler
@@ -338,6 +363,9 @@
 			<!-- OAuth Account Linking -->
 			<div class="bg-card rounded-lg border border-border p-6">
 				<h3 class="font-semibold text-foreground mb-4">Identifiants de connexion</h3>
+				{#if oauthError}
+					<p class="text-xs text-red-600 mb-3">{oauthError}</p>
+				{/if}
 				<div class="space-y-3">
 					<!-- Google -->
 					<div class="flex items-center justify-between">
