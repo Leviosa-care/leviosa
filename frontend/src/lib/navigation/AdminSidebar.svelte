@@ -11,6 +11,7 @@
 		ChartSpline,
 		Server,
 		HandCoins,
+		Building2,
 		ExternalLink,
 	} from "@lucide/svelte";
 	import type { Component } from "svelte";
@@ -108,6 +109,11 @@
 			href: "/admin/compta",
 			label: "Comptabilite",
 			icon: HandCoins,
+		},
+		{
+			href: "/admin/buildings",
+			label: "Batiments",
+			icon: Building2,
 		},
 	];
 
