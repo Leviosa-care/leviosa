@@ -6,7 +6,7 @@
 
 *.compose.yaml
 
-notes
+/notes
 
 frontend/local.Dockerfile
 backend/local.Dockerfile
