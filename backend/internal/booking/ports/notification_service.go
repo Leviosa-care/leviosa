@@ -38,6 +38,11 @@ type BookingNotificationData struct {
 	RoomID     uuid.UUID
 	ProductID  uuid.UUID
 
+	// Guest booking flag
+	IsGuestBooking bool
+	GuestEmail     string
+	GuestPhone     string
+
 	// Required: Appointment timing
 	SlotStartTime time.Time
 	SlotEndTime   time.Time

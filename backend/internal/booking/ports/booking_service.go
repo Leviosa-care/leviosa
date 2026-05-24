@@ -14,8 +14,9 @@ type AnalyticsSummaryResponse = domain.AnalyticsSummaryResponse
 
 // BookingService defines the interface for booking business logic
 type BookingService interface {
-	// CreateBooking creates a new booking with product and time slot information
-	CreateBooking(ctx context.Context, availabilityID, clientID, productID uuid.UUID, slotStartTime time.Time, clientNotes string) (*domain.Booking, error)
+	// CreateBooking creates a new booking with product and time slot information.
+	// Pass a non-nil clientID for registered users, or guest fields for guest bookings.
+	CreateBooking(ctx context.Context, availabilityID uuid.UUID, clientID *uuid.UUID, productID uuid.UUID, slotStartTime time.Time, clientNotes string, guestFirstName, guestLastName, guestEmail, guestPhone string) (*domain.Booking, error)
 
 	// GetBooking retrieves a booking by ID
 	GetBooking(ctx context.Context, id uuid.UUID) (*domain.Booking, error)
