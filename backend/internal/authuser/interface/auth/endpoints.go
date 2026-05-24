@@ -57,6 +57,14 @@ const (
 	OAuthStartEndpoint    = AuthBasePath + OAuthPath + ProviderParam
 	OAuthCallbackEndpoint = AuthBasePath + OAuthPath + ProviderParam + CallbackPath
 
+	// OAuth account linking endpoints (authenticated user)
+	UsersMeBasePath       = "/users/me"
+	OAuthLinkPath         = "/oauth"
+	LinkPath              = "/link"
+	UnlinkPath            = "/unlink"
+	LinkOAuthEndpoint     = UsersMeBasePath + OAuthLinkPath + ProviderParam + LinkPath
+	UnlinkOAuthEndpoint   = UsersMeBasePath + OAuthLinkPath + ProviderParam + UnlinkPath
+
 	// === Authenticated User Endpoints ===
 
 	// Requires Visitor role or higher

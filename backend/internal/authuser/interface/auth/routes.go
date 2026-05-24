@@ -79,9 +79,9 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 
 	// Links a provider account to the currently authenticated user.
 	// Example: POST /users/me/oauth/google/link
-	// router.HandleFunc("POST /users/me/oauth/{provider}/link", mw.EnableCORS(h.LinkOAuthAccount))
+	router.HandleFunc("POST "+LinkOAuthEndpoint, RequireStandard(mw.EnableCORS(h.LinkOAuth)))
 
 	// Unlinks a provider account from the currently authenticated user.
 	// Example: DELETE /users/me/oauth/apple/unlink
-	// router.HandleFunc("DELETE /users/me/oauth/{provider}/unlink", mw.EnableCORS(h.UnlinkOAuthAccount))
+	router.HandleFunc("DELETE "+UnlinkOAuthEndpoint, RequireStandard(mw.EnableCORS(h.UnlinkOAuth)))
 }
