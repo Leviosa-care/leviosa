@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
-	import { DollarSign, ArrowDown, TrendingUp, CreditCard, Banknote, ArrowRightLeft } from '@lucide/svelte';
+	import { DollarSign, ArrowDown, TrendingUp, CreditCard, Calendar } from '@lucide/svelte';
+	import { goto } from '$app/navigation';
 
 	let { data }: PageProps = $props();
 
@@ -19,19 +20,6 @@
 		});
 	}
 
-	function getPaymentMethodIcon(method: string) {
-		switch (method) {
-			case 'card':
-				return CreditCard;
-			case 'cash':
-				return Banknote;
-			case 'transfer':
-				return ArrowRightLeft;
-			default:
-				return CreditCard;
-		}
-	}
-
 	function getTypeBadge(type: string) {
 		return type === 'payment'
 			? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
@@ -42,35 +30,63 @@
 		return type === 'payment' ? 'Paiement' : 'Remboursement';
 	}
 
-	function getStatusBadge(status: string) {
+	function getBookingStatusBadge(status: string) {
 		switch (status) {
 			case 'completed':
 				return 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300';
-			case 'pending':
-				return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300';
-			case 'failed':
+			case 'cancelled':
 				return 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300';
+			case 'confirmed':
+				return 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300';
+			case 'no_show':
+				return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300';
 			default:
 				return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
 		}
 	}
 
-	function getStatusLabel(status: string): string {
+	function getBookingStatusLabel(status: string): string {
 		switch (status) {
 			case 'completed': return 'Complété';
-			case 'pending': return 'En attente';
-			case 'failed': return 'Échoué';
+			case 'cancelled': return 'Annulé';
+			case 'confirmed': return 'Confirmé';
+			case 'no_show': return 'Absence';
 			default: return status;
 		}
 	}
 
-	function getPaymentMethodLabel(method: string): string {
-		switch (method) {
-			case 'card': return 'Carte';
-			case 'cash': return 'Espèces';
-			case 'transfer': return 'Virement';
-			default: return method;
+	function getPaymentStatusBadge(status: string) {
+		switch (status) {
+			case 'paid':
+				return 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300';
+			case 'refunded':
+				return 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300';
+			default:
+				return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
 		}
+	}
+
+	function getPaymentStatusLabel(status: string): string {
+		switch (status) {
+			case 'paid': return 'Payé';
+			case 'refunded': return 'Remboursé';
+			default: return status;
+		}
+	}
+
+	// Month selector: compute the selected month from the 'from' date
+	let selectedMonth: string = $derived(data.from.substring(0, 7));
+
+	function onMonthChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		const yearMonth = target.value; // "YYYY-MM"
+		if (!yearMonth) return;
+		const [year, month] = yearMonth.split('-').map(Number);
+		const from = `${yearMonth}-01`;
+		// Last day of selected month
+		const lastDay = new Date(year, month, 0).getDate();
+		const to = `${yearMonth}-${String(lastDay).padStart(2, '0')}`;
+		goto(`/admin/compta?from=${from}&to=${to}`);
 	}
 </script>
 
@@ -79,13 +95,25 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8 lg:py-12">
-	<div class="mb-8">
-		<h1 class="text-3xl lg:text-4xl font-bold mb-1 text-foreground">
-			Comptabilité
-		</h1>
-		<p class="text-muted-foreground">
-			Suivi des revenus et des transactions
-		</p>
+	<div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+		<div>
+			<h1 class="text-3xl lg:text-4xl font-bold mb-1 text-foreground">
+				Comptabilité
+			</h1>
+			<p class="text-muted-foreground">
+				Suivi des revenus et des transactions
+			</p>
+		</div>
+		<!-- Month selector -->
+		<div class="flex items-center gap-2">
+			<Calendar size={18} class="text-muted-foreground" />
+			<input
+				type="month"
+				value={selectedMonth}
+				onchange={onMonthChange}
+				class="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+			/>
+		</div>
 	</div>
 
 	<!-- Summary KPIs -->
@@ -133,94 +161,64 @@
 	<!-- Transactions Table -->
 	<div class="bg-card rounded-lg border border-border mb-8">
 		<div class="p-6 border-b border-border">
-			<h2 class="text-xl font-semibold text-foreground">Transactions récentes</h2>
+			<h2 class="text-xl font-semibold text-foreground">Transactions</h2>
 		</div>
-		<div class="overflow-x-auto">
-			<table class="w-full">
-				<thead>
-					<tr class="bg-muted/50 border-b border-border">
-						<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Date</th>
-						<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Description</th>
-						<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Client</th>
-						<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Méthode</th>
-						<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Type</th>
-						<th class="text-right py-4 px-6 text-sm font-medium text-muted-foreground">Montant</th>
-						<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Statut</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each data.transactions as transaction}
-						{@const MethodIcon = getPaymentMethodIcon(transaction.paymentMethod)}
-						<tr class="border-b border-border hover:bg-muted/30 transition-colors">
-							<td class="py-4 px-6 text-sm text-muted-foreground">{formatDateTime(transaction.date)}</td>
-							<td class="py-4 px-6">
-								<span class="text-sm font-medium text-foreground">{transaction.description}</span>
-							</td>
-							<td class="py-4 px-6 text-sm text-foreground">{transaction.clientName}</td>
-							<td class="py-4 px-6">
-								<div class="flex items-center gap-2">
-									<MethodIcon size={14} class="text-muted-foreground" />
-									<span class="text-sm text-muted-foreground">{getPaymentMethodLabel(transaction.paymentMethod)}</span>
-								</div>
-							</td>
-							<td class="py-4 px-6">
-								<span class="px-3 py-1 rounded-full text-xs font-medium {getTypeBadge(transaction.type)}">
-									{getTypeLabel(transaction.type)}
-								</span>
-							</td>
-							<td class="py-4 px-6 text-right">
-								<span class="text-sm font-medium {transaction.amountInCents >= 0
-									? 'text-green-500'
-									: 'text-red-500'}">
-									{formatCents(transaction.amountInCents)}
-								</span>
-							</td>
-							<td class="py-4 px-6">
-								<span class="px-3 py-1 rounded-full text-xs font-medium {getStatusBadge(transaction.status)}">
-									{getStatusLabel(transaction.status)}
-								</span>
-							</td>
+		{#if data.transactions.length === 0}
+			<div class="p-12 text-center">
+				<CreditCard size={48} class="mx-auto mb-4 text-muted-foreground/50" />
+				<p class="text-muted-foreground">Aucune transaction pour cette période.</p>
+			</div>
+		{:else}
+			<div class="overflow-x-auto">
+				<table class="w-full">
+					<thead>
+						<tr class="bg-muted/50 border-b border-border">
+							<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Date</th>
+							<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Produit</th>
+							<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Client</th>
+							<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Praticien</th>
+							<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Type</th>
+							<th class="text-right py-4 px-6 text-sm font-medium text-muted-foreground">Montant</th>
+							<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Paiement</th>
+							<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Réservation</th>
 						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
-	</div>
-
-	<!-- Monthly Breakdown -->
-	<div class="bg-card rounded-lg border border-border">
-		<div class="p-6 border-b border-border">
-			<h2 class="text-xl font-semibold text-foreground">Répartition mensuelle</h2>
-		</div>
-		<div class="overflow-x-auto">
-			<table class="w-full">
-				<thead>
-					<tr class="bg-muted/50 border-b border-border">
-						<th class="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Mois</th>
-						<th class="text-right py-4 px-6 text-sm font-medium text-muted-foreground">Paiements</th>
-						<th class="text-right py-4 px-6 text-sm font-medium text-muted-foreground">Remboursements</th>
-						<th class="text-right py-4 px-6 text-sm font-medium text-muted-foreground">Net</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each data.monthlyBreakdown as month}
-						<tr class="border-b border-border hover:bg-muted/30 transition-colors">
-							<td class="py-4 px-6">
-								<span class="text-sm font-medium text-foreground">{month.month}</span>
-							</td>
-							<td class="py-4 px-6 text-right">
-								<span class="text-sm font-medium text-green-500">{formatCents(month.payments)}</span>
-							</td>
-							<td class="py-4 px-6 text-right">
-								<span class="text-sm font-medium text-red-500">{formatCents(month.refunds)}</span>
-							</td>
-							<td class="py-4 px-6 text-right">
-								<span class="text-sm font-bold text-foreground">{formatCents(month.net)}</span>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
+					</thead>
+					<tbody>
+						{#each data.transactions as transaction}
+							<tr class="border-b border-border hover:bg-muted/30 transition-colors">
+								<td class="py-4 px-6 text-sm text-muted-foreground">{formatDateTime(transaction.date)}</td>
+								<td class="py-4 px-6">
+									<span class="text-sm font-medium text-foreground">{transaction.description}</span>
+								</td>
+								<td class="py-4 px-6 text-sm text-foreground">{transaction.clientName}</td>
+								<td class="py-4 px-6 text-sm text-foreground">{transaction.partnerName}</td>
+								<td class="py-4 px-6">
+									<span class="px-3 py-1 rounded-full text-xs font-medium {getTypeBadge(transaction.type)}">
+										{getTypeLabel(transaction.type)}
+									</span>
+								</td>
+								<td class="py-4 px-6 text-right">
+									<span class="text-sm font-medium {transaction.type === 'payment'
+										? 'text-green-500'
+										: 'text-red-500'}">
+										{transaction.type === 'refund' ? '-' : ''}{formatCents(transaction.amountInCents)}
+									</span>
+								</td>
+								<td class="py-4 px-6">
+									<span class="px-3 py-1 rounded-full text-xs font-medium {getPaymentStatusBadge(transaction.paymentStatus)}">
+										{getPaymentStatusLabel(transaction.paymentStatus)}
+									</span>
+								</td>
+								<td class="py-4 px-6">
+									<span class="px-3 py-1 rounded-full text-xs font-medium {getBookingStatusBadge(transaction.bookingStatus)}">
+										{getBookingStatusLabel(transaction.bookingStatus)}
+									</span>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{/if}
 	</div>
 </div>
