@@ -3,6 +3,7 @@ package booking
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
@@ -10,11 +11,18 @@ import (
 	"github.com/google/uuid"
 )
 
+const earningsMaxFetch = 10000
+
 func (s *BookingService) GetPartnerEarnings(ctx context.Context, partnerID uuid.UUID) (*domain.EarningsSummary, error) {
-	filter := ports.BookingFilter{}
+	filter := ports.BookingFilter{Limit: earningsMaxFetch}
 	bookingsEncx, err := s.bookingRepo.GetByPartnerID(ctx, partnerID, filter)
 	if err != nil {
 		return nil, fmt.Errorf("get partner bookings: %w", err)
+	}
+
+	if len(bookingsEncx) == earningsMaxFetch {
+		slog.WarnContext(ctx, "partner earnings fetch hit safety cap; results may be incomplete",
+			"cap", earningsMaxFetch, "partner_id", partnerID)
 	}
 
 	bookings := make([]*domain.Booking, 0, len(bookingsEncx))
@@ -24,6 +32,16 @@ func (s *BookingService) GetPartnerEarnings(ctx context.Context, partnerID uuid.
 			return nil, fmt.Errorf("decrypt booking %s: %w", bookingEncx.ID, err)
 		}
 		bookings = append(bookings, booking)
+	}
+
+	// Build product name cache to avoid N+1 calls to the catalog service.
+	productNames := make(map[uuid.UUID]string)
+	if s.productService != nil {
+		for _, booking := range bookings {
+			if _, ok := productNames[booking.ProductID]; !ok {
+				productNames[booking.ProductID] = s.resolveProductName(ctx, booking.ProductID)
+			}
+		}
 	}
 
 	now := time.Now()
@@ -60,10 +78,16 @@ func (s *BookingService) GetPartnerEarnings(ctx context.Context, partnerID uuid.
 			summary.PendingCents += booking.TotalPriceCents
 		}
 
+		productName, ok := productNames[booking.ProductID]
+		if !ok {
+			productName = "Produit inconnu"
+		}
+
 		summary.Transactions = append(summary.Transactions, domain.Transaction{
 			ID:            booking.ID,
 			SlotStartTime: booking.SlotStartTime.Format(time.RFC3339),
 			ProductID:     booking.ProductID,
+			ProductName:   productName,
 			AmountCents:   booking.TotalPriceCents,
 			PaymentStatus: booking.PaymentStatus,
 		})
@@ -73,7 +97,7 @@ func (s *BookingService) GetPartnerEarnings(ctx context.Context, partnerID uuid.
 }
 
 func nextMonday(t time.Time) time.Time {
-	daysUntilMonday := (7 - int(t.Weekday())) % 7
+	daysUntilMonday := (int(time.Monday) - int(t.Weekday()) + 7) % 7
 	if daysUntilMonday == 0 {
 		daysUntilMonday = 7
 	}

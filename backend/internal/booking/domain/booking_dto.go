@@ -50,6 +50,7 @@ type Transaction struct {
 	ID              uuid.UUID     `json:"id"`
 	SlotStartTime   string        `json:"slot_start_time"`
 	ProductID       uuid.UUID     `json:"product_id"`
+	ProductName     string        `json:"product_name"`
 	AmountCents     int           `json:"amount_cents"`
 	PaymentStatus   PaymentStatus `json:"payment_status"`
 }
