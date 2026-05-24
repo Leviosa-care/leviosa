@@ -109,18 +109,40 @@ function mapMetrics(b: BackendPartnerMetrics): PartnerMetrics {
 	};
 }
 
-export const load: PageServerLoad = async ({ locals, fetch }) => {
+export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 	const partnerId = locals.user?.id;
 	if (!partnerId) {
 		throw redirect(302, '/auth');
 	}
 
+	// Parse date range from URL query params, default to last 30 days
 	const now = new Date();
-	const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-	const startDate = firstDayOfMonth.toISOString().split('T')[0];
-	const endDate = now.toISOString().split('T')[0];
+	const defaultStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29);
+	const startDateParam = url.searchParams.get('start_date') ?? defaultStart.toISOString().split('T')[0];
+	const endDateParam = url.searchParams.get('end_date') ?? now.toISOString().split('T')[0];
 
-	const metricsRes = await fetch(`${env.API_URL}/partners/${partnerId}/metrics?start_date=${startDate}&end_date=${endDate}`, {
+	// Validate the date format (YYYY-MM-DD)
+	const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+	if (!dateRegex.test(startDateParam) || !dateRegex.test(endDateParam)) {
+		return {
+			metrics: null,
+			startDate: startDateParam,
+			endDate: endDateParam,
+			error: 'Format de date invalide. Utilisez AAAA-MM-JJ.',
+		};
+	}
+
+	// Validate start <= end
+	if (startDateParam > endDateParam) {
+		return {
+			metrics: null,
+			startDate: startDateParam,
+			endDate: endDateParam,
+			error: 'La date de début doit être antérieure ou égale à la date de fin.',
+		};
+	}
+
+	const metricsRes = await fetch(`${env.API_URL}/partners/${partnerId}/metrics?start_date=${startDateParam}&end_date=${endDateParam}`, {
 		headers: {
 			'Content-Type': 'application/json',
 		},
@@ -131,16 +153,22 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 	}
 
 	if (!metricsRes.ok) {
-		if (metricsRes.status === 500) {
-			return {
-				metrics: null,
-				error: 'Erreur serveur. Veuillez réessayer dans quelques instants.',
-			};
-		}
-		throw redirect(302, '/auth');
+		return {
+			metrics: null,
+			startDate: startDateParam,
+			endDate: endDateParam,
+			error:
+				metricsRes.status === 500
+					? 'Erreur serveur. Veuillez réessayer dans quelques instants.'
+					: 'Impossible de charger les statistiques.',
+		};
 	}
 
 	const backend: BackendPartnerMetrics = await metricsRes.json();
 
-	return { metrics: mapMetrics(backend) };
+	return {
+		metrics: mapMetrics(backend),
+		startDate: startDateParam,
+		endDate: endDateParam,
+	};
 };

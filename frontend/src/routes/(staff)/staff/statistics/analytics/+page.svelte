@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
-	import { Activity, Clock, Target } from '@lucide/svelte';
+	import { Activity, Clock, Target, CalendarDays } from '@lucide/svelte';
+	import { goto } from '$app/navigation';
 
 	let { data }: PageProps = $props();
 
@@ -11,13 +12,8 @@
 	const totalBookedMinutes = $derived(
 		dailyMetrics.reduce((sum, d) => sum + d.totalMinutesBooked, 0)
 	);
-	const totalOpenMinutes = $derived(
-		dailyMetrics.reduce((sum, d) => sum + d.totalMinutesOpen, 0)
-	);
-	const avgUtilization = $derived(
-		totalOpenMinutes > 0 ? (totalBookedMinutes / totalOpenMinutes) * 100 : 0
-	);
-	const totalSessions = $derived(dailyMetrics.length);
+	const avgUtilization = $derived(data.metrics?.summary.averageUtilization ?? 0);
+	const totalSessions = $derived(data.metrics?.summary.daysAnalyzed ?? 0);
 	const avgEfficiency = $derived(
 		dailyMetrics.length > 0
 			? dailyMetrics.reduce((sum, d) => sum + d.efficiencyScore, 0) / dailyMetrics.length
@@ -40,6 +36,30 @@
 	const maxMinutes = $derived(
 		Math.max(...last7Days.map((d) => d.totalMinutesBooked), 1)
 	);
+
+	// Date range selector state
+	let startDate = $state(data.startDate);
+	let endDate = $state(data.endDate);
+
+	function applyDateRange() {
+		const params = new URLSearchParams();
+		params.set('start_date', startDate);
+		params.set('end_date', endDate);
+		goto(`/staff/statistics/analytics?${params.toString()}`);
+	}
+
+	function setPresetRange(days: number) {
+		const now = new Date();
+		const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (days - 1));
+		startDate = start.toISOString().split('T')[0];
+		endDate = now.toISOString().split('T')[0];
+		applyDateRange();
+	}
+
+	const hasNoData = $derived(
+		!data.metrics ||
+		(data.metrics.roomMetrics.length === 0 && data.metrics.summary.daysAnalyzed === 0)
+	);
 </script>
 
 <svelte:head>
@@ -49,14 +69,78 @@
 <div class="container mx-auto px-4 py-8 lg:py-12">
 	<div class="mb-8">
 		<h1 class="text-3xl lg:text-4xl font-bold mb-1 text-foreground">Statistiques</h1>
-		<p class="text-muted-foreground">Vos performances du mois en cours</p>
+		<p class="text-muted-foreground">Vos performances sur la période sélectionnée</p>
+	</div>
+
+	<!-- Date Range Selector -->
+	<div class="bg-card rounded-lg border border-border p-4 mb-8">
+		<div class="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+			<div class="flex flex-col gap-1.5">
+				<label for="start_date" class="text-sm font-medium text-foreground flex items-center gap-1.5">
+					<CalendarDays size={14} />
+					Début
+				</label>
+				<input
+					id="start_date"
+					type="date"
+					bind:value={startDate}
+					class="px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:ring-2 focus:ring-foreground focus:outline-none"
+				/>
+			</div>
+			<div class="flex flex-col gap-1.5">
+				<label for="end_date" class="text-sm font-medium text-foreground flex items-center gap-1.5">
+					<CalendarDays size={14} />
+					Fin
+				</label>
+				<input
+					id="end_date"
+					type="date"
+					bind:value={endDate}
+					class="px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:ring-2 focus:ring-foreground focus:outline-none"
+				/>
+			</div>
+			<button
+				onclick={applyDateRange}
+				class="px-4 py-2 rounded-lg bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors cursor-pointer"
+			>
+				Appliquer
+			</button>
+			<div class="flex gap-2 sm:ml-auto">
+				<button
+					onclick={() => setPresetRange(7)}
+					class="px-3 py-1.5 rounded-md text-xs font-medium border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
+				>
+					7 jours
+				</button>
+				<button
+					onclick={() => setPresetRange(30)}
+					class="px-3 py-1.5 rounded-md text-xs font-medium border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
+				>
+					30 jours
+				</button>
+				<button
+					onclick={() => setPresetRange(90)}
+					class="px-3 py-1.5 rounded-md text-xs font-medium border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
+				>
+					90 jours
+				</button>
+			</div>
+		</div>
 	</div>
 
 	{#if data.error}
 		<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-8">
 			{data.error}
 		</div>
-	{:else if data.metrics}
+	{/if}
+
+	{#if !data.error && hasNoData}
+		<div class="bg-card rounded-lg border border-border p-12 text-center">
+			<Target size={48} class="text-muted-foreground mx-auto mb-4" />
+			<h2 class="text-xl font-semibold text-foreground mb-2">Aucune donnée disponible</h2>
+			<p class="text-sm text-muted-foreground">Les statistiques d'utilisation apparaîtront ici dès que vous aurez des réservations sur la période sélectionnée.</p>
+		</div>
+	{:else if !data.error && data.metrics}
 		<!-- KPI Cards -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 			<div class="bg-card rounded-lg border border-border p-6">
@@ -113,7 +197,7 @@
 			<div class="bg-card rounded-lg border border-border p-6">
 				<h2 class="text-lg font-semibold text-foreground mb-6">Volume quotidien (7 jours)</h2>
 				{#if last7Days.length === 0}
-					<p class="text-sm text-muted-foreground">Aucune données disponibles</p>
+					<p class="text-sm text-muted-foreground">Aucune donnée disponible pour les 7 derniers jours</p>
 				{:else}
 					<div class="space-y-3">
 						{#each last7Days as day (day.date)}
