@@ -16,6 +16,7 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /admin/dashboard/stats", RequireAdmin(mw.EnableCORS(h.GetDashboardStats)))
 	router.HandleFunc("GET /admin/bookings", RequireAdmin(mw.EnableCORS(h.GetAdminBookings)))
 	router.HandleFunc("GET /admin/analytics/summary", RequireAdmin(mw.EnableCORS(h.GetAnalyticsSummary)))
+	router.HandleFunc("GET /admin/bookings/financial-summary", RequireAdmin(mw.EnableCORS(h.GetFinancialSummary)))
 
 	// Booking management endpoints
 	router.HandleFunc("POST /bookings", RequireStandard(mw.EnableCORS(h.CreateBooking)))

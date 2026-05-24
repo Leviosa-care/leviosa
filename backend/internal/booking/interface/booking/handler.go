@@ -24,6 +24,7 @@ type Handler interface {
 	ProcessPayment(w http.ResponseWriter, r *http.Request)
 	RefundBooking(w http.ResponseWriter, r *http.Request)
 	GetAnalyticsSummary(w http.ResponseWriter, r *http.Request)
+	GetFinancialSummary(w http.ResponseWriter, r *http.Request)
 	HandleStripeWebhook(w http.ResponseWriter, r *http.Request)
 }
 
