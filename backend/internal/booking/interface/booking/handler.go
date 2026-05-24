@@ -23,6 +23,7 @@ type Handler interface {
 	MarkNoShow(w http.ResponseWriter, r *http.Request)
 	ProcessPayment(w http.ResponseWriter, r *http.Request)
 	RefundBooking(w http.ResponseWriter, r *http.Request)
+	GetAnalyticsSummary(w http.ResponseWriter, r *http.Request)
 	HandleStripeWebhook(w http.ResponseWriter, r *http.Request)
 }
 
