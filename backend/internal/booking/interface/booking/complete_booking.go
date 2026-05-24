@@ -70,6 +70,10 @@ func (h *handler) CompleteBooking(w http.ResponseWriter, r *http.Request) {
 		CancellationReason: cancellationReason,
 		CancelledAt:        booking.CancelledAt,
 		CompletedAt:        booking.CompletedAt,
+		GuestFirstName:     booking.GuestFirstName,
+		GuestLastName:      booking.GuestLastName,
+		GuestEmail:         booking.GuestEmail,
+		GuestPhone:         booking.GuestPhone,
 	}
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)

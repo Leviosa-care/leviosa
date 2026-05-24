@@ -58,6 +58,10 @@ func convertBookingsToResponses(bookings []*domain.Booking) []domain.BookingResp
 			CancellationReason: cancellationReason,
 			CancelledAt:        booking.CancelledAt,
 			CompletedAt:        booking.CompletedAt,
+			GuestFirstName:     booking.GuestFirstName,
+			GuestLastName:      booking.GuestLastName,
+			GuestEmail:         booking.GuestEmail,
+			GuestPhone:         booking.GuestPhone,
 		})
 	}
 	return responses

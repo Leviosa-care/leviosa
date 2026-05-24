@@ -10,6 +10,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/validation"
 )
 
 func (h *handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
@@ -35,8 +36,22 @@ func (h *handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate guest contact format when provided
+	if request.GuestEmail != "" {
+		if err := validation.ValidateEmail(request.GuestEmail); err != nil {
+			httpx.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("guest_email: %v", err)), http.StatusBadRequest)
+			return
+		}
+	}
+	if request.GuestPhone != "" {
+		if err := validation.ValidatePhone(request.GuestPhone); err != nil {
+			httpx.RespondWithError(w, errs.NewInvalidValueErr(fmt.Sprintf("guest_phone: %v", err)), http.StatusBadRequest)
+			return
+		}
+	}
+
 	// Call service to create booking
-	booking, err := h.svc.CreateBooking(ctx, request.AvailabilityID, request.ClientID, request.ProductID, request.SlotStartTime, request.ClientNotes)
+	booking, err := h.svc.CreateBooking(ctx, request.AvailabilityID, request.ClientID, request.ProductID, request.SlotStartTime, request.ClientNotes, request.GuestFirstName, request.GuestLastName, request.GuestEmail, request.GuestPhone)
 	if err != nil {
 		var statusCode int
 		switch {
@@ -78,12 +93,16 @@ func (h *handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		CancellationReason: cancellationReason,
 		CancelledAt:        booking.CancelledAt,
 		CompletedAt:        booking.CompletedAt,
+		GuestFirstName:     booking.GuestFirstName,
+		GuestLastName:      booking.GuestLastName,
+		GuestEmail:         booking.GuestEmail,
+		GuestPhone:         booking.GuestPhone,
 	}
 
 	logger.InfoContext(ctx, "Handler: Booking created successfully",
 		"booking_id", booking.ID,
 		"availability_id", booking.AvailabilityID,
-		"client_id", booking.ClientID,
+		"is_guest", booking.IsGuestBooking(),
 		"operation", "create_booking")
 
 	httpx.RespondWithJSON(w, response, http.StatusCreated)
