@@ -13,6 +13,11 @@ export interface PartnerProfile {
 	joinedAt: string;
 }
 
+export interface LinkedProviders {
+	google: boolean;
+	apple: boolean;
+}
+
 interface PartnerResponse {
 	id: string;
 	bio: string;
@@ -48,6 +53,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		if (partnerRes.status === 500) {
 			return {
 				profile: null,
+				linkedProviders: { google: false, apple: false },
 				error: 'Erreur serveur. Veuillez réessayer dans quelques instants.',
 			};
 		}
@@ -108,7 +114,23 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		joinedAt: partner.created_at,
 	};
 
+	// Fetch current user data to determine OAuth linking status
+	let linkedProviders: LinkedProviders = { google: false, apple: false };
+	const userRes = await fetch(`${env.API_URL}/users/me`, {
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	});
+	if (userRes.ok) {
+		const userData = await userRes.json();
+		linkedProviders = {
+			google: !!userData.google_id,
+			apple: !!userData.apple_id,
+		};
+	}
+
 	return {
 		profile,
+		linkedProviders,
 	};
 };
