@@ -17,6 +17,7 @@ type Handler interface {
 	GetAllPartnersByProduct(w http.ResponseWriter, r *http.Request)
 	GetAllPartnersByProducts(w http.ResponseWriter, r *http.Request)
 	UpdatePartner(w http.ResponseWriter, r *http.Request)
+	UpdatePartnerMe(w http.ResponseWriter, r *http.Request)
 	DeletePartner(w http.ResponseWriter, r *http.Request)
 	VerifyPartner(w http.ResponseWriter, r *http.Request)
 }

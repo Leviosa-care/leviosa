@@ -38,6 +38,9 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Update partner profile (partner can update their own, admin can update any)
 	router.HandleFunc("PUT "+UpdatePartnerEndpoint, RequirePartner(mw.EnableCORS(h.UpdatePartner)))
 
+	// Update authenticated partner's own profile
+	router.HandleFunc("PUT "+UpdatePartnerMeEndpoint, RequirePartner(mw.EnableCORS(h.UpdatePartnerMe)))
+
 	// Verify partner credentials (admin only)
 	router.HandleFunc("POST "+VerifyPartnerEndpoint, RequireAdmin(mw.EnableCORS(h.VerifyPartner)))
 }
