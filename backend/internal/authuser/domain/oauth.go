@@ -26,3 +26,14 @@ type OAuthCallbackResponse struct {
 	RefreshTokenExpiry int64  `json:"refresh_token_expiry"`
 	IsNewUser          bool   `json:"is_new_user"`
 }
+
+// OAuthLinkResponse contains the result of linking an OAuth provider
+type OAuthLinkResponse struct {
+	AuthorizationURL string `json:"authorization_url,omitempty"`
+	State            string `json:"state,omitempty"`
+}
+
+// OAuthUnlinkResponse contains the result of unlinking an OAuth provider
+type OAuthUnlinkResponse struct {
+	Provider string `json:"provider"`
+}

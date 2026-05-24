@@ -29,6 +29,7 @@ type UserResponse struct {
 	Address2   string    `json:"address2,omitempty"`
 	GoogleID   string    `json:"google_id,omitempty"`
 	AppleID    string    `json:"apple_id,omitempty"`
+	HasPassword bool     `json:"has_password"`
 }
 
 type ApproveUserRequest struct {
