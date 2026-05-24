@@ -8,6 +8,7 @@
 		id: string;
 		slotStartTime: string;
 		productId: string;
+		productName: string;
 		amountCents: number;
 		paymentStatus: 'paid' | 'pending' | 'refunded';
 	}
@@ -63,33 +64,29 @@
 			: 0,
 	);
 
-	// Derive monthly earnings from transactions
 	interface MonthlyEarning {
-		month: string;
+		key: string;
+		label: string;
 		amountInCents: number;
 	}
 
-	const monthlyEarnings = $derived(() => {
+	const monthlyEarnings = $derived.by((): MonthlyEarning[] => {
 		if (!data.summary?.transactions) return [];
-		const byMonth = new Map<string, number>();
+		const byMonth = new Map<string, MonthlyEarning>();
 		data.summary.transactions.forEach((tx: Transaction) => {
 			const date = new Date(tx.slotStartTime);
-			const monthKey = date.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
-			const current = byMonth.get(monthKey) || 0;
-			byMonth.set(monthKey, current + tx.amountCents);
+			const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+			const label = date.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+			const existing = byMonth.get(key);
+			byMonth.set(key, { key, label, amountInCents: (existing?.amountInCents ?? 0) + tx.amountCents });
 		});
-		// Get last 6 months of data
-		const sorted = Array.from(byMonth.entries()).sort((a, b) => {
-			const [monthA, yearA] = a[0].split(' ');
-			const [monthB, yearB] = b[0].split(' ');
-			// Simple sort by the key string - works for last 6 months
-			return a[0].localeCompare(b[0], 'fr');
-		});
-		return sorted.slice(-6).map(([month, amount]) => ({ month, amountInCents: amount }));
+		return Array.from(byMonth.values())
+			.sort((a, b) => a.key.localeCompare(b.key))
+			.slice(-6);
 	});
 
 	const maxEarning = $derived(
-		monthlyEarnings().length > 0 ? Math.max(...monthlyEarnings().map((m) => m.amountInCents)) : 1
+		monthlyEarnings.length > 0 ? Math.max(...monthlyEarnings.map((m) => m.amountInCents)) : 1
 	);
 </script>
 
@@ -106,6 +103,18 @@
 	{#if data.error}
 		<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-8">
 			{data.error}
+		</div>
+	{:else if !data.summary}
+		<div class="bg-card rounded-lg border border-border p-12 text-center">
+			<Banknote size={48} class="text-muted-foreground mx-auto mb-4" />
+			<h2 class="text-xl font-semibold text-foreground mb-2">Aucune donnée financière</h2>
+			<p class="text-sm text-muted-foreground">Vos revenus apparaîtront ici dès que vous recevrez vos premières réservations.</p>
+		</div>
+	{:else if data.summary.transactions.length === 0 && data.summary.currentMonthCents === 0 && data.summary.lastMonthCents === 0}
+		<div class="bg-card rounded-lg border border-border p-12 text-center">
+			<Banknote size={48} class="text-muted-foreground mx-auto mb-4" />
+			<h2 class="text-xl font-semibold text-foreground mb-2">Aucune donnée financière</h2>
+			<p class="text-sm text-muted-foreground">Vos revenus apparaîtront ici dès que vous recevrez vos premières réservations.</p>
 		</div>
 	{:else if data.summary}
 		<!-- Summary Cards -->
@@ -173,13 +182,13 @@
 
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 			<!-- Monthly Chart (derived from transactions) -->
-			{#if monthlyEarnings().length > 0}
+			{#if monthlyEarnings.length > 0}
 				<div class="bg-card rounded-lg border border-border p-6">
 					<h2 class="text-lg font-semibold text-foreground mb-6">Revenus mensuels</h2>
 					<div class="space-y-3">
-						{#each monthlyEarnings() as month (month.month)}
+						{#each monthlyEarnings as month (month.key)}
 							<div class="flex items-center gap-4">
-								<span class="w-10 text-sm text-muted-foreground">{month.month}</span>
+								<span class="w-10 text-sm text-muted-foreground">{month.label}</span>
 								<div class="flex-1 h-7 bg-muted rounded-md overflow-hidden relative">
 									<div
 										class="h-full bg-foreground/80 rounded-md absolute top-0 left-0 transition-all"
@@ -208,7 +217,7 @@
 									<p class="text-sm font-medium text-foreground truncate">
 										Réservation #{tx.id.slice(0, 8)}
 									</p>
-									<p class="text-xs text-muted-foreground truncate">Produit: {tx.productId}</p>
+									<p class="text-xs text-muted-foreground truncate">{tx.productName}</p>
 									<p class="text-xs text-muted-foreground">{formatDateTime(tx.slotStartTime)}</p>
 								</div>
 								<div class="flex flex-col items-end gap-1 flex-shrink-0">

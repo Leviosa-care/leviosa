@@ -6,6 +6,7 @@ export interface Transaction {
 	id: string;
 	slotStartTime: string;
 	productId: string;
+	productName: string;
 	amountCents: number;
 	paymentStatus: 'paid' | 'pending' | 'refunded';
 }
@@ -23,6 +24,7 @@ interface BackendTransaction {
 	id: string;
 	slot_start_time: string;
 	product_id: string;
+	product_name: string;
 	amount_cents: number;
 	payment_status: 'paid' | 'pending' | 'refunded';
 }
@@ -74,6 +76,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 			id: t.id,
 			slotStartTime: t.slot_start_time,
 			productId: t.product_id,
+			productName: t.product_name,
 			amountCents: t.amount_cents,
 			paymentStatus: t.payment_status,
 		})),
