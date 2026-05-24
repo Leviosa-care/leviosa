@@ -32,6 +32,8 @@ type AuthAggregatorService interface {
 	ConfirmPasswordReset(ctx context.Context, request *domain.ConfirmPasswordResetRequest) error
 	OAuthStart(ctx context.Context, request *domain.OAuthStartRequest) (*domain.OAuthStartResponse, error)
 	OAuthCallback(ctx context.Context, w http.ResponseWriter, r *http.Request, provider string) (*domain.OAuthCallbackResponse, error)
+	LinkOAuth(ctx context.Context, sessionInfo *session.SessionInfo, provider string) (*domain.OAuthLinkResponse, error)
+	UnlinkOAuth(ctx context.Context, sessionInfo *session.SessionInfo, provider string) (*domain.OAuthUnlinkResponse, error)
 	// TODO: not sure about that one
 	// ValidateSession(ctx context.Context) error
 }
