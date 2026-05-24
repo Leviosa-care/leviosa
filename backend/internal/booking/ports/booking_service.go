@@ -10,6 +10,7 @@ import (
 
 type EarningsSummary = domain.EarningsSummary
 type DashboardStats = domain.DashboardStats
+type AnalyticsSummaryResponse = domain.AnalyticsSummaryResponse
 
 // BookingService defines the interface for booking business logic
 type BookingService interface {
@@ -58,6 +59,10 @@ type BookingService interface {
 	// GetAdminBookings retrieves a paginated list of all bookings with enriched
 	// fields (client name, partner name, product name, room name) for the admin UI.
 	GetAdminBookings(ctx context.Context, filter AdminBookingsFilter) (*domain.AdminBookingsListResponse, error)
+
+	// GetAnalyticsSummary computes aggregated analytics for the admin dashboard:
+	// current-month KPIs, monthly revenue time-series, and top products.
+	GetAnalyticsSummary(ctx context.Context, months int) (*AnalyticsSummaryResponse, error)
 }
 
 // AdminBookingsFilter holds query parameters for the admin bookings list endpoint.
