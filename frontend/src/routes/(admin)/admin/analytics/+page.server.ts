@@ -1,27 +1,54 @@
 import { env } from '$env/dynamic/private';
+import { error, isRedirect, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-interface DashboardStats {
+// API response types (snake_case from backend)
+interface APICurrentMonth {
+	revenue_cents: number;
+	bookings_count: number;
+	new_clients_count: number;
+	avg_booking_value_cents: number;
+}
+
+interface APIMonthlyRevenue {
+	month: string;
+	revenue_cents: number;
+	bookings_count: number;
+}
+
+interface APITopProduct {
+	product_id: string;
+	name: string;
+	bookings_count: number;
+	revenue_cents: number;
+}
+
+interface APIAnalyticsSummary {
+	current_month: APICurrentMonth;
+	monthly_revenue: APIMonthlyRevenue[];
+	top_products: APITopProduct[];
+}
+
+// UI types (camelCase)
+export interface DashboardStats {
 	totalRevenueInCents: number;
 	bookingsThisMonth: number;
 	newUsersThisMonth: number;
 	avgBookingValue: number;
-	repeatRate: number;
-	conversionRate: number;
 }
 
-interface MonthlyRevenue {
+export interface MonthlyRevenue {
 	month: string;
 	amountInCents: number;
 }
 
-interface TopProduct {
+export interface TopProduct {
 	name: string;
 	bookings: number;
 	revenueInCents: number;
 }
 
-interface AnalyticsData {
+export interface AnalyticsData {
 	stats: DashboardStats;
 	monthlyRevenue: MonthlyRevenue[];
 	topProducts: TopProduct[];
@@ -32,9 +59,7 @@ async function getMockAnalyticsData(): Promise<AnalyticsData> {
 		totalRevenueInCents: 48750,
 		bookingsThisMonth: 156,
 		newUsersThisMonth: 23,
-		avgBookingValue: 312,
-		repeatRate: 42,
-		conversionRate: 18
+		avgBookingValue: 312
 	};
 
 	const monthlyRevenue: MonthlyRevenue[] = [
@@ -57,20 +82,51 @@ async function getMockAnalyticsData(): Promise<AnalyticsData> {
 	return { stats, monthlyRevenue, topProducts };
 }
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ fetch }) => {
 	if (env.USE_MOCK_DATA === 'true') {
 		return await getMockAnalyticsData();
 	}
-	return {
-		stats: {
-			totalRevenueInCents: 0,
-			bookingsThisMonth: 0,
-			newUsersThisMonth: 0,
-			avgBookingValue: 0,
-			repeatRate: 0,
-			conversionRate: 0,
-		},
-		monthlyRevenue: [],
-		topProducts: [],
-	};
+
+	try {
+		const res = await fetch(`${env.API_URL}/admin/analytics/summary?months=6`);
+		if (res.status === 401 || res.status === 403) {
+			throw redirect(302, '/auth');
+		}
+		if (!res.ok) {
+			throw new Error(`Failed to fetch analytics: ${res.status} ${res.statusText}`);
+		}
+
+		const api: APIAnalyticsSummary = await res.json();
+
+		const stats: DashboardStats = {
+			totalRevenueInCents: api.current_month.revenue_cents,
+			bookingsThisMonth: api.current_month.bookings_count,
+			newUsersThisMonth: api.current_month.new_clients_count,
+			avgBookingValue: api.current_month.avg_booking_value_cents
+		};
+
+		const monthlyRevenue: MonthlyRevenue[] = (api.monthly_revenue ?? []).map((m) => ({
+			month: formatMonthLabel(m.month),
+			amountInCents: m.revenue_cents
+		}));
+
+		const topProducts: TopProduct[] = (api.top_products ?? []).map((p) => ({
+			name: p.name,
+			bookings: p.bookings_count,
+			revenueInCents: p.revenue_cents
+		}));
+
+		return { stats, monthlyRevenue, topProducts };
+	} catch (err) {
+		if (isRedirect(err)) throw err;
+		console.error('Error loading analytics data:', err);
+		throw error(503, 'Impossible de charger les données analytiques. Veuillez réessayer.');
+	}
 };
+
+/** Convert "2026-04" → "Avr" */
+function formatMonthLabel(iso: string): string {
+	const [year, month] = iso.split('-');
+	const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+	return new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(date);
+}

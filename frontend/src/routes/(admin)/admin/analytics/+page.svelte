@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
-	import { TrendingUp, Users, Calendar, DollarSign, Repeat, Target, Award } from '@lucide/svelte';
+	import { TrendingUp, Users, Calendar, DollarSign, Award } from '@lucide/svelte';
 
 	let { data }: PageProps = $props();
 
@@ -12,7 +12,7 @@
 		return new Intl.NumberFormat('fr-FR').format(num);
 	}
 
-	const maxRevenue = $derived(Math.max(...data.monthlyRevenue.map(m => m.amountInCents)));
+	const maxRevenue = $derived(Math.max(1, ...data.monthlyRevenue.map(m => m.amountInCents)));
 </script>
 
 <svelte:head>
@@ -30,7 +30,7 @@
 	</div>
 
 	<!-- KPI Cards -->
-	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 		<!-- Total Revenue -->
 		<div class="bg-card rounded-lg border border-border p-6">
 			<div class="flex items-center justify-between mb-4">
@@ -87,33 +87,7 @@
 			<p class="text-sm text-muted-foreground">Panier moyen</p>
 		</div>
 
-		<!-- Repeat Rate -->
-		<div class="bg-card rounded-lg border border-border p-6">
-			<div class="flex items-center justify-between mb-4">
-				<div class="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-					<Repeat size={24} class="text-orange-600 dark:text-orange-400" />
-				</div>
-				<span class="text-xs text-muted-foreground">Taux</span>
-			</div>
-			<div class="text-3xl font-bold text-foreground mb-1">
-				{data.stats.repeatRate}%
-			</div>
-			<p class="text-sm text-muted-foreground">Taux de fidélisation</p>
-		</div>
 
-		<!-- Conversion Rate -->
-		<div class="bg-card rounded-lg border border-border p-6">
-			<div class="flex items-center justify-between mb-4">
-				<div class="p-3 bg-pink-100 dark:bg-pink-900/30 rounded-lg">
-					<Target size={24} class="text-pink-600 dark:text-pink-400" />
-				</div>
-				<span class="text-xs text-muted-foreground">Taux</span>
-			</div>
-			<div class="text-3xl font-bold text-foreground mb-1">
-				{data.stats.conversionRate}%
-			</div>
-			<p class="text-sm text-muted-foreground">Taux de conversion</p>
-		</div>
 	</div>
 
 	<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -166,6 +140,12 @@
 								</td>
 								<td class="text-right py-3 px-2 text-sm text-foreground">{formatNumber(product.bookings)}</td>
 								<td class="text-right py-3 px-2 text-sm font-medium text-foreground">{formatCents(product.revenueInCents)}</td>
+							</tr>
+						{:else}
+							<tr>
+								<td colspan="3" class="py-8 text-center text-sm text-muted-foreground">
+									Aucune donnée disponible pour le moment.
+								</td>
 							</tr>
 						{/each}
 					</tbody>
