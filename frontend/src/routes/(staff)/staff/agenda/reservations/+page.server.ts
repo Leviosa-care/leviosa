@@ -4,15 +4,19 @@ import { env } from '$env/dynamic/private';
 
 export interface Booking {
 	id: string;
+	clientId: string;
 	clientName: string;
 	clientInitials: string;
 	productName: string;
 	startTime: string;
 	endTime: string;
 	roomName: string;
-	status: 'upcoming' | 'completed' | 'no_show' | 'cancelled';
+	status: 'confirmed' | 'completed' | 'no_show' | 'cancelled';
+	paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
 	amountInCents: number;
-	notes?: string;
+	currency: string;
+	clientNotes: string;
+	partnerNotes: string;
 }
 
 export const load: PageServerLoad = async ({ locals, url, fetch }) => {
@@ -21,19 +25,10 @@ export const load: PageServerLoad = async ({ locals, url, fetch }) => {
 	}
 
 	const partnerId = locals.user.id;
-	const statusFilter = url.searchParams.get('status');
+	const statusFilter = url.searchParams.get('status') ?? '';
 
 	try {
-		const apiUrl = new URL(`${env.API_URL}/partners/${partnerId}/bookings`);
-		if (statusFilter) {
-			apiUrl.searchParams.set('status', statusFilter);
-		}
-
-		const res = await fetch(apiUrl.toString(), {
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		});
+		const res = await fetch(`${env.API_URL}/partners/${partnerId}/bookings`);
 
 		if (res.status === 401) {
 			throw redirect(302, '/auth');
@@ -41,45 +36,47 @@ export const load: PageServerLoad = async ({ locals, url, fetch }) => {
 
 		if (!res.ok) {
 			console.error(`Failed to fetch bookings: ${res.status} ${res.statusText}`);
-			return { bookings: [] };
+			return { bookings: [], statusFilter };
 		}
 
 		const data = await res.json();
 
 		if (!Array.isArray(data)) {
 			console.error('Invalid response format: expected array');
-			return { bookings: [] };
+			return { bookings: [], statusFilter };
 		}
 
 		const bookings: Booking[] = data.map((booking: any) => {
-			const clientInitials = booking.client_id
-				? booking.client_id
-						.split('-')
-						.slice(-2)
-						.map((s: string) => s[0]?.toUpperCase() || '')
-						.join('')
-				: '??';
+			const clientInitials = (booking.client_name || '??')
+				.split(' ')
+				.map((s: string) => s[0]?.toUpperCase() || '')
+				.slice(0, 2)
+				.join('');
 
 			return {
 				id: booking.id,
+				clientId: booking.client_id,
 				clientName: booking.client_name || 'Client inconnu',
 				clientInitials,
 				productName: booking.product_name || 'Produit inconnu',
 				startTime: booking.slot_start_time,
 				endTime: booking.slot_end_time,
 				roomName: booking.room_name || 'Salle inconnue',
-				status: booking.status || 'upcoming',
+				status: booking.status || 'confirmed',
+				paymentStatus: booking.payment_status || 'pending',
 				amountInCents: booking.total_price_cents || 0,
-				notes: booking.client_notes || booking.partner_notes || undefined,
+				currency: booking.currency || 'EUR',
+				clientNotes: booking.client_notes || '',
+				partnerNotes: booking.partner_notes || '',
 			};
 		});
 
 		bookings.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
-		return { bookings };
+		return { bookings, statusFilter };
 	} catch (err) {
 		if (isRedirect(err)) throw err;
 		console.error('Error loading bookings:', err);
-		return { bookings: [] };
+		return { bookings: [], statusFilter };
 	}
 };
