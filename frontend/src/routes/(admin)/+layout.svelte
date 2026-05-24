@@ -39,7 +39,7 @@
 
 <!-- Desktop Layout -->
 <div class="hidden lg:flex min-h-screen bg-muted/25">
-	<AdminSidebar user={data.user} permissions={data.permissions} />
+	<AdminSidebar user={data.user} permissions={data.permissions} unreadCount={data.unreadCount} />
 	<main class="flex-1 bg-background">
 		{@render children()}
 	</main>

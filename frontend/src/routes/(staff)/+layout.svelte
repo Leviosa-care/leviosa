@@ -8,7 +8,7 @@
 
 <div class="flex min-h-screen">
 	<!-- Sidebar component handles both desktop sidebar and mobile bottom nav -->
-	<StaffSidebar {user} {permissions} />
+	<StaffSidebar {user} {permissions} unreadCount={data.unreadCount} />
 
 	<!-- Main content area -->
 	<main class="flex-1 overflow-x-hidden">
