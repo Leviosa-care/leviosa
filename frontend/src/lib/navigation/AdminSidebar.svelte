@@ -21,9 +21,10 @@
 	interface SidebarProps {
 		user: App.User;
 		permissions: Permissions;
+		unreadCount?: number;
 	}
 
-	let { user, permissions }: SidebarProps = $props();
+	let { user, permissions, unreadCount = 0 }: SidebarProps = $props();
 
 	// Sidebar collapse state
 	let isCollapsed = $state(false);
@@ -232,6 +233,7 @@
 			<ul class="space-y-1">
 				{#each desktopNavigation as item (item.href)}
 					{@const active = isActive(item.href)}
+					{@const badge = item.href === '/admin/messages' ? unreadCount : 0}
 					<li>
 						<a
 							href={item.href}
@@ -245,7 +247,12 @@
 						>
 							<item.icon strokeWidth={active ? 2 : 1.5} size={20} />
 							{#if !isCollapsed}
-								<span class="tracking-tight">{item.label}</span>
+								<span class="tracking-tight flex-1">{item.label}</span>
+								{#if badge > 0}
+									<span class="px-1.5 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
+										{badge > 99 ? '99+' : badge}
+									</span>
+								{/if}
 							{/if}
 						</a>
 					</li>

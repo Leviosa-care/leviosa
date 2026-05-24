@@ -21,9 +21,10 @@
 	interface SidebarProps {
 		user: App.User;
 		permissions: Permissions;
+		unreadCount?: number;
 	}
 
-	let { user, permissions }: SidebarProps = $props();
+	let { user, permissions, unreadCount = 0 }: SidebarProps = $props();
 
 	// Sidebar collapse state
 	let isCollapsed = $state(false);
@@ -219,6 +220,7 @@
 			<ul class="space-y-1">
 				{#each desktopItems as item (item.href)}
 					{@const active = isActive(item.href)}
+					{@const badge = item.href === '/staff/messages' ? unreadCount : 0}
 					<li>
 						<a
 							href={item.href}
@@ -234,7 +236,12 @@
 						>
 							<item.icon strokeWidth={active ? 2 : 1.5} size={18} />
 							{#if !isCollapsed}
-								<span>{item.label}</span>
+								<span class="flex-1">{item.label}</span>
+								{#if badge > 0}
+									<span class="px-1.5 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
+										{badge > 99 ? '99+' : badge}
+									</span>
+								{/if}
 							{/if}
 						</a>
 					</li>
@@ -323,6 +330,7 @@
 		<ul class="flex items-center justify-around px-1 py-1">
 			{#each mobileItems as item (item.href)}
 				{@const active = isActive(item.href)}
+				{@const badge = item.href === '/staff/messages' ? unreadCount : 0}
 				<li class="flex-1">
 					<a
 						href={item.href}
@@ -330,7 +338,14 @@
 		                   {active ? 'text-dark-900' : 'text-dark-500'}"
 						aria-current={active ? "page" : undefined}
 					>
-						<item.icon size={20} strokeWidth={active ? 2 : 1.5} />
+						<span class="relative">
+							<item.icon size={20} strokeWidth={active ? 2 : 1.5} />
+							{#if badge > 0}
+								<span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold leading-none">
+									{badge > 9 ? '9+' : badge}
+								</span>
+							{/if}
+						</span>
 						<span class="text-xs font-medium">
 							{item.label}
 						</span>
