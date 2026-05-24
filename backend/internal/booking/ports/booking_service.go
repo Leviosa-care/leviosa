@@ -63,6 +63,10 @@ type BookingService interface {
 	// GetAnalyticsSummary computes aggregated analytics for the admin dashboard:
 	// current-month KPIs, monthly revenue time-series, and top products.
 	GetAnalyticsSummary(ctx context.Context, months int) (*AnalyticsSummaryResponse, error)
+
+	// GetFinancialSummary computes gross revenue, refunds, net revenue, and returns
+	// all paid/refunded transactions for the given date range.
+	GetFinancialSummary(ctx context.Context, from, to time.Time) (*domain.FinancialSummaryResponse, error)
 }
 
 // AdminBookingsFilter holds query parameters for the admin bookings list endpoint.
