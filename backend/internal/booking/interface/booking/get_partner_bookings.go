@@ -1,9 +1,11 @@
 package bookingHandler
 
 import (
+	"errors"
 	"net/http"
-	"strings"
 
+	"github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
+	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/identity"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
 	"github.com/google/uuid"
@@ -12,30 +14,36 @@ import (
 func (h *handler) GetPartnerBookings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Extract partner ID from URL path
-	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
-	if len(pathParts) < 3 {
-		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid partner ID in path"), http.StatusBadRequest)
-		return
-	}
-
-	partnerID, err := uuid.Parse(pathParts[1])
+	partnerID, err := uuid.Parse(r.PathValue("partnerId"))
 	if err != nil {
 		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid partner ID format"), http.StatusBadRequest)
 		return
 	}
 
-	// Parse query parameters
-	filter := parseBookingFilter(r)
-
-	// Call service to get partner bookings
-	bookings, err := h.svc.GetPartnerBookings(ctx, partnerID, filter)
-	if err != nil {
-		httpx.RespondWithError(w, err, http.StatusInternalServerError)
+	sessionInfo, ok := session.SessionInfoFromContext(ctx)
+	if !ok {
+		httpx.RespondWithError(w, errs.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+	if sessionInfo.UserID != partnerID && !sessionInfo.Role.IsAtLeast(identity.Administrator) {
+		httpx.RespondWithError(w, errs.ErrForbidden, http.StatusForbidden)
 		return
 	}
 
-	// Convert to response DTOs
-	responses := convertBookingsToResponses(bookings)
-	httpx.RespondWithJSON(w, responses, http.StatusOK)
+	filter := parseBookingFilter(r)
+
+	bookings, err := h.svc.GetPartnerBookingsEnriched(ctx, partnerID, filter)
+	if err != nil {
+		var statusCode int
+		switch {
+		case errors.Is(err, errs.ErrRepositoryNotFound):
+			statusCode = http.StatusNotFound
+		default:
+			statusCode = http.StatusInternalServerError
+		}
+		httpx.RespondWithError(w, err, statusCode)
+		return
+	}
+
+	httpx.RespondWithJSON(w, bookings, http.StatusOK)
 }
