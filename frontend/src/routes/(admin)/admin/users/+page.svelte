@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { PageData, ActionData } from "./$types";
-	import { browser } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import Tabs from "$lib/ui/bits-components/Tabs.svelte";
 	import TabsList from "$lib/ui/bits-components/TabsList.svelte";
@@ -20,7 +19,11 @@
 		KeyRound,
 		X,
 		CheckCircle,
-		AlertCircle
+		AlertCircle,
+		BadgeCheck,
+		Building2,
+		FileText,
+		CreditCard
 	} from "@lucide/svelte";
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -28,18 +31,21 @@
 	// Mobile detection
 	let isMobile = $state(false);
 
-	if (browser) {
+	$effect(() => {
 		isMobile = window.innerWidth < 768;
-		window.addEventListener("resize", () => {
-			isMobile = window.innerWidth < 768;
-		});
-	}
+		const onResize = () => { isMobile = window.innerWidth < 768; };
+		window.addEventListener("resize", onResize);
+		return () => window.removeEventListener("resize", onResize);
+	});
 
 	// Dialog states
 	let deleteDialogOpen = $state(false);
 	let editDialogOpen = $state(false);
 	let approveDialogOpen = $state(false);
+	let verifyPartnerDialogOpen = $state(false);
+	let deletePartnerDialogOpen = $state(false);
 	let selectedUser = $state<typeof data.users[0] | null>(null);
+	let selectedPartner = $state<typeof data.partners[0] | null>(null);
 	let selectedRole = $state<string>("");
 
 	interface Trigger {
@@ -50,7 +56,8 @@
 
 	let triggers = $derived<Trigger[]>([
 		{ value: "all", name: "Tous les utilisateurs", count: data.users.length },
-		{ value: "pending", name: "En attente", count: data.pendingUsers.length }
+		{ value: "pending", name: "En attente", count: data.pendingUsers.length },
+		{ value: "partners", name: "Partenaires", count: data.partners.length }
 	]);
 
 	function getRoleBadgeClass(role: string) {
@@ -75,6 +82,26 @@
 		);
 	}
 
+	function getVerificationBadgeClass(isVerified: boolean) {
+		return cn(
+			"inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+			isVerified
+				? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+				: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+		);
+	}
+
+	function getStripeBadgeClass(onboardingComplete: boolean, status: string) {
+		return cn(
+			"inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+			onboardingComplete && status === "active"
+				? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+				: status === "pending"
+					? "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+					: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+		);
+	}
+
 	function formatDate(dateString: string) {
 		const date = new Date(dateString);
 		return date.toLocaleDateString("fr-FR", {
@@ -82,6 +109,16 @@
 			month: "short",
 			year: "numeric"
 		});
+	}
+
+	function truncate(text: string, maxLength: number = 80) {
+		if (text.length <= maxLength) return text;
+		return text.substring(0, maxLength) + "…";
+	}
+
+	/** Look up user info for a partner by cross-referencing userId with the users list. */
+	function getUserForPartner(partner: typeof data.partners[0]) {
+		return data.users.find((u) => u.id === partner.userId) ?? null;
 	}
 
 	function openDeleteDialog(user: typeof data.users[0]) {
@@ -100,6 +137,16 @@
 		approveDialogOpen = true;
 	}
 
+	function openVerifyPartnerDialog(partner: typeof data.partners[0]) {
+		selectedPartner = partner;
+		verifyPartnerDialogOpen = true;
+	}
+
+	function openDeletePartnerDialog(partner: typeof data.partners[0]) {
+		selectedPartner = partner;
+		deletePartnerDialogOpen = true;
+	}
+
 	const availableRoles = Object.entries(ROLES).map(([key, value]) => ({
 		label: key.charAt(0).toUpperCase() + key.slice(1),
 		value: value
@@ -111,6 +158,8 @@
 			deleteDialogOpen = false;
 			editDialogOpen = false;
 			approveDialogOpen = false;
+			verifyPartnerDialogOpen = false;
+			deletePartnerDialogOpen = false;
 		}
 	});
 </script>
@@ -318,6 +367,128 @@
 				</div>
 			</div>
 		</TabsContent>
+
+		<!-- Partners Tab -->
+		<TabsContent value="partners" class="p-6">
+			{#if data.partnersError}
+				<div class="mb-4 flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 text-red-800 rounded-lg">
+					<AlertCircle size={20} />
+					<p class="text-sm font-medium">Impossible de charger les partenaires. Veuillez rafraîchir la page.</p>
+				</div>
+			{/if}
+			<div class="bg-background border border-border-card rounded-lg overflow-hidden">
+				<div class="overflow-x-auto">
+					<table class="w-full">
+						<thead>
+							<tr class="border-b border-border-card bg-muted/50">
+								<th class="text-left px-4 py-3 text-sm font-semibold text-foreground">Partenaire</th>
+								<th class="text-left px-4 py-3 text-sm font-semibold text-foreground">Bio</th>
+								<th class="text-left px-4 py-3 text-sm font-semibold text-foreground">Vérifié</th>
+								<th class="text-left px-4 py-3 text-sm font-semibold text-foreground">Stripe</th>
+								<th class="text-left px-4 py-3 text-sm font-semibold text-foreground">Catégories / Produits</th>
+								<th class="text-left px-4 py-3 text-sm font-semibold text-foreground">Créé le</th>
+								<th class="text-right px-4 py-3 text-sm font-semibold text-foreground">Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#if data.partners.length === 0}
+								<tr>
+									<td colspan="7" class="px-4 py-8 text-center text-muted-foreground">
+										{data.partnersError ? "Erreur de chargement" : "Aucun partenaire trouvé"}
+									</td>
+								</tr>
+							{:else}
+								{#each data.partners as partner (partner.id)}
+									{@const user = getUserForPartner(partner)}
+									<tr class="border-b border-border-card hover:bg-muted/30 transition-colors">
+										<td class="px-4 py-3">
+											<div class="flex items-center gap-3">
+												<div class="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+													<Building2 size={16} class="text-blue-600 dark:text-blue-400" />
+												</div>
+												<div>
+													<p class="text-sm font-medium text-foreground">
+														{user ? user.email : partner.id}
+													</p>
+													{#if user && (user.firstname || user.lastname)}
+														<p class="text-xs text-muted-foreground">
+															{user.firstname} {user.lastname}
+														</p>
+													{/if}
+												</div>
+											</div>
+										</td>
+										<td class="px-4 py-3">
+											<p class="text-sm text-muted-foreground max-w-[240px]">
+												{truncate(partner.bio, 80)}
+											</p>
+										</td>
+										<td class="px-4 py-3">
+											<span class={getVerificationBadgeClass(partner.stripeOnboardingComplete && partner.stripeAccountStatus === "active")}>
+												{#if partner.stripeOnboardingComplete && partner.stripeAccountStatus === "active"}
+													<BadgeCheck size={12} />
+													Vérifié
+												{:else}
+													<Clock size={12} />
+													Non vérifié
+												{/if}
+											</span>
+										</td>
+										<td class="px-4 py-3">
+											<span class={getStripeBadgeClass(partner.stripeOnboardingComplete, partner.stripeAccountStatus)}>
+												<CreditCard size={12} />
+												{#if partner.stripeOnboardingComplete && partner.stripeAccountStatus === "active"}
+													Complet
+												{:else if partner.stripeAccountStatus === "pending"}
+													En attente
+												{:else}
+													Incomplet
+												{/if}
+											</span>
+										</td>
+										<td class="px-4 py-3">
+											<div class="flex items-center gap-2">
+												<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-xs text-foreground-alt">
+													<FileText size={10} />
+													{partner.categoryCount} cat.
+												</span>
+												<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-xs text-foreground-alt">
+													{partner.productCount} prod.
+												</span>
+											</div>
+										</td>
+										<td class="px-4 py-3 text-sm text-muted-foreground">
+											{formatDate(partner.createdAt)}
+										</td>
+										<td class="px-4 py-3">
+											<div class="flex items-center justify-end gap-1">
+												{#if !(partner.stripeOnboardingComplete && partner.stripeAccountStatus === "active")}
+													<button
+														onclick={() => openVerifyPartnerDialog(partner)}
+														class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 rounded-md transition-colors"
+														title="Vérifier"
+													>
+														<BadgeCheck size={14} />
+														Vérifier
+													</button>
+												{/if}
+												<button
+													onclick={() => openDeletePartnerDialog(partner)}
+													class="p-2 rounded-md text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+													title="Supprimer"
+												>
+													<Trash2 size={16} />
+												</button>
+											</div>
+										</td>
+									</tr>
+								{/each}
+							{/if}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</TabsContent>
 	</Tabs>
 </div>
 
@@ -346,10 +517,8 @@
 
 			<div class="pt-4">
 				<form method="POST" action="?/deleteUser" use:enhance={() => {
-					return async ({ result }) => {
-						if (result.type === "success") {
-							deleteDialogOpen = false;
-						}
+					return async ({ update }) => {
+						await update({ reset: false });
 					};
 				}} class="flex w-full justify-end gap-3">
 					<input type="hidden" name="id" value={selectedUser.id} />
@@ -376,10 +545,8 @@
 			description="Êtes-vous sûr de vouloir supprimer '{selectedUser.email}' ? Cette action ne peut pas être annulée."
 		>
 			<form method="POST" action="?/deleteUser" use:enhance={() => {
-				return async ({ result }) => {
-					if (result.type === "success") {
-						deleteDialogOpen = false;
-					}
+				return async ({ update }) => {
+					await update({ reset: false });
 				};
 			}} class="mt-6">
 				<input type="hidden" name="id" value={selectedUser.id} />
@@ -425,10 +592,8 @@
 
 			<div class="pt-4">
 				<form method="POST" action="?/updateRole" use:enhance={() => {
-					return async ({ result }) => {
-						if (result.type === "success") {
-							editDialogOpen = false;
-						}
+					return async ({ update }) => {
+						await update({ reset: false });
 					};
 				}} class="space-y-4">
 					<input type="hidden" name="id" value={selectedUser.id} />
@@ -472,10 +637,8 @@
 			description="Modifier le rôle de '{selectedUser.email}'"
 		>
 			<form method="POST" action="?/updateRole" use:enhance={() => {
-				return async ({ result }) => {
-					if (result.type === "success") {
-						editDialogOpen = false;
-					}
+				return async ({ update }) => {
+					await update({ reset: false });
 				};
 			}} class="mt-6 space-y-4">
 				<input type="hidden" name="id" value={selectedUser.id} />
@@ -536,10 +699,8 @@
 
 			<div class="pt-4">
 				<form method="POST" action="?/approveUser" use:enhance={() => {
-					return async ({ result }) => {
-						if (result.type === "success") {
-							approveDialogOpen = false;
-						}
+					return async ({ update }) => {
+						await update({ reset: false });
 					};
 				}} class="flex w-full justify-end gap-3">
 					<input type="hidden" name="id" value={selectedUser?.id} />
@@ -566,10 +727,8 @@
 			description="Êtes-vous sûr de vouloir approuver '{selectedUser?.email}' ?"
 		>
 			<form method="POST" action="?/approveUser" use:enhance={() => {
-				return async ({ result }) => {
-					if (result.type === "success") {
-						approveDialogOpen = false;
-					}
+				return async ({ update }) => {
+					await update({ reset: false });
 				};
 			}} class="mt-6">
 				<input type="hidden" name="id" value={selectedUser?.id} />
@@ -593,3 +752,157 @@
 	{/if}
 {/if}
 
+<!-- Verify Partner Dialog/Drawer -->
+{#if selectedPartner}
+	{@const partnerUser = getUserForPartner(selectedPartner)}
+	{#if isMobile}
+		<Drawer bind:isOpen={verifyPartnerDialogOpen}>
+			<div class="sticky top-0 bg-background pb-4 border-b border-border-card -mx-4 px-4 -mt-4 pt-4 z-10">
+				<div class="flex items-center justify-between mb-2">
+					<h2 class="text-xl font-semibold tracking-tight">
+						Vérifier le Partenaire
+					</h2>
+					<button
+						type="button"
+						onclick={() => (verifyPartnerDialogOpen = false)}
+						class="p-2 hover:bg-muted rounded-md transition-colors"
+					>
+						<X class="text-foreground size-5" />
+					</button>
+				</div>
+				<p class="text-muted-foreground text-sm">
+					Êtes-vous sûr de vouloir vérifier le partenaire "{partnerUser?.email ?? selectedPartner.id}" ?
+					Cela activera son compte et lui attribuera le rôle partenaire.
+				</p>
+			</div>
+
+			<div class="pt-4">
+				<form method="POST" action="?/verifyPartner" use:enhance={() => {
+					return async ({ update }) => {
+						await update({ reset: false });
+					};
+				}} class="flex w-full justify-end gap-3">
+					<input type="hidden" name="id" value={selectedPartner.id} />
+					<button
+						type="button"
+						onclick={() => (verifyPartnerDialogOpen = false)}
+						class="px-4 py-2 border border-border-input text-foreground-alt rounded-lg hover:bg-muted transition-colors font-medium text-sm"
+					>
+						Annuler
+					</button>
+					<button
+						type="submit"
+						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+					>
+						Vérifier
+					</button>
+				</form>
+			</div>
+		</Drawer>
+	{:else}
+		<Modal
+			bind:isOpen={verifyPartnerDialogOpen}
+			title="Vérifier le Partenaire"
+			description="Êtes-vous sûr de vouloir vérifier le partenaire '{partnerUser?.email ?? selectedPartner.id}' ? Cela activera son compte et lui attribuera le rôle partenaire."
+		>
+			<form method="POST" action="?/verifyPartner" use:enhance={() => {
+				return async ({ update }) => {
+					await update({ reset: false });
+				};
+			}} class="mt-6">
+				<input type="hidden" name="id" value={selectedPartner.id} />
+				<div class="flex w-full justify-end gap-3">
+					<button
+						type="button"
+						onclick={() => (verifyPartnerDialogOpen = false)}
+						class="px-6 py-2.5 border border-border-input text-foreground-alt rounded-lg hover:bg-muted transition-colors font-medium"
+					>
+						Annuler
+					</button>
+					<button
+						type="submit"
+						class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+					>
+						Vérifier
+					</button>
+				</div>
+			</form>
+		</Modal>
+	{/if}
+
+	<!-- Delete Partner Dialog/Drawer -->
+	{#if isMobile}
+		<Drawer bind:isOpen={deletePartnerDialogOpen}>
+			<div class="sticky top-0 bg-background pb-4 border-b border-border-card -mx-4 px-4 -mt-4 pt-4 z-10">
+				<div class="flex items-center justify-between mb-2">
+					<h2 class="text-xl font-semibold tracking-tight">
+						Supprimer le Partenaire
+					</h2>
+					<button
+						type="button"
+						onclick={() => (deletePartnerDialogOpen = false)}
+						class="p-2 hover:bg-muted rounded-md transition-colors"
+					>
+						<X class="text-foreground size-5" />
+					</button>
+				</div>
+				<p class="text-muted-foreground text-sm">
+					Êtes-vous sûr de vouloir supprimer le partenaire "{partnerUser?.email ?? selectedPartner.id}" ?
+					Cette action ne peut pas être annulée.
+				</p>
+			</div>
+
+			<div class="pt-4">
+				<form method="POST" action="?/deletePartner" use:enhance={() => {
+					return async ({ update }) => {
+						await update({ reset: false });
+					};
+				}} class="flex w-full justify-end gap-3">
+					<input type="hidden" name="id" value={selectedPartner.id} />
+					<button
+						type="button"
+						onclick={() => (deletePartnerDialogOpen = false)}
+						class="px-4 py-2 border border-border-input text-foreground-alt rounded-lg hover:bg-muted transition-colors font-medium text-sm"
+					>
+						Annuler
+					</button>
+					<button
+						type="submit"
+						class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+					>
+						Supprimer
+					</button>
+				</form>
+			</div>
+		</Drawer>
+	{:else}
+		<Modal
+			bind:isOpen={deletePartnerDialogOpen}
+			title="Supprimer le Partenaire"
+			description="Êtes-vous sûr de vouloir supprimer le partenaire '{partnerUser?.email ?? selectedPartner.id}' ? Cette action ne peut pas être annulée."
+		>
+			<form method="POST" action="?/deletePartner" use:enhance={() => {
+				return async ({ update }) => {
+					await update({ reset: false });
+				};
+			}} class="mt-6">
+				<input type="hidden" name="id" value={selectedPartner.id} />
+				<div class="flex w-full justify-end gap-3">
+					<button
+						type="button"
+						onclick={() => (deletePartnerDialogOpen = false)}
+						class="px-6 py-2.5 border border-border-input text-foreground-alt rounded-lg hover:bg-muted transition-colors font-medium"
+					>
+						Annuler
+					</button>
+					<button
+						type="submit"
+						class="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+					>
+						Supprimer
+					</button>
+				</div>
+			</form>
+		</Modal>
+	{/if}
+{/if}

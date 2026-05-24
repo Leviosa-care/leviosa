@@ -693,6 +693,34 @@ export const mockSettings = {
     }
 };
 
+// ==================== PARTNERS (API shape) ====================
+export const mockPartners = [
+    {
+        id: "p-001",
+        user_id: "660e8400-e29b-41d4-a716-446655440001",
+        bio: "Thérapeute certifiée en massage profond et drainage lymphatique avec plus de 10 ans d'expérience.",
+        experience: "Diplômée de l'École Française de Massage. Spécialisée dans les techniques sportives et la récupération.",
+        category_ids: ["cat-1"],
+        product_ids: ["prod-1", "prod-2", "prod-3"],
+        stripe_account_status: "active",
+        stripe_onboarding_complete: true,
+        created_at: "2025-01-20T08:15:00Z",
+        updated_at: "2025-06-01T14:30:00Z",
+    },
+    {
+        id: "p-002",
+        user_id: "aa0e8400-e29b-41d4-a716-446655440005",
+        bio: "Coach mental et praticienne en développement personnel. Accompagne les hauts potentiels vers l'excellence.",
+        experience: "Master en psychologie du sport. Certification en PNL et coaching systémique.",
+        category_ids: ["cat-2", "cat-3"],
+        product_ids: ["prod-4", "prod-5"],
+        stripe_account_status: "pending",
+        stripe_onboarding_complete: false,
+        created_at: "2025-01-05T14:45:00Z",
+        updated_at: "2025-05-15T09:00:00Z",
+    },
+];
+
 // ==================== ADMIN CATALOG TYPES & DATA ====================
 export type Category = {
     id: string;
