@@ -28,6 +28,9 @@ import (
 	productHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/product"
 	promotionCodeHandler "github.com/Leviosa-care/leviosa/backend/internal/catalog/interface/promotion_code"
 
+	// Messaging HTTP handlers
+	messagingHandler "github.com/Leviosa-care/leviosa/backend/internal/messaging/interface"
+
 	// Common
 	"github.com/Leviosa-care/leviosa/backend/internal/common/envmode"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
@@ -106,6 +109,9 @@ func (s *Server) setupRoutes(mux *http.ServeMux) {
 
 	// Booking routes
 	s.setupBookingRoutes(mux)
+
+	// Messaging routes
+	s.setupMessagingRoutes(mux)
 }
 
 func (s *Server) setupAuthuserRoutes(router *http.ServeMux) {
@@ -220,6 +226,14 @@ func (s *Server) setupBookingRoutes(router *http.ServeMux) {
 		s.container.AuthMw,
 	)
 	metricsH.RegisterRoutes(router)
+}
+
+func (s *Server) setupMessagingRoutes(router *http.ServeMux) {
+	messagingH := messagingHandler.New(
+		s.container.MessagingService,
+		s.container.AuthMw,
+	)
+	messagingH.RegisterRoutes(router)
 }
 
 func (s *Server) applyMiddleware(handler http.Handler) http.Handler {

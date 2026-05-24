@@ -43,6 +43,13 @@ import (
 	pricePayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/price"
 	productPayment "github.com/Leviosa-care/leviosa/backend/internal/catalog/infrastructure/stripe/product"
 
+	// Messaging
+	messagingSvc         "github.com/Leviosa-care/leviosa/backend/internal/messaging/application"
+	messagingBooking     "github.com/Leviosa-care/leviosa/backend/internal/messaging/infrastructure/booking"
+	messagingAuthuser    "github.com/Leviosa-care/leviosa/backend/internal/messaging/infrastructure/authuser"
+	messagingRepo        "github.com/Leviosa-care/leviosa/backend/internal/messaging/infrastructure/postgres"
+	messagingPorts       "github.com/Leviosa-care/leviosa/backend/internal/messaging/ports"
+
 	// Booking
 	allocationSvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/allocation"
 	availabilitySvc "github.com/Leviosa-care/leviosa/backend/internal/booking/application/availability"
@@ -152,6 +159,12 @@ type Container struct {
 	BookingService      bookingPorts.BookingService
 	MetricsService      bookingPorts.MetricsService
 	PaymentService      bookingPorts.PaymentService
+
+	// Messaging Repositories
+	MessageRepo messagingPorts.MessageRepository
+
+	// Messaging Services
+	MessagingService messagingPorts.MessagingService
 }
 
 // NewContainer creates and wires all dependencies
@@ -323,6 +336,9 @@ func (c *Container) setupRepositories(ctx context.Context) error {
 	c.MetricsRepo = metricsRepo.New(c.DB)
 	c.RoomScheduleRepo = roomScheduleRepo.NewRoomScheduleRepository(c.DB)
 
+	// Messaging repositories
+	c.MessageRepo = messagingRepo.New(ctx, c.DB)
+
 	return nil
 }
 
@@ -418,6 +434,11 @@ func (c *Container) setupServices(ctx context.Context) error {
 	)
 
 	c.PaymentService = bookingStripe
+
+	// Messaging services
+	bookChecker := messagingBooking.New(c.BookingService)
+	nameFetcher := messagingAuthuser.New(c.UserService)
+	c.MessagingService = messagingSvc.New(c.MessageRepo, c.Crypto, bookChecker, nameFetcher)
 
 	return nil
 }
