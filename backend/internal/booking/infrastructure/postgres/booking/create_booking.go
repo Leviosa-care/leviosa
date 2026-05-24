@@ -16,10 +16,14 @@ func (r *Repository) Create(ctx context.Context, bookingEncx *domain.BookingEncx
 			client_notes_encrypted, partner_notes_encrypted,
 			total_price_cents, currency, payment_status, payment_intent_id,
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
+			guest_first_name_encrypted, guest_last_name_encrypted,
+			guest_email_encrypted, guest_phone_encrypted,
 			created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
+			$19, $20, $21, $22,
+			$23, $24, $25, $26, $27
 		)
 	`, r.schema)
 
@@ -42,6 +46,10 @@ func (r *Repository) Create(ctx context.Context, bookingEncx *domain.BookingEncx
 		bookingEncx.CancelledAt,
 		bookingEncx.CancellationReasonEncrypted,
 		bookingEncx.CompletedAt,
+		bookingEncx.GuestFirstNameEncrypted,
+		bookingEncx.GuestLastNameEncrypted,
+		bookingEncx.GuestEmailEncrypted,
+		bookingEncx.GuestPhoneEncrypted,
 		bookingEncx.CreatedAt,
 		bookingEncx.UpdatedAt,
 		bookingEncx.DEKEncrypted,

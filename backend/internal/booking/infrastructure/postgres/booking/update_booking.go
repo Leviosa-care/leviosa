@@ -28,10 +28,14 @@ func (r *Repository) Update(ctx context.Context, booking *domain.BookingEncx) er
 			cancelled_at = $16,
 			cancellation_reason_encrypted = $17,
 			completed_at = $18,
-			updated_at = $19,
-			dek_encrypted = $20,
-			key_version = $21,
-			metadata = $22
+			guest_first_name_encrypted = $19,
+			guest_last_name_encrypted = $20,
+			guest_email_encrypted = $21,
+			guest_phone_encrypted = $22,
+			updated_at = $23,
+			dek_encrypted = $24,
+			key_version = $25,
+			metadata = $26
 		WHERE id = $1
 	`, r.schema)
 
@@ -54,6 +58,10 @@ func (r *Repository) Update(ctx context.Context, booking *domain.BookingEncx) er
 		booking.CancelledAt,
 		booking.CancellationReasonEncrypted,
 		booking.CompletedAt,
+		booking.GuestFirstNameEncrypted,
+		booking.GuestLastNameEncrypted,
+		booking.GuestEmailEncrypted,
+		booking.GuestPhoneEncrypted,
 		booking.UpdatedAt,
 		booking.DEKEncrypted,
 		booking.KeyVersion,
