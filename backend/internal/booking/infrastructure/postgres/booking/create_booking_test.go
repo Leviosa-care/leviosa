@@ -80,7 +80,7 @@ func TestCreateBooking(t *testing.T) {
 		bookingEncx := tb.NewTestBookingEncxWithPaymentIntent(
 			t,
 			tb.NewTestBookingEncx(t).AvailabilityID,
-			tb.NewTestBookingEncx(t).ClientID,
+			*tb.NewTestBookingEncx(t).ClientID,
 			tb.NewTestBookingEncx(t).PartnerID,
 			tb.NewTestBookingEncx(t).RoomID,
 			paymentIntentID,
@@ -103,7 +103,7 @@ func TestCreateBooking(t *testing.T) {
 		bookingEncx := tb.NewTestBookingEncxWithNotes(
 			t,
 			tb.NewTestBookingEncx(t).AvailabilityID,
-			tb.NewTestBookingEncx(t).ClientID,
+			*tb.NewTestBookingEncx(t).ClientID,
 			tb.NewTestBookingEncx(t).PartnerID,
 			tb.NewTestBookingEncx(t).RoomID,
 			"client note content",
@@ -121,6 +121,24 @@ func TestCreateBooking(t *testing.T) {
 		assert.NotEmpty(t, saved.PartnerNotesEncrypted)
 	})
 
+	t.Run("should create a guest booking with nil client_id", func(t *testing.T) {
+		tb.ClearBookingsTable(t, ctx, testPool)
+
+		guestBooking := tb.NewGuestBookingEncx(t, "Alice", "Martin", "alice@example.com", "+33612345678")
+		tb.EnsureBookingForeignKeys(t, ctx, testPool, guestBooking)
+
+		err := repo.Create(ctx, guestBooking)
+		require.NoError(t, err)
+
+		saved, err := tb.GetBookingEncxByID(t, ctx, testPool, guestBooking.ID)
+		require.NoError(t, err)
+		assert.Nil(t, saved.ClientID, "guest booking should have nil client_id")
+		assert.NotEmpty(t, saved.GuestFirstNameEncrypted)
+		assert.NotEmpty(t, saved.GuestLastNameEncrypted)
+		assert.NotEmpty(t, saved.GuestEmailEncrypted)
+		assert.NotEmpty(t, saved.GuestPhoneEncrypted)
+	})
+
 	t.Run("should create bookings with different statuses", func(t *testing.T) {
 		tb.ClearBookingsTable(t, ctx, testPool)
 
@@ -128,7 +146,7 @@ func TestCreateBooking(t *testing.T) {
 		completedBooking := tb.NewCompletedBookingEncx(
 			t,
 			tb.NewTestBookingEncx(t).AvailabilityID,
-			tb.NewTestBookingEncx(t).ClientID,
+			*tb.NewTestBookingEncx(t).ClientID,
 			tb.NewTestBookingEncx(t).PartnerID,
 			tb.NewTestBookingEncx(t).RoomID,
 		)
@@ -140,7 +158,7 @@ func TestCreateBooking(t *testing.T) {
 		cancelledBooking := tb.NewCancelledBookingEncx(
 			t,
 			tb.NewTestBookingEncx(t).AvailabilityID,
-			tb.NewTestBookingEncx(t).ClientID,
+			*tb.NewTestBookingEncx(t).ClientID,
 			tb.NewTestBookingEncx(t).PartnerID,
 			tb.NewTestBookingEncx(t).RoomID,
 			"client requested",

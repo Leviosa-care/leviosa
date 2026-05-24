@@ -100,7 +100,7 @@ func TestCreateBooking(t *testing.T) {
 		// Assert booking details
 		assert.NotEqual(t, uuid.Nil, booking.ID)
 		assert.Equal(t, availability.ID, booking.AvailabilityID)
-		assert.Equal(t, clientID, booking.ClientID)
+		assert.Equal(t, &clientID, booking.ClientID)
 		assert.Equal(t, partnerID, booking.PartnerID)
 		assert.Equal(t, room.ID, booking.RoomID)
 		assert.Equal(t, productID, booking.ProductID)

@@ -114,7 +114,7 @@ func TestGetClientBookings(t *testing.T) {
 
 		// Verify all bookings belong to the client
 		for _, booking := range bookings {
-			assert.Equal(t, clientID, booking.ClientID)
+			assert.Equal(t, &clientID, booking.ClientID)
 		}
 	})
 

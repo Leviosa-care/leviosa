@@ -45,7 +45,7 @@ func TestGetByClientID(t *testing.T) {
 
 		// Verify all bookings belong to the client
 		for _, b := range bookings {
-			assert.Equal(t, clientID, b.ClientID)
+			assert.Equal(t, &clientID, b.ClientID)
 		}
 	})
 
@@ -171,5 +171,24 @@ func TestGetByClientID(t *testing.T) {
 		assert.Len(t, bookings, 2)
 		assert.Equal(t, 1000, bookings[0].TotalPriceCents)
 		assert.Equal(t, 5000, bookings[1].TotalPriceCents)
+	})
+
+	t.Run("should not return guest bookings when listing by client id", func(t *testing.T) {
+		tb.ClearBookingsTable(t, ctx, testPool)
+
+		clientID := uuid.New()
+
+		clientBooking := tb.NewTestBookingEncxWithIDs(t, uuid.New(), clientID, uuid.New(), uuid.New())
+		guestBooking := tb.NewGuestBookingEncx(t, "Bob", "Dupont", "bob@example.com", "+33698765432")
+
+		err := tb.InsertBookingEncx(t, ctx, testPool, clientBooking)
+		require.NoError(t, err)
+		err = tb.InsertBookingEncx(t, ctx, testPool, guestBooking)
+		require.NoError(t, err)
+
+		bookings, err := repo.GetByClientID(ctx, clientID, ports.BookingFilter{})
+		require.NoError(t, err)
+		assert.Len(t, bookings, 1, "guest bookings must not appear in client booking list")
+		assert.Equal(t, &clientID, bookings[0].ClientID)
 	})
 }

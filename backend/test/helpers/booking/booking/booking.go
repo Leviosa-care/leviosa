@@ -9,6 +9,11 @@ import (
 	"github.com/hengadev/encx"
 )
 
+// ptrUUID returns a pointer to the given uuid.UUID.
+func ptrUUID(id uuid.UUID) *uuid.UUID {
+	return &id
+}
+
 // NewTestBookingEncx creates a basic encrypted booking with random UUIDs
 func NewTestBookingEncx(t *testing.T) *domain.BookingEncx {
 	t.Helper()
@@ -18,7 +23,7 @@ func NewTestBookingEncx(t *testing.T) *domain.BookingEncx {
 	return &domain.BookingEncx{
 		ID:             uuid.New(),
 		AvailabilityID: uuid.New(),
-		ClientID:       uuid.New(),
+		ClientID:       ptrUUID(uuid.New()),
 		PartnerID:      uuid.New(),
 		RoomID:         uuid.New(),
 
@@ -66,7 +71,7 @@ func NewTestBookingEncxWithIDs(
 	t.Helper()
 	bookingEncx := NewTestBookingEncx(t)
 	bookingEncx.AvailabilityID = availabilityID
-	bookingEncx.ClientID = clientID
+	bookingEncx.ClientID = &clientID
 	bookingEncx.PartnerID = partnerID
 	bookingEncx.RoomID = roomID
 	return bookingEncx
@@ -217,6 +222,21 @@ func NewNoShowBookingEncx(
 		domain.BookingStatusNoShow,
 		domain.PaymentStatusPaid,
 	)
+}
+
+// NewGuestBookingEncx creates an encrypted booking for a guest (no client_id)
+func NewGuestBookingEncx(
+	t *testing.T,
+	firstName, lastName, email, phone string,
+) *domain.BookingEncx {
+	t.Helper()
+	bookingEncx := NewTestBookingEncx(t)
+	bookingEncx.ClientID = nil
+	bookingEncx.GuestFirstNameEncrypted = []byte("encrypted_" + firstName)
+	bookingEncx.GuestLastNameEncrypted = []byte("encrypted_" + lastName)
+	bookingEncx.GuestEmailEncrypted = []byte("encrypted_" + email)
+	bookingEncx.GuestPhoneEncrypted = []byte("encrypted_" + phone)
+	return bookingEncx
 }
 
 // NewTestBookingEncxWithPrice creates an encrypted booking with specific price

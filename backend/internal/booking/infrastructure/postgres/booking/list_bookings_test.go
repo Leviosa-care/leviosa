@@ -149,7 +149,7 @@ func TestListBookings(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, bookings, 2)
 		for _, b := range bookings {
-			assert.Equal(t, clientID, b.ClientID)
+			assert.Equal(t, &clientID, b.ClientID)
 		}
 	})
 
