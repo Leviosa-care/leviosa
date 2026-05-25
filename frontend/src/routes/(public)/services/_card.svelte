@@ -2,9 +2,14 @@
     import { ChevronDown, Clock } from "@lucide/svelte";
     import Button from "$lib/ui/Button.svelte";
 
-    import { type Product } from "./types";
-
-    let { title, description, duration, price, tags }: Product = $props();
+    let { id, title, description, duration, price, tags }: {
+        id: string;
+        title: string;
+        description: string;
+        duration: number;
+        price: string;
+        tags: string[];
+    } = $props();
 </script>
 
 <div
@@ -18,7 +23,7 @@
             class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
         >
             <h4 class="text-dark-900 font-bold text-xl md:text-2xl">{title}</h4>
-            <p class="text-dark-900 font-bold text-xl md:text-2xl">{price}€</p>
+            {#if price}<p class="text-dark-900 font-bold text-xl md:text-2xl">{price}€</p>{/if}
         </div>
         <p class="max-w-2xl text-dark-700">{description}</p>
         <div class="flex flex-wrap gap-2">
@@ -30,9 +35,11 @@
         <div
             class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center"
         >
-            <Button class="text-white px-8 py-4 md:px-12 md:py-6 rounded-2xl"
-                >Réserver</Button
-            >
+            <a href="/book?product={id}">
+                <Button class="text-white px-8 py-4 md:px-12 md:py-6 rounded-2xl cursor-pointer"
+                    >Réserver</Button
+                >
+            </a>
             <Button
                 class="bg-transparent hover:bg-dark-50/30 px-8 py-4 md:px-4 md:py-2"
             >
