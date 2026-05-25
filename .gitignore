@@ -21,3 +21,7 @@ frontend/.env
 IMPLEMENTATION_CHECKLIST.md
 
 docs/issues/
+
+node_modules/
+.sandcastle/logs/
+.sandcastle/worktrees/
