@@ -6,10 +6,8 @@
 		CalendarDays,
 		NotebookPen,
 		Mail,
-		Ticket,
 		Package,
 		ChartSpline,
-		Server,
 		HandCoins,
 		Building2,
 		ExternalLink,
@@ -87,14 +85,14 @@
 			icon: Mail,
 		},
 		{
-			href: "/admin/bookings/events",
-			label: "Evenements",
-			icon: Ticket,
-		},
-		{
 			href: "/admin/catalog",
 			label: "Catalogue",
 			icon: Package,
+		},
+		{
+			href: "/admin/buildings",
+			label: "Bâtiments",
+			icon: Building2,
 		},
 		{
 			href: "/admin/analytics",
@@ -102,19 +100,9 @@
 			icon: ChartSpline,
 		},
 		{
-			href: "/admin/infra",
-			label: "Infrastructure",
-			icon: Server,
-		},
-		{
 			href: "/admin/compta",
-			label: "Comptabilite",
+			label: "Comptabilité",
 			icon: HandCoins,
-		},
-		{
-			href: "/admin/buildings",
-			label: "Batiments",
-			icon: Building2,
 		},
 	];
 

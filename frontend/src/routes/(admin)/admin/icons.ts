@@ -1,4 +1,4 @@
-import { Home, Mail, Package, ChartSpline, CalendarDays, NotebookPen, Ticket, Users, Server, HandCoins } from "@lucide/svelte";
+import { Home, Mail, Package, ChartSpline, CalendarDays, NotebookPen, Users, HandCoins, Building2 } from "@lucide/svelte";
 
 export type Icon = {
     icon: typeof import("@lucide/svelte").Icon;
@@ -38,24 +38,19 @@ export const icons: Record<IconType, Icon[]> = {
                 link: "/admin/messages",
             },
             {
-                icon: Ticket,
-                name: "Evenements",
-                link: "/admin/bookings/events",
-            },
-            {
                 icon: Package,
                 name: "Catalogue",
-                link: "/admin/products",
+                link: "/admin/catalog",
+            },
+            {
+                icon: Building2,
+                name: "Bâtiments",
+                link: "/admin/buildings",
             },
             {
                 icon: ChartSpline,
                 name: "Analytics",
                 link: "/admin/analytics",
-            },
-            {
-                icon: Server,
-                name: "Infrastructure",
-                link: "/admin/infra",
             },
             {
                 icon: HandCoins,
