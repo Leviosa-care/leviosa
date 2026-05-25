@@ -16,7 +16,10 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /availabilities", RequirePartner(mw.EnableCORS(h.CreateAvailability)))
 	router.HandleFunc("POST /availabilities/recurring", RequirePartner(mw.EnableCORS(h.CreateRecurringAvailability)))
 	router.HandleFunc("GET /availabilities/{id}", RequireStandard(mw.EnableCORS(h.GetAvailability)))
-	router.HandleFunc("GET /partners/{partnerId}/availabilities", RequireStandard(mw.EnableCORS(h.GetPartnerAvailabilities)))
+
+	// Public endpoint for booking flow — partner availabilities visible to guests
+	router.HandleFunc("GET /partners/{partnerId}/availabilities", mw.EnableCORS(h.GetPartnerAvailabilities))
+
 	router.HandleFunc("GET /availabilities", RequireStandard(mw.EnableCORS(h.GetAvailableSlots)))
 	router.HandleFunc("POST /availabilities/{id}/cancel", RequirePartner(mw.EnableCORS(h.CancelAvailability)))
 	router.HandleFunc("POST /availabilities/{id}/block", RequireAdmin(mw.EnableCORS(h.BlockAvailability)))

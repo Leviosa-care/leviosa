@@ -83,7 +83,7 @@ func (h *handler) GetPartnerAvailabilities(w http.ResponseWriter, r *http.Reques
 			StartTime:   availability.StartTime,
 			EndTime:     availability.EndTime,
 			MaxCapacity: availability.MaxCapacity,
-			// CurrentBookings:   availability.CurrentBookings,
+			// CurrentBookings not available on domain.Availability — requires join query
 			Status:            availability.Status,
 			ServiceType:       availability.ServiceType,
 			PriceCents:        availability.PriceCents,
