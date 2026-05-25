@@ -9,6 +9,11 @@ import (
 func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	RequireAdmin := h.authmw.RequireAdmin
 
+	// === Public Endpoints ===
+
+	// Get all active prices for a product (public access)
+	router.HandleFunc("GET "+GetPublicProductPricesEndpoint, mw.EnableCORS(h.GetPublicProductPrices))
+
 	// === Admin-Only Endpoints ===
 	// (All price management endpoints are admin-only)
 

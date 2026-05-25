@@ -12,6 +12,7 @@ type Handler interface {
 	CreatePrice(w http.ResponseWriter, r *http.Request)
 	GetPrice(w http.ResponseWriter, r *http.Request)
 	GetPricesByProductID(w http.ResponseWriter, r *http.Request)
+	GetPublicProductPrices(w http.ResponseWriter, r *http.Request)
 	UpdatePrice(w http.ResponseWriter, r *http.Request)
 }
 

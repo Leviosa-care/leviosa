@@ -2,6 +2,7 @@ package priceHandler
 
 const (
 	// Base paths
+	ProductsBasePath       = "/products"
 	AdminPricesBasePath   = "/admin/prices"
 	AdminProductsBasePath = "/admin/products"
 
@@ -9,8 +10,13 @@ const (
 	IDPath     = "/{id}"
 	PricesPath = "/prices"
 
+	// === Public Endpoints ===
+
+	// Get all active prices for a product (public access)
+	GetPublicProductPricesEndpoint = ProductsBasePath + IDPath + PricesPath
+
 	// === Admin-Only Endpoints ===
-	// (All price endpoints are admin-only)
+	// (All price management endpoints are admin-only)
 
 	// Get price by ID (admin only)
 	GetPriceEndpoint = AdminPricesBasePath + IDPath
