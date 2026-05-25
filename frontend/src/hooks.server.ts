@@ -44,7 +44,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     // Routes that require authentication - all others are public
     const requiresAuth = (pathname: string) => {
-        const protectedPrefixes = ['/staff', '/admin'];
+        const protectedPrefixes = ['/staff', '/admin', '/client'];
         return protectedPrefixes.some(prefix => pathname.startsWith(prefix));
     };
 
