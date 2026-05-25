@@ -1,0 +1,11 @@
+{
+  "type": "module",
+  "scripts": {
+    "issue": "tsx .sandcastle/run-issue.ts",
+    "review": "tsx .sandcastle/review-issue.ts"
+  },
+  "devDependencies": {
+    "@ai-hero/sandcastle": "^0.5.10",
+    "tsx": "^4.19.2"
+  }
+}
