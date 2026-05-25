@@ -99,7 +99,7 @@
 
     <!-- Desktop Actions (hidden below 1280px) -->
     <div class="hidden xl:flex xl:gap-4 xl:items-center xl:justify-end">
-        <Button class="text-white">Réserver maintenant</Button>
+        <a href="/book"><Button class="text-white">Réserver maintenant</Button></a>
         <Button class="bg-white border border-dark-900 hover:bg-dark-50">
             <a href={secondaryButtonLink}>
                 {secondaryButtonText}
@@ -148,10 +148,9 @@
 
         <!-- Action buttons (full width, stacked) -->
         <div class="flex flex-col gap-3">
-            <Button
+            <a href="/book"><Button
                 class="w-full inline-flex justify-center items-center px-8 py-3.5 bg-dark-900 hover:bg-dark-800 text-background text-sm sm:text-base font-medium transition-all duration-200 shadow-sm hover:shadow-md ring-offset-2 focus:ring-2 focus:ring-dark-900"
-                >Réserver maintenant</Button
-            >
+                >Réserver maintenant</Button></a>
             <Button
                 class="w-full bg-background border border-dark-900 hover:bg-dark-50 px-8 py-3.5 rounded-xl"
             >
