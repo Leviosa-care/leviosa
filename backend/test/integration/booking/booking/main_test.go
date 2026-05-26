@@ -57,6 +57,7 @@ var (
 	testServerURL    string
 	testServer       *http.Server
 	authSessionRepo  authsession.SessionRepository
+	notificationSpy  *SpyNotificationService
 )
 
 func TestMain(m *testing.M) {
@@ -200,7 +201,8 @@ func TestMain(m *testing.M) {
 	catalogPriceRepo := pricePostgres.New(ctx, testPool)
 	catalogPriceService := priceService.New(catalogPriceRepo, sharedRepo, priceStripe)
 
-	service = bookingService.New(bookingRepo, availabilityRepo, paymentService, catalogProductService, catalogPriceService, nil, crypto)
+	notificationSpy = NewSpyNotificationService()
+	service = bookingService.New(bookingRepo, availabilityRepo, paymentService, catalogProductService, catalogPriceService, notificationSpy, crypto)
 
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
