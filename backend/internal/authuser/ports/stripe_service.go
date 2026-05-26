@@ -14,5 +14,9 @@ type StripeService interface {
 	UpdateCustomer(ctx context.Context, customerID string, params *stripe.CustomerUpdateParams) (*stripe.Customer, error)
 	DeleteCustomer(ctx context.Context, customerID string) (*stripe.Customer, error)
 	FindCustomerByUserID(ctx context.Context, userID uuid.UUID) (*stripe.Customer, error)
+
+	// CreateConnectedAccount creates a Stripe Connect Express account for a partner.
+	// Returns the Stripe account ID on success.
+	CreateConnectedAccount(ctx context.Context, userID uuid.UUID) (string, error)
 }
 
