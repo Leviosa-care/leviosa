@@ -12,10 +12,6 @@
 	let threads = $state<ThreadSummary[]>([...data.threads]);
 	let pollingMessages = $state<ThreadMessage[]>([...data.activeMessages]);
 
-	const activeThread = $derived(threads.find((t) => t.thread_id === activeThreadId) ?? null);
-
-	const totalUnread = $derived(threads.reduce((s, c) => s + c.unread_count, 0));
-
 	// Bookings are already filtered server-side for the active participant.
 	const upcomingBookings = $derived(
 		data.bookingContext.filter(
@@ -25,34 +21,56 @@
 		)
 	);
 
-	async function refreshData() {
+	async function refreshThreads() {
 		try {
-			const [threadsRes, msgsRes] = await Promise.all([
-				fetch('/api/threads'),
-				activeThreadId
-					? fetch(`/api/threads/${activeThreadId}/messages?limit=100`)
-					: Promise.resolve(null)
-			]);
+			const threadsRes = await fetch('/api/threads');
 			if (threadsRes.ok) threads = await threadsRes.json();
-			if (msgsRes?.ok) {
-				const d = await msgsRes.json();
-				pollingMessages = d.messages ?? [];
-			}
 		} catch {
 			// non-critical polling failure
 		}
 	}
 
+	// SSE: open EventSource when a thread is selected, close on deselect or change.
+	// Using a plain local variable (not $state) avoids a reactive loop where
+	// writing eventSource inside the effect would trigger an immediate re-run.
+	$effect(() => {
+		if (!browser || !activeThreadId) return;
+
+		const es = new EventSource(`/api/threads/${activeThreadId}/events`);
+		es.onmessage = (e) => {
+			try {
+				const msg: ThreadMessage = JSON.parse(e.data);
+				if (!pollingMessages.some((m) => m.id === msg.id)) {
+					pollingMessages = [...pollingMessages, msg];
+				}
+			} catch {
+				// Ignore malformed events.
+			}
+		};
+		es.onerror = () => {
+			// Browser's built-in retry handles reconnection.
+		};
+
+		return () => es.close();
+	});
+
+	// Periodic refresh for thread list only (unread counts, last messages).
 	$effect(() => {
 		if (!browser) return;
-		const interval = setInterval(refreshData, 10_000);
-		const onVisible = () => { if (!document.hidden) refreshData(); };
+		const interval = setInterval(refreshThreads, 10_000);
+		const onVisible = () => {
+			if (!document.hidden) refreshThreads();
+		};
 		document.addEventListener('visibilitychange', onVisible);
 		return () => {
 			clearInterval(interval);
 			document.removeEventListener('visibilitychange', onVisible);
 		};
 	});
+
+	const activeThread = $derived(threads.find((t) => t.thread_id === activeThreadId) ?? null);
+
+	const totalUnread = $derived(threads.reduce((s, c) => s + c.unread_count, 0));
 
 	function formatRelative(iso: string): string {
 		const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -126,9 +144,29 @@
 	function selectThread(threadId: string) {
 		activeThreadId = threadId;
 		pollingMessages = [];
+
+		// Fetch initial messages for the new thread. Merge with any SSE messages
+		// that arrived during the fetch rather than replacing outright.
+		fetch(`/api/threads/${threadId}/messages?limit=100`)
+			.then((res) => (res.ok ? res.json() : null))
+			.then((d) => {
+				if (d) {
+					const fetched: ThreadMessage[] = d.messages ?? [];
+					const sseOnly = pollingMessages.filter(
+						(m) => !fetched.some((f) => f.id === m.id)
+					);
+					pollingMessages = [...fetched, ...sseOnly];
+				}
+			})
+			.catch(() => {});
+
+		// Update URL without full page navigation
 		const url = new URL(window.location.href);
 		url.searchParams.set('thread', threadId);
-		window.location.href = url.toString();
+		window.history.replaceState({}, '', url.toString());
+
+		// Mark thread as read
+		fetch(`/api/threads/${threadId}/read`, { method: 'POST' }).catch(() => {});
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
