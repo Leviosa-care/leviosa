@@ -152,7 +152,7 @@ func (a *BookingNotificationAdapter) enrichData(ctx context.Context, data *booki
 	}
 
 	// Fetch partner details
-	if data.PartnerName == "" {
+	if data.PartnerEmail == "" || data.PartnerName == "" {
 		user, err := a.userFetcher.GetUserByID(ctx, data.PartnerID)
 		if err != nil {
 			slog.WarnContext(ctx, "failed to fetch partner details for notification",
