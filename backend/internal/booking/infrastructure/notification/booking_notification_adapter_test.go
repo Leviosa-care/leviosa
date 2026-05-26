@@ -300,6 +300,173 @@ func TestFirstNameLastName(t *testing.T) {
 	assertEqual(t, "lastName", "", lastName("Alice"))
 }
 
+func TestSendBookingCancellation_SendsToClientAndPartner(t *testing.T) {
+	data := makeBookingData()
+	data.CancellationReason = "Client needs to reschedule"
+	cancelledAt := time.Date(2026, 6, 14, 9, 0, 0, 0, time.UTC)
+	data.CancelledAt = &cancelledAt
+
+	users := map[uuid.UUID]*UserInfo{
+		data.ClientID:  {Email: "client@example.com", FirstName: "Alice", LastName: "Smith"},
+		data.PartnerID: {Email: "partner@example.com", FirstName: "Bob", LastName: "Jones"},
+	}
+	rooms := map[uuid.UUID]*RoomInfo{
+		data.RoomID: {Name: "Room A", BuildingID: uuid.New()},
+	}
+	buildingID := rooms[data.RoomID].BuildingID
+	buildings := map[uuid.UUID]*BuildingInfo{
+		buildingID: {Name: "Main Building", Address: "123 Rue de Paris"},
+	}
+	products := map[string]*catalogDomain.ProductRes{
+		data.ProductID.String(): {Name: "Massage Therapy"},
+	}
+
+	spy := &spyEmailService{}
+	adapter := newTestAdapter(spy, users, rooms, buildings, products)
+
+	err := adapter.sendBookingCancellationEmail(context.Background(), data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(spy.bookingCancellations) != 2 {
+		t.Fatalf("expected 2 cancellation emails (client + partner), got %d", len(spy.bookingCancellations))
+	}
+
+	clientEmail := spy.bookingCancellations[0]
+	assertEqual(t, "client ToEmail", "client@example.com", clientEmail.ToEmail)
+	assertEqual(t, "client ToFirstName", "Alice", clientEmail.ToFirstName)
+	assertEqual(t, "client ToLastName", "Smith", clientEmail.ToLastName)
+	assertEqual(t, "client BookingID", data.BookingID.String(), clientEmail.BookingID)
+	assertEqual(t, "client ProductName", "Massage Therapy", clientEmail.ProductName)
+	assertEqual(t, "client RoomName", "Room A", clientEmail.RoomName)
+	assertEqual(t, "client Date", "Monday, 15 June 2026", clientEmail.Date)
+	assertEqual(t, "client Time", "10:00 – 11:00", clientEmail.Time)
+	assertEqual(t, "client Reason", "Client needs to reschedule", clientEmail.Reason)
+
+	partnerEmail := spy.bookingCancellations[1]
+	assertEqual(t, "partner ToEmail", "partner@example.com", partnerEmail.ToEmail)
+	assertEqual(t, "partner ToFirstName", "Bob", partnerEmail.ToFirstName)
+	assertEqual(t, "partner ToLastName", "Jones", partnerEmail.ToLastName)
+	assertEqual(t, "partner BookingID", data.BookingID.String(), partnerEmail.BookingID)
+	assertEqual(t, "partner ProductName", "Massage Therapy", partnerEmail.ProductName)
+	assertEqual(t, "partner Reason", "Client needs to reschedule", partnerEmail.Reason)
+}
+
+func TestSendBookingCancellation_GuestBooking(t *testing.T) {
+	data := makeBookingData()
+	data.IsGuestBooking = true
+	data.GuestEmail = "guest@example.com"
+	data.ClientEmail = "guest@example.com"
+	data.ClientName = "Jane Doe"
+	data.ClientID = uuid.Nil
+	data.CancellationReason = "Schedule conflict"
+
+	users := map[uuid.UUID]*UserInfo{
+		data.PartnerID: {Email: "partner@example.com", FirstName: "Bob", LastName: "Jones"},
+	}
+
+	spy := &spyEmailService{}
+	adapter := newTestAdapter(spy, users, nil, nil, nil)
+
+	err := adapter.sendBookingCancellationEmail(context.Background(), data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(spy.bookingCancellations) != 2 {
+		t.Fatalf("expected 2 cancellation emails (guest client + partner), got %d", len(spy.bookingCancellations))
+	}
+
+	assertEqual(t, "guest client ToEmail", "guest@example.com", spy.bookingCancellations[0].ToEmail)
+	assertEqual(t, "guest client ToFirstName", "Jane", spy.bookingCancellations[0].ToFirstName)
+	assertEqual(t, "partner ToEmail", "partner@example.com", spy.bookingCancellations[1].ToEmail)
+}
+
+func TestSendBookingCancellation_MissingClientEmail_StillSendsToPartner(t *testing.T) {
+	data := makeBookingData()
+	data.CancellationReason = "No reason"
+
+	users := map[uuid.UUID]*UserInfo{
+		data.PartnerID: {Email: "partner@example.com", FirstName: "Bob", LastName: "Jones"},
+	}
+
+	spy := &spyEmailService{}
+	adapter := newTestAdapter(spy, users, nil, nil, nil)
+
+	err := adapter.sendBookingCancellationEmail(context.Background(), data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Partner should still receive the cancellation email even if client email is missing
+	if len(spy.bookingCancellations) != 1 {
+		t.Fatalf("expected 1 cancellation email (partner only), got %d", len(spy.bookingCancellations))
+	}
+	assertEqual(t, "partner ToEmail", "partner@example.com", spy.bookingCancellations[0].ToEmail)
+}
+
+func TestSendBookingCancellation_MissingPartnerEmail_StillSendsToClient(t *testing.T) {
+	data := makeBookingData()
+	data.CancellationReason = "No reason"
+
+	users := map[uuid.UUID]*UserInfo{
+		data.ClientID: {Email: "client@example.com", FirstName: "Alice", LastName: "Smith"},
+	}
+
+	spy := &spyEmailService{}
+	adapter := newTestAdapter(spy, users, nil, nil, nil)
+
+	err := adapter.sendBookingCancellationEmail(context.Background(), data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Client should still receive the cancellation email even if partner email is missing
+	if len(spy.bookingCancellations) != 1 {
+		t.Fatalf("expected 1 cancellation email (client only), got %d", len(spy.bookingCancellations))
+	}
+	assertEqual(t, "client ToEmail", "client@example.com", spy.bookingCancellations[0].ToEmail)
+}
+
+func TestSendBookingCancellation_BothEmailsMissing_LogsAndReturnsNil(t *testing.T) {
+	data := makeBookingData()
+	data.CancellationReason = "No reason"
+
+	spy := &spyEmailService{}
+	adapter := newTestAdapter(spy, nil, nil, nil, nil)
+
+	err := adapter.sendBookingCancellationEmail(context.Background(), data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(spy.bookingCancellations) != 0 {
+		t.Fatalf("expected 0 cancellation emails, got %d", len(spy.bookingCancellations))
+	}
+}
+
+func TestSendBookingCancellation_FireAndForget(t *testing.T) {
+	data := makeBookingData()
+	data.ClientEmail = "client@example.com"
+	data.PartnerEmail = "partner@example.com"
+	data.ClientName = "Test Client"
+	data.PartnerName = "Test Partner"
+	data.CancellationReason = "Test"
+
+	spy := &spyEmailService{}
+	adapter := newTestAdapter(spy, nil, nil, nil, nil)
+
+	// SendBookingCancellation returns nil immediately (fire-and-forget)
+	err := adapter.SendBookingCancellation(context.Background(), data)
+	if err != nil {
+		t.Fatalf("expected nil error from fire-and-forget, got: %v", err)
+	}
+
+	// Wait for goroutine to execute
+	time.Sleep(100 * time.Millisecond)
+}
+
 func TestSendBookingConfirmation_FireAndForget(t *testing.T) {
 	data := makeBookingData()
 	data.ClientEmail = "client@example.com"
