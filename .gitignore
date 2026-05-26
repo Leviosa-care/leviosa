@@ -21,6 +21,7 @@ frontend/.env
 IMPLEMENTATION_CHECKLIST.md
 
 docs/issues/
+docs/prd/
 
 node_modules/
 .sandcastle/logs/
