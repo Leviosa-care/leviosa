@@ -53,6 +53,53 @@ type PaymentNotificationRequest struct {
 	LogoURL     string `json:"logo_url"`
 }
 
+// Booking Confirmation Email
+type BookingConfirmationRequest struct {
+	ToEmail     string `json:"to_email"`
+	ToFirstName string `json:"to_first_name"`
+	ToLastName  string `json:"to_last_name"`
+	BookingID   string `json:"booking_id"`
+	ProductName string `json:"product_name"`
+	RoomName    string `json:"room_name"`
+	Building    string `json:"building"`
+	Address     string `json:"address"`
+	Date        string `json:"date"`
+	Time        string `json:"time"`
+	PartnerName string `json:"partner_name"`
+	Amount      string `json:"amount"`
+	Year        int    `json:"year"`
+}
+
+// Booking Cancellation Email
+type BookingCancellationRequest struct {
+	ToEmail     string `json:"to_email"`
+	ToFirstName string `json:"to_first_name"`
+	ToLastName  string `json:"to_last_name"`
+	BookingID   string `json:"booking_id"`
+	ProductName string `json:"product_name"`
+	RoomName    string `json:"room_name"`
+	Date        string `json:"date"`
+	Time        string `json:"time"`
+	Reason      string `json:"reason"`
+	Year        int    `json:"year"`
+}
+
+// Booking Reminder Email
+type BookingReminderRequest struct {
+	ToEmail     string `json:"to_email"`
+	ToFirstName string `json:"to_first_name"`
+	ToLastName  string `json:"to_last_name"`
+	BookingID   string `json:"booking_id"`
+	ProductName string `json:"product_name"`
+	RoomName    string `json:"room_name"`
+	Building    string `json:"building"`
+	Address     string `json:"address"`
+	Date        string `json:"date"`
+	Time        string `json:"time"`
+	PartnerName string `json:"partner_name"`
+	Year        int    `json:"year"`
+}
+
 // EmailRequest is the generic email structure used by SMTP client
 type EmailRequest struct {
 	To         string

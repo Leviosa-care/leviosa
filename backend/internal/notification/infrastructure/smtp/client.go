@@ -164,6 +164,146 @@ func (c *SMTPClient) SendPaymentNotificationEmail(ctx context.Context, req domai
 	return c.sendEmail(ctx, emailReq, req.FromEmail)
 }
 
+func (c *SMTPClient) SendPaymentFailedEmail(ctx context.Context, req domain.PaymentNotificationRequest) error {
+	data := struct {
+		FirstName   string
+		LastName    string
+		Amount      string
+		Product     string
+		PaymentDate string
+		CompanyName string
+		Year        int
+		LogoURL     string
+	}{
+		FirstName:   req.ToFirstName,
+		LastName:    req.ToLastName,
+		Amount:      req.Amount,
+		Product:     req.Product,
+		PaymentDate: req.PaymentDate,
+		CompanyName: req.CompanyName,
+		Year:        time.Now().Year(),
+		LogoURL:     req.LogoURL,
+	}
+
+	emailReq := &domain.EmailRequest{
+		To:       req.ToEmail,
+		Subject:  "Payment Failed",
+		Template: "payment_failed",
+		Data:     data,
+	}
+
+	return c.sendEmail(ctx, emailReq, req.FromEmail)
+}
+
+func (c *SMTPClient) SendBookingConfirmationEmail(ctx context.Context, req domain.BookingConfirmationRequest) error {
+	data := struct {
+		FirstName   string
+		LastName    string
+		BookingID   string
+		ProductName string
+		RoomName    string
+		Building    string
+		Address     string
+		Date        string
+		Time        string
+		PartnerName string
+		Amount      string
+		Year        int
+	}{
+		FirstName:   req.ToFirstName,
+		LastName:    req.ToLastName,
+		BookingID:   req.BookingID,
+		ProductName: req.ProductName,
+		RoomName:    req.RoomName,
+		Building:    req.Building,
+		Address:     req.Address,
+		Date:        req.Date,
+		Time:        req.Time,
+		PartnerName: req.PartnerName,
+		Amount:      req.Amount,
+		Year:        req.Year,
+	}
+
+	emailReq := &domain.EmailRequest{
+		To:       req.ToEmail,
+		Subject:  "Booking Confirmation",
+		Template: "booking_confirmation",
+		Data:     data,
+	}
+
+	return c.sendEmail(ctx, emailReq, "") // from email handled by SMTP config
+}
+
+func (c *SMTPClient) SendBookingCancellationEmail(ctx context.Context, req domain.BookingCancellationRequest) error {
+	data := struct {
+		FirstName   string
+		LastName    string
+		BookingID   string
+		ProductName string
+		RoomName    string
+		Date        string
+		Time        string
+		Reason      string
+		Year        int
+	}{
+		FirstName:   req.ToFirstName,
+		LastName:    req.ToLastName,
+		BookingID:   req.BookingID,
+		ProductName: req.ProductName,
+		RoomName:    req.RoomName,
+		Date:        req.Date,
+		Time:        req.Time,
+		Reason:      req.Reason,
+		Year:        req.Year,
+	}
+
+	emailReq := &domain.EmailRequest{
+		To:       req.ToEmail,
+		Subject:  "Booking Cancelled",
+		Template: "booking_cancellation",
+		Data:     data,
+	}
+
+	return c.sendEmail(ctx, emailReq, "")
+}
+
+func (c *SMTPClient) SendBookingReminderEmail(ctx context.Context, req domain.BookingReminderRequest) error {
+	data := struct {
+		FirstName   string
+		LastName    string
+		BookingID   string
+		ProductName string
+		RoomName    string
+		Building    string
+		Address     string
+		Date        string
+		Time        string
+		PartnerName string
+		Year        int
+	}{
+		FirstName:   req.ToFirstName,
+		LastName:    req.ToLastName,
+		BookingID:   req.BookingID,
+		ProductName: req.ProductName,
+		RoomName:    req.RoomName,
+		Building:    req.Building,
+		Address:     req.Address,
+		Date:        req.Date,
+		Time:        req.Time,
+		PartnerName: req.PartnerName,
+		Year:        req.Year,
+	}
+
+	emailReq := &domain.EmailRequest{
+		To:       req.ToEmail,
+		Subject:  "Booking Reminder",
+		Template: "booking_reminder",
+		Data:     data,
+	}
+
+	return c.sendEmail(ctx, emailReq, "")
+}
+
 func (c *SMTPClient) sendEmail(ctx context.Context, request *domain.EmailRequest, fromEmail string) error {
 	if request == nil {
 		return errs.ErrInvalidValue
@@ -175,6 +315,10 @@ func (c *SMTPClient) sendEmail(ctx context.Context, request *domain.EmailRequest
 
 	if request.Subject == "" {
 		return fmt.Errorf("email subject cannot be empty: %w", errs.ErrInvalidValue)
+	}
+
+	if fromEmail == "" {
+		fromEmail = c.config.Username
 	}
 
 	m := gomail.NewMessage()

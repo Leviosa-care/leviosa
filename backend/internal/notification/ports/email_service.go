@@ -13,4 +13,10 @@ type EmailService interface {
 	SendVerifyEmailEmail(ctx context.Context, req domain.VerifyEmailRequest) error
 	SendEventNotificationEmail(ctx context.Context, req domain.EventNotificationRequest) error
 	SendPaymentNotificationEmail(ctx context.Context, req domain.PaymentNotificationRequest) error
+	SendPaymentFailedEmail(ctx context.Context, req domain.PaymentNotificationRequest) error
+
+	// Booking-related email notifications
+	SendBookingConfirmationEmail(ctx context.Context, req domain.BookingConfirmationRequest) error
+	SendBookingCancellationEmail(ctx context.Context, req domain.BookingCancellationRequest) error
+	SendBookingReminderEmail(ctx context.Context, req domain.BookingReminderRequest) error
 }
