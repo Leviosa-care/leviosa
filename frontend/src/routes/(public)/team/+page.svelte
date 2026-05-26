@@ -19,49 +19,49 @@
         {
             name: "Bodywork & Massage",
             description:
-                "Experts en therapie manuelle et recuperation physique.",
+                "Experts en thérapie manuelle et récupération physique.",
             partners: [
                 {
                     firstname: "Sarah",
                     lastname: "Chen",
-                    occupation: "Osteopathe D.O",
-                    quote: "Le corps garde en memoire ce que l'esprit oublie. Mon approche vise a liberer ces tensions profondes.",
+                    occupation: "Ostéopathe D.O",
+                    quote: "Le corps garde en mémoire ce que l'esprit oublie. Mon approche vise à libérer ces tensions profondes.",
                     tags: ["Douleurs Chroniques", "Posturologie"],
                 },
                 {
                     firstname: "Marc",
                     lastname: "Dubois",
-                    occupation: "Massotherapeute sportif",
-                    quote: "Optimiser la recuperation pour permettre une performance durable, sans blessure.",
-                    tags: ["Recuperation", "Deep Tissue"],
+                    occupation: "Massothérapeute sportif",
+                    quote: "Optimiser la récupération pour permettre une performance durable, sans blessure.",
+                    tags: ["Récupération", "Deep Tissue"],
                 },
                 {
                     firstname: "Jean",
                     lastname: "Dupont",
-                    occupation: "Massotherapeute sportif",
-                    quote: "Optimiser la recuperation pour permettre une performance durable, sans blessure.",
-                    tags: ["Recuperation", "Deep Tissue"],
+                    occupation: "Massothérapeute sportif",
+                    quote: "Optimiser la récupération pour permettre une performance durable, sans blessure.",
+                    tags: ["Récupération", "Deep Tissue"],
                 },
             ],
         },
         {
             name: "Mindset Coaching",
             description:
-                "Psychologues et coachs certifies pour votre equilibre.",
+                "Psychologues et coachs certifiés pour votre équilibre.",
             partners: [
                 {
                     firstname: "Elena",
                     lastname: "Rodriguez",
                     occupation: "Psychologue Clinicienne",
-                    quote: "Un espace securisant pour comprendre vos mecanismes et retrouver votre serenite",
-                    tags: ["Gestion du stress", "Anxiete"],
+                    quote: "Un espace sécurisant pour comprendre vos mécanismes et retrouver votre sérénité",
+                    tags: ["Gestion du stress", "Anxiété"],
                 },
                 {
                     firstname: "David",
                     lastname: "Miller",
-                    occupation: "Coach Executif",
+                    occupation: "Coach Exécutif",
                     quote: "Clarifier votre vision pour agir avec impact et confiance dans les moments critiques",
-                    tags: ["Leadership", "Prise de decision"],
+                    tags: ["Leadership", "Prise de décision"],
                 },
             ],
         },
@@ -73,21 +73,21 @@
                     firstname: "Alexandre",
                     lastname: "T.",
                     occupation: "Coach Sportif",
-                    quote: "Le mouvement est le meilleur medicament. Construisons un corps fort et capable.",
-                    tags: ["Force", "Mobilite"],
+                    quote: "Le mouvement est le meilleur médicament. Construisons un corps fort et capable.",
+                    tags: ["Force", "Mobilité"],
                 },
                 {
                     firstname: "Sophie",
                     lastname: "Laurent",
                     occupation: "Instructrice Yoga",
-                    quote: "Connecter le souffle et le mouvement pour trouver l'equilibre physique et mental.",
-                    tags: ["Vinyasa", "Meditation"],
+                    quote: "Connecter le souffle et le mouvement pour trouver l'équilibre physique et mental.",
+                    tags: ["Vinyasa", "Méditation"],
                 },
             ],
         },
     ];
 
-    const allCategories = "Toutes les categories";
+    const allCategories = "Toutes les catégories";
     let activeCategory = $state(allCategories);
     let partners = $derived(
         categories.find((c) => c.name === activeCategory)?.partners ?? [],
@@ -108,12 +108,12 @@
             <h2
                 class="text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-dark-900 leading-[1.1]"
             >
-                Une equipe engagee
+                Une équipe engagée
             </h2>
             <h2
                 class="text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-dark-700 leading-[1.1] mb-6"
             >
-                Pour votre bien-etre
+                Pour votre bien-être
             </h2>
         </div>
         <p
@@ -129,7 +129,7 @@
     >
         <div class="w-full lg:w-auto" use:reveal={{ preset: "fade-up", delay: 150 }}>
             <p class="uppercase text-dark-600 font-medium mb-4 px-2 lg:px-0">
-                categories
+                catégories
             </p>
             <div
                 class="w-full lg:max-w-xs flex flex-row lg:flex-col gap-2 overflow-x-auto pb-2 px-2 xl:px-0"
