@@ -59,6 +59,9 @@ type Config struct {
 
 	// Session
 	SessionSecret string
+
+	// Service Auth
+	ServiceKeyCacheTTLSeconds int
 }
 
 // LoadConfig loads configuration from environment variables
@@ -126,6 +129,9 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 
 		// Session
 		SessionSecret: getEnv("SESSION_SECRET", "development-secret-key"),
+
+		// Service Auth
+		ServiceKeyCacheTTLSeconds: getEnvInt("SERVICE_KEY_CACHE_TTL_SECONDS", 300),
 	}
 
 	// Validate required fields

@@ -359,7 +359,9 @@ func (c *Container) setupServices(ctx context.Context) error {
 
 	// Auth middleware (uses a separate minimal session repo interface for token lookups)
 	authSessionRepo := commonSession.NewRedisSessionRepository(c.RedisClient)
-	c.AuthMw = auth.NewSessionAuthMiddleware(authSessionRepo, c.Crypto, c.VaultClient)
+	c.AuthMw = auth.NewSessionAuthMiddleware(authSessionRepo, c.Crypto, c.VaultClient,
+		auth.WithServiceKeyCacheTTL(time.Duration(c.Config.ServiceKeyCacheTTLSeconds)*time.Second),
+	)
 
 	// OTP service
 	var err error
