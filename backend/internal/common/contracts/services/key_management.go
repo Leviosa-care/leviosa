@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/vault/api"
 	"github.com/hengadev/encx"
@@ -56,7 +57,7 @@ func (skm *ServiceKeyManager) StoreServiceKey(ctx context.Context, serviceName, 
 		"data": map[string]interface{}{
 			"key_hash":     keyHash,
 			"service_name": serviceName,
-			"created_at":   fmt.Sprintf("%d", ctx.Value("timestamp")),
+			"created_at":   fmt.Sprintf("%d", time.Now().Unix()),
 		},
 	}
 
