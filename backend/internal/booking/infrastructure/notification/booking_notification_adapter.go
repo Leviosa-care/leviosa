@@ -240,30 +240,69 @@ func (a *BookingNotificationAdapter) sendBookingConfirmationEmail(ctx context.Co
 func (a *BookingNotificationAdapter) sendBookingCancellationEmail(ctx context.Context, data bookingPorts.BookingNotificationData) error {
 	a.enrichData(ctx, &data)
 
-	if data.ClientEmail == "" {
-		return fmt.Errorf("no client email available for booking cancellation")
-	}
-
 	formattedDate := data.SlotStartTime.Format("Monday, 02 January 2006")
 	formattedTime := fmt.Sprintf("%s – %s",
 		data.SlotStartTime.Format("15:04"),
 		data.SlotEndTime.Format("15:04"),
 	)
 
-	req := notificationDomain.BookingCancellationRequest{
-		ToEmail:     data.ClientEmail,
-		ToFirstName: firstName(data.ClientName),
-		ToLastName:  lastName(data.ClientName),
-		BookingID:   data.BookingID.String(),
-		ProductName: data.ProductName,
-		RoomName:    data.RoomName,
-		Date:        formattedDate,
-		Time:        formattedTime,
-		Reason:      data.CancellationReason,
-		Year:        time.Now().Year(),
+	// Send cancellation email to the client
+	if data.ClientEmail == "" {
+		slog.WarnContext(ctx, "no client email available for booking cancellation",
+			"booking_id", data.BookingID,
+			"client_id", data.ClientID,
+		)
+	} else {
+		clientReq := notificationDomain.BookingCancellationRequest{
+			ToEmail:     data.ClientEmail,
+			ToFirstName: firstName(data.ClientName),
+			ToLastName:  lastName(data.ClientName),
+			BookingID:   data.BookingID.String(),
+			ProductName: data.ProductName,
+			RoomName:    data.RoomName,
+			Date:        formattedDate,
+			Time:        formattedTime,
+			Reason:      data.CancellationReason,
+			Year:        time.Now().Year(),
+		}
+		if err := a.emailService.SendBookingCancellationEmail(ctx, clientReq); err != nil {
+			slog.ErrorContext(ctx, "failed to send cancellation email to client",
+				"booking_id", data.BookingID,
+				"client_email", data.ClientEmail,
+				"error", err,
+			)
+		}
 	}
 
-	return a.emailService.SendBookingCancellationEmail(ctx, req)
+	// Send cancellation email to the partner
+	if data.PartnerEmail == "" {
+		slog.WarnContext(ctx, "no partner email available for booking cancellation",
+			"booking_id", data.BookingID,
+			"partner_id", data.PartnerID,
+		)
+	} else {
+		partnerReq := notificationDomain.BookingCancellationRequest{
+			ToEmail:     data.PartnerEmail,
+			ToFirstName: firstName(data.PartnerName),
+			ToLastName:  lastName(data.PartnerName),
+			BookingID:   data.BookingID.String(),
+			ProductName: data.ProductName,
+			RoomName:    data.RoomName,
+			Date:        formattedDate,
+			Time:        formattedTime,
+			Reason:      data.CancellationReason,
+			Year:        time.Now().Year(),
+		}
+		if err := a.emailService.SendBookingCancellationEmail(ctx, partnerReq); err != nil {
+			slog.ErrorContext(ctx, "failed to send cancellation email to partner",
+				"booking_id", data.BookingID,
+				"partner_email", data.PartnerEmail,
+				"error", err,
+			)
+		}
+	}
+
+	return nil
 }
 
 func (a *BookingNotificationAdapter) sendBookingReminderEmail(ctx context.Context, data bookingPorts.BookingNotificationData) error {
