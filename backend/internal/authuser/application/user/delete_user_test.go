@@ -227,6 +227,11 @@ func (m *MockStripeService) FindCustomerByUserID(ctx context.Context, userID uui
 	return args.Get(0).(*stripe.Customer), args.Error(1)
 }
 
+func (m *MockStripeService) CreateConnectedAccount(ctx context.Context, userID uuid.UUID) (string, error) {
+	args := m.Called(ctx, userID)
+	return args.String(0), args.Error(1)
+}
+
 func TestDeleteUser(t *testing.T) {
 	ctx := context.Background()
 	userID := uuid.New()

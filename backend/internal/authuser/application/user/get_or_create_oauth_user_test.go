@@ -170,6 +170,10 @@ func (m *mockStripeService) FindCustomerByUserID(_ context.Context, _ uuid.UUID)
 	return nil, nil
 }
 
+func (m *mockStripeService) CreateConnectedAccount(_ context.Context, _ uuid.UUID) (string, error) {
+	return "", nil
+}
+
 func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
 	ctx := context.Background()
 
