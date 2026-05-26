@@ -56,7 +56,13 @@ func (s *PartnerService) CreatePartner(ctx context.Context, userID uuid.UUID, bi
 		UpdatedAt:   now,
 	}
 
-	// TODO: do the stripe related account creation operations
+	// Create Stripe Connect Express account for the partner.
+	// All new partners start as pending; active is set via webhook after onboarding.
+	// If Stripe fails, the empty StripeConnectedAccountID signals a retry is needed.
+	partner.StripeAccountStatus = domain.StripeAccountStatusPending
+	if stripeAccountID, err := s.stripe.CreateConnectedAccount(ctx, userID); err == nil {
+		partner.StripeConnectedAccountID = stripeAccountID
+	}
 
 	// Encrypt partner data
 	partnerEncx, err := domain.ProcessPartnerEncx(ctx, s.crypto, partner)
