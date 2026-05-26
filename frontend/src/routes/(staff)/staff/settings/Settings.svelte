@@ -2,9 +2,21 @@
     import type { PageData } from "./$types";
     import { superForm } from "sveltekit-superforms";
     import { Dialog, Button, Label, Separator } from "bits-ui";
-    import { X } from "@lucide/svelte";
+    import { X, AlertCircle } from "@lucide/svelte";
+    import { invalidateAll } from "$app/navigation";
 
     let { data }: { data: PageData } = $props();
+
+    let retrying = $state(false);
+
+    async function retryLoad() {
+        retrying = true;
+        try {
+            await invalidateAll();
+        } finally {
+            retrying = false;
+        }
+    }
 
     // Company Name Form
     const {
@@ -108,9 +120,6 @@
     let accessTokenDurationDialogOpen = $state(false);
     let refreshTokenDurationDialogOpen = $state(false);
 
-    // Current settings from data
-    let currentSettings = $derived(data.settings);
-
     // Helper function to format duration in seconds to human-readable
     function formatSeconds(seconds: number): string {
         if (seconds < 60) return `${seconds}s`;
@@ -133,6 +142,30 @@
     }
 </script>
 
+{#if data.settingsError}
+    <div class="flex-1 overflow-y-auto p-6">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                <div class="flex items-center gap-3">
+                    <AlertCircle class="text-red-600 shrink-0" size={20} />
+                    <div>
+                        <h2 class="font-semibold text-red-900">Erreur de chargement</h2>
+                        <p class="text-sm text-red-700 mt-1">
+                            Les paramètres n'ont pas pu être chargés. Vérifiez votre connexion et réessayez.
+                        </p>
+                        <button
+                            onclick={retryLoad}
+                            disabled={retrying}
+                            class="mt-3 h-input rounded-input border border-red-300 bg-white text-red-700 hover:bg-red-50 inline-flex items-center justify-center px-4 text-sm font-medium active:scale-[0.98] cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {retrying ? "Chargement..." : "Réessayer"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{:else}
 <div class="flex-1 overflow-y-auto p-6">
     <div class="max-w-4xl mx-auto space-y-6">
         <!-- Company Information Section -->
@@ -149,14 +182,14 @@
                     <div class="flex-1">
                         <div class="font-medium text-sm">Nom de l'entreprise</div>
                         <div class="text-sm text-foreground-alt mt-1">
-                            {currentSettings?.company?.name || "Non défini"}
+                            {data.settings?.company?.name || "Non défini"}
                         </div>
                     </div>
                     <Button.Root
                         type="button"
                         class="cursor-pointer"
                         onclick={() => {
-                            $companyNameForm.name = currentSettings?.company?.name || "";
+                            $companyNameForm.name = data.settings?.company?.name || "";
                             companyNameDialogOpen = true;
                         }}
                     >
@@ -171,14 +204,14 @@
                     <div class="flex-1">
                         <div class="font-medium text-sm">Email de contact</div>
                         <div class="text-sm text-foreground-alt mt-1">
-                            {currentSettings?.company?.email || "Non défini"}
+                            {data.settings?.company?.email || "Non défini"}
                         </div>
                     </div>
                     <Button.Root
                         type="button"
                         class="cursor-pointer"
                         onclick={() => {
-                            $companyEmailForm.email = currentSettings?.company?.email || "";
+                            $companyEmailForm.email = data.settings?.company?.email || "";
                             companyEmailDialogOpen = true;
                         }}
                     >
@@ -193,14 +226,14 @@
                     <div class="flex-1">
                         <div class="font-medium text-sm">Téléphone</div>
                         <div class="text-sm text-foreground-alt mt-1">
-                            {currentSettings?.company?.telephone || "Non défini"}
+                            {data.settings?.company?.telephone || "Non défini"}
                         </div>
                     </div>
                     <Button.Root
                         type="button"
                         class="cursor-pointer"
                         onclick={() => {
-                            $companyPhoneForm.telephone = currentSettings?.company?.telephone || "";
+                            $companyPhoneForm.telephone = data.settings?.company?.telephone || "";
                             companyPhoneDialogOpen = true;
                         }}
                     >
@@ -215,14 +248,14 @@
                     <div class="flex-1">
                         <div class="font-medium text-sm">Adresse</div>
                         <div class="text-sm text-foreground-alt mt-1">
-                            {currentSettings?.company?.address || "Non définie"}
+                            {data.settings?.company?.address || "Non définie"}
                         </div>
                     </div>
                     <Button.Root
                         type="button"
                         class="cursor-pointer"
                         onclick={() => {
-                            $companyAddressForm.address = currentSettings?.company?.address || "";
+                            $companyAddressForm.address = data.settings?.company?.address || "";
                             companyAddressDialogOpen = true;
                         }}
                     >
@@ -237,14 +270,14 @@
                     <div class="flex-1">
                         <div class="font-medium text-sm">Instagram</div>
                         <div class="text-sm text-foreground-alt mt-1">
-                            {currentSettings?.company?.instagram || "Non défini"}
+                            {data.settings?.company?.instagram || "Non défini"}
                         </div>
                     </div>
                     <Button.Root
                         type="button"
                         class="cursor-pointer"
                         onclick={() => {
-                            $companyInstagramForm.instagram = currentSettings?.company?.instagram || "";
+                            $companyInstagramForm.instagram = data.settings?.company?.instagram || "";
                             companyInstagramDialogOpen = true;
                         }}
                     >
@@ -270,14 +303,14 @@
                     <div class="flex-1">
                         <div class="font-medium text-sm">Durée de validité OTP</div>
                         <div class="text-sm text-foreground-alt mt-1">
-                            {formatSeconds(currentSettings?.otp?.duration || 300)} (60-3600 secondes)
+                            {formatSeconds(data.settings?.otp?.duration || 300)} (60-3600 secondes)
                         </div>
                     </div>
                     <Button.Root
                         type="button"
                         class="cursor-pointer"
                         onclick={() => {
-                            $otpDurationForm.duration = currentSettings?.otp?.duration || 300;
+                            $otpDurationForm.duration = data.settings?.otp?.duration || 300;
                             otpDurationDialogOpen = true;
                         }}
                     >
@@ -292,14 +325,14 @@
                     <div class="flex-1">
                         <div class="font-medium text-sm">Longueur du code OTP</div>
                         <div class="text-sm text-foreground-alt mt-1">
-                            {currentSettings?.otp?.length || 6} chiffres (4-10 chiffres)
+                            {data.settings?.otp?.length || 6} chiffres (4-10 chiffres)
                         </div>
                     </div>
                     <Button.Root
                         type="button"
                         class="cursor-pointer"
                         onclick={() => {
-                            $otpLengthForm.length = currentSettings?.otp?.length || 6;
+                            $otpLengthForm.length = data.settings?.otp?.length || 6;
                             otpLengthDialogOpen = true;
                         }}
                     >
@@ -314,14 +347,14 @@
                     <div class="flex-1">
                         <div class="font-medium text-sm">Tentatives maximales</div>
                         <div class="text-sm text-foreground-alt mt-1">
-                            {currentSettings?.otp?.max_attempts || 5} tentatives (1-10)
+                            {data.settings?.otp?.max_attempts || 5} tentatives (1-10)
                         </div>
                     </div>
                     <Button.Root
                         type="button"
                         class="cursor-pointer"
                         onclick={() => {
-                            $otpMaxAttemptsForm.max_attempts = currentSettings?.otp?.max_attempts || 5;
+                            $otpMaxAttemptsForm.max_attempts = data.settings?.otp?.max_attempts || 5;
                             otpMaxAttemptsDialogOpen = true;
                         }}
                     >
@@ -347,14 +380,14 @@
                     <div class="flex-1">
                         <div class="font-medium text-sm">Durée du token d'accès</div>
                         <div class="text-sm text-foreground-alt mt-1">
-                            {formatMinutes(currentSettings?.tokens?.access_duration || 15)} (1-240 minutes)
+                            {formatMinutes(data.settings?.tokens?.access_duration || 15)} (1-240 minutes)
                         </div>
                     </div>
                     <Button.Root
                         type="button"
                         class="cursor-pointer"
                         onclick={() => {
-                            $accessTokenDurationForm.duration = currentSettings?.tokens?.access_duration || 15;
+                            $accessTokenDurationForm.duration = data.settings?.tokens?.access_duration || 15;
                             accessTokenDurationDialogOpen = true;
                         }}
                     >
@@ -369,14 +402,14 @@
                     <div class="flex-1">
                         <div class="font-medium text-sm">Durée du token de rafraîchissement</div>
                         <div class="text-sm text-foreground-alt mt-1">
-                            {formatHours(currentSettings?.tokens?.refresh_duration || 168)} (1-720 heures)
+                            {formatHours(data.settings?.tokens?.refresh_duration || 168)} (1-720 heures)
                         </div>
                     </div>
                     <Button.Root
                         type="button"
                         class="cursor-pointer"
                         onclick={() => {
-                            $refreshTokenDurationForm.duration = currentSettings?.tokens?.refresh_duration || 168;
+                            $refreshTokenDurationForm.duration = data.settings?.tokens?.refresh_duration || 168;
                             refreshTokenDurationDialogOpen = true;
                         }}
                     >
@@ -914,3 +947,4 @@
         </Dialog.Content>
     </Dialog.Portal>
 </Dialog.Root>
+{/if}

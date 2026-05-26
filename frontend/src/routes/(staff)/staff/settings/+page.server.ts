@@ -27,10 +27,29 @@ import {
     refreshTokenDurationSchema,
     refreshTokenDurationDefaults,
 } from "./schemas"
-import { mockSettings } from "$lib/data/mockData"
-
-// Enable mock mode for development
+// Enable mock mode for staging
 const MOCK_MODE = env.USE_MOCK_DATA === 'true'
+
+type Settings = {
+    company: {
+        name: string
+        email: string
+        telephone: string
+        address: string
+        instagram: string
+        logo_url: string
+        logo_content_type: string
+    }
+    otp: {
+        duration: number
+        length: number
+        max_attempts: number
+    }
+    tokens: {
+        access_duration: number
+        refresh_duration: number
+    }
+}
 
 export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
     // ⬅️ pulls data from (ops)/+layout.server.ts
@@ -52,28 +71,25 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
     const accessTokenDurationForm = await superValidate(arktype(accessTokenDurationSchema, { defaults: accessTokenDurationDefaults }))
     const refreshTokenDurationForm = await superValidate(arktype(refreshTokenDurationSchema, { defaults: refreshTokenDurationDefaults }))
 
-    let settings = mockSettings
+    let settings: Settings | null = null
+    let settingsError = false
 
-    if (MOCK_MODE) {
-        // Use mock data in development
-        settings = mockSettings
-    } else {
-        const sessionCookie = cookies.get('session');
+    const sessionCookie = cookies.get('session')
 
-        // Fetch settings using bulk endpoint
-        const bulkKeys = [
-            'company_name',
-            'company_email',
-            'company_phone',
-            'company_address',
-            'company_instagram',
-            'otp_duration',
-            'otp_length',
-            'otp_max_attempts',
-            'access_token_duration',
-            'refresh_token_duration'
-        ].join(',')
+    const bulkKeys = [
+        'company_name',
+        'company_email',
+        'company_phone',
+        'company_address',
+        'company_instagram',
+        'otp_duration',
+        'otp_length',
+        'otp_max_attempts',
+        'access_token_duration',
+        'refresh_token_duration'
+    ].join(',')
 
+    try {
         const settingsRes = await fetch(`${env.API_URL}/admin/settings/bulk?keys=${bulkKeys}`, {
             headers: {
                 'Authorization': `Bearer ${sessionCookie}`,
@@ -81,30 +97,34 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         })
 
         if (settingsRes.ok) {
-            const bulkData = await settingsRes.json()
+            const bulkData: { key: string; value: string }[] = await settingsRes.json()
+            const find = (key: string) => bulkData.find((s) => s.key === key)?.value ?? ''
 
-            // Transform bulk data into settings structure
             settings = {
                 company: {
-                    name: bulkData.find((s: any) => s.key === 'company_name')?.value || '',
-                    email: bulkData.find((s: any) => s.key === 'company_email')?.value || '',
-                    telephone: bulkData.find((s: any) => s.key === 'company_phone')?.value || '',
-                    address: bulkData.find((s: any) => s.key === 'company_address')?.value || '',
-                    instagram: bulkData.find((s: any) => s.key === 'company_instagram')?.value || '',
+                    name: find('company_name'),
+                    email: find('company_email'),
+                    telephone: find('company_phone'),
+                    address: find('company_address'),
+                    instagram: find('company_instagram'),
                     logo_url: '',
                     logo_content_type: '',
                 },
                 otp: {
-                    duration: parseInt(bulkData.find((s: any) => s.key === 'otp_duration')?.value || '300'),
-                    length: parseInt(bulkData.find((s: any) => s.key === 'otp_length')?.value || '6'),
-                    max_attempts: parseInt(bulkData.find((s: any) => s.key === 'otp_max_attempts')?.value || '5'),
+                    duration: parseInt(find('otp_duration') || '300'),
+                    length: parseInt(find('otp_length') || '6'),
+                    max_attempts: parseInt(find('otp_max_attempts') || '5'),
                 },
                 tokens: {
-                    access_duration: parseInt(bulkData.find((s: any) => s.key === 'access_token_duration')?.value || '15'),
-                    refresh_duration: parseInt(bulkData.find((s: any) => s.key === 'refresh_token_duration')?.value || '168'),
+                    access_duration: parseInt(find('access_token_duration') || '15'),
+                    refresh_duration: parseInt(find('refresh_token_duration') || '168'),
                 }
             }
+        } else {
+            settingsError = true
         }
+    } catch {
+        settingsError = true
     }
 
     return {
@@ -119,6 +139,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
         accessTokenDurationForm,
         refreshTokenDurationForm,
         settings,
+        settingsError,
     }
 }
 
