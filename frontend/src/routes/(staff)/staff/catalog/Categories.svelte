@@ -53,7 +53,7 @@
     let { data }: Props = $props();
 
     // Extract categories from page data
-    let categories: Category[] = data.categories || [];
+    let categories: Category[] = $derived(data.categories ?? []);
 
     // Dialog states
     let createDialogOpen = $state(false);

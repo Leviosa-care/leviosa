@@ -54,7 +54,7 @@
     let { data }: Props = $props();
 
     // Use coupons from server data
-    let coupons = $state<Coupon[]>(data.coupons || []);
+    let coupons: Coupon[] = $derived(data.coupons ?? []);
 
     // Initialize superforms for create, update, and delete
     const {

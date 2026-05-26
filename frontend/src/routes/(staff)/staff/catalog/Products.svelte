@@ -14,9 +14,9 @@
     import type { Snippet } from "svelte";
     import type { PageData } from "./$types";
     import Drawer from "$lib/ui/Drawer.svelte";
+    import { superForm } from "sveltekit-superforms";
 
     import { browser } from "$app/environment";
-    import { mockProducts, mockCategories } from "$lib/data/mockData";
 
     // Detect if we're on mobile
     let isMobile = $state(false);
@@ -62,8 +62,9 @@
 
     let { data }: Props = $props();
 
-    // Use mock products for now
-    let products = $state<Product[]>([...mockProducts]);
+    // Extract products and categories from server data
+    let products: Product[] = $derived(data.products ?? []);
+    let categories = $derived(data.categories ?? []);
 
     // Category filter state (single select)
     const ALL_CATEGORIES = "";
@@ -84,71 +85,68 @@
     // Currently selected product for edit/delete
     let selectedProduct: Product | null = $state(null);
 
-    // Form states for new/edit product
-    let formData = $state<{
-        id: string;
-        name: string;
-        description: string;
-        category: string;
-        duration: number;
-        status: string;
-        availability: string;
-        bufferTime: number;
-        cancellationHours: number;
-        stripeProductId: string;
-    }>({
-        id: "",
-        name: "",
-        description: "",
-        category: "",
-        duration: 60,
-        status: "draft",
-        availability: "in-person",
-        bufferTime: 10,
-        cancellationHours: 24,
-        stripeProductId: "",
+    // Superforms for create, update, delete
+    const {
+        form: createForm,
+        errors: createErrors,
+        enhance: createEnhance,
+    } = superForm(data.createProductForm, {
+        resetForm: true,
+        onUpdated({ form }) {
+            if (form.valid) {
+                createDialogOpen = false;
+            }
+        },
     });
 
-    // Reset form to default values
-    function resetForm() {
-        formData = {
-            id: "",
-            name: "",
-            description: "",
-            category: "",
-            duration: 60,
-            status: "draft",
-            availability: "in-person",
-            bufferTime: 10,
-            cancellationHours: 24,
-            stripeProductId: "",
-        };
-    }
+    const {
+        form: updateForm,
+        errors: updateErrors,
+        enhance: updateEnhance,
+    } = superForm(data.updateProductForm, {
+        resetForm: false,
+        onUpdated({ form }) {
+            if (form.valid) {
+                editDialogOpen = false;
+            }
+        },
+    });
+
+    const {
+        form: deleteForm,
+        errors: deleteErrors,
+        enhance: deleteEnhance,
+    } = superForm(data.deleteProductForm, {
+        resetForm: true,
+        onUpdated({ form }) {
+            if (form.valid) {
+                deleteDialogOpen = false;
+            }
+        },
+    });
 
     function openCreateDialog() {
-        resetForm();
         createDialogOpen = true;
     }
 
     function openEditDialog(product: Product) {
         selectedProduct = product;
-        formData = {
-            id: product.id,
-            name: product.name,
-            description: product.description,
-            category: product.category,
-            duration: product.duration,
-            status: product.status,
-            availability: product.availability,
-            bufferTime: product.bufferTime,
-            cancellationHours: product.cancellationHours,
-            stripeProductId: product.stripeProductId,
-        };
+        $updateForm.id = product.id;
+        $updateForm.name = product.name;
+        $updateForm.description = product.description;
+        $updateForm.category = product.category;
+        $updateForm.duration = product.duration;
+        $updateForm.status = product.status;
+        $updateForm.availability = product.availability;
+        $updateForm.bufferTime = product.bufferTime;
+        $updateForm.cancellationHours = product.cancellationHours;
+        $updateForm.stripeProductId = product.stripeProductId;
         editDialogOpen = true;
     }
 
     function openDeleteDialog(product: Product) {
         selectedProduct = product;
+        $deleteForm.id = product.id;
         deleteDialogOpen = true;
     }
 
@@ -158,7 +156,7 @@
 
     function getCategoryName(categoryId: string): string {
         return (
-            mockCategories.find((c) => c.id === categoryId)?.name || "Inconnu"
+            categories.find((c: any) => c.id === categoryId)?.name || "Inconnu"
         );
     }
 
@@ -167,72 +165,6 @@
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
-    }
-
-    function handleCreateSubmit(e: Event) {
-        e.preventDefault();
-        const newProduct = {
-            id: `prod-${Date.now()}`,
-            name: formData.name,
-            description: formData.description,
-            category: formData.category,
-            duration: formData.duration,
-            status: formData.status as "draft" | "published",
-            availability: formData.availability as
-                | "online"
-                | "in-person"
-                | "hybrid",
-            bufferTime: formData.bufferTime,
-            cancellationHours: formData.cancellationHours,
-            stripeProductId: formData.stripeProductId,
-            metadata: {},
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            images: [],
-        } satisfies Product;
-        products = [...products, newProduct];
-        createDialogOpen = false;
-        resetForm();
-    }
-
-    function handleEditSubmit(e: Event) {
-        e.preventDefault();
-        if (!selectedProduct) return;
-
-        const selectedId = selectedProduct.id;
-        products = products.map((p) =>
-            p.id === selectedId
-                ? {
-                      ...p,
-                      name: formData.name,
-                      description: formData.description,
-                      category: formData.category,
-                      duration: formData.duration,
-                      status: formData.status as "draft" | "published",
-                      availability: formData.availability as
-                          | "online"
-                          | "in-person"
-                          | "hybrid",
-                      bufferTime: formData.bufferTime,
-                      cancellationHours: formData.cancellationHours,
-                      stripeProductId: formData.stripeProductId,
-                      updatedAt: new Date().toISOString(),
-                  }
-                : p,
-        );
-        editDialogOpen = false;
-        selectedProduct = null;
-        resetForm();
-    }
-
-    function handleDeleteSubmit(e: Event) {
-        e.preventDefault();
-        if (!selectedProduct) return;
-
-        const selectedId = selectedProduct.id;
-        products = products.filter((p) => p.id !== selectedId);
-        deleteDialogOpen = false;
-        selectedProduct = null;
     }
 </script>
 
@@ -294,7 +226,7 @@
                                 {/snippet}
                             </Combobox.Item>
                             <Combobox.Group class="pt-1">
-                                {#each mockCategories as category}
+                                {#each categories as category}
                                     <Combobox.Item
                                         value={category.id}
                                         label={category.name}
@@ -348,8 +280,8 @@
 
         <!-- Selected category chip -->
         {#if selectedCategoryId !== ALL_CATEGORIES}
-            {@const category = mockCategories.find(
-                (c) => c.id === selectedCategoryId,
+            {@const category = categories.find(
+                (c: any) => c.id === selectedCategoryId,
             )}
             {#if category}
                 <div class="flex flex-wrap gap-2 mb-6">
@@ -566,64 +498,69 @@
             </p>
         </div>
 
-        <form onsubmit={handleCreateSubmit} class="grid gap-4 pt-8">
+        <form
+            method="POST"
+            action="?/createProduct"
+            enctype="multipart/form-data"
+            use:createEnhance
+            class="grid gap-4 pt-8"
+        >
+            {#if $createErrors._errors}
+                <div class="text-sm text-destructive mt-4">
+                    {$createErrors._errors[0]}
+                </div>
+            {/if}
+
             <div class="grid grid-cols-1 gap-4 w-full pb-4">
-                {@render field("name", "Nom", inputCreate, formData.name, null)}
+                {@render field("name", "Nom", inputCreate, $createForm.name, $createErrors.name)}
                 {@render field(
                     "description",
                     "Description",
                     textareaCreate,
-                    formData.description,
-                    null,
+                    $createForm.description,
+                    $createErrors.description,
                 )}
                 {@render field(
                     "category",
                     "Catégorie",
-                    categorySelect,
-                    formData.category,
-                    null,
+                    categorySelectCreate,
+                    $createForm.category,
+                    $createErrors.category,
                 )}
                 {@render field(
                     "duration",
                     "Durée (minutes)",
-                    numberInput,
-                    formData.duration,
-                    null,
+                    numberInputCreate,
+                    $createForm.duration,
+                    $createErrors.duration,
                 )}
                 {@render field(
                     "bufferTime",
                     "Temps de buffer (minutes)",
-                    numberInput,
-                    formData.bufferTime,
-                    null,
+                    numberInputCreate,
+                    $createForm.bufferTime,
+                    $createErrors.bufferTime,
                 )}
                 {@render field(
                     "cancellationHours",
                     "Annulation (heures)",
-                    numberInput,
-                    formData.cancellationHours,
-                    null,
+                    numberInputCreate,
+                    $createForm.cancellationHours,
+                    $createErrors.cancellationHours,
                 )}
                 {@render field(
                     "stripeProductId",
                     "Stripe Product ID",
-                    textInput,
-                    formData.stripeProductId,
-                    null,
-                )}
-                {@render field(
-                    "status",
-                    "Statut",
-                    statusRadio,
-                    formData.status,
-                    null,
+                    textInputCreate,
+                    $createForm.stripeProductId,
+                    $createErrors.stripeProductId,
                 )}
                 {@render field(
                     "availability",
                     "Modalité",
-                    availabilityRadio,
-                    formData.availability,
-                    null,
+                    availabilityRadioCreate,
+                    $createForm.availability,
+                    $createErrors.availability,
                 )}
             </div>
             <div class="flex w-full justify-end gap-3">
@@ -664,7 +601,19 @@
 
                 <Separator.Root class="bg-muted mx-5 !mb-2 !mt-5 block h-px" />
 
-                <form onsubmit={handleCreateSubmit} class="grid gap-4">
+                <form
+                    method="POST"
+                    action="?/createProduct"
+                    enctype="multipart/form-data"
+                    use:createEnhance
+                    class="grid gap-4"
+                >
+                    {#if $createErrors._errors}
+                        <div class="text-sm text-destructive mt-4">
+                            {$createErrors._errors[0]}
+                        </div>
+                    {/if}
+
                     <div
                         class="grid grid-cols-[max-content_1fr] gap-4 w-full items-center pb-11 pt-7"
                     >
@@ -672,64 +621,57 @@
                             "name",
                             "Nom",
                             inputCreate,
-                            formData.name,
-                            null,
+                            $createForm.name,
+                            $createErrors.name,
                         )}
                         {@render field(
                             "description",
                             "Description",
                             textareaCreate,
-                            formData.description,
-                            null,
+                            $createForm.description,
+                            $createErrors.description,
                         )}
                         {@render field(
                             "category",
                             "Catégorie",
-                            categorySelect,
-                            formData.category,
-                            null,
+                            categorySelectCreate,
+                            $createForm.category,
+                            $createErrors.category,
                         )}
                         {@render field(
                             "duration",
                             "Durée (minutes)",
-                            numberInput,
-                            formData.duration,
-                            null,
+                            numberInputCreate,
+                            $createForm.duration,
+                            $createErrors.duration,
                         )}
                         {@render field(
                             "bufferTime",
                             "Temps de buffer (minutes)",
-                            numberInput,
-                            formData.bufferTime,
-                            null,
+                            numberInputCreate,
+                            $createForm.bufferTime,
+                            $createErrors.bufferTime,
                         )}
                         {@render field(
                             "cancellationHours",
                             "Annulation (heures)",
-                            numberInput,
-                            formData.cancellationHours,
-                            null,
+                            numberInputCreate,
+                            $createForm.cancellationHours,
+                            $createErrors.cancellationHours,
                         )}
                         {@render field(
                             "stripeProductId",
                             "Stripe Product ID",
-                            textInput,
-                            formData.stripeProductId,
-                            null,
-                        )}
-                        {@render field(
-                            "status",
-                            "Statut",
-                            statusRadio,
-                            formData.status,
-                            null,
+                            textInputCreate,
+                            $createForm.stripeProductId,
+                            $createErrors.stripeProductId,
                         )}
                         {@render field(
                             "availability",
                             "Visibilité",
-                            availabilityRadio,
-                            formData.availability,
-                            null,
+                            availabilityRadioCreate,
+                            $createForm.availability,
+                            $createErrors.availability,
                         )}
                     </div>
                     <div class="flex w-full justify-end gap-3">
@@ -786,64 +728,78 @@
             </p>
         </div>
 
-        <form onsubmit={handleEditSubmit} class="grid gap-4 pt-8">
+        <form
+            method="POST"
+            action="?/updateProduct"
+            enctype="multipart/form-data"
+            use:updateEnhance
+            class="grid gap-4 pt-8"
+        >
+            <input type="hidden" name="id" bind:value={$updateForm.id} />
+
+            {#if $updateErrors._errors}
+                <div class="text-sm text-destructive mt-4">
+                    {$updateErrors._errors[0]}
+                </div>
+            {/if}
+
             <div class="grid grid-cols-1 gap-4 w-full pb-4">
-                {@render field("name", "Nom", inputEdit, formData.name, null)}
+                {@render field("name", "Nom", inputEdit, $updateForm.name, $updateErrors.name)}
                 {@render field(
                     "description",
                     "Description",
                     textareaEdit,
-                    formData.description,
-                    null,
+                    $updateForm.description,
+                    $updateErrors.description,
                 )}
                 {@render field(
                     "category",
                     "Catégorie",
-                    categorySelect,
-                    formData.category,
-                    null,
+                    categorySelectEdit,
+                    $updateForm.category,
+                    $updateErrors.category,
                 )}
                 {@render field(
                     "duration",
                     "Durée (minutes)",
-                    numberInput,
-                    formData.duration,
-                    null,
+                    numberInputEdit,
+                    $updateForm.duration,
+                    $updateErrors.duration,
                 )}
                 {@render field(
                     "bufferTime",
                     "Temps de buffer (minutes)",
-                    numberInput,
-                    formData.bufferTime,
-                    null,
+                    numberInputEdit,
+                    $updateForm.bufferTime,
+                    $updateErrors.bufferTime,
                 )}
                 {@render field(
                     "cancellationHours",
                     "Annulation (heures)",
-                    numberInput,
-                    formData.cancellationHours,
-                    null,
+                    numberInputEdit,
+                    $updateForm.cancellationHours,
+                    $updateErrors.cancellationHours,
                 )}
                 {@render field(
                     "stripeProductId",
                     "Stripe Product ID",
-                    textInput,
-                    formData.stripeProductId,
-                    null,
+                    textInputEdit,
+                    $updateForm.stripeProductId,
+                    $updateErrors.stripeProductId,
                 )}
                 {@render field(
                     "status",
                     "Statut",
-                    statusRadio,
-                    formData.status,
-                    null,
+                    statusRadioEdit,
+                    $updateForm.status,
+                    $updateErrors.status,
                 )}
                 {@render field(
                     "availability",
                     "Modalité",
-                    availabilityRadio,
-                    formData.availability,
-                    null,
+                    availabilityRadioEdit,
+                    $updateForm.availability,
+                    $updateErrors.availability,
                 )}
             </div>
             <div class="flex w-full justify-end gap-3">
@@ -883,7 +839,21 @@
 
                 <Separator.Root class="bg-muted mx-5 !mb-2 !mt-5 block h-px" />
 
-                <form onsubmit={handleEditSubmit} class="grid gap-4">
+                <form
+                    method="POST"
+                    action="?/updateProduct"
+                    enctype="multipart/form-data"
+                    use:updateEnhance
+                    class="grid gap-4"
+                >
+                    <input type="hidden" name="id" bind:value={$updateForm.id} />
+
+                    {#if $updateErrors._errors}
+                        <div class="text-sm text-destructive mt-4">
+                            {$updateErrors._errors[0]}
+                        </div>
+                    {/if}
+
                     <div
                         class="grid grid-cols-[max-content_1fr] gap-4 w-full items-center pb-11 pt-7"
                     >
@@ -891,64 +861,64 @@
                             "name",
                             "Nom",
                             inputEdit,
-                            formData.name,
-                            null,
+                            $updateForm.name,
+                            $updateErrors.name,
                         )}
                         {@render field(
                             "description",
                             "Description",
                             textareaEdit,
-                            formData.description,
-                            null,
+                            $updateForm.description,
+                            $updateErrors.description,
                         )}
                         {@render field(
                             "category",
                             "Catégorie",
-                            categorySelect,
-                            formData.category,
-                            null,
+                            categorySelectEdit,
+                            $updateForm.category,
+                            $updateErrors.category,
                         )}
                         {@render field(
                             "duration",
                             "Durée (minutes)",
-                            numberInput,
-                            formData.duration,
-                            null,
+                            numberInputEdit,
+                            $updateForm.duration,
+                            $updateErrors.duration,
                         )}
                         {@render field(
                             "bufferTime",
                             "Temps de buffer (minutes)",
-                            numberInput,
-                            formData.bufferTime,
-                            null,
+                            numberInputEdit,
+                            $updateForm.bufferTime,
+                            $updateErrors.bufferTime,
                         )}
                         {@render field(
                             "cancellationHours",
                             "Annulation (heures)",
-                            numberInput,
-                            formData.cancellationHours,
-                            null,
+                            numberInputEdit,
+                            $updateForm.cancellationHours,
+                            $updateErrors.cancellationHours,
                         )}
                         {@render field(
                             "stripeProductId",
                             "Stripe Product ID",
-                            textInput,
-                            formData.stripeProductId,
-                            null,
+                            textInputEdit,
+                            $updateForm.stripeProductId,
+                            $updateErrors.stripeProductId,
                         )}
                         {@render field(
                             "status",
                             "Statut",
-                            statusRadio,
-                            formData.status,
-                            null,
+                            statusRadioEdit,
+                            $updateForm.status,
+                            $updateErrors.status,
                         )}
                         {@render field(
                             "availability",
                             "Visibilité",
-                            availabilityRadio,
-                            formData.availability,
-                            null,
+                            availabilityRadioEdit,
+                            $updateForm.availability,
+                            $updateErrors.availability,
                         )}
                     </div>
                     <div class="flex w-full justify-end gap-3">
@@ -1007,7 +977,15 @@
             </p>
         </div>
 
-        <form onsubmit={handleDeleteSubmit} class="pt-8">
+        <form method="POST" action="?/deleteProduct" use:deleteEnhance class="pt-8">
+            <input type="hidden" name="id" bind:value={$deleteForm.id} />
+
+            {#if $deleteErrors._errors}
+                <div class="text-sm text-destructive mb-4">
+                    {$deleteErrors._errors[0]}
+                </div>
+            {/if}
+
             <div class="flex w-full justify-end gap-3">
                 <button
                     type="button"
@@ -1045,7 +1023,15 @@
                     >" ? Cette action est irréversible.
                 </Dialog.Description>
 
-                <form onsubmit={handleDeleteSubmit} class="mt-8">
+                <form method="POST" action="?/deleteProduct" use:deleteEnhance class="mt-8">
+                    <input type="hidden" name="id" bind:value={$deleteForm.id} />
+
+                    {#if $deleteErrors._errors}
+                        <div class="text-sm text-destructive mb-4">
+                            {$deleteErrors._errors[0]}
+                        </div>
+                    {/if}
+
                     <div class="flex w-full justify-end gap-3">
                         <Button.Root type="button" class="cursor-pointer">
                             <Dialog.Close
@@ -1102,7 +1088,7 @@
             id={fieldName}
             type="text"
             name={fieldName}
-            bind:value={formData.name}
+            bind:value={$createForm.name}
             class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
             required
         />
@@ -1115,7 +1101,7 @@
             id={fieldName}
             type="text"
             name={fieldName}
-            bind:value={formData.name}
+            bind:value={$updateForm.name}
             class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
             required
         />
@@ -1128,7 +1114,7 @@
             id={fieldName}
             name={fieldName}
             rows="4"
-            bind:value={formData.description}
+            bind:value={$createForm.description}
             class="rounded-card-sm border border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden w-full px-4 py-2 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
             placeholder="Décrivez le produit"
             required
@@ -1142,7 +1128,7 @@
             id={fieldName}
             name={fieldName}
             rows="4"
-            bind:value={formData.description}
+            bind:value={$updateForm.description}
             class="rounded-card-sm border border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden w-full px-4 py-2 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
             placeholder="Décrivez le produit"
             required
@@ -1150,28 +1136,43 @@
     {/if}
 {/snippet}
 
-{#snippet categorySelect(name: string)}
+{#snippet categorySelectCreate(name: string)}
     <select
         id={name}
         {name}
-        bind:value={formData.category}
+        bind:value={$createForm.category}
         class="h-input rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
         required
     >
         <option value="">Sélectionner une catégorie</option>
-        {#each mockCategories as category}
+        {#each categories as category}
             <option value={category.id}>{category.name}</option>
         {/each}
     </select>
 {/snippet}
 
-{#snippet numberInput(name: string)}
+{#snippet categorySelectEdit(name: string)}
+    <select
+        id={name}
+        {name}
+        bind:value={$updateForm.category}
+        class="h-input rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+        required
+    >
+        <option value="">Sélectionner une catégorie</option>
+        {#each categories as category}
+            <option value={category.id}>{category.name}</option>
+        {/each}
+    </select>
+{/snippet}
+
+{#snippet numberInputCreate(name: string)}
     {#if name === "duration" || name === "bufferTime" || name === "cancellationHours"}
         <input
             id={name}
             type="number"
             {name}
-            bind:value={formData[name]}
+            bind:value={$createForm[name as keyof typeof $createForm]}
             min="0"
             class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
             required
@@ -1179,19 +1180,45 @@
     {/if}
 {/snippet}
 
-{#snippet textInput(name: string)}
+{#snippet numberInputEdit(name: string)}
+    {#if name === "duration" || name === "bufferTime" || name === "cancellationHours"}
+        <input
+            id={name}
+            type="number"
+            {name}
+            bind:value={$updateForm[name as keyof typeof $updateForm]}
+            min="0"
+            class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+            required
+        />
+    {/if}
+{/snippet}
+
+{#snippet textInputCreate(name: string)}
     {#if name === "stripeProductId"}
         <input
             id={name}
             type="text"
             {name}
-            bind:value={formData.stripeProductId}
+            bind:value={$createForm.stripeProductId}
             class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
         />
     {/if}
 {/snippet}
 
-{#snippet statusRadio(name: string)}
+{#snippet textInputEdit(name: string)}
+    {#if name === "stripeProductId"}
+        <input
+            id={name}
+            type="text"
+            {name}
+            bind:value={$updateForm.stripeProductId}
+            class="h-input rounded-card-sm border-border-input bg-background placeholder:text-foreground-alt/50 hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border px-4 text-base focus:ring-2 focus:ring-offset-2 sm:text-sm transition-all"
+        />
+    {/if}
+{/snippet}
+
+{#snippet statusRadioEdit(name: string)}
     {#if name === "status"}
         <div class="flex gap-4">
             <label class="flex items-center gap-2 cursor-pointer">
@@ -1199,7 +1226,7 @@
                     type="radio"
                     name="status"
                     value="draft"
-                    bind:group={formData.status}
+                    bind:group={$updateForm.status}
                     class="w-4 h-4 text-dark border-gray-300 focus:ring-dark"
                 />
                 <span class="text-sm">Brouillon</span>
@@ -1209,7 +1236,7 @@
                     type="radio"
                     name="status"
                     value="published"
-                    bind:group={formData.status}
+                    bind:group={$updateForm.status}
                     class="w-4 h-4 text-dark border-gray-300 focus:ring-dark"
                 />
                 <span class="text-sm">Publié</span>
@@ -1218,7 +1245,7 @@
     {/if}
 {/snippet}
 
-{#snippet availabilityRadio(name: string)}
+{#snippet availabilityRadioCreate(name: string)}
     {#if name === "availability"}
         <div class="flex gap-4">
             <label class="flex items-center gap-2 cursor-pointer">
@@ -1226,7 +1253,7 @@
                     type="radio"
                     name="availability"
                     value="in-person"
-                    bind:group={formData.availability}
+                    bind:group={$createForm.availability}
                     class="w-4 h-4 text-dark border-gray-300 focus:ring-dark"
                 />
                 <span class="text-sm">Présentiel</span>
@@ -1236,7 +1263,7 @@
                     type="radio"
                     name="availability"
                     value="online"
-                    bind:group={formData.availability}
+                    bind:group={$createForm.availability}
                     class="w-4 h-4 text-dark border-gray-300 focus:ring-dark"
                 />
                 <span class="text-sm">En ligne</span>
@@ -1246,7 +1273,44 @@
                     type="radio"
                     name="availability"
                     value="hybrid"
-                    bind:group={formData.availability}
+                    bind:group={$createForm.availability}
+                    class="w-4 h-4 text-dark border-gray-300 focus:ring-dark"
+                />
+                <span class="text-sm">Hybride</span>
+            </label>
+        </div>
+    {/if}
+{/snippet}
+
+{#snippet availabilityRadioEdit(name: string)}
+    {#if name === "availability"}
+        <div class="flex gap-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                    type="radio"
+                    name="availability"
+                    value="in-person"
+                    bind:group={$updateForm.availability}
+                    class="w-4 h-4 text-dark border-gray-300 focus:ring-dark"
+                />
+                <span class="text-sm">Présentiel</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                    type="radio"
+                    name="availability"
+                    value="online"
+                    bind:group={$updateForm.availability}
+                    class="w-4 h-4 text-dark border-gray-300 focus:ring-dark"
+                />
+                <span class="text-sm">En ligne</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                    type="radio"
+                    name="availability"
+                    value="hybrid"
+                    bind:group={$updateForm.availability}
                     class="w-4 h-4 text-dark border-gray-300 focus:ring-dark"
                 />
                 <span class="text-sm">Hybride</span>

@@ -62,8 +62,8 @@
     let { data }: Props = $props();
 
     // Use promotion codes from server data
-    let promotionCodes = $state<PromotionCode[]>(data.promotionCodes || []);
-    let coupons = $state<Coupon[]>(data.coupons || []);
+    let promotionCodes: PromotionCode[] = $derived(data.promotionCodes ?? []);
+    let coupons: Coupon[] = $derived(data.coupons ?? []);
 
     // Initialize superforms for create, update, and delete
     const {

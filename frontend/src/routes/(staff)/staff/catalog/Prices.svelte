@@ -49,8 +49,8 @@
     let { data }: Props = $props();
 
     // Extract prices and products from page data
-    let prices = $state<Price[]>(data.prices || []);
-    let products = $state(data.products || []);
+    let prices: Price[] = $derived(data.prices ?? []);
+    let products = $derived(data.products ?? []);
 
     // Product filter state (single select)
     const ALL_PRODUCTS = "";
