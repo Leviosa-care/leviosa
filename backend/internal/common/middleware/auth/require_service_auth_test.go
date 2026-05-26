@@ -45,7 +45,7 @@ func TestGetServiceInfoFromContext(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			if tt.contextValue != nil {
-				ctx = context.WithValue(ctx, ServiceContextKey, tt.contextValue)
+				ctx = context.WithValue(ctx, serviceContextKey, tt.contextValue)
 			}
 
 			serviceInfo, err := GetServiceInfoFromContext(ctx)

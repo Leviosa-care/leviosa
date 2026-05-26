@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/services"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/ctxutil"
@@ -18,8 +19,10 @@ type ServiceInfo struct {
 	Name string `json:"name"`
 }
 
-// ServiceContextKey is the key used to store service info in request context
-const ServiceContextKey = "service_info"
+type serviceContextKeyType struct{}
+
+// serviceContextKey is the unexported key used to store service info in request context.
+var serviceContextKey = serviceContextKeyType{}
 
 // RequireServiceAuth validates service authentication headers and makes service info available in context
 func (m *SessionAuthMiddleware) RequireServiceAuth(next mw.Handler) mw.Handler {
@@ -68,9 +71,7 @@ func (m *SessionAuthMiddleware) RequireServiceAuth(next mw.Handler) mw.Handler {
 			return
 		}
 
-		// Validate service key against Vault
-		// TODO: Implement Vault service key validation once Vault client is added to middleware
-		// For now, we'll use a placeholder validation
+		// Validate service key against Vault (with caching)
 		if !m.validateServiceKey(ctx, serviceName, serviceKey) {
 			logger.WarnContext(ctx, "Service auth middleware: Invalid service key",
 				"operation", "require_service_auth",
@@ -87,7 +88,7 @@ func (m *SessionAuthMiddleware) RequireServiceAuth(next mw.Handler) mw.Handler {
 		}
 
 		// Add service info to context
-		ctx = context.WithValue(ctx, ServiceContextKey, serviceInfo)
+		ctx = context.WithValue(ctx, serviceContextKey, serviceInfo)
 		r = r.WithContext(ctx)
 
 		logger.InfoContext(ctx, "Service auth middleware: Service authentication successful",
@@ -101,62 +102,15 @@ func (m *SessionAuthMiddleware) RequireServiceAuth(next mw.Handler) mw.Handler {
 	}
 }
 
-// validateServiceKey validates the service key against stored service credentials in Vault
+// validateServiceKey validates the service key against stored service credentials in Vault.
+// The key hash is cached in memory with a configurable TTL to avoid a Vault round-trip on every request.
 func (m *SessionAuthMiddleware) validateServiceKey(ctx context.Context, serviceName, serviceKey string) bool {
 	logger, err := ctxutil.GetLoggerFromContext(ctx)
 	if err != nil {
-		// If we can't get logger, continue with validation but log to stderr
 		return false
 	}
 
-	// Get the Vault path for this service's API key
-	vaultPath := services.ServiceAPIKeyPath(serviceName)
-
-	logger.InfoContext(ctx, "Service auth middleware: Validating service key with Vault",
-		"operation", "validate_service_key",
-		"service_name", serviceName,
-		"vault_path", vaultPath)
-
-	// Read the stored API key from Vault
-	secret, err := m.vaultClient.Logical().Read(vaultPath)
-	if err != nil {
-		logger.ErrorContext(ctx, "Service auth middleware: Failed to read service key from Vault",
-			"operation", "validate_service_key",
-			"service_name", serviceName,
-			"vault_path", vaultPath,
-			"error", err)
-		return false
-	}
-
-	if secret == nil || secret.Data == nil {
-		logger.WarnContext(ctx, "Service auth middleware: Service key not found in Vault",
-			"operation", "validate_service_key",
-			"service_name", serviceName,
-			"vault_path", vaultPath)
-		return false
-	}
-
-	// Extract the stored key hash from Vault response
-	// Vault KV v2 nests data under "data" key
-	data, ok := secret.Data["data"].(map[string]interface{})
-	if !ok {
-		logger.ErrorContext(ctx, "Service auth middleware: Invalid Vault response format",
-			"operation", "validate_service_key",
-			"service_name", serviceName,
-			"vault_path", vaultPath)
-		return false
-	}
-
-	storedKeyHash, ok := data["key_hash"].(string)
-	if !ok || storedKeyHash == "" {
-		logger.WarnContext(ctx, "Service auth middleware: Missing or invalid key_hash in Vault",
-			"operation", "validate_service_key",
-			"service_name", serviceName,
-			"vault_path", vaultPath)
-		return false
-	}
-
-	// Hash the provided key and compare with stored hash
+	// Hash the provided key once for comparison.
 	providedKeyBytes, err := encx.SerializeValue(serviceKey)
 	if err != nil {
 		logger.ErrorContext(ctx, "Service auth middleware: Failed to serialize service key",
@@ -167,7 +121,72 @@ func (m *SessionAuthMiddleware) validateServiceKey(ctx context.Context, serviceN
 	}
 	providedKeyHash := m.crypto.HashBasic(ctx, providedKeyBytes)
 
-	isValid := storedKeyHash == providedKeyHash
+	// Check the cache first.
+	storedKeyHash, ok := m.getCachedKeyHash(serviceName)
+	if ok {
+		// Cache hit (within TTL) – compare directly, no Vault round-trip.
+		isValid := storedKeyHash == providedKeyHash
+		if isValid {
+			logger.InfoContext(ctx, "Service auth middleware: Service key validation successful (cached)",
+				"operation", "validate_service_key",
+				"service_name", serviceName)
+		} else {
+			logger.WarnContext(ctx, "Service auth middleware: Service key validation failed (cached)",
+				"operation", "validate_service_key",
+				"service_name", serviceName)
+		}
+		return isValid
+	}
+
+	// Cache miss or expired – fetch from Vault.
+	vaultPath := services.ServiceAPIKeyPath(serviceName)
+
+	logger.InfoContext(ctx, "Service auth middleware: Fetching service key from Vault",
+		"operation", "validate_service_key",
+		"service_name", serviceName,
+		"vault_path", vaultPath)
+
+	secretData, err := m.secretReader.Read(ctx, vaultPath)
+	if err != nil {
+		logger.ErrorContext(ctx, "Service auth middleware: Failed to read service key from Vault",
+			"operation", "validate_service_key",
+			"service_name", serviceName,
+			"vault_path", vaultPath,
+			"error", err)
+		return false
+	}
+
+	if secretData == nil || secretData.Data == nil {
+		logger.WarnContext(ctx, "Service auth middleware: Service key not found in Vault",
+			"operation", "validate_service_key",
+			"service_name", serviceName,
+			"vault_path", vaultPath)
+		return false
+	}
+
+	// Vault KV v2 nests data under the "data" key.
+	data, ok := secretData.Data["data"].(map[string]interface{})
+	if !ok {
+		logger.ErrorContext(ctx, "Service auth middleware: Invalid Vault response format",
+			"operation", "validate_service_key",
+			"service_name", serviceName,
+			"vault_path", vaultPath)
+		return false
+	}
+
+	fetchedKeyHash, ok := data["key_hash"].(string)
+	if !ok || fetchedKeyHash == "" {
+		logger.WarnContext(ctx, "Service auth middleware: Missing or invalid key_hash in Vault",
+			"operation", "validate_service_key",
+			"service_name", serviceName,
+			"vault_path", vaultPath)
+		return false
+	}
+
+	// Update the cache.
+	m.setCachedKeyHash(serviceName, fetchedKeyHash)
+
+	isValid := fetchedKeyHash == providedKeyHash
 
 	if isValid {
 		logger.InfoContext(ctx, "Service auth middleware: Service key validation successful",
@@ -182,9 +201,37 @@ func (m *SessionAuthMiddleware) validateServiceKey(ctx context.Context, serviceN
 	return isValid
 }
 
+// getCachedKeyHash returns the cached key hash for the given service if it exists and is not expired.
+func (m *SessionAuthMiddleware) getCachedKeyHash(serviceName string) (string, bool) {
+	m.cacheMu.RLock()
+	defer m.cacheMu.RUnlock()
+
+	entry, exists := m.serviceKeyCache[serviceName]
+	if !exists {
+		return "", false
+	}
+
+	if time.Since(entry.fetchedAt) > m.cacheTTL {
+		return "", false
+	}
+
+	return entry.keyHash, true
+}
+
+// setCachedKeyHash stores the key hash for the given service in the cache.
+func (m *SessionAuthMiddleware) setCachedKeyHash(serviceName, keyHash string) {
+	m.cacheMu.Lock()
+	defer m.cacheMu.Unlock()
+
+	m.serviceKeyCache[serviceName] = &cachedKeyEntry{
+		keyHash:   keyHash,
+		fetchedAt: time.Now(),
+	}
+}
+
 // GetServiceInfoFromContext extracts service info from request context
 func GetServiceInfoFromContext(ctx context.Context) (*ServiceInfo, error) {
-	serviceInfo, ok := ctx.Value(ServiceContextKey).(*ServiceInfo)
+	serviceInfo, ok := ctx.Value(serviceContextKey).(*ServiceInfo)
 	if !ok {
 		return nil, errs.NewInvalidValueErr("service info not found in context")
 	}
