@@ -13,7 +13,7 @@ type MessagingService interface {
 	ListThreads(ctx context.Context, userID uuid.UUID) ([]domain.ThreadSummary, error)
 	CreateThread(ctx context.Context, currentUserID, participantID uuid.UUID, currentUserRole identity.Role) (*domain.Thread, error)
 	GetMessages(ctx context.Context, threadID, userID uuid.UUID, limit int, cursor string) (*domain.ThreadMessagesResponse, error)
-	SendMessage(ctx context.Context, threadID, userID uuid.UUID, body string) (*domain.Message, error)
+	SendMessage(ctx context.Context, threadID, userID uuid.UUID, body string) (*domain.MessageResponse, error)
 	MarkAsRead(ctx context.Context, threadID, userID uuid.UUID) error
 	GetUnreadCount(ctx context.Context, userID uuid.UUID) (int, error)
 }

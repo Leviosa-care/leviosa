@@ -20,6 +20,12 @@ type service struct {
 	crypto      encx.CryptoService
 	bookChecker ports.BookingChecker
 	nameFetcher ports.UserNameFetcher
+	broker      Broker
+}
+
+// Broker publishes SSE events when a new message is created.
+type Broker interface {
+	Publish(threadID uuid.UUID, msg *domain.MessageResponse)
 }
 
 func New(
@@ -27,12 +33,14 @@ func New(
 	crypto encx.CryptoService,
 	bookChecker ports.BookingChecker,
 	nameFetcher ports.UserNameFetcher,
+	broker Broker,
 ) ports.MessagingService {
 	return &service{
 		repo:        repo,
 		crypto:      crypto,
 		bookChecker: bookChecker,
 		nameFetcher: nameFetcher,
+		broker:      broker,
 	}
 }
 
@@ -187,7 +195,7 @@ func (s *service) GetMessages(ctx context.Context, threadID, userID uuid.UUID, l
 	return response, nil
 }
 
-func (s *service) SendMessage(ctx context.Context, threadID, userID uuid.UUID, body string) (*domain.Message, error) {
+func (s *service) SendMessage(ctx context.Context, threadID, userID uuid.UUID, body string) (*domain.MessageResponse, error) {
 	isParticipant, err := s.repo.IsParticipant(ctx, threadID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("check participation: %w", err)
@@ -210,7 +218,20 @@ func (s *service) SendMessage(ctx context.Context, threadID, userID uuid.UUID, b
 		return nil, fmt.Errorf("persist message: %w", err)
 	}
 
-	return message, nil
+	response := &domain.MessageResponse{
+		ID:        message.ID,
+		ThreadID:  message.ThreadID,
+		SenderID:  message.SenderID,
+		Body:      message.Body,
+		CreatedAt: message.CreatedAt,
+		ReadAt:    message.ReadAt,
+	}
+
+	if s.broker != nil {
+		s.broker.Publish(threadID, response)
+	}
+
+	return response, nil
 }
 
 func (s *service) MarkAsRead(ctx context.Context, threadID, userID uuid.UUID) error {
