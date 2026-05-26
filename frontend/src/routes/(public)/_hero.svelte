@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Button from "$lib/ui/Button.svelte";
     import { reveal } from "$lib/actions/reveal";
 </script>
 
@@ -52,7 +51,7 @@
                 >
                     Prendre rendez-vous
                     <span
-                        class="iconify group-hover:trandark-x-0.5 transition-transform"
+                        class="iconify group-hover:translate-x-0.5 transition-transform"
                         data-icon="lucide:arrow-right"
                         data-width="18"
                         data-stroke-width="1.5"
@@ -70,28 +69,19 @@
             <div class="mt-8 flex items-center gap-4 text-sm text-dark-500" use:reveal={{ preset: "fade-up", delay: 300 }}>
                 <div class="flex -space-x-2">
                     <div
-                        class="w-8 h-8 rounded-full border-2 border-white bg-dark-200 flex items-center justify-center text-xs overflow-hidden"
+                        class="w-8 h-8 rounded-full border-2 border-white bg-dark-200 flex items-center justify-center text-xs font-medium text-dark-600"
                     >
-                        <img
-                            src="https://ui-avatars.com/api/?name=Alex&background=random"
-                            alt="User"
-                        />
+                        A
                     </div>
                     <div
-                        class="w-8 h-8 rounded-full border-2 border-white bg-dark-200 flex items-center justify-center text-xs overflow-hidden"
+                        class="w-8 h-8 rounded-full border-2 border-white bg-dark-200 flex items-center justify-center text-xs font-medium text-dark-600"
                     >
-                        <img
-                            src="https://ui-avatars.com/api/?name=Sarah&background=random"
-                            alt="User"
-                        />
+                        S
                     </div>
                     <div
-                        class="w-8 h-8 rounded-full border-2 border-white bg-dark-200 flex items-center justify-center text-xs overflow-hidden"
+                        class="w-8 h-8 rounded-full border-2 border-white bg-dark-200 flex items-center justify-center text-xs font-medium text-dark-600"
                     >
-                        <img
-                            src="https://ui-avatars.com/api/?name=Mike&background=random"
-                            alt="User"
-                        />
+                        M
                     </div>
                 </div>
                 <p class="font-medium">
@@ -105,7 +95,7 @@
         <div class="relative w-full mt-4 lg:mt-0 select-none" use:reveal={{ preset: "fade-in-scale", delay: 200 }}>
             <!-- Decorative Background Blob -->
             <div
-                class="absolute top-1/2 left-1/2 -trandark-x-1/2 -trandark-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-dark-100 to-white rounded-full blur-3xl opacity-60 -z-10"
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-dark-100 to-white rounded-full blur-3xl opacity-60 -z-10"
             ></div>
 
             <!-- UI Card Component: Booking Interface Representation -->
@@ -263,30 +253,4 @@
     </div>
 </div>
 
-{#snippet content()}
-    <div
-        class="flex flex-col items-center justify-between gap-8 lg:gap-24 p-6 lg:p-24 mt-18 border border-blue-500"
-    >
-        <div
-            class="lg:w-full w-fit grid gap-6 lg:gap-8 border border-red-400 max-w-2xl lg:max-w-none"
-        >
-            <h1
-                class="text-3xl sm:text-4xl lg:text-6xl text-dark-900 font-bold"
-            >
-                Optimise ton corps <br class="lg:block" /> et apaise ton esprit
-            </h1>
-            <p
-                class="text-foreground-alt font-normal leading-relaxed text-base lg:text-lg max-w-md lg:max-w-160"
-            >
-                Réserve tes séances instantanément : un accompagnement
-                professionnel quand tu en as le plus besoin.
-            </p>
-            <Button class="text-white justify-self-start"
-                >Prendre rendez vous</Button
-            >
-        </div>
-        <div
-            class="bg-dark-50 lg:w-full w-fit aspect-6/4 border border-green-400"
-        ></div>
-    </div>
-{/snippet}
+
