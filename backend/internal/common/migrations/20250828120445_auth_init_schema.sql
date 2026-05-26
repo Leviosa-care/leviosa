@@ -90,12 +90,7 @@ CREATE TABLE auth.partners (
     category_ids UUID[],                             -- Catalog category UUIDs this partner offers services for
     product_ids UUID[],                              -- Catalog product UUIDs this partner offers services for
 
-    -- Stripe Connect integration (sensitive financial data remains encrypted)
-    stripe_connected_account_id_encrypted BYTEA,     -- Encrypted Stripe Connected Account ID
-    stripe_account_status VARCHAR(20) DEFAULT 'pending', -- Stripe account status (pending, active, restricted, disabled)
-    stripe_onboarding_complete BOOLEAN DEFAULT FALSE, -- Whether Stripe onboarding is complete
-
-    -- Encryption metadata (only needed for Stripe account ID)
+    -- Encryption metadata
     dek_encrypted BYTEA NOT NULL,
     key_version INTEGER NOT NULL DEFAULT 1,
 
@@ -107,8 +102,6 @@ CREATE TABLE auth.partners (
 -- Indexes for partners table
 CREATE INDEX idx_partners_id ON auth.partners (id);
 CREATE INDEX idx_partners_user_id ON auth.partners (user_id);
-CREATE INDEX idx_partners_stripe_account_status ON auth.partners (stripe_account_status);
-CREATE INDEX idx_partners_stripe_onboarding_complete ON auth.partners (stripe_onboarding_complete);
 CREATE INDEX idx_partners_created_at ON auth.partners (created_at);
 
 CREATE TRIGGER update_partners_updated_at
