@@ -68,7 +68,11 @@ import (
 	roomRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/postgres/room"
 	roomScheduleRepo "github.com/Leviosa-care/leviosa/backend/internal/booking/adapters/postgres"
 	bookingAuthuser "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/authuser"
+	bookingNotification "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/notification"
 	bookingStripe "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/stripe"
+
+	// Notification
+	smtpClient "github.com/Leviosa-care/leviosa/backend/internal/notification/infrastructure/smtp"
 
 	// Common
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
@@ -165,6 +169,9 @@ type Container struct {
 
 	// Messaging Services
 	MessagingService messagingPorts.MessagingService
+
+	// Notification
+	BookingNotificationService bookingPorts.BookingNotificationService
 }
 
 // NewContainer creates and wires all dependencies
@@ -420,14 +427,27 @@ func (c *Container) setupServices(ctx context.Context) error {
 
 	c.AvailabilityService = availabilitySvc.New(c.AvailabilityRepo, c.AllocationRepo, c.RoomRepo, c.RoomScheduleRepo, c.ProductService, c.Crypto)
 
-	// Note: notificationService is nil - not implemented yet
+	notificationAdapter := bookingNotification.NewBookingNotificationAdapter(
+		smtpClient.NewSMTPClient(smtpClient.SMTPConfig{
+			Host:     c.Config.SMTPHost,
+			Port:     c.Config.SMTPPort,
+			Username: c.Config.SMTPUsername,
+			Password: c.Config.SMTPPassword,
+		}),
+		bookingNotification.NewInProcessUserFetcher(c.UserService),
+		bookingNotification.NewInProcessRoomFetcher(c.RoomService),
+		bookingNotification.NewInProcessBuildingFetcher(c.BuildingService),
+		c.ProductService,
+	)
+	c.BookingNotificationService = notificationAdapter
+
 	c.BookingService = bookingSvc.New(
 		c.BookingRepo,
 		c.AvailabilityRepo,
 		bookingStripe,
 		c.ProductService,
 		c.PriceService,
-		nil,
+		notificationAdapter,
 		c.Crypto,
 		bookingSvc.WithRoomService(c.RoomService),
 		bookingSvc.WithAuthUserClient(c.BookingAuthuserCLi),

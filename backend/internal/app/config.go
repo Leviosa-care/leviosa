@@ -43,6 +43,12 @@ type Config struct {
 	StripeSecretKey      string
 	StripeWebhookSecret  string
 
+	// SMTP
+	SMTPHost     string
+	SMTPPort     int
+	SMTPUsername string
+	SMTPPassword string
+
 	// OAuth
 	GoogleClientID     string
 	GoogleClientSecret string
@@ -103,6 +109,12 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 		// Stripe
 		StripeSecretKey:     getEnv("STRIPE_SECRET_KEY", ""),
 		StripeWebhookSecret: getEnv("STRIPE_WEBHOOK_SECRET", ""),
+
+		// SMTP
+		SMTPHost:     getEnv("SMTP_HOST", "smtp.gmail.com"),
+		SMTPPort:     getEnvInt("SMTP_PORT", 587),
+		SMTPUsername: getEnv("SMTP_USERNAME", ""),
+		SMTPPassword: getEnv("SMTP_PASSWORD", ""),
 
 		// OAuth
 		GoogleClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
