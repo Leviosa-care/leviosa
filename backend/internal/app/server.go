@@ -60,12 +60,15 @@ func (s *Server) Start(ctx context.Context) error {
 	s.setupRoutes(mux)
 
 	// Create HTTP server
+	// WriteTimeout is 0 (disabled) because SSE connections stay open
+	// indefinitely. Individual handlers are protected by context cancellation
+	// and the server's graceful shutdown.
 	s.httpServer = &http.Server{
 		Addr:         fmt.Sprintf(":%d", s.container.Config.ServerPort),
 		Handler:      s.applyMiddleware(mux),
 		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		WriteTimeout: 0, // disabled for SSE
+		IdleTimeout:  120 * time.Second,
 	}
 
 	s.logger.InfoContext(ctx, "Starting server", "port", s.container.Config.ServerPort)
@@ -232,6 +235,7 @@ func (s *Server) setupMessagingRoutes(router *http.ServeMux) {
 	messagingH := messagingHandler.New(
 		s.container.MessagingService,
 		s.container.AuthMw,
+		s.container.MessagingBroker,
 	)
 	messagingH.RegisterRoutes(router)
 }

@@ -48,6 +48,7 @@ import (
 	messagingBooking     "github.com/Leviosa-care/leviosa/backend/internal/messaging/infrastructure/booking"
 	messagingAuthuser    "github.com/Leviosa-care/leviosa/backend/internal/messaging/infrastructure/authuser"
 	messagingRepo        "github.com/Leviosa-care/leviosa/backend/internal/messaging/infrastructure/postgres"
+	messagingSSE         "github.com/Leviosa-care/leviosa/backend/internal/messaging/infrastructure/sse"
 	messagingPorts       "github.com/Leviosa-care/leviosa/backend/internal/messaging/ports"
 
 	// Booking
@@ -166,6 +167,9 @@ type Container struct {
 
 	// Messaging Repositories
 	MessageRepo messagingPorts.MessageRepository
+
+	// Messaging Infrastructure
+	MessagingBroker *messagingSSE.Broker
 
 	// Messaging Services
 	MessagingService messagingPorts.MessagingService
@@ -458,7 +462,8 @@ func (c *Container) setupServices(ctx context.Context) error {
 	// Messaging services
 	bookChecker := messagingBooking.New(c.BookingService)
 	nameFetcher := messagingAuthuser.New(c.UserService)
-	c.MessagingService = messagingSvc.New(c.MessageRepo, c.Crypto, bookChecker, nameFetcher)
+	c.MessagingBroker = messagingSSE.NewBroker(nil) // logger set later in server
+	c.MessagingService = messagingSvc.New(c.MessageRepo, c.Crypto, bookChecker, nameFetcher, c.MessagingBroker)
 
 	return nil
 }
