@@ -1,4 +1,4 @@
-import type { Actions, RequestEvent } from "./$types"
+import type { Actions, PageServerLoad, RequestEvent } from "./$types"
 import { fail, redirect } from "@sveltejs/kit"
 
 import { env } from "$env/dynamic/private";
@@ -11,6 +11,19 @@ import { parseDate } from "@internationalized/date";
 import { pad } from "$lib/utils/pad"
 import { mapGenderToBackend, formatPhoneToE164 } from "$lib/utils/auth-helpers";
 import { getCookieDomain } from "$lib/server/hostname";
+
+type Category = {
+    id: string;
+    name: string;
+    description: string;
+};
+
+type Product = {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+};
 
 
 const schema = type({
@@ -51,7 +64,7 @@ const defaults = {
     product_ids: [],
 } as typeof schema.infer
 
-export const load = async ({ cookies, url }: RequestEvent) => {
+export const load: PageServerLoad = async ({ cookies, url, fetch }: RequestEvent) => {
     // Get all data from registration cookies (set by previous steps)
     const regGeneralCookie = cookies.get("reg_general");
     const regAddressCookie = cookies.get("reg_address");
@@ -108,7 +121,30 @@ export const load = async ({ cookies, url }: RequestEvent) => {
         },
         arktype(schema, { defaults })
     );
-    return { form };
+
+    // Fetch categories and products for the multi-select pickers
+    let categories: Category[] = [];
+    let products: Product[] = [];
+
+    try {
+        const categoriesRes = await fetch(`${env.API_URL}/categories`);
+        if (categoriesRes.ok) {
+            categories = await categoriesRes.json();
+        }
+    } catch {
+        // Categories fetch failed — continue with empty list
+    }
+
+    try {
+        const productsRes = await fetch(`${env.API_URL}/products`);
+        if (productsRes.ok) {
+            products = await productsRes.json();
+        }
+    } catch {
+        // Products fetch failed — continue with empty list
+    }
+
+    return { form, categories, products };
 }
 
 
