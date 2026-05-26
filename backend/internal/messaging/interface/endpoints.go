@@ -174,16 +174,7 @@ func (h *handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := domain.MessageResponse{
-		ID:        message.ID,
-		ThreadID:  message.ThreadID,
-		SenderID:  message.SenderID,
-		Body:      message.Body,
-		CreatedAt: message.CreatedAt,
-		ReadAt:    message.ReadAt,
-	}
-
-	httpx.RespondWithJSON(w, response, http.StatusCreated)
+	httpx.RespondWithJSON(w, message, http.StatusCreated)
 }
 
 func (h *handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {

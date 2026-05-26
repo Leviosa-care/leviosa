@@ -18,4 +18,8 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /threads/{id}/messages", RequireStandard(mw.EnableCORS(h.SendMessage)))
 	router.HandleFunc("POST /threads/{id}/read", RequireStandard(mw.EnableCORS(h.MarkAsRead)))
 	router.HandleFunc("GET /threads/unread-count", RequireStandard(mw.EnableCORS(h.GetUnreadCount)))
+
+	// SSE endpoint — no CORS wrapper because SSE uses its own streaming response.
+	// CORS headers are set directly in the handler.
+	router.HandleFunc("GET /threads/{id}/events", RequireStandard(h.StreamThreadEvents))
 }
