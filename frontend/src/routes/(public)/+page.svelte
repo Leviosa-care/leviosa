@@ -11,7 +11,7 @@
     // let { cards } = data
 </script>
 
-<main class="relative pt-24 lg:pt-32 overflow-hidden">
+<main class="relative overflow-hidden">
     <Hero />
     <Services />
     <Why />
