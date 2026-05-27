@@ -184,7 +184,7 @@
     </div>
 
     <!-- Content: Sticky Sidebar + Products -->
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
         <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-10 lg:gap-16 items-start">
             <!-- Sticky Category Sidebar -->
             <div class="lg:sticky lg:top-24" use:reveal={{ preset: "fade-up", delay: 150 }}>
