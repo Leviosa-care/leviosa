@@ -1,8 +1,23 @@
 import type { PageServerLoad } from "./$types";
 import { env } from "$env/dynamic/private";
 import { error } from "@sveltejs/kit";
+import { mockCategories, mockProducts, mockPrices } from "$lib/data/mockData";
 
 export const load: PageServerLoad = async ({ fetch }) => {
+    if (env.USE_MOCK_DATA === "true") {
+        const pricesByProduct: Record<string, number> = {};
+        for (const price of mockPrices) {
+            if (price.isActive && price.interval === "one_time" && !(price.productId in pricesByProduct)) {
+                pricesByProduct[price.productId] = price.amount;
+            }
+        }
+        return {
+            categories: mockCategories,
+            products: mockProducts.map((p) => ({ ...p, category: { id: p.category, name: "" } })),
+            pricesByProduct,
+        };
+    }
+
     // Fetch published categories
     const categoriesRes = await fetch(`${env.API_URL}/categories`);
     if (!categoriesRes.ok) {
@@ -27,7 +42,6 @@ export const load: PageServerLoad = async ({ fetch }) => {
                 );
                 if (pricesRes.ok) {
                     const prices = await pricesRes.json();
-                    // Use the first active one_time price as the display price
                     const price = prices.find(
                         (p: { interval: string; isActive: boolean }) =>
                             p.isActive && p.interval === "one_time"
