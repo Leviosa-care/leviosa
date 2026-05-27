@@ -19,11 +19,13 @@
 >
     <!-- Image or placeholder -->
     {#if image}
-        <img
-            src={image}
-            alt={title}
-            class="w-full h-56 md:w-72 md:h-auto flex-shrink-0 object-cover"
-        />
+        <div class="relative w-full h-56 md:w-72 md:h-auto flex-shrink-0 overflow-hidden">
+            <img
+                src={image}
+                alt={title}
+                class="absolute inset-0 w-full h-full object-cover"
+            />
+        </div>
     {:else}
         <div
             class="bg-gradient-to-br from-dark-100 to-dark-50 w-full h-56 md:w-72 md:h-auto flex-shrink-0 flex items-center justify-center"
