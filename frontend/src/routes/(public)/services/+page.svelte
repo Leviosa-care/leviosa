@@ -38,17 +38,15 @@
     );
 </script>
 
-<div class="bg-gradient-to-b from-white to-[#f7f4ef] min-h-screen">
+<div
+    class="min-h-screen bg-white"
+    style="background-image: radial-gradient(rgba(15,23,42,0.035) 1px, transparent 1px); background-size: 24px 24px;"
+>
     <!-- Hero -->
-    <div class="relative overflow-hidden bg-white border-b border-dark-100">
-        <!-- Ambient dot texture -->
-        <div
-            class="absolute inset-0 opacity-[0.035] pointer-events-none"
-            style="background-image: radial-gradient(#0f172a 1px, transparent 1px); background-size: 24px 24px;"
-        ></div>
+    <div class="relative">
         <!-- Soft gradient overlay -->
         <div
-            class="absolute inset-0 bg-gradient-to-br from-dark-50/60 via-white/70 to-white pointer-events-none"
+            class="absolute inset-0 bg-gradient-to-br from-dark-50/60 via-white/50 to-transparent pointer-events-none"
         ></div>
 
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
@@ -107,7 +105,7 @@
     </div>
 
     <!-- Content: Sticky Sidebar + Products -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
         <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-10 lg:gap-16 items-start">
             <!-- Sticky Category Sidebar -->
             <div class="lg:sticky lg:top-24" use:reveal={{ preset: "fade-up", delay: 150 }}>
