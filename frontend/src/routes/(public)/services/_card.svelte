@@ -2,22 +2,25 @@
     import { ChevronDown, Clock } from "@lucide/svelte";
     import Button from "$lib/ui/Button.svelte";
 
-    let { id, title, description, duration, price, tags }: {
+    let { id, title, description, duration, price, tags, image }: {
         id: string;
         title: string;
         description: string;
         duration: number;
         price: string;
         tags: string[];
+        image?: string;
     } = $props();
 </script>
 
 <div
     class="flex flex-col md:flex-row md:items-center gap-6 md:gap-8 bg-white p-6 md:p-8 rounded-4xl"
 >
-    <div
-        class="bg-dark-200 rounded-3xl w-full h-48 md:aspect-square md:w-64 md:h-auto flex-shrink-0"
-    ></div>
+    {#if image}
+        <img src={image} alt={title} class="rounded-3xl w-full h-48 md:aspect-square md:w-64 md:h-auto flex-shrink-0 object-cover" />
+    {:else}
+        <div class="bg-dark-200 rounded-3xl w-full h-48 md:aspect-square md:w-64 md:h-auto flex-shrink-0"></div>
+    {/if}
     <div class="grid gap-4 w-full">
         <div
             class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"

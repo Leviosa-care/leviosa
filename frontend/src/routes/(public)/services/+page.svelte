@@ -26,6 +26,7 @@
                         ? (data.pricesByProduct[p.id] / 100).toFixed(2).replace(/\.00$/, "")
                         : "",
                     tags: [],
+                    image: p.images?.find((img: any) => img.is_active)?.url ?? p.images?.[0]?.url ?? "",
                 })),
         }));
         return cats;
