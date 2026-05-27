@@ -235,7 +235,7 @@ export const mockProducts = [
                 parent_id: "prod-2",
                 parent_type: "product",
                 url: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop",
-                title: "Lymphatic Drainage",
+                title: "Drainage Lymphatique",
                 is_active: true,
                 created_at: "2025-01-02T11:00:00Z",
             }
@@ -269,8 +269,8 @@ export const mockProducts = [
     },
     {
         id: "prod-4",
-        name: "Executive Performance Coaching",
-        description: "One-on-one coaching for high-performers looking to optimize decision making and leadership presence.",
+        name: "Coaching Performance Exécutive",
+        description: "Coaching individuel pour les hauts performeurs souhaitant optimiser leur prise de décision et leur présence en tant que leader.",
         category: "cat-2",
         duration: 60,
         status: "published" as const,
@@ -287,7 +287,7 @@ export const mockProducts = [
                 parent_id: "prod-4",
                 parent_type: "product",
                 url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop",
-                title: "Executive Performance Coaching",
+                title: "Coaching Performance Exécutive",
                 is_active: true,
                 created_at: "2025-01-04T14:00:00Z",
             }
@@ -295,8 +295,8 @@ export const mockProducts = [
     },
     {
         id: "prod-5",
-        name: "Strength Foundations",
-        description: "Improve range of motion and joint health through functional movement patterns. Build a solid foundation for long-term fitness.",
+        name: "Bases de la Force",
+        description: "Améliorez votre amplitude de mouvement et la santé articulaire grâce aux schémas de mouvement fonctionnel. Bâtissez une base solide pour une condition physique durable.",
         category: "cat-3",
         duration: 90,
         status: "published" as const,
@@ -313,7 +313,7 @@ export const mockProducts = [
                 parent_id: "prod-5",
                 parent_type: "product",
                 url: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&auto=format&fit=crop",
-                title: "Strength Foundations",
+                title: "Bases de la Force",
                 is_active: true,
                 created_at: "2025-01-05T10:15:00Z",
             }
