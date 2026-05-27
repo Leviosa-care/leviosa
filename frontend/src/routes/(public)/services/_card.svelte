@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Clock } from "@lucide/svelte";
+    import { goto } from "$app/navigation";
 
     let { id, title, description, duration, price, tags, image }: {
         id: string;
@@ -13,7 +14,8 @@
 </script>
 
 <div
-    class="group flex flex-col md:flex-row md:items-stretch bg-white rounded-3xl border border-dark-100 hover:border-dark-200 hover:shadow-lg transition-all duration-300 overflow-hidden"
+    onclick={() => goto(`/services/${id}`)}
+    class="group cursor-pointer flex flex-col md:flex-row md:items-stretch bg-white rounded-3xl border border-dark-100 hover:border-dark-200 hover:shadow-lg transition-all duration-300 overflow-hidden"
 >
     <!-- Image or placeholder -->
     {#if image}
@@ -75,7 +77,7 @@
 
         <!-- CTAs -->
         <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center mt-auto pt-2">
-            <a href="/book?product={id}">
+            <a href="/book?product={id}" onclick={(e) => e.stopPropagation()}>
                 <button
                     class="group/btn inline-flex justify-center items-center gap-2 bg-dark-900 hover:bg-dark-800 text-white text-sm font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer w-full sm:w-auto"
                 >
@@ -88,11 +90,13 @@
                     ></span>
                 </button>
             </a>
-            <button
-                class="inline-flex justify-center items-center gap-2 bg-transparent hover:bg-dark-50 border border-dark-200 hover:border-dark-300 text-dark-600 hover:text-dark-900 text-sm font-medium px-6 py-3 rounded-xl transition-all duration-200 cursor-pointer"
+            <a
+                href="/services/{id}"
+                onclick={(e) => e.stopPropagation()}
+                class="inline-flex justify-center items-center gap-2 bg-transparent hover:bg-dark-50 border border-dark-200 hover:border-dark-300 text-dark-600 hover:text-dark-900 text-sm font-medium px-6 py-3 rounded-xl transition-all duration-200"
             >
                 Plus de détails
-            </button>
+            </a>
         </div>
     </div>
 </div>
