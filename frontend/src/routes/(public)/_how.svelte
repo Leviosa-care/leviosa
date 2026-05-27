@@ -2,7 +2,7 @@
     import { reveal } from "$lib/actions/reveal";
 </script>
 
-<section id="how" class="relative py-24 sm:py-32 bg-dark-50 overflow-hidden">
+<section id="how" class="relative py-24 sm:py-32 bg-dark-25 overflow-hidden">
     <div class="max-w-7xl mx-auto px-6 lg:px-8">
         <!-- Section Header -->
         <div class="max-w-2xl mx-auto text-center" use:reveal={{ preset: "fade-up", delay: 100 }}>
