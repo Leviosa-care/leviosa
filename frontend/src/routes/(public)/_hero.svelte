@@ -67,11 +67,12 @@
                     ></span>
                 </button>
 
-                <button
-                    class="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/25 hover:bg-white/20 text-white text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 cursor-pointer"
+                <a
+                    href="#how"
+                    class="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/25 hover:bg-white/20 text-white text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200"
                 >
                     Comment ça fonctionne
-                </button>
+                </a>
             </div>
 
             <!-- Social Proof -->
