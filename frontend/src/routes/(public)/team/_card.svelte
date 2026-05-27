@@ -3,7 +3,7 @@
 
     import { type Partner } from "./types";
 
-    let { firstname, lastname, occupation, quote, tags }: Partner = $props();
+    let { firstname, lastname, occupation, quote, tags, picture }: Partner = $props();
 </script>
 
 <div
@@ -11,7 +11,13 @@
 >
     <div class="grid gap-3 md:gap-4 w-full">
         <div class="flex gap-3 md:gap-4 items-center">
-            <div class="bg-dark-200 rounded-3xl aspect-square w-10 md:w-12 flex-shrink-0"></div>
+            {#if picture}
+                <img src={picture} alt="{firstname} {lastname}" class="rounded-3xl aspect-square w-10 md:w-12 flex-shrink-0 object-cover" />
+            {:else}
+                <div class="bg-dark-200 rounded-3xl aspect-square w-10 md:w-12 flex-shrink-0 flex items-center justify-center text-xs font-semibold text-dark-600">
+                    {firstname[0]}{lastname[0]}
+                </div>
+            {/if}
             <div class="">
                 <h4 class="text-dark-900 font-bold text-lg md:text-2xl">
                     {firstname}

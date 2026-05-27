@@ -4,5 +4,6 @@ export type Partner = {
     occupation: string;
     quote: string;
     tags: string[];
+    picture?: string;
 }
 

@@ -27,6 +27,7 @@
                     occupation: "Ostéopathe D.O",
                     quote: "Le corps garde en mémoire ce que l'esprit oublie. Mon approche vise à libérer ces tensions profondes.",
                     tags: ["Douleurs Chroniques", "Posturologie"],
+                    picture: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&h=200&auto=format&fit=crop&q=80",
                 },
                 {
                     firstname: "Marc",
@@ -34,6 +35,7 @@
                     occupation: "Massothérapeute sportif",
                     quote: "Optimiser la récupération pour permettre une performance durable, sans blessure.",
                     tags: ["Récupération", "Deep Tissue"],
+                    picture: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=200&h=200&auto=format&fit=crop&q=80",
                 },
                 {
                     firstname: "Jean",
@@ -41,6 +43,7 @@
                     occupation: "Massothérapeute sportif",
                     quote: "Optimiser la récupération pour permettre une performance durable, sans blessure.",
                     tags: ["Récupération", "Deep Tissue"],
+                    picture: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&auto=format&fit=crop&q=80",
                 },
             ],
         },
@@ -55,6 +58,7 @@
                     occupation: "Psychologue Clinicienne",
                     quote: "Un espace sécurisant pour comprendre vos mécanismes et retrouver votre sérénité",
                     tags: ["Gestion du stress", "Anxiété"],
+                    picture: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&auto=format&fit=crop&q=80",
                 },
                 {
                     firstname: "David",
@@ -62,6 +66,7 @@
                     occupation: "Coach Exécutif",
                     quote: "Clarifier votre vision pour agir avec impact et confiance dans les moments critiques",
                     tags: ["Leadership", "Prise de décision"],
+                    picture: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&auto=format&fit=crop&q=80",
                 },
             ],
         },
@@ -75,6 +80,7 @@
                     occupation: "Coach Sportif",
                     quote: "Le mouvement est le meilleur médicament. Construisons un corps fort et capable.",
                     tags: ["Force", "Mobilité"],
+                    picture: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=200&h=200&auto=format&fit=crop&q=80",
                 },
                 {
                     firstname: "Sophie",
@@ -82,6 +88,7 @@
                     occupation: "Instructrice Yoga",
                     quote: "Connecter le souffle et le mouvement pour trouver l'équilibre physique et mental.",
                     tags: ["Vinyasa", "Méditation"],
+                    picture: "https://images.unsplash.com/photo-1545389336-cf090694435e?w=200&h=200&auto=format&fit=crop&q=80",
                 },
             ],
         },
