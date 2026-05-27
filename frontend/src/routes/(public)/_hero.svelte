@@ -2,7 +2,7 @@
     import { reveal } from "$lib/actions/reveal";
 </script>
 
-<div class="relative min-h-[90vh] flex items-center overflow-hidden">
+<div class="relative min-h-screen flex items-center overflow-hidden">
     <!-- Background Video -->
     <video
         class="absolute inset-0 w-full h-full object-cover"
