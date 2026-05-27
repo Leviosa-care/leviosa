@@ -3,6 +3,8 @@
     import SideDrawer from "$lib/ui/SideDrawer.svelte";
     import Logo from "./__logo.svelte";
     import { page } from "$app/state";
+    import { onMount, onDestroy } from "svelte";
+    import { browser } from "$app/environment";
     import { type Permissions } from "$lib/security/permissions";
     import { Menu, X } from "@lucide/svelte";
 
@@ -12,6 +14,26 @@
     let { permissions }: Props = $props();
 
     let isMobileMenuOpen = $state(false);
+    let scrolled = $state(false);
+
+    const isHeroPage = $derived(page.url.pathname === "/");
+    const showScrolledState = $derived(!isHeroPage || scrolled);
+
+    function handleScroll() {
+        if (!isHeroPage) { scrolled = false; return; }
+        scrolled = window.scrollY > window.innerHeight;
+    }
+
+    onMount(() => {
+        if (!browser) return;
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        handleScroll();
+    });
+
+    onDestroy(() => {
+        if (!browser) return;
+        window.removeEventListener("scroll", handleScroll);
+    });
 
     interface NavItem {
         link: string;
@@ -24,15 +46,15 @@
         { link: "/about", title: "À propos" },
         { link: "/bookings", title: "Mes réservations" },
     ];
-    // Services · L’équipe · À propos · Réserver
 
     function isActive(path: string): boolean {
         return page.url.pathname.startsWith(path);
     }
+
     const secondaryButtonText =
         permissions.canAccessOps || permissions.canAccessApp
             ? "Voir ton profil"
-            : "S'authentifier";
+            : "S’authentifier";
 
     const secondaryButtonLink = permissions.canAccessOps
         ? "/staff"
@@ -40,16 +62,13 @@
           ? "/app"
           : "/auth";
 
-    // Close drawer when resizing to desktop (xl: 1280px)
     $effect(() => {
-        if (typeof window === "undefined") return;
-
+        if (!browser) return;
         function handleResize() {
             if (window.innerWidth >= 1280 && isMobileMenuOpen) {
                 isMobileMenuOpen = false;
             }
         }
-
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     });
@@ -62,7 +81,9 @@
 />
 
 <div
-    class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-dark-100/50 flex items-center justify-between px-4 py-4 xl:grid xl:grid-cols-[1fr_auto_1fr] xl:py-4 xl:px-12"
+    class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-4 xl:grid xl:grid-cols-[1fr_auto_1fr] xl:py-4 xl:px-12 border-b transition-all duration-300 {showScrolledState
+        ? 'bg-white/80 backdrop-blur-md border-dark-100/50'
+        : 'bg-transparent border-transparent'}"
 >
     <!-- Mobile/Tablet Hamburger (hidden on desktop) -->
     <button
@@ -71,12 +92,12 @@
         aria-expanded={isMobileMenuOpen}
         class="flex items-center justify-center xl:hidden w-11 h-11 cursor-pointer"
     >
-        <Menu size={24} />
+        <Menu size={24} class="transition-colors duration-300 {showScrolledState ? 'text-dark-900' : 'text-white'}" />
     </button>
 
     <!-- Logo -->
     <div class="xl:justify-start">
-        <Logo />
+        <Logo scrolled={showScrolledState} />
     </div>
 
     <!-- Desktop Navigation (hidden below 1280px) -->
@@ -85,9 +106,9 @@
             {#each items as item}
                 <li>
                     <a
-                        class="transition-colors {isActive(item.link)
-                            ? 'text-dark-900 font-semibold'
-                            : 'text-dark-500 hover:text-dark-900'}"
+                        class="transition-colors duration-300 {isActive(item.link)
+                            ? showScrolledState ? 'text-dark-900 font-semibold' : 'text-white font-semibold'
+                            : showScrolledState ? 'text-dark-500 hover:text-dark-900' : 'text-white/80 hover:text-white'}"
                         href={item.link}
                     >
                         {item.title}
@@ -99,8 +120,16 @@
 
     <!-- Desktop Actions (hidden below 1280px) -->
     <div class="hidden xl:flex xl:gap-4 xl:items-center xl:justify-end">
-        <a href="/book"><Button class="rounded-xl py-3 text-white">Réserver maintenant</Button></a>
-        <Button class="rounded-xl py-3 bg-white border border-dark-900 hover:bg-dark-50">
+        <a href="/book">
+            <Button class="rounded-xl py-3 transition-colors duration-300 {showScrolledState
+                ? 'bg-dark-900 text-white hover:bg-dark-800'
+                : 'bg-white text-dark-900 hover:bg-white/90'}">
+                Réserver maintenant
+            </Button>
+        </a>
+        <Button class="rounded-xl py-3 transition-colors duration-300 {showScrolledState
+            ? 'bg-white border border-dark-900 hover:bg-dark-50 text-dark-900'
+            : 'bg-transparent border border-white/60 hover:bg-white/10 text-white'}">
             <a href={secondaryButtonLink}>
                 {secondaryButtonText}
             </a>
