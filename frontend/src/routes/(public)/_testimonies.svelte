@@ -8,6 +8,7 @@
             name: "Emma W.",
             role: "Patiente suivie depuis 2 ans",
             initials: "EW",
+            picture: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=80&h=80&auto=format&fit=crop&q=80",
         },
         {
             quote:
@@ -15,6 +16,7 @@
             name: "Thomas R.",
             role: "Consultation en ostéopathie",
             initials: "TR",
+            picture: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&auto=format&fit=crop&q=80",
         },
         {
             quote:
@@ -22,6 +24,7 @@
             name: "Camille D.",
             role: "Coaching mindset & bien-être",
             initials: "CD",
+            picture: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&auto=format&fit=crop&q=80",
         },
     ];
 </script>
@@ -92,11 +95,13 @@
 
                     <!-- Attribution -->
                     <div class="flex items-center gap-3">
-                        <div
-                            class="w-10 h-10 rounded-full bg-dark-100 flex items-center justify-center text-xs font-semibold text-dark-600"
-                        >
-                            {testimonial.initials}
-                        </div>
+                        {#if testimonial.picture}
+                            <img src={testimonial.picture} alt={testimonial.name} class="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                        {:else}
+                            <div class="w-10 h-10 rounded-full bg-dark-100 flex items-center justify-center text-xs font-semibold text-dark-600 flex-shrink-0">
+                                {testimonial.initials}
+                            </div>
+                        {/if}
                         <div>
                             <div class="text-sm font-semibold text-dark-900">
                                 {testimonial.name}
