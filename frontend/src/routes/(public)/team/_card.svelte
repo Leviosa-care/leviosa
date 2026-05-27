@@ -1,52 +1,74 @@
 <script lang="ts">
-    import Button from "$lib/ui/Button.svelte";
-
+    import { goto } from "$app/navigation";
     import { type Partner } from "./types";
 
-    let { firstname, lastname, occupation, quote, tags, picture }: Partner = $props();
+    let { id, firstname, lastname, occupation, quote, tags, picture }: Partner = $props();
 </script>
 
 <div
-    class="flex items-center gap-6 md:gap-8 bg-white p-6 md:p-8 rounded-4xl border border-dark-50"
+    onclick={() => goto(`/team/${id}`)}
+    class="group cursor-pointer flex flex-col bg-white rounded-3xl border border-dark-100 hover:border-dark-200 hover:shadow-lg transition-all duration-300 overflow-hidden p-6 md:p-8"
 >
-    <div class="grid gap-3 md:gap-4 w-full">
-        <div class="flex gap-3 md:gap-4 items-center">
-            {#if picture}
-                <img src={picture} alt="{firstname} {lastname}" class="rounded-3xl aspect-square w-10 md:w-12 flex-shrink-0 object-cover" />
-            {:else}
-                <div class="bg-dark-200 rounded-3xl aspect-square w-10 md:w-12 flex-shrink-0 flex items-center justify-center text-xs font-semibold text-dark-600">
-                    {firstname[0]}{lastname[0]}
-                </div>
-            {/if}
-            <div class="">
-                <h4 class="text-dark-900 font-bold text-lg md:text-2xl">
-                    {firstname}
-                    {lastname}
-                </h4>
-                <p class="text-dark-700 text-sm md:text-base font-medium">{occupation}</p>
+    <!-- Header: photo + name/occupation -->
+    <div class="flex gap-4 items-center mb-4">
+        {#if picture}
+            <img
+                src={picture}
+                alt="{firstname} {lastname}"
+                class="rounded-2xl aspect-square w-14 md:w-16 flex-shrink-0 object-cover"
+            />
+        {:else}
+            <div
+                class="bg-dark-100 rounded-2xl aspect-square w-14 md:w-16 flex-shrink-0 flex items-center justify-center text-sm font-semibold text-dark-500"
+            >
+                {firstname[0]}{lastname[0]}
             </div>
+        {/if}
+        <div>
+            <h4 class="text-dark-900 font-semibold text-lg md:text-xl tracking-tight">
+                {firstname} {lastname}
+            </h4>
+            <p class="text-dark-500 text-sm font-medium mt-0.5">{occupation}</p>
         </div>
-        <div class="flex flex-wrap gap-2">
-            {#each tags as item}
-                {@render tag(item)}
-            {/each}
-        </div>
-        <p class="max-w-2xl text-sm md:text-base text-dark-700">{quote}</p>
-        <div class="flex flex-col sm:flex-row gap-2 md:gap-4 max-w-md">
-            <Button class="text-white px-6 py-3 md:px-12 md:py-6 rounded-2xl text-sm md:text-base"
-                >Voir le profil</Button
+    </div>
+
+    <!-- Tags -->
+    <div class="flex flex-wrap gap-2 mb-4">
+        {#each tags as item}
+            <div
+                class="inline-flex items-center bg-dark-50 border border-dark-100 rounded-full px-3 py-1.5"
             >
-            <Button
-                class="border border-dark-900 px-6 py-3 md:px-12 md:py-6 bg-transparent text-dark-900 hover:text-dark-800 rounded-2xl text-sm md:text-base"
-            >
-                <p>Réserver</p>
-            </Button>
-        </div>
+                <span class="text-xs font-medium text-dark-600">{item}</span>
+            </div>
+        {/each}
+    </div>
+
+    <!-- Quote -->
+    <p class="text-dark-500 text-sm md:text-base leading-relaxed mb-6 flex-1">
+        {quote}
+    </p>
+
+    <!-- CTAs -->
+    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center mt-auto">
+        <a
+            href="/book?partner={id}"
+            onclick={(e) => e.stopPropagation()}
+            class="inline-flex justify-center items-center gap-2 bg-dark-900 hover:bg-dark-800 text-white text-sm font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+        >
+            Réserver
+            <span
+                class="iconify group-hover:translate-x-0.5 transition-transform"
+                data-icon="lucide:arrow-right"
+                data-width="16"
+                data-stroke-width="2"
+            ></span>
+        </a>
+        <a
+            href="/team/{id}"
+            onclick={(e) => e.stopPropagation()}
+            class="inline-flex justify-center items-center gap-2 bg-transparent hover:bg-dark-50 border border-dark-200 hover:border-dark-300 text-dark-600 hover:text-dark-900 text-sm font-medium px-6 py-3 rounded-xl transition-all duration-200"
+        >
+            Voir le profil
+        </a>
     </div>
 </div>
-
-{#snippet tag(name: string)}
-    <div class="bg-dark-50 rounded-3xl px-3 py-1.5 md:px-4 md:py-2">
-        <p class="text-xs md:text-sm">{name}</p>
-    </div>
-{/snippet}
