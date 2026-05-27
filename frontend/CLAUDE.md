@@ -21,7 +21,6 @@ This is a SvelteKit 5 frontend application using TypeScript, Tailwind CSS v4, an
 ```
 src/
 ├── hooks.server.ts          # Server-side request handling & auth
-├── service-worker.ts        # PWA service worker
 ├── app.html                 # HTML template
 ├── app.css                  # Global styles
 ├── lib/                     # Reusable components and utilities
@@ -60,7 +59,7 @@ npm run prepare
 ## Configuration Files
 
 - `svelte.config.js` - SvelteKit configuration with Node.js adapter and path aliases
-- `vite.config.ts` - Vite configuration with Tailwind CSS v4 integration
+- `vite.config.ts` - Vite configuration with Tailwind CSS v4 and SvelteKitPWA (Workbox) integration
 - `tailwind.config.ts` - Tailwind CSS v4 configuration
 - `tsconfig.json` - TypeScript configuration extending SvelteKit defaults
 
