@@ -1,4 +1,5 @@
 export type Partner = {
+    id: string;
     firstname: string;
     lastname: string;
     occupation: string;
@@ -6,4 +7,3 @@ export type Partner = {
     tags: string[];
     picture?: string;
 }
-
