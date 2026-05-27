@@ -1,5 +1,6 @@
 <script lang="ts">
     import Card from "./_card.svelte";
+    import { Clock } from "@lucide/svelte";
     import { reveal } from "$lib/actions/reveal";
     import type { PageProps } from "./$types";
 
@@ -36,6 +37,14 @@
     let activeDescription = $derived(
         categories.find((c: any) => c.name === activeCategory)?.description ?? "",
     );
+
+    let heroProducts = $derived(
+        data.products.slice(0, 3).map((p: any) => ({
+            name: p.name,
+            category: p.category?.name ?? "",
+            duration: p.duration,
+        })),
+    );
 </script>
 
 <div
@@ -50,55 +59,125 @@
         ></div>
 
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
-            <div class="max-w-3xl">
-                <!-- Badge -->
-                <div
-                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dark-50 border border-dark-200 mb-8"
-                    use:reveal={{ preset: "fade-down", delay: 100 }}
-                >
-                    <span class="text-xs font-semibold text-dark-500 uppercase tracking-wider"
-                        >Notre philosophie</span
+            <div class="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-12 lg:gap-16 items-center">
+                <!-- Left: text content -->
+                <div class="max-w-2xl">
+                    <!-- Badge -->
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dark-50 border border-dark-200 mb-8"
+                        use:reveal={{ preset: "fade-down", delay: 100 }}
                     >
+                        <span class="text-xs font-semibold text-dark-500 uppercase tracking-wider"
+                            >Notre philosophie</span
+                        >
+                    </div>
+
+                    <!-- Headline with weight contrast -->
+                    <h1
+                        class="text-5xl sm:text-6xl lg:text-7xl font-medium tracking-tight text-dark-900 leading-[1.05] mb-6"
+                        use:reveal={{ preset: "fade-up", delay: 150 }}
+                    >
+                        Bien-être Holistique
+                        <br class="hidden sm:block" />
+                        <span class="text-dark-400 font-light">Pour Corps & Esprit</span>
+                    </h1>
+
+                    <p
+                        class="text-lg md:text-xl text-dark-500 leading-relaxed font-normal mb-12"
+                        use:reveal={{ preset: "fade-up", delay: 200 }}
+                    >
+                        Découvrez notre gamme complète de services conçus pour améliorer votre
+                        bien-être physique et mental grâce à des soins d'experts et un
+                        coaching personnalisé.
+                    </p>
+
+                    <!-- Stats row -->
+                    <div
+                        class="flex flex-wrap items-center gap-6 md:gap-10"
+                        use:reveal={{ preset: "fade-up", delay: 250 }}
+                    >
+                        <div>
+                            <p class="text-2xl md:text-3xl font-semibold text-dark-900">2 000+</p>
+                            <p class="text-sm text-dark-500 mt-0.5">clients satisfaits</p>
+                        </div>
+                        <div class="w-px h-10 bg-dark-200 self-stretch"></div>
+                        <div>
+                            <p class="text-2xl md:text-3xl font-semibold text-dark-900">10+</p>
+                            <p class="text-sm text-dark-500 mt-0.5">services disponibles</p>
+                        </div>
+                        <div class="w-px h-10 bg-dark-200 self-stretch"></div>
+                        <div>
+                            <p class="text-2xl md:text-3xl font-semibold text-dark-900">5 ★</p>
+                            <p class="text-sm text-dark-500 mt-0.5">note moyenne</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Headline with weight contrast -->
-                <h1
-                    class="text-5xl sm:text-6xl lg:text-7xl font-medium tracking-tight text-dark-900 leading-[1.05] mb-6"
-                    use:reveal={{ preset: "fade-up", delay: 150 }}
-                >
-                    Bien-être Holistique
-                    <br class="hidden sm:block" />
-                    <span class="text-dark-400 font-light">Pour Corps & Esprit</span>
-                </h1>
+                <!-- Right: highlight cards grid -->
+                <div class="hidden lg:flex flex-col gap-3" use:reveal={{ preset: "fade-up", delay: 200 }}>
+                    {#if heroProducts[0]}
+                        <div
+                            class="bg-dark-900 text-white rounded-2xl p-6 shadow-md"
+                        >
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-xs font-semibold text-white/50 uppercase tracking-wider">
+                                    {heroProducts[0].category}
+                                </span>
+                                <span class="inline-flex items-center gap-1.5 text-xs text-white/60">
+                                    <Clock size={11} />
+                                    {heroProducts[0].duration} min
+                                </span>
+                            </div>
+                            <p class="text-white font-semibold text-lg leading-snug">
+                                {heroProducts[0].name}
+                            </p>
+                        </div>
+                    {/if}
 
-                <p
-                    class="text-lg md:text-xl text-dark-500 leading-relaxed max-w-2xl font-normal mb-12"
-                    use:reveal={{ preset: "fade-up", delay: 200 }}
-                >
-                    Découvrez notre gamme complète de services conçus pour améliorer votre
-                    bien-être physique et mental grâce à des soins d'experts et un
-                    coaching personnalisé.
-                </p>
+                    <div class="grid grid-cols-2 gap-3">
+                        {#if heroProducts[1]}
+                            <div
+                                class="bg-white border border-dark-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200"
+                            >
+                                <div class="flex items-start justify-between gap-2 mb-3">
+                                    <span class="text-xs font-semibold text-dark-400 uppercase tracking-wider leading-tight">
+                                        {heroProducts[1].category}
+                                    </span>
+                                    <span class="inline-flex items-center gap-1 text-xs text-dark-500 flex-shrink-0">
+                                        <Clock size={11} />
+                                        {heroProducts[1].duration} min
+                                    </span>
+                                </div>
+                                <p class="text-dark-900 font-semibold text-sm leading-snug">
+                                    {heroProducts[1].name}
+                                </p>
+                            </div>
+                        {/if}
+                        {#if heroProducts[2]}
+                            <div
+                                class="bg-white border border-dark-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200"
+                            >
+                                <div class="flex items-start justify-between gap-2 mb-3">
+                                    <span class="text-xs font-semibold text-dark-400 uppercase tracking-wider leading-tight">
+                                        {heroProducts[2].category}
+                                    </span>
+                                    <span class="inline-flex items-center gap-1 text-xs text-dark-500 flex-shrink-0">
+                                        <Clock size={11} />
+                                        {heroProducts[2].duration} min
+                                    </span>
+                                </div>
+                                <p class="text-dark-900 font-semibold text-sm leading-snug">
+                                    {heroProducts[2].name}
+                                </p>
+                            </div>
+                        {/if}
+                    </div>
 
-                <!-- Stats row -->
-                <div
-                    class="flex flex-wrap items-center gap-6 md:gap-10"
-                    use:reveal={{ preset: "fade-up", delay: 250 }}
-                >
-                    <div>
-                        <p class="text-2xl md:text-3xl font-semibold text-dark-900">2 000+</p>
-                        <p class="text-sm text-dark-500 mt-0.5">clients satisfaits</p>
-                    </div>
-                    <div class="w-px h-10 bg-dark-200 self-stretch"></div>
-                    <div>
-                        <p class="text-2xl md:text-3xl font-semibold text-dark-900">10+</p>
-                        <p class="text-sm text-dark-500 mt-0.5">services disponibles</p>
-                    </div>
-                    <div class="w-px h-10 bg-dark-200 self-stretch"></div>
-                    <div>
-                        <p class="text-2xl md:text-3xl font-semibold text-dark-900">5 ★</p>
-                        <p class="text-sm text-dark-500 mt-0.5">note moyenne</p>
-                    </div>
+                    {#if data.products.length > 3}
+                        <p class="text-xs text-dark-400 text-right">
+                            +{data.products.length - 3} autres services disponibles
+                        </p>
+                    {/if}
                 </div>
             </div>
         </div>
