@@ -3,10 +3,10 @@
 </script>
 
 <!-- Final CTA Section (Conclusion) -->
-<section class="py-24 bg-white relative overflow-hidden">
+<section class="py-24 bg-dark-50 relative overflow-hidden">
     <!-- Background Glow -->
     <div
-        class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-3xl opacity-30 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100 via-white to-white pointer-events-none"
+        class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-3xl opacity-40 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100 via-transparent to-transparent pointer-events-none"
     ></div>
 
     <div class="relative max-w-3xl mx-auto px-6 text-center z-10">

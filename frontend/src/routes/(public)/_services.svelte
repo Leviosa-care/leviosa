@@ -2,7 +2,7 @@
     import { reveal } from "$lib/actions/reveal";
 </script>
 
-<section id="services" class="py-20 lg:py-24 bg-white border-b border-dark-100">
+<section id="services" class="py-20 lg:py-24 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Section Header -->
         <div
