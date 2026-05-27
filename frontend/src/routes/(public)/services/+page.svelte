@@ -68,7 +68,7 @@
                         use:reveal={{ preset: "fade-down", delay: 100 }}
                     >
                         <span class="text-xs font-semibold text-dark-500 uppercase tracking-wider"
-                            >Notre philosophie</span
+                            >Nos services</span
                         >
                     </div>
 
