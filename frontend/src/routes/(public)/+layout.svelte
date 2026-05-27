@@ -7,8 +7,10 @@
     let { permissions } = data;
 </script>
 
-<div class="grid">
+<div class="min-h-screen flex flex-col">
     <Navigation {permissions} />
-    {@render children()}
+    <main class="flex-1">
+        {@render children()}
+    </main>
     <Footer />
 </div>
