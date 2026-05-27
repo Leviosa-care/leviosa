@@ -99,8 +99,8 @@
 
     <!-- Desktop Actions (hidden below 1280px) -->
     <div class="hidden xl:flex xl:gap-4 xl:items-center xl:justify-end">
-        <a href="/book"><Button class="text-white">Réserver maintenant</Button></a>
-        <Button class="bg-white border border-dark-900 hover:bg-dark-50">
+        <a href="/book"><Button class="rounded-xl py-3 text-white">Réserver maintenant</Button></a>
+        <Button class="rounded-xl py-3 bg-white border border-dark-900 hover:bg-dark-50">
             <a href={secondaryButtonLink}>
                 {secondaryButtonText}
             </a>
