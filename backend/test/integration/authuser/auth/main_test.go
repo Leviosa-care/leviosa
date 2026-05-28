@@ -271,7 +271,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to create partner service: %v", err)
 	}
 
-	service = aggregator.New(otpService, userService, sessionService, partnerService)
+	service = aggregator.New(otpService, userService, sessionService, partnerService, nil)
 
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)

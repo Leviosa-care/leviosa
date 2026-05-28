@@ -42,5 +42,11 @@ func (s *AuthAggregatorService) GuestClaimVerify(ctx context.Context, req *domai
 		return nil, err
 	}
 
+	// Fire-and-forget: claim guest bookings linked to this email.
+	// A failure must never block or roll back account creation.
+	if s.bookingClient != nil {
+		s.bookingClient.ClaimBookings(ctx, userID.String(), claimData.Email)
+	}
+
 	return response, nil
 }

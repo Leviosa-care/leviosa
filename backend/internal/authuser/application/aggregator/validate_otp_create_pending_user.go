@@ -16,22 +16,13 @@ func (s *AuthAggregatorService) ValidateOTPCreatePendingUser(ctx context.Context
 		return nil, err
 	}
 
-	// OTP is valid, now create the pending user
+	// OTP is valid, now create the pending user.
+	// CreatePendingUser returns the existing user's ID on ErrConflict (race condition
+	// where the same email was verified twice), so we can proceed to create a session.
 	userID, err := s.user.CreatePendingUser(ctx, request.Email)
 	if err != nil {
-		switch {
-		case errors.Is(err, errs.ErrConflict):
-		// User already exists - this could be a race condition
-		// Since OTP was valid and we got the existing user's ID, we can proceed
-		// The user has verified their email and we can create a session for them
-		// Note: userID contains the existing user's ID even with the conflict error
-		// case errors.Is(err, errs.ErrInvalidValue):
-		// 	return nil, err // Pass through validation errors
-		// case errors.Is(err, errs.ErrExternalService):
-		// 	return nil, err // Pass through external service errors (database issues)
-		default:
-			// return nil, errs.NewInternalErr(err) // Wrap unexpected errors
-			return nil, err // Wrap unexpected errors
+		if !errors.Is(err, errs.ErrConflict) {
+			return nil, err
 		}
 	}
 
@@ -42,20 +33,12 @@ func (s *AuthAggregatorService) ValidateOTPCreatePendingUser(ctx context.Context
 	})
 	if err != nil {
 		return nil, err
-		// switch {
-		// case errors.Is(err, errs.ErrInvalidValue):
-		// 	return nil, err // Pass through validation errors
-		// case errors.Is(err, errs.ErrDomainNotFound):
-		// 	return nil, err // Pass through not found errors
-		// case errors.Is(err, errs.ErrQueryFailed):
-		// 	return nil, errs.NewExternalServiceErr(err, "database error during session creation") // Database query issues
-		// case errors.Is(err, errs.ErrMarshalJSON):
-		// 	return nil, errs.NewInternalErr(err) // JSON marshaling issues
-		// case errors.Is(err, errs.ErrUnexpectedError):
-		// 	return nil, errs.NewInternalErr(err) // Unexpected errors
-		// default:
-		// 	return nil, errs.NewInternalErr(err) // Wrap unexpected errors
-		// }
+	}
+
+	// Fire-and-forget: claim guest bookings linked to this email.
+	// A failure must never block or roll back account creation.
+	if s.bookingClient != nil {
+		s.bookingClient.ClaimBookings(ctx, userID.String(), request.Email)
 	}
 
 	return response, nil
