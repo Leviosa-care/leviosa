@@ -43,7 +43,11 @@ func (s *BookingService) buildNotificationData(booking *domain.Booking, productN
 		data.GuestPhone    = booking.GuestPhone
 		data.ClientName    = booking.GuestDisplayName()
 		data.ClientEmail   = booking.GuestEmail
+		data.ClientPhone   = booking.GuestPhone
 	}
+
+	// Include booking token for notification bridge (may be empty for legacy bookings)
+	data.Token = booking.Token
 
 	return data
 }
