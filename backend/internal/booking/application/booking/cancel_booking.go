@@ -12,6 +12,30 @@ import (
 	"github.com/google/uuid"
 )
 
+// CancelBookingByToken cancels a booking using a signed booking token instead of
+// a session cookie. It verifies the token, ensures it matches the requested booking
+// ID, and then delegates to the standard CancelBooking flow.
+func (s *BookingService) CancelBookingByToken(ctx context.Context, bookingID uuid.UUID, token string, reason string) (*domain.Booking, error) {
+	if len(s.tokenSecret) == 0 {
+		return nil, fmt.Errorf("booking token feature is not configured")
+	}
+
+	tokenBookingID, err := domain.VerifyBookingToken(token, s.tokenSecret)
+	if err != nil {
+		if domain.IsBookingTokenError(err) {
+			return nil, errs.NewUnauthorizedErr(err.Error())
+		}
+		return nil, fmt.Errorf("verify booking token for cancel: %w", err)
+	}
+
+	// The token must be scoped to the exact booking being cancelled.
+	if tokenBookingID != bookingID {
+		return nil, errs.NewUnauthorizedErr("token does not match the requested booking")
+	}
+
+	return s.CancelBooking(ctx, bookingID, reason)
+}
+
 func (s *BookingService) CancelBooking(ctx context.Context, id uuid.UUID, reason string) (*domain.Booking, error) {
 	// Get existing booking
 	bookingEncx, err := s.bookingRepo.GetByID(ctx, id)
@@ -59,16 +83,13 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uuid.UUID, reason
 		return nil, fmt.Errorf("cancel booking: %w", err)
 	}
 
-	// Mark associated availability as available again
-	availabilityEncx, err := s.availabilityRepo.GetByID(ctx, booking.AvailabilityID)
-	if err == nil {
-		availability, err := domain.DecryptAvailabilityEncx(ctx, s.crypto, availabilityEncx)
-		if err != nil {
-
-		}
-		availability.MarkAsAvailable()
-		if err := s.availabilityRepo.Update(ctx, availabilityEncx); err != nil { // Best effort, don't fail booking cancellation
-
+	// Mark associated availability as available again (best effort)
+	if availabilityEncx, err := s.availabilityRepo.GetByID(ctx, booking.AvailabilityID); err == nil {
+		if availability, err := domain.DecryptAvailabilityEncx(ctx, s.crypto, availabilityEncx); err == nil {
+			availability.MarkAsAvailable()
+			if updatedEncx, err := domain.ProcessAvailabilityEncx(ctx, s.crypto, availability); err == nil {
+				_ = s.availabilityRepo.Update(ctx, updatedEncx)
+			}
 		}
 	}
 
@@ -97,4 +118,3 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uuid.UUID, reason
 
 	return booking, nil
 }
-
