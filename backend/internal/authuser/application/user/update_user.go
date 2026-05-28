@@ -64,6 +64,13 @@ func (s *UserService) UpdateUser(ctx context.Context, userID uuid.UUID, request 
 		user.AppleID = *request.AppleID
 	}
 
+	// Auto-clear profile_incomplete once all required fields are filled.
+	if user.ProfileIncomplete {
+		if user.Gender != "" && !user.BirthDate.IsZero() && user.Address1 != "" {
+			user.ProfileIncomplete = false
+		}
+	}
+
 	// Encrypt the user data using the new generated function
 	updatedUserEncx, err := domain.ProcessUserEncx(ctx, s.crypto, user)
 	if err != nil {
