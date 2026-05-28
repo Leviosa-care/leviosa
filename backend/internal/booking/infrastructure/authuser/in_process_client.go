@@ -60,6 +60,9 @@ func (c *InProcessClient) GetPartnerByUserID(ctx context.Context, userID uuid.UU
 
 // GetUserName retrieves the display name for a user by their ID.
 func (c *InProcessClient) GetUserName(ctx context.Context, userID uuid.UUID) (string, error) {
+	if c.userService == nil {
+		return "Unknown", nil
+	}
 	user, err := c.userService.GetUserByID(ctx, userID)
 	if err != nil {
 		return "", fmt.Errorf("get user by id %s: %w", userID, err)
