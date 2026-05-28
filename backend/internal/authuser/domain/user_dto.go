@@ -11,25 +11,26 @@ import (
 )
 
 type UserResponse struct {
-	ID         uuid.UUID `json:"id"`
-	State      UserState `json:"state"`
-	Email      string    `json:"email"`
-	Picture    string    `json:"picture,omitempty"`
-	CreatedAt  time.Time `json:"created_at"`
-	LoggedInAt time.Time `json:"logged_in_at"`
-	Role       string    `json:"role,omitempty"`
-	BirthDate  time.Time `json:"birthdate"`
-	LastName   string    `json:"last_name,omitempty"`
-	FirstName  string    `json:"first_name,omitempty"`
-	Gender     string    `json:"gender,omitempty"`
-	Telephone  string    `json:"telephone,omitempty"`
-	PostalCode string    `json:"postal_code,omitempty"`
-	City       string    `json:"city,omitempty"`
-	Address1   string    `json:"address1,omitempty"`
-	Address2   string    `json:"address2,omitempty"`
-	GoogleID   string    `json:"google_id,omitempty"`
-	AppleID    string    `json:"apple_id,omitempty"`
-	HasPassword bool     `json:"has_password"`
+	ID               uuid.UUID `json:"id"`
+	State            UserState `json:"state"`
+	Email            string    `json:"email"`
+	Picture          string    `json:"picture,omitempty"`
+	CreatedAt        time.Time `json:"created_at"`
+	LoggedInAt       time.Time `json:"logged_in_at"`
+	Role             string    `json:"role,omitempty"`
+	BirthDate        time.Time `json:"birthdate"`
+	LastName         string    `json:"last_name,omitempty"`
+	FirstName        string    `json:"first_name,omitempty"`
+	Gender           string    `json:"gender,omitempty"`
+	Telephone        string    `json:"telephone,omitempty"`
+	PostalCode       string    `json:"postal_code,omitempty"`
+	City             string    `json:"city,omitempty"`
+	Address1         string    `json:"address1,omitempty"`
+	Address2         string    `json:"address2,omitempty"`
+	GoogleID         string    `json:"google_id,omitempty"`
+	AppleID          string    `json:"apple_id,omitempty"`
+	HasPassword      bool      `json:"has_password"`
+	ProfileIncomplete bool     `json:"profile_incomplete"`
 }
 
 type ApproveUserRequest struct {

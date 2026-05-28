@@ -27,28 +27,30 @@ type User struct {
 	GoogleID         string    `json:"google_id" encx:"encrypt"`
 	AppleID          string    `json:"-" encx:"encrypt"`
 	StripeCustomerID string    `json:"-" encx:"encrypt"`
+	ProfileIncomplete bool     `json:"profile_incomplete"`
 }
 
 func (u *User) ToResponse() *UserResponse {
 	return &UserResponse{
-		ID:          u.ID,
-		State:       u.State,
-		Email:       u.Email,
-		Picture:     u.Picture,
-		CreatedAt:   u.CreatedAt,
-		LoggedInAt:  u.LoggedInAt,
-		Role:        u.Role,
-		BirthDate:   u.BirthDate,
-		LastName:    u.LastName,
-		FirstName:   u.FirstName,
-		Gender:      u.Gender,
-		Telephone:   u.Telephone,
-		PostalCode:  u.PostalCode,
-		City:        u.City,
-		Address1:    u.Address1,
-		Address2:    u.Address2,
-		GoogleID:    u.GoogleID,
-		AppleID:     u.AppleID,
-		HasPassword: u.Password != "",
+		ID:               u.ID,
+		State:            u.State,
+		Email:            u.Email,
+		Picture:          u.Picture,
+		CreatedAt:        u.CreatedAt,
+		LoggedInAt:       u.LoggedInAt,
+		Role:             u.Role,
+		BirthDate:        u.BirthDate,
+		LastName:         u.LastName,
+		FirstName:        u.FirstName,
+		Gender:           u.Gender,
+		Telephone:        u.Telephone,
+		PostalCode:       u.PostalCode,
+		City:             u.City,
+		Address1:         u.Address1,
+		Address2:         u.Address2,
+		GoogleID:         u.GoogleID,
+		AppleID:          u.AppleID,
+		HasPassword:      u.Password != "",
+		ProfileIncomplete: u.ProfileIncomplete,
 	}
 }

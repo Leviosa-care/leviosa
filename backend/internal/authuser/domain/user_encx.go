@@ -63,6 +63,7 @@ type UserEncx struct {
 	
 	StripeCustomerIDEncrypted []byte `db:"stripecustomerid_encrypted" json:"stripecustomerid_encrypted"`
 	
+ProfileIncomplete bool `db:"profile_incomplete" json:"profile_incomplete"`
 
 	// Essential encryption fields
 	DEKEncrypted  []byte `db:"dek_encrypted" json:"dek_encrypted"`
@@ -90,6 +91,8 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 	result.ID = source.ID
 	
 	result.State = source.State
+
+	result.ProfileIncomplete = source.ProfileIncomplete
 	
 
 	// Generate DEK
@@ -372,6 +375,8 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 	result.ID = source.ID
 	
 	result.State = source.State
+
+	result.ProfileIncomplete = source.ProfileIncomplete
 	
 
 	// Decrypt DEK
