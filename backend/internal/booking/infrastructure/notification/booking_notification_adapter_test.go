@@ -3,6 +3,7 @@ package notification
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -13,6 +14,23 @@ import (
 
 	"github.com/google/uuid"
 )
+
+// ---- Spy SMS service ----
+
+type spySMSService struct {
+	mu       sync.Mutex
+	messages []notificationDomain.GenericSMSRequest
+}
+
+func (s *spySMSService) SendOTP(ctx context.Context, req notificationDomain.OTPSMSRequest) error {
+	return nil
+}
+func (s *spySMSService) SendSMS(ctx context.Context, req notificationDomain.GenericSMSRequest) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.messages = append(s.messages, req)
+	return nil
+}
 
 // ---- Spy email service ----
 
@@ -124,6 +142,7 @@ func (f *stubProductFetcher) GetAllProducts(ctx context.Context) ([]*catalogDoma
 
 func newTestAdapter(
 	spy *spyEmailService,
+	smsSpy *spySMSService,
 	users map[uuid.UUID]*UserInfo,
 	rooms map[uuid.UUID]*RoomInfo,
 	buildings map[uuid.UUID]*BuildingInfo,
@@ -131,6 +150,8 @@ func newTestAdapter(
 ) *BookingNotificationAdapter {
 	return NewBookingNotificationAdapter(
 		spy,
+		smsSpy,
+		"https://app.leviosa.com",
 		&stubUserFetcher{users: users},
 		&stubRoomFetcher{rooms: rooms},
 		&stubBuildingFetcher{buildings: buildings},
@@ -173,7 +194,8 @@ func TestSendBookingConfirmation_MapsFieldsCorrectly(t *testing.T) {
 	}
 
 	spy := &spyEmailService{}
-	adapter := newTestAdapter(spy, users, rooms, buildings, products)
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(spy, smsSpy, users, rooms, buildings, products)
 
 	// Call the internal method directly to verify field mapping without goroutine races.
 	err := adapter.sendBookingConfirmationEmail(context.Background(), data)
@@ -211,7 +233,8 @@ func TestSendPaymentConfirmation_MapsFieldsCorrectly(t *testing.T) {
 	}
 
 	spy := &spyEmailService{}
-	adapter := newTestAdapter(spy, users, nil, nil, nil)
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(spy, smsSpy, users, nil, nil, nil)
 
 	err := adapter.sendPaymentConfirmationEmail(context.Background(), data)
 	if err != nil {
@@ -245,7 +268,8 @@ func TestSendBookingConfirmation_GuestBooking(t *testing.T) {
 	}
 
 	spy := &spyEmailService{}
-	adapter := newTestAdapter(spy, users, nil, nil, nil)
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(spy, smsSpy, users, nil, nil, nil)
 
 	err := adapter.sendBookingConfirmationEmail(context.Background(), data)
 	if err != nil {
@@ -262,15 +286,20 @@ func TestSendBookingConfirmation_GuestBooking(t *testing.T) {
 	assertEqual(t, "ToLastName", "Doe", got.ToLastName)
 }
 
-func TestSendBookingConfirmation_MissingClientEmail_ReturnsError(t *testing.T) {
+func TestSendBookingConfirmation_MissingClientEmail_NoEmailSent(t *testing.T) {
 	data := makeBookingData()
 	// No users, no guest email
-	spy := &spyEmailService{}
-	adapter := newTestAdapter(spy, nil, nil, nil, nil)
+	emailSpy := &spyEmailService{}
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(emailSpy, smsSpy, nil, nil, nil, nil)
 
 	err := adapter.sendBookingConfirmationEmail(context.Background(), data)
-	if err == nil {
-		t.Fatal("expected error when client email is missing")
+	if err != nil {
+		t.Fatalf("unexpected error (fire-and-forget): %v", err)
+	}
+
+	if len(emailSpy.bookingConfirmations) != 0 {
+		t.Fatalf("expected 0 confirmation emails when client email is missing, got %d", len(emailSpy.bookingConfirmations))
 	}
 }
 
@@ -322,7 +351,8 @@ func TestSendBookingCancellation_SendsToClientAndPartner(t *testing.T) {
 	}
 
 	spy := &spyEmailService{}
-	adapter := newTestAdapter(spy, users, rooms, buildings, products)
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(spy, smsSpy, users, rooms, buildings, products)
 
 	err := adapter.sendBookingCancellationEmail(context.Background(), data)
 	if err != nil {
@@ -367,7 +397,8 @@ func TestSendBookingCancellation_GuestBooking(t *testing.T) {
 	}
 
 	spy := &spyEmailService{}
-	adapter := newTestAdapter(spy, users, nil, nil, nil)
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(spy, smsSpy, users, nil, nil, nil)
 
 	err := adapter.sendBookingCancellationEmail(context.Background(), data)
 	if err != nil {
@@ -392,7 +423,8 @@ func TestSendBookingCancellation_MissingClientEmail_StillSendsToPartner(t *testi
 	}
 
 	spy := &spyEmailService{}
-	adapter := newTestAdapter(spy, users, nil, nil, nil)
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(spy, smsSpy, users, nil, nil, nil)
 
 	err := adapter.sendBookingCancellationEmail(context.Background(), data)
 	if err != nil {
@@ -415,7 +447,8 @@ func TestSendBookingCancellation_MissingPartnerEmail_StillSendsToClient(t *testi
 	}
 
 	spy := &spyEmailService{}
-	adapter := newTestAdapter(spy, users, nil, nil, nil)
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(spy, smsSpy, users, nil, nil, nil)
 
 	err := adapter.sendBookingCancellationEmail(context.Background(), data)
 	if err != nil {
@@ -434,7 +467,8 @@ func TestSendBookingCancellation_BothEmailsMissing_LogsAndReturnsNil(t *testing.
 	data.CancellationReason = "No reason"
 
 	spy := &spyEmailService{}
-	adapter := newTestAdapter(spy, nil, nil, nil, nil)
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(spy, smsSpy, nil, nil, nil, nil)
 
 	err := adapter.sendBookingCancellationEmail(context.Background(), data)
 	if err != nil {
@@ -455,7 +489,8 @@ func TestSendBookingCancellation_FireAndForget(t *testing.T) {
 	data.CancellationReason = "Test"
 
 	spy := &spyEmailService{}
-	adapter := newTestAdapter(spy, nil, nil, nil, nil)
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(spy, smsSpy, nil, nil, nil, nil)
 
 	// SendBookingCancellation returns nil immediately (fire-and-forget)
 	err := adapter.SendBookingCancellation(context.Background(), data)
@@ -473,7 +508,8 @@ func TestSendBookingConfirmation_FireAndForget(t *testing.T) {
 	data.ClientName = "Test Client"
 
 	spy := &spyEmailService{}
-	adapter := newTestAdapter(spy, nil, nil, nil, nil)
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(spy, smsSpy, nil, nil, nil, nil)
 
 	// SendBookingConfirmation returns nil immediately (fire-and-forget)
 	err := adapter.SendBookingConfirmation(context.Background(), data)
@@ -486,6 +522,177 @@ func TestSendBookingConfirmation_FireAndForget(t *testing.T) {
 
 	// The goroutine will fail to send (no client in fetcher) but that's OK,
 	// the important thing is SendBookingConfirmation itself returned nil.
+}
+
+// SMS-specific tests
+
+func TestSendBookingConfirmation_SMSIncludesTokenURL(t *testing.T) {
+	data := makeBookingData()
+	data.ClientPhone = "+33612345678"
+	data.ClientEmail = "client@example.com"
+	data.ClientName = "Alice Smith"
+	data.ProductName = "Massage Therapy"
+	data.Token = "abc123token"
+
+	users := map[uuid.UUID]*UserInfo{
+		data.PartnerID: {Email: "partner@example.com", FirstName: "Bob", LastName: "Jones"},
+	}
+
+	emailSpy := &spyEmailService{}
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(emailSpy, smsSpy, users, nil, nil, nil)
+
+	err := adapter.sendBookingConfirmationEmail(context.Background(), data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(smsSpy.messages) != 1 {
+		t.Fatalf("expected 1 SMS, got %d", len(smsSpy.messages))
+	}
+
+	sms := smsSpy.messages[0]
+	assertEqual(t, "phone", "+33612345678", sms.PhoneNumber)
+	if sms.Message == "" {
+		t.Fatal("expected non-empty SMS message")
+	}
+	// Must contain the token URL
+	tokenURL := "https://app.leviosa.com/bookings?token=abc123token"
+	if !containsString(sms.Message, tokenURL) {
+		t.Errorf("SMS message should contain %q, got %q", tokenURL, sms.Message)
+	}
+}
+
+func TestSendBookingConfirmation_SMSIncludesProductAndTime(t *testing.T) {
+	data := makeBookingData()
+	data.ClientPhone = "+33612345678"
+	data.ClientEmail = "client@example.com"
+	data.ClientName = "Alice Smith"
+	data.ProductName = "Massage Therapy"
+	data.Token = "some-token"
+
+	users := map[uuid.UUID]*UserInfo{
+		data.PartnerID: {Email: "partner@example.com", FirstName: "Bob", LastName: "Jones"},
+	}
+
+	emailSpy := &spyEmailService{}
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(emailSpy, smsSpy, users, nil, nil, nil)
+
+	err := adapter.sendBookingConfirmationEmail(context.Background(), data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(smsSpy.messages) != 1 {
+		t.Fatalf("expected 1 SMS, got %d", len(smsSpy.messages))
+	}
+
+	sms := smsSpy.messages[0]
+	if !containsString(sms.Message, "Massage Therapy") {
+		t.Errorf("SMS should mention product name, got %q", sms.Message)
+	}
+	if !containsString(sms.Message, "10:00-11:00") {
+		t.Errorf("SMS should mention time slot, got %q", sms.Message)
+	}
+}
+
+func TestSendBookingConfirmation_SMSNoToken_SendsWithoutURL(t *testing.T) {
+	data := makeBookingData()
+	data.ClientPhone = "+33612345678"
+	data.ClientEmail = "client@example.com"
+	data.ClientName = "Alice Smith"
+	data.ProductName = "Massage Therapy"
+	data.Token = "" // legacy booking, no token
+
+	users := map[uuid.UUID]*UserInfo{
+		data.PartnerID: {Email: "partner@example.com", FirstName: "Bob", LastName: "Jones"},
+	}
+
+	emailSpy := &spyEmailService{}
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(emailSpy, smsSpy, users, nil, nil, nil)
+
+	err := adapter.sendBookingConfirmationEmail(context.Background(), data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// SMS should still be sent, just without the token URL
+	if len(smsSpy.messages) != 1 {
+		t.Fatalf("expected 1 SMS even without token, got %d", len(smsSpy.messages))
+	}
+	if containsString(smsSpy.messages[0].Message, "bookings?token=") {
+		t.Error("SMS should NOT contain token URL when token is empty")
+	}
+}
+
+func TestSendBookingConfirmation_NoPhone_SkipsSMS(t *testing.T) {
+	data := makeBookingData()
+	data.ClientEmail = "client@example.com"
+	data.ClientName = "Alice Smith"
+	// No phone
+
+	users := map[uuid.UUID]*UserInfo{
+		data.PartnerID: {Email: "partner@example.com", FirstName: "Bob", LastName: "Jones"},
+	}
+
+	emailSpy := &spyEmailService{}
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(emailSpy, smsSpy, users, nil, nil, nil)
+
+	err := adapter.sendBookingConfirmationEmail(context.Background(), data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// No SMS should be sent without a phone number
+	if len(smsSpy.messages) != 0 {
+		t.Fatalf("expected 0 SMS when no phone available, got %d", len(smsSpy.messages))
+	}
+}
+
+func TestSendBookingConfirmation_GuestBooking_SMSUsesGuestPhone(t *testing.T) {
+	data := makeBookingData()
+	data.IsGuestBooking = true
+	data.GuestPhone = "+33698765432"
+	data.ClientPhone = "+33698765432"
+	data.ClientEmail = "guest@example.com"
+	data.ClientName = "Jane Doe"
+	data.ClientID = uuid.Nil
+	data.ProductName = "Yoga Class"
+	data.Token = "guest-token-xyz"
+
+	users := map[uuid.UUID]*UserInfo{
+		data.PartnerID: {Email: "partner@example.com", FirstName: "Bob", LastName: "Jones"},
+	}
+
+	emailSpy := &spyEmailService{}
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(emailSpy, smsSpy, users, nil, nil, nil)
+
+	err := adapter.sendBookingConfirmationEmail(context.Background(), data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(smsSpy.messages) != 1 {
+		t.Fatalf("expected 1 SMS for guest booking, got %d", len(smsSpy.messages))
+	}
+
+	sms := smsSpy.messages[0]
+	assertEqual(t, "phone", "+33698765432", sms.PhoneNumber)
+	if !containsString(sms.Message, "Yoga Class") {
+		t.Errorf("SMS should mention product name, got %q", sms.Message)
+	}
+	tokenURL := "https://app.leviosa.com/bookings?token=guest-token-xyz"
+	if !containsString(sms.Message, tokenURL) {
+		t.Errorf("SMS should contain token URL %q, got %q", tokenURL, sms.Message)
+	}
+}
+
+func containsString(s, substr string) bool {
+	return strings.Contains(s, substr)
 }
 
 func assertEqual(t *testing.T, field, want, got string) {
