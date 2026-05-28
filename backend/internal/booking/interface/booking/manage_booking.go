@@ -62,6 +62,7 @@ func convertBookingsToResponses(bookings []*domain.Booking) []domain.BookingResp
 			GuestLastName:      booking.GuestLastName,
 			GuestEmail:         booking.GuestEmail,
 			GuestPhone:         booking.GuestPhone,
+			Token:              booking.Token,
 		})
 	}
 	return responses

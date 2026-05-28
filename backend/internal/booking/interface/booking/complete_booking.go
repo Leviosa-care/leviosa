@@ -74,6 +74,7 @@ func (h *handler) CompleteBooking(w http.ResponseWriter, r *http.Request) {
 		GuestLastName:      booking.GuestLastName,
 		GuestEmail:         booking.GuestEmail,
 		GuestPhone:         booking.GuestPhone,
+		Token:              booking.Token,
 	}
 
 	httpx.RespondWithJSON(w, response, http.StatusOK)

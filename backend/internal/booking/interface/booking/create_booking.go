@@ -97,6 +97,7 @@ func (h *handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		GuestLastName:      booking.GuestLastName,
 		GuestEmail:         booking.GuestEmail,
 		GuestPhone:         booking.GuestPhone,
+		Token:              booking.Token,
 	}
 
 	logger.InfoContext(ctx, "Handler: Booking created successfully",
