@@ -129,7 +129,7 @@
             {:else}
                 <!-- Authenticated: link to bookings -->
                 <div class="text-center">
-                    <a href="/bookings">
+                    <a href="/client/bookings">
                         <Button class="text-white px-8 py-4 rounded-2xl cursor-pointer">
                             Voir mes réservations
                         </Button>
