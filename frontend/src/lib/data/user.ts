@@ -17,4 +17,5 @@ export const mockUser: App.User = {
     google_id: "mock-google-id-12345",
     apple_id: "",
     has_password: true,
+    profile_incomplete: false,
 };

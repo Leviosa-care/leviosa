@@ -21,6 +21,7 @@ declare global {
             google_id?: string;
             apple_id?: string;
             has_password?: boolean;
+            profile_incomplete?: boolean;
         }
         interface Error { }
         interface Locals {
