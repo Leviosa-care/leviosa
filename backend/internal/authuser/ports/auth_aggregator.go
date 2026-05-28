@@ -20,6 +20,8 @@ import (
 type AuthAggregatorService interface {
 	CheckEmailSendOTP(ctx context.Context, request *domain.CheckEmailAvailabilityRequest) error
 	ValidateOTPCreatePendingUser(ctx context.Context, request *domain.ValidateOTPRequest) (*domain.CreateSessionResponse, error)
+	GuestClaim(ctx context.Context, req *domain.GuestClaimRequest) error
+	GuestClaimVerify(ctx context.Context, req *domain.GuestClaimVerifyRequest, claimData *domain.GuestClaimRequest) (*domain.CreateSessionResponse, error)
 	CompleteUser(ctx context.Context, sessionInfo *session.SessionInfo, request *domain.CompleteUserRequest) error
 	CompletePartner(ctx context.Context, sessionInfo *session.SessionInfo, request *domain.CompletePartnerRequest) error
 	RefreshSession(ctx context.Context, sessionID uuid.UUID) (*domain.RefreshSessionResponse, error)
