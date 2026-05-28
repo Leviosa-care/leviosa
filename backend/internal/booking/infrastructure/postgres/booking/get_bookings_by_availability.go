@@ -39,6 +39,7 @@ func (r *Repository) GetBookingsByAvailability(ctx context.Context, availability
 			guest_last_name_encrypted,
 			guest_email_encrypted,
 			guest_phone_encrypted,
+			token,
 			-- Encryption metadata
 			dek_encrypted,
 			key_version,
@@ -84,6 +85,7 @@ func (r *Repository) GetBookingsByAvailability(ctx context.Context, availability
 			&bookingEncx.GuestLastNameEncrypted,
 			&bookingEncx.GuestEmailEncrypted,
 			&bookingEncx.GuestPhoneEncrypted,
+			&bookingEncx.Token,
 			// Encryption metadata
 			&bookingEncx.DEKEncrypted,
 			&bookingEncx.KeyVersion,
