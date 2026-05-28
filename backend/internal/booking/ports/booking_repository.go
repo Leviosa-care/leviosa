@@ -45,6 +45,14 @@ type BookingRepository interface {
 
 	// GetByPaymentIntentID retrieves booking by Stripe payment intent ID
 	GetByPaymentIntentID(ctx context.Context, paymentIntentID string) (*domain.BookingEncx, error)
+
+	// GetGuestBookings retrieves all bookings that have no client_id (guest bookings).
+	GetGuestBookings(ctx context.Context) ([]*domain.BookingEncx, error)
+
+	// SetBookingClientID atomically sets client_id on a single booking.
+	// Only succeeds if the booking's client_id is currently NULL.
+	// Returns true if the row was updated, false if it was already owned.
+	SetBookingClientID(ctx context.Context, bookingID, clientID uuid.UUID) (bool, error)
 }
 
 // BookingFilter defines filtering options for booking queries
