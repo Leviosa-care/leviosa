@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
@@ -111,8 +112,10 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uuid.UUID, reason
 		}
 		notificationData := s.buildNotificationData(booking, productName)
 		if err := s.notificationService.SendBookingCancellation(ctx, notificationData); err != nil {
-			// Log error but don't fail the cancellation
-			_ = err // TODO: Add proper logging
+			slog.WarnContext(ctx, "failed to send booking cancellation notification",
+				"booking_id", booking.ID,
+				"err", err,
+			)
 		}
 	}
 
