@@ -3,7 +3,6 @@ package bookingHandler
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
@@ -14,14 +13,7 @@ import (
 func (h *handler) GetBooking(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Extract booking ID from URL path
-	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
-	if len(pathParts) < 2 {
-		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid booking ID in path"), http.StatusBadRequest)
-		return
-	}
-
-	bookingID, err := uuid.Parse(pathParts[1])
+	bookingID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
 		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid booking ID format"), http.StatusBadRequest)
 		return
