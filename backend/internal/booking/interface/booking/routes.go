@@ -22,6 +22,10 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /bookings/lookup", mw.EnableCORS(h.LookupBooking))
 	router.HandleFunc("POST /bookings/{id}/cancel-public", mw.EnableCORS(h.CancelBookingPublic))
 
+	// Internal booking claim endpoint (called by authuser after account creation).
+	// Protected by service key auth: only authuser may call this.
+	router.HandleFunc("POST /bookings/claim", h.authmw.RequireServiceAuth(mw.EnableCORS(h.ClaimBookings)))
+
 	// Booking management endpoints
 	// POST /bookings is public to allow guest bookings without authentication
 	router.HandleFunc("POST /bookings", mw.EnableCORS(h.CreateBooking))

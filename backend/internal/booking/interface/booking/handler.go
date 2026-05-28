@@ -28,6 +28,7 @@ type Handler interface {
 	GetAnalyticsSummary(w http.ResponseWriter, r *http.Request)
 	GetFinancialSummary(w http.ResponseWriter, r *http.Request)
 	HandleStripeWebhook(w http.ResponseWriter, r *http.Request)
+	ClaimBookings(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
