@@ -42,6 +42,26 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// testClaimServiceKey is the plaintext key injected into the test secret reader.
+// All requests to POST /bookings/claim must supply this as X-Service-Key.
+const testClaimServiceKey = "test-authuser-claim-service-key"
+
+// testSecretReader is a static SecretReader that validates against a pre-hashed key.
+// It allows the integration tests to exercise RequireServiceAuth without a real Vault.
+type testSecretReader struct {
+	keyHash string // HMAC of testClaimServiceKey, computed once during TestMain
+}
+
+func (r *testSecretReader) Read(_ context.Context, _ string) (*auth.SecretData, error) {
+	return &auth.SecretData{
+		Data: map[string]interface{}{
+			"data": map[string]interface{}{
+				"key_hash": r.keyHash,
+			},
+		},
+	}, nil
+}
+
 var testTokenSecret = []byte("test_booking_token_secret_32bytes")
 
 var (
@@ -207,8 +227,19 @@ func TestMain(m *testing.M) {
 	service = bookingService.New(bookingRepo, availabilityRepo, paymentService, catalogProductService, catalogPriceService, notificationSpy, crypto,
 		bookingService.WithTokenSecret(testTokenSecret))
 
+	// Pre-compute the hash of the test service key so the mock secret reader can
+	// return it for RequireServiceAuth validation on POST /bookings/claim.
+	claimKeyBytes, err := encx.SerializeValue(testClaimServiceKey)
+	if err != nil {
+		log.Fatalf("Failed to serialize test claim service key: %v", err)
+	}
+	claimKeyHash := crypto.HashBasic(ctx, claimKeyBytes)
+	mockReader := &testSecretReader{keyHash: claimKeyHash}
+
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
-	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
+	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil,
+		auth.WithSecretReader(mockReader),
+	)
 
 	handler = bookingHandler.New(service, paymentService, authmw)
 
