@@ -39,18 +39,18 @@ export const load: PageServerLoad = async ({ url, locals, fetch, cookies }) => {
 		}
 	}
 
-	return { booking, lookupError };
+	return { booking, lookupError, token };
 };
 
 export const actions: Actions = {
-	default: async ({ request, fetch }) => {
+	lookup: async ({ request, fetch }) => {
 		const formData = await request.formData();
 		const ref = (formData.get('ref') as string)?.trim() ?? '';
 		const email = (formData.get('email') as string)?.trim() ?? '';
 		const phone = (formData.get('phone') as string)?.trim() ?? '';
 
 		if (!ref) {
-			return { success: false, error: 'Veuillez entrer la référence de réservation.' };
+			return { action: 'lookup' as const, success: false, error: 'Veuillez entrer la référence de réservation.' };
 		}
 
 		const params = new URLSearchParams({ ref });
@@ -59,18 +59,48 @@ export const actions: Actions = {
 		} else if (phone) {
 			params.set('phone', phone);
 		} else {
-			return { success: false, error: 'Veuillez entrer votre email ou numéro de téléphone.' };
+			return { action: 'lookup' as const, success: false, error: 'Veuillez entrer votre email ou numéro de téléphone.' };
 		}
 
 		try {
 			const res = await fetch(`${env.API_URL}/bookings/lookup?${params}`);
 			if (res.ok) {
-				return { success: true, booking: await res.json() };
+				return { action: 'lookup' as const, success: true, booking: await res.json() };
 			}
 			const body = await res.json().catch(() => ({ error: 'Erreur inconnue' }));
-			return { success: false, error: body.error ?? 'Aucune réservation trouvée.' };
+			return { action: 'lookup' as const, success: false, error: body.error ?? 'Aucune réservation trouvée.' };
 		} catch {
-			return { success: false, error: 'Erreur réseau. Veuillez réessayer.' };
+			return { action: 'lookup' as const, success: false, error: 'Erreur réseau. Veuillez réessayer.' };
+		}
+	},
+
+	cancel: async ({ request, fetch, url }) => {
+		const formData = await request.formData();
+		const bookingId = (formData.get('booking_id') as string)?.trim() ?? '';
+		const token = (formData.get('token') as string)?.trim() ?? '';
+		const reason = (formData.get('reason') as string)?.trim() ?? '';
+
+		if (!bookingId || !token) {
+			return { action: 'cancel' as const, success: false, error: 'Informations manquantes pour annuler.' };
+		}
+
+		try {
+			const res = await fetch(
+				`${env.API_URL}/bookings/${bookingId}/cancel-public?token=${encodeURIComponent(token)}`,
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ reason: reason || 'Annulation par le client' })
+				}
+			);
+			if (res.ok) {
+				const booking = await res.json();
+				return { action: 'cancel' as const, success: true, booking };
+			}
+			const body = await res.json().catch(() => ({ error: 'Erreur inconnue' }));
+			return { action: 'cancel' as const, success: false, error: body.error ?? "Échec de l'annulation." };
+		} catch {
+			return { action: 'cancel' as const, success: false, error: 'Erreur réseau. Veuillez réessayer.' };
 		}
 	}
 };

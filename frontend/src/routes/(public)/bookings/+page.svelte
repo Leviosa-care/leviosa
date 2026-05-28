@@ -2,16 +2,34 @@
 	import { reveal } from '$lib/actions/reveal';
 	import { enhance } from '$app/forms';
 	import type { PageProps } from './$types';
-	import { Eye, Clock, CheckCircle, XCircle, AlertCircle, Search, Phone as PhoneIcon } from '@lucide/svelte';
+	import { Eye, Clock, CheckCircle, XCircle, AlertCircle, Search, Phone as PhoneIcon, Trash2, Loader2 } from '@lucide/svelte';
 
 	let { data, form }: PageProps = $props();
 
 	// Contact method toggle for the manual lookup form
 	let contactMethod: 'email' | 'phone' = $state('email');
 
+	// Cancel confirmation state
+	let showCancelConfirm = $state(false);
+	let cancelling = $state(false);
+
 	// Booking detail (from either token path or manual form action)
-	let booking = $derived(data.booking ?? form?.booking ?? null);
-	let displayError = $derived(data.lookupError ?? (form && !form.success ? form.error : null));
+	let booking = $derived(data.booking ?? (form?.action === 'lookup' && form.success ? form.booking : null));
+	let displayError = $derived(data.lookupError ?? (form?.action === 'lookup' && !form.success ? form.error : null));
+	let cancelError = $derived(form?.action === 'cancel' && !form.success ? form.error : null);
+
+	// If the cancel action succeeded, update the booking in-place
+	let effectiveBooking = $derived(
+		form?.action === 'cancel' && form.success && form.booking ? form.booking : booking
+	);
+
+	// Cancel requires a booking token — only available on the token URL path
+	let canCancel = $derived(
+		!!data.token &&
+		effectiveBooking &&
+		effectiveBooking.status === 'confirmed' &&
+		new Date(effectiveBooking.slot_start_time) > new Date()
+	);
 
 	function formatDate(iso: string): string {
 		return new Date(iso).toLocaleDateString('fr-FR', {
@@ -58,7 +76,7 @@
 <div class="min-h-screen bg-dark-50 py-24 md:py-32 px-4 lg:px-8">
 	<div class="max-w-2xl mx-auto" use:reveal={{ preset: "fade-up", delay: 100 }}>
 
-		{#if booking}
+		{#if effectiveBooking}
 			<!-- ═══ Booking detail view ═══ -->
 			<div class="text-center mb-8">
 				<h1 class="text-3xl md:text-4xl font-bold text-dark-900 mb-2">
@@ -68,58 +86,127 @@
 
 			<div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm">
 				<div class="flex items-center gap-3 mb-6">
-					<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium {statusColor(booking.status)}">
-						{#if booking.status === 'confirmed' || booking.status === 'completed'}
+					<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium {statusColor(effectiveBooking.status)}">
+						{#if effectiveBooking.status === 'confirmed' || effectiveBooking.status === 'completed'}
 							<CheckCircle size={16} />
-						{:else if booking.status === 'cancelled'}
+						{:else if effectiveBooking.status === 'cancelled'}
 							<XCircle size={16} />
 						{:else}
 							<Clock size={16} />
 						{/if}
-						{statusLabel(booking.status)}
+						{statusLabel(effectiveBooking.status)}
 					</span>
 				</div>
 
 				<div class="grid gap-4">
-					{#if booking.product_name}
+					{#if effectiveBooking.product_name}
 						<div class="flex justify-between py-3 border-b border-dark-100">
 							<span class="text-dark-600">Service</span>
-							<span class="font-semibold text-dark-900">{booking.product_name}</span>
+							<span class="font-semibold text-dark-900">{effectiveBooking.product_name}</span>
 						</div>
 					{/if}
 
-					{#if booking.partner_name}
+					{#if effectiveBooking.partner_name}
 						<div class="flex justify-between py-3 border-b border-dark-100">
 							<span class="text-dark-600">Praticien</span>
-							<span class="font-semibold text-dark-900">{booking.partner_name}</span>
+							<span class="font-semibold text-dark-900">{effectiveBooking.partner_name}</span>
 						</div>
 					{/if}
 
 					<div class="flex justify-between py-3 border-b border-dark-100">
 						<span class="text-dark-600">Date</span>
-						<span class="font-semibold text-dark-900 capitalize">{formatDate(booking.slot_start_time)}</span>
+						<span class="font-semibold text-dark-900 capitalize">{formatDate(effectiveBooking.slot_start_time)}</span>
 					</div>
 
 					<div class="flex justify-between py-3 border-b border-dark-100">
 						<span class="text-dark-600">Horaire</span>
 						<span class="font-semibold text-dark-900">
-							{formatTime(booking.slot_start_time)} — {formatTime(booking.slot_end_time)}
+							{formatTime(effectiveBooking.slot_start_time)} — {formatTime(effectiveBooking.slot_end_time)}
 						</span>
 					</div>
 
-					{#if booking.total_price_cents}
+					{#if effectiveBooking.total_price_cents}
 						<div class="flex justify-between py-3 border-b border-dark-100">
 							<span class="text-dark-600">Montant</span>
-							<span class="font-semibold text-dark-900 text-lg">{formatCents(booking.total_price_cents)}</span>
+							<span class="font-semibold text-dark-900 text-lg">{formatCents(effectiveBooking.total_price_cents)}</span>
 						</div>
 					{/if}
 
 					<div class="flex justify-between py-3">
 						<span class="text-dark-600">Référence</span>
-						<span class="font-mono text-sm text-dark-700">{booking.id}</span>
+						<span class="font-mono text-sm text-dark-700">{effectiveBooking.id}</span>
 					</div>
 				</div>
 			</div>
+
+			<!-- ═══ Cancel section ═══ -->
+			{#if canCancel}
+				{#if showCancelConfirm}
+					<div class="mt-6 bg-red-50 border border-red-200 rounded-2xl p-6">
+						<p class="text-red-800 font-medium mb-4">Confirmer l'annulation ?</p>
+						<p class="text-red-700 text-sm mb-5">Cette action est irréversible. Votre créneau sera libéré.</p>
+
+						{#if cancelError}
+							<div class="flex items-center gap-2 px-4 py-3 mb-4 rounded-lg bg-red-100 border border-red-300 text-red-800 text-sm">
+								<AlertCircle size={16} class="flex-shrink-0" />
+								{cancelError}
+							</div>
+						{/if}
+
+						<form
+							method="POST"
+							action="?action=cancel"
+							class="flex gap-3"
+							use:enhance={() => {
+								cancelling = true;
+								return async ({ update }) => {
+									await update({ reset: false });
+									cancelling = false;
+									showCancelConfirm = false;
+								};
+							}}
+						>
+							<input type="hidden" name="booking_id" value={effectiveBooking.id} />
+							<input type="hidden" name="token" value={data.token ?? ''} />
+							<input type="hidden" name="reason" value="Annulation par le client" />
+
+							<button
+								type="submit"
+								disabled={cancelling}
+								class="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 rounded-xl font-medium hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer"
+							>
+								{#if cancelling}
+									<Loader2 size={18} class="animate-spin" />
+									Annulation...
+								{:else}
+									<Trash2 size={18} />
+									Confirmer l'annulation
+								{/if}
+							</button>
+
+							<button
+								type="button"
+								disabled={cancelling}
+								class="px-5 py-2.5 rounded-xl font-medium text-dark-700 bg-white border border-dark-200 hover:bg-dark-50 transition-colors disabled:opacity-50 cursor-pointer"
+								onclick={() => { showCancelConfirm = false; }}
+							>
+								Retour
+							</button>
+						</form>
+					</div>
+				{:else}
+					<div class="mt-6 text-center">
+						<button
+							type="button"
+							class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors cursor-pointer"
+							onclick={() => { showCancelConfirm = true; }}
+						>
+							<Trash2 size={18} />
+							Annuler cette réservation
+						</button>
+					</div>
+				{/if}
+			{/if}
 
 			<div class="mt-8 text-center">
 				<a href="/services" class="text-dark-600 hover:text-dark-900 underline">
@@ -147,6 +234,7 @@
 
 			<form
 				method="POST"
+				action="?action=lookup"
 				class="bg-white rounded-3xl p-6 md:p-8 shadow-sm space-y-5"
 				use:enhance
 			>
