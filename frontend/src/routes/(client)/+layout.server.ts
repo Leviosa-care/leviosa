@@ -26,5 +26,5 @@ export const load: LayoutServerLoad = async ({ locals, fetch, url }) => {
 		}
 	}
 
-	return { user, unreadCount };
+	return { user, unreadCount, profileIncomplete: user.profile_incomplete === true };
 };
