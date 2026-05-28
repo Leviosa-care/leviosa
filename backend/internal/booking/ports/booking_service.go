@@ -84,6 +84,11 @@ type BookingService interface {
 	// booking being cancelled. The product's cancellation window is enforced identically
 	// regardless of auth method.
 	CancelBookingByToken(ctx context.Context, bookingID uuid.UUID, token string, reason string) (*domain.Booking, error)
+
+	// ClaimBookings links all guest bookings matching the given email to the
+	// specified client. Bookings that already have an owner are skipped.
+	// Returns the number of bookings claimed.
+	ClaimBookings(ctx context.Context, clientID uuid.UUID, email string) (int, error)
 }
 
 // AdminBookingsFilter holds query parameters for the admin bookings list endpoint.
