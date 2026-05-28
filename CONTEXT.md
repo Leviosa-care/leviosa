@@ -14,7 +14,7 @@ These are the canonical terms used in code, documentation, and conversation. Use
 |------|------------|
 | **User** | Any registered account on the platform. Has a role that governs access. |
 | **Client** | A user who books wellness sessions (role: `standard` or `premium`). |
-| **Guest** | A person who books a session without creating an account. Identified by first name, last name, and at least one of email or phone. Guest contact fields are stored encrypted on the Booking. A guest can later claim their bookings by registering with the same email or phone (future feature). |
+| **Guest** | A person who books a session without creating an account. Identified by first name, last name, and at least one of email or phone. Guest contact fields are stored encrypted on the Booking. After a successful booking, the confirmation page offers an inline account creation form pre-filled with their booking info — just a password field away. |
 | **Premium client** | A client role reserved for future elevated access (discounts, priority booking). Currently follows the same booking flow as a standard client. The distinction will become meaningful when service tiers or exclusive offerings are introduced. |
 | **Partner** | A wellness professional who offers services through the platform (role: `partner`). Has a public profile with bio, certifications, and specializations. |
 | **Staff** | _(removed)_ — this role was planned for internal ops users but was never fully implemented and has been retired. The `(staff)` frontend route group is the **Partner area** and is accessible to partners and administrators only. |
@@ -40,6 +40,8 @@ These are the canonical terms used in code, documentation, and conversation. Use
 | **Availability** | A time window a partner offers for bookings. Can be a single occurrence or a recurring pattern (daily/weekly/monthly) with an optional end date. |
 | **Booking** | A confirmed reservation by a client for a partner's service in a room. The core transactional entity. Tracks payment and progresses through a lifecycle. All bookings are 1-on-1 consultations. In client-facing UI the word "consultation" is used as a synonym, but the domain term and API surface always use "booking". There is no "event" or group-booking type. |
 | **Booking status** | The FSM governing a booking's lifecycle: `confirmed → completed | cancelled | no_show`. |
+| **Booking claim** | The act of linking past guest bookings to a newly created User account. Triggered silently and automatically when a User registers with the same email or verified phone number that was used for a guest booking. |
+| **Booking token** | A signed, time-limited token embedded in the confirmation SMS/email that grants unauthenticated access to a specific booking's status page (`/bookings?token=xxx`). Used by guests to view or cancel their booking without an account. Falls back to manual lookup by booking reference + email/phone. |
 | **Earnings** | A read-only financial summary for a partner, derived by aggregating their completed bookings. Includes current-month revenue, last-month revenue, pending amounts, and a per-transaction history. Not a stored entity — computed on demand from the Booking table. |
 | **Gap** | Unused time between bookings in a room schedule. The system detects gaps to surface upselling opportunities. |
 | **Utilization** | A metric measuring how efficiently a room's time is used (utilization % minus fragmentation penalty). Computed via a materialized view. |
