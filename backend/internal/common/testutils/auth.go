@@ -508,15 +508,15 @@ func insertUser(t *testing.T, ctx context.Context, user *UserEncx, pool *pgxpool
 			id, state, email_hash, email_encrypted, password_hash_secure,
 			first_name_encrypted, last_name_encrypted, telephone_hash, telephone_encrypted,
 			role_encrypted, created_at_encrypted, logged_in_at_encrypted,
-			dek_encrypted, key_version
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+			dek_encrypted, key_version, profile_incomplete
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 	`
 
 	_, err := pool.Exec(ctx, query,
 		user.ID, user.State, user.EmailHash, user.EmailEncrypted, user.PasswordHashSecure,
 		user.FirstNameEncrypted, user.LastNameEncrypted, user.TelephoneHash, user.TelephoneEncrypted,
 		user.RoleEncrypted, user.CreatedAtEncrypted, user.LoggedInAtEncrypted,
-		user.DEKEncrypted, user.KeyVersion)
+		user.DEKEncrypted, user.KeyVersion, user.ProfileIncomplete)
 	require.NoError(t, err, "Failed to insert test user")
 }
 

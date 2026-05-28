@@ -37,7 +37,7 @@ func GetUserByEmailHashSQL(t *testing.T, ctx context.Context, emailHash string, 
 			telephone_hash, telephone_encrypted, postal_code_encrypted,
 			city_encrypted, address1_encrypted, address2_encrypted,
 			google_id_encrypted, apple_id_encrypted, stripe_customer_id_encrypted,
-			created_at_encrypted, logged_in_at_encrypted, dek_encrypted, key_version
+			created_at_encrypted, logged_in_at_encrypted, dek_encrypted, key_version, profile_incomplete
 		FROM auth.users
 		WHERE email_hash = $1
 	`
@@ -53,7 +53,7 @@ func GetUserByEmailHashSQL(t *testing.T, ctx context.Context, emailHash string, 
 		&userEncx.PostalCodeEncrypted, &userEncx.CityEncrypted, &userEncx.Address1Encrypted,
 		&userEncx.Address2Encrypted, &userEncx.GoogleIDEncrypted, &userEncx.AppleIDEncrypted,
 		&userEncx.StripeCustomerIDEncrypted, &userEncx.CreatedAtEncrypted, &userEncx.LoggedInAtEncrypted,
-		&userEncx.DEKEncrypted, &userEncx.KeyVersion,
+		&userEncx.DEKEncrypted, &userEncx.KeyVersion, &userEncx.ProfileIncomplete,
 	)
 
 	if err != nil {
@@ -139,7 +139,7 @@ func GetUserFromDB(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pg
 			telephone_hash, telephone_encrypted, postal_code_encrypted,
 			city_encrypted, address1_encrypted, address2_encrypted,
 			google_id_encrypted, apple_id_encrypted, stripe_customer_id_encrypted,
-			created_at_encrypted, logged_in_at_encrypted, dek_encrypted, key_version
+			created_at_encrypted, logged_in_at_encrypted, dek_encrypted, key_version, profile_incomplete
 		FROM auth.users
 		WHERE id = $1
 	`
@@ -155,7 +155,7 @@ func GetUserFromDB(t *testing.T, ctx context.Context, userID uuid.UUID, pool *pg
 		&userEncx.PostalCodeEncrypted, &userEncx.CityEncrypted, &userEncx.Address1Encrypted,
 		&userEncx.Address2Encrypted, &userEncx.GoogleIDEncrypted, &userEncx.AppleIDEncrypted,
 		&userEncx.StripeCustomerIDEncrypted, &userEncx.CreatedAtEncrypted, &userEncx.LoggedInAtEncrypted,
-		&userEncx.DEKEncrypted, &userEncx.KeyVersion,
+		&userEncx.DEKEncrypted, &userEncx.KeyVersion, &userEncx.ProfileIncomplete,
 	)
 
 	require.NoError(t, err, "Failed to get user from database")

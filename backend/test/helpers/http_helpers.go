@@ -1048,3 +1048,82 @@ func ParseCompletePartnerResponse(t *testing.T, resp *http.Response) string {
 
 	return response.Message
 }
+
+// NewGuestClaimRequest creates an HTTP request for guest claim (step 1)
+func NewGuestClaimRequest(t *testing.T, ctx context.Context, baseURL string, email, phone, password, firstName, lastName string) *http.Request {
+	t.Helper()
+
+	body := map[string]string{
+		"email":      email,
+		"phone":      phone,
+		"password":   password,
+		"first_name": firstName,
+		"last_name":  lastName,
+	}
+	jsonData, err := json.Marshal(body)
+	require.NoError(t, err, "Failed to marshal guest claim request")
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		baseURL+authEndpoints.GuestClaimEndpoint,
+		bytes.NewBuffer(jsonData),
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+// NewGuestClaimVerifyRequest creates an HTTP request for guest claim verify (step 2)
+func NewGuestClaimVerifyRequest(t *testing.T, ctx context.Context, baseURL string, email, code, password, firstName, lastName, phone string) *http.Request {
+	t.Helper()
+
+	body := map[string]string{
+		"email":      email,
+		"code":       code,
+		"password":   password,
+		"first_name": firstName,
+		"last_name":  lastName,
+		"phone":      phone,
+	}
+	jsonData, err := json.Marshal(body)
+	require.NoError(t, err, "Failed to marshal guest claim verify request")
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		baseURL+authEndpoints.GuestClaimVerifyEndpoint,
+		bytes.NewBuffer(jsonData),
+	)
+	require.NoError(t, err, "Failed to create HTTP request")
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+// ParseGuestClaimResponse parses the HTTP response for guest claim
+func ParseGuestClaimResponse(t *testing.T, resp *http.Response) (string, string) {
+	t.Helper()
+
+	var response struct {
+		Message string `json:"message"`
+		Status  string `json:"status"`
+	}
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(&response)
+	require.NoError(t, err, "Failed to decode guest claim response")
+	return response.Message, response.Status
+}
+
+// ParseGuestClaimVerifyResponse parses the HTTP response for guest claim verify
+func ParseGuestClaimVerifyResponse(t *testing.T, resp *http.Response) (string, string) {
+	t.Helper()
+
+	var response struct {
+		Message string `json:"message"`
+		Status  string `json:"status"`
+	}
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(&response)
+	require.NoError(t, err, "Failed to decode guest claim verify response")
+	return response.Message, response.Status
+}

@@ -95,7 +95,7 @@ func GetUserEnxByID(t *testing.T, ctx context.Context, userID uuid.UUID, pool *p
 			telephone_hash, telephone_encrypted, postal_code_encrypted,
 			city_encrypted, address1_encrypted, address2_encrypted, stripe_customer_id_encrypted,
 			google_id_encrypted, apple_id_encrypted, created_at_encrypted,
-			logged_in_at_encrypted, dek_encrypted, key_version
+			logged_in_at_encrypted, dek_encrypted, key_version, profile_incomplete
 		FROM auth.users
 		WHERE id = $1
 	`
@@ -108,7 +108,7 @@ func GetUserEnxByID(t *testing.T, ctx context.Context, userID uuid.UUID, pool *p
 		&userEncx.PostalCodeEncrypted, &userEncx.CityEncrypted, &userEncx.Address1Encrypted,
 		&userEncx.Address2Encrypted, &userEncx.StripeCustomerIDEncrypted, &userEncx.GoogleIDEncrypted, &userEncx.AppleIDEncrypted,
 		&userEncx.CreatedAtEncrypted, &userEncx.LoggedInAtEncrypted, &userEncx.DEKEncrypted,
-		&userEncx.KeyVersion,
+		&userEncx.KeyVersion, &userEncx.ProfileIncomplete,
 	)
 
 	return &userEncx, err
@@ -126,7 +126,7 @@ func GetUserEncxByEmailHash(t *testing.T, ctx context.Context, emailHash string,
 		       picture_encrypted, birth_date_encrypted, gender_encrypted,
 		       address1_encrypted, city_encrypted, postal_code_encrypted,
 		       role_encrypted, created_at_encrypted, logged_in_at_encrypted,
-		       dek_encrypted, key_version
+		       dek_encrypted, key_version, profile_incomplete
 		FROM auth.users WHERE email_hash = $1
 	`
 	err := pool.QueryRow(ctx, query, emailHash).Scan(
@@ -135,7 +135,7 @@ func GetUserEncxByEmailHash(t *testing.T, ctx context.Context, emailHash string,
 		&userEncx.PictureEncrypted, &userEncx.BirthDateEncrypted, &userEncx.GenderEncrypted,
 		&userEncx.Address1Encrypted, &userEncx.CityEncrypted, &userEncx.PostalCodeEncrypted,
 		&userEncx.RoleEncrypted, &userEncx.CreatedAtEncrypted, &userEncx.LoggedInAtEncrypted,
-		&userEncx.DEKEncrypted, &userEncx.KeyVersion,
+		&userEncx.DEKEncrypted, &userEncx.KeyVersion, &userEncx.ProfileIncomplete,
 	)
 
 	return &userEncx, err
@@ -191,8 +191,8 @@ func InsertUserEncx(t *testing.T, ctx context.Context, userEncx *domain.UserEncx
 			picture_encrypted, birth_date_encrypted, gender_encrypted,
 			address1_encrypted, address2_encrypted, city_encrypted, postal_code_encrypted,
 			role_encrypted, created_at_encrypted, logged_in_at_encrypted, stripe_customer_id_encrypted,
-			google_id_encrypted, apple_id_encrypted, dek_encrypted, key_version
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+			google_id_encrypted, apple_id_encrypted, dek_encrypted, key_version, profile_incomplete
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
 	`
 	_, err := pool.Exec(ctx, query,
 		userEncx.ID, userEncx.State, userEncx.EmailHash, userEncx.EmailEncrypted, userEncx.PasswordHashSecure,
@@ -200,7 +200,7 @@ func InsertUserEncx(t *testing.T, ctx context.Context, userEncx *domain.UserEncx
 		userEncx.PictureEncrypted, userEncx.BirthDateEncrypted, userEncx.GenderEncrypted,
 		userEncx.Address1Encrypted, userEncx.Address2Encrypted, userEncx.CityEncrypted, userEncx.PostalCodeEncrypted,
 		userEncx.RoleEncrypted, userEncx.CreatedAtEncrypted, userEncx.LoggedInAtEncrypted, userEncx.StripeCustomerIDEncrypted,
-		userEncx.GoogleIDEncrypted, userEncx.AppleIDEncrypted, userEncx.DEKEncrypted, userEncx.KeyVersion)
+		userEncx.GoogleIDEncrypted, userEncx.AppleIDEncrypted, userEncx.DEKEncrypted, userEncx.KeyVersion, userEncx.ProfileIncomplete)
 
 	return err
 }

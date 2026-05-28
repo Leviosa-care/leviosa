@@ -43,6 +43,7 @@ type UserEncx struct {
 	
 	LoggedInAtEncrypted []byte `db:"loggedinat_encrypted" json:"loggedinat_encrypted"`
 	
+ProfileIncomplete bool `db:"profile_incomplete" json:"profile_incomplete"`
 
 	// Essential encryption fields
 	DEKEncrypted  []byte `db:"dek_encrypted" json:"dek_encrypted"`
@@ -70,6 +71,8 @@ func ProcessUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 	result.ID = source.ID
 	
 	result.State = source.State
+
+	result.ProfileIncomplete = false // test utility users always have complete profiles
 	
 
 	// Generate DEK
@@ -219,6 +222,7 @@ func DecryptUserEncx(ctx context.Context, crypto encx.CryptoService, source *Use
 	
 	result.ID = source.ID
 	
+
 	result.State = source.State
 	
 
