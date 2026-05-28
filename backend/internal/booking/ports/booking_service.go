@@ -72,6 +72,18 @@ type BookingService interface {
 	// GetFinancialSummary computes gross revenue, refunds, net revenue, and returns
 	// all paid/refunded transactions for the given date range.
 	GetFinancialSummary(ctx context.Context, from, to time.Time) (*domain.FinancialSummaryResponse, error)
+
+	// LookupBookingByToken verifies a booking token and returns a public response.
+	LookupBookingByToken(ctx context.Context, token string) (*domain.PublicBookingLookupResponse, error)
+
+	// LookupBookingByRefAndContact looks up a guest booking by reference + email/phone.
+	LookupBookingByRefAndContact(ctx context.Context, ref string, email, phone string) (*domain.PublicBookingLookupResponse, error)
+
+	// CancelBookingByToken cancels a booking using a signed booking token instead of
+	// a session cookie. The token must be valid, not expired, and must match the
+	// booking being cancelled. The product's cancellation window is enforced identically
+	// regardless of auth method.
+	CancelBookingByToken(ctx context.Context, bookingID uuid.UUID, token string, reason string) (*domain.Booking, error)
 }
 
 // AdminBookingsFilter holds query parameters for the admin bookings list endpoint.

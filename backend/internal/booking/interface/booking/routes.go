@@ -18,6 +18,10 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /admin/analytics/summary", RequireAdmin(mw.EnableCORS(h.GetAnalyticsSummary)))
 	router.HandleFunc("GET /admin/bookings/financial-summary", RequireAdmin(mw.EnableCORS(h.GetFinancialSummary)))
 
+	// Public booking endpoints (unauthenticated — used by guest booking page)
+	router.HandleFunc("GET /bookings/lookup", mw.EnableCORS(h.LookupBooking))
+	router.HandleFunc("POST /bookings/{id}/cancel-public", mw.EnableCORS(h.CancelBookingPublic))
+
 	// Booking management endpoints
 	// POST /bookings is public to allow guest bookings without authentication
 	router.HandleFunc("POST /bookings", mw.EnableCORS(h.CreateBooking))

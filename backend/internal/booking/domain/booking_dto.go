@@ -114,6 +114,21 @@ type AdminBookingResponse struct {
 	CreatedAt       time.Time     `json:"created_at"`
 }
 
+// PublicBookingLookupResponse is the DTO returned by the unauthenticated public
+// booking lookup endpoint. It contains only the fields safe to show to guests:
+// no ClientID, no internal partner/room IDs, and no decrypted guest contact fields.
+type PublicBookingLookupResponse struct {
+	ID              uuid.UUID     `json:"id"`
+	ProductName     string        `json:"product_name"`
+	PartnerName     string        `json:"partner_name"`
+	SlotStartTime   time.Time     `json:"slot_start_time"`
+	SlotEndTime     time.Time     `json:"slot_end_time"`
+	Status          BookingStatus `json:"status"`
+	TotalPriceCents int           `json:"total_price_cents"`
+	Currency        string        `json:"currency"`
+	PaymentStatus   PaymentStatus `json:"payment_status"`
+}
+
 // AdminBookingsListResponse is the paginated response for the admin bookings list.
 type AdminBookingsListResponse struct {
 	Bookings []AdminBookingResponse `json:"bookings"`

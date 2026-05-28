@@ -9,6 +9,7 @@ import (
 
 type Handler interface {
 	RegisterRoutes(router *http.ServeMux)
+	LookupBooking(w http.ResponseWriter, r *http.Request)
 	CreateBooking(w http.ResponseWriter, r *http.Request)
 	GetBooking(w http.ResponseWriter, r *http.Request)
 	GetClientBookings(w http.ResponseWriter, r *http.Request)
@@ -19,6 +20,7 @@ type Handler interface {
 	GetUpcomingBookings(w http.ResponseWriter, r *http.Request)
 	UpdateBookingNotes(w http.ResponseWriter, r *http.Request)
 	CancelBooking(w http.ResponseWriter, r *http.Request)
+	CancelBookingPublic(w http.ResponseWriter, r *http.Request)
 	CompleteBooking(w http.ResponseWriter, r *http.Request)
 	MarkNoShow(w http.ResponseWriter, r *http.Request)
 	ProcessPayment(w http.ResponseWriter, r *http.Request)
