@@ -445,6 +445,8 @@ func (c *Container) setupServices(ctx context.Context) error {
 			Username: c.Config.SMTPUsername,
 			Password: c.Config.SMTPPassword,
 		}),
+		nil, // TODO: wire Twilio SMS client when available
+		c.Config.FrontendOrigin,
 		bookingNotification.NewInProcessUserFetcher(c.UserService),
 		bookingNotification.NewInProcessRoomFetcher(c.RoomService),
 		bookingNotification.NewInProcessBuildingFetcher(c.BuildingService),

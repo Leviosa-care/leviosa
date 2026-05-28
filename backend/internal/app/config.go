@@ -63,6 +63,9 @@ type Config struct {
 	// Booking token signing secret (HMAC key for guest booking tokens)
 	BookingTokenSecret string
 
+	// Frontend origin for building public URLs (e.g. booking lookup links in SMS)
+	FrontendOrigin string
+
 	// Service Auth
 	ServiceKeyCacheTTLSeconds int
 }
@@ -135,6 +138,9 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 
 		// Booking token
 		BookingTokenSecret: getEnv("BOOKING_TOKEN_SECRET", ""),
+
+		// Frontend
+		FrontendOrigin: getEnv("FRONTEND_ORIGIN", "http://localhost:5173"),
 
 		// Service Auth
 		ServiceKeyCacheTTLSeconds: getEnvInt("SERVICE_KEY_CACHE_TTL_SECONDS", 300),
