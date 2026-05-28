@@ -18,9 +18,13 @@
 	let displayError = $derived(data.lookupError ?? (form?.action === 'lookup' && !form.success ? form.error : null));
 	let cancelError = $derived(form?.action === 'cancel' && !form.success ? form.error : null);
 
-	// If the cancel action succeeded, update the booking in-place
+	// If the cancel action succeeded, update the booking in-place.
+	// Spread original booking first so product_name / partner_name are preserved —
+	// the cancel response is a minimal PublicBookingLookupResponse that omits those fields.
 	let effectiveBooking = $derived(
-		form?.action === 'cancel' && form.success && form.booking ? form.booking : booking
+		form?.action === 'cancel' && form.success && form.booking
+			? { ...booking, ...form.booking }
+			: booking
 	);
 
 	// Cancel requires a booking token — only available on the token URL path
