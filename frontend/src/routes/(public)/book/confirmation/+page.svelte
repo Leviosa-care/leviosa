@@ -1,11 +1,12 @@
 <script lang="ts">
     import { reveal } from "$lib/actions/reveal";
     import Button from "$lib/ui/Button.svelte";
+    import GuestClaimCard from "./GuestClaimCard.svelte";
     import type { PageProps } from "./$types";
 
     let { data }: PageProps = $props();
 
-    const { booking, product, priceDisplay, user } = data;
+    const { booking, product, priceDisplay, user, guestInfo } = data;
 
     // Guard against null/invalid dates from the URL-param fallback path
     const rawStart = booking.slot_start_time;
@@ -113,8 +114,22 @@
 
         <!-- CTA section -->
         <div class="mt-8 grid gap-4">
-            {#if !user}
-                <!-- Guest: prompt to create account -->
+            {#if !user && guestInfo}
+                <!-- Guest: inline account creation card -->
+                <GuestClaimCard {guestInfo} guestClaimForm={data.guestClaimForm} guestClaimVerifyForm={data.guestClaimVerifyForm} />
+
+                <!-- Fallback link for no-JS or API-unreachable -->
+                <noscript>
+                    <div class="text-center">
+                        <a href="/auth">
+                            <Button class="text-white px-8 py-4 rounded-2xl cursor-pointer">
+                                Créer un compte
+                            </Button>
+                        </a>
+                    </div>
+                </noscript>
+            {:else if !user}
+                <!-- Guest but no guest info cookie (e.g. page refreshed) — fallback link -->
                 <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm text-center">
                     <h3 class="text-lg font-semibold text-dark-900 mb-2">
                         Créer un compte pour suivre vos réservations
