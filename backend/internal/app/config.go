@@ -43,6 +43,11 @@ type Config struct {
 	StripeSecretKey      string
 	StripeWebhookSecret  string
 
+	// Twilio
+	TwilioAccountSID  string
+	TwilioAuthToken   string
+	TwilioPhoneNumber string
+
 	// SMTP
 	SMTPHost     string
 	SMTPPort     int
@@ -118,6 +123,11 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 		// Stripe
 		StripeSecretKey:     getEnv("STRIPE_SECRET_KEY", ""),
 		StripeWebhookSecret: getEnv("STRIPE_WEBHOOK_SECRET", ""),
+
+		// Twilio
+		TwilioAccountSID:  getEnv("TWILIO_ACCOUNT_SID", ""),
+		TwilioAuthToken:   getEnv("TWILIO_AUTH_TOKEN", ""),
+		TwilioPhoneNumber: getEnv("TWILIO_PHONE_NUMBER", ""),
 
 		// SMTP
 		SMTPHost:     getEnv("SMTP_HOST", "smtp.gmail.com"),

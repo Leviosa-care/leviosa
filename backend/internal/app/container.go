@@ -75,6 +75,8 @@ import (
 
 	// Notification
 	smtpClient "github.com/Leviosa-care/leviosa/backend/internal/notification/infrastructure/smtp"
+	twilioClient "github.com/Leviosa-care/leviosa/backend/internal/notification/infrastructure/twilio"
+	notificationPorts "github.com/Leviosa-care/leviosa/backend/internal/notification/ports"
 
 	// Common
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
@@ -438,6 +440,15 @@ func (c *Container) setupServices(ctx context.Context) error {
 
 	c.AvailabilityService = availabilitySvc.New(c.AvailabilityRepo, c.AllocationRepo, c.RoomRepo, c.RoomScheduleRepo, c.ProductService, c.Crypto)
 
+	var smsService notificationPorts.SMSService
+	if c.Config.TwilioAccountSID != "" && c.Config.TwilioAuthToken != "" && c.Config.TwilioPhoneNumber != "" {
+		smsService = twilioClient.NewTwilioClient(
+			c.Config.TwilioAccountSID,
+			c.Config.TwilioAuthToken,
+			c.Config.TwilioPhoneNumber,
+		)
+	}
+
 	notificationAdapter := bookingNotification.NewBookingNotificationAdapter(
 		smtpClient.NewSMTPClient(smtpClient.SMTPConfig{
 			Host:     c.Config.SMTPHost,
@@ -445,7 +456,7 @@ func (c *Container) setupServices(ctx context.Context) error {
 			Username: c.Config.SMTPUsername,
 			Password: c.Config.SMTPPassword,
 		}),
-		nil, // TODO: wire Twilio SMS client when available
+		smsService,
 		c.Config.FrontendOrigin,
 		bookingNotification.NewInProcessUserFetcher(c.UserService),
 		bookingNotification.NewInProcessRoomFetcher(c.RoomService),
