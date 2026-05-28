@@ -42,6 +42,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+var testTokenSecret = []byte("test_booking_token_secret_32bytes")
+
 var (
 	pgContainer      *tu.PostgresContainer
 	testPool         *pgxpool.Pool
@@ -202,7 +204,8 @@ func TestMain(m *testing.M) {
 	catalogPriceService := priceService.New(catalogPriceRepo, sharedRepo, priceStripe)
 
 	notificationSpy = NewSpyNotificationService()
-	service = bookingService.New(bookingRepo, availabilityRepo, paymentService, catalogProductService, catalogPriceService, notificationSpy, crypto)
+	service = bookingService.New(bookingRepo, availabilityRepo, paymentService, catalogProductService, catalogPriceService, notificationSpy, crypto,
+		bookingService.WithTokenSecret(testTokenSecret))
 
 	authSessionRepo = authsession.NewRedisSessionRepository(redisClient)
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
