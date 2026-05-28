@@ -35,7 +35,9 @@
 
     const displayName = user
         ? `${user.firstname} ${user.lastname}`
-        : "";
+        : booking.guest_first_name && booking.guest_last_name
+          ? `${booking.guest_first_name} ${booking.guest_last_name}`
+          : "";
 </script>
 
 <div class="bg-dark-50 min-h-screen py-24 md:py-32 px-4 lg:px-8">
