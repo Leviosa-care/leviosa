@@ -2,6 +2,7 @@ import type { PageServerLoad, Actions } from "./$types";
 import { env } from "$env/dynamic/private";
 import { error, redirect } from "@sveltejs/kit";
 import { fail } from "@sveltejs/kit";
+import { getCookieDomain } from "$lib/server/hostname";
 
 export const load: PageServerLoad = async ({ fetch, url, locals }) => {
     const apiUrl = env.API_URL;
@@ -42,7 +43,7 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 };
 
 export const actions = {
-    default: async ({ request, fetch, locals }) => {
+    default: async ({ request, fetch, locals, cookies, url }) => {
         const formData = await request.formData();
 
         const availabilityId = formData.get("availability_id") as string;
@@ -114,6 +115,26 @@ export const actions = {
         if (booking.slot_start_time) params.set("slot_start_time", booking.slot_start_time);
         if (booking.slot_end_time) params.set("slot_end_time", booking.slot_end_time);
         if (booking.total_price_cents) params.set("price_cents", String(booking.total_price_cents));
+
+        // For guest bookings, store guest contact info in a short-lived
+        // httponly cookie so the confirmation page can pre-fill the inline
+        // account creation card without leaking PII into the URL.
+        if (!authenticatedUserId) {
+            const cookieDomain = getCookieDomain(url.hostname);
+            cookies.set("guest_booking_info", JSON.stringify({
+                guest_first_name: guestFirstName || "",
+                guest_last_name: guestLastName || "",
+                guest_email: guestEmail || "",
+                guest_phone: guestPhone || "",
+            }), {
+                path: "/book/confirmation",
+                maxAge: 300, // 5 minutes
+                httpOnly: true,
+                secure: !url.hostname.startsWith('localhost'),
+                sameSite: "lax",
+                ...(cookieDomain && { domain: cookieDomain }),
+            });
+        }
 
         throw redirect(302, `/book/confirmation?${params.toString()}`);
     },
