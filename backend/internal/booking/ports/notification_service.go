@@ -63,6 +63,9 @@ type BookingNotificationData struct {
 	BuildingName string
 	Address      string
 
+	// Booking token for public guest access (empty for bookings created before issue 002)
+	Token string
+
 	// Cancellation details (only for cancellation notifications)
 	CancellationReason string
 	CancelledAt        *time.Time
