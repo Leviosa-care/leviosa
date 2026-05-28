@@ -60,6 +60,9 @@ type Config struct {
 	// Session
 	SessionSecret string
 
+	// Booking token signing secret (HMAC key for guest booking tokens)
+	BookingTokenSecret string
+
 	// Service Auth
 	ServiceKeyCacheTTLSeconds int
 }
@@ -129,6 +132,9 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 
 		// Session
 		SessionSecret: getEnv("SESSION_SECRET", "development-secret-key"),
+
+		// Booking token
+		BookingTokenSecret: getEnv("BOOKING_TOKEN_SECRET", ""),
 
 		// Service Auth
 		ServiceKeyCacheTTLSeconds: getEnvInt("SERVICE_KEY_CACHE_TTL_SECONDS", 300),

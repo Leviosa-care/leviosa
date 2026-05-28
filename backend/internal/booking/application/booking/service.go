@@ -16,6 +16,7 @@ type BookingService struct {
 	roomService         ports.RoomService
 	authUserClient      ports.AuthUserClient
 	crypto              encx.CryptoService
+	tokenSecret         []byte
 }
 
 // New creates a new instance of the booking service
@@ -55,4 +56,9 @@ func WithRoomService(rs ports.RoomService) Option {
 // WithAuthUserClient injects the auth-user client dependency.
 func WithAuthUserClient(c ports.AuthUserClient) Option {
 	return func(s *BookingService) { s.authUserClient = c }
+}
+
+// WithTokenSecret sets the HMAC secret used to sign booking tokens.
+func WithTokenSecret(secret []byte) Option {
+	return func(s *BookingService) { s.tokenSecret = secret }
 }

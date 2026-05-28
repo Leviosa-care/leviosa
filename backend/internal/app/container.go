@@ -457,6 +457,7 @@ func (c *Container) setupServices(ctx context.Context) error {
 		c.Crypto,
 		bookingSvc.WithRoomService(c.RoomService),
 		bookingSvc.WithAuthUserClient(c.BookingAuthuserCLi),
+		bookingSvc.WithTokenSecret([]byte(c.Config.BookingTokenSecret)),
 	)
 
 	c.PaymentService = bookingStripe

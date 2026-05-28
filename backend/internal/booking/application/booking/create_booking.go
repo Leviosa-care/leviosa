@@ -150,6 +150,12 @@ func (s *BookingService) CreateBooking(
 	booking.SlotStartTime = slotStartTime
 	booking.SlotEndTime = slotEndTime
 
+	// Generate signed booking token for public guest access
+	if len(s.tokenSecret) > 0 {
+		token := domain.GenerateBookingToken(booking.ID, booking.SlotEndTime, s.tokenSecret)
+		booking.SetToken(token)
+	}
+
 	// Set client notes if provided
 	if clientNotes != "" {
 		booking.SetClientNotes(clientNotes)
@@ -174,7 +180,7 @@ func (s *BookingService) CreateBooking(
 			metadata["client_id"] = clientID.String()
 		}
 		if booking.IsGuestBooking() {
-			metadata["guest_name"]  = booking.GuestDisplayName()
+			metadata["guest_name"] = booking.GuestDisplayName()
 			metadata["guest_email"] = guestEmail
 			metadata["guest_phone"] = guestPhone
 		}
