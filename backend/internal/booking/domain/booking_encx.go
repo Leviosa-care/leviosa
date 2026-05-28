@@ -42,6 +42,8 @@ type BookingEncx struct {
 	
 	CompletedAt *time.Time `db:"completedat" json:"completedat"`
 	
+	Token string `db:"token" json:"token"`
+	
 	CreatedAt time.Time `db:"createdat" json:"createdat"`
 	
 	UpdatedAt time.Time `db:"updatedat" json:"updatedat"`
@@ -109,6 +111,8 @@ func ProcessBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 	result.PaymentIntentID = source.PaymentIntentID
 	
 	result.Status = source.Status
+	
+	result.Token = source.Token
 	
 	result.CancelledAt = source.CancelledAt
 	
@@ -314,6 +318,8 @@ func DecryptBookingEncx(ctx context.Context, crypto encx.CryptoService, source *
 	result.PaymentIntentID = source.PaymentIntentID
 	
 	result.Status = source.Status
+	
+	result.Token = source.Token
 	
 	result.CancelledAt = source.CancelledAt
 	

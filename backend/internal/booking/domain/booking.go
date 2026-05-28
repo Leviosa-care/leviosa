@@ -64,6 +64,9 @@ type Booking struct {
 	CancellationReason string        `json:"cancellation_reason,omitempty" encx:"encrypt"`
 	CompletedAt        *time.Time    `json:"completed_at,omitempty"`
 
+	// Booking token for public guest access
+	Token string `json:"token,omitempty"`
+
 	// Administrative fields
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -241,4 +244,10 @@ func (b *Booking) IsCancellable() bool {
 // RequiresPayment checks if the booking still requires payment
 func (b *Booking) RequiresPayment() bool {
 	return b.PaymentStatus == PaymentStatusPending || b.PaymentStatus == PaymentStatusFailed
+}
+
+// SetToken sets the signed booking token for public guest access.
+func (b *Booking) SetToken(token string) {
+	b.Token = token
+	b.UpdatedAt = time.Now()
 }

@@ -56,3 +56,9 @@ var (
 	ErrCannotMarkCompletedAsNoShow  = errors.New("cannot mark completed booking as no-show")
 )
 
+// Booking token errors
+var (
+	ErrInvalidBookingToken = errors.New("invalid booking token")
+	ErrBookingTokenExpired = errors.New("booking token has expired")
+)
+

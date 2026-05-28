@@ -27,6 +27,9 @@ type BookingResponse struct {
 	CompletedAt        *time.Time            `json:"completed_at,omitempty"`
 	Availability       *AvailabilityResponse `json:"availability,omitempty"`
 
+	// Booking token for public guest access
+	Token string `json:"token,omitempty"`
+
 	// Guest contact fields (populated for guest bookings)
 	GuestFirstName string `json:"guest_first_name,omitempty"`
 	GuestLastName  string `json:"guest_last_name,omitempty"`
