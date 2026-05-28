@@ -8,6 +8,7 @@ import (
 
 	// Authuser
 	authuserAgg "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/aggregator"
+	bookingClientAdapter "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/booking"
 	otpSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/otp"
 	partnerSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/partner"
 	sessionSvc "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/session"
@@ -140,11 +141,12 @@ type Container struct {
 	BookingAuthuserCLi bookingPorts.AuthUserClient
 
 	// Authuser Services
-	UserService    authuserPorts.UserService
-	PartnerService authuserPorts.PartnerService
-	OTPService     authuserPorts.OTPService
-	SessionService authuserPorts.SessionService
-	AuthAggregator authuserPorts.AuthAggregatorService
+	UserService     authuserPorts.UserService
+	PartnerService  authuserPorts.PartnerService
+	OTPService      authuserPorts.OTPService
+	SessionService  authuserPorts.SessionService
+	AuthAggregator  authuserPorts.AuthAggregatorService
+	BookingClient   authuserPorts.BookingClient
 
 	// Catalog Services
 	CategoryService      catalogPorts.CategoryService
@@ -408,13 +410,16 @@ func (c *Container) setupServices(ctx context.Context) error {
 		return fmt.Errorf("create partner service: %w", err)
 	}
 
-	// Auth aggregator
-	c.AuthAggregator = authuserAgg.New(
+	// Auth aggregator — held as concrete type so SetBookingClient can be called
+	// without a type assertion after BookingService is wired.
+	authAgg := authuserAgg.New(
 		c.OTPService,
 		c.UserService,
 		c.SessionService,
 		c.PartnerService,
+		nil, // BookingClient injected below
 	)
+	c.AuthAggregator = authAgg
 
 	// Booking services
 	// Stripe payment gateway for bookings
@@ -461,6 +466,10 @@ func (c *Container) setupServices(ctx context.Context) error {
 	)
 
 	c.PaymentService = bookingStripe
+
+	// Wire BookingClient into AuthAggregator (now that BookingService is created)
+	c.BookingClient = bookingClientAdapter.NewInProcessClient(c.BookingService)
+	authAgg.SetBookingClient(c.BookingClient)
 
 	// Messaging services
 	bookChecker := messagingBooking.New(c.BookingService)
