@@ -19,7 +19,7 @@ func (r *Repository) GetPendingUsers(ctx context.Context) ([]*domain.UserEncx, e
 			telephone_hash, telephone_encrypted, postal_code_encrypted,
 			city_encrypted, address1_encrypted, address2_encrypted, stripe_customer_id_encrypted,
 			google_id_encrypted, apple_id_encrypted, created_at_encrypted,
-			logged_in_at_encrypted, dek_encrypted, key_version
+			logged_in_at_encrypted, dek_encrypted, key_version, profile_incomplete
 		FROM %s.users
 		WHERE state = $1
 		ORDER BY created_at DESC
@@ -44,7 +44,7 @@ func (r *Repository) GetPendingUsers(ctx context.Context) ([]*domain.UserEncx, e
 			&user.PostalCodeEncrypted, &user.CityEncrypted, &user.Address1Encrypted,
 			&user.Address2Encrypted, &user.StripeCustomerIDEncrypted, &user.GoogleIDEncrypted, &user.AppleIDEncrypted,
 			&user.CreatedAtEncrypted, &user.LoggedInAtEncrypted, &user.DEKEncrypted,
-			&user.KeyVersion,
+			&user.KeyVersion, &user.ProfileIncomplete,
 		)
 		if err != nil {
 			return nil, errs.ClassifyPgError("scan pending user", err)

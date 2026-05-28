@@ -18,10 +18,10 @@ func (r *Repository) CreateUser(ctx context.Context, user *domain.UserEncx) erro
 			telephone_hash, telephone_encrypted, postal_code_encrypted,
 			city_encrypted, address1_encrypted, address2_encrypted, stripe_customer_id_encrypted,
 			google_id_encrypted, apple_id_encrypted, created_at_encrypted,
-			logged_in_at_encrypted, dek_encrypted, key_version
+			logged_in_at_encrypted, dek_encrypted, key_version, profile_incomplete
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-			$15, $16, $17, $18, $19, $20, $21, $22, $23, $24
+			$15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
 		)
 	`, r.schema)
 
@@ -33,7 +33,7 @@ func (r *Repository) CreateUser(ctx context.Context, user *domain.UserEncx) erro
 		user.PostalCodeEncrypted, user.CityEncrypted, user.Address1Encrypted,
 		user.Address2Encrypted, user.StripeCustomerIDEncrypted,
 		user.GoogleIDEncrypted, user.AppleIDEncrypted, user.CreatedAtEncrypted, user.LoggedInAtEncrypted,
-		user.DEKEncrypted, user.KeyVersion,
+		user.DEKEncrypted, user.KeyVersion, user.ProfileIncomplete,
 	)
 	if err != nil {
 		return errs.ClassifyPgError("create user", err)

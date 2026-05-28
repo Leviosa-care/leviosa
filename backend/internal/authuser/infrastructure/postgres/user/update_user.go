@@ -34,7 +34,8 @@ func (r *Repository) UpdateUser(ctx context.Context, user *domain.UserEncx) erro
 			created_at_encrypted = $21,
 			logged_in_at_encrypted = $22,
 			dek_encrypted = $23,
-			key_version = $24
+			key_version = $24,
+			profile_incomplete = $25
 		WHERE id = $1
 	`, r.schema)
 
@@ -46,7 +47,7 @@ func (r *Repository) UpdateUser(ctx context.Context, user *domain.UserEncx) erro
 		user.PostalCodeEncrypted, user.CityEncrypted, user.Address1Encrypted,
 		user.Address2Encrypted, user.StripeCustomerIDEncrypted, user.GoogleIDEncrypted, user.AppleIDEncrypted,
 		user.CreatedAtEncrypted, user.LoggedInAtEncrypted, user.DEKEncrypted,
-		user.KeyVersion,
+		user.KeyVersion, user.ProfileIncomplete,
 	)
 	if err != nil {
 		return errs.ClassifyPgError("update user", err)
