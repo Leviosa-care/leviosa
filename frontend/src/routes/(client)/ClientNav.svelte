@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 
-	import { Home, CalendarDays, PlusCircle, Menu, X } from '@lucide/svelte';
+	import { Home, CalendarDays, PlusCircle, Menu, X, UserRound } from '@lucide/svelte';
 	import type { Component } from 'svelte';
 
 	interface Props {
@@ -21,6 +21,7 @@
 		{ href: '/client', label: 'Accueil', icon: Home },
 		{ href: '/client/bookings', label: 'Mes réservations', icon: CalendarDays },
 		{ href: '/book', label: 'Réserver', icon: PlusCircle },
+		{ href: '/client/profile', label: 'Mon profil', icon: UserRound },
 	];
 
 	function isActive(href: string): boolean {
@@ -67,7 +68,7 @@
 		</nav>
 
 		<!-- User avatar -->
-		<div class="flex items-center gap-3">
+		<a href="/client/profile" class="flex items-center gap-3 hover:opacity-80 transition-opacity" aria-label="Mon profil">
 			<div class="hidden sm:block text-right">
 				<p class="text-sm font-medium text-foreground leading-tight">{displayName}</p>
 				<p class="text-xs text-muted-foreground">Client</p>
@@ -79,7 +80,7 @@
 					<span class="text-xs font-semibold text-foreground">{initials || '?'}</span>
 				{/if}
 			</div>
-		</div>
+		</a>
 	</div>
 </header>
 
