@@ -21,6 +21,12 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	// Validates an OTP and creates a pending user entry.
 	router.HandleFunc("POST "+ValidateOTPCreatePendingEndpoint, mw.EnableCORS(h.ValidateOTPCreatePendingUser))
 
+	// Guest claim flow: validates guest data and sends OTP for email verification.
+	router.HandleFunc("POST "+GuestClaimEndpoint, mw.EnableCORS(h.GuestClaim))
+
+	// Guest claim verify: validates OTP and creates a partial account with profile_incomplete=true.
+	router.HandleFunc("POST "+GuestClaimVerifyEndpoint, mw.EnableCORS(h.GuestClaimVerify))
+
 	// Completes user registration (e.g., creates Stripe user, sets initial state).
 	router.HandleFunc("POST "+CompleteUserEndpoint, RequireVisitor(mw.EnableCORS(h.CompleteUser)))
 

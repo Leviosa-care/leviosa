@@ -44,6 +44,12 @@ const (
 	CheckEmailSendOTPEndpoint        = AuthBasePath + EmailPath
 	ValidateOTPCreatePendingEndpoint = AuthBasePath + OTPPath
 
+	// Guest claim flow
+	GuestClaimPath        = "/guest-claim"
+	GuestClaimVerifyPath  = GuestClaimPath + "/verify"
+	GuestClaimEndpoint    = AuthBasePath + GuestClaimPath
+	GuestClaimVerifyEndpoint = AuthBasePath + GuestClaimVerifyPath
+
 	// User login/logout
 	SignInEndpoint  = AuthBasePath + LoginPath
 	SignOutEndpoint = AuthBasePath + LogoutPath
