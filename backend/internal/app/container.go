@@ -74,9 +74,18 @@ import (
 	bookingStripe "github.com/Leviosa-care/leviosa/backend/internal/booking/infrastructure/stripe"
 
 	// Notification
+	notificationApp "github.com/Leviosa-care/leviosa/backend/internal/notification/application"
 	smtpClient "github.com/Leviosa-care/leviosa/backend/internal/notification/infrastructure/smtp"
 	twilioClient "github.com/Leviosa-care/leviosa/backend/internal/notification/infrastructure/twilio"
 	notificationPorts "github.com/Leviosa-care/leviosa/backend/internal/notification/ports"
+
+	// Settings
+	settingsApp "github.com/Leviosa-care/leviosa/backend/internal/settings/application"
+	settingsMedia "github.com/Leviosa-care/leviosa/backend/internal/settings/infrastructure/s3"
+	noopPublisher "github.com/Leviosa-care/leviosa/backend/internal/settings/infrastructure/noop"
+	settingsRepo "github.com/Leviosa-care/leviosa/backend/internal/settings/infrastructure/postgres"
+	settingsRabbitMQ "github.com/Leviosa-care/leviosa/backend/internal/settings/infrastructure/rabbitmq"
+	settingsPorts "github.com/Leviosa-care/leviosa/backend/internal/settings/ports"
 
 	// Common
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
@@ -180,6 +189,12 @@ type Container struct {
 
 	// Notification
 	BookingNotificationService bookingPorts.BookingNotificationService
+	NotificationService       notificationPorts.NotificationService
+
+	// Settings
+	SettingsService       settingsPorts.SettingsService
+	SettingsRepo          settingsPorts.SettingsRepository
+	SettingsMedia         settingsPorts.SettingsMedia
 }
 
 // NewContainer creates and wires all dependencies
@@ -354,6 +369,10 @@ func (c *Container) setupRepositories(ctx context.Context) error {
 	// Messaging repositories
 	c.MessageRepo = messagingRepo.New(ctx, c.DB)
 
+	// Settings repositories
+	c.SettingsRepo = settingsRepo.New(ctx, c.DB)
+	c.SettingsMedia = settingsMedia.New(ctx, c.S3Client, c.Config.S3BucketName)
+
 	return nil
 }
 
@@ -440,9 +459,18 @@ func (c *Container) setupServices(ctx context.Context) error {
 
 	c.AvailabilityService = availabilitySvc.New(c.AvailabilityRepo, c.AllocationRepo, c.RoomRepo, c.RoomScheduleRepo, c.ProductService, c.Crypto)
 
-	var smsService notificationPorts.SMSService
+	// Shared notification infrastructure — built once, shared between the booking
+	// notification adapter and the canonical notification service.
+	sharedEmailClient := smtpClient.NewSMTPClient(smtpClient.SMTPConfig{
+		Host:     c.Config.SMTPHost,
+		Port:     c.Config.SMTPPort,
+		Username: c.Config.SMTPUsername,
+		Password: c.Config.SMTPPassword,
+	})
+
+	var sharedSMSClient notificationPorts.SMSService
 	if c.Config.TwilioAccountSID != "" && c.Config.TwilioAuthToken != "" && c.Config.TwilioPhoneNumber != "" {
-		smsService = twilioClient.NewTwilioClient(
+		sharedSMSClient = twilioClient.NewTwilioClient(
 			c.Config.TwilioAccountSID,
 			c.Config.TwilioAuthToken,
 			c.Config.TwilioPhoneNumber,
@@ -450,13 +478,8 @@ func (c *Container) setupServices(ctx context.Context) error {
 	}
 
 	notificationAdapter := bookingNotification.NewBookingNotificationAdapter(
-		smtpClient.NewSMTPClient(smtpClient.SMTPConfig{
-			Host:     c.Config.SMTPHost,
-			Port:     c.Config.SMTPPort,
-			Username: c.Config.SMTPUsername,
-			Password: c.Config.SMTPPassword,
-		}),
-		smsService,
+		sharedEmailClient,
+		sharedSMSClient,
 		c.Config.FrontendOrigin,
 		bookingNotification.NewInProcessUserFetcher(c.UserService),
 		bookingNotification.NewInProcessRoomFetcher(c.RoomService),
@@ -489,6 +512,30 @@ func (c *Container) setupServices(ctx context.Context) error {
 	nameFetcher := messagingAuthuser.New(c.UserService)
 	c.MessagingBroker = messagingSSE.NewBroker(nil) // logger set later in server
 	c.MessagingService = messagingSvc.New(c.MessageRepo, c.Crypto, bookChecker, nameFetcher, c.MessagingBroker)
+
+	// Settings service
+	var settingsPublisher settingsPorts.EventPublisher
+	if c.RabbitMQ != nil {
+		settingsPublisher = settingsRabbitMQ.NewPublisher(c.RabbitMQ)
+	} else {
+		settingsPublisher = noopPublisher.NewPublisher()
+	}
+	c.SettingsService = settingsApp.New(c.SettingsRepo, c.SettingsMedia, c.Crypto, settingsPublisher)
+
+	// Canonical notification service
+	notificationSettingsProvider := notificationApp.NewSettingsProvider(c.SettingsService)
+	notificationMailService := notificationApp.NewMailService(sharedEmailClient, notificationSettingsProvider)
+
+	var notificationSmsService *notificationApp.SMSService
+	if sharedSMSClient != nil {
+		notificationSmsService = notificationApp.NewSMSService(sharedSMSClient)
+	}
+
+	c.NotificationService = notificationApp.NewNotificationService(
+		notificationMailService,
+		notificationSmsService,
+		notificationSettingsProvider,
+	)
 
 	return nil
 }

@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/notification/ports"
 )
@@ -48,10 +49,16 @@ func (n *NotificationService) SendPaymentNotificationEmail(ctx context.Context, 
 
 // SMS methods - delegate to SMSService
 func (n *NotificationService) SendOTPBySMS(ctx context.Context, phoneNumber, otp string) error {
+	if n.smsService == nil {
+		return fmt.Errorf("SMS service is not configured: twilio credentials not provided")
+	}
 	return n.smsService.SendOTPBySMS(ctx, phoneNumber, otp)
 }
 
 func (n *NotificationService) SendGenericSMS(ctx context.Context, phoneNumber, message string) error {
+	if n.smsService == nil {
+		return fmt.Errorf("SMS service is not configured: twilio credentials not provided")
+	}
 	return n.smsService.SendGenericSMS(ctx, phoneNumber, message)
 }
 

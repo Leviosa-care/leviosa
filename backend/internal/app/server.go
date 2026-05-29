@@ -31,6 +31,9 @@ import (
 	// Messaging HTTP handlers
 	messagingHandler "github.com/Leviosa-care/leviosa/backend/internal/messaging/interface"
 
+	// Settings HTTP handlers
+	settingsHandler "github.com/Leviosa-care/leviosa/backend/internal/settings/interface/http"
+
 	// Common
 	"github.com/Leviosa-care/leviosa/backend/internal/common/envmode"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/httpx"
@@ -119,6 +122,9 @@ func (s *Server) setupRoutes(mux *http.ServeMux) {
 
 	// Messaging routes
 	s.setupMessagingRoutes(mux)
+
+	// Settings routes
+	s.setupSettingsRoutes(mux)
 }
 
 func (s *Server) setupAuthuserRoutes(router *http.ServeMux) {
@@ -242,6 +248,14 @@ func (s *Server) setupMessagingRoutes(router *http.ServeMux) {
 		s.container.MessagingBroker,
 	)
 	messagingH.RegisterRoutes(router)
+}
+
+func (s *Server) setupSettingsRoutes(router *http.ServeMux) {
+	settingsH := settingsHandler.New(
+		s.container.SettingsService,
+		s.container.AuthMw,
+	)
+	settingsH.RegisterRoutes(router)
 }
 
 func (s *Server) applyMiddleware(handler http.Handler) http.Handler {
