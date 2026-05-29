@@ -386,11 +386,22 @@ func (c *Container) setupServices(ctx context.Context) error {
 		auth.WithServiceKeyCacheTTL(time.Duration(c.Config.ServiceKeyCacheTTLSeconds)*time.Second),
 	)
 
-	// OTP service
-	var err error
-	c.OTPService, err = otpSvc.New(ctx, c.OTPRepo, c.Crypto, c.RabbitMQ)
-	if err != nil {
-		return fmt.Errorf("create otp service: %w", err)
+	// Shared notification clients — built once, shared between booking notification
+	// adapter and the canonical notification service (which is also used by OTP delivery).
+	sharedEmailClient := smtpClient.NewSMTPClient(smtpClient.SMTPConfig{
+		Host:     c.Config.SMTPHost,
+		Port:     c.Config.SMTPPort,
+		Username: c.Config.SMTPUsername,
+		Password: c.Config.SMTPPassword,
+	})
+
+	var sharedSMSClient notificationPorts.SMSService
+	if c.Config.TwilioAccountSID != "" && c.Config.TwilioAuthToken != "" && c.Config.TwilioPhoneNumber != "" {
+		sharedSMSClient = twilioClient.NewTwilioClient(
+			c.Config.TwilioAccountSID,
+			c.Config.TwilioAuthToken,
+			c.Config.TwilioPhoneNumber,
+		)
 	}
 
 	// Catalog stripe gateways
@@ -417,6 +428,8 @@ func (c *Container) setupServices(ctx context.Context) error {
 	// Authuser services
 	c.UserService = userSvc.New(c.UserRepo, c.Crypto, c.StripeAdapter)
 
+	var err error
+
 	// Partner service depends on catalog (ProductService, CategoryService)
 	c.PartnerService, err = partnerSvc.New(
 		ctx,
@@ -429,6 +442,36 @@ func (c *Container) setupServices(ctx context.Context) error {
 	)
 	if err != nil {
 		return fmt.Errorf("create partner service: %w", err)
+	}
+
+	// Settings service — wired before OTP so the notification service can read settings.
+	var settingsPublisher settingsPorts.EventPublisher
+	if c.RabbitMQ != nil {
+		settingsPublisher = settingsRabbitMQ.NewPublisher(c.RabbitMQ)
+	} else {
+		settingsPublisher = noopPublisher.NewPublisher()
+	}
+	c.SettingsService = settingsApp.New(c.SettingsRepo, c.SettingsMedia, c.Crypto, settingsPublisher)
+
+	// Canonical notification service
+	notificationSettingsProvider := notificationApp.NewSettingsProvider(c.SettingsService)
+	notificationMailService := notificationApp.NewMailService(sharedEmailClient, notificationSettingsProvider)
+
+	var notificationSmsService *notificationApp.SMSService
+	if sharedSMSClient != nil {
+		notificationSmsService = notificationApp.NewSMSService(sharedSMSClient)
+	}
+
+	c.NotificationService = notificationApp.NewNotificationService(
+		notificationMailService,
+		notificationSmsService,
+		notificationSettingsProvider,
+	)
+
+	// OTP service — requires notification service for in-process email delivery
+	c.OTPService, err = otpSvc.New(ctx, c.OTPRepo, c.Crypto, c.NotificationService)
+	if err != nil {
+		return fmt.Errorf("create otp service: %w", err)
 	}
 
 	// Auth aggregator — held as concrete type so SetBookingClient can be called
@@ -458,24 +501,6 @@ func (c *Container) setupServices(ctx context.Context) error {
 	c.AllocationService = allocationSvc.New(c.AllocationRepo, c.RoomRepo, c.BookingAuthuserCLi, c.Crypto)
 
 	c.AvailabilityService = availabilitySvc.New(c.AvailabilityRepo, c.AllocationRepo, c.RoomRepo, c.RoomScheduleRepo, c.ProductService, c.Crypto)
-
-	// Shared notification infrastructure — built once, shared between the booking
-	// notification adapter and the canonical notification service.
-	sharedEmailClient := smtpClient.NewSMTPClient(smtpClient.SMTPConfig{
-		Host:     c.Config.SMTPHost,
-		Port:     c.Config.SMTPPort,
-		Username: c.Config.SMTPUsername,
-		Password: c.Config.SMTPPassword,
-	})
-
-	var sharedSMSClient notificationPorts.SMSService
-	if c.Config.TwilioAccountSID != "" && c.Config.TwilioAuthToken != "" && c.Config.TwilioPhoneNumber != "" {
-		sharedSMSClient = twilioClient.NewTwilioClient(
-			c.Config.TwilioAccountSID,
-			c.Config.TwilioAuthToken,
-			c.Config.TwilioPhoneNumber,
-		)
-	}
 
 	notificationAdapter := bookingNotification.NewBookingNotificationAdapter(
 		sharedEmailClient,
@@ -512,30 +537,6 @@ func (c *Container) setupServices(ctx context.Context) error {
 	nameFetcher := messagingAuthuser.New(c.UserService)
 	c.MessagingBroker = messagingSSE.NewBroker(nil) // logger set later in server
 	c.MessagingService = messagingSvc.New(c.MessageRepo, c.Crypto, bookChecker, nameFetcher, c.MessagingBroker)
-
-	// Settings service
-	var settingsPublisher settingsPorts.EventPublisher
-	if c.RabbitMQ != nil {
-		settingsPublisher = settingsRabbitMQ.NewPublisher(c.RabbitMQ)
-	} else {
-		settingsPublisher = noopPublisher.NewPublisher()
-	}
-	c.SettingsService = settingsApp.New(c.SettingsRepo, c.SettingsMedia, c.Crypto, settingsPublisher)
-
-	// Canonical notification service
-	notificationSettingsProvider := notificationApp.NewSettingsProvider(c.SettingsService)
-	notificationMailService := notificationApp.NewMailService(sharedEmailClient, notificationSettingsProvider)
-
-	var notificationSmsService *notificationApp.SMSService
-	if sharedSMSClient != nil {
-		notificationSmsService = notificationApp.NewSMSService(sharedSMSClient)
-	}
-
-	c.NotificationService = notificationApp.NewNotificationService(
-		notificationMailService,
-		notificationSmsService,
-		notificationSettingsProvider,
-	)
 
 	return nil
 }
