@@ -12,7 +12,7 @@ These are the canonical terms used in code, documentation, and conversation. Use
 
 | Term | Definition |
 |------|------------|
-| **User** | Any registered account on the platform. Has a role that governs access. |
+| **User** | Any registered account on the platform. Has a role that governs access. Must be at least 18 years old (see ADR-0012). |
 | **Client** | A user who books wellness sessions (role: `standard` or `premium`). |
 | **Guest** | A person who books a session without creating an account. Identified by first name, last name, and at least one of email or phone. Guest contact fields are stored encrypted on the Booking. After a successful booking, the confirmation page offers an inline account creation form pre-filled with their booking info — just a password field away. |
 | **Premium client** | A client role reserved for future elevated access (discounts, priority booking). Currently follows the same booking flow as a standard client. The distinction will become meaningful when service tiers or exclusive offerings are introduced. |
@@ -93,7 +93,7 @@ Leviosa is a **modular monolith**: one deployed binary, five internal services w
 | **catalog** | Categories, products, images (S3), Stripe pricing |
 | **booking** | Rooms, buildings, allocations, availabilities, bookings, metrics |
 | **settings** | Platform-wide configuration key-value store |
-| **notification** | Email and SMS delivery (consumed from RabbitMQ events) |
+| **notification** | Email and SMS delivery. OTP emails are delivered via direct in-process call from authuser (see ADR-0011). Other notifications (booking confirmations, etc.) use RabbitMQ events. |
 
 ---
 
