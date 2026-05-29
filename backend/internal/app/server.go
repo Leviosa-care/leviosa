@@ -44,8 +44,12 @@ type Server struct {
 	logger     *slog.Logger
 }
 
-// NewServer creates a new HTTP server with all routes
+// NewServer creates a new HTTP server with all routes.
+// It initialises package-level middleware state (e.g. CORS origin) before
+// the server can accept connections.
 func NewServer(container *Container, logger *slog.Logger) *Server {
+	middleware.SetAllowedOrigin(container.Config.FrontendOrigin)
+
 	return &Server{
 		container: container,
 		logger:    logger,
