@@ -161,6 +161,11 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 		return nil, fmt.Errorf("DATABASE_URL is required")
 	}
 
+	// Validate session secret in non-development environments
+	if cfg.Environment != "development" && cfg.SessionSecret == "development-secret-key" {
+		return nil, fmt.Errorf("SESSION_SECRET must be set to a secure value in %s environment (not the development default)", cfg.Environment)
+	}
+
 	return cfg, nil
 }
 
