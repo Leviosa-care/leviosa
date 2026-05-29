@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"time"
 
 	// Authuser
@@ -94,6 +95,7 @@ import (
 	commonSession "github.com/Leviosa-care/leviosa/backend/internal/common/auth/session"
 
 	// Middleware
+	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
 
 	// External
@@ -123,6 +125,7 @@ type Container struct {
 	Crypto      encx.CryptoService
 	VaultClient *api.Client
 	AuthMw      auth.AuthMiddleware
+	RateLimiter *middleware.RateLimiter
 
 	// Authuser Repositories
 	UserRepo      authuserPorts.UserRepository
@@ -385,6 +388,9 @@ func (c *Container) setupServices(ctx context.Context) error {
 	c.AuthMw = auth.NewSessionAuthMiddleware(authSessionRepo, c.Crypto, c.VaultClient,
 		auth.WithServiceKeyCacheTTL(time.Duration(c.Config.ServiceKeyCacheTTLSeconds)*time.Second),
 	)
+
+	// Rate limiter (reuses Redis connection)
+	c.RateLimiter = middleware.NewRateLimiter(c.RedisClient, slog.Default())
 
 	// Shared notification clients — built once, shared between booking notification
 	// adapter and the canonical notification service (which is also used by OTP delivery).

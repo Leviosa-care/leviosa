@@ -259,11 +259,32 @@ func (s *Server) setupSettingsRoutes(router *http.ServeMux) {
 }
 
 func (s *Server) applyMiddleware(handler http.Handler) http.Handler {
-	// CORS middleware
+	// Rate limiting on auth endpoints (innermost: applied before CORS so the
+	// rate limiter runs inside the CORS wrapper and 429 responses still carry
+	// CORS headers — required for browser clients to surface the 429 status).
+	rateLimitRules := []middleware.PathRateLimit{
+		{
+			Method:      http.MethodPost,
+			Path:        "/auth/login",
+			KeyPrefix:   "signin",
+			MaxRequests: s.container.Config.RateLimitSigninMax,
+			Window:      time.Duration(s.container.Config.RateLimitSigninWindowSeconds) * time.Second,
+		},
+		{
+			Method:      http.MethodPost,
+			Path:        "/auth/password/reset/request",
+			KeyPrefix:   "password_reset",
+			MaxRequests: s.container.Config.RateLimitPasswordResetMax,
+			Window:      time.Duration(s.container.Config.RateLimitPasswordResetWindowSeconds) * time.Second,
+		},
+	}
+	handler = s.container.RateLimiter.RateLimitByPath(rateLimitRules)(handler)
+
+	// CORS wraps the rate limiter so that 429 responses carry CORS headers.
 	corsHandler := middleware.EnableCORS(handler.ServeHTTP)
 	handler = http.HandlerFunc(corsHandler)
 
-	// Logging middleware
+	// Logging middleware (outermost)
 	handler = middleware.AttachLogger(envmode.Prod, s.logger)(handler)
 
 	return handler

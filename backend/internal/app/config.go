@@ -73,6 +73,12 @@ type Config struct {
 
 	// Service Auth
 	ServiceKeyCacheTTLSeconds int
+
+	// Rate Limiting
+	RateLimitSigninMax             int
+	RateLimitSigninWindowSeconds   int
+	RateLimitPasswordResetMax      int
+	RateLimitPasswordResetWindowSeconds int
 }
 
 // LoadConfig loads configuration from environment variables
@@ -154,6 +160,12 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 
 		// Service Auth
 		ServiceKeyCacheTTLSeconds: getEnvInt("SERVICE_KEY_CACHE_TTL_SECONDS", 300),
+
+		// Rate Limiting
+		RateLimitSigninMax:                  getEnvInt("RATE_LIMIT_SIGNIN_MAX", 10),
+		RateLimitSigninWindowSeconds:        getEnvInt("RATE_LIMIT_SIGNIN_WINDOW_SECONDS", 900),
+		RateLimitPasswordResetMax:           getEnvInt("RATE_LIMIT_PASSWORD_RESET_MAX", 5),
+		RateLimitPasswordResetWindowSeconds: getEnvInt("RATE_LIMIT_PASSWORD_RESET_WINDOW_SECONDS", 900),
 	}
 
 	// Validate required fields
