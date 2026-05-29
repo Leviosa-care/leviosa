@@ -8,7 +8,7 @@ import (
 
 // Birth date validation constants
 const (
-	MinAgeYears = 13  // GDPR compliance - minimum age
+	MinAgeYears = 18  // Minimum age for booking contracts and payments
 	MaxAgeYears = 120 // Reasonable maximum age
 )
 
@@ -22,7 +22,7 @@ const (
 // Birth date validation error messages
 const (
 	BirthDateFutureMsg   = "birth date cannot be in the future"
-	BirthDateTooYoungMsg = "user must be at least 13 years old"
+	BirthDateTooYoungMsg = "user must be at least 18 years old"
 	BirthDateTooOldMsg   = "birth date is not valid"
 )
 
@@ -36,7 +36,7 @@ func validateBirthDate(birthdate time.Time) error {
 		errs.Set(BirthDateFutureKey, BirthDateFutureMsg)
 	}
 
-	// Check minimum age (13 years for GDPR compliance)
+	// Check minimum age (18 years for booking contracts and payments)
 	minBirthDate := now.AddDate(-MinAgeYears, 0, 0)
 	if birthdate.After(minBirthDate) {
 		errs.Set(BirthDateTooYoungKey, BirthDateTooYoungMsg)

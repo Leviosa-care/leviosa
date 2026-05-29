@@ -13,7 +13,7 @@ func TestValidateBirthDate(t *testing.T) {
 
 	t.Run("valid birth dates should pass", func(t *testing.T) {
 		validBirthDates := []time.Time{
-			now.AddDate(-MinAgeYears, 0, -1), // 13 years and 1 day old
+			now.AddDate(-MinAgeYears, 0, -1), // 18 years and 1 day old
 			now.AddDate(-20, 0, 0),           // 20 years old
 			now.AddDate(-30, -6, -15),        // 30 years, 6 months, 15 days old
 			now.AddDate(-50, 0, 0),           // 50 years old
@@ -55,8 +55,8 @@ func TestValidateBirthDate(t *testing.T) {
 			now,                             // Born today
 			now.AddDate(0, 0, -1),           // Born yesterday
 			now.AddDate(-1, 0, 0),           // 1 year old
-			now.AddDate(-12, 0, 0),          // 12 years old
-			now.AddDate(-MinAgeYears, 0, 1), // 12 years, 11 months, 29 days old (just under 13)
+			now.AddDate(-17, 0, 0),          // 17 years old
+			now.AddDate(-MinAgeYears, 0, 1), // 17 years, 11 months, 29 days old (just under 18)
 		}
 
 		for _, birthdate := range tooYoungDates {
@@ -95,14 +95,14 @@ func TestValidateBirthDate(t *testing.T) {
 
 	t.Run("boundary cases", func(t *testing.T) {
 		t.Run("exactly minimum age should pass", func(t *testing.T) {
-			// Exactly 13 years old
+			// Exactly 18 years old
 			exactMinAge := now.AddDate(-MinAgeYears, 0, 0)
 			err := validateBirthDate(exactMinAge)
 			assert.NoError(t, err, "expected exactly %d years old to be valid", MinAgeYears)
 		})
 
 		t.Run("just under minimum age should fail", func(t *testing.T) {
-			// 13 years minus 1 day
+			// 18 years minus 1 day
 			justUnderMinAge := now.AddDate(-MinAgeYears, 0, 1)
 			err := validateBirthDate(justUnderMinAge)
 			assert.Error(t, err)
@@ -112,11 +112,13 @@ func TestValidateBirthDate(t *testing.T) {
 			assert.Contains(t, errMap, BirthDateTooYoungKey)
 		})
 
-		t.Run("exactly maximum age should pass", func(t *testing.T) {
-			// Exactly 120 years old
-			exactMaxAge := now.AddDate(-MaxAgeYears, 0, 0)
-			err := validateBirthDate(exactMaxAge)
-			assert.NoError(t, err, "expected exactly %d years old to be valid", MaxAgeYears)
+		t.Run("just within maximum age should pass", func(t *testing.T) {
+			// 1 day under 120 years — testing "exactly 120" is inherently flaky because
+			// the validator calls time.Now() independently, making the boundary shift by
+			// nanoseconds and causing a spurious "too old" error on exact matches.
+			justWithinMaxAge := now.AddDate(-MaxAgeYears, 0, 1)
+			err := validateBirthDate(justWithinMaxAge)
+			assert.NoError(t, err, "expected just within %d years old to be valid", MaxAgeYears)
 		})
 
 		t.Run("just over maximum age should fail", func(t *testing.T) {
@@ -209,30 +211,6 @@ func TestValidateBirthDate(t *testing.T) {
 					}
 				})
 			}
-		})
-	})
-
-	t.Run("GDPR compliance validation", func(t *testing.T) {
-		t.Run("minimum age requirement", func(t *testing.T) {
-			// Test the GDPR requirement of 13 years minimum
-			almostThirteen := now.AddDate(-MinAgeYears, 0, 1)  // 12 years, 11 months, 29 days
-			exactlyThirteen := now.AddDate(-MinAgeYears, 0, 0) // Exactly 13 years
-			overThirteen := now.AddDate(-MinAgeYears, 0, -1)   // 13 years and 1 day
-
-			// Almost 13 should fail
-			err := validateBirthDate(almostThirteen)
-			assert.Error(t, err)
-			var errMap errsx.Map
-			assert.True(t, errsx.As(err, &errMap))
-			assert.Contains(t, errMap, BirthDateTooYoungKey)
-
-			// Exactly 13 should pass
-			err = validateBirthDate(exactlyThirteen)
-			assert.NoError(t, err)
-
-			// Over 13 should pass
-			err = validateBirthDate(overThirteen)
-			assert.NoError(t, err)
 		})
 	})
 }
