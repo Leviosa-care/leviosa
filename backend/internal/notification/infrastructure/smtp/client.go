@@ -358,7 +358,7 @@ func (c *SMTPClient) sendEmail(ctx context.Context, request *domain.EmailRequest
 	d := gomail.NewDialer(c.config.Host, c.config.Port, c.config.Username, c.config.Password)
 
 	if err := d.DialAndSend(m); err != nil {
-		return fmt.Errorf("send email via SMTP: %w", errs.ErrConnectionFailure)
+		return fmt.Errorf("send email via SMTP: %w", err)
 	}
 
 	return nil
@@ -385,12 +385,19 @@ func writeTempFile(data []byte, filename string) (string, error) {
 		return "", fmt.Errorf("file data cannot be empty: %w", errs.ErrInvalidValue)
 	}
 
-	tmpDir := os.TempDir()
-	tmpPath := filepath.Join(tmpDir, filename)
+	ext := filepath.Ext(filename)
+	stem := filename[:len(filename)-len(ext)]
 
-	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
+	f, err := os.CreateTemp("", stem+"*"+ext)
+	if err != nil {
+		return "", fmt.Errorf("create temp file %s: %w", filename, err)
+	}
+	defer f.Close()
+
+	if _, err := f.Write(data); err != nil {
+		os.Remove(f.Name())
 		return "", fmt.Errorf("write temp file %s: %w", filename, err)
 	}
 
-	return tmpPath, nil
+	return f.Name(), nil
 }
