@@ -4,7 +4,7 @@
 
     onMount(() => {
         if (window.innerWidth >= 768) {
-            goto("/bookings/consultations");
+            goto("/admin/bookings/consultations");
         }
     });
 </script>
