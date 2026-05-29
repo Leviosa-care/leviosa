@@ -33,7 +33,6 @@ Each microservice has specific test commands in their individual Makefiles:
 - **authuser**: `make test`, `make ti` (integration), `make all`
 - **catalog**: `make test`, `make ti` (integration), `make test-all`
 - **settings**: `make test`, `make ti` (integration), `make all`
-- **notification**: `make test`, `make ti` (integration)
 
 ## Project Architecture
 
@@ -65,7 +64,6 @@ backend/
 ├── authuser/          # Authentication and user management
 ├── catalog/           # Product catalog and pricing (Stripe integration)
 ├── settings/          # System configuration service
-├── notification/      # Email/SMS notifications
 └── cmd/leviosa/       # Main application entry point
 ```
 
