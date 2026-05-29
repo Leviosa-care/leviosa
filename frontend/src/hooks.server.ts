@@ -1,5 +1,14 @@
 import { redirect, isRedirect, error, isHttpError, type Handle, type RequestEvent } from '@sveltejs/kit';
 import { env } from "$env/dynamic/private"
+import { dev } from '$app/environment';
+
+// Startup guard: prevent misconfigured staging/production from serving mock data.
+if (env.USE_MOCK_DATA === 'true' && !dev) {
+	throw new Error(
+		`Refusing to start: USE_MOCK_DATA is "true" but the application is not running in development mode. ` +
+		`Set USE_MOCK_DATA to "false" or start the server with "npm run dev".`
+	);
+}
 
 import { handleLoginRedirect } from '$lib/utils/redirect';
 import { mockUser } from '$lib/data/user';
