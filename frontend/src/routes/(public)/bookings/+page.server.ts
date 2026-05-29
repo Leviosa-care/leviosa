@@ -2,21 +2,37 @@ import { env } from '$env/dynamic/private';
 import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ url, locals, fetch, cookies }) => {
-	// Mock mode (dev/staging): locals.user is always set → redirect immediately
-	if (locals.user) {
-		throw redirect(302, '/client/bookings');
+function roleBookingsPath(role: string): string | null {
+	switch (role) {
+		case 'standard':
+		case 'premium':
+			return '/client/bookings';
+		case 'administrator':
+			return '/admin/bookings';
+		case 'partner':
+			return '/staff/agenda/reservations';
+		default:
+			return null;
 	}
+}
 
-	// Production: hooks.server.ts skips session validation for non-protected routes,
-	// so locals.user is not populated. Check the session cookie explicitly.
-	const sessionID = cookies.get(locals.sessionCookieName);
-	if (sessionID) {
-		const res = await fetch(`${env.API_URL}/users/me`, {
-			headers: { Cookie: `leviosa_access_token=${sessionID}` }
-		}).catch(() => null);
-		if (res?.ok) {
-			throw redirect(302, '/client/bookings');
+export const load: PageServerLoad = async ({ url, locals, fetch, cookies }) => {
+	if (locals.user) {
+		const dest = roleBookingsPath(locals.user.role);
+		if (dest) throw redirect(302, dest);
+	} else {
+		// Production: hooks.server.ts skips session validation for non-protected routes,
+		// so locals.user is not populated. Check the session cookie explicitly.
+		const sessionID = cookies.get(locals.sessionCookieName);
+		if (sessionID) {
+			const res = await fetch(`${env.API_URL}/users/me`, {
+				headers: { Cookie: `leviosa_access_token=${sessionID}` }
+			}).catch(() => null);
+			if (res?.ok) {
+				const user = await res.json();
+				const dest = roleBookingsPath(user.role);
+				if (dest) throw redirect(302, dest);
+			}
 		}
 	}
 
