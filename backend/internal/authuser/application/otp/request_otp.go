@@ -74,16 +74,8 @@ func (s *OTPService) RequestOTP(ctx context.Context, email string) error {
 		return fmt.Errorf("save OTP: %w", err)
 	}
 
-	if err := s.PublishOTPUpdate(
-		ctx,
-		otp.Email,
-		&domain.OTPSentEvent{
-			Code:      otp.Code,
-			Email:     otp.Email,
-			ExpiresAt: otp.ExpiresAt,
-		},
-	); err != nil {
-		return errs.NewExternalServiceErr(err, "publish OTP update")
+	if err := s.notificationSvc.SendOTPEmail(ctx, otp.Email, otp.Code); err != nil {
+		return fmt.Errorf("send OTP email: %w", err)
 	}
 
 	return nil

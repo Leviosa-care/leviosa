@@ -8,7 +8,6 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 
-	"github.com/Leviosa-care/leviosa/backend/internal/common/contracts/otp"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/validation"
 	"github.com/hengadev/encx"
@@ -51,11 +50,8 @@ func (s *OTPService) ResendOTP(ctx context.Context, email string) error {
 				// Already cleaned up - that's fine
 			case errors.Is(err, errs.ErrContext):
 				return err
-			case errors.Is(err, errs.ErrDBQuery):
-				return errs.NewUnexpectedError(err)
 			default:
-				// Log error but continue
-				// TODO: Add proper logging
+				return errs.NewUnexpectedError(err)
 			}
 		}
 		return errs.NewExpiredTokenErr("OTP", errors.New("OTP has expired"))
@@ -66,16 +62,8 @@ func (s *OTPService) ResendOTP(ctx context.Context, email string) error {
 		return errs.NewRateLimitErr(errors.New("maximum attempts exceeded"), "OTP")
 	}
 
-	if err := s.PublishOTPUpdate(
-		ctx,
-		otp.Email,
-		&domain.OTPSentEvent{
-			Code:      existingOTP.Code,
-			Email:     existingOTP.Email,
-			ExpiresAt: existingOTP.ExpiresAt,
-		},
-	); err != nil {
-		return errs.NewExternalServiceErr(err, "publish OTP update")
+	if err := s.notificationSvc.SendOTPEmail(ctx, email, existingOTP.Code); err != nil {
+		return fmt.Errorf("send OTP email: %w", err)
 	}
 
 	return nil
