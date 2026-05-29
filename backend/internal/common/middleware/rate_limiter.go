@@ -23,6 +23,7 @@ type RateLimitConfig struct {
 // rateLimitPipeline is the minimal interface needed from a Redis pipeline.
 type rateLimitPipeline interface {
 	ZRemRangeByScore(ctx context.Context, key, min, max string) *redis.IntCmd
+	ZRangeWithScores(ctx context.Context, key string, start, stop int64) *redis.ZSliceCmd
 	ZCard(ctx context.Context, key string) *redis.IntCmd
 	ZAdd(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd
 	Expire(ctx context.Context, key string, ttl time.Duration) *redis.BoolCmd
@@ -97,6 +98,8 @@ func (rl *RateLimiter) check(ctx context.Context, key string, cfg RateLimitConfi
 	pipe := rl.client.Pipeline()
 	// Remove entries outside the window.
 	pipe.ZRemRangeByScore(ctx, key, "-inf", fmt.Sprintf("%d", windowStart.UnixMilli()))
+	// Fetch the oldest remaining entry so we can compute a precise Retry-After.
+	oldestCmd := pipe.ZRangeWithScores(ctx, key, 0, 0)
 	// Count entries in the current window.
 	countCmd := pipe.ZCard(ctx, key)
 	// Add current request to the sorted set (score = timestamp, member = unique ID).
@@ -114,8 +117,15 @@ func (rl *RateLimiter) check(ctx context.Context, key string, cfg RateLimitConfi
 	count := countCmd.Val()
 
 	if int(count) >= cfg.MaxRequests {
-		// Calculate how long until the oldest entry in the window expires.
+		// Default to the full window; refine to the precise time-to-expiry of the
+		// oldest entry if available.
 		retryAfter = cfg.Window
+		if entries := oldestCmd.Val(); len(entries) > 0 {
+			oldestTime := time.UnixMilli(int64(entries[0].Score))
+			if precise := oldestTime.Add(cfg.Window).Sub(now); precise > 0 {
+				retryAfter = precise
+			}
+		}
 		return false, retryAfter, nil
 	}
 

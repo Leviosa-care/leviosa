@@ -29,13 +29,24 @@ func (m *mockRedisClient) Pipeline() rateLimitPipeline {
 
 // mockPipeliner tracks the sorted-set entries and simulates the pipeline.
 type mockPipeliner struct {
-	store    *mockRedisClient
-	countCmd *redis.IntCmd
+	store      *mockRedisClient
+	countCmd   *redis.IntCmd
+	oldestCmd  *redis.ZSliceCmd
 }
 
 func (p *mockPipeliner) Exec(ctx context.Context) ([]redis.Cmder, error) {
 	if p.store.err != nil {
 		return nil, p.store.err
+	}
+
+	// Populate the oldest-entry result before adding the new request, matching
+	// real pipeline ordering (ZRangeWithScores after ZRemRangeByScore, before ZAdd).
+	if p.oldestCmd != nil {
+		if len(p.store.entries) > 0 {
+			p.oldestCmd.SetVal([]redis.Z{p.store.entries[0]})
+		} else {
+			p.oldestCmd.SetVal(nil)
+		}
 	}
 
 	// The count we report is the number of entries BEFORE this request is added,
@@ -57,6 +68,12 @@ func (p *mockPipeliner) Exec(ctx context.Context) ([]redis.Cmder, error) {
 
 func (p *mockPipeliner) ZRemRangeByScore(ctx context.Context, key, min, max string) *redis.IntCmd {
 	return redis.NewIntCmd(ctx)
+}
+
+func (p *mockPipeliner) ZRangeWithScores(ctx context.Context, key string, start, stop int64) *redis.ZSliceCmd {
+	cmd := redis.NewZSliceCmd(ctx)
+	p.oldestCmd = cmd
+	return cmd
 }
 
 func (p *mockPipeliner) ZCard(ctx context.Context, key string) *redis.IntCmd {
@@ -81,6 +98,10 @@ func (f *failPipeliner) Exec(ctx context.Context) ([]redis.Cmder, error) {
 }
 
 func (f *failPipeliner) ZRemRangeByScore(ctx context.Context, key, min, max string) *redis.IntCmd {
+	return nil
+}
+
+func (f *failPipeliner) ZRangeWithScores(ctx context.Context, key string, start, stop int64) *redis.ZSliceCmd {
 	return nil
 }
 
@@ -173,8 +194,10 @@ func TestRateLimiter_BlocksAfterLimit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Retry-After should be an integer: %v", err)
 	}
-	if secs != 900 {
-		t.Fatalf("Retry-After should equal the window in seconds (900), got %d", secs)
+	// The precise value is time-until-oldest-entry-expires, which in this test is
+	// just under the full window (entries were added milliseconds ago).
+	if secs <= 0 || secs > 900 {
+		t.Fatalf("Retry-After should be in (0, 900], got %d", secs)
 	}
 }
 
@@ -304,8 +327,13 @@ func TestRateLimiter_ResponseContainsCorrectRetryAfter(t *testing.T) {
 	if w.Code != http.StatusTooManyRequests {
 		t.Fatalf("second request: expected 429, got %d", w.Code)
 	}
-	retryAfter := w.Header().Get("Retry-After")
-	if retryAfter != "300" {
-		t.Fatalf("expected Retry-After 300, got %s", retryAfter)
+	retryAfterStr := w.Header().Get("Retry-After")
+	retryAfterSecs, err := strconv.Atoi(retryAfterStr)
+	if err != nil {
+		t.Fatalf("Retry-After should be an integer, got %q: %v", retryAfterStr, err)
+	}
+	// Precise value is time-until-oldest-entry-expires: just under the 5-minute window.
+	if retryAfterSecs <= 0 || retryAfterSecs > 300 {
+		t.Fatalf("expected Retry-After in (0, 300], got %d", retryAfterSecs)
 	}
 }
