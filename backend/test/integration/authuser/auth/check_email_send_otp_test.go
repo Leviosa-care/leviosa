@@ -22,19 +22,10 @@ func TestCheckEmailSendOTP(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	// Setup RabbitMQ for OTP message verification
-	ch, err := testMQConn.Channel()
-	require.NoError(t, err)
-	defer ch.Close()
-
-	// Setup OTP queue and start consuming
-	td.SetupOTPQueue(t, ch)
-	msgs := td.ConsumeOTPMessages(t, ch)
-
 	t.Run("should successfully request email verification for available email", func(t *testing.T) {
 		// Clean state
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		// Test with valid, available email
 		request := domain.CheckEmailAvailabilityRequest{
@@ -63,23 +54,22 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		assert.True(t, ttl > 8*time.Minute, "OTP TTL should be around 10 minutes")
 		assert.True(t, ttl <= 10*time.Minute, "OTP TTL should not exceed 10 minutes")
 
-		// Verify RabbitMQ message was sent
-		delivery := td.WaitForOTPMessage(t, msgs, 2*time.Second)
+		// Verify notification service was called with correct email
+		otpCode := td.AssertOTPReceived(t, testNotifier, request.Email)
+		assert.Len(t, otpCode, 6, "OTP code should be 6 digits")
 
-		// Get OTP from Redis to verify the code
+		// Verify OTP code in Redis matches the one sent via notification
 		otpEncx, err := td.GetOTPEncxByEmailHash(t, ctx, emailHash, redisClient)
 		assert.NoError(t, err)
 		otp, err := domain.DecryptOTPEncx(ctx, crypto, otpEncx)
 		assert.NoError(t, err)
-
-		// Verify message content
-		td.VerifyOTPMessage(t, delivery, request.Email, otp.Code)
+		assert.Equal(t, otpCode, otp.Code)
 	})
 
 	t.Run("should return conflict when email is already registered", func(t *testing.T) {
 		// Clean state and insert existing user
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		existingEmail := "existing@example.com"
 		user := td.NewTestUser(t, existingEmail, "John", "Doe")
@@ -109,14 +99,14 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		exists := td.CheckOTPExists(t, ctx, emailHash, redisClient)
 		assert.False(t, exists, "No OTP should be created for existing email")
 
-		// Verify no RabbitMQ message was sent
-		td.VerifyNoOTPMessage(t, msgs, 500*time.Millisecond)
+		// Verify no notification was sent
+		td.AssertNoOTPSent(t, testNotifier)
 	})
 
 	t.Run("should return rate limit when OTP already exists", func(t *testing.T) {
 		// Clean state
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		email := "ratelimit@example.com"
 
@@ -142,14 +132,14 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		assert.Contains(t, errorMsg, "already active")
 		assert.Equal(t, http.StatusTooManyRequests, statusCode)
 
-		// Verify no new RabbitMQ message was sent
-		td.VerifyNoOTPMessage(t, msgs, 500*time.Millisecond)
+		// Verify no notification was sent
+		td.AssertNoOTPSent(t, testNotifier)
 	})
 
 	t.Run("should return bad request for invalid email", func(t *testing.T) {
 		// Clean state
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		// Test with invalid email
 		request := domain.CheckEmailAvailabilityRequest{
@@ -170,14 +160,14 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		exists := td.CheckOTPExists(t, ctx, "invalid-hash", redisClient)
 		assert.False(t, exists, "No OTP should be created for invalid email")
 
-		// Verify no RabbitMQ message was sent
-		td.VerifyNoOTPMessage(t, msgs, 500*time.Millisecond)
+		// Verify no notification was sent
+		td.AssertNoOTPSent(t, testNotifier)
 	})
 
 	t.Run("should return bad request for empty email", func(t *testing.T) {
 		// Clean state
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		// Test with empty email
 		request := domain.CheckEmailAvailabilityRequest{
@@ -194,14 +184,14 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		assert.Contains(t, errorMsg, "required")
 		assert.Equal(t, http.StatusBadRequest, statusCode)
 
-		// Verify no RabbitMQ message was sent
-		td.VerifyNoOTPMessage(t, msgs, 500*time.Millisecond)
+		// Verify no notification was sent
+		td.AssertNoOTPSent(t, testNotifier)
 	})
 
 	t.Run("should handle malformed JSON request", func(t *testing.T) {
 		// Clean state
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		// Create malformed JSON request
 		malformedJSON := `{"email": "test@example.com", "invalid_field": true}`
@@ -224,14 +214,14 @@ func TestCheckEmailSendOTP(t *testing.T) {
 		assert.Contains(t, errorMsg, "unknown field")
 		assert.Equal(t, http.StatusBadRequest, statusCode)
 
-		// Verify no RabbitMQ message was sent
-		td.VerifyNoOTPMessage(t, msgs, 500*time.Millisecond)
+		// Verify no notification was sent
+		td.AssertNoOTPSent(t, testNotifier)
 	})
 
 	t.Run("should successfully handle concurrent requests for different emails", func(t *testing.T) {
 		// Clean state
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		// Test concurrent requests
 		emails := []string{
@@ -275,18 +265,7 @@ func TestCheckEmailSendOTP(t *testing.T) {
 			assert.True(t, exists, "OTP should exist for email: %s", email)
 		}
 
-		// Verify all RabbitMQ messages were sent (allow some time for async processing)
-		messagesReceived := 0
-		timeout := time.After(3 * time.Second)
-		for messagesReceived < len(emails) {
-			select {
-			case delivery := <-msgs:
-				messagesReceived++
-				delivery.Ack(false)
-			case <-timeout:
-				t.Fatalf("Timeout waiting for messages. Expected %d, received %d", len(emails), messagesReceived)
-			}
-		}
-		assert.Equal(t, len(emails), messagesReceived, "All RabbitMQ messages should be received")
+		// Verify all notification calls were made
+		td.AssertOTPSentCount(t, testNotifier, len(emails))
 	})
 }

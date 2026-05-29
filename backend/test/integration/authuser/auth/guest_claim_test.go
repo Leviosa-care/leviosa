@@ -22,17 +22,9 @@ func TestGuestClaim(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	// Setup RabbitMQ for OTP message verification
-	ch, err := testMQConn.Channel()
-	require.NoError(t, err)
-	defer ch.Close()
-
-	td.SetupOTPQueue(t, ch)
-	msgs := td.ConsumeOTPMessages(t, ch)
-
 	t.Run("should send OTP for valid guest claim and return 202", func(t *testing.T) {
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		req := td.NewGuestClaimRequest(t, ctx, testServerURL,
 			"guest@example.com", "0612345678", td.GenerateStrongPassword(t),
@@ -54,14 +46,13 @@ func TestGuestClaim(t *testing.T) {
 		exists := td.CheckOTPExists(t, ctx, emailHash, redisClient)
 		assert.True(t, exists, "OTP should exist in Redis")
 
-		// Verify RabbitMQ message was sent
-		delivery := td.WaitForOTPMessage(t, msgs, 3*time.Second)
-		assert.NotNil(t, delivery)
+		// Verify notification was sent
+		td.AssertOTPReceived(t, testNotifier, "guest@example.com")
 	})
 
 	t.Run("should return 409 for already registered email", func(t *testing.T) {
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		// Insert existing user
 		existingUser := td.NewTestUser(t, "taken@example.com", "Alice", "Martin")
@@ -85,7 +76,7 @@ func TestGuestClaim(t *testing.T) {
 
 	t.Run("should return 400 for invalid input", func(t *testing.T) {
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		// Empty email, short password
 		req := td.NewGuestClaimRequest(t, ctx, testServerURL,
@@ -104,17 +95,9 @@ func TestGuestClaimVerify(t *testing.T) {
 	ctx := context.Background()
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	// Setup RabbitMQ for OTP
-	ch, err := testMQConn.Channel()
-	require.NoError(t, err)
-	defer ch.Close()
-
-	td.SetupOTPQueue(t, ch)
-	msgs := td.ConsumeOTPMessages(t, ch)
-
 	t.Run("happy path: verify OTP and create guest account", func(t *testing.T) {
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		email := "newguest@example.com"
 		password := td.GenerateStrongPassword(t)
@@ -127,10 +110,6 @@ func TestGuestClaimVerify(t *testing.T) {
 		require.NoError(t, err)
 		resp.Body.Close()
 		require.Equal(t, http.StatusAccepted, resp.StatusCode)
-
-		// Consume OTP from RabbitMQ to get the code
-		delivery := td.WaitForOTPMessage(t, msgs, 3*time.Second)
-		require.NotNil(t, delivery)
 
 		// Extract OTP code from Redis
 		emailBytes, err := encx.SerializeValue(email)
@@ -183,7 +162,7 @@ func TestGuestClaimVerify(t *testing.T) {
 
 	t.Run("wrong OTP returns 400", func(t *testing.T) {
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		email := "wrongotp@example.com"
 		password := td.GenerateStrongPassword(t)
@@ -196,10 +175,6 @@ func TestGuestClaimVerify(t *testing.T) {
 		require.NoError(t, err)
 		resp.Body.Close()
 		require.Equal(t, http.StatusAccepted, resp.StatusCode)
-
-		// Consume OTP message
-		delivery := td.WaitForOTPMessage(t, msgs, 3*time.Second)
-		require.NotNil(t, delivery)
 
 		// Step 2: verify with wrong OTP
 		verifyReq := td.NewGuestClaimVerifyRequest(t, ctx, testServerURL,
@@ -214,7 +189,7 @@ func TestGuestClaimVerify(t *testing.T) {
 
 	t.Run("expired OTP returns 401", func(t *testing.T) {
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		email := "expiredotp@example.com"
 		password := td.GenerateStrongPassword(t)
@@ -239,7 +214,7 @@ func TestGuestClaimVerify(t *testing.T) {
 
 	t.Run("duplicate email on verify returns 409", func(t *testing.T) {
 		td.ClearAuthTestData(t, ctx, testPool, redisClient)
-		td.PurgeOTPQueue(t, ch)
+		testNotifier.Reset()
 
 		email := "duplicate@example.com"
 		password := td.GenerateStrongPassword(t)

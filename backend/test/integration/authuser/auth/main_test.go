@@ -48,6 +48,7 @@ import (
 	"github.com/Leviosa-care/leviosa/backend/internal/common/middleware/auth"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/migrations"
 	tu "github.com/Leviosa-care/leviosa/backend/internal/common/testutils"
+	td "github.com/Leviosa-care/leviosa/backend/test/helpers"
 	"github.com/hengadev/encx"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
@@ -70,9 +71,10 @@ var (
 	authSessionRepo authsession.SessionRepository
 	service         ports.AuthAggregatorService
 	authHandler     aggregatorHandler.Handler
-	testServerURL   string           // Global variable to hold the URL of the running test server
-	testServer      *http.Server     // To allow graceful shutdown
-	testMQConn      *amqp.Connection // RabbitMQ connection for test verification
+	testServerURL   string                                // Global variable to hold the URL of the running test server
+	testServer      *http.Server                          // To allow graceful shutdown
+	testMQConn      *amqp.Connection                      // RabbitMQ connection for test verification
+	testNotifier    *td.MockNotificationService            // Mock notification service for OTP verification
 
 	// Catalog services for partner validation
 	categoryService catalogPorts.PublicCategoryService
@@ -256,7 +258,8 @@ func TestMain(m *testing.M) {
 	productService = catalogProductApp.New(productRepo, sharedRepo, catalogStripeService, catalogPriceStripeService, nil)
 
 	otpRepo = otpRepository.New(redisClient)
-	otpService, err := otp.New(ctx, otpRepo, crypto, testMQConn)
+	testNotifier = td.NewMockNotificationService()
+	otpService, err := otp.New(ctx, otpRepo, crypto, testNotifier)
 	if err != nil {
 		log.Fatalf("Failed to create OTP service: %v", err)
 	}
@@ -325,10 +328,10 @@ func TestMain(m *testing.M) {
 
 // setupAllRabbitMQQueues sets up all RabbitMQ exchanges and queues needed for the auth service
 func setupAllRabbitMQQueues(ctx context.Context, ch *amqp.Channel) error {
-	// Setup OTP notification queues (for publishing OTP messages)
-	log.Println("Setting up OTP notification queues...")
+	// Setup authuser queues (catalog consumer)
+	log.Println("Setting up authuser queues...")
 	if err := authRabbitMQ.Setup(ctx, ch); err != nil {
-		return fmt.Errorf("setup OTP notification queues: %w", err)
+		return fmt.Errorf("setup authuser queues: %w", err)
 	}
 
 	// Setup settings queues (for consuming settings updates)
