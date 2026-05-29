@@ -5,11 +5,13 @@
     import { superForm } from "sveltekit-superforms";
     import { Button } from "bits-ui";
     import { DateField } from "bits-ui";
-    import { CalendarDate } from "@internationalized/date";
+    import { CalendarDate, today as getToday, getLocalTimeZone } from "@internationalized/date";
     import { ArrowLeft } from "@lucide/svelte";
 
     import Input from "$lib/ui/Input.svelte";
     import ProgressIndicator from "../ProgressIndicator.svelte";
+    import { getRegistrationContext } from "$lib/context/register.svelte";
+    import type { Step } from "$lib/types/step";
 
     let { data }: PageProps = $props();
     const { form, enhance, errors } = superForm(data.form, {
@@ -27,13 +29,12 @@
             }
         },
     });
-    let birthdate = $state(new CalendarDate(2000, 1, 1));
-    // TODO: have the maxValue for the date of tody - 18 years
-    // TODO: find a way to change the format of the date in the component using the french format for dates, not the english one
-    import { getRegistrationContext } from "$lib/context/register.svelte";
     const register = getRegistrationContext();
-
-    import type { Step } from "$lib/types/step";
+    let birthdate = $state(new CalendarDate(2000, 1, 1));
+    const today = getToday(getLocalTimeZone());
+    const maxBirthdate = today.subtract({ years: 18 });
+    const minBirthdate = today.subtract({ years: 120 });
+    // TODO: find a way to change the format of the date in the component using the french format for dates, not the english one
     let steps: Step[] = [
         { id: 1, name: "Email", status: "complete" },
         { id: 2, name: "Identité", status: "current" },
@@ -112,7 +113,7 @@
                             >
                         </select>
                     </div>
-                    <DateField.Root bind:value={birthdate} locale="fr">
+                    <DateField.Root bind:value={birthdate} locale="fr" minValue={minBirthdate} maxValue={maxBirthdate}>
                         <div class="flex w-full flex-col gap-1.5">
                             <DateField.Label
                                 class="block select-none font-semibold"
