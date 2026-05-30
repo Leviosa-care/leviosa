@@ -26,6 +26,12 @@ type PartnerEncx struct {
 	
 	Experience string `db:"experience" json:"experience"`
 	
+	Occupation string `db:"occupation" json:"occupation"`
+	
+	Quote string `db:"quote" json:"quote"`
+	
+	Tags []string `db:"tags" json:"tags"`
+	
 	CreatedAt time.Time `db:"createdat" json:"createdat"`
 	
 	UpdatedAt time.Time `db:"updatedat" json:"updatedat"`
@@ -72,6 +78,12 @@ func ProcessPartnerEncx(ctx context.Context, crypto encx.CryptoService, source *
 	result.Bio = source.Bio
 	
 	result.Experience = source.Experience
+	
+	result.Occupation = source.Occupation
+	
+	result.Quote = source.Quote
+	
+	result.Tags = source.Tags
 	
 	result.CreatedAt = source.CreatedAt
 	
@@ -139,6 +151,12 @@ func DecryptPartnerEncx(ctx context.Context, crypto encx.CryptoService, source *
 	result.Bio = source.Bio
 	
 	result.Experience = source.Experience
+	
+	result.Occupation = source.Occupation
+	
+	result.Quote = source.Quote
+	
+	result.Tags = source.Tags
 	
 	result.CreatedAt = source.CreatedAt
 	

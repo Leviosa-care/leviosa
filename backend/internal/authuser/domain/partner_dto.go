@@ -14,6 +14,9 @@ type PartnerResponse struct {
 	UserID     uuid.UUID `json:"user_id"`
 	Bio        string    `json:"bio"`
 	Experience string    `json:"experience"`
+	Occupation string    `json:"occupation"`
+	Quote      string    `json:"quote"`
+	Tags       []string  `json:"tags"`
 	// Certifications []string    `json:"certifications"`
 	CategoryIDs             []uuid.UUID       `json:"category_ids,omitempty"`
 	ProductIDs              []uuid.UUID       `json:"product_ids,omitempty"`
@@ -23,8 +26,11 @@ type PartnerResponse struct {
 	UpdatedAt               time.Time         `json:"updated_at"`
 }
 type UpdatePartnerRequest struct {
-	Bio        *string `json:"bio,omitempty"`
-	Experience *string `json:"experience,omitempty"`
+	Bio        *string  `json:"bio,omitempty"`
+	Experience *string  `json:"experience,omitempty"`
+	Occupation *string  `json:"occupation,omitempty"`
+	Quote      *string  `json:"quote,omitempty"`
+	Tags       *[]string `json:"tags,omitempty"`
 	// Certifications *[]string `json:"certifications,omitempty"`
 }
 
@@ -44,6 +50,37 @@ func (r *UpdatePartnerRequest) Valid(ctx context.Context) error {
 		experience := strings.TrimSpace(*r.Experience)
 		if len(experience) > 2000 {
 			errs.Set("experience", "experience must be 2000 characters or less")
+		}
+	}
+
+	// Occupation validation if provided
+	if r.Occupation != nil {
+		occupation := strings.TrimSpace(*r.Occupation)
+		if len(occupation) > 200 {
+			errs.Set("occupation", "occupation must be 200 characters or less")
+		}
+	}
+
+	// Quote validation if provided
+	if r.Quote != nil {
+		quote := strings.TrimSpace(*r.Quote)
+		if len(quote) > 300 {
+			errs.Set("quote", "quote must be 300 characters or less")
+		}
+	}
+
+	// Tags validation if provided
+	if r.Tags != nil {
+		if len(*r.Tags) > 20 {
+			errs.Set("tags", "maximum 20 tags allowed")
+		}
+		for _, tag := range *r.Tags {
+			tag = strings.TrimSpace(tag)
+			if tag == "" {
+				errs.Set("tags", "tag cannot be empty")
+			} else if len(tag) > 100 {
+				errs.Set("tags", "each tag must be 100 characters or less")
+			}
 		}
 	}
 
