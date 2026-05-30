@@ -226,7 +226,7 @@ func (c *SMTPClient) SendBookingConfirmationEmail(ctx context.Context, req domai
 
 	emailReq := &domain.EmailRequest{
 		To:       req.ToEmail,
-		Subject:  "Booking Confirmation",
+		Subject:  "Confirmation de réservation",
 		Template: "booking_confirmation",
 		Data:     data,
 	}
@@ -259,7 +259,7 @@ func (c *SMTPClient) SendBookingCancellationEmail(ctx context.Context, req domai
 
 	emailReq := &domain.EmailRequest{
 		To:       req.ToEmail,
-		Subject:  "Booking Cancelled",
+		Subject:  "Annulation de réservation",
 		Template: "booking_cancellation",
 		Data:     data,
 	}
@@ -296,7 +296,7 @@ func (c *SMTPClient) SendBookingReminderEmail(ctx context.Context, req domain.Bo
 
 	emailReq := &domain.EmailRequest{
 		To:       req.ToEmail,
-		Subject:  "Booking Reminder",
+		Subject:  "Rappel de réservation",
 		Template: "booking_reminder",
 		Data:     data,
 	}
