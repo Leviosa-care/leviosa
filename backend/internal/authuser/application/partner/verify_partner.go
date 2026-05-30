@@ -81,16 +81,5 @@ func (s *PartnerService) VerifyPartner(ctx context.Context, partnerID uuid.UUID,
 	}
 
 	// Return partner response
-	return &domain.PartnerResponse{
-		ID:                      updatedPartner.ID,
-		UserID:                  updatedPartner.UserID,
-		Bio:                     updatedPartner.Bio,
-		Experience:              updatedPartner.Experience,
-		CategoryIDs:             updatedPartner.CategoryIDs,
-		ProductIDs:              updatedPartner.ProductIDs,
-		StripeAccountStatus:     updatedPartner.StripeAccountStatus,
-		StripeOnboardingComplete: updatedPartner.StripeOnboardingComplete,
-		CreatedAt:               updatedPartner.CreatedAt,
-		UpdatedAt:               updatedPartner.UpdatedAt,
-	}, nil
+	return updatedPartner.ToResponse(), nil
 }

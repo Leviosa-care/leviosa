@@ -9,12 +9,12 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetPartnerByUserID retrieves a partner by user ID with their associated user information.
+// GetPartnerByID retrieves a partner by ID with their associated user information.
 func (s *PartnerService) GetPartnerByID(ctx context.Context, partnerID uuid.UUID) (*domain.PartnerResponse, error) {
 	// Get encrypted partner from repository
 	partnerEncx, err := s.partnerRepo.GetPartnerByID(ctx, partnerID)
 	if err != nil {
-		return nil, fmt.Errorf("get partner by user ID from repository: %w", err)
+		return nil, fmt.Errorf("get partner by ID from repository: %w", err)
 	}
 
 	// Decrypt partner
@@ -24,17 +24,5 @@ func (s *PartnerService) GetPartnerByID(ctx context.Context, partnerID uuid.UUID
 	}
 
 	// Build complete response with user info
-	return &domain.PartnerResponse{
-		ID:                      partner.ID,
-		UserID:                  partner.UserID,
-		Bio:                     partner.Bio,
-		Experience:              partner.Experience,
-		// Certifications: partner.Certifications,
-		CategoryIDs:             partner.CategoryIDs,
-		ProductIDs:              partner.ProductIDs,
-		StripeAccountStatus:     partner.StripeAccountStatus,
-		StripeOnboardingComplete: partner.StripeOnboardingComplete,
-		CreatedAt:               partner.CreatedAt,
-		UpdatedAt:               partner.UpdatedAt,
-	}, nil
+	return partner.ToResponse(), nil
 }

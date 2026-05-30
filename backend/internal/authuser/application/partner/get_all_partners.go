@@ -26,19 +26,7 @@ func (s *PartnerService) GetAllPartners(ctx context.Context) ([]*domain.PartnerR
 		}
 
 		// Build complete partner response
-		partners = append(partners, &domain.PartnerResponse{
-			ID:         partner.ID,
-			UserID:     partner.UserID,
-			Bio:        partner.Bio,
-			Experience: partner.Experience,
-			// Certifications: partner.Certifications,
-			CategoryIDs:             partner.CategoryIDs,
-			ProductIDs:              partner.ProductIDs,
-			StripeAccountStatus:     partner.StripeAccountStatus,
-			StripeOnboardingComplete: partner.StripeOnboardingComplete,
-			CreatedAt:               partner.CreatedAt,
-			UpdatedAt:               partner.UpdatedAt,
-		})
+		partners = append(partners, partner.ToResponse())
 	}
 
 	return partners, nil

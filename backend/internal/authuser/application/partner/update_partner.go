@@ -3,6 +3,7 @@ package partner
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
@@ -37,6 +38,19 @@ func (s *PartnerService) UpdatePartner(ctx context.Context, partnerID uuid.UUID,
 	if request.Experience != nil {
 		partner.Experience = *request.Experience
 	}
+	if request.Occupation != nil {
+		partner.Occupation = strings.TrimSpace(*request.Occupation)
+	}
+	if request.Quote != nil {
+		partner.Quote = strings.TrimSpace(*request.Quote)
+	}
+	if request.Tags != nil {
+		tags := make([]string, 0, len(*request.Tags))
+		for _, tag := range *request.Tags {
+			tags = append(tags, strings.TrimSpace(tag))
+		}
+		partner.Tags = tags
+	}
 	// if request.Certifications != nil {
 	//	partner.Certifications = *request.Certifications
 	// }
@@ -53,17 +67,5 @@ func (s *PartnerService) UpdatePartner(ctx context.Context, partnerID uuid.UUID,
 	}
 
 	// Return updated partner response
-	return &domain.PartnerResponse{
-		ID:                      partner.ID,
-		UserID:                  partner.UserID,
-		Bio:                     partner.Bio,
-		Experience:              partner.Experience,
-		// Certifications: partner.Certifications,
-		CategoryIDs:             partner.CategoryIDs,
-		ProductIDs:              partner.ProductIDs,
-		StripeAccountStatus:     partner.StripeAccountStatus,
-		StripeOnboardingComplete: partner.StripeOnboardingComplete,
-		CreatedAt:               partner.CreatedAt,
-		UpdatedAt:               partner.UpdatedAt,
-	}, nil
+	return partner.ToResponse(), nil
 }
