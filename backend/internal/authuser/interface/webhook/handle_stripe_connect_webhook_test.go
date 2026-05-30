@@ -129,6 +129,14 @@ func (m *mockPartnerService) UpdateStripeAccountStatus(ctx context.Context, stri
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
+func (m *mockPartnerService) GetPublicPartners(ctx context.Context) ([]*domain.PublicPartnerResponse, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*domain.PublicPartnerResponse), args.Error(1)
+}
+
 // Verify mockPartnerService satisfies the interface
 var _ ports.PartnerService = (*mockPartnerService)(nil)
 

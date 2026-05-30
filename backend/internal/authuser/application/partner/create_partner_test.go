@@ -115,6 +115,14 @@ func (m *mockPartnerRepository) UpdatePartnerStripeStatus(ctx context.Context, p
 	return args.Error(0)
 }
 
+func (m *mockPartnerRepository) GetPublicPartners(ctx context.Context) ([]*domain.PublicPartnerRow, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*domain.PublicPartnerRow), args.Error(1)
+}
+
 type mockUserRepository struct {
 	mock.Mock
 }
