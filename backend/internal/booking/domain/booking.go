@@ -67,6 +67,9 @@ type Booking struct {
 	// Booking token for public guest access
 	Token string `json:"token,omitempty"`
 
+	// Reminder tracking
+	RemindedAt *time.Time `json:"reminded_at,omitempty"`
+
 	// Administrative fields
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

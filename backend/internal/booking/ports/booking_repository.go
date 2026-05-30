@@ -53,6 +53,15 @@ type BookingRepository interface {
 	// Only succeeds if the booking's client_id is currently NULL.
 	// Returns true if the row was updated, false if it was already owned.
 	SetBookingClientID(ctx context.Context, bookingID, clientID uuid.UUID) (bool, error)
+
+	// FindBookingsDueForReminder returns all confirmed bookings where
+	// reminded_at IS NULL. Time filtering (slot_start_time within the reminder
+	// window) is performed at the service layer after decryption because
+	// slot_start_time is stored encrypted for GDPR compliance.
+	FindBookingsDueForReminder(ctx context.Context) ([]*domain.BookingEncx, error)
+
+	// MarkReminderSent sets reminded_at to now() for a given booking.
+	MarkReminderSent(ctx context.Context, bookingID uuid.UUID) error
 }
 
 // BookingFilter defines filtering options for booking queries
