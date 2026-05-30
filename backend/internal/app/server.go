@@ -11,6 +11,7 @@ import (
 	authHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/auth"
 	partnerHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/partner"
 	userHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/user"
+	webhookHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/webhook"
 
 	// Booking HTTP handlers
 	allocationHandler "github.com/Leviosa-care/leviosa/backend/internal/booking/interface/allocation"
@@ -142,11 +143,20 @@ func (s *Server) setupAuthuserRoutes(router *http.ServeMux) {
 	)
 	userH.RegisterRoutes(router)
 
+	// Partner handler
 	partnerH := partnerHandler.New(
 		s.container.PartnerService,
 		s.container.AuthMw,
 	)
 	partnerH.RegisterRoutes(router)
+
+	// Stripe Connect webhook handler
+	webhookH := webhookHandler.New(
+		s.container.PartnerService,
+		s.container.StripeAdapter,
+		s.container.AuthMw,
+	)
+	webhookH.RegisterRoutes(router)
 }
 
 func (s *Server) setupCatalogRoutes(router *http.ServeMux) {

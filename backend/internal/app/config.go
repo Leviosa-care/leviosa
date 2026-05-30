@@ -40,8 +40,9 @@ type Config struct {
 	EncxPepperAlias string
 
 	// Stripe
-	StripeSecretKey      string
-	StripeWebhookSecret  string
+	StripeSecretKey              string
+	StripeWebhookSecret          string
+	StripeConnectWebhookSecret   string
 
 	// Twilio
 	TwilioAccountSID  string
@@ -127,8 +128,9 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 		EncxPepperAlias: getEnv("ENCX_PEPPER_ALIAS", "leviosa"),
 
 		// Stripe
-		StripeSecretKey:     getEnv("STRIPE_SECRET_KEY", ""),
-		StripeWebhookSecret: getEnv("STRIPE_WEBHOOK_SECRET", ""),
+		StripeSecretKey:            getEnv("STRIPE_SECRET_KEY", ""),
+		StripeWebhookSecret:        getEnv("STRIPE_WEBHOOK_SECRET", ""),
+		StripeConnectWebhookSecret: getEnv("STRIPE_CONNECT_WEBHOOK_SECRET", ""),
 
 		// Twilio
 		TwilioAccountSID:  getEnv("TWILIO_ACCOUNT_SID", ""),

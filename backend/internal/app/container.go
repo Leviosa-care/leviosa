@@ -344,7 +344,7 @@ func (c *Container) setupRepositories(ctx context.Context) error {
 	c.PartnerRepo = partnerRepo.New(ctx, c.DB)
 	c.OTPRepo = otpRepo.New(c.RedisClient)
 	c.SessionRepo = sessionRepo.New(c.RedisClient)
-	c.StripeAdapter = stripeAdapter.NewService(c.Config.StripeSecretKey, "")
+	c.StripeAdapter = stripeAdapter.NewService(c.Config.StripeSecretKey, "", c.Config.StripeConnectWebhookSecret)
 
 	// Catalog repositories
 	c.CategoryRepo = categoryRepo.New(ctx, c.DB)
