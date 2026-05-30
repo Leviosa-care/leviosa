@@ -90,6 +90,30 @@ func NewUpdatePartnerRequest(t *testing.T, ctx context.Context, serverURL string
 	return req
 }
 
+func NewUpdatePartnerMeRequest(t *testing.T, ctx context.Context, serverURL string, request domain.UpdatePartnerRequest, accessToken string) *http.Request {
+	t.Helper()
+
+	body, err := json.Marshal(request)
+	require.NoError(t, err, "Failed to marshal update partner me request")
+
+	url := fmt.Sprintf("%s/partners/me", serverURL)
+	req, err := http.NewRequestWithContext(ctx, "PUT", url, bytes.NewReader(body))
+	require.NoError(t, err, "Failed to create HTTP request")
+
+	req.Header.Set("Content-Type", "application/json")
+
+	// Add session cookie if provided
+	if accessToken != "" {
+		cookie := &http.Cookie{
+			Name:  ck.AccessTokenCookieName,
+			Value: accessToken,
+		}
+		req.AddCookie(cookie)
+	}
+
+	return req
+}
+
 // NewDeletePartnerRequest creates an HTTP request for deleting a partner
 func NewDeletePartnerRequest(t *testing.T, ctx context.Context, serverURL string, partnerID uuid.UUID, accessToken string) *http.Request {
 	t.Helper()

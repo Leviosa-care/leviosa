@@ -139,18 +139,19 @@ func InsertPartnerEncx(t *testing.T, ctx context.Context, partnerEncx *domain.Pa
 
 	query := `
 		INSERT INTO auth.partners (
-			id, user_id, bio, experience,
+			id, user_id, bio, experience, occupation, quote, tags,
 			category_ids, product_ids,
 			stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			dek_encrypted, key_version, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
 		)`
 
 	_, err := pool.Exec(ctx, query,
 		partnerEncx.ID,
 		partnerEncx.UserID,
 		partnerEncx.Bio, partnerEncx.Experience,
+		partnerEncx.Occupation, partnerEncx.Quote, partnerEncx.Tags,
 		partnerEncx.CategoryIDs, partnerEncx.ProductIDs,
 		partnerEncx.StripeConnectedAccountIDEncrypted, partnerEncx.StripeAccountStatus, partnerEncx.StripeOnboardingComplete,
 		partnerEncx.DEKEncrypted, partnerEncx.KeyVersion,
@@ -165,7 +166,7 @@ func GetPartnerEncxByUserID(t *testing.T, ctx context.Context, userID uuid.UUID,
 
 	var partnerEncx domain.PartnerEncx
 	query := `
-		SELECT id, bio, experience,
+		SELECT id, bio, experience, occupation, quote, tags,
 			   category_ids, product_ids,
 			   stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			   dek_encrypted, key_version, created_at, updated_at
@@ -175,6 +176,7 @@ func GetPartnerEncxByUserID(t *testing.T, ctx context.Context, userID uuid.UUID,
 	err := pool.QueryRow(ctx, query, userID).Scan(
 		&partnerEncx.ID,
 		&partnerEncx.Bio, &partnerEncx.Experience,
+		&partnerEncx.Occupation, &partnerEncx.Quote, &partnerEncx.Tags,
 		&partnerEncx.CategoryIDs, &partnerEncx.ProductIDs,
 		&partnerEncx.StripeConnectedAccountIDEncrypted, &partnerEncx.StripeAccountStatus, &partnerEncx.StripeOnboardingComplete,
 		&partnerEncx.DEKEncrypted, &partnerEncx.KeyVersion,
@@ -195,7 +197,7 @@ func GetPartnerEncxByID(t *testing.T, ctx context.Context, ID uuid.UUID, pool *p
 
 	var partnerEncx domain.PartnerEncx
 	query := `
-		SELECT id, user_id, bio, experience,
+		SELECT id, user_id, bio, experience, occupation, quote, tags,
 			   category_ids, product_ids,
 			   stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			   dek_encrypted, key_version, created_at, updated_at
@@ -205,6 +207,7 @@ func GetPartnerEncxByID(t *testing.T, ctx context.Context, ID uuid.UUID, pool *p
 	err := pool.QueryRow(ctx, query, ID).Scan(
 		&partnerEncx.ID, &partnerEncx.UserID,
 		&partnerEncx.Bio, &partnerEncx.Experience,
+		&partnerEncx.Occupation, &partnerEncx.Quote, &partnerEncx.Tags,
 		&partnerEncx.CategoryIDs, &partnerEncx.ProductIDs,
 		&partnerEncx.StripeConnectedAccountIDEncrypted, &partnerEncx.StripeAccountStatus, &partnerEncx.StripeOnboardingComplete,
 		&partnerEncx.DEKEncrypted, &partnerEncx.KeyVersion,
