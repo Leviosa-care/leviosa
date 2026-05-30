@@ -180,6 +180,7 @@ type Container struct {
 	BookingService      bookingPorts.BookingService
 	MetricsService      bookingPorts.MetricsService
 	PaymentService      bookingPorts.PaymentService
+	ReminderScheduler   *bookingSvc.ReminderScheduler
 
 	// Messaging Repositories
 	MessageRepo messagingPorts.MessageRepository
@@ -533,6 +534,15 @@ func (c *Container) setupServices(ctx context.Context) error {
 	)
 
 	c.PaymentService = bookingStripe
+
+	// Booking reminder scheduler
+	c.ReminderScheduler = bookingSvc.NewReminderScheduler(
+		c.BookingRepo,
+		notificationAdapter,
+		c.Crypto,
+		bookingSvc.WithInterval(time.Duration(c.Config.ReminderIntervalMinutes)*time.Minute),
+		bookingSvc.WithReminderWindow(time.Duration(c.Config.ReminderWindowHours)*time.Hour),
+	)
 
 	// Wire BookingClient into AuthAggregator (now that BookingService is created)
 	c.BookingClient = bookingClientAdapter.NewInProcessClient(c.BookingService)

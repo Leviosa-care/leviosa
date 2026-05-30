@@ -44,6 +44,10 @@ func run(ctx context.Context) error {
 	// Create HTTP server
 	server := app.NewServer(container, logger)
 
+	// Start background workers
+	reminderCtx, reminderCancel := context.WithCancel(context.Background())
+	go container.ReminderScheduler.Start(reminderCtx)
+
 	// Setup graceful shutdown
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -60,6 +64,10 @@ func run(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		logger.InfoContext(ctx, "Shutdown signal received")
+
+		// Stop background workers
+		reminderCancel()
+		container.ReminderScheduler.Stop()
 
 		// Give server 30 seconds to shutdown gracefully
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)

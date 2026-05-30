@@ -72,6 +72,10 @@ type Config struct {
 	// Frontend origin for building public URLs (e.g. booking lookup links in SMS)
 	FrontendOrigin string
 
+	// Booking reminder scheduler
+	ReminderIntervalMinutes  int
+	ReminderWindowHours      int
+
 	// Service Auth
 	ServiceKeyCacheTTLSeconds int
 
@@ -159,6 +163,10 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 
 		// Frontend
 		FrontendOrigin: getEnv("FRONTEND_ORIGIN", "http://localhost:5173"),
+
+		// Booking reminder scheduler
+		ReminderIntervalMinutes: getEnvInt("REMINDER_INTERVAL_MINUTES", 15),
+		ReminderWindowHours:    getEnvInt("REMINDER_WINDOW_HOURS", 24),
 
 		// Service Auth
 		ServiceKeyCacheTTLSeconds: getEnvInt("SERVICE_KEY_CACHE_TTL_SECONDS", 300),
