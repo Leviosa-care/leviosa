@@ -1,18 +1,31 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
-	import { BadgeCheck, Pencil, Mail, MapPin, Phone, Tag, Package, AlertCircle, Link, Unlink, CreditCard, ExternalLink } from '@lucide/svelte';
+	import { BadgeCheck, Pencil, Mail, MapPin, Phone, Tag, Package, AlertCircle, Link, Unlink, CreditCard, ExternalLink, Briefcase, MessageSquareQuote, Tags } from '@lucide/svelte';
 
 	let { data }: PageProps = $props();
 
 	let editingBio = $state(false);
 	let editingExperience = $state(false);
+	let editingOccupation = $state(false);
+	let editingQuote = $state(false);
+	let editingTags = $state(false);
 	let bioValue = $state(data.profile?.bio ?? '');
 	let experienceValue = $state(data.profile?.experience ?? '');
+	let occupationValue = $state(data.profile?.occupation ?? '');
+	let quoteValue = $state(data.profile?.quote ?? '');
+	let tagsInput = $state((data.profile?.tags ?? []).join(', '));
+	let tagsValue = $state<string[]>(data.profile?.tags ?? []);
 	// Track last successfully saved values so cancel reverts to the last save, not page load.
 	let savedBio = $state(data.profile?.bio ?? '');
 	let savedExperience = $state(data.profile?.experience ?? '');
+	let savedOccupation = $state(data.profile?.occupation ?? '');
+	let savedQuote = $state(data.profile?.quote ?? '');
+	let savedTagsInput = $state((data.profile?.tags ?? []).join(', '));
 	let bioSaving = $state(false);
 	let experienceSaving = $state(false);
+	let occupationSaving = $state(false);
+	let quoteSaving = $state(false);
+	let tagsSaving = $state(false);
 	let saveError = $state<string | null>(null);
 	let oauthLoading = $state<string | null>(null);
 	let oauthError = $state<string | null>(null);
@@ -82,6 +95,77 @@
 			saveError = 'Une erreur est survenue. Veuillez réessayer.';
 		} finally {
 			experienceSaving = false;
+		}
+	}
+
+	async function saveOccupation() {
+		occupationSaving = true;
+		saveError = null;
+		try {
+			const res = await fetch(`/api/partners/me`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ occupation: occupationValue }),
+			});
+			if (res.ok) {
+				savedOccupation = occupationValue;
+				editingOccupation = false;
+			} else {
+				saveError = 'Impossible d\'enregistrer. Veuillez réessayer.';
+			}
+		} catch {
+			saveError = 'Une erreur est survenue. Veuillez réessayer.';
+		} finally {
+			occupationSaving = false;
+		}
+	}
+
+	async function saveQuote() {
+		quoteSaving = true;
+		saveError = null;
+		try {
+			const res = await fetch(`/api/partners/me`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ quote: quoteValue }),
+			});
+			if (res.ok) {
+				savedQuote = quoteValue;
+				editingQuote = false;
+			} else {
+				saveError = 'Impossible d\'enregistrer. Veuillez réessayer.';
+			}
+		} catch {
+			saveError = 'Une erreur est survenue. Veuillez réessayer.';
+		} finally {
+			quoteSaving = false;
+		}
+	}
+
+	async function saveTags() {
+		tagsSaving = true;
+		saveError = null;
+		const parsedTags = tagsInput
+			.split(',')
+			.map((t: string) => t.trim())
+			.filter((t: string) => t.length > 0);
+		try {
+			const res = await fetch(`/api/partners/me`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ tags: parsedTags }),
+			});
+			if (res.ok) {
+				tagsValue = parsedTags;
+				savedTagsInput = tagsInput;
+				editingTags = false;
+			} else {
+				saveError = 'Impossible d\'enregistrer. Veuillez réessayer.';
+			}
+		} catch {
+			saveError = 'Une erreur est survenue. Veuillez réessayer.';
+		} finally {
+			tagsSaving = false;
 		}
 	}
 
@@ -358,6 +442,172 @@
 					</div>
 				{:else}
 					<p class="text-sm text-muted-foreground leading-relaxed">{experienceValue}</p>
+				{/if}
+			</div>
+
+			<!-- Occupation -->
+			<div class="bg-card rounded-lg border border-border p-6">
+				<div class="flex items-center justify-between mb-4">
+					<div class="flex items-center gap-2">
+						<Briefcase size={16} class="text-muted-foreground" />
+						<h3 class="font-semibold text-foreground">Profession</h3>
+					</div>
+					<button
+						class="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+						onclick={() => (editingOccupation = !editingOccupation)}
+						title="Modifier"
+					>
+						<Pencil size={15} />
+					</button>
+				</div>
+				{#if editingOccupation}
+					<div class="space-y-3">
+						<input
+							type="text"
+							bind:value={occupationValue}
+							maxlength="200"
+							placeholder="Ex: Kinésithérapeute du sport"
+							class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+						/>
+						{#if saveError && editingOccupation}
+							<p class="text-xs text-red-600">{saveError}</p>
+						{/if}
+						<div class="flex items-center justify-between">
+							<span class="text-xs text-muted-foreground">{occupationValue.length}/200</span>
+							<div class="flex gap-2">
+								<button
+									class="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted transition-colors"
+									onclick={() => { occupationValue = savedOccupation; editingOccupation = false; saveError = null; }}
+									disabled={occupationSaving}
+								>
+									Annuler
+								</button>
+								<button
+									class="px-3 py-1.5 text-sm rounded-md bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-50"
+									onclick={saveOccupation}
+									disabled={occupationSaving}
+								>
+									{occupationSaving ? 'Enregistrement...' : 'Enregistrer'}
+								</button>
+							</div>
+						</div>
+					</div>
+				{:else}
+					<p class="text-sm text-muted-foreground leading-relaxed">{occupationValue || 'Non renseigné'}</p>
+				{/if}
+			</div>
+
+			<!-- Quote -->
+			<div class="bg-card rounded-lg border border-border p-6">
+				<div class="flex items-center justify-between mb-4">
+					<div class="flex items-center gap-2">
+						<MessageSquareQuote size={16} class="text-muted-foreground" />
+						<h3 class="font-semibold text-foreground">Citation</h3>
+					</div>
+					<button
+						class="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+						onclick={() => (editingQuote = !editingQuote)}
+						title="Modifier"
+					>
+						<Pencil size={15} />
+					</button>
+				</div>
+				{#if editingQuote}
+					<div class="space-y-3">
+						<input
+							type="text"
+							bind:value={quoteValue}
+							maxlength="300"
+							placeholder="Ex: Le mouvement est la vie"
+							class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+						/>
+						{#if saveError && editingQuote}
+							<p class="text-xs text-red-600">{saveError}</p>
+						{/if}
+						<div class="flex items-center justify-between">
+							<span class="text-xs text-muted-foreground">{quoteValue.length}/300</span>
+							<div class="flex gap-2">
+								<button
+									class="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted transition-colors"
+									onclick={() => { quoteValue = savedQuote; editingQuote = false; saveError = null; }}
+									disabled={quoteSaving}
+								>
+									Annuler
+								</button>
+								<button
+									class="px-3 py-1.5 text-sm rounded-md bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-50"
+									onclick={saveQuote}
+									disabled={quoteSaving}
+								>
+									{quoteSaving ? 'Enregistrement...' : 'Enregistrer'}
+								</button>
+							</div>
+						</div>
+					</div>
+				{:else}
+					<p class="text-sm text-muted-foreground leading-relaxed italic">{quoteValue ? `« ${quoteValue} »` : 'Non renseigné'}</p>
+				{/if}
+			</div>
+
+			<!-- Tags -->
+			<div class="bg-card rounded-lg border border-border p-6">
+				<div class="flex items-center justify-between mb-4">
+					<div class="flex items-center gap-2">
+						<Tags size={16} class="text-muted-foreground" />
+						<h3 class="font-semibold text-foreground">Tags de spécialité</h3>
+					</div>
+					<button
+						class="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+						onclick={() => (editingTags = !editingTags)}
+						title="Modifier"
+					>
+						<Pencil size={15} />
+					</button>
+				</div>
+				{#if editingTags}
+					<div class="space-y-3">
+						<input
+							type="text"
+							bind:value={tagsInput}
+							placeholder="Ex: sport, rééducation, blessures"
+							class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+						/>
+						<p class="text-xs text-muted-foreground">Séparez les tags par des virgules</p>
+						{#if saveError && editingTags}
+							<p class="text-xs text-red-600">{saveError}</p>
+						{/if}
+						<div class="flex items-center justify-between">
+							<span class="text-xs text-muted-foreground">{tagsInput.split(',').filter((t: string) => t.trim()).length} tag(s)</span>
+							<div class="flex gap-2">
+								<button
+									class="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted transition-colors"
+									onclick={() => { tagsInput = savedTagsInput; editingTags = false; saveError = null; }}
+									disabled={tagsSaving}
+								>
+									Annuler
+								</button>
+								<button
+									class="px-3 py-1.5 text-sm rounded-md bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-50"
+									onclick={saveTags}
+									disabled={tagsSaving}
+								>
+									{tagsSaving ? 'Enregistrement...' : 'Enregistrer'}
+								</button>
+							</div>
+						</div>
+					</div>
+				{:else}
+					{#if tagsValue.length > 0}
+						<div class="flex flex-wrap gap-2">
+							{#each tagsValue as tag (tag)}
+								<span class="px-3 py-1.5 text-xs font-medium bg-muted text-foreground rounded-full">
+									{tag}
+								</span>
+							{/each}
+						</div>
+					{:else}
+						<p class="text-sm text-muted-foreground">Non renseigné</p>
+					{/if}
 				{/if}
 			</div>
 		</div>

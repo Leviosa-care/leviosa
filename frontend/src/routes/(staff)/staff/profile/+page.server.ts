@@ -6,6 +6,9 @@ export interface PartnerProfile {
 	id: string;
 	bio: string;
 	experience: string;
+	occupation: string;
+	quote: string;
+	tags: string[];
 	isVerified: boolean;
 	stripeAccountStatus: string;
 	stripeOnboardingComplete: boolean;
@@ -23,6 +26,9 @@ interface PartnerResponse {
 	id: string;
 	bio: string;
 	experience: string;
+	occupation: string;
+	quote: string;
+	tags: string[];
 	created_at: string;
 	category_ids: string[];
 	product_ids: string[];
@@ -103,6 +109,9 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 		id: partner.id,
 		bio: partner.bio || '',
 		experience: partner.experience || '',
+		occupation: partner.occupation || '',
+		quote: partner.quote || '',
+		tags: partner.tags || [],
 		isVerified: partner.stripe_account_status === 'active',
 		stripeAccountStatus: partner.stripe_account_status,
 		stripeOnboardingComplete: partner.stripe_onboarding_complete,
