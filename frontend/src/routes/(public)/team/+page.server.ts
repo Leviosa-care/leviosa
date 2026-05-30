@@ -42,8 +42,8 @@ export const load: PageServerLoad = async ({ fetch }) => {
 
     const partners = partnersData.map((partner: any) => ({
         id: partner.id,
-        firstname: partner.user?.first_name ?? "—",
-        lastname: partner.user?.last_name ?? "—",
+        firstname: partner.first_name ?? "—",
+        lastname: partner.last_name ?? "—",
         occupation: partner.occupation ?? "",
         quote: partner.quote ?? "",
         tags: partner.tags ?? [],

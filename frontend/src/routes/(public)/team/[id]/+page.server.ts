@@ -58,8 +58,8 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
     return {
         partner: {
             id: partnerData.id,
-            firstname: partnerData.user?.first_name ?? "—",
-            lastname: partnerData.user?.last_name ?? "—",
+            firstname: partnerData.first_name ?? "—",
+            lastname: partnerData.last_name ?? "—",
             occupation: partnerData.occupation ?? "",
             quote: partnerData.quote ?? "",
             tags: partnerData.tags ?? [],
