@@ -24,6 +24,9 @@ const (
 
 	// === Public Partner Endpoints ===
 
+	// Get all public partners (unauthenticated)
+	GetPublicPartnersEndpoint = PartnersBasePath
+
 	// Get partner by ID
 	GetPartnerByIDEndpoint = PartnersBasePath + "/{id}"
 

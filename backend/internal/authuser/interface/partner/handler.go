@@ -9,6 +9,7 @@ import (
 
 type Handler interface {
 	RegisterRoutes(router *http.ServeMux)
+	GetPublicPartners(w http.ResponseWriter, r *http.Request)
 	GetPartnerByID(w http.ResponseWriter, r *http.Request)
 	GetPartnerMe(w http.ResponseWriter, r *http.Request)
 	GetAllPartners(w http.ResponseWriter, r *http.Request)

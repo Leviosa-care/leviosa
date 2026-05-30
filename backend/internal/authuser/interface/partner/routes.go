@@ -11,6 +11,9 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	RequireAdmin := h.authmw.RequireAdmin
 	RequirePartner := h.authmw.RequireMinimumRole(identity.Partner)
 
+	// Get all public partners (unauthenticated)
+	router.HandleFunc("GET "+GetPublicPartnersEndpoint, mw.EnableCORS(h.GetPublicPartners))
+
 	// Get partner by ID
 	router.HandleFunc("GET "+GetPartnerByIDEndpoint, mw.EnableCORS(h.GetPartnerByID))
 
