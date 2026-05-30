@@ -21,6 +21,7 @@ func (r *Repository) List(ctx context.Context, filter ports.BookingFilter) ([]*d
 			b.guest_first_name_encrypted, b.guest_last_name_encrypted,
 			b.guest_email_encrypted, b.guest_phone_encrypted,
 			b.token,
+			b.reminded_at,
 			b.created_at, b.updated_at,
 			b.dek_encrypted, b.key_version, b.metadata
 		FROM %s.bookings b
@@ -153,6 +154,7 @@ func (r *Repository) List(ctx context.Context, filter ports.BookingFilter) ([]*d
 			&bookingEncx.GuestEmailEncrypted,
 			&bookingEncx.GuestPhoneEncrypted,
 			&bookingEncx.Token,
+			&bookingEncx.RemindedAt,
 			&bookingEncx.CreatedAt,
 			&bookingEncx.UpdatedAt,
 			&bookingEncx.DEKEncrypted,

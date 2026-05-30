@@ -6,11 +6,12 @@ import (
 
 	"github.com/Leviosa-care/leviosa/backend/internal/booking/domain"
 	"github.com/Leviosa-care/leviosa/backend/internal/common/errs"
-	"github.com/google/uuid"
 )
 
-// GetGuestBookings retrieves all bookings with client_id IS NULL.
-func (r *Repository) GetGuestBookings(ctx context.Context) ([]*domain.BookingEncx, error) {
+// FindBookingsDueForReminder returns all confirmed bookings where reminded_at IS NULL.
+// Time filtering on slot_start_time is performed at the service layer after
+// decryption because slot_start_time is stored encrypted for GDPR compliance.
+func (r *Repository) FindBookingsDueForReminder(ctx context.Context) ([]*domain.BookingEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			b.id, b.availability_id, b.client_id, b.user_id, b.room_id,
@@ -25,12 +26,12 @@ func (r *Repository) GetGuestBookings(ctx context.Context) ([]*domain.BookingEnc
 			b.created_at, b.updated_at,
 			b.dek_encrypted, b.key_version, b.metadata
 		FROM %s.bookings b
-		WHERE b.client_id IS NULL
+		WHERE b.status = 'confirmed' AND b.reminded_at IS NULL
 	`, r.schema)
 
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
-		return nil, errs.ClassifyPgError("get guest bookings", err)
+		return nil, errs.ClassifyPgError("find bookings due for reminder", err)
 	}
 	defer rows.Close()
 
@@ -50,30 +51,14 @@ func (r *Repository) GetGuestBookings(ctx context.Context) ([]*domain.BookingEnc
 			&b.CreatedAt, &b.UpdatedAt,
 			&b.DEKEncrypted, &b.KeyVersion, &b.Metadata,
 		); err != nil {
-			return nil, errs.ClassifyPgError("scan guest booking", err)
+			return nil, errs.ClassifyPgError("scan booking due for reminder", err)
 		}
 		bookings = append(bookings, b)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, errs.ClassifyPgError("iterate guest bookings", err)
+		return nil, errs.ClassifyPgError("iterate bookings due for reminder", err)
 	}
 
 	return bookings, nil
-}
-
-// SetBookingClientID atomically sets client_id on a single booking, only if
-// the booking's client_id is currently NULL. Returns true if the row was updated.
-func (r *Repository) SetBookingClientID(ctx context.Context, bookingID, clientID uuid.UUID) (bool, error) {
-	query := fmt.Sprintf(`
-		UPDATE %s.bookings SET client_id = $1, updated_at = now()
-		WHERE id = $2 AND client_id IS NULL
-	`, r.schema)
-
-	result, err := r.pool.Exec(ctx, query, clientID, bookingID)
-	if err != nil {
-		return false, errs.ClassifyPgError("set booking client_id", err)
-	}
-
-	return result.RowsAffected() > 0, nil
 }
