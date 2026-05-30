@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Échec du paiement — Leviosa</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #eaeaea;">
+    <div style="max-width: 600px; margin: 0 auto;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #eaeaea; padding: 20px;">
+        <tr>
+          <td align="center">
+            <table
+              width="100%"
+              cellpadding="0"
+              cellspacing="0"
+              style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);"
+            >
+              <!-- Header -->
+              <tr>
+                <td align="center" style="background-color: #1e1e1e; padding: 30px 20px;">
+                  <img
+                    src="{{ .LogoURL }}"
+                    alt="Leviosa Logo"
+                    style="max-width: 200px; height: auto;"
+                  />
+                </td>
+              </tr>
+
+              <!-- Content -->
+              <tr>
+                <td style="padding: 40px 30px;">
+                  <h1 style="color: #1e1e1e; font-size: 24px; font-weight: normal; margin: 0 0 20px; text-align: center;">
+                    Échec du Paiement
+                  </h1>
+
+                  <p style="color: #444444; font-size: 16px; line-height: 1.5; margin: 0 0 20px;">
+                    Bonjour {{ .FirstName }},
+                  </p>
+
+                  <p style="color: #444444; font-size: 16px; line-height: 1.5; margin: 0 0 20px;">
+                    Nous n'avons pas pu traiter votre paiement. Voici les détails de la tentative :
+                  </p>
+
+                  <!-- Payment Details -->
+                  <div style="background-color: #f4f4f4; border-radius: 6px; padding: 20px; margin: 30px 0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
+                      <tr>
+                        <td style="padding: 10px 0; color: #555555; font-size: 14px; width: 40%; vertical-align: top;">
+                          Service
+                        </td>
+                        <td style="padding: 10px 0; color: #1e1e1e; font-size: 14px; font-weight: bold; vertical-align: top;">
+                          {{ .Product }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 10px 0; color: #555555; font-size: 14px; border-top: 1px dashed #cccccc; vertical-align: top;">
+                          Montant dû
+                        </td>
+                        <td style="padding: 10px 0; color: #1e1e1e; font-size: 14px; font-weight: bold; border-top: 1px dashed #cccccc; vertical-align: top;">
+                          {{ .Amount }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 10px 0; color: #555555; font-size: 14px; border-top: 1px dashed #cccccc; vertical-align: top;">
+                          Date de la tentative
+                        </td>
+                        <td style="padding: 10px 0; color: #1e1e1e; font-size: 14px; font-weight: bold; border-top: 1px dashed #cccccc; vertical-align: top;">
+                          {{ .PaymentDate }}
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  <!-- Retry CTA -->
+                  <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 30px 0; border-radius: 0 6px 6px 0;">
+                    <p style="color: #444444; font-size: 14px; margin: 0 0 15px; line-height: 1.5;">
+                      Votre réservation n'a pas pu être confirmée car le paiement a échoué. Veuillez vérifier vos informations de paiement et réessayer.
+                    </p>
+                  </div>
+
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="#" style="background-color: #1e1e1e; color: #ffffff; padding: 12px 30px; border-radius: 4px; text-decoration: none; font-size: 16px; display: inline-block; font-weight: bold;">
+                      Réessayer le paiement
+                    </a>
+                  </div>
+
+                  <p style="color: #444444; font-size: 16px; line-height: 1.5; margin: 0;">
+                    Si le problème persiste, n'hésitez pas à contacter notre équipe d'assistance.
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="background-color: #f4f4f4; padding: 20px; text-align: center; color: #666666; font-size: 14px;">
+                  <p style="margin: 0;">&copy; {{ .Year }} Leviosa. Tous droits réservés.</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
