@@ -15,7 +15,7 @@ import (
 func (r *Repository) GetAllPartnersByCategory(ctx context.Context, categoryID uuid.UUID) ([]*domain.PartnerEncx, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			id, user_id, bio, experience,
+			id, user_id, bio, experience, occupation, quote, tags,
 			category_ids, product_ids,
 			stripe_connected_account_id_encrypted, stripe_account_status, stripe_onboarding_complete,
 			dek_encrypted, key_version, created_at, updated_at
@@ -38,6 +38,9 @@ func (r *Repository) GetAllPartnersByCategory(ctx context.Context, categoryID uu
 			&partner.UserID,
 			&partner.Bio,
 			&partner.Experience,
+			&partner.Occupation,
+			&partner.Quote,
+			&partner.Tags,
 			&partner.CategoryIDs,
 			&partner.ProductIDs,
 			&partner.StripeConnectedAccountIDEncrypted,
