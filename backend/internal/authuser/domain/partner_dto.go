@@ -103,6 +103,34 @@ func (r *UpdatePartnerRequest) Valid(ctx context.Context) error {
 	return errs.AsError()
 }
 
+// PublicPartnerResponse is the DTO returned by the unauthenticated GET /partners endpoint.
+// It embeds the partner's public fields alongside the linked user's name and picture.
+type PublicPartnerResponse struct {
+	ID          uuid.UUID  `json:"id"`
+	FirstName   string     `json:"first_name"`
+	LastName    string     `json:"last_name"`
+	Picture     string     `json:"picture,omitempty"`
+	Bio         string     `json:"bio"`
+	Experience  string     `json:"experience"`
+	Occupation  string     `json:"occupation"`
+	Quote       string     `json:"quote"`
+	Tags        []string   `json:"tags"`
+	CategoryIDs []uuid.UUID `json:"category_ids,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
+}
+
+// PublicPartnerRow holds the raw row from the public partners query,
+// which JOINs partners with users. The user fields are encrypted
+// and will be decrypted by the application layer.
+type PublicPartnerRow struct {
+	PartnerEncx              *PartnerEncx
+	FirstNameEncrypted       []byte
+	LastNameEncrypted        []byte
+	PictureEncrypted         []byte
+	UserDEKEncrypted         []byte
+	UserKeyVersion           int
+}
+
 type VerifyPartnerRequest struct {
 	PartnerID uuid.UUID `json:"partner_id"`
 }
