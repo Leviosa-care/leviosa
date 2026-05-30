@@ -18,5 +18,9 @@ type StripeService interface {
 	// CreateConnectedAccount creates a Stripe Connect Express account for a partner.
 	// Returns the Stripe account ID on success.
 	CreateConnectedAccount(ctx context.Context, userID uuid.UUID) (string, error)
+
+	// CreateAccountLink creates a Stripe Account Link for onboarding.
+	// Returns the URL the partner should be redirected to.
+	CreateAccountLink(ctx context.Context, accountID, returnType, returnURL, refreshURL string) (string, error)
 }
 

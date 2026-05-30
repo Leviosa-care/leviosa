@@ -39,4 +39,9 @@ type PartnerService interface {
 	UpdatePartner(ctx context.Context, partnerID uuid.UUID, request *domain.UpdatePartnerRequest) (*domain.PartnerResponse, error)
 	DeletePartner(ctx context.Context, partnerID uuid.UUID) error
 	VerifyPartner(ctx context.Context, partnerID uuid.UUID, verifiedByUserID uuid.UUID) (*domain.PartnerResponse, error)
+
+	// GetOnboardingLink generates a Stripe Account Link URL for the partner to complete onboarding.
+	// If the partner has no StripeConnectedAccountID, a new Stripe account is created first.
+	// Returns the URL to redirect the partner to.
+	GetOnboardingLink(ctx context.Context, userID uuid.UUID, returnURL, refreshURL string) (string, error)
 }

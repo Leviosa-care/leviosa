@@ -390,6 +390,11 @@ func (m *mockStripeService) CreateConnectedAccount(ctx context.Context, userID u
 	return args.String(0), args.Error(1)
 }
 
+func (m *mockStripeService) CreateAccountLink(ctx context.Context, accountID, returnType, returnURL, refreshURL string) (string, error) {
+	args := m.Called(ctx, accountID, returnType, returnURL, refreshURL)
+	return args.String(0), args.Error(1)
+}
+
 // --- Helper to create a PartnerService with mocks ---
 
 func setupPartnerService(
