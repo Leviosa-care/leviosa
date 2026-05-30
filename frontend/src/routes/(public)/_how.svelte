@@ -57,7 +57,7 @@
                 </div>
                 <div class="flex items-center gap-3 mb-3">
                     <span class="text-xs font-medium text-dark-400 font-mono tracking-wider">01</span>
-                    <h3 class="text-lg font-semibold tracking-tight text-dark-900">Choisissez votre expert</h3>
+                    <h3 class="text-lg font-semibold tracking-tight text-dark-900 whitespace-nowrap">Choisissez votre expert</h3>
                 </div>
                 <p class="text-sm text-dark-500 leading-relaxed flex-grow">
                     Parcourez nos profils vérifiés et filtrez par spécialité pour trouver le praticien adapté à votre besoin.
