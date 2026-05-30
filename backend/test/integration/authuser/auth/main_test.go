@@ -230,7 +230,7 @@ func TestMain(m *testing.M) {
 
 	log.Printf("✓ AuthTestContext initialized for user authentication testing")
 
-	payment := authPayment.NewService("sk_test_123456789012345678901234", stripeContainer.URL)
+	payment := authPayment.NewService("sk_test_123456789012345678901234", stripeContainer.URL, "")
 
 	// Setup RabbitMQ exchanges and queues needed for settings and OTP notifications
 	if err := setupAllRabbitMQQueues(ctx, ch); err != nil {

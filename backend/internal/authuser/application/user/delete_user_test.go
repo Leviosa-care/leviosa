@@ -232,6 +232,16 @@ func (m *MockStripeService) CreateConnectedAccount(ctx context.Context, userID u
 	return args.String(0), args.Error(1)
 }
 
+func (m *MockStripeService) CreateAccountLink(ctx context.Context, accountID, returnType, returnURL, refreshURL string) (string, error) {
+	args := m.Called(ctx, accountID, returnType, returnURL, refreshURL)
+	return args.String(0), args.Error(1)
+}
+
+func (m *MockStripeService) VerifyConnectWebhookSignature(payload []byte, signature string) (string, bool, bool, error) {
+	args := m.Called(payload, signature)
+	return args.String(0), args.Bool(1), args.Bool(2), args.Error(3)
+}
+
 func TestDeleteUser(t *testing.T) {
 	ctx := context.Background()
 	userID := uuid.New()

@@ -19,6 +19,7 @@ import (
 	sessionRepository "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/redis/session"
 	authPayment "github.com/Leviosa-care/leviosa/backend/internal/authuser/infrastructure/stripe"
 	partnerHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/partner"
+	webhookHandler "github.com/Leviosa-care/leviosa/backend/internal/authuser/interface/webhook"
 	"github.com/Leviosa-care/leviosa/backend/internal/authuser/ports"
 	catalogCategory "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/category"
 	catalogProduct "github.com/Leviosa-care/leviosa/backend/internal/catalog/application/product"
@@ -44,6 +45,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const testConnectWebhookSecret = "whsec_test_connect_secret_for_integration_tests"
+
 var (
 	pgContainer     *tu.PostgresContainer
 	testPool        *pgxpool.Pool
@@ -61,6 +64,7 @@ var (
 	sessionRepo     ports.SessionRepository
 	userSvc         ports.UserService
 	partnerSvc      ports.PartnerService
+	stripeAdapter   ports.StripeService
 	categorySvc     catalogPorts.CategoryService
 	productSvc      catalogPorts.ProductService
 	handler         partnerHandler.Handler
@@ -200,11 +204,11 @@ func TestMain(m *testing.M) {
 
 	log.Printf("✓ AuthTestContext initialized for user authentication testing")
 
-	payment := authPayment.NewService("sk_test_123456789012345678901234", stripeContainer.URL)
+	stripeAdapter = authPayment.NewService("sk_test_123456789012345678901234", stripeContainer.URL, testConnectWebhookSecret)
 
 	// Initialize application layers
 	userRepo = userRepository.New(ctx, testPool)
-	userSvc = user.New(userRepo, crypto, payment)
+	userSvc = user.New(userRepo, crypto, stripeAdapter)
 
 	partnerRepo = partnerRepository.New(ctx, testPool)
 
@@ -231,7 +235,7 @@ func TestMain(m *testing.M) {
 		productSvc,
 		categorySvc,
 		crypto,
-		payment,
+		stripeAdapter,
 	)
 	if err != nil {
 		log.Fatalf("Failed to create partner service: %v", err)
@@ -243,6 +247,7 @@ func TestMain(m *testing.M) {
 	authmw := auth.NewSessionAuthMiddleware(authSessionRepo, crypto, nil)
 
 	handler = partnerHandler.New(partnerSvc, authmw)
+	webhookH := webhookHandler.New(partnerSvc, stripeAdapter, authmw)
 
 	// Set required environment variables for logger middleware
 	os.Setenv("CLIENT_IP_HEADER", "X-Forwarded-For")
@@ -251,6 +256,7 @@ func TestMain(m *testing.M) {
 	// HTTP server setup with logger middleware
 	router := http.NewServeMux()
 	handler.RegisterRoutes(router)
+	webhookH.RegisterRoutes(router)
 
 	// Use the enhanced AttachLogger middleware from core package
 	loggerMiddleware := middleware.AttachLogger(envmode.Dev, testLogger)

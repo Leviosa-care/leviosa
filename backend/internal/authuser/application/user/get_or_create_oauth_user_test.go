@@ -174,6 +174,14 @@ func (m *mockStripeService) CreateConnectedAccount(_ context.Context, _ uuid.UUI
 	return "", nil
 }
 
+func (m *mockStripeService) CreateAccountLink(_ context.Context, _, _, _, _ string) (string, error) {
+	return "", nil
+}
+
+func (m *mockStripeService) VerifyConnectWebhookSignature(_ []byte, _ string) (string, bool, bool, error) {
+	return "", false, false, nil
+}
+
 func TestUserService_GetOrCreateOAuthUser(t *testing.T) {
 	ctx := context.Background()
 
