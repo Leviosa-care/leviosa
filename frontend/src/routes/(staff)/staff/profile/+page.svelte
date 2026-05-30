@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
-	import { BadgeCheck, Pencil, Mail, MapPin, Phone, Tag, Package, AlertCircle, Link, Unlink } from '@lucide/svelte';
+	import { BadgeCheck, Pencil, Mail, MapPin, Phone, Tag, Package, AlertCircle, Link, Unlink, CreditCard, ExternalLink } from '@lucide/svelte';
 
 	let { data }: PageProps = $props();
 
@@ -17,6 +17,15 @@
 	let oauthLoading = $state<string | null>(null);
 	let oauthError = $state<string | null>(null);
 	let linkedProviders = $state(data.linkedProviders ?? { google: false, apple: false });
+	let stripeLoading = $state(false);
+	let stripeError = $state<string | null>(null);
+
+	// Handle Stripe return redirect — reload the page to get fresh status
+	$effect(() => {
+		if (data.stripeCallback === 'return' && typeof window !== 'undefined') {
+			window.location.href = '/staff/profile';
+		}
+	});
 
 	function formatDate(iso: string): string {
 		return new Date(iso).toLocaleDateString('fr-FR', {
@@ -73,6 +82,28 @@
 			saveError = 'Une erreur est survenue. Veuillez réessayer.';
 		} finally {
 			experienceSaving = false;
+		}
+	}
+
+	const needsStripeOnboarding = $derived(
+		data.profile && (data.profile.stripeAccountStatus === 'pending' || data.profile.stripeAccountStatus === 'restricted')
+	);
+
+	async function startStripeOnboarding() {
+		stripeLoading = true;
+		stripeError = null;
+		try {
+			const res = await fetch('/api/partners/me/stripe/onboarding-link', { method: 'POST' });
+			if (res.ok) {
+				const { url } = await res.json();
+				window.location.href = url;
+			} else {
+				stripeError = 'Impossible de générer le lien Stripe. Veuillez réessayer.';
+			}
+		} catch {
+			stripeError = 'Une erreur est survenue. Veuillez réessayer.';
+		} finally {
+			stripeLoading = false;
 		}
 	}
 
@@ -149,6 +180,37 @@
 			</div>
 		</div>
 	{:else}
+
+	{#if needsStripeOnboarding}
+		<div class="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-6">
+			<div class="flex flex-col sm:flex-row items-start gap-4">
+				<div class="flex items-center gap-3 flex-1">
+					<CreditCard class="text-amber-600 flex-shrink-0" size={22} />
+					<div>
+						<h2 class="font-semibold text-amber-900">Configuration Stripe requise</h2>
+						<p class="text-sm text-amber-700 mt-1">
+							{data.stripeCallback === 'refresh'
+								? 'Le lien précédent a expiré. Veuillez générer un nouveau lien pour poursuivre la configuration de votre compte Stripe.'
+								: 'Pour recevoir vos paiements, vous devez configurer votre compte Stripe en complétant les informations bancaires et d\'identité.'}
+						</p>
+					</div>
+				</div>
+				<button
+					class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors disabled:opacity-50 flex-shrink-0"
+					onclick={startStripeOnboarding}
+					disabled={stripeLoading}
+				>
+					{stripeLoading ? 'Chargement...' : 'Configurer Stripe'}
+					{#if !stripeLoading}
+						<ExternalLink size={14} />
+					{/if}
+				</button>
+			</div>
+			{#if stripeError}
+				<p class="text-xs text-red-600 mt-3">{stripeError}</p>
+			{/if}
+		</div>
+	{/if}
 
 	<!-- Profile Header -->
 	<div class="bg-card rounded-lg border border-border p-6 mb-6">

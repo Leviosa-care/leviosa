@@ -7,6 +7,7 @@ export interface PartnerProfile {
 	bio: string;
 	experience: string;
 	isVerified: boolean;
+	stripeAccountStatus: string;
 	stripeOnboardingComplete: boolean;
 	categories: { id: string; name: string }[];
 	products: { id: string; name: string }[];
@@ -39,7 +40,7 @@ interface Product {
 	name: string;
 }
 
-export const load: PageServerLoad = async ({ fetch }) => {
+export const load: PageServerLoad = async ({ fetch, url }) => {
 	const partnerRes = await fetch(`${env.API_URL}/partners/me`, {
 		headers: {
 			'Content-Type': 'application/json',
@@ -55,6 +56,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 			return {
 				profile: null,
 				linkedProviders: { google: false, apple: false },
+				stripeCallback: null,
 				error: 'Erreur serveur. Veuillez réessayer dans quelques instants.',
 			};
 		}
@@ -102,6 +104,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		bio: partner.bio || '',
 		experience: partner.experience || '',
 		isVerified: partner.stripe_account_status === 'active',
+		stripeAccountStatus: partner.stripe_account_status,
 		stripeOnboardingComplete: partner.stripe_onboarding_complete,
 		categories: partnerCategories,
 		products: partnerProducts,
@@ -118,8 +121,12 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		};
 	}
 
+	// Derive the Stripe callback status from query parameter
+	const stripeCallback = url.searchParams.get('stripe') || null;
+
 	return {
 		profile,
 		linkedProviders,
+		stripeCallback,
 	};
 };
