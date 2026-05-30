@@ -7,14 +7,15 @@ import (
 
 // service handles Stripe operations
 type service struct {
-	client *stripe.Client
+	client                *stripe.Client
+	connectWebhookSecret  string
 }
 
 // Compile-time check to ensure Service implements ports.StripeService
 var _ ports.StripeService = (*service)(nil)
 
 // NewService creates a new Stripe service
-func NewService(apiKey, baseURL string) *service {
+func NewService(apiKey, baseURL, connectWebhookSecret string) *service {
 	var sc *stripe.Client
 
 	if baseURL != "" {
@@ -27,5 +28,8 @@ func NewService(apiKey, baseURL string) *service {
 		sc = stripe.NewClient(apiKey)
 	}
 
-	return &service{sc}
+	return &service{
+		client:               sc,
+		connectWebhookSecret: connectWebhookSecret,
+	}
 }
