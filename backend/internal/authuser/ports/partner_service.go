@@ -44,4 +44,9 @@ type PartnerService interface {
 	// If the partner has no StripeConnectedAccountID, a new Stripe account is created first.
 	// Returns the URL to redirect the partner to.
 	GetOnboardingLink(ctx context.Context, userID uuid.UUID, returnURL, refreshURL string) (string, error)
+
+	// UpdateStripeAccountStatus updates a partner's stripe_account_status by looking up
+	// the partner whose StripeConnectedAccountID matches the given accountID.
+	// Returns the partner ID of the updated partner, or an error if not found.
+	UpdateStripeAccountStatus(ctx context.Context, stripeAccountID string, status domain.StripeAccountStatus) (uuid.UUID, error)
 }

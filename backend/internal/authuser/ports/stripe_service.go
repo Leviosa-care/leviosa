@@ -22,5 +22,10 @@ type StripeService interface {
 	// CreateAccountLink creates a Stripe Account Link for onboarding.
 	// Returns the URL the partner should be redirected to.
 	CreateAccountLink(ctx context.Context, accountID, returnType, returnURL, refreshURL string) (string, error)
+
+	// VerifyConnectWebhookSignature verifies the Stripe webhook signature using the
+	// Connect-specific webhook secret and returns the parsed account.updated event data.
+	// Returns the Stripe account ID and whether charges/payouts are enabled.
+	VerifyConnectWebhookSignature(payload []byte, signature string) (accountID string, chargesEnabled bool, payoutsEnabled bool, err error)
 }
 

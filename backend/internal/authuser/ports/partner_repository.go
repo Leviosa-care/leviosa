@@ -15,8 +15,10 @@ type PartnerRepository interface {
 	GetAllPartnersByCategories(ctx context.Context, categoryIDs []uuid.UUID) ([]*domain.PartnerEncx, error)
 	GetAllPartnersByProduct(ctx context.Context, productID uuid.UUID) ([]*domain.PartnerEncx, error)
 	GetAllPartnersByProducts(ctx context.Context, productIDs []uuid.UUID) ([]*domain.PartnerEncx, error)
+	GetAllPartnersWithStripeAccount(ctx context.Context) ([]*domain.PartnerEncx, error)
 	CreatePartner(ctx context.Context, partner *domain.PartnerEncx) error
 	UpdatePartner(ctx context.Context, partner *domain.PartnerEncx) error
+	UpdatePartnerStripeStatus(ctx context.Context, partnerID uuid.UUID, status domain.StripeAccountStatus) error
 	DeletePartner(ctx context.Context, userID uuid.UUID) error
 	VerifyPartner(ctx context.Context, userID uuid.UUID, verifiedByUserID uuid.UUID) error
 }
