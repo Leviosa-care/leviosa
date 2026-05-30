@@ -524,6 +524,58 @@ func TestSendBookingConfirmation_FireAndForget(t *testing.T) {
 	// the important thing is SendBookingConfirmation itself returned nil.
 }
 
+func TestSendBookingConfirmation_EmailIncludesTokenURL(t *testing.T) {
+	data := makeBookingData()
+	data.Token = "abc123token"
+
+	users := map[uuid.UUID]*UserInfo{
+		data.ClientID:  {Email: "client@example.com", FirstName: "Alice", LastName: "Smith"},
+		data.PartnerID: {Email: "partner@example.com", FirstName: "Bob", LastName: "Jones"},
+	}
+
+	spy := &spyEmailService{}
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(spy, smsSpy, users, nil, nil, nil)
+
+	err := adapter.sendBookingConfirmationEmail(context.Background(), data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(spy.bookingConfirmations) != 1 {
+		t.Fatalf("expected 1 confirmation, got %d", len(spy.bookingConfirmations))
+	}
+
+	got := spy.bookingConfirmations[0]
+	expectedURL := "https://app.leviosa.com/bookings?token=abc123token"
+	assertEqual(t, "BookingTokenURL", expectedURL, got.BookingTokenURL)
+}
+
+func TestSendBookingConfirmation_EmailNoTokenForRegisteredUser(t *testing.T) {
+	data := makeBookingData()
+	data.Token = "" // registered user booking — no token
+
+	users := map[uuid.UUID]*UserInfo{
+		data.ClientID:  {Email: "client@example.com", FirstName: "Alice", LastName: "Smith"},
+		data.PartnerID: {Email: "partner@example.com", FirstName: "Bob", LastName: "Jones"},
+	}
+
+	spy := &spyEmailService{}
+	smsSpy := &spySMSService{}
+	adapter := newTestAdapter(spy, smsSpy, users, nil, nil, nil)
+
+	err := adapter.sendBookingConfirmationEmail(context.Background(), data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(spy.bookingConfirmations) != 1 {
+		t.Fatalf("expected 1 confirmation, got %d", len(spy.bookingConfirmations))
+	}
+
+	assertEqual(t, "BookingTokenURL (registered user)", "", spy.bookingConfirmations[0].BookingTokenURL)
+}
+
 // SMS-specific tests
 
 func TestSendBookingConfirmation_SMSIncludesTokenURL(t *testing.T) {

@@ -227,19 +227,20 @@ func (a *BookingNotificationAdapter) sendBookingConfirmationEmail(ctx context.Co
 		)
 
 		req := notificationDomain.BookingConfirmationRequest{
-			ToEmail:     data.ClientEmail,
-			ToFirstName: firstName(data.ClientName),
-			ToLastName:  lastName(data.ClientName),
-			BookingID:   data.BookingID.String(),
-			ProductName: data.ProductName,
-			RoomName:    data.RoomName,
-			Building:    data.BuildingName,
-			Address:     data.Address,
-			Date:        formattedDate,
-			Time:        formattedTime,
-			PartnerName: data.PartnerName,
-			Amount:      formatAmount(data.TotalPriceCents, data.Currency),
-			Year:        time.Now().Year(),
+			ToEmail:         data.ClientEmail,
+			ToFirstName:     firstName(data.ClientName),
+			ToLastName:      lastName(data.ClientName),
+			BookingID:       data.BookingID.String(),
+			ProductName:     data.ProductName,
+			RoomName:        data.RoomName,
+			Building:        data.BuildingName,
+			Address:         data.Address,
+			Date:            formattedDate,
+			Time:            formattedTime,
+			PartnerName:     data.PartnerName,
+			Amount:          formatAmount(data.TotalPriceCents, data.Currency),
+			Year:            time.Now().Year(),
+			BookingTokenURL: a.buildTokenURL(data.Token),
 		}
 
 		if err := a.emailService.SendBookingConfirmationEmail(ctx, req); err != nil {
@@ -433,6 +434,15 @@ func (a *BookingNotificationAdapter) sendPaymentFailedEmail(ctx context.Context,
 	}
 
 	return a.emailService.SendPaymentFailedEmail(ctx, req)
+}
+
+// buildTokenURL constructs the guest booking URL from a token.
+// Returns an empty string for registered-user bookings (no token).
+func (a *BookingNotificationAdapter) buildTokenURL(token string) string {
+	if token == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s/bookings?token=%s", a.frontendOrigin, token)
 }
 
 // formatAmount converts cents to a human-readable currency string.

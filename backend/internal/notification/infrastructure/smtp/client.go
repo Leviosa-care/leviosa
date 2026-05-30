@@ -197,31 +197,33 @@ func (c *SMTPClient) SendPaymentFailedEmail(ctx context.Context, req domain.Paym
 
 func (c *SMTPClient) SendBookingConfirmationEmail(ctx context.Context, req domain.BookingConfirmationRequest) error {
 	data := struct {
-		FirstName   string
-		LastName    string
-		BookingID   string
-		ProductName string
-		RoomName    string
-		Building    string
-		Address     string
-		Date        string
-		Time        string
-		PartnerName string
-		Amount      string
-		Year        int
+		FirstName       string
+		LastName        string
+		BookingID       string
+		ProductName     string
+		RoomName        string
+		Building        string
+		Address         string
+		Date            string
+		Time            string
+		PartnerName     string
+		Amount          string
+		Year            int
+		BookingTokenURL string
 	}{
-		FirstName:   req.ToFirstName,
-		LastName:    req.ToLastName,
-		BookingID:   req.BookingID,
-		ProductName: req.ProductName,
-		RoomName:    req.RoomName,
-		Building:    req.Building,
-		Address:     req.Address,
-		Date:        req.Date,
-		Time:        req.Time,
-		PartnerName: req.PartnerName,
-		Amount:      req.Amount,
-		Year:        req.Year,
+		FirstName:       req.ToFirstName,
+		LastName:        req.ToLastName,
+		BookingID:       req.BookingID,
+		ProductName:     req.ProductName,
+		RoomName:        req.RoomName,
+		Building:        req.Building,
+		Address:         req.Address,
+		Date:            req.Date,
+		Time:            req.Time,
+		PartnerName:     req.PartnerName,
+		Amount:          req.Amount,
+		Year:            req.Year,
+		BookingTokenURL: req.BookingTokenURL,
 	}
 
 	emailReq := &domain.EmailRequest{

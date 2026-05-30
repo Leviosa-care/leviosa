@@ -55,19 +55,20 @@ type PaymentNotificationRequest struct {
 
 // Booking Confirmation Email
 type BookingConfirmationRequest struct {
-	ToEmail     string `json:"to_email"`
-	ToFirstName string `json:"to_first_name"`
-	ToLastName  string `json:"to_last_name"`
-	BookingID   string `json:"booking_id"`
-	ProductName string `json:"product_name"`
-	RoomName    string `json:"room_name"`
-	Building    string `json:"building"`
-	Address     string `json:"address"`
-	Date        string `json:"date"`
-	Time        string `json:"time"`
-	PartnerName string `json:"partner_name"`
-	Amount      string `json:"amount"`
-	Year        int    `json:"year"`
+	ToEmail         string `json:"to_email"`
+	ToFirstName     string `json:"to_first_name"`
+	ToLastName      string `json:"to_last_name"`
+	BookingID       string `json:"booking_id"`
+	ProductName     string `json:"product_name"`
+	RoomName        string `json:"room_name"`
+	Building        string `json:"building"`
+	Address         string `json:"address"`
+	Date            string `json:"date"`
+	Time            string `json:"time"`
+	PartnerName     string `json:"partner_name"`
+	Amount          string `json:"amount"`
+	Year            int    `json:"year"`
+	BookingTokenURL string `json:"booking_token_url,omitempty"` // non-empty only for guest bookings
 }
 
 // Booking Cancellation Email

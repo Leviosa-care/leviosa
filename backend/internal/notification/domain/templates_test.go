@@ -10,18 +10,19 @@ func TestBookingConfirmationTemplateRenders(t *testing.T) {
 	tmpl := parseTemplateOrFail(t, "booking_confirmation")
 
 	data := struct {
-		FirstName   string
-		LastName    string
-		BookingID   string
-		ProductName string
-		RoomName    string
-		Building    string
-		Address     string
-		Date        string
-		Time        string
-		PartnerName string
-		Amount      string
-		Year        int
+		FirstName       string
+		LastName        string
+		BookingID       string
+		ProductName     string
+		RoomName        string
+		Building        string
+		Address         string
+		Date            string
+		Time            string
+		PartnerName     string
+		Amount          string
+		Year            int
+		BookingTokenURL string
 	}{
 		FirstName:   "Alice",
 		LastName:    "Smith",
@@ -53,6 +54,53 @@ func TestBookingConfirmationTemplateRenders(t *testing.T) {
 	assertContains(t, buf.String(), "550e8400-e29b-41d4-a716-446655440000")
 	assertContains(t, buf.String(), "2026")
 	assertContains(t, buf.String(), "Politique d'annulation")
+
+	// No token URL for registered users — guest link section must not appear.
+	if bytes.Contains(buf.Bytes(), []byte("bookings?token=")) {
+		t.Error("token link section should not appear when BookingTokenURL is empty")
+	}
+}
+
+func TestBookingConfirmationTemplate_GuestTokenLink(t *testing.T) {
+	tmpl := parseTemplateOrFail(t, "booking_confirmation")
+
+	data := struct {
+		FirstName       string
+		LastName        string
+		BookingID       string
+		ProductName     string
+		RoomName        string
+		Building        string
+		Address         string
+		Date            string
+		Time            string
+		PartnerName     string
+		Amount          string
+		Year            int
+		BookingTokenURL string
+	}{
+		FirstName:       "Jane",
+		LastName:        "Doe",
+		BookingID:       "550e8400-e29b-41d4-a716-446655440000",
+		ProductName:     "Massage Therapy",
+		RoomName:        "Room A",
+		Building:        "Main Building",
+		Address:         "123 Rue de Paris",
+		Date:            "Monday, 15 June 2026",
+		Time:            "10:00 – 11:00",
+		PartnerName:     "Bob Jones",
+		Amount:          "€50.00",
+		Year:            2026,
+		BookingTokenURL: "https://app.leviosa.com/bookings?token=abc123",
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		t.Fatalf("failed to execute booking_confirmation template with token: %v", err)
+	}
+
+	assertContains(t, buf.String(), "https://app.leviosa.com/bookings?token=abc123")
+	assertContains(t, buf.String(), "Voir ma réservation")
 }
 
 func TestBookingCancellationTemplateRenders(t *testing.T) {
