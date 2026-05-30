@@ -102,6 +102,19 @@ func (m *mockPartnerRepository) VerifyPartner(ctx context.Context, userID uuid.U
 	return args.Error(0)
 }
 
+func (m *mockPartnerRepository) GetAllPartnersWithStripeAccount(ctx context.Context) ([]*domain.PartnerEncx, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*domain.PartnerEncx), args.Error(1)
+}
+
+func (m *mockPartnerRepository) UpdatePartnerStripeStatus(ctx context.Context, partnerID uuid.UUID, status domain.StripeAccountStatus) error {
+	args := m.Called(ctx, partnerID, status)
+	return args.Error(0)
+}
+
 type mockUserRepository struct {
 	mock.Mock
 }
@@ -393,6 +406,11 @@ func (m *mockStripeService) CreateConnectedAccount(ctx context.Context, userID u
 func (m *mockStripeService) CreateAccountLink(ctx context.Context, accountID, returnType, returnURL, refreshURL string) (string, error) {
 	args := m.Called(ctx, accountID, returnType, returnURL, refreshURL)
 	return args.String(0), args.Error(1)
+}
+
+func (m *mockStripeService) VerifyConnectWebhookSignature(payload []byte, signature string) (string, bool, bool, error) {
+	args := m.Called(payload, signature)
+	return args.String(0), args.Bool(1), args.Bool(2), args.Error(3)
 }
 
 // --- Helper to create a PartnerService with mocks ---
