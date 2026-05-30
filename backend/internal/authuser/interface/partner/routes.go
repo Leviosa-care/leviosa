@@ -43,4 +43,7 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 
 	// Verify partner credentials (admin only)
 	router.HandleFunc("POST "+VerifyPartnerEndpoint, RequireAdmin(mw.EnableCORS(h.VerifyPartner)))
+
+	// Get Stripe onboarding link for authenticated partner
+	router.HandleFunc("POST "+GetOnboardingLinkEndpoint, RequirePartner(mw.EnableCORS(h.GetOnboardingLink)))
 }

@@ -71,4 +71,9 @@ const (
 
 	// Validate products exist in catalog
 	ValidatePartnerProductsEndpoint = AdminPartnersBasePath + "/products" + ValidatePath
+
+	// === Stripe Endpoints ===
+
+	// Get Stripe onboarding link for the authenticated partner
+	GetOnboardingLinkEndpoint = PartnersBasePath + MePath + "/stripe/onboarding-link"
 )

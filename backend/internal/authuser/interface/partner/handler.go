@@ -20,6 +20,7 @@ type Handler interface {
 	UpdatePartnerMe(w http.ResponseWriter, r *http.Request)
 	DeletePartner(w http.ResponseWriter, r *http.Request)
 	VerifyPartner(w http.ResponseWriter, r *http.Request)
+	GetOnboardingLink(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
