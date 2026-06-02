@@ -20,7 +20,6 @@
 	let bufferTime = $state(data.product.bufferTime);
 	let cancellationHours = $state(data.product.cancellationHours);
 	let stripeProductId = $state("");
-	let imageUrl = $state(data.product.image);
 
 	// Image upload state
 	let imagePreview = $state<string | null>(data.product.image || null);
@@ -42,18 +41,14 @@
 		return async ({ result }: { result: import('@sveltejs/kit').ActionResult }) => {
 			isUploading = false;
 			if (result.type === 'redirect') {
-				goto(result.location);
-			} else if (result.type === 'success' && result.data && typeof result.data === 'object' && 'url' in result.data) {
-				imageUrl = (result.data as { url: string }).url;
-				imagePreview = imageUrl;
 				toast.success('Succès', 'Image téléchargée avec succès');
+				goto(result.location);
 			} else if (result.type === 'failure') {
-				toast.error('Erreur', 'Le téléchargement de l\'image a échoué');
+				toast.error('Erreur', (result.data as { error?: string })?.error ?? "Le téléchargement de l'image a échoué");
 				imagePreview = null;
 			}
 		};
 	}
-
 	const categoriesWithoutDefault = data.categories.filter(c => c.id !== "default");
 
 	// Handle image file selection
@@ -62,8 +57,8 @@
 		const file = input.files?.[0];
 		if (file) {
 			isUploading = true;
-			// Preview immediately
 			imagePreview = URL.createObjectURL(file);
+			input.form?.requestSubmit();
 		}
 	}
 
@@ -90,7 +85,6 @@
 
 	function removeImage() {
 		imagePreview = null;
-		imageUrl = "";
 	}
 </script>
 
@@ -128,6 +122,7 @@
 						class="relative w-full aspect-video max-h-96 bg-muted rounded-lg border-2 border-dashed border-border-card flex flex-col items-center justify-center cursor-pointer hover:border-foreground/30 transition-colors"
 						onpaste={handleImagePaste}
 					>
+					<input type="hidden" name="productName" value={data.product.name} />
 						<input
 							bind:this={imageFileInput}
 							type="file"
@@ -152,9 +147,6 @@
 							<p class="text-xs text-muted-foreground">
 								JPEG, PNG, WebP · max 10 Mo
 							</p>
-							{#if isUploading}
-								<p class="text-xs text-foreground">Téléchargement en cours...</p>
-							{/if}
 						</div>
 					</div>
 				</div>
@@ -176,16 +168,21 @@
 							alt="Aperçu de l'image"
 							class="w-full h-full object-contain"
 						/>
-						<button
-							type="button"
-							onclick={removeImage}
-							class="absolute top-3 right-3 p-2 bg-black/60 hover:bg-red-600 text-white rounded-lg transition-colors"
-							aria-label="Supprimer l'image"
-						>
-							<X size={16} />
-						</button>
+						{#if isUploading}
+							<div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+								<p class="text-white text-sm font-medium">Téléchargement en cours…</p>
+							</div>
+						{:else}
+							<button
+								type="button"
+								onclick={removeImage}
+								class="absolute top-3 right-3 p-2 bg-black/60 hover:bg-red-600 text-white rounded-lg transition-colors"
+								aria-label="Supprimer l'image"
+							>
+								<X size={16} />
+							</button>
+						{/if}
 					</div>
-					<input type="hidden" name="imageUrl" value={imageUrl} />
 				</div>
 			{/if}
 
