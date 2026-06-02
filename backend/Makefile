@@ -5,7 +5,7 @@
 
 .PHONY: test-all test-unit test-integration test-coverage test-race test-benchmark test-verbose test-smoke test-clean test-help
 .PHONY: test-unit-authuser test-unit-catalog test-unit-settings test-unit-booking test-unit-notification
-.PHONY: test-integration-authuser test-integration-catalog test-integration-settings test-integration-booking test-integration-notification
+.PHONY: test-integration-authuser test-integration-catalog test-integration-settings test-integration-booking test-integration-notification test-integration-messaging
 
 # Test settings
 TEST_TIMEOUT?=30m
@@ -15,7 +15,7 @@ TEST_COVERAGE?=-cover
 TEST_COVERAGE_HTML?=-coverprofile=coverage.out -covermode=atomic
 
 # Service paths (future internal/ structure)
-INTERNAL_SERVICES=authuser catalog settings booking notification
+INTERNAL_SERVICES=authuser catalog settings booking notification messaging
 SERVICES_ROOT=internal
 
 # Integration test paths (current structure)
@@ -42,6 +42,7 @@ test-help: ## Show testing help message
 	@echo '  test-integration-settings     Run integration tests for settings'
 	@echo '  test-integration-booking      Run integration tests for booking'
 	@echo '  test-integration-notification Run integration tests for notification'
+	@echo '  test-integration-messaging     Run integration tests for messaging'
 	@echo ''
 	@echo 'Advanced Testing Commands:'
 	@echo '  test-coverage      Generate HTML coverage report for all services'
@@ -169,6 +170,14 @@ test-integration-notification: ## Run integration tests for notification
 		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(INTEGRATION_ROOT)/notification/...; \
 	else \
 		echo "Warning: $(INTEGRATION_ROOT)/notification not found, skipping..."; \
+	fi
+
+test-integration-messaging: ## Run integration tests for messaging
+	@if [ -d "$(INTEGRATION_ROOT)/messaging" ]; then \
+		echo "Running integration tests for messaging service..."; \
+		go test $(TEST_VERBOSE) -timeout $(TEST_TIMEOUT) ./$(INTEGRATION_ROOT)/messaging/...; \
+	else \
+		echo "Warning: $(INTEGRATION_ROOT)/messaging not found, skipping..."; \
 	fi
 
 # Advanced Testing Commands
