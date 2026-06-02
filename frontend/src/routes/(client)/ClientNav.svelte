@@ -1,14 +1,15 @@
 <script lang="ts">
 	import { page } from '$app/state';
 
-	import { Home, CalendarDays, PlusCircle, Menu, X, UserRound } from '@lucide/svelte';
+	import { Home, CalendarDays, PlusCircle, Menu, X, UserRound, MessageCircle } from '@lucide/svelte';
 	import type { Component } from 'svelte';
 
 	interface Props {
 		user: App.User;
+		unreadCount?: number;
 	}
 
-	let { user }: Props = $props();
+	let { user, unreadCount = 0 }: Props = $props();
 	let isMobileMenuOpen = $state(false);
 
 	interface NavItem {
@@ -20,6 +21,7 @@
 	const navItems: NavItem[] = [
 		{ href: '/client', label: 'Accueil', icon: Home },
 		{ href: '/client/bookings', label: 'Mes réservations', icon: CalendarDays },
+		{ href: '/client/messages', label: 'Messages', icon: MessageCircle },
 		{ href: '/book', label: 'Réserver', icon: PlusCircle },
 		{ href: '/client/profile', label: 'Mon profil', icon: UserRound },
 	];
@@ -63,6 +65,11 @@
 				>
 					<item.icon size={16} strokeWidth={isActive(item.href) ? 2 : 1.5} />
 					{item.label}
+					{#if item.href === '/client/messages' && unreadCount > 0}
+						<span class="ml-0.5 px-1.5 py-0.5 text-xs font-medium bg-foreground text-background rounded-full leading-none">
+							{unreadCount}
+						</span>
+					{/if}
 				</a>
 			{/each}
 		</nav>
@@ -112,6 +119,11 @@
 							>
 								<item.icon size={18} strokeWidth={isActive(item.href) ? 2 : 1.5} />
 								{item.label}
+								{#if item.href === '/client/messages' && unreadCount > 0}
+									<span class="ml-auto px-1.5 py-0.5 text-xs font-medium bg-foreground text-background rounded-full leading-none">
+										{unreadCount}
+									</span>
+								{/if}
 							</a>
 						</li>
 					{/each}
