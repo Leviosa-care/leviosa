@@ -60,8 +60,8 @@ export const productSchema = type({
     updatedAt: "string",
     published: "'published' | 'draft' | 'archived'",
     availability: "'online' | 'in-person' | 'hybrid'",
-    bufferTime: "number > 0",
-    cancellationHours: "number > 0"
+    bufferTime: "number >= 0",
+    cancellationHours: "number >= 0"
 })
 
 export type product = Infer<typeof productSchema>
