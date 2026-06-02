@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { goto } from "$app/navigation";
-	import { ArrowLeft, Package, Clock, MapPin, Calendar, FileText, Tag, DollarSign, X, ImageIcon } from "@lucide/svelte";
+	import { ArrowLeft, Package, Clock, MapPin, Calendar, FileText, Tag, DollarSign, ImageIcon } from "@lucide/svelte";
 	import type { PageData, ActionData } from "./$types";
 	import { getToastContext } from "$lib/components/toast";
 
@@ -19,7 +19,6 @@
 	let availability = $state<"online" | "in-person" | "hybrid">(data.product.availability);
 	let bufferTime = $state(data.product.bufferTime);
 	let cancellationHours = $state(data.product.cancellationHours);
-	let stripeProductId = $state("");
 
 	// Image upload state
 	let imagePreview = $state<string | null>(data.product.image || null);
@@ -81,10 +80,6 @@
 				}
 			}
 		}
-	}
-
-	function removeImage() {
-		imagePreview = null;
 	}
 </script>
 
@@ -172,15 +167,6 @@
 							<div class="absolute inset-0 bg-black/50 flex items-center justify-center">
 								<p class="text-white text-sm font-medium">Téléchargement en cours…</p>
 							</div>
-						{:else}
-							<button
-								type="button"
-								onclick={removeImage}
-								class="absolute top-3 right-3 p-2 bg-black/60 hover:bg-red-600 text-white rounded-lg transition-colors"
-								aria-label="Supprimer l'image"
-							>
-								<X size={16} />
-							</button>
 						{/if}
 					</div>
 				</div>
@@ -284,52 +270,27 @@
 				</div>
 			</div>
 
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-				<!-- Price -->
-				<div>
-					<label for="price" class="block text-sm font-medium text-foreground-alt mb-2">
-						Prix (€)
-					</label>
-					<div class="relative">
-						<DollarSign
-							size={18}
-							class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-						/>
-						<input
-							id="price"
-							name="price"
-							type="text"
-							value={price}
-							readonly
-							tabindex="-1"
-							class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg bg-muted text-muted-foreground cursor-not-allowed"
-						/>
-						<p class="mt-1 text-xs text-muted-foreground">
-							Prix en lecture seule — géré via Stripe
-						</p>
-					</div>
-				</div>
-				<!-- Stripe Product ID -->
-				<div>
-					<label for="stripeProductId" class="block text-sm font-medium text-foreground-alt mb-2">
-						Stripe Product ID (Optionnel)
-					</label>
-					<div class="relative">
-						<DollarSign
-							size={18}
-							class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-						/>
-						<input
-							id="stripeProductId"
-							name="stripeProductId"
-							type="text"
-							bind:value={stripeProductId}
-							placeholder="prod_xxxxxxxxx"
-							class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
-						/>
-					</div>
+			<!-- Price -->
+			<div>
+				<label for="price" class="block text-sm font-medium text-foreground-alt mb-2">
+					Prix (€)
+				</label>
+				<div class="relative">
+					<DollarSign
+						size={18}
+						class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+					/>
+					<input
+						id="price"
+						name="price"
+						type="text"
+						value={price}
+						readonly
+						tabindex="-1"
+						class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg bg-muted text-muted-foreground cursor-not-allowed"
+					/>
 					<p class="mt-1 text-xs text-muted-foreground">
-						ID du produit Stripe pour les paiements
+						Prix en lecture seule — géré via Stripe
 					</p>
 				</div>
 			</div>
