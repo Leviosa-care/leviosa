@@ -12,7 +12,7 @@
 	// Form state - initialize with product data
 	let name = $state(data.product.name);
 	let description = $state(data.product.description);
-	let categoryId = $state("");
+	let categoryId = $state(data.updateProductForm.data.category);
 	let duration = $state(data.product.duration);
 	let price = $state(data.product.price);
 	let status = $state<"published" | "draft" | "archived">(data.product.published);
@@ -22,14 +22,6 @@
 	let stripeProductId = $state("");
 	let imageUrl = $state(data.product.image);
 
-	// Find category ID from product category name
-	$effect(() => {
-		const category = data.categories.find(c => c.name === data.product.category);
-		if (category) {
-			categoryId = category.id;
-		}
-	});
-
 	// Image upload state
 	let imagePreview = $state<string | null>(data.product.image || null);
 	let isUploading = $state(false);
@@ -37,9 +29,9 @@
 
 	function updateProductEnhance() {
 		return async ({ result }: { result: import('@sveltejs/kit').ActionResult }) => {
-			if (result.type === 'success') {
+			if (result.type === 'redirect') {
 				toast.success('Succès', 'Produit mis à jour avec succès');
-				goto('/admin/catalog');
+				goto(result.location);
 			} else if (result.type === 'failure') {
 				toast.error('Erreur', (result.data as { error?: string })?.error ?? 'Une erreur est survenue');
 			}
@@ -299,7 +291,7 @@
 				<!-- Price -->
 				<div>
 					<label for="price" class="block text-sm font-medium text-foreground-alt mb-2">
-						Prix (€) <span class="text-red-500">*</span>
+						Prix (€)
 					</label>
 					<div class="relative">
 						<DollarSign
@@ -309,17 +301,17 @@
 						<input
 							id="price"
 							name="price"
-							type="number"
-							bind:value={price}
-							required
-							min="0"
-							step="0.01"
-							placeholder="75.00"
-							class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
+							type="text"
+							value={price}
+							readonly
+							tabindex="-1"
+							class="w-full pl-10 pr-4 py-3 border border-border-input rounded-lg bg-muted text-muted-foreground cursor-not-allowed"
 						/>
+						<p class="mt-1 text-xs text-muted-foreground">
+							Prix en lecture seule — géré via Stripe
+						</p>
 					</div>
 				</div>
-
 				<!-- Stripe Product ID -->
 				<div>
 					<label for="stripeProductId" class="block text-sm font-medium text-foreground-alt mb-2">
