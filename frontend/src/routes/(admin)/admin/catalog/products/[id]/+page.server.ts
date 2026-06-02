@@ -154,15 +154,20 @@ export const actions: Actions = {
 		const productId = params.id;
 		const formData = await request.formData();
 		const imageFile = formData.get('image');
+		const productName = formData.get('productName') as string | null;
 
 		if (!imageFile || !(imageFile instanceof File)) {
-			return { success: false, error: 'Invalid image file' };
+			return fail(400, { error: 'Fichier image invalide' });
 		}
 
 		const uploadFormData = new FormData();
 		uploadFormData.append('image', imageFile);
+		uploadFormData.append('parent_id', productId);
+		uploadFormData.append('parent_type', 'product');
+		uploadFormData.append('title', productName ?? productId);
+		uploadFormData.append('is_active', 'true');
 
-		const res = await fetch(`${env.API_URL}/admin/products/${productId}/images`, {
+		const res = await fetch(`${env.API_URL}/admin/images`, {
 			method: 'POST',
 			body: uploadFormData,
 		});
@@ -171,11 +176,11 @@ export const actions: Actions = {
 			if (res.status === 401) throw redirect(303, '/auth');
 			const errorText = await res.text();
 			console.error('Image upload failed:', res.status, errorText);
-			return fail(res.status, { error: `Upload failed: ${res.status}` });
+			return fail(res.status, { error: `Le téléchargement a échoué (${res.status})` });
 		}
 
-		const result = await res.json();
-		return { success: true, url: result.url };
+		// Endpoint returns { "id": "..." } — reload page to pick up new active image
+		throw redirect(303, `/admin/catalog/products/${productId}`);
 	},
 	default: async ({ request, params, fetch }) => {
 		const productId = params.id;
