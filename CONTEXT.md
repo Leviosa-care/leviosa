@@ -47,6 +47,15 @@ These are the canonical terms used in code, documentation, and conversation. Use
 | **Utilization** | A metric measuring how efficiently a room's time is used (utilization % minus fragmentation penalty). Computed via a materialized view. |
 | **10-minute alignment** | All time slots are aligned to 10-minute boundaries for scheduling consistency. |
 
+### Messaging
+
+| Term | Definition |
+|------|------------|
+| **Thread** | A private conversation between exactly two users. Identified by its two participants. At most one thread can exist between any pair of users. |
+| **Message** | A single text entry in a thread. Body is encrypted at rest via `encx`. |
+| **Thread initiation** | Only partners and administrators may open a new thread. A partner may only open a thread with a client with whom they share at least one booking. Clients may read and reply to threads but cannot start them. |
+| **Unread count** | The number of messages in a thread not yet read by the current user. Used for nav badge indicators on all roles. |
+
 ### Infrastructure Concepts
 
 | Term | Definition |
