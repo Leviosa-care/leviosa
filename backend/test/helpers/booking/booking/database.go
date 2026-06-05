@@ -85,12 +85,15 @@ func InsertBookingEncx(
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
 			guest_first_name_encrypted, guest_last_name_encrypted,
 			guest_email_encrypted, guest_phone_encrypted,
+			token,
+			reminded_at,
 			created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
 			$19, $20, $21, $22,
-			$23, $24, $25, $26, $27
+			$23, $24,
+			$25, $26, $27, $28, $29
 		)
 	`
 
@@ -117,6 +120,8 @@ func InsertBookingEncx(
 		bookingEncx.GuestLastNameEncrypted,
 		bookingEncx.GuestEmailEncrypted,
 		bookingEncx.GuestPhoneEncrypted,
+		bookingEncx.Token,
+		bookingEncx.RemindedAt,
 		bookingEncx.CreatedAt,
 		bookingEncx.UpdatedAt,
 		bookingEncx.DEKEncrypted,
@@ -145,6 +150,8 @@ func GetBookingEncxByID(
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
 			guest_first_name_encrypted, guest_last_name_encrypted,
 			guest_email_encrypted, guest_phone_encrypted,
+			token,
+			reminded_at,
 			created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM booking.bookings
@@ -175,6 +182,8 @@ func GetBookingEncxByID(
 		&bookingEncx.GuestLastNameEncrypted,
 		&bookingEncx.GuestEmailEncrypted,
 		&bookingEncx.GuestPhoneEncrypted,
+		&bookingEncx.Token,
+		&bookingEncx.RemindedAt,
 		&bookingEncx.CreatedAt,
 		&bookingEncx.UpdatedAt,
 		&bookingEncx.DEKEncrypted,
@@ -203,6 +212,8 @@ func GetBookingsByAvailabilityID(
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
 			guest_first_name_encrypted, guest_last_name_encrypted,
 			guest_email_encrypted, guest_phone_encrypted,
+			token,
+			reminded_at,
 			created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM booking.bookings
@@ -238,6 +249,12 @@ func GetBookingsByAvailabilityID(
 			&bookingEncx.CancelledAt,
 			&bookingEncx.CancellationReasonEncrypted,
 			&bookingEncx.CompletedAt,
+			&bookingEncx.GuestFirstNameEncrypted,
+			&bookingEncx.GuestLastNameEncrypted,
+			&bookingEncx.GuestEmailEncrypted,
+			&bookingEncx.GuestPhoneEncrypted,
+			&bookingEncx.Token,
+			&bookingEncx.RemindedAt,
 			&bookingEncx.CreatedAt,
 			&bookingEncx.UpdatedAt,
 			&bookingEncx.DEKEncrypted,
@@ -271,6 +288,8 @@ func GetBookingsByClientID(
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
 			guest_first_name_encrypted, guest_last_name_encrypted,
 			guest_email_encrypted, guest_phone_encrypted,
+			token,
+			reminded_at,
 			created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM booking.bookings
@@ -306,6 +325,12 @@ func GetBookingsByClientID(
 			&bookingEncx.CancelledAt,
 			&bookingEncx.CancellationReasonEncrypted,
 			&bookingEncx.CompletedAt,
+			&bookingEncx.GuestFirstNameEncrypted,
+			&bookingEncx.GuestLastNameEncrypted,
+			&bookingEncx.GuestEmailEncrypted,
+			&bookingEncx.GuestPhoneEncrypted,
+			&bookingEncx.Token,
+			&bookingEncx.RemindedAt,
 			&bookingEncx.CreatedAt,
 			&bookingEncx.UpdatedAt,
 			&bookingEncx.DEKEncrypted,
@@ -339,6 +364,8 @@ func GetBookingsByPartnerID(
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
 			guest_first_name_encrypted, guest_last_name_encrypted,
 			guest_email_encrypted, guest_phone_encrypted,
+			token,
+			reminded_at,
 			created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM booking.bookings
@@ -374,6 +401,12 @@ func GetBookingsByPartnerID(
 			&bookingEncx.CancelledAt,
 			&bookingEncx.CancellationReasonEncrypted,
 			&bookingEncx.CompletedAt,
+			&bookingEncx.GuestFirstNameEncrypted,
+			&bookingEncx.GuestLastNameEncrypted,
+			&bookingEncx.GuestEmailEncrypted,
+			&bookingEncx.GuestPhoneEncrypted,
+			&bookingEncx.Token,
+			&bookingEncx.RemindedAt,
 			&bookingEncx.CreatedAt,
 			&bookingEncx.UpdatedAt,
 			&bookingEncx.DEKEncrypted,
@@ -407,6 +440,8 @@ func GetBookingByPaymentIntentID(
 			status, cancelled_at, cancellation_reason_encrypted, completed_at,
 			guest_first_name_encrypted, guest_last_name_encrypted,
 			guest_email_encrypted, guest_phone_encrypted,
+			token,
+			reminded_at,
 			created_at, updated_at,
 			dek_encrypted, key_version, metadata
 		FROM booking.bookings
@@ -437,6 +472,8 @@ func GetBookingByPaymentIntentID(
 		&bookingEncx.GuestLastNameEncrypted,
 		&bookingEncx.GuestEmailEncrypted,
 		&bookingEncx.GuestPhoneEncrypted,
+		&bookingEncx.Token,
+		&bookingEncx.RemindedAt,
 		&bookingEncx.CreatedAt,
 		&bookingEncx.UpdatedAt,
 		&bookingEncx.DEKEncrypted,
