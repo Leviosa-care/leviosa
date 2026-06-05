@@ -28,6 +28,10 @@ type Partner struct {
 
 // ToResponse converts a Partner domain entity to a PartnerResponse DTO.
 func (p *Partner) ToResponse() *PartnerResponse {
+	tags := p.Tags
+	if tags == nil {
+		tags = []string{}
+	}
 	return &PartnerResponse{
 		ID:                       p.ID,
 		UserID:                   p.UserID,
@@ -35,7 +39,7 @@ func (p *Partner) ToResponse() *PartnerResponse {
 		Experience:               p.Experience,
 		Occupation:               p.Occupation,
 		Quote:                    p.Quote,
-		Tags:                     p.Tags,
+		Tags:                     tags,
 		CategoryIDs:              p.CategoryIDs,
 		ProductIDs:               p.ProductIDs,
 		StripeAccountStatus:      p.StripeAccountStatus,
