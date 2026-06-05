@@ -190,7 +190,7 @@ func TestReminderSchedulerTick_SendsRemindersForEligibleBookings(t *testing.T) {
 	}
 	notif := &mockReminderNotification{}
 
-	scheduler := NewReminderSchedulerForTest(repo, notif, crypto, 24*time.Hour)
+	scheduler := NewReminderSchedulerForTest(repo, notif, crypto, WithReminderWindow(24*time.Hour))
 	scheduler.tick(ctx)
 
 	notif.mu.Lock()
@@ -201,15 +201,15 @@ func TestReminderSchedulerTick_SendsRemindersForEligibleBookings(t *testing.T) {
 	marks := repo.markCalled
 	repo.mu.Unlock()
 
-	// Only the in-window booking should trigger a reminder notification
+	// Only the in-window booking should trigger a reminder notification.
 	assert.Len(t, calls, 1)
 	assert.Equal(t, encxInWindow.ID, calls[0].BookingID)
 
-	// All three bookings pass FindBookingsDueForReminder, but only the in-window
-	// one gets a notification. However, MarkReminderSent is called only for
-	// bookings that were actually sent reminders (in-window).
-	assert.Len(t, marks, 1)
-	assert.Equal(t, encxInWindow.ID, marks[0])
+	// In-window booking is marked after sending; past booking is also marked
+	// (without sending) so it does not reappear on future ticks.
+	assert.Len(t, marks, 2)
+	assert.Contains(t, marks, encxInWindow.ID)
+	assert.Contains(t, marks, encxPast.ID)
 }
 
 func TestReminderSchedulerTick_MarkSentEvenOnNotificationError(t *testing.T) {
@@ -228,7 +228,7 @@ func TestReminderSchedulerTick_MarkSentEvenOnNotificationError(t *testing.T) {
 		err: assert.AnError,
 	}
 
-	scheduler := NewReminderSchedulerForTest(repo, notif, crypto, 24*time.Hour)
+	scheduler := NewReminderSchedulerForTest(repo, notif, crypto, WithReminderWindow(24*time.Hour))
 	scheduler.tick(ctx)
 
 	notif.mu.Lock()
@@ -263,7 +263,7 @@ func TestReminderSchedulerTick_MultipleBookingsInWindow(t *testing.T) {
 	}
 	notif := &mockReminderNotification{}
 
-	scheduler := NewReminderSchedulerForTest(repo, notif, crypto, 24*time.Hour)
+	scheduler := NewReminderSchedulerForTest(repo, notif, crypto, WithReminderWindow(24*time.Hour))
 	scheduler.tick(ctx)
 
 	notif.mu.Lock()
@@ -292,7 +292,7 @@ func TestReminderSchedulerTick_GuestBooking(t *testing.T) {
 	}
 	notif := &mockReminderNotification{}
 
-	scheduler := NewReminderSchedulerForTest(repo, notif, crypto, 24*time.Hour)
+	scheduler := NewReminderSchedulerForTest(repo, notif, crypto, WithReminderWindow(24*time.Hour))
 	scheduler.tick(ctx)
 
 	notif.mu.Lock()
@@ -302,6 +302,36 @@ func TestReminderSchedulerTick_GuestBooking(t *testing.T) {
 	require.Len(t, calls, 1)
 	assert.True(t, calls[0].IsGuestBooking)
 	assert.Equal(t, "jean@example.com", calls[0].GuestEmail)
+}
+
+func TestReminderSchedulerTick_PastBookingIsMarkedWithoutSending(t *testing.T) {
+	ctx := context.Background()
+	crypto := &identityCrypto{pepper: make([]byte, 32)}
+
+	now := time.Now()
+	inPast := now.Add(-2 * time.Hour)
+
+	encxPast := makeEncryptedBooking(t, crypto, inPast)
+
+	repo := &mockSchedulerRepo{
+		bookings: []*domain.BookingEncx{encxPast},
+	}
+	notif := &mockReminderNotification{}
+
+	scheduler := NewReminderSchedulerForTest(repo, notif, crypto, WithReminderWindow(24*time.Hour))
+	scheduler.tick(ctx)
+
+	notif.mu.Lock()
+	calls := notif.calls
+	notif.mu.Unlock()
+
+	repo.mu.Lock()
+	marks := repo.markCalled
+	repo.mu.Unlock()
+
+	assert.Empty(t, calls, "no reminder should be sent for a past booking")
+	assert.Len(t, marks, 1, "past booking should be marked as reminded to prevent reappearing")
+	assert.Equal(t, encxPast.ID, marks[0])
 }
 
 func TestReminderSchedulerBuildNotificationData(t *testing.T) {
@@ -412,7 +442,8 @@ func TestReminderScheduler_SlowTickSkipsNext(t *testing.T) {
 	notif := &mockReminderNotification{}
 	crypto := &identityCrypto{pepper: make([]byte, 32)}
 
-	scheduler := NewReminderSchedulerForTest(repo, notif, crypto, 24*time.Hour,
+	scheduler := NewReminderSchedulerForTest(repo, notif, crypto,
+		WithReminderWindow(24*time.Hour),
 		WithInterval(100*time.Millisecond),
 	)
 

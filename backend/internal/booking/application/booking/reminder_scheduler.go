@@ -63,7 +63,6 @@ func NewReminderSchedulerForTest(
 	repo reminderRepo,
 	notification ports.BookingNotificationService,
 	crypto encx.CryptoService,
-	reminderWindow time.Duration,
 	opts ...SchedulerOption,
 ) *ReminderScheduler {
 	s := &ReminderScheduler{
@@ -71,7 +70,7 @@ func NewReminderSchedulerForTest(
 		notification:   notification,
 		crypto:         crypto,
 		interval:       15 * time.Minute,
-		reminderWindow: reminderWindow,
+		reminderWindow: 24 * time.Hour,
 		stopCh:         make(chan struct{}),
 	}
 	for _, opt := range opts {
@@ -177,8 +176,21 @@ func (s *ReminderScheduler) tick(ctx context.Context) {
 			continue
 		}
 
-		// Filter: only bookings within the reminder window.
-		if booking.SlotStartTime.Before(now) || booking.SlotStartTime.After(windowEnd) {
+		// Past bookings: mark as reminded without sending so they don't
+		// reappear on every tick (slot_start_time is encrypted so the DB
+		// cannot filter them out; we do it here after decryption).
+		if booking.SlotStartTime.Before(now) {
+			if err := s.repo.MarkReminderSent(ctx, booking.ID); err != nil {
+				slog.ErrorContext(ctx, "reminder scheduler: failed to mark past booking as reminded",
+					"booking_id", booking.ID,
+					"error", err,
+				)
+			}
+			continue
+		}
+
+		// Bookings beyond the reminder window: skip without marking.
+		if booking.SlotStartTime.After(windowEnd) {
 			continue
 		}
 

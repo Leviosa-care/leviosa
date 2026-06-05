@@ -371,7 +371,10 @@ func (a *BookingNotificationAdapter) sendBookingReminderEmail(ctx context.Contex
 	a.enrichData(ctx, &data)
 
 	if data.ClientEmail == "" {
-		return fmt.Errorf("no client email available for booking reminder")
+		slog.WarnContext(ctx, "no client email available for booking reminder",
+			"booking_id", data.BookingID,
+		)
+		return nil
 	}
 
 	formattedDate := data.SlotStartTime.Format("Monday, 02 January 2006")
