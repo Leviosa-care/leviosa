@@ -110,6 +110,27 @@ export const actions = {
             return fail(400, { loginForm: form })
         }
 
+        if (env.USE_MOCK_DATA === 'true') {
+            const mockCredentials = [
+                { email: env.MOCK_ADMIN_EMAIL, password: env.MOCK_ADMIN_PASSWORD, role: 'administrator', dest: '/admin' },
+                { email: env.MOCK_PARTNER_EMAIL, password: env.MOCK_PARTNER_PASSWORD, role: 'partner', dest: '/staff' },
+                { email: env.MOCK_CLIENT_EMAIL, password: env.MOCK_CLIENT_PASSWORD, role: 'standard', dest: '/client' },
+            ];
+            const match = mockCredentials.find(
+                c => c.email && c.password && c.email === form.data.email && c.password === form.data.password
+            );
+            if (!match) {
+                return setError(form, "Identifiants incorrects. Veuillez vérifier votre email et mot de passe.");
+            }
+            cookies.set('mock_session', match.role, {
+                path: '/',
+                httpOnly: true,
+                sameSite: 'lax',
+                maxAge: 60 * 60 * 24 * 7,
+            });
+            redirect(302, match.dest);
+        }
+
         const res = await fetch(`${env.API_URL}/auth/login`, {
             method: "POST",
             headers: { 'Content-Type': "application/json" },

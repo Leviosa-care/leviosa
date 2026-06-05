@@ -3,6 +3,11 @@ import { env } from '$env/dynamic/private';
 
 export const actions = {
 	default: async ({ cookies, locals }) => {
+		if (env.USE_MOCK_DATA === 'true') {
+			cookies.delete('mock_session', { path: '/' });
+			throw redirect(302, '/auth');
+		}
+
 		const sessionID = cookies.get(locals.sessionCookieName);
 
 		if (sessionID) {
