@@ -44,6 +44,7 @@ func NewTestPartner(t *testing.T, userID uuid.UUID) *domain.Partner {
 		UpdatedAt:                time.Now(),
 		CategoryIDs:              categoryIDs,
 		ProductIDs:               productIDs,
+		Tags:                     []string{"test"},
 		StripeConnectedAccountID: "acct_test123456789",
 		StripeAccountStatus:      domain.StripeAccountStatusPending,
 		StripeOnboardingComplete: false,
