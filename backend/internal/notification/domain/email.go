@@ -51,6 +51,7 @@ type PaymentNotificationRequest struct {
 	FromEmail   string `json:"from_email"`
 	CompanyName string `json:"company_name"`
 	LogoURL     string `json:"logo_url"`
+	RetryURL    string `json:"retry_url,omitempty"` // non-empty for payment_failed emails
 }
 
 // Booking Confirmation Email

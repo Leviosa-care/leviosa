@@ -431,6 +431,7 @@ func (a *BookingNotificationAdapter) sendPaymentFailedEmail(ctx context.Context,
 		Amount:      formatAmount(data.TotalPriceCents, data.Currency),
 		Product:     data.ProductName,
 		PaymentDate: time.Now().Format("02 January 2006"),
+		RetryURL:    a.frontendOrigin + "/bookings",
 	}
 
 	return a.emailService.SendPaymentFailedEmail(ctx, req)

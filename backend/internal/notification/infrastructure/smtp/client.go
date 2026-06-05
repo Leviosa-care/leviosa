@@ -174,6 +174,7 @@ func (c *SMTPClient) SendPaymentFailedEmail(ctx context.Context, req domain.Paym
 		CompanyName string
 		Year        int
 		LogoURL     string
+		RetryURL    string
 	}{
 		FirstName:   req.ToFirstName,
 		LastName:    req.ToLastName,
@@ -183,6 +184,7 @@ func (c *SMTPClient) SendPaymentFailedEmail(ctx context.Context, req domain.Paym
 		CompanyName: req.CompanyName,
 		Year:        time.Now().Year(),
 		LogoURL:     req.LogoURL,
+		RetryURL:    req.RetryURL,
 	}
 
 	emailReq := &domain.EmailRequest{
