@@ -27,7 +27,11 @@
 	let occupationSaving = $state(false);
 	let quoteSaving = $state(false);
 	let tagsSaving = $state(false);
-	let saveError = $state<string | null>(null);
+	let bioError = $state<string | null>(null);
+	let experienceError = $state<string | null>(null);
+	let occupationError = $state<string | null>(null);
+	let quoteError = $state<string | null>(null);
+	let tagsError = $state<string | null>(null);
 	let oauthLoading = $state<string | null>(null);
 	let oauthError = $state<string | null>(null);
 	let linkedProviders = $state(data.linkedProviders ?? { google: false, apple: false });
@@ -58,7 +62,7 @@
 
 	async function saveBio() {
 		bioSaving = true;
-		saveError = null;
+		bioError = null;
 		try {
 			const res = await fetch(`/api/partners/me`, {
 				method: 'PUT',
@@ -69,10 +73,10 @@
 				savedBio = bioValue;
 				editingBio = false;
 			} else {
-				saveError = 'Impossible d\'enregistrer. Veuillez réessayer.';
+				bioError = 'Impossible d\'enregistrer. Veuillez réessayer.';
 			}
 		} catch {
-			saveError = 'Une erreur est survenue. Veuillez réessayer.';
+			bioError = 'Une erreur est survenue. Veuillez réessayer.';
 		} finally {
 			bioSaving = false;
 		}
@@ -80,7 +84,7 @@
 
 	async function saveExperience() {
 		experienceSaving = true;
-		saveError = null;
+		experienceError = null;
 		try {
 			const res = await fetch(`/api/partners/me`, {
 				method: 'PUT',
@@ -91,10 +95,10 @@
 				savedExperience = experienceValue;
 				editingExperience = false;
 			} else {
-				saveError = 'Impossible d\'enregistrer. Veuillez réessayer.';
+				experienceError = 'Impossible d\'enregistrer. Veuillez réessayer.';
 			}
 		} catch {
-			saveError = 'Une erreur est survenue. Veuillez réessayer.';
+			experienceError = 'Une erreur est survenue. Veuillez réessayer.';
 		} finally {
 			experienceSaving = false;
 		}
@@ -102,7 +106,7 @@
 
 	async function saveOccupation() {
 		occupationSaving = true;
-		saveError = null;
+		occupationError = null;
 		try {
 			const res = await fetch(`/api/partners/me`, {
 				method: 'PUT',
@@ -113,10 +117,10 @@
 				savedOccupation = occupationValue;
 				editingOccupation = false;
 			} else {
-				saveError = 'Impossible d\'enregistrer. Veuillez réessayer.';
+				occupationError = 'Impossible d\'enregistrer. Veuillez réessayer.';
 			}
 		} catch {
-			saveError = 'Une erreur est survenue. Veuillez réessayer.';
+			occupationError = 'Une erreur est survenue. Veuillez réessayer.';
 		} finally {
 			occupationSaving = false;
 		}
@@ -124,7 +128,7 @@
 
 	async function saveQuote() {
 		quoteSaving = true;
-		saveError = null;
+		quoteError = null;
 		try {
 			const res = await fetch(`/api/partners/me`, {
 				method: 'PUT',
@@ -135,10 +139,10 @@
 				savedQuote = quoteValue;
 				editingQuote = false;
 			} else {
-				saveError = 'Impossible d\'enregistrer. Veuillez réessayer.';
+				quoteError = 'Impossible d\'enregistrer. Veuillez réessayer.';
 			}
 		} catch {
-			saveError = 'Une erreur est survenue. Veuillez réessayer.';
+			quoteError = 'Une erreur est survenue. Veuillez réessayer.';
 		} finally {
 			quoteSaving = false;
 		}
@@ -146,7 +150,7 @@
 
 	async function saveTags() {
 		tagsSaving = true;
-		saveError = null;
+		tagsError = null;
 		const parsedTags = tagsInput
 			.split(',')
 			.map((t: string) => t.trim())
@@ -162,10 +166,10 @@
 				savedTagsInput = tagsInput;
 				editingTags = false;
 			} else {
-				saveError = 'Impossible d\'enregistrer. Veuillez réessayer.';
+				tagsError = 'Impossible d\'enregistrer. Veuillez réessayer.';
 			}
 		} catch {
-			saveError = 'Une erreur est survenue. Veuillez réessayer.';
+			tagsError = 'Une erreur est survenue. Veuillez réessayer.';
 		} finally {
 			tagsSaving = false;
 		}
@@ -371,15 +375,15 @@
 							maxlength="1000"
 							class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-foreground/20"
 						></textarea>
-						{#if saveError && editingBio}
-							<p class="text-xs text-red-600">{saveError}</p>
+						{#if bioError}
+							<p class="text-xs text-red-600">{bioError}</p>
 						{/if}
 						<div class="flex items-center justify-between">
 							<span class="text-xs text-muted-foreground">{bioValue.length}/1000</span>
 							<div class="flex gap-2">
 								<button
 									class="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted transition-colors"
-									onclick={() => { bioValue = savedBio; editingBio = false; saveError = null; }}
+									onclick={() => { bioValue = savedBio; editingBio = false; bioError = null; }}
 									disabled={bioSaving}
 								>
 									Annuler
@@ -419,15 +423,15 @@
 							maxlength="2000"
 							class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-foreground/20"
 						></textarea>
-						{#if saveError && editingExperience}
-							<p class="text-xs text-red-600">{saveError}</p>
+						{#if experienceError}
+							<p class="text-xs text-red-600">{experienceError}</p>
 						{/if}
 						<div class="flex items-center justify-between">
 							<span class="text-xs text-muted-foreground">{experienceValue.length}/2000</span>
 							<div class="flex gap-2">
 								<button
 									class="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted transition-colors"
-									onclick={() => { experienceValue = savedExperience; editingExperience = false; saveError = null; }}
+									onclick={() => { experienceValue = savedExperience; editingExperience = false; experienceError = null; }}
 									disabled={experienceSaving}
 								>
 									Annuler
@@ -471,15 +475,15 @@
 							placeholder="Ex: Kinésithérapeute du sport"
 							class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
 						/>
-						{#if saveError && editingOccupation}
-							<p class="text-xs text-red-600">{saveError}</p>
+						{#if occupationError}
+							<p class="text-xs text-red-600">{occupationError}</p>
 						{/if}
 						<div class="flex items-center justify-between">
 							<span class="text-xs text-muted-foreground">{occupationValue.length}/200</span>
 							<div class="flex gap-2">
 								<button
 									class="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted transition-colors"
-									onclick={() => { occupationValue = savedOccupation; editingOccupation = false; saveError = null; }}
+									onclick={() => { occupationValue = savedOccupation; editingOccupation = false; occupationError = null; }}
 									disabled={occupationSaving}
 								>
 									Annuler
@@ -523,15 +527,15 @@
 							placeholder="Ex: Le mouvement est la vie"
 							class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
 						/>
-						{#if saveError && editingQuote}
-							<p class="text-xs text-red-600">{saveError}</p>
+						{#if quoteError}
+							<p class="text-xs text-red-600">{quoteError}</p>
 						{/if}
 						<div class="flex items-center justify-between">
 							<span class="text-xs text-muted-foreground">{quoteValue.length}/300</span>
 							<div class="flex gap-2">
 								<button
 									class="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted transition-colors"
-									onclick={() => { quoteValue = savedQuote; editingQuote = false; saveError = null; }}
+									onclick={() => { quoteValue = savedQuote; editingQuote = false; quoteError = null; }}
 									disabled={quoteSaving}
 								>
 									Annuler
@@ -575,15 +579,15 @@
 							class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
 						/>
 						<p class="text-xs text-muted-foreground">Séparez les tags par des virgules</p>
-						{#if saveError && editingTags}
-							<p class="text-xs text-red-600">{saveError}</p>
+						{#if tagsError}
+							<p class="text-xs text-red-600">{tagsError}</p>
 						{/if}
 						<div class="flex items-center justify-between">
 							<span class="text-xs text-muted-foreground">{tagsInput.split(',').filter((t: string) => t.trim()).length} tag(s)</span>
 							<div class="flex gap-2">
 								<button
 									class="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted transition-colors"
-									onclick={() => { tagsInput = savedTagsInput; editingTags = false; saveError = null; }}
+									onclick={() => { tagsInput = savedTagsInput; editingTags = false; tagsError = null; }}
 									disabled={tagsSaving}
 								>
 									Annuler
