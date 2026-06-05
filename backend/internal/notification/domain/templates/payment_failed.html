@@ -19,11 +19,7 @@
               <!-- Header -->
               <tr>
                 <td align="center" style="background-color: #1e1e1e; padding: 30px 20px;">
-                  <img
-                    src="{{ .LogoURL }}"
-                    alt="Leviosa Logo"
-                    style="max-width: 200px; height: auto;"
-                  />
+                  <h1 style="color: #ffffff; font-size: 28px; font-weight: normal; margin: 0; letter-spacing: 4px;">LEVIOSA</h1>
                 </td>
               </tr>
 
@@ -79,11 +75,13 @@
                     </p>
                   </div>
 
+                  {{ if .RetryURL }}
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="#" style="background-color: #1e1e1e; color: #ffffff; padding: 12px 30px; border-radius: 4px; text-decoration: none; font-size: 16px; display: inline-block; font-weight: bold;">
+                    <a href="{{ .RetryURL }}" style="background-color: #1e1e1e; color: #ffffff; padding: 12px 30px; border-radius: 4px; text-decoration: none; font-size: 16px; display: inline-block; font-weight: bold;">
                       Réessayer le paiement
                     </a>
                   </div>
+                  {{ end }}
 
                   <p style="color: #444444; font-size: 16px; line-height: 1.5; margin: 0;">
                     Si le problème persiste, n'hésitez pas à contacter notre équipe d'assistance.

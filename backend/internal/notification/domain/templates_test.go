@@ -199,6 +199,7 @@ func TestPaymentFailedTemplateRenders(t *testing.T) {
 		CompanyName string
 		Year        int
 		LogoURL     string
+		RetryURL    string
 	}{
 		FirstName:   "Alice",
 		LastName:    "Smith",
@@ -208,6 +209,7 @@ func TestPaymentFailedTemplateRenders(t *testing.T) {
 		CompanyName: "Leviosa",
 		Year:        2026,
 		LogoURL:     "https://example.com/logo.png",
+		RetryURL:    "https://app.leviosa.com/bookings",
 	}
 
 	var buf bytes.Buffer
@@ -219,7 +221,19 @@ func TestPaymentFailedTemplateRenders(t *testing.T) {
 	assertContains(t, buf.String(), "Massage Therapy")
 	assertContains(t, buf.String(), "15 June 2026")
 	assertContains(t, buf.String(), "Réessayer le paiement")
+	assertContains(t, buf.String(), "https://app.leviosa.com/bookings")
 	assertContains(t, buf.String(), "2026")
+
+	// Without a retry URL, the CTA button must not render.
+	dataNoURL := data
+	dataNoURL.RetryURL = ""
+	var bufNoURL bytes.Buffer
+	if err := tmpl.Execute(&bufNoURL, dataNoURL); err != nil {
+		t.Fatalf("failed to execute payment_failed template without RetryURL: %v", err)
+	}
+	if bytes.Contains(bufNoURL.Bytes(), []byte("Réessayer le paiement")) {
+		t.Error("retry button should not appear when RetryURL is empty")
+	}
 }
 
 func parseTemplateOrFail(t *testing.T, name string) *template.Template {
