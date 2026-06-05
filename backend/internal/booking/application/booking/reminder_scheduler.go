@@ -57,13 +57,16 @@ func NewReminderScheduler(
 
 // NewReminderSchedulerForTest creates a scheduler with a narrower repository
 // interface suitable for unit testing without the full BookingRepository.
+// Accepts the same SchedulerOption set as NewReminderScheduler so tests can
+// override interval and reminder window.
 func NewReminderSchedulerForTest(
 	repo reminderRepo,
 	notification ports.BookingNotificationService,
 	crypto encx.CryptoService,
 	reminderWindow time.Duration,
+	opts ...SchedulerOption,
 ) *ReminderScheduler {
-	return &ReminderScheduler{
+	s := &ReminderScheduler{
 		repo:           repo,
 		notification:   notification,
 		crypto:         crypto,
@@ -71,6 +74,10 @@ func NewReminderSchedulerForTest(
 		reminderWindow: reminderWindow,
 		stopCh:         make(chan struct{}),
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // SchedulerOption configures optional ReminderScheduler settings.
@@ -97,17 +104,19 @@ func WithReminderWindow(d time.Duration) SchedulerOption {
 
 // Start begins the scheduler loop. It blocks until the context is cancelled
 // or Stop is called. Start is safe to call from a goroutine.
+//
+// The scheduler is non-blocking: if a tick takes longer than the interval,
+// the next scheduled tick is skipped rather than queued. This is achieved by
+// resetting the timer after each tick completes, ensuring a full interval
+// elapses before the next tick regardless of how long the previous one took.
 func (s *ReminderScheduler) Start(ctx context.Context) {
 	slog.InfoContext(ctx, "booking reminder scheduler started",
 		"interval", s.interval,
 		"reminder_window", s.reminderWindow,
 	)
 
-	ticker := time.NewTicker(s.interval)
-	defer ticker.Stop()
-
-	// Run the first tick immediately.
-	s.tick(ctx)
+	timer := time.NewTimer(0) // fire immediately for first tick
+	defer timer.Stop()
 
 	for {
 		select {
@@ -117,8 +126,12 @@ func (s *ReminderScheduler) Start(ctx context.Context) {
 		case <-s.stopCh:
 			slog.InfoContext(ctx, "booking reminder scheduler stopped via Stop")
 			return
-		case <-ticker.C:
+		case <-timer.C:
 			s.tick(ctx)
+			// Reset with a full interval. If the tick took longer than the
+			// interval, the next tick is effectively skipped — the timer fires
+			// one full interval from now rather than immediately.
+			timer.Reset(s.interval)
 		}
 	}
 }

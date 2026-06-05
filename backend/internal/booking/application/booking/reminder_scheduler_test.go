@@ -375,6 +375,62 @@ func TestReminderSchedulerOptions_ZeroIgnored(t *testing.T) {
 	assert.Equal(t, 24*time.Hour, s.reminderWindow)
 }
 
+// slowRepo wraps a reminderRepo and injects a configurable sleep during
+// FindBookingsDueForReminder to simulate a slow tick.
+type slowRepo struct {
+	reminderRepo
+	mu       sync.Mutex
+	tickDone int
+	duration time.Duration
+}
+
+func (s *slowRepo) FindBookingsDueForReminder(ctx context.Context) ([]*domain.BookingEncx, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-time.After(s.duration):
+	}
+	s.mu.Lock()
+	s.tickDone++
+	s.mu.Unlock()
+	return nil, nil
+}
+
+func (s *slowRepo) tickCount() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.tickDone
+}
+
+// TestReminderScheduler_SlowTickSkipsNext verifies that a slow tick does not
+// cause the next tick to fire immediately. With a 100ms interval and a 200ms
+// tick, only 1 tick should complete within a 350ms window. A Ticker-based
+// implementation would complete 2 ticks (one buffered), but a Timer-based one
+// correctly skips.
+func TestReminderScheduler_SlowTickSkipsNext(t *testing.T) {
+	repo := &slowRepo{duration: 200 * time.Millisecond}
+	notif := &mockReminderNotification{}
+	crypto := &identityCrypto{pepper: make([]byte, 32)}
+
+	scheduler := NewReminderSchedulerForTest(repo, notif, crypto, 24*time.Hour,
+		WithInterval(100*time.Millisecond),
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go scheduler.Start(ctx)
+
+	// First tick fires immediately and takes 200ms (done at ~200ms).
+	// Timer resets with 100ms interval → next tick at ~300ms.
+	// Tick at ~300ms takes 200ms → done at ~500ms.
+	time.Sleep(350 * time.Millisecond)
+	cancel()
+
+	ticks := repo.tickCount()
+	assert.Equal(t, 1, ticks, "expected exactly 1 tick to complete (slow tick should skip the next)")
+}
+
 func TestReminderSchedulerStop(t *testing.T) {
 	s := NewReminderScheduler(nil, nil, nil)
 
