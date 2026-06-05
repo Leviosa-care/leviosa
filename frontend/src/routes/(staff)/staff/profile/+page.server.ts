@@ -112,7 +112,7 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 		occupation: partner.occupation || '',
 		quote: partner.quote || '',
 		tags: partner.tags || [],
-		isVerified: partner.stripe_account_status === 'active',
+		isVerified: partner.stripe_account_status === 'active' && partner.stripe_onboarding_complete,
 		stripeAccountStatus: partner.stripe_account_status,
 		stripeOnboardingComplete: partner.stripe_onboarding_complete,
 		categories: partnerCategories,
