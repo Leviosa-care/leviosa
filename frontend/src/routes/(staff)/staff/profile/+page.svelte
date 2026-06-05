@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
+	import { replaceState } from '$app/navigation';
 	import { BadgeCheck, Pencil, Mail, MapPin, Phone, Tag, Package, AlertCircle, Link, Unlink, CreditCard, ExternalLink, Briefcase, MessageSquareQuote, Tags } from '@lucide/svelte';
 
 	let { data }: PageProps = $props();
@@ -33,10 +34,11 @@
 	let stripeLoading = $state(false);
 	let stripeError = $state<string | null>(null);
 
-	// Handle Stripe return redirect — reload the page to get fresh status
+	// Strip the ?stripe=return query param from the URL without re-running the load.
+	// The server already fetched fresh status on this request.
 	$effect(() => {
-		if (data.stripeCallback === 'return' && typeof window !== 'undefined') {
-			window.location.href = '/staff/profile';
+		if (data.stripeCallback === 'return') {
+			replaceState('/staff/profile', {});
 		}
 	});
 
