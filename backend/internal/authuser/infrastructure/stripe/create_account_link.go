@@ -10,12 +10,12 @@ import (
 // CreateAccountLink creates a Stripe Account Link for partner onboarding.
 // The partner will be redirected to returnURL after completing onboarding,
 // and to refreshURL if the link expires and needs regeneration.
-func (s *service) CreateAccountLink(ctx context.Context, accountID, returnType, returnURL, refreshURL string) (string, error) {
+func (s *service) CreateAccountLink(ctx context.Context, accountID, linkType, returnURL, refreshURL string) (string, error) {
 	params := &stripe.AccountLinkCreateParams{
 		Account:    stripe.String(accountID),
 		ReturnURL:  stripe.String(returnURL),
 		RefreshURL: stripe.String(refreshURL),
-		Type:       stripe.String(returnType),
+		Type:       stripe.String(linkType),
 	}
 
 	accountLink, err := s.client.V1AccountLinks.Create(ctx, params)
