@@ -2,9 +2,9 @@
 -- +goose StatementBegin
 
 ALTER TABLE auth.partners
-    ADD COLUMN occupation TEXT,
-    ADD COLUMN quote TEXT,
-    ADD COLUMN tags TEXT[];
+    ADD COLUMN occupation TEXT NOT NULL DEFAULT '',
+    ADD COLUMN quote TEXT NOT NULL DEFAULT '',
+    ADD COLUMN tags TEXT[] NOT NULL DEFAULT ARRAY[]::text[];
 
 -- +goose StatementEnd
 
