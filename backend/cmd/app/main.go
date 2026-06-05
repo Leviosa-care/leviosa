@@ -81,6 +81,9 @@ func run(ctx context.Context) error {
 		return nil
 
 	case err := <-serverErrCh:
+		// Stop background workers on server error
+		reminderCancel()
+		container.ReminderScheduler.Stop()
 		return fmt.Errorf("server error: %w", err)
 	}
 }
