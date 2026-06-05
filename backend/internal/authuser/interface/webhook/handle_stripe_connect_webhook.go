@@ -57,6 +57,8 @@ func mapStripeAccountStatus(chargesEnabled, payoutsEnabled bool) domain.StripeAc
 func (h *handler) HandleStripeConnectWebhook(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	defer r.Body.Close()
+
 	// Read the raw body for signature verification
 	body, err := io.ReadAll(io.LimitReader(r.Body, MaxWebhookPayloadSize))
 	if err != nil {
@@ -66,7 +68,6 @@ func (h *handler) HandleStripeConnectWebhook(w http.ResponseWriter, r *http.Requ
 		httpx.RespondWithError(w, errors.New("failed to read webhook payload"), http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
 	// Get the Stripe signature header
 	signature := r.Header.Get(StripeSignatureHeader)
