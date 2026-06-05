@@ -43,17 +43,11 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
     }
     const partnerData = await partnerRes.json();
 
-    let products: any[] = [];
-    if (partnerData.product_ids?.length > 0) {
-        try {
-            const productsRes = await fetch(
-                `${env.API_URL}/products?ids=${partnerData.product_ids.join(",")}`
-            );
-            if (productsRes.ok) products = await productsRes.json();
-        } catch {
-            // non-blocking
-        }
-    }
+    const categoriesRes = await fetch(`${env.API_URL}/categories`);
+    const allCategories: any[] = categoriesRes.ok ? await categoriesRes.json() : [];
+    const categories = allCategories
+        .filter((c: any) => partnerData.category_ids?.includes(c.id))
+        .map((c: any) => ({ id: c.id, name: c.name }));
 
     return {
         partner: {
@@ -67,12 +61,7 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
             bio: partnerData.bio,
             experience: partnerData.experience,
         },
-        products: products.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            description: p.description,
-            duration: p.duration,
-        })),
-        categories: partnerData.categories ?? [],
+        products: [],
+        categories,
     };
 };
