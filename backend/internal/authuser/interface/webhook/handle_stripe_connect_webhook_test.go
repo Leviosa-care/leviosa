@@ -137,6 +137,14 @@ func (m *mockPartnerService) GetPublicPartners(ctx context.Context) ([]*domain.P
 	return args.Get(0).([]*domain.PublicPartnerResponse), args.Error(1)
 }
 
+func (m *mockPartnerService) GetPublicPartnerByID(ctx context.Context, partnerID uuid.UUID) (*domain.PublicPartnerResponse, error) {
+	args := m.Called(ctx, partnerID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.PublicPartnerResponse), args.Error(1)
+}
+
 // Verify mockPartnerService satisfies the interface
 var _ ports.PartnerService = (*mockPartnerService)(nil)
 
