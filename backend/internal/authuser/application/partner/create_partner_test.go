@@ -123,6 +123,14 @@ func (m *mockPartnerRepository) GetPublicPartners(ctx context.Context) ([]*domai
 	return args.Get(0).([]*domain.PublicPartnerRow), args.Error(1)
 }
 
+func (m *mockPartnerRepository) GetPublicPartnerByID(ctx context.Context, partnerID uuid.UUID) (*domain.PublicPartnerRow, error) {
+	args := m.Called(ctx, partnerID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.PublicPartnerRow), args.Error(1)
+}
+
 type mockUserRepository struct {
 	mock.Mock
 }
