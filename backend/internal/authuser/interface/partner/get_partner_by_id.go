@@ -18,7 +18,7 @@ func (h *handler) GetPartnerByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract user ID from URL path
+	// Extract partner ID from URL path
 	partnerIDStr := r.PathValue("id")
 	partnerID, err := uuid.Parse(partnerIDStr)
 	if err != nil {
@@ -27,32 +27,29 @@ func (h *handler) GetPartnerByID(w http.ResponseWriter, r *http.Request) {
 			"operation", "get_partner_by_id",
 			"method", r.Method,
 			"path", r.URL.Path,
-			"user_id", partnerIDStr)
+			"partner_id", partnerIDStr)
 		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid partner ID format"), http.StatusBadRequest)
 		return
 	}
 
-	// Log incoming request
 	logger.InfoContext(ctx, "Handler: Processing get partner by ID request",
 		"operation", "get_partner_by_id",
 		"method", r.Method,
 		"path", r.URL.Path,
-		"user_id", partnerID,
+		"partner_id", partnerID,
 		"user_agent", r.Header.Get("User-Agent"))
 
-	// partner, err := h.svc.GetPartnerByUserID(ctx, userID)
-	partner, err := h.svc.GetPartnerByID(ctx, partnerID)
+	partner, err := h.svc.GetPublicPartnerByID(ctx, partnerID)
 	if err != nil {
 		httpx.RespondWithServiceError(w, logger, ctx, err, "get partner by ID")
 		return
 	}
 
-	// Log successful operation
 	logger.InfoContext(ctx, "Handler: Get partner by ID completed",
 		"operation", "get_partner_by_id",
 		"method", r.Method,
 		"path", r.URL.Path,
-		"user_id", partnerID,
+		"partner_id", partnerID,
 		"status_code", http.StatusOK)
 
 	httpx.RespondWithJSON(w, partner, http.StatusOK)

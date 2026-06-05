@@ -8,8 +8,6 @@ import (
 	"github.com/hengadev/encx"
 )
 
-// GetPublicPartners retrieves all active, non-disabled partners with embedded
-// user profile information for the public team page. No authentication required.
 func (s *PartnerService) GetPublicPartners(ctx context.Context) ([]*domain.PublicPartnerResponse, error) {
 	rows, err := s.partnerRepo.GetPublicPartners(ctx)
 	if err != nil {
@@ -35,7 +33,6 @@ func (s *PartnerService) GetPublicPartners(ctx context.Context) ([]*domain.Publi
 
 		picture, _ := decryptStringField(ctx, s.crypto, userDEK, row.PictureEncrypted)
 
-		// Partner profile fields are stored as plaintext; no DEK decryption needed.
 		p := row.PartnerEncx
 		tags := p.Tags
 		if tags == nil {
