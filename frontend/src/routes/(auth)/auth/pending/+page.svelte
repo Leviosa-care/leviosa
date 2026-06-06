@@ -10,7 +10,7 @@
             <Slack size={24} />
         </div>
         <div class="grid gap-4">
-            <h3 class="text-black font-semibold text-lg">
+            <h3 class="text-foreground font-semibold text-lg">
                 Merci de ton inscription
             </h3>
             <div>

@@ -79,16 +79,16 @@
                 {/if}
             </Tabs.Content>
             <Tabs.List
-                class="rounded-9px bg-dark-10 shadow-mini-inset dark:bg-background grid w-full grid-cols-2 gap-1 p-1 text-sm font-semibold leading-[0.01em] dark:border dark:border-neutral-600/30"
+                class="rounded-9px bg-dark-10 shadow-mini-inset dark:bg-background grid w-full grid-cols-2 gap-1 p-1 text-sm font-semibold leading-[0.01em] dark:border dark:border-border-input"
             >
                 <Tabs.Trigger
                     value="register"
-                    class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-8 rounded-[7px] bg-transparent py-2 data-[state=active]:bg-white cursor-pointer"
+                    class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-8 rounded-[7px] bg-transparent py-2 data-[state=active]:bg-background cursor-pointer"
                     >S'enregistrer</Tabs.Trigger
                 >
                 <Tabs.Trigger
                     value="login"
-                    class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-8 rounded-[7px] bg-transparent py-2 data-[state=active]:bg-white cursor-pointer"
+                    class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-8 rounded-[7px] bg-transparent py-2 data-[state=active]:bg-background cursor-pointer"
                     >Se connecter</Tabs.Trigger
                 >
             </Tabs.List>
@@ -163,7 +163,7 @@
             <Slack />
             <h2 class="font-extrabold text-2xl">Bienvenue à Leviosa</h2>
         </div>
-        <p class="text-gray-600">
+        <p class="text-muted-foreground">
             {subtitle}
         </p>
     </div>
@@ -208,11 +208,11 @@
     {#if authState === "register"}
         <p class="text-sm text-center mt-2 text-muted-foreground">
             En continuant, vous acceptez nos <a
-                class="underline hover:text-gray-600"
+                class="underline hover:text-foreground"
                 href="/terms-of-service">Conditions d'utilisation</a
             >
             et notre
-            <a class="underline hover:text-gray-600" href="/privacy-policy"
+            <a class="underline hover:text-foreground" href="/privacy-policy"
                 >Politique de confidentialité</a
             >.
         </p>

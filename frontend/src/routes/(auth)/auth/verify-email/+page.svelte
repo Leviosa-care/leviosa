@@ -70,7 +70,7 @@
 >
     <div class="w-full max-w-[640px]">
         <Button.Root
-            class="mb-4 justify-center gap-2 items-center h-input rounded-input hover:bg-gray-50 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex px-4 text-[15px] font-bold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer"
+            class="mb-4 justify-center gap-2 items-center h-input rounded-input hover:bg-muted focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex px-4 text-[15px] font-bold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer"
             type="button"
             onclick={() => goto("/auth")}
         >
@@ -79,7 +79,7 @@
             >
         </Button.Root>
         <div
-            class="p-4 md:p-12 grid gap-12 border-gray-200 border-1 rounded-input"
+            class="p-4 md:p-12 grid gap-12 border-border-card border-1 rounded-input"
         >
             <div class="grid gap-8">
                 <div class="w-full flex-none">
@@ -89,9 +89,9 @@
                     <h3 class="font-bold sm:text-2xl text-lg">
                         Renseignez le code reçu par email
                     </h3>
-                    <p class="text-gray-600 sm:text-base text-sm">
+                    <p class="text-muted-foreground sm:text-base text-sm">
                         Entrez le code à 6 chiffres envoyé à <strong
-                            >'john.doe@gmail.com{email}'</strong
+                            >{email}</strong
                         >.
                     </p>
                 </div>
@@ -108,14 +108,14 @@
                             class="h-input w-input sm:h-16 sm:w-16 text-center rounded-card-sm border-border-input bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex items-center border text-xl focus:ring-2 focus:ring-offset-2 sm:text-2xl"
                             type="text"
                             name={key}
-                            class:border-red-500={$errors[key]}
-                            class:focus:ring-red-500={$errors[key]}
+                            class:border-destructive={$errors[key]}
+                            class:focus:ring-destructive={$errors[key]}
                             bind:value={$form[key]}
                         />
                     {/each}
                 </div>
                 {#if $errors}
-                    <span class="text-red-500 text-center"
+                    <span class="text-destructive text-center"
                         >{$errors._errors}</span
                     >
                 {/if}
@@ -131,7 +131,7 @@
                         class="text-sm sm:text-md text-center mt-8 text-muted-foreground"
                     >
                         Tu n'as pas reçu de code ? <a
-                            class="hover:underline text-gray-600"
+                            class="hover:underline text-muted-foreground"
                             href="/terms-of-service"
                         >
                             Renvoyer le code</a

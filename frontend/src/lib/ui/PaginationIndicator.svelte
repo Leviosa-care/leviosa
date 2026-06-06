@@ -11,7 +11,7 @@
     {#each Array(count) as _, index}
         {@const dark = index <= selectedElement}
         <div
-            class="w-8 h-2 rounded-sm {dark ? 'bg-dark' : 'bg-gray-200'}"
+            class="w-8 h-2 rounded-sm {dark ? 'bg-dark' : 'bg-muted'}"
         ></div>
     {/each}
 </div>

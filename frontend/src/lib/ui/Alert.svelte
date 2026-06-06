@@ -9,15 +9,15 @@
     const getAlertTypeStyle = (type: AlertType): string => {
         switch (type) {
             case "info":
-                return "border-blue-500 text-blue-800 bg-blue-50";
+                return "border-accent text-accent-foreground bg-accent/10";
             case "success":
-                return "border-green-500 text-green-800 bg-green-50";
+                return "border-success-border text-success bg-success-muted";
             case "warning":
-                return "border-amber-500 text-amber-800 bg-amber-50";
+                return "border-tertiary/50 text-tertiary bg-tertiary/10";
             case "error":
-                return "border-red-500 text-red-800 bg-red-50";
+                return "border-destructive/50 text-destructive bg-destructive/10";
             default:
-                return "border-amber-500 text-amber-800 bg-amber-50";
+                return "border-tertiary/50 text-tertiary bg-tertiary/10";
         }
     };
 </script>

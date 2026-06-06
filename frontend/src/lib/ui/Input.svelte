@@ -58,9 +58,9 @@
             aria-invalid={invalid}
             onfocus={() => (isFocused = true)}
             onblur={() => (isFocused = value.length === 0 ? false : true)}
-            class={`w-full px-4 pr-11 pb-3 pt-6 border border-gray-300 rounded-xl peer ${
-                invalid ? "border-red-500" : "border-border-input"
-            } bg-background hover:border-dark-40 focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border text-base focus:ring-2 focus:ring-offset-2 sm:text-lg text-black font-base`}
+            class={`w-full px-4 pr-11 pb-3 pt-6 border rounded-xl peer ${
+                invalid ? "border-destructive" : "border-border-input"
+            } bg-background hover:border-border-input-hover focus:ring-foreground focus:ring-offset-background focus:outline-hidden inline-flex w-full items-center border text-base focus:ring-2 focus:ring-offset-2 sm:text-lg text-foreground font-base`}
         />
         <label
             for={name}
@@ -68,8 +68,8 @@
         absolute left-4 top-1/2 transition-all duration-200 ease-in-out origin-top-left
         ${
             isFocused || value.length > 0
-                ? "translate-y-[-1.6125rem] scale-80 text-gray-400 "
-                : `translate-y-[-50%] scale-100 font-medium text-gray-300`
+                ? "translate-y-[-1.6125rem] scale-80 text-muted-foreground "
+                : `translate-y-[-50%] scale-100 font-medium text-foreground-alt`
         }
       `}
         >
@@ -90,7 +90,7 @@
         {/if}
     </div>
     {#if invalid}
-        <p class="ml-2 mt-1 text-red-500 text-sm">
+        <p class="ml-2 mt-1 text-destructive text-sm">
             {error}
         </p>
     {/if}

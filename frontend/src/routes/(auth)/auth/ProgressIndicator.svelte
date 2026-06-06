@@ -17,11 +17,11 @@
                 <div
                     class="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full text-sm font-medium {step.status ===
                     'complete'
-                        ? 'bg-green-600 text-white'
+                        ? 'bg-success text-success-foreground'
                         : ''} {step.status === 'current'
-                        ? 'border-2 border-green-600 text-green-600'
+                        ? 'border-2 border-success text-success'
                         : ''} {step.status === 'upcoming'
-                        ? 'border-2 border-gray-300 text-gray-500'
+                        ? 'border-2 border-muted text-muted-foreground'
                         : ''}"
                 >
                     {#if step.status === "complete"}
@@ -33,11 +33,11 @@
                 <div class="mt-1 text-xs sm:text-base font-medium text-center">
                     <span
                         class="{step.status === 'complete'
-                            ? 'text-green-600'
+                            ? 'text-success'
                             : ''} {step.status === 'current'
-                            ? 'text-green-600'
+                            ? 'text-success'
                             : ''} {step.status === 'upcoming'
-                            ? 'text-gray-500'
+                            ? 'text-muted-foreground'
                             : ''}"
                     >
                         {step.name}
@@ -52,15 +52,15 @@
                 {#if i != 0}
                     <div
                         class="h-0.5 w-full {steps[i - 1].status === 'complete'
-                            ? 'bg-green-600'
-                            : 'bg-gray-300'}"
+                            ? 'bg-success'
+                            : 'bg-muted'}"
                     ></div>
                 {/if}
                 {#if i != steps.length - 1}
                     <div
                         class="h-0.5 w-full {step.status === 'complete'
-                            ? 'bg-green-600'
-                            : 'bg-gray-300'}"
+                            ? 'bg-success'
+                            : 'bg-muted'}"
                     ></div>
                 {/if}
             </div>

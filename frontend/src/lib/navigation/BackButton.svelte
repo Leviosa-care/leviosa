@@ -2,7 +2,7 @@
     import { ArrowLeft, ChevronLeft } from "@lucide/svelte";
 
     import { goto } from "$app/navigation";
-    import { page } from "$app/stores";
+    import { page } from "$app/state";
     interface Props {
         pathname?: string;
         variant?: "chevron" | "arrow";
@@ -20,7 +20,7 @@
         } else if (pathname != "") {
             goto(pathname);
         } else {
-            const previousPath = $page.url.pathname
+            const previousPath = page.url.pathname
                 .split("/")
                 .slice(0, -1)
                 .join("/");
@@ -32,7 +32,7 @@
 
 <button
     onclick={goBack}
-    class="bg-gray-50 hover:bg-gray-100 rounded-full p-3 cursor-pointer"
+    class="bg-muted hover:bg-dark-10 rounded-full p-3 cursor-pointer"
 >
     <!-- <button onclick={goBack} class="rounded-full p-3"> -->
     {#if variant === "arrow"}

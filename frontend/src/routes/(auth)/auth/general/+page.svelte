@@ -48,15 +48,16 @@
 >
     <div class="w-full max-w-[640px]">
         <Button.Root
-            class="mb-4 justify-center gap-2 items-center h-input rounded-input hover:bg-gray-50 focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex px-4 text-[15px] font-bold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer"
+            class="mb-4 justify-center gap-2 items-center h-input rounded-input hover:bg-muted focus-visible:ring-dark focus-visible:ring-offset-background focus-visible:outline-hidden inline-flex px-4 text-[15px] font-bold focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer"
             type="button"
+            onclick={() => goto("/auth/verify-email")}
         >
             <ArrowLeft size={16} />
             <span class="text-xs sm:text-base">Retour à l'étape précédente</span
             >
         </Button.Root>
         <div
-            class="p-4 md:p-12 grid gap-12 border-gray-200 border-1 rounded-input"
+            class="p-4 md:p-12 grid gap-12 border-border-card border-1 rounded-input"
         >
             <div class="w-full flex-none">
                 <ProgressIndicator {steps} />
@@ -65,7 +66,7 @@
                 <h3 class="font-bold sm:text-2xl text-lg">
                     Informations personnelles
                 </h3>
-                <p class="text-gray-600 sm:text-base text-sm">
+                <p class="text-muted-foreground sm:text-base text-sm">
                     Veuillez fournir vos coordonnées personnelles pour compléter
                     votre profil
                 </p>

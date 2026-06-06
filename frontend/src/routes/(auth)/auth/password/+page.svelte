@@ -57,14 +57,14 @@
     <div class="w-full max-w-[640px]">
         <PreviousStep />
         <div
-            class="p-4 md:p-12 grid gap-12 border-gray-200 border-1 rounded-input"
+            class="p-4 md:p-12 grid gap-12 border-border-card border-1 rounded-input"
         >
             <div class="w-full flex-none">
                 <ProgressIndicator {steps} />
             </div>
             <div>
                 <h2 class="text-2xl font-bold">Votre mot de passe</h2>
-                <p class="text-gray-600 sm:text-base text-sm">
+                <p class="text-muted-foreground sm:text-base text-sm">
                     Veuillez fournir votre mot de passe pour compléter votre
                     profil
                 </p>
@@ -88,7 +88,7 @@
                         {...$constraints.confirm}
                     />
                     {#if !isSamePassword}
-                        <p class="text-red-500">
+                        <p class="text-destructive">
                             Les mots de passe ne correspondent pas. Veuillez
                             corriger votre mot de passe.
                         </p>
