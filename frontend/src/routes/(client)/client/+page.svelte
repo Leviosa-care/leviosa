@@ -23,11 +23,11 @@
 
 	function statusBadge(status: string): string {
 		switch (status) {
-			case 'confirmed': return 'bg-blue-100 text-blue-700';
-			case 'completed': return 'bg-green-100 text-green-700';
-			case 'cancelled': return 'bg-red-100 text-red-700';
-			case 'no_show': return 'bg-orange-100 text-orange-700';
-			default: return 'bg-gray-100 text-gray-700';
+			case 'confirmed': return 'bg-accent/30 text-accent-foreground';
+			case 'completed': return 'bg-success-muted text-success';
+			case 'cancelled': return 'bg-destructive/10 text-destructive';
+			case 'no_show': return 'bg-tertiary/10 text-dark-600';
+			default: return 'bg-muted text-muted-foreground';
 		}
 	}
 
@@ -49,8 +49,12 @@
 <div class="space-y-8">
 	<!-- Welcome -->
 	<div>
-		<h1 class="text-2xl lg:text-3xl font-bold text-foreground">Bienvenue</h1>
-		<p class="text-muted-foreground mt-1">Votre espace personnel</p>
+		<h1 class="text-2xl lg:text-3xl font-bold text-foreground">
+			{data.user?.firstname ? `Bonjour, ${data.user.firstname}` : 'Bonjour'}
+		</h1>
+		<p class="text-muted-foreground mt-1">
+			{data.nextBooking ? 'Votre prochaine séance est planifiée.' : 'Aucune séance à venir — réservez dès maintenant.'}
+		</p>
 	</div>
 
 	<!-- Prochaine séance -->
@@ -90,6 +94,9 @@
 			</div>
 		{:else}
 			<div class="bg-card rounded-lg border border-border-card p-8 text-center shadow-card">
+				<div class="flex justify-center mb-3 text-muted-foreground">
+					<CalendarDays size={32} />
+				</div>
 				<p class="text-muted-foreground mb-4">Aucune séance à venir</p>
 				<a
 					href="/book"
