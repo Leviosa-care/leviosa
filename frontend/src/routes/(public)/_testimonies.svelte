@@ -41,7 +41,7 @@
         <!-- Section Header -->
         <div class="text-center mb-16" use:reveal={{ preset: "fade-up", delay: 100 }}>
             <span
-                class="text-sm font-semibold text-dark-500 uppercase tracking-wider"
+                class="text-sm font-semibold text-dark-400 uppercase tracking-wider"
                 >Témoignages</span
             >
             <h2
@@ -74,7 +74,7 @@
                                 width="16"
                                 height="16"
                                 viewBox="0 0 24 24"
-                                class="iconify text-amber-400 iconify--lucide"
+                                class="iconify text-tertiary iconify--lucide"
                             >
                                 <path
                                     fill="currentColor"
@@ -115,7 +115,7 @@
                                     width="12"
                                     height="12"
                                     viewBox="0 0 24 24"
-                                    class="iconify text-blue-500 iconify--lucide"
+                                    class="iconify text-accent-foreground iconify--lucide"
                                 >
                                     <g
                                         fill="none"

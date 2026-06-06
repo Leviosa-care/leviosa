@@ -9,7 +9,7 @@
             <span class="text-xs font-medium text-dark-500 uppercase tracking-widest bg-dark-100 px-3 py-1 rounded-full">
                 Comment ça fonctionne
             </span>
-            <h2 class="mt-6 text-3xl sm:text-4xl font-semibold tracking-tight text-dark-900">
+            <h2 class="mt-6 text-3xl sm:text-4xl font-display font-semibold tracking-tight text-dark-900">
                 Votre expert à portée de main en 4 étapes
             </h2>
             <p class="mt-4 text-base sm:text-lg text-dark-500 leading-relaxed">
@@ -116,8 +116,8 @@
                         </div>
                         <div class="absolute bottom-2 right-2 w-12 h-16 bg-dark-800 border border-dark-700 rounded-lg shadow-sm"></div>
                         <div class="absolute inset-0 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out">
-                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mb-2">
-                                <span data-icon="solar:check-read-linear" data-width="16" class="text-green-600"></span>
+                            <div class="w-8 h-8 rounded-full bg-success-muted flex items-center justify-center mb-2">
+                                <span data-icon="solar:check-read-linear" data-width="16" class="text-success"></span>
                             </div>
                             <div class="w-16 h-1.5 bg-dark-200 rounded-full mb-1"></div>
                             <div class="w-10 h-1 bg-dark-200 rounded-full"></div>

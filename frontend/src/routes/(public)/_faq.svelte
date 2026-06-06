@@ -1,6 +1,7 @@
 <script lang="ts">
     import { reveal } from "$lib/actions/reveal";
     import { slide } from "svelte/transition";
+    import { Plus } from "@lucide/svelte";
 
     const faqs = [
         {
@@ -44,7 +45,7 @@
             use:reveal={{ preset: "fade-up", delay: 100 }}
         >
             <span
-                class="text-sm font-semibold text-dark-500 uppercase tracking-wider"
+                class="text-sm font-semibold text-dark-400 uppercase tracking-wider"
                 >FAQ</span
             >
             <h2
@@ -81,12 +82,7 @@
                                 ? 'rotate-45'
                                 : ''}"
                         >
-                            <span
-                                class="iconify text-dark-500"
-                                data-icon="lucide:plus"
-                                data-width="14"
-                                data-stroke-width="2"
-                            ></span>
+                            <Plus size={14} class="text-dark-500" strokeWidth={2} />
                         </span>
                     </button>
                     {#if openIndex === i}
