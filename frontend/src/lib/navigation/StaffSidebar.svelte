@@ -163,15 +163,15 @@
 {#if permissions.canAccessOps}
 	<!-- Desktop Sidebar Navigation -->
 	<aside
-		class="hidden lg:flex lg:flex-col lg:border-r bg-white border-dark-100 relative transition-all duration-300 min-h-screen
+		class="hidden lg:flex lg:flex-col lg:border-r bg-dark-900 border-dark-800 relative transition-all duration-300 min-h-screen
 		           {isCollapsed ? 'lg:w-20' : 'lg:w-64'}"
 		aria-label="Sidebar navigation"
 	>
 		<!-- Collapse Toggle Button -->
 		<button
 			onclick={toggleSidebar}
-			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-white flex items-center justify-center
-		           text-dark-700 hover:text-dark-900 hover:bg-dark-100 transition-all duration-200 border border-dark-200"
+			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-dark-800 flex items-center justify-center
+		           text-dark-300 hover:text-white transition-all duration-200 border border-dark-700"
 			aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
 			title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
 		>
@@ -184,20 +184,20 @@
 
 		<!-- Sidebar Header -->
 		<div
-			class="flex items-center justify-between border-b border-dark-100 py-6 {isCollapsed
+			class="flex items-center justify-between border-b border-dark-800 py-6 {isCollapsed
 				? 'px-3'
 				: 'px-6'}"
 		>
 			{#if !isCollapsed}
 				<div>
-					<h1 class="text-sm font-semibold tracking-tight text-dark-900 uppercase">
+					<h1 class="text-sm font-semibold tracking-tight text-white uppercase">
 						{user.role === "administrator" ? "Admin" : "Staff"}
 					</h1>
-					<p class="text-xs text-dark-500">Leviosa</p>
+					<p class="text-xs text-dark-400">Leviosa</p>
 				</div>
 				<a
 					href="/staff/settings"
-					class="p-2 rounded-md transition-all duration-200 text-dark-500 hover:bg-dark-100 hover:text-dark-900"
+					class="p-2 rounded-md transition-all duration-200 text-dark-400 hover:bg-dark-800 hover:text-white"
 					aria-label="Paramètres"
 					title="Paramètres"
 				>
@@ -206,7 +206,7 @@
 			{:else}
 				<a
 					href="/staff/settings"
-					class="p-2 rounded-md transition-all duration-200 text-dark-500 hover:bg-dark-100 mx-auto"
+					class="p-2 rounded-md transition-all duration-200 text-dark-400 hover:bg-dark-800 mx-auto"
 					aria-label="Paramètres"
 					title="Paramètres"
 				>
@@ -229,8 +229,8 @@
 								? 'justify-center px-3 py-3'
 								: 'gap-3 px-3 py-2.5'}
 			                       {active
-								? 'text-dark-900 bg-dark-100'
-								: 'text-dark-600 hover:text-dark-900 hover:bg-dark-50'}"
+								? 'text-white bg-dark-700'
+								: 'text-dark-300 hover:text-white hover:bg-dark-800'}"
 							aria-current={active ? "page" : undefined}
 							title={isCollapsed ? item.label : undefined}
 						>
@@ -238,7 +238,7 @@
 							{#if !isCollapsed}
 								<span class="flex-1">{item.label}</span>
 								{#if badge > 0}
-									<span class="px-1.5 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
+									<span class="px-1.5 py-0.5 text-xs font-bold bg-destructive text-white rounded-full">
 										{badge > 99 ? '99+' : badge}
 									</span>
 								{/if}
@@ -250,7 +250,7 @@
 		</nav>
 
 		<!-- Sidebar Footer -->
-		<div class="py-5 border-t border-dark-100 {isCollapsed ? 'px-3' : 'px-6'}">
+		<div class="py-5 border-t border-dark-800 {isCollapsed ? 'px-3' : 'px-6'}">
 			{#if !isCollapsed}
 				<div class="relative">
 					{#if userMenuOpen}
@@ -281,24 +281,24 @@
 						</div>
 					{/if}
 					<div class="flex items-center gap-3">
-						<div class="w-9 h-9 rounded-full flex items-center justify-center bg-dark-100">
-							<span class="text-xs font-semibold text-dark-700 uppercase">
+						<div class="w-9 h-9 rounded-full flex items-center justify-center bg-dark-700">
+							<span class="text-xs font-semibold text-dark-200 uppercase">
 								{user.firstname?.[0] ?? user.email?.[0]?.toUpperCase() ?? "A"}
 							</span>
 						</div>
 						<div class="flex-1 min-w-0">
-							<p class="text-sm font-medium text-dark-900 truncate">
+							<p class="text-sm font-medium text-white truncate">
 								{user.firstname
 									? `${user.firstname} ${user.lastname ?? ""}`.trim()
 									: user.email?.split("@")[0] ?? "Staff"}
 							</p>
-							<p class="text-xs text-dark-500">
+							<p class="text-xs text-dark-400">
 								{user.role === "administrator" ? "Administrateur" : "Partenaire"}
 							</p>
 						</div>
 						<button
 							onclick={toggleUserMenu}
-							class="flex-shrink-0 p-1.5 rounded-md text-dark-400 hover:text-dark-900 hover:bg-dark-100 transition-colors"
+							class="flex-shrink-0 p-1.5 rounded-md text-dark-400 hover:text-white hover:bg-dark-800 transition-colors"
 							aria-label="Options utilisateur"
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
@@ -311,10 +311,10 @@
 				</div>
 			{:else}
 				<div
-					class="w-9 h-9 mx-auto rounded-full flex items-center justify-center bg-dark-100"
+					class="w-9 h-9 mx-auto rounded-full flex items-center justify-center bg-dark-700"
 					title={user.firstname ?? user.email}
 				>
-					<span class="text-xs font-semibold text-dark-700 uppercase">
+					<span class="text-xs font-semibold text-dark-200 uppercase">
 						{user.firstname?.[0] ?? user.email?.[0]?.toUpperCase() ?? "A"}
 					</span>
 				</div>
@@ -341,7 +341,7 @@
 						<span class="relative">
 							<item.icon size={20} strokeWidth={active ? 2 : 1.5} />
 							{#if badge > 0}
-								<span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold leading-none">
+								<span class="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-white text-xs rounded-full flex items-center justify-center font-bold leading-none">
 									{badge > 9 ? '9+' : badge}
 								</span>
 							{/if}
