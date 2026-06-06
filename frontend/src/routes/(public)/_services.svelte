@@ -1,5 +1,6 @@
 <script lang="ts">
     import { reveal } from "$lib/actions/reveal";
+    import { Zap, Check, Search, Lightbulb, TrendingUp } from "@lucide/svelte";
 </script>
 
 <section id="services" class="py-20 lg:py-24 bg-white">
@@ -38,31 +39,12 @@
                 >
                     <div class="flex items-center gap-3 mb-6">
                         <div
-                            class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600"
+                            class="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center text-dark-900"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                aria-hidden="true"
-                                role="img"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                data-icon="lucide:zap"
-                                data-width="20"
-                                data-stroke-width="1.5"
-                                class="iconify iconify--lucide"
-                                ><path
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
-                                ></path></svg
-                            >
+                            <Zap size={20} strokeWidth={1.5} />
                         </div>
                         <span
-                            class="text-sm font-semibold text-blue-600 tracking-wide uppercase"
+                            class="text-sm font-semibold text-dark-900 tracking-wide uppercase"
                             >Le Plus Populaire</span
                         >
                     </div>
@@ -87,26 +69,7 @@
                             <div
                                 class="mt-1 flex-shrink-0 w-5 h-5 rounded-full bg-dark-100 flex items-center justify-center"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    aria-hidden="true"
-                                    role="img"
-                                    width="12"
-                                    height="12"
-                                    viewBox="0 0 24 24"
-                                    data-icon="lucide:check"
-                                    data-width="12"
-                                    data-stroke-width="2"
-                                    class="iconify text-dark-900 iconify--lucide"
-                                    ><path
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M20 6L9 17l-5-5"
-                                    ></path></svg
-                                >
+                                <Check size={12} class="text-dark-900" strokeWidth={2} />
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-dark-900">
@@ -123,26 +86,7 @@
                             <div
                                 class="mt-1 flex-shrink-0 w-5 h-5 rounded-full bg-dark-100 flex items-center justify-center"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    aria-hidden="true"
-                                    role="img"
-                                    width="12"
-                                    height="12"
-                                    viewBox="0 0 24 24"
-                                    data-icon="lucide:check"
-                                    data-width="12"
-                                    data-stroke-width="2"
-                                    class="iconify text-dark-900 iconify--lucide"
-                                    ><path
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M20 6L9 17l-5-5"
-                                    ></path></svg
-                                >
+                                <Check size={12} class="text-dark-900" strokeWidth={2} />
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-dark-900">
@@ -158,26 +102,7 @@
                             <div
                                 class="mt-1 flex-shrink-0 w-5 h-5 rounded-full bg-dark-100 flex items-center justify-center"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    aria-hidden="true"
-                                    role="img"
-                                    width="12"
-                                    height="12"
-                                    viewBox="0 0 24 24"
-                                    data-icon="lucide:check"
-                                    data-width="12"
-                                    data-stroke-width="2"
-                                    class="iconify text-dark-900 iconify--lucide"
-                                    ><path
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M20 6L9 17l-5-5"
-                                    ></path></svg
-                                >
+                                <Check size={12} class="text-dark-900" strokeWidth={2} />
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-dark-900">
@@ -192,11 +117,12 @@
 
                     <!-- Secondary CTA (Discovery) -->
                     <div class="flex flex-col sm:flex-row gap-4">
-                        <button
+                        <a
+                            href="/services"
                             class="inline-flex justify-center items-center gap-2 bg-white text-dark-900 border border-dark-200 hover:border-dark-400 hover:bg-dark-50 text-sm font-medium px-6 py-3 rounded-xl transition-all duration-200 cursor-pointer"
                         >
                             Découvrir le service
-                        </button>
+                        </a>
                     </div>
                 </div>
 
@@ -221,27 +147,7 @@
                             <div
                                 class="w-12 h-12 rounded-full border-4 border-dark-50 bg-white shadow-sm flex items-center justify-center z-10"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    aria-hidden="true"
-                                    role="img"
-                                    width="18"
-                                    height="18"
-                                    viewBox="0 0 24 24"
-                                    data-icon="lucide:search"
-                                    data-width="18"
-                                    class="iconify text-dark-400 iconify--lucide"
-                                    ><g
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        ><path d="m21 21l-4.34-4.34"
-                                        ></path><circle cx="11" cy="11" r="8"
-                                        ></circle></g
-                                    ></svg
-                                >
+                                <Search size={18} class="text-dark-400" />
                             </div>
                             <div
                                 class="flex-1 bg-white p-3 rounded-lg border border-dark-100 shadow-sm opacity-60"
@@ -260,25 +166,7 @@
                             <div
                                 class="w-12 h-12 rounded-full border-4 border-dark-50 bg-dark-900 shadow-lg shadow-dark-200 flex items-center justify-center z-10"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    aria-hidden="true"
-                                    role="img"
-                                    width="18"
-                                    height="18"
-                                    viewBox="0 0 24 24"
-                                    data-icon="lucide:lightbulb"
-                                    data-width="18"
-                                    class="iconify text-white iconify--lucide"
-                                    ><path
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M15 14c.2-1 .7-1.7 1.5-2.5c1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5c.7.7 1.3 1.5 1.5 2.5m0 4h6m-5 4h4"
-                                    ></path></svg
-                                >
+                                <Lightbulb size={18} class="text-white" />
                             </div>
                             <div
                                 class="flex-1 bg-white p-4 rounded-xl border border-dark-200 shadow-md"
@@ -292,25 +180,7 @@
                                     <div
                                         class="h-4 w-4 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center"
                                     >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            aria-hidden="true"
-                                            role="img"
-                                            width="10"
-                                            height="10"
-                                            viewBox="0 0 24 24"
-                                            data-icon="lucide:check"
-                                            data-width="10"
-                                            class="iconify text-emerald-600 iconify--lucide"
-                                            ><path
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M20 6L9 17l-5-5"
-                                            ></path></svg
-                                        >
+                                        <Check size={10} class="text-emerald-600" strokeWidth={2} />
                                     </div>
                                 </div>
                                 <div class="space-y-1.5">
@@ -329,27 +199,7 @@
                             <div
                                 class="w-12 h-12 rounded-full border-4 border-dark-50 bg-white shadow-sm flex items-center justify-center z-10"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    aria-hidden="true"
-                                    role="img"
-                                    width="18"
-                                    height="18"
-                                    viewBox="0 0 24 24"
-                                    data-icon="lucide:trending-up"
-                                    data-width="18"
-                                    class="iconify text-dark-400 iconify--lucide"
-                                    ><g
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        ><path d="M16 7h6v6"></path><path
-                                            d="m22 7l-8.5 8.5l-5-5L2 17"
-                                        ></path></g
-                                    ></svg
-                                >
+                                <TrendingUp size={18} class="text-dark-400" />
                             </div>
                             <div
                                 class="flex-1 bg-white p-3 rounded-lg border border-dark-100 shadow-sm opacity-60"
