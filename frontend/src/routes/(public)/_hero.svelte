@@ -1,5 +1,6 @@
 <script lang="ts">
     import { reveal } from "$lib/actions/reveal";
+    import { ArrowRight } from "@lucide/svelte";
 </script>
 
 <div class="relative min-h-screen flex items-center overflow-hidden">
@@ -37,7 +38,7 @@
 
             <!-- Headline -->
             <h1
-                class="text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-white leading-[1.1] mb-6"
+                class="text-4xl sm:text-5xl lg:text-6xl font-display font-medium tracking-tight text-white leading-[1.1] mb-6"
                 use:reveal={{ preset: "fade-up", delay: 150 }}
             >
                 Un expert à vos côtés,<br class="hidden lg:block" /> à vos horaires.
@@ -55,17 +56,13 @@
 
             <!-- Primary CTA -->
             <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-4" use:reveal={{ preset: "fade-up", delay: 250 }}>
-                <button
-                    class="group w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white hover:bg-white/90 text-dark-900 text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
+                <a
+                    href="/book"
+                    class="group w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-tertiary hover:bg-tertiary/90 text-dark-900 text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
                 >
                     Prendre rendez-vous
-                    <span
-                        class="iconify group-hover:translate-x-0.5 transition-transform"
-                        data-icon="lucide:arrow-right"
-                        data-width="18"
-                        data-stroke-width="1.5"
-                    ></span>
-                </button>
+                    <ArrowRight size={18} class="group-hover:translate-x-0.5 transition-transform" strokeWidth={1.5} />
+                </a>
 
                 <a
                     href="#how"
@@ -78,15 +75,21 @@
             <!-- Social Proof -->
             <div class="mt-8 flex items-center gap-4 text-sm text-white/70" use:reveal={{ preset: "fade-up", delay: 300 }}>
                 <div class="flex -space-x-2">
-                    <div class="w-8 h-8 rounded-full border-2 border-white/30 bg-white/20 flex items-center justify-center text-xs font-medium text-white">
-                        A
-                    </div>
-                    <div class="w-8 h-8 rounded-full border-2 border-white/30 bg-white/20 flex items-center justify-center text-xs font-medium text-white">
-                        S
-                    </div>
-                    <div class="w-8 h-8 rounded-full border-2 border-white/30 bg-white/20 flex items-center justify-center text-xs font-medium text-white">
-                        M
-                    </div>
+                    <img
+                        src="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=80&h=80&auto=format&fit=crop&q=80"
+                        alt="Emma W."
+                        class="w-8 h-8 rounded-full border-2 border-white/30 object-cover"
+                    />
+                    <img
+                        src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&auto=format&fit=crop&q=80"
+                        alt="Thomas R."
+                        class="w-8 h-8 rounded-full border-2 border-white/30 object-cover"
+                    />
+                    <img
+                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&auto=format&fit=crop&q=80"
+                        alt="Camille D."
+                        class="w-8 h-8 rounded-full border-2 border-white/30 object-cover"
+                    />
                 </div>
                 <p class="font-medium">Plus de 2 000 clients nous font confiance</p>
             </div>
