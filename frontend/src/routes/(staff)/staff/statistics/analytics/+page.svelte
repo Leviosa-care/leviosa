@@ -66,10 +66,14 @@
 	<title>Statistiques | Staff</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 lg:py-12">
-	<div class="mb-8">
-		<h1 class="text-3xl lg:text-4xl font-bold mb-1 text-foreground">Statistiques</h1>
-		<p class="text-muted-foreground">Vos performances sur la période sélectionnée</p>
+<div class="p-6 lg:p-10">
+	<div class="mb-10">
+		<h1 class="font-display text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">
+			Statistiques
+		</h1>
+		<p class="text-muted-foreground mt-1.5 text-base">
+			Vos performances sur la période sélectionnée
+		</p>
 	</div>
 
 	<!-- Date Range Selector -->
@@ -143,7 +147,7 @@
 	{:else if !data.error && data.metrics}
 		<!-- KPI Cards -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-background rounded-xl border border-border p-6">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-green-100 rounded-lg">
 						<Target size={22} class="text-green-600" />
@@ -156,7 +160,7 @@
 				<p class="text-sm text-muted-foreground">Taux d'occupation moyen</p>
 			</div>
 
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-background rounded-xl border border-border p-6">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-blue-100 rounded-lg">
 						<Activity size={22} class="text-blue-600" />
@@ -167,7 +171,7 @@
 				<p class="text-sm text-muted-foreground">Jours analysés</p>
 			</div>
 
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-background rounded-xl border border-border p-6">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-yellow-100 rounded-lg">
 						<Activity size={22} class="text-yellow-600" />
@@ -178,7 +182,7 @@
 				<p class="text-sm text-muted-foreground">Score d'efficacité moyen</p>
 			</div>
 
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-background rounded-xl border border-border p-6">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-orange-100 rounded-lg">
 						<Clock size={22} class="text-orange-600" />
@@ -194,7 +198,7 @@
 
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 			<!-- Daily Volume Chart (Last 7 days) -->
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-background rounded-xl border border-border p-6">
 				<h2 class="text-lg font-semibold text-foreground mb-6">Volume quotidien (7 jours)</h2>
 				{#if last7Days.length === 0}
 					<p class="text-sm text-muted-foreground">Aucune donnée disponible pour les 7 derniers jours</p>
@@ -219,7 +223,7 @@
 			</div>
 
 			<!-- Summary Stats -->
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-background rounded-xl border border-border p-6">
 				<h2 class="text-lg font-semibold text-foreground mb-6">Détails</h2>
 				<div class="space-y-4">
 					<div class="flex items-center justify-between">

@@ -11,9 +11,6 @@
     import PromotionCodes from "./PromotionCodes.svelte";
     import Exercices from "./Exercices.svelte";
 
-    import { theme } from "$lib/stores/theme";
-
-    import { Power } from "@lucide/svelte";
 
     let { data }: { data: PageData } = $props();
     interface Trigger {
@@ -32,27 +29,15 @@
 
 <div class="h-[100vh] flex-1 flex flex-col overflow-hidden bg-background">
     <Tabs value="categories" class="flex flex-col h-full">
-        <!-- Header with title and description -->
-        <div class="border-b border-border-card px-6 py-4 grid gap-8">
-            <div class="flex flex-row items-center justify-between">
-                <div class="grid gap-1 mb-6">
-                    <h1 class="text-2xl font-semibold tracking-tight">
-                        Catalogue
-                    </h1>
-                    <p class="text-sm text-foreground-alt">
-                        Configurez et organisez l'ensemble de votre offre
-                        commerciale : catégories, produits, tarification,
-                        promotions et exercices disponibles.
-                    </p>
-                </div>
-
-                <button
-                    class="text-dark-900 bg-dark-100/40 flex items-center justify-center gap-2 px-4 py-2 rounded-lg mr-8 z-20"
-                    onclick={() => theme.toggle()}
-                >
-                    <Power size={20} />
-                    <p>Toggle mode</p>
-                </button>
+        <!-- Header -->
+        <div class="border-b border-border px-6 py-6">
+            <div class="mb-6">
+                <h1 class="font-display text-2xl font-semibold tracking-tight text-foreground">
+                    Catalogue
+                </h1>
+                <p class="text-sm text-muted-foreground mt-1">
+                    Configurez et organisez votre offre commerciale
+                </p>
             </div>
 
             <!-- Scrollable tabs -->

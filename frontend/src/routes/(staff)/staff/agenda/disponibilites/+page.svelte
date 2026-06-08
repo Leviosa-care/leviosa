@@ -433,15 +433,15 @@
 	<title>Disponibilités | Staff</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 lg:py-12">
-	<div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<div class="p-6 lg:p-10">
+	<div class="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
 		<div>
-			<h1 class="text-3xl lg:text-4xl font-bold mb-1 text-foreground">Disponibilités</h1>
-			<p class="text-muted-foreground">Gérez vos créneaux pour les 7 prochains jours</p>
+			<h1 class="font-display text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">Disponibilités</h1>
+			<p class="text-muted-foreground mt-1.5 text-base">Gérez vos créneaux pour les 7 prochains jours</p>
 		</div>
 		<button
 			onclick={openCreateModal}
-			class="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+			class="inline-flex items-center gap-2 px-4 py-2.5 bg-foreground text-background rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
 		>
 			<Plus size={16} />
 			Nouveau créneau
@@ -450,7 +450,7 @@
 
 	<!-- Room Allocations Info -->
 	{#if activeAllocations.length > 0}
-		<div class="mb-6 bg-card rounded-lg border border-border p-4">
+		<div class="mb-6 bg-background rounded-xl border border-border p-4">
 			<div class="flex items-center gap-2 mb-2">
 				<Building2 size={16} class="text-muted-foreground" />
 				<h3 class="text-sm font-semibold text-foreground">Salles allouées</h3>
@@ -476,18 +476,18 @@
 	{/if}
 
 	<!-- Summary Cards -->
-	<div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-		<div class="bg-card rounded-lg border border-border p-4">
-			<p class="text-sm text-muted-foreground mb-1">Créneaux libres</p>
-			<p class="text-2xl font-bold text-green-600">{totalAvailable}</p>
+	<div class="grid grid-cols-3 gap-4 mb-8">
+		<div class="bg-background rounded-xl border border-border p-5">
+			<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Libres</p>
+			<p class="text-2xl font-bold text-green-600 dark:text-green-400 tabular-nums">{totalAvailable}</p>
 		</div>
-		<div class="bg-card rounded-lg border border-border p-4">
-			<p class="text-sm text-muted-foreground mb-1">Réservés</p>
-			<p class="text-2xl font-bold text-blue-600">{totalBooked}</p>
+		<div class="bg-background rounded-xl border border-border p-5">
+			<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Réservés</p>
+			<p class="text-2xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">{totalBooked}</p>
 		</div>
-		<div class="bg-card rounded-lg border border-border p-4 col-span-2 sm:col-span-1">
-			<p class="text-sm text-muted-foreground mb-1">Taux d'occupation</p>
-			<p class="text-2xl font-bold text-foreground">
+		<div class="bg-background rounded-xl border border-border p-5">
+			<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Occupation</p>
+			<p class="text-2xl font-bold text-foreground tabular-nums">
 				{totalBooked + totalAvailable > 0
 					? Math.round((totalBooked / (totalBooked + totalAvailable)) * 100)
 					: 0}%
@@ -497,7 +497,7 @@
 
 	<!-- Week Navigation -->
 	<div
-		class="flex items-center justify-between mb-6 bg-card rounded-lg border border-border p-4"
+		class="flex items-center justify-between mb-6 bg-background rounded-xl border border-border p-4"
 	>
 		<button class="p-2 hover:bg-muted rounded-md transition-colors" disabled>
 			<ChevronLeft size={20} class="text-muted-foreground" />
@@ -528,7 +528,7 @@
 	<!-- Days and Slots -->
 	<div class="space-y-6">
 		{#each filteredDays as day (day.date)}
-			<div class="bg-card rounded-lg border border-border overflow-hidden">
+			<div class="bg-background rounded-xl border border-border overflow-hidden">
 				<div class="bg-muted/50 px-5 py-3 border-b border-border">
 					<h2 class="font-semibold text-foreground capitalize">
 						{day.dayName} {formatDate(day.date)}

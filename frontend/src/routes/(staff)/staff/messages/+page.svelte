@@ -182,8 +182,8 @@
 </svelte:head>
 
 <div class="h-[calc(100vh-4rem)] lg:h-screen flex flex-col">
-	<div class="border-b border-border px-6 py-4">
-		<h1 class="text-2xl font-bold text-foreground">
+	<div class="border-b border-border px-6 py-5">
+		<h1 class="font-display text-2xl font-semibold tracking-tight text-foreground">
 			Messages
 			{#if totalUnread > 0}
 				<span

@@ -211,25 +211,25 @@
 	<title>Réservations | Staff</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 lg:py-12">
-	<div class="mb-8">
-		<h1 class="text-3xl lg:text-4xl font-bold mb-1 text-foreground">Réservations</h1>
-		<p class="text-muted-foreground">Suivi de vos séances et clients</p>
+<div class="p-6 lg:p-10">
+	<div class="mb-10">
+		<h1 class="font-display text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">Réservations</h1>
+		<p class="text-muted-foreground mt-1.5 text-base">Suivi de vos séances et clients</p>
 	</div>
 
 	<!-- Summary -->
 	<div class="grid grid-cols-3 gap-4 mb-8">
-		<div class="bg-card rounded-lg border border-border p-4">
-			<p class="text-sm text-muted-foreground mb-1">À venir</p>
-			<p class="text-2xl font-bold text-blue-600">{upcomingCount}</p>
+		<div class="bg-background rounded-xl border border-border p-5">
+			<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">À venir</p>
+			<p class="text-2xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">{upcomingCount}</p>
 		</div>
-		<div class="bg-card rounded-lg border border-border p-4">
-			<p class="text-sm text-muted-foreground mb-1">Terminées</p>
-			<p class="text-2xl font-bold text-green-600">{completedCount}</p>
+		<div class="bg-background rounded-xl border border-border p-5">
+			<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Terminées</p>
+			<p class="text-2xl font-bold text-green-600 dark:text-green-400 tabular-nums">{completedCount}</p>
 		</div>
-		<div class="bg-card rounded-lg border border-border p-4">
-			<p class="text-sm text-muted-foreground mb-1">Revenus terminées</p>
-			<p class="text-2xl font-bold text-foreground">{formatCents(completedEarnings)}</p>
+		<div class="bg-background rounded-xl border border-border p-5">
+			<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Revenus</p>
+			<p class="text-2xl font-bold text-foreground tabular-nums">{formatCents(completedEarnings)}</p>
 		</div>
 	</div>
 
@@ -258,7 +258,7 @@
 	<!-- Bookings List -->
 	<div class="space-y-3">
 		{#each filtered as booking (booking.id)}
-			<div class="bg-card rounded-lg border border-border p-4 sm:p-5 hover:shadow-sm transition-shadow">
+			<div class="bg-background rounded-xl border border-border p-4 sm:p-5 hover:shadow-sm transition-shadow">
 				<div class="flex flex-col sm:flex-row sm:items-start gap-4">
 					<!-- Client Avatar -->
 					<div
@@ -376,7 +376,7 @@
 				</div>
 			</div>
 		{:else}
-			<div class="text-center py-12 text-muted-foreground bg-card rounded-lg border border-border">
+			<div class="text-center py-12 text-muted-foreground bg-background rounded-xl border border-border">
 				Aucune réservation trouvée
 			</div>
 		{/each}

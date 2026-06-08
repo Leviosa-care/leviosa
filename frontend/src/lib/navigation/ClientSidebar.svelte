@@ -96,7 +96,7 @@
 	>
 		{#if !isCollapsed}
 			<div>
-				<h1 class="text-sm font-semibold tracking-tight text-foreground uppercase">Leviosa</h1>
+				<h1 class="text-sm font-semibold tracking-tight text-foreground uppercase font-display">Leviosa</h1>
 				<p class="text-xs text-muted-foreground">Espace client</p>
 			</div>
 		{:else}

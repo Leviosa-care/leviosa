@@ -9,10 +9,10 @@
 	<title>Paramètres | Staff</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 lg:py-12 max-w-4xl">
-    <div class="mb-8">
-        <h1 class="text-3xl lg:text-4xl font-bold mb-1 text-foreground">Paramètres</h1>
-        <p class="text-muted-foreground">Configurez les informations de l'entreprise et les paramètres système</p>
+<div class="p-6 lg:p-10 max-w-4xl">
+    <div class="mb-10">
+        <h1 class="font-display text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">Paramètres</h1>
+        <p class="text-muted-foreground mt-1.5 text-base">Configurez les informations de l'entreprise et les paramètres système</p>
     </div>
     <Settings {data} />
 </div>

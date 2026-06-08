@@ -243,10 +243,10 @@
 	<title>Mon profil | Staff</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 lg:py-12 max-w-4xl">
-	<div class="mb-8">
-		<h1 class="text-3xl lg:text-4xl font-bold mb-1 text-foreground">Mon profil</h1>
-		<p class="text-muted-foreground">Gérez vos informations de praticien</p>
+<div class="p-6 lg:p-10 max-w-4xl">
+	<div class="mb-10">
+		<h1 class="font-display text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">Mon profil</h1>
+		<p class="text-muted-foreground mt-1.5 text-base">Gérez vos informations de praticien</p>
 	</div>
 
 	{#if data.error}
