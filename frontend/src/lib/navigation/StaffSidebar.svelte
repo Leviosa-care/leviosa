@@ -17,6 +17,7 @@
 	} from "@lucide/svelte";
 	import type { Component } from "svelte";
 	import type { Permissions } from "$lib/security/permissions";
+	import ThemeToggle from "$lib/components/admin/ThemeToggle.svelte";
 
 	interface SidebarProps {
 		user: App.User;
@@ -163,17 +164,17 @@
 {#if permissions.canAccessOps}
 	<!-- Desktop Sidebar Navigation -->
 	<aside
-		class="hidden lg:flex lg:flex-col lg:border-r bg-dark-900 border-dark-800 relative transition-all duration-300 min-h-screen
-		           {isCollapsed ? 'lg:w-20' : 'lg:w-64'}"
+		class="hidden lg:flex lg:flex-col lg:border-r bg-background border-border-card sticky top-0 h-screen transition-all duration-300 {isCollapsed
+			? 'lg:w-20'
+			: 'lg:w-64'}"
 		aria-label="Sidebar navigation"
 	>
 		<!-- Collapse Toggle Button -->
 		<button
 			onclick={toggleSidebar}
-			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-dark-800 flex items-center justify-center
-		           text-dark-300 hover:text-white transition-all duration-200 border border-dark-700"
-			aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-			title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-background flex items-center justify-center text-foreground-alt hover:text-foreground hover:bg-muted transition-all duration-200 border border-border-card shadow-sm"
+			aria-label={isCollapsed ? "Agrandir la barre latérale" : "Réduire la barre latérale"}
+			title={isCollapsed ? "Agrandir la barre latérale" : "Réduire la barre latérale"}
 		>
 			{#if isCollapsed}
 				<ChevronRight size={16} strokeWidth={2} />
@@ -184,39 +185,45 @@
 
 		<!-- Sidebar Header -->
 		<div
-			class="flex items-center justify-between border-b border-dark-800 py-6 {isCollapsed
+			class="flex items-center justify-between border-b border-border-card py-6 {isCollapsed
 				? 'px-3'
 				: 'px-6'}"
 		>
 			{#if !isCollapsed}
 				<div>
-					<h1 class="text-sm font-semibold tracking-tight text-white uppercase">
+					<h1 class="text-sm font-semibold tracking-tight text-foreground uppercase">
 						{user.role === "administrator" ? "Admin" : "Staff"}
 					</h1>
-					<p class="text-xs text-dark-400">Leviosa</p>
+					<p class="text-xs text-muted-foreground">Leviosa</p>
 				</div>
-				<a
-					href="/staff/settings"
-					class="p-2 rounded-md transition-all duration-200 text-dark-400 hover:bg-dark-800 hover:text-white"
-					aria-label="Paramètres"
-					title="Paramètres"
-				>
-					<Settings size={18} strokeWidth={1.5} />
-				</a>
+				<div class="flex items-center gap-1">
+					<ThemeToggle />
+					<a
+						href="/staff/settings"
+						class="p-2 rounded-md transition-all duration-200 text-foreground-alt hover:bg-muted hover:text-foreground"
+						aria-label="Paramètres"
+						title="Paramètres"
+					>
+						<Settings size={18} strokeWidth={1.5} />
+					</a>
+				</div>
 			{:else}
-				<a
-					href="/staff/settings"
-					class="p-2 rounded-md transition-all duration-200 text-dark-400 hover:bg-dark-800 mx-auto"
-					aria-label="Paramètres"
-					title="Paramètres"
-				>
-					<Settings size={18} strokeWidth={1.5} />
-				</a>
+				<div class="mx-auto flex flex-col items-center gap-2">
+					<ThemeToggle />
+					<a
+						href="/staff/settings"
+						class="p-2 rounded-md transition-all duration-200 text-foreground-alt hover:bg-muted"
+						aria-label="Paramètres"
+						title="Paramètres"
+					>
+						<Settings size={18} strokeWidth={1.5} />
+					</a>
+				</div>
 			{/if}
 		</div>
 
 		<!-- Navigation Items -->
-		<nav class="flex-1 py-6 {isCollapsed ? 'px-3' : 'px-4'}">
+		<nav class="flex-1 py-6 overflow-y-auto {isCollapsed ? 'px-3' : 'px-4'}">
 			<ul class="space-y-1">
 				{#each desktopItems as item (item.href)}
 					{@const active = isActive(item.href)}
@@ -224,13 +231,13 @@
 					<li>
 						<a
 							href={item.href}
-							class="flex items-center text-sm font-medium transition-all duration-200 rounded-md
+							class="flex items-center text-sm font-medium transition-all duration-200 rounded-lg
 			                       {isCollapsed
 								? 'justify-center px-3 py-3'
 								: 'gap-3 px-3 py-2.5'}
 			                       {active
-								? 'text-white bg-dark-700'
-								: 'text-dark-300 hover:text-white hover:bg-dark-800'}"
+								? 'text-foreground bg-muted'
+								: 'text-foreground-alt hover:text-foreground hover:bg-muted'}"
 							aria-current={active ? "page" : undefined}
 							title={isCollapsed ? item.label : undefined}
 						>
@@ -250,29 +257,29 @@
 		</nav>
 
 		<!-- Sidebar Footer -->
-		<div class="py-5 border-t border-dark-800 {isCollapsed ? 'px-3' : 'px-6'}">
+		<div class="py-5 border-t border-border-card {isCollapsed ? 'px-3' : 'px-6'}">
 			{#if !isCollapsed}
 				<div class="relative">
 					{#if userMenuOpen}
 						<div class="fixed inset-0 z-10" onclick={closeUserMenu}></div>
 						<div
-							class="absolute bottom-full left-0 right-0 mb-2 z-20 bg-white border border-dark-100 rounded-lg shadow-lg py-1 overflow-hidden"
+							class="absolute bottom-full left-0 right-0 mb-2 z-20 bg-background border border-border-card rounded-lg shadow-lg py-1 overflow-hidden"
 						>
 							<a
 								href="https://leviosa.care"
 								target="_blank"
 								rel="noopener noreferrer"
 								onclick={closeUserMenu}
-								class="flex items-center gap-2.5 px-3 py-2 text-sm text-dark-600 hover:text-dark-900 hover:bg-dark-50 transition-colors"
+								class="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground-alt hover:text-foreground hover:bg-muted transition-colors"
 							>
 								<ExternalLink size={15} />
 								<span>Voir le site</span>
 							</a>
-							<div class="my-1 border-t border-dark-100"></div>
+							<div class="my-1 border-t border-border-card"></div>
 							<form method="POST" action="/logout" class="contents">
 								<button
 									type="submit"
-									class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
+									class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 transition-colors cursor-pointer"
 								>
 									<LogOut size={15} />
 									<span>Déconnexion</span>
@@ -281,24 +288,26 @@
 						</div>
 					{/if}
 					<div class="flex items-center gap-3">
-						<div class="w-9 h-9 rounded-full flex items-center justify-center bg-dark-700">
-							<span class="text-xs font-semibold text-dark-200 uppercase">
+						<div
+							class="w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center bg-muted border border-border-card"
+						>
+							<span class="text-xs font-semibold text-foreground-alt uppercase">
 								{user.firstname?.[0] ?? user.email?.[0]?.toUpperCase() ?? "A"}
 							</span>
 						</div>
 						<div class="flex-1 min-w-0">
-							<p class="text-sm font-medium text-white truncate">
+							<p class="text-sm font-medium text-foreground truncate tracking-tight">
 								{user.firstname
 									? `${user.firstname} ${user.lastname ?? ""}`.trim()
 									: user.email?.split("@")[0] ?? "Staff"}
 							</p>
-							<p class="text-xs text-dark-400">
+							<p class="text-xs text-muted-foreground capitalize">
 								{user.role === "administrator" ? "Administrateur" : "Partenaire"}
 							</p>
 						</div>
 						<button
 							onclick={toggleUserMenu}
-							class="flex-shrink-0 p-1.5 rounded-md text-dark-400 hover:text-white hover:bg-dark-800 transition-colors"
+							class="flex-shrink-0 p-1.5 rounded-md text-foreground-alt hover:text-foreground hover:bg-muted transition-colors"
 							aria-label="Options utilisateur"
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
@@ -310,13 +319,24 @@
 					</div>
 				</div>
 			{:else}
-				<div
-					class="w-9 h-9 mx-auto rounded-full flex items-center justify-center bg-dark-700"
-					title={user.firstname ?? user.email}
-				>
-					<span class="text-xs font-semibold text-dark-200 uppercase">
-						{user.firstname?.[0] ?? user.email?.[0]?.toUpperCase() ?? "A"}
-					</span>
+				<div class="flex flex-col items-center gap-2">
+					<div
+						class="w-9 h-9 rounded-full flex items-center justify-center bg-muted border border-border-card"
+						title={user.firstname ?? user.email}
+					>
+						<span class="text-xs font-semibold text-foreground-alt uppercase">
+							{user.firstname?.[0] ?? user.email?.[0]?.toUpperCase() ?? "A"}
+						</span>
+					</div>
+					<a
+						href="https://leviosa.care"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="flex items-center justify-center w-9 h-9 text-foreground-alt hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+						title="Voir le site public"
+					>
+						<ExternalLink size={14} />
+					</a>
 				</div>
 			{/if}
 		</div>
@@ -324,7 +344,7 @@
 
 	<!-- Mobile Bottom Navigation -->
 	<nav
-		class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white backdrop-blur-sm border-t border-dark-100"
+		class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-t border-border-card"
 		aria-label="Bottom navigation"
 	>
 		<ul class="flex items-center justify-around px-1 py-1">
@@ -335,7 +355,7 @@
 					<a
 						href={item.href}
 						class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg transition-all duration-200
-		                   {active ? 'text-dark-900' : 'text-dark-500'}"
+		                   {active ? 'text-foreground' : 'text-muted-foreground'}"
 						aria-current={active ? "page" : undefined}
 					>
 						<span class="relative">
