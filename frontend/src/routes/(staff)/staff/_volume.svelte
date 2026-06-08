@@ -1,24 +1,33 @@
 <script lang="ts">
 </script>
 
-<div class="bg-background rounded-xl border border-border overflow-hidden">
-    <div class="px-5 py-4 border-b border-border">
-        <h2 class="text-sm font-semibold tracking-tight text-foreground uppercase">Volume de consultations</h2>
+<div class="bg-background rounded-2xl border border-border overflow-hidden">
+    <div class="px-5 py-4 flex items-center justify-between">
+        <h2 class="font-display text-sm font-semibold tracking-tight text-foreground">Volume hebdomadaire</h2>
+        <span class="text-[11px] text-muted-foreground">7 derniers jours</span>
     </div>
-    <div class="p-5">
-        <div class="flex items-end gap-2 h-40">
+    <div class="px-5 pb-5">
+        <div class="flex items-end gap-3 h-36">
             {#each [35, 50, 42, 68, 55, 78, 62] as height, i}
-                <div class="flex-1 flex flex-col items-center gap-1.5">
-                    <div class="w-full rounded-md relative overflow-hidden bg-muted" style="height: 100%">
+                <div class="flex-1 flex flex-col items-center gap-2">
+                    <!-- Hover area with bar -->
+                    <div class="w-full relative group cursor-default" style="height: 128px">
+                        <!-- Background track -->
+                        <div class="absolute inset-0 rounded-lg bg-muted/50"></div>
+                        <!-- Filled bar -->
                         <div
-                            class="absolute bottom-0 left-0 right-0 rounded-md transition-all duration-500 {i === 5
+                            class="absolute bottom-0 left-0 right-0 rounded-lg transition-all duration-700 ease-out {i === 5
                                 ? 'bg-foreground'
-                                : 'bg-foreground/20'}"
+                                : 'bg-foreground/15 group-hover:bg-foreground/25'}"
                             style="height: {height}%"
                         ></div>
+                        <!-- Hover value tooltip -->
+                        <div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-foreground tabular-nums opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            {height}%
+                        </div>
                     </div>
-                    <span class="text-[10px] font-medium text-muted-foreground tabular-nums">
-                        {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'][i]}
+                    <span class="text-[10px] font-medium text-muted-foreground tracking-wide {i === 5 ? '!text-foreground' : ''}">
+                        {['L', 'M', 'M', 'J', 'V', 'S', 'D'][i]}
                     </span>
                 </div>
             {/each}

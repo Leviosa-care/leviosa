@@ -7,22 +7,25 @@
     } from "@lucide/svelte";
 </script>
 
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-    {@render card(TrendingUp, "Revenus (7j)", "+12,5%", "1 250,00 €", "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400")}
-    {@render card(CalendarCheck, "Réservations", "+8,2%", "48", "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400")}
-    {@render card(Clock, "Taux d'occupation", "94%", "94%", "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400")}
-    {@render card(BarChart3, "Satisfaction", "4.9/5", "4,9", "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400")}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+    {@render card(TrendingUp, "Revenus", "+12,5%", "1 250 €", "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400", "7 derniers jours")}
+    {@render card(CalendarCheck, "Réservations", "+8,2%", "48", "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400", "7 derniers jours")}
+    {@render card(Clock, "Occupation", "94%", "94%", "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400", "Cette semaine")}
+    {@render card(BarChart3, "Satisfaction", "—", "4,9", "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400", "Sur 128 avis")}
 </div>
 
-{#snippet card(Icon: typeof import('@lucide/svelte').TrendingUp, title: string, trend: string, value: string, iconColor: string)}
-    <div class="bg-background rounded-xl border border-border p-5 group hover:border-foreground/10 transition-colors duration-300">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-9 h-9 rounded-lg {iconColor} flex items-center justify-center">
+{#snippet card(Icon: typeof import('@lucide/svelte').TrendingUp, title: string, trend: string, value: string, iconColor: string, subtitle: string)}
+    <div class="group relative bg-background rounded-2xl border border-border p-5 lg:p-6 hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+        <div class="flex items-start justify-between mb-5">
+            <div class="w-10 h-10 rounded-xl {iconColor} flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
                 <Icon size={18} strokeWidth={2} />
             </div>
-            <span class="text-xs font-medium tracking-wide text-muted-foreground">{trend}</span>
+            <span class="text-[11px] font-semibold tracking-wider text-muted-foreground tabular-nums mt-1">{trend}</span>
         </div>
-        <p class="text-2xl font-bold text-foreground tracking-tight tabular-nums">{value}</p>
-        <p class="text-sm text-muted-foreground mt-1">{title}</p>
+        <p class="text-3xl font-bold text-foreground tracking-tight tabular-nums leading-none">{value}</p>
+        <div class="mt-3 flex items-center justify-between">
+            <p class="text-sm font-medium text-foreground">{title}</p>
+        </div>
+        <p class="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
     </div>
 {/snippet}
