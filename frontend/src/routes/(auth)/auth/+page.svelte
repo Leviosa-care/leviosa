@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { PageProps } from "./$types";
 
-    import { ArrowRight, Slack } from "@lucide/svelte";
+    import { ArrowRight } from "@lucide/svelte";
     import { Tabs, Button } from "bits-ui";
     import { superForm } from "sveltekit-superforms";
 
@@ -62,7 +62,7 @@
             class="rounded-card border-muted bg-background-alt shadow-card md:w-[540px] w-[360px] border p-8"
         >
             <Tabs.Content value="login" class="select-none pt-8">
-                {@render header("Connectez-vous à votre compte pour continuer")}
+                {@render header("Retrouvez votre espace", "Connectez-vous pour accéder à votre compte.")}
                 {#if redirectFrom && !$errors._errors}
                     <Alert message={MESSAGES.expiredSession} />
                 {/if}
@@ -72,7 +72,8 @@
             </Tabs.Content>
             <Tabs.Content value="register" class="select-none pt-8">
                 {@render header(
-                    "Inscrivez-vous pour profiter de tous nos services",
+                    "Créer votre compte",
+                    "Rejoignez Leviosa en quelques étapes.",
                 )}
                 {#if $registerErrors._errors}
                     <Alert type="error" message={$registerErrors._errors[0]} />
@@ -84,7 +85,7 @@
                 <Tabs.Trigger
                     value="register"
                     class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-8 rounded-[7px] bg-transparent py-2 data-[state=active]:bg-background cursor-pointer"
-                    >S'enregistrer</Tabs.Trigger
+                    >Créer un compte</Tabs.Trigger
                 >
                 <Tabs.Trigger
                     value="login"
@@ -157,12 +158,9 @@
     </div>
 </div>
 
-{#snippet header(subtitle: string)}
+{#snippet header(title: string, subtitle: string)}
     <div class="text-center mb-8 grid gap-4">
-        <div class="flex gap-2 justify-center items-center">
-            <Slack />
-            <h2 class="font-extrabold text-2xl">Bienvenue à Leviosa</h2>
-        </div>
+        <h2 class="font-extrabold text-2xl">{title}</h2>
         <p class="text-muted-foreground">
             {subtitle}
         </p>
