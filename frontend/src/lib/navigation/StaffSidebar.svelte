@@ -191,8 +191,8 @@
 		>
 			{#if !isCollapsed}
 				<div>
-					<h1 class="text-sm font-semibold tracking-tight text-foreground uppercase font-display">Leviosa</h1>
-					<p class="text-xs text-muted-foreground">{user.role === "administrator" ? "Admin" : "Staff"}</p>
+					<h1 class="font-display text-lg font-bold text-foreground tracking-tight">L</h1>
+					<p class="text-[9px] text-muted-foreground uppercase tracking-[0.15em] mt-0.5">Leviosa</p>
 				</div>
 				<div class="flex items-center gap-1">
 					<ThemeToggle />
