@@ -6,24 +6,21 @@
     import Volume from "./_volume.svelte";
 </script>
 
-<div class="flex flex-col h-screen">
-    <div
-        class="flex flex-row items-center justify-between border-b border-border-card"
-    >
-        <div class="grid gap-1 px-8 py-4">
-            <h1 class="text-2xl font-semibold tracking-tight">Accueil</h1>
-            <p class="text-sm text-foreground-alt">
-                Vue d'ensemble de l'activite de la plateforme
-            </p>
-        </div>
+<svelte:head>
+	<title>Accueil | Staff</title>
+</svelte:head>
+
+<div class="container mx-auto px-4 py-8 lg:py-12">
+    <div class="mb-8">
+        <h1 class="text-3xl lg:text-4xl font-bold mb-1 text-foreground">Accueil</h1>
+        <p class="text-muted-foreground">Vue d'ensemble de l'activité de la plateforme</p>
     </div>
-    <div class="p-12 bg-background flex-1">
-        <Cards />
-        <div class="mt-8 grid grid-cols-[1fr_auto] grid-rows-2 gap-16">
-            <Agenda />
-            <Actions />
-            <Volume />
-            <Activity />
-        </div>
+
+    <Cards />
+    <div class="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_auto] grid-rows-1 lg:grid-rows-2 gap-6 lg:gap-16">
+        <Agenda />
+        <Actions />
+        <Volume />
+        <Activity />
     </div>
 </div>
