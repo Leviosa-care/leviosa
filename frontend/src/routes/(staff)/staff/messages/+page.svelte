@@ -183,16 +183,18 @@
 
 <div class="h-[calc(100vh-4rem)] lg:h-screen flex flex-col">
 	<div class="border-b border-border px-6 py-5">
-		<h1 class="font-display text-2xl font-semibold tracking-tight text-foreground">
-			Messages
+		<div class="flex items-center gap-4">
+			<h1 class="font-display text-2xl font-semibold tracking-tight text-foreground">
+				Messages
+			</h1>
 			{#if totalUnread > 0}
 				<span
-					class="ml-2 px-2 py-0.5 text-xs font-medium bg-foreground text-background rounded-full"
+					class="px-2.5 py-1 text-[11px] font-bold bg-foreground text-background rounded-full tabular-nums"
 				>
 					{totalUnread}
 				</span>
 			{/if}
-		</h1>
+		</div>
 	</div>
 
 	<div class="flex flex-1 overflow-hidden">

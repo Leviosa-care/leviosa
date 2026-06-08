@@ -68,12 +68,14 @@
 
 <div class="p-6 lg:p-10">
 	<div class="mb-10">
-		<h1 class="font-display text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">
-			Statistiques
+		<p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">Statistiques</p>
+		<h1 class="font-display text-4xl lg:text-5xl font-semibold tracking-tight text-foreground leading-[1.1]">
+			Analytics
 		</h1>
-		<p class="text-muted-foreground mt-1.5 text-base">
+		<p class="text-muted-foreground mt-3 text-sm">
 			Vos performances sur la période sélectionnée
 		</p>
+		<div class="mt-4 h-px w-16 bg-foreground/20"></div>
 	</div>
 
 	<!-- Date Range Selector -->
@@ -147,7 +149,7 @@
 	{:else if !data.error && data.metrics}
 		<!-- KPI Cards -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-			<div class="bg-background rounded-xl border border-border p-6">
+			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-green-100 rounded-lg">
 						<Target size={22} class="text-green-600" />
@@ -160,7 +162,7 @@
 				<p class="text-sm text-muted-foreground">Taux d'occupation moyen</p>
 			</div>
 
-			<div class="bg-background rounded-xl border border-border p-6">
+			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-blue-100 rounded-lg">
 						<Activity size={22} class="text-blue-600" />
@@ -171,7 +173,7 @@
 				<p class="text-sm text-muted-foreground">Jours analysés</p>
 			</div>
 
-			<div class="bg-background rounded-xl border border-border p-6">
+			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-yellow-100 rounded-lg">
 						<Activity size={22} class="text-yellow-600" />
@@ -182,7 +184,7 @@
 				<p class="text-sm text-muted-foreground">Score d'efficacité moyen</p>
 			</div>
 
-			<div class="bg-background rounded-xl border border-border p-6">
+			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-orange-100 rounded-lg">
 						<Clock size={22} class="text-orange-600" />
@@ -198,7 +200,7 @@
 
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 			<!-- Daily Volume Chart (Last 7 days) -->
-			<div class="bg-background rounded-xl border border-border p-6">
+			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<h2 class="text-lg font-semibold text-foreground mb-6">Volume quotidien (7 jours)</h2>
 				{#if last7Days.length === 0}
 					<p class="text-sm text-muted-foreground">Aucune donnée disponible pour les 7 derniers jours</p>
@@ -223,7 +225,7 @@
 			</div>
 
 			<!-- Summary Stats -->
-			<div class="bg-background rounded-xl border border-border p-6">
+			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<h2 class="text-lg font-semibold text-foreground mb-6">Détails</h2>
 				<div class="space-y-4">
 					<div class="flex items-center justify-between">

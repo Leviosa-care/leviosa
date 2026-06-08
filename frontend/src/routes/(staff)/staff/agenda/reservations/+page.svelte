@@ -213,21 +213,23 @@
 
 <div class="p-6 lg:p-10">
 	<div class="mb-10">
-		<h1 class="font-display text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">Réservations</h1>
-		<p class="text-muted-foreground mt-1.5 text-base">Suivi de vos séances et clients</p>
+		<p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">Agenda</p>
+		<h1 class="font-display text-4xl lg:text-5xl font-semibold tracking-tight text-foreground leading-[1.1]">Réservations</h1>
+		<p class="text-muted-foreground mt-3 text-sm">Suivi de vos séances et clients</p>
+		<div class="mt-4 h-px w-16 bg-foreground/20"></div>
 	</div>
 
 	<!-- Summary -->
 	<div class="grid grid-cols-3 gap-4 mb-8">
-		<div class="bg-background rounded-xl border border-border p-5">
+		<div class="bg-background rounded-2xl border border-border p-5">
 			<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">À venir</p>
 			<p class="text-2xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">{upcomingCount}</p>
 		</div>
-		<div class="bg-background rounded-xl border border-border p-5">
+		<div class="bg-background rounded-2xl border border-border p-5">
 			<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Terminées</p>
 			<p class="text-2xl font-bold text-green-600 dark:text-green-400 tabular-nums">{completedCount}</p>
 		</div>
-		<div class="bg-background rounded-xl border border-border p-5">
+		<div class="bg-background rounded-2xl border border-border p-5">
 			<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Revenus</p>
 			<p class="text-2xl font-bold text-foreground tabular-nums">{formatCents(completedEarnings)}</p>
 		</div>

@@ -32,12 +32,14 @@
         <!-- Header -->
         <div class="border-b border-border px-6 py-6">
             <div class="mb-6">
-                <h1 class="font-display text-2xl font-semibold tracking-tight text-foreground">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">Administration</p>
+                <h1 class="font-display text-3xl font-semibold tracking-tight text-foreground">
                     Catalogue
                 </h1>
-                <p class="text-sm text-muted-foreground mt-1">
+                <p class="text-sm text-muted-foreground mt-2">
                     Configurez et organisez votre offre commerciale
                 </p>
+                <div class="mt-4 h-px w-16 bg-foreground/20"></div>
             </div>
 
             <!-- Scrollable tabs -->

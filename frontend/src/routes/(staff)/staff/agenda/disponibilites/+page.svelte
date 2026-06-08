@@ -436,8 +436,10 @@
 <div class="p-6 lg:p-10">
 	<div class="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
 		<div>
-			<h1 class="font-display text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">Disponibilités</h1>
-			<p class="text-muted-foreground mt-1.5 text-base">Gérez vos créneaux pour les 7 prochains jours</p>
+			<p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">Agenda</p>
+			<h1 class="font-display text-4xl lg:text-5xl font-semibold tracking-tight text-foreground leading-[1.1]">Disponibilités</h1>
+			<p class="text-muted-foreground mt-3 text-sm">Gérez vos créneaux pour les 7 prochains jours</p>
+			<div class="mt-4 h-px w-16 bg-foreground/20"></div>
 		</div>
 		<button
 			onclick={openCreateModal}
@@ -477,15 +479,15 @@
 
 	<!-- Summary Cards -->
 	<div class="grid grid-cols-3 gap-4 mb-8">
-		<div class="bg-background rounded-xl border border-border p-5">
+		<div class="bg-background rounded-2xl border border-border p-5">
 			<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Libres</p>
 			<p class="text-2xl font-bold text-green-600 dark:text-green-400 tabular-nums">{totalAvailable}</p>
 		</div>
-		<div class="bg-background rounded-xl border border-border p-5">
+		<div class="bg-background rounded-2xl border border-border p-5">
 			<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Réservés</p>
 			<p class="text-2xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">{totalBooked}</p>
 		</div>
-		<div class="bg-background rounded-xl border border-border p-5">
+		<div class="bg-background rounded-2xl border border-border p-5">
 			<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Occupation</p>
 			<p class="text-2xl font-bold text-foreground tabular-nums">
 				{totalBooked + totalAvailable > 0
