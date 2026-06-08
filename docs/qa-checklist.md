@@ -2,8 +2,8 @@
 
 ## Authentication & Onboarding
 
-- [ ] Sign in with valid credentials
-- [ ] Sign in with invalid credentials (error state)
+- [x] Sign in with valid credentials
+- [x] Sign in with invalid credentials (error state)
 - [ ] Sign up flow — complete all steps (general info, address, password, email verification)
 - [ ] Complete partner onboarding (`/auth/complete-partner`)
 - [ ] Forgotten password flow
