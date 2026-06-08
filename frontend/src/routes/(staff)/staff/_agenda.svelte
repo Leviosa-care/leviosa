@@ -2,41 +2,43 @@
     import { Button } from "bits-ui";
 </script>
 
-<div
-    class="bg-background h-fit border border-dark-100/40 rounded-xl overflow-hidden"
->
-    <div
-        class="bg-dark-50 px-8 py-4 flex gap-4 items-center border border-b-dark-50"
-    >
-        <p class="text-dark-900 font-bold">Agenda du jour</p>
+<div class="bg-background rounded-lg border border-border-card overflow-hidden">
+    <div class="px-6 py-4 border-b border-border-card">
+        <h2 class="text-base font-semibold text-foreground">Agenda du jour</h2>
+        <p class="text-xs text-muted-foreground mt-0.5">Réservations à venir</p>
     </div>
-    <div class="grid">
+    <div class="divide-y divide-border-card">
         {@render time_slot(
             "10:00",
-            "Consultations suivi - Dermatologie",
+            "Consultation suivi - Dermatologie",
             "Dr Sarah L",
             "Marc D.",
             "En cours",
+            true,
         )}
         {@render time_slot(
-            "10:00",
+            "11:30",
             "Bilan initial - Nutrition",
             "Dr Jean M.",
             "Sophie K.",
-            "A venir",
+            "À venir",
+            false,
         )}
         {@render time_slot(
-            "10:00",
-            "Bilan initial - Nutrition",
-            "Dr Jean M.",
-            "Sophie K.",
-            "Annule",
+            "14:00",
+            "Bilan initial - Kiné",
+            "Dr Claire P.",
+            "Lucas M.",
+            "Annulé",
+            false,
         )}
-        <Button.Root
-            class="bg-dark-50/40 hover:bg-dark-50/60 text-dark-800 font-medium inline-flex justify-center items-center w-full border border-dark-50 py-4 cursor-pointer"
-            >Voir l'agenda complet</Button.Root
-        >
     </div>
+    <a
+        href="/staff/agenda/reservations"
+        class="block text-center py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border-t border-border-card"
+    >
+        Voir l'agenda complet
+    </a>
 </div>
 
 {#snippet time_slot(
@@ -45,23 +47,28 @@
     partner: string,
     client: string,
     status: string,
+    active: boolean,
 )}
-    <div class="px-8 py-4 flex justify-between items-center">
-        <div class="flex items-center gap-8">
-            <div
-                class="p-3 bg-dark-50 aspect-square inline-flex justify-center items-center rounded-input text-sm font-medium"
-            >
-                {time}
-            </div>
-            <div>
-                <p class="text-dark-900 font-medium">
-                    {title}
-                </p>
-                <p class="text-dark-600 text-sm">
-                    {partner} - Client: {client}
-                </p>
-            </div>
+    <div class="px-6 py-4 flex items-center gap-4 hover:bg-muted/30 transition-colors">
+        <div
+            class="p-3 bg-muted rounded-lg text-sm font-medium text-foreground tabular-nums"
+        >
+            {time}
         </div>
-        <p>{status}</p>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-foreground truncate">
+                {title}
+            </p>
+            <p class="text-xs text-muted-foreground">
+                {partner} — Client: {client}
+            </p>
+        </div>
+        <span class="text-xs font-medium px-2.5 py-0.5 rounded-full whitespace-nowrap {status === 'En cours'
+            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+            : status === 'Annulé'
+            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}">
+            {status}
+        </span>
     </div>
 {/snippet}

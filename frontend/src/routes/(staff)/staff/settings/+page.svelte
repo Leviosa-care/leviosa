@@ -5,19 +5,14 @@
     let { data }: { data: PageData } = $props();
 </script>
 
-<div class="h-[100vh] flex-1 flex flex-col overflow-hidden bg-gray-50">
-    <!-- Header with title and description -->
-    <div class="bg-white border-b border-border-card px-6 py-6">
-        <div class="grid gap-1">
-            <h1 class="text-2xl font-semibold tracking-tight">
-                Paramètres
-            </h1>
-            <p class="text-sm text-foreground-alt">
-                Configurez les informations de l'entreprise et les paramètres système
-            </p>
-        </div>
-    </div>
+<svelte:head>
+	<title>Paramètres | Staff</title>
+</svelte:head>
 
-    <!-- Main content area -->
+<div class="container mx-auto px-4 py-8 lg:py-12 max-w-4xl">
+    <div class="mb-8">
+        <h1 class="text-3xl lg:text-4xl font-bold mb-1 text-foreground">Paramètres</h1>
+        <p class="text-muted-foreground">Configurez les informations de l'entreprise et les paramètres système</p>
+    </div>
     <Settings {data} />
 </div>

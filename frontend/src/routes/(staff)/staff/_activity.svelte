@@ -1,29 +1,24 @@
 <script lang="ts">
 </script>
 
-<div class="h-fit rounded-xl overflow-hidden border border-border-dark">
-    <div
-        class="bg-dark-50 px-4 py-4 flex gap-4 items-center border border-b-dark-50"
-    >
-        <p class="text-dark-900 font-bold">Activite recente</p>
+<div class="bg-background rounded-lg border border-border-card overflow-hidden">
+    <div class="px-6 py-4 border-b border-border-card">
+        <h2 class="text-base font-semibold text-foreground">Activité récente</h2>
+        <p class="text-xs text-muted-foreground mt-0.5">Derniers événements</p>
     </div>
-    <ul class="px-4 py-4">
-        {@render activity(
-            "Nouvelle inscription",
-            "par Paul V.",
-            "Il y a 10 min.",
-        )}
-        {@render activity("Paiement recu", "de $60.00", "Il y a 32 min.")}
-        {@render activity("Mise a jour catalogue", "(3 items)", "Il y a 2h.")}
+    <ul class="divide-y divide-border-card">
+        {@render activity("Nouvelle inscription", "par Paul V.", "Il y a 10 min.")}
+        {@render activity("Paiement reçu", "de 60,00 €", "Il y a 32 min.")}
+        {@render activity("Mise à jour catalogue", "(3 items)", "Il y a 2h.")}
     </ul>
 </div>
 
 {#snippet activity(title: string, subtitle: string, date: string)}
-    <li class="py-2">
+    <li class="px-6 py-3 hover:bg-muted/30 transition-colors">
         <div class="flex items-center gap-1 text-sm">
-            <p class="text-dark-900 font-medium">{title}</p>
-            <p class="text-dark-600">{subtitle}</p>
+            <p class="font-medium text-foreground">{title}</p>
+            <p class="text-muted-foreground">{subtitle}</p>
         </div>
-        <p class="text-dark-500 text-xs">{date}</p>
+        <p class="text-xs text-muted-foreground mt-0.5">{date}</p>
     </li>
 {/snippet}

@@ -2,16 +2,14 @@
     import { TriangleAlert, ArrowRight } from "@lucide/svelte";
 </script>
 
-<div class="h-fit rounded-xl overflow-hidden border border-border-card">
-    <div
-        class="bg-dark-50 px-4 py-4 flex gap-4 items-center border border-b-dark-50"
-    >
-        <TriangleAlert />
-        <p class="text-dark-900 font-bold">Actions requises</p>
+<div class="bg-background rounded-lg border border-border-card overflow-hidden">
+    <div class="px-6 py-4 border-b border-border-card flex items-center gap-2">
+        <TriangleAlert size={16} class="text-muted-foreground" />
+        <h2 class="text-base font-semibold text-foreground">Actions requises</h2>
     </div>
-    <div>
+    <div class="divide-y divide-border-card">
         {@render required_action(
-            "Validation practicien",
+            "Validation praticien",
             "2h",
             "Dr Thomas R. attend la validation de ses documents.",
             "Examiner",
@@ -26,7 +24,7 @@
             "Litige client",
             "1j",
             "Signalement sur la consultation #4849",
-            "Voir le detail",
+            "Voir le détail",
         )}
     </div>
 </div>
@@ -37,18 +35,16 @@
     description: string,
     action: string,
 )}
-    <div class="p-4 grid gap-4 bg-background">
-        <div class="grid gap-1">
-            <div class="flex justify-between items-center">
-                <p class="text-dark-800 font-bold">{title}</p>
-                <p class="text-dark-300 capitalize">{duration}</p>
-            </div>
-            <p class="text-dark-500">{description}</p>
+    <div class="px-6 py-4 hover:bg-muted/30 transition-colors">
+        <div class="flex items-start justify-between gap-3 mb-1">
+            <p class="text-sm font-medium text-foreground">{title}</p>
+            <span class="text-xs text-muted-foreground whitespace-nowrap">{duration}</span>
         </div>
+        <p class="text-xs text-muted-foreground mb-3">{description}</p>
         <button
-            class="flex gap-2 items-center text-dark-700 hover:text-dark-900 cursor-pointer"
+            class="flex items-center gap-1.5 text-xs font-medium text-foreground-alt hover:text-foreground cursor-pointer transition-colors"
         >
-            <p>{action}</p>
+            <span>{action}</span>
             <ArrowRight size={12} />
         </button>
     </div>
