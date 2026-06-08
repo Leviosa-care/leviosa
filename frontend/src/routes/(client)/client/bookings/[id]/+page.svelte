@@ -46,11 +46,11 @@
 
 	function statusBadge(status: string): string {
 		switch (status) {
-			case 'confirmed': return 'bg-blue-100 text-blue-700';
-			case 'completed': return 'bg-green-100 text-green-700';
-			case 'cancelled': return 'bg-red-100 text-red-700';
-			case 'no_show': return 'bg-orange-100 text-orange-700';
-			default: return 'bg-gray-100 text-gray-700';
+			case 'confirmed': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+			case 'completed': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+			case 'cancelled': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+			case 'no_show': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+			default: return 'bg-muted text-muted-foreground';
 		}
 	}
 
@@ -159,15 +159,15 @@
 				{statusLabel(booking.status)}
 			</span>
 			<span class="px-2 py-0.5 rounded-full text-xs border {booking.payment_status === 'paid'
-				? 'bg-green-50 text-green-600 border-green-200'
-				: 'bg-gray-50 text-gray-600 border-gray-200'}">
+				? 'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800'
+				: 'bg-muted text-muted-foreground border-border'}">
 				{paymentStatusLabel(booking.payment_status)}
 			</span>
 		</div>
 	</div>
 
 	<!-- Detail card -->
-	<div class="bg-card rounded-lg border border-border-card p-5 sm:p-6 shadow-card space-y-5">
+	<div class="bg-card rounded-lg border border-border p-5 sm:p-6 space-y-5">
 		<!-- Date/Time -->
 		<div class="flex items-start gap-3">
 			<Clock size={18} class="text-muted-foreground mt-0.5 flex-shrink-0" />
@@ -295,7 +295,7 @@
 	<!-- Cancel action -->
 	{#if isCancellable()}
 		{#if cancelError}
-			<div class="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+			<div class="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
 				<AlertCircle size={16} class="flex-shrink-0" />
 				{cancelError}
 			</div>

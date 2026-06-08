@@ -147,8 +147,7 @@
 		activeThreadId = threadId;
 		pollingMessages = [];
 
-		// Clear the unread badge immediately so the UI responds without waiting
-		// for the next poll cycle.
+		// Clear the unread badge immediately
 		threads = threads.map((t) =>
 			t.thread_id === threadId ? { ...t, unread_count: 0 } : t
 		);
@@ -191,7 +190,7 @@
 </script>
 
 <svelte:head>
-	<title>Messages | Espace client</title>
+	<title>Messages | Leviosa</title>
 </svelte:head>
 
 {#if threads.length === 0 && !activeThreadId}
@@ -209,16 +208,16 @@
 		</p>
 	</div>
 {:else}
-	<div class="h-[calc(100vh-4rem)] flex flex-col -mx-4 -my-6 lg:-my-10">
+	<div class="h-[calc(100vh-8rem)] flex flex-col -mx-4 -my-6 lg:-my-10">
 		<!-- Header -->
-		<div class="border-b border-border px-6 py-4">
+		<div class="border-b border-border px-6 py-4 bg-card">
 			<h1 class="text-2xl font-bold text-foreground">Messages</h1>
 		</div>
 
 		<div class="flex flex-1 overflow-hidden">
 			<!-- Conversation List -->
 			<div
-				class="w-full lg:w-80 xl:w-96 border-r border-border flex-shrink-0 overflow-y-auto {activeThreadId
+				class="w-full lg:w-80 xl:w-96 border-r border-border flex-shrink-0 overflow-y-auto bg-card {activeThreadId
 					? 'hidden lg:block'
 					: 'block'}"
 			>
@@ -273,10 +272,10 @@
 
 			<!-- Message Thread -->
 			{#if activeThread}
-				<div class="flex-1 flex flex-col overflow-hidden {activeThreadId ? 'block' : 'hidden lg:block'}">
+				<div class="flex-1 flex flex-col overflow-hidden bg-background {activeThreadId ? 'block' : 'hidden lg:block'}">
 					<!-- Thread Header -->
 					<div
-						class="px-6 py-4 border-b border-border flex items-center gap-3"
+						class="px-6 py-4 border-b border-border flex items-center gap-3 bg-card"
 					>
 						<button
 							class="lg:hidden p-1 rounded-md hover:bg-muted transition-colors text-muted-foreground"
@@ -327,7 +326,7 @@
 					</div>
 
 					<!-- Compose -->
-					<div class="px-6 py-4 border-t border-border">
+					<div class="px-6 py-4 border-t border-border bg-card">
 						<div class="flex items-center gap-3">
 							<input
 								type="text"

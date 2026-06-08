@@ -4,7 +4,6 @@
 	import {
 		Clock,
 		AlertCircle,
-		CalendarX,
 		ArrowRight,
 		XCircle,
 	} from '@lucide/svelte';
@@ -35,11 +34,11 @@
 
 	function statusBadge(status: string): string {
 		switch (status) {
-			case 'confirmed': return 'bg-blue-100 text-blue-700';
-			case 'completed': return 'bg-green-100 text-green-700';
-			case 'cancelled': return 'bg-red-100 text-red-700';
-			case 'no_show': return 'bg-orange-100 text-orange-700';
-			default: return 'bg-gray-100 text-gray-700';
+			case 'confirmed': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+			case 'completed': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+			case 'cancelled': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+			case 'no_show': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+			default: return 'bg-muted text-muted-foreground';
 		}
 	}
 
@@ -80,10 +79,6 @@
 		['cancelled', 'Annulées'],
 	];
 
-	/** Check if a confirmed upcoming booking is within the cancellation window.
-	 *  We rely on the backend to enforce the product's cancellation_hours;
-	 *  we just gate the button visibility on confirmed + future bookings.
-	 */
 	function isCancellable(booking: any): boolean {
 		if (booking.status !== 'confirmed') return false;
 		return new Date(booking.slot_start_time) > now;
@@ -117,8 +112,8 @@
 
 <div class="space-y-6">
 	<div>
-		<h1 class="text-2xl lg:text-3xl font-bold text-foreground">Mes réservations</h1>
-		<p class="text-muted-foreground mt-1">Historique de vos séances</p>
+		<h1 class="text-3xl lg:text-4xl font-bold text-foreground mb-1">Mes réservations</h1>
+		<p class="text-muted-foreground">Historique de vos séances</p>
 	</div>
 
 	<!-- Tabs -->
@@ -126,7 +121,7 @@
 		{#each tabs as [val, label]}
 			<button
 				class="px-4 py-2 rounded-md text-sm font-medium transition-colors {activeTab === val
-					? 'bg-card shadow-sm text-foreground'
+					? 'bg-background shadow-sm text-foreground'
 					: 'text-muted-foreground hover:text-foreground'}"
 				onclick={() => { activeTab = val; cancelError = ''; }}
 			>
@@ -137,7 +132,7 @@
 
 	<!-- Error -->
 	{#if cancelError}
-		<div class="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+		<div class="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
 			<AlertCircle size={16} class="flex-shrink-0" />
 			{cancelError}
 		</div>
@@ -146,7 +141,7 @@
 	<!-- Bookings list -->
 	<div class="space-y-3">
 		{#each filtered as booking (booking.id)}
-			<div class="bg-card rounded-lg border border-border-card p-4 sm:p-5 shadow-card hover:shadow-sm transition-shadow">
+			<div class="bg-card rounded-lg border border-border p-4 sm:p-5 hover:bg-muted/30 transition-colors">
 				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 					<!-- Info -->
 					<div class="flex-1 min-w-0">
@@ -155,8 +150,8 @@
 								{statusLabel(booking.status)}
 							</span>
 							<span class="px-2 py-0.5 rounded-full text-xs border {booking.payment_status === 'paid'
-								? 'bg-green-50 text-green-600 border-green-200'
-								: 'bg-gray-50 text-gray-600 border-gray-200'}">
+								? 'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800'
+								: 'bg-muted text-muted-foreground border-border'}">
 								{paymentStatusLabel(booking.payment_status)}
 							</span>
 						</div>
@@ -180,7 +175,7 @@
 						</a>
 						{#if isCancellable(booking)}
 							<button
-								class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors disabled:opacity-50"
+								class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-md hover:bg-red-100 dark:hover:bg-red-900 transition-colors disabled:opacity-50"
 								onclick={() => cancelBooking(booking.id)}
 								disabled={cancellingId === booking.id}
 							>
@@ -192,7 +187,7 @@
 				</div>
 			</div>
 		{:else}
-			<div class="bg-card rounded-lg border border-border-card p-12 text-center text-muted-foreground shadow-card">
+			<div class="bg-card rounded-lg border border-border p-12 text-center text-muted-foreground">
 				Aucune réservation trouvée
 			</div>
 		{/each}

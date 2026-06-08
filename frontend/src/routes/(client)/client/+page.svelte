@@ -23,10 +23,10 @@
 
 	function statusBadge(status: string): string {
 		switch (status) {
-			case 'confirmed': return 'bg-accent/30 text-accent-foreground';
-			case 'completed': return 'bg-success-muted text-success';
-			case 'cancelled': return 'bg-destructive/10 text-destructive';
-			case 'no_show': return 'bg-tertiary/10 text-dark-600';
+			case 'confirmed': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+			case 'completed': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+			case 'cancelled': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+			case 'no_show': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
 			default: return 'bg-muted text-muted-foreground';
 		}
 	}
@@ -49,10 +49,10 @@
 <div class="space-y-8">
 	<!-- Welcome -->
 	<div>
-		<h1 class="text-2xl lg:text-3xl font-bold text-foreground">
+		<h1 class="text-3xl lg:text-4xl font-bold text-foreground mb-1">
 			{data.user?.firstname ? `Bonjour, ${data.user.firstname}` : 'Bonjour'}
 		</h1>
-		<p class="text-muted-foreground mt-1">
+		<p class="text-muted-foreground">
 			{data.nextBooking ? 'Votre prochaine séance est planifiée.' : 'Aucune séance à venir — réservez dès maintenant.'}
 		</p>
 	</div>
@@ -65,10 +65,10 @@
 		</h2>
 
 		{#if data.nextBooking}
-			<div class="bg-card rounded-lg border border-border-card p-5 shadow-card">
+			<div class="bg-card rounded-lg border border-border p-6">
 				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 					<div>
-						<div class="flex items-center gap-2 mb-1">
+						<div class="flex items-center gap-2 mb-2">
 							<span class="px-2.5 py-0.5 rounded-full text-xs font-medium {statusBadge(data.nextBooking.status)}">
 								{statusLabel(data.nextBooking.status)}
 							</span>
@@ -93,7 +93,7 @@
 				</div>
 			</div>
 		{:else}
-			<div class="bg-card rounded-lg border border-border-card p-8 text-center shadow-card">
+			<div class="bg-card rounded-lg border border-border p-8 text-center">
 				<div class="flex justify-center mb-3 text-muted-foreground">
 					<CalendarDays size={32} />
 				</div>
@@ -135,7 +135,7 @@
 		{#if data.recentCompleted.length > 0}
 			<div class="space-y-3">
 				{#each data.recentCompleted as booking (booking.id)}
-					<div class="bg-card rounded-lg border border-border-card p-4 shadow-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+					<div class="bg-card rounded-lg border border-border p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 						<div>
 							<p class="text-foreground font-medium text-sm">{formatDate(booking.slot_start_time)}</p>
 							<p class="text-sm text-muted-foreground">{formatTime(booking.slot_start_time)} – {formatTime(booking.slot_end_time)}</p>
@@ -152,7 +152,7 @@
 				{/each}
 			</div>
 		{:else}
-			<div class="bg-card rounded-lg border border-border-card p-6 text-center text-muted-foreground shadow-card">
+			<div class="bg-card rounded-lg border border-border p-6 text-center text-muted-foreground">
 				Aucune réservation terminée
 			</div>
 		{/if}
