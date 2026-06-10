@@ -153,7 +153,7 @@
                 <div
                     class="w-16 h-16 rounded-full bg-dark-04 flex items-center justify-center mb-4"
                 >
-                    <ImageIcon size={32} class="text-dark-400" />
+                    <ImageIcon size={32} class="text-muted-foreground" />
                 </div>
                 <h3 class="text-lg font-medium mb-2">Aucune catégorie</h3>
                 <p class="text-sm text-foreground-alt mb-6 max-w-sm">
@@ -196,7 +196,7 @@
                                 >
                                     <ImageIcon
                                         size={48}
-                                        class="text-dark-300"
+                                        class="text-muted-foreground"
                                     />
                                 </div>
                             {/if}

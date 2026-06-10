@@ -54,7 +54,7 @@
                     {#each triggers as trigger}
                         <TabsTrigger
                             value={trigger.value}
-                            class="px-2 py-1.75 md:px-4 md:py-2 md:h-8 rounded-none bg-transparent border-b-3 data-[state=active]:shadow-none mb-[-2px] data-[state=active]:border-b-dark-900 data-[state=active]:text-dark-900 data-[state=inactive]:border-transparent data-[state=inactive]:text-dark-400 data-[state=inactive]:hover:bg-transparent  data-[state=inactive]:hover:text-dark-600 transition-colors cursor-pointer"
+                            class="px-2 py-1.75 md:px-4 md:py-2 md:h-8 rounded-none bg-transparent border-b-3 data-[state=active]:shadow-none mb-[-2px] data-[state=active]:border-b-foreground data-[state=active]:text-foreground data-[state=inactive]:border-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-transparent  data-[state=inactive]:hover:text-foreground-alt transition-colors cursor-pointer"
                         >
                             {trigger.name}
                         </TabsTrigger>

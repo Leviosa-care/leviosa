@@ -56,7 +56,7 @@
             <!-- Primary CTA -->
             <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-4" use:reveal={{ preset: "fade-up", delay: 250 }}>
                 <button
-                    class="group w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white hover:bg-white/90 text-dark-900 text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
+                    class="group w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white hover:bg-white/90 text-foreground text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 shadow-mini hover:shadow-card cursor-pointer"
                 >
                     Prendre rendez-vous
                     <span

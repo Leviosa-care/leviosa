@@ -41,17 +41,17 @@
 </script>
 
 <!-- Hero -->
-<section class="py-28 sm:py-36 bg-dark-25">
+<section class="py-28 sm:py-36 bg-background-section">
     <div
         class="max-w-3xl mx-auto px-4 sm:px-6 text-center"
         use:reveal={{ preset: "fade-up", delay: 100 }}
     >
         <h1
-            class="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-dark-900 leading-[1.1] mb-6"
+            class="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-foreground leading-[1.1] mb-6"
         >
             Prendre soin de soi,<br />simplement.
         </h1>
-        <p class="text-lg text-dark-500 leading-relaxed max-w-xl mx-auto">
+        <p class="text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto">
             Un accès direct aux experts qui veillent sur votre corps et votre
             esprit — où que vous en soyez dans la vie.
         </p>
@@ -66,16 +66,16 @@
             use:reveal={{ preset: "fade-up", delay: 100 }}
         >
             <span
-                class="text-xs font-medium text-dark-500 uppercase tracking-widest bg-dark-100 px-3 py-1 rounded-full"
+                class="text-xs font-medium text-muted-foreground uppercase tracking-widest bg-surface-hover px-3 py-1 rounded-full"
             >
                 Notre Mission
             </span>
             <h2
-                class="mt-6 text-3xl md:text-4xl font-semibold tracking-tight text-dark-900"
+                class="mt-6 text-3xl md:text-4xl font-semibold tracking-tight text-foreground"
             >
                 Né d'un constat simple.
             </h2>
-            <p class="mt-4 text-base md:text-lg text-dark-500 leading-relaxed">
+            <p class="mt-4 text-base md:text-lg text-muted-foreground leading-relaxed">
                 Trouver le bon expert prend trop de temps. Les échanges
                 s'étirent, les disponibilités restent floues. Leviosa change ça
                 — une réservation directe, des praticiens vérifiés, un
@@ -86,7 +86,7 @@
 </section>
 
 <!-- Ce qui nous rassemble -->
-<section class="py-20 bg-dark-900 relative overflow-hidden">
+<section class="py-20 bg-foreground relative overflow-hidden">
     <div
         class="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"
     ></div>
@@ -138,12 +138,12 @@
             use:reveal={{ preset: "fade-up", delay: 100 }}
         >
             <span
-                class="text-xs font-medium text-dark-500 uppercase tracking-widest bg-dark-100 px-3 py-1 rounded-full"
+                class="text-xs font-medium text-muted-foreground uppercase tracking-widest bg-surface-hover px-3 py-1 rounded-full"
             >
                 Nos spécialités
             </span>
             <h2
-                class="mt-6 text-3xl md:text-4xl font-semibold tracking-tight text-dark-900"
+                class="mt-6 text-3xl md:text-4xl font-semibold tracking-tight text-foreground"
             >
                 Ce que vous trouverez ici.
             </h2>
@@ -152,19 +152,19 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {#each domains as domain, i}
                 <div
-                    class="group p-8 rounded-2xl bg-dark-50 border border-dark-100 hover:border-dark-200 transition-colors duration-200 flex flex-col"
+                    class="group p-8 rounded-2xl bg-surface border border-border-input hover:border-border-input-hover transition-colors duration-200 flex flex-col"
                     use:reveal={{ preset: "fade-up", delay: 150 + i * 75 }}
                 >
                     <span
-                        class="text-xs font-medium text-dark-400 font-mono tracking-wider"
+                        class="text-xs font-medium text-muted-foreground font-mono tracking-wider"
                         >{domain.number}</span
                     >
                     <h3
-                        class="mt-4 text-lg font-semibold text-dark-900 tracking-tight"
+                        class="mt-4 text-lg font-semibold text-foreground tracking-tight"
                     >
                         {domain.label}
                     </h3>
-                    <p class="mt-2 text-sm text-dark-500 leading-relaxed">
+                    <p class="mt-2 text-sm text-muted-foreground leading-relaxed">
                         {domain.description}
                     </p>
                 </div>
@@ -174,19 +174,19 @@
 </section>
 
 <!-- Nos valeurs -->
-<section class="py-20 bg-dark-25">
+<section class="py-20 bg-background-section">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
             class="max-w-2xl mx-auto text-center mb-12"
             use:reveal={{ preset: "fade-up", delay: 100 }}
         >
             <span
-                class="text-xs font-medium text-dark-500 uppercase tracking-widest bg-dark-100 px-3 py-1 rounded-full"
+                class="text-xs font-medium text-muted-foreground uppercase tracking-widest bg-surface-hover px-3 py-1 rounded-full"
             >
                 Nos valeurs
             </span>
             <h2
-                class="mt-6 text-3xl md:text-4xl font-semibold tracking-tight text-dark-900"
+                class="mt-6 text-3xl md:text-4xl font-semibold tracking-tight text-foreground"
             >
                 Fondé sur la clarté, pas la complexité.
             </h2>
@@ -194,18 +194,18 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
             <div
-                class="group h-full p-8 rounded-2xl bg-white border border-dark-100 hover:border-dark-200 transition-colors duration-200 flex flex-col items-start text-left"
+                class="group h-full p-8 rounded-2xl bg-white border border-border-input hover:border-border-input-hover transition-colors duration-200 flex flex-col items-start text-left"
                 use:reveal={{ preset: "fade-up", delay: 150 }}
             >
                 <div
-                    class="w-12 h-12 rounded-xl bg-dark-50 border border-dark-200 flex items-center justify-center shadow-sm mb-6 group-hover:scale-105 transition-transform duration-200"
+                    class="w-12 h-12 rounded-xl bg-surface border border-border-input-hover flex items-center justify-center shadow-mini mb-6 group-hover:scale-105 transition-transform duration-200"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="22"
                         height="22"
                         viewBox="0 0 24 24"
-                        class="text-dark-900"
+                        class="text-foreground"
                     >
                         <g
                             fill="none"
@@ -221,10 +221,10 @@
                         </g>
                     </svg>
                 </div>
-                <h3 class="text-lg font-semibold text-dark-900 tracking-tight mb-3">
+                <h3 class="text-lg font-semibold text-foreground tracking-tight mb-3">
                     Accès direct aux experts
                 </h3>
-                <p class="text-sm leading-relaxed text-dark-500">
+                <p class="text-sm leading-relaxed text-muted-foreground">
                     Vous échangez directement avec les praticiens. Pas
                     d'intermédiaires, pas de couches de traduction, juste une
                     collaboration efficace.
@@ -232,18 +232,18 @@
             </div>
 
             <div
-                class="group h-full p-8 rounded-2xl bg-white border border-dark-100 hover:border-dark-200 transition-colors duration-200 flex flex-col items-start text-left"
+                class="group h-full p-8 rounded-2xl bg-white border border-border-input hover:border-border-input-hover transition-colors duration-200 flex flex-col items-start text-left"
                 use:reveal={{ preset: "fade-up", delay: 225 }}
             >
                 <div
-                    class="w-12 h-12 rounded-xl bg-dark-50 border border-dark-200 flex items-center justify-center shadow-sm mb-6 group-hover:scale-105 transition-transform duration-200"
+                    class="w-12 h-12 rounded-xl bg-surface border border-border-input-hover flex items-center justify-center shadow-mini mb-6 group-hover:scale-105 transition-transform duration-200"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="22"
                         height="22"
                         viewBox="0 0 24 24"
-                        class="text-dark-900"
+                        class="text-foreground"
                     >
                         <g
                             fill="none"
@@ -261,10 +261,10 @@
                         </g>
                     </svg>
                 </div>
-                <h3 class="text-lg font-semibold text-dark-900 tracking-tight mb-3">
+                <h3 class="text-lg font-semibold text-foreground tracking-tight mb-3">
                     Exécution pragmatique
                 </h3>
-                <p class="text-sm leading-relaxed text-dark-500">
+                <p class="text-sm leading-relaxed text-muted-foreground">
                     Notre priorité est de vous apporter une valeur concrète dès
                     la première séance. Pas de promesses creuses, des résultats
                     réels.
@@ -272,18 +272,18 @@
             </div>
 
             <div
-                class="group h-full p-8 rounded-2xl bg-white border border-dark-100 hover:border-dark-200 transition-colors duration-200 flex flex-col items-start text-left"
+                class="group h-full p-8 rounded-2xl bg-white border border-border-input hover:border-border-input-hover transition-colors duration-200 flex flex-col items-start text-left"
                 use:reveal={{ preset: "fade-up", delay: 300 }}
             >
                 <div
-                    class="w-12 h-12 rounded-xl bg-dark-50 border border-dark-200 flex items-center justify-center shadow-sm mb-6 group-hover:scale-105 transition-transform duration-200"
+                    class="w-12 h-12 rounded-xl bg-surface border border-border-input-hover flex items-center justify-center shadow-mini mb-6 group-hover:scale-105 transition-transform duration-200"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="22"
                         height="22"
                         viewBox="0 0 24 24"
-                        class="text-dark-900"
+                        class="text-foreground"
                     >
                         <g
                             fill="none"
@@ -299,10 +299,10 @@
                         </g>
                     </svg>
                 </div>
-                <h3 class="text-lg font-semibold text-dark-900 tracking-tight mb-3">
+                <h3 class="text-lg font-semibold text-foreground tracking-tight mb-3">
                     Transparence totale
                 </h3>
-                <p class="text-sm leading-relaxed text-dark-500">
+                <p class="text-sm leading-relaxed text-muted-foreground">
                     Délais clairs, tarification fixe et retours honnêtes. Si un
                     expert n'est pas adapté à votre besoin, nous vous le dirons
                     immédiatement.
@@ -313,20 +313,20 @@
 </section>
 
 <!-- CTA final -->
-<section class="py-24 bg-dark-25 relative overflow-hidden">
+<section class="py-24 bg-background-section relative overflow-hidden">
     <div
         class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-3xl opacity-40 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100 via-transparent to-transparent pointer-events-none"
     ></div>
 
     <div class="relative max-w-3xl mx-auto px-6 text-center z-10">
         <h2
-            class="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-dark-900 mb-6"
+            class="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-foreground mb-6"
             use:reveal={{ preset: "fade-up", delay: 100 }}
         >
             Prêt·e à prendre soin de vous ?
         </h2>
         <p
-            class="text-lg text-dark-500 mb-10 max-w-lg mx-auto leading-relaxed"
+            class="text-lg text-muted-foreground mb-10 max-w-lg mx-auto leading-relaxed"
             use:reveal={{ preset: "fade-up", delay: 150 }}
         >
             Rejoignez les milliers de personnes qui ont déjà trouvé leur
@@ -338,7 +338,7 @@
         >
             <a
                 href="/book"
-                class="inline-flex justify-center items-center gap-2 bg-dark-900 hover:bg-dark-800 text-white text-sm font-medium px-8 py-3.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+                class="inline-flex justify-center items-center gap-2 bg-foreground hover:bg-foreground-alt text-white text-sm font-medium px-8 py-3.5 rounded-xl transition-all duration-200 shadow-mini hover:shadow-card"
             >
                 Prendre rendez-vous
                 <span
@@ -350,7 +350,7 @@
             </a>
             <a
                 href="/auth"
-                class="inline-flex justify-center items-center gap-2 bg-transparent hover:bg-dark-100 border border-dark-200 hover:border-dark-300 text-dark-700 hover:text-dark-900 text-sm font-medium px-8 py-3.5 rounded-xl transition-all duration-200"
+                class="inline-flex justify-center items-center gap-2 bg-transparent hover:bg-surface-hover border border-border-input-hover hover:border-border-input-hover text-foreground-alt hover:text-foreground text-sm font-medium px-8 py-3.5 rounded-xl transition-all duration-200"
             >
                 Rejoindre en tant qu'expert
             </a>

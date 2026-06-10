@@ -9,20 +9,20 @@
     ];
 </script>
 
-<section class="py-14 bg-dark-25 border-t border-b border-dark-100">
+<section class="py-14 bg-background-section border-t border-b border-border-input">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
             {#each stats as stat, i}
                 <div
-                    class="flex flex-col items-center text-center {i < 3 ? 'md:border-r md:border-dark-100' : ''}"
+                    class="flex flex-col items-center text-center {i < 3 ? 'md:border-r md:border-border-input' : ''}"
                     use:reveal={{ preset: "fade-up", delay: 100 + i * 75 }}
                 >
                     <span
-                        class="text-3xl sm:text-4xl font-semibold tracking-tight text-dark-900"
+                        class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground"
                     >
                         {stat.value}
                     </span>
-                    <span class="mt-1.5 text-sm text-dark-500">{stat.label}</span>
+                    <span class="mt-1.5 text-sm text-muted-foreground">{stat.label}</span>
                 </div>
             {/each}
         </div>

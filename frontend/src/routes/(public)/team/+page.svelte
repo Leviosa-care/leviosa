@@ -29,7 +29,7 @@
     <!-- Hero -->
     <div class="relative">
         <div
-            class="absolute inset-0 bg-gradient-to-br from-dark-50/60 via-white/50 to-transparent pointer-events-none"
+            class="absolute inset-0 bg-gradient-to-br from-surface/60 via-white/50 to-transparent pointer-events-none"
         ></div>
 
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
@@ -38,26 +38,26 @@
                 <div class="max-w-2xl">
                     <!-- Badge -->
                     <div
-                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dark-50 border border-dark-200 mb-8"
+                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface border border-border-input-hover mb-8"
                         use:reveal={{ preset: "fade-down", delay: 100 }}
                     >
-                        <span class="text-xs font-semibold text-dark-500 uppercase tracking-wider"
+                        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
                             >Notre équipe</span
                         >
                     </div>
 
                     <!-- Headline with weight contrast -->
                     <h1
-                        class="text-5xl sm:text-6xl lg:text-7xl font-medium tracking-tight text-dark-900 leading-[1.05] mb-6"
+                        class="text-5xl sm:text-6xl lg:text-7xl font-medium tracking-tight text-foreground leading-[1.05] mb-6"
                         use:reveal={{ preset: "fade-up", delay: 150 }}
                     >
                         Une équipe engagée
                         <br class="hidden sm:block" />
-                        <span class="text-dark-400 font-light">Pour votre bien-être</span>
+                        <span class="text-muted-foreground font-light">Pour votre bien-être</span>
                     </h1>
 
                     <p
-                        class="text-lg md:text-xl text-dark-500 leading-relaxed font-normal mb-12"
+                        class="text-lg md:text-xl text-muted-foreground leading-relaxed font-normal mb-12"
                         use:reveal={{ preset: "fade-up", delay: 200 }}
                     >
                         Nos praticiens et coachs partagent une vision holistique de la santé.
@@ -71,18 +71,18 @@
                         use:reveal={{ preset: "fade-up", delay: 250 }}
                     >
                         <div>
-                            <p class="text-2xl md:text-3xl font-semibold text-dark-900">{totalPartners}+</p>
-                            <p class="text-sm text-dark-500 mt-0.5">praticiens experts</p>
+                            <p class="text-2xl md:text-3xl font-semibold text-foreground">{totalPartners}+</p>
+                            <p class="text-sm text-muted-foreground mt-0.5">praticiens experts</p>
                         </div>
-                        <div class="w-px h-10 bg-dark-200 self-stretch"></div>
+                        <div class="w-px h-10 bg-border-input-hover self-stretch"></div>
                         <div>
-                            <p class="text-2xl md:text-3xl font-semibold text-dark-900">{data.categories.length}</p>
-                            <p class="text-sm text-dark-500 mt-0.5">spécialités</p>
+                            <p class="text-2xl md:text-3xl font-semibold text-foreground">{data.categories.length}</p>
+                            <p class="text-sm text-muted-foreground mt-0.5">spécialités</p>
                         </div>
-                        <div class="w-px h-10 bg-dark-200 self-stretch"></div>
+                        <div class="w-px h-10 bg-border-input-hover self-stretch"></div>
                         <div>
-                            <p class="text-2xl md:text-3xl font-semibold text-dark-900">5 ★</p>
-                            <p class="text-sm text-dark-500 mt-0.5">note moyenne</p>
+                            <p class="text-2xl md:text-3xl font-semibold text-foreground">5 ★</p>
+                            <p class="text-sm text-muted-foreground mt-0.5">note moyenne</p>
                         </div>
                     </div>
                 </div>
@@ -90,7 +90,7 @@
                 <!-- Right: partner portrait cards -->
                 <div class="hidden lg:flex flex-col gap-3" use:reveal={{ preset: "fade-up", delay: 200 }}>
                     {#if heroPartners[0]}
-                        <div class="bg-dark-900 text-white rounded-2xl p-6 shadow-md flex items-center gap-4">
+                        <div class="bg-foreground text-white rounded-2xl p-6 shadow-card flex items-center gap-4">
                             {#if heroPartners[0].picture}
                                 <img
                                     src={heroPartners[0].picture}
@@ -98,7 +98,7 @@
                                     class="w-14 h-14 rounded-xl object-cover flex-shrink-0"
                                 />
                             {:else}
-                                <div class="w-14 h-14 rounded-xl bg-dark-700 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                                <div class="w-14 h-14 rounded-xl bg-foreground-alt flex items-center justify-center text-sm font-semibold flex-shrink-0">
                                     {heroPartners[0].firstname[0]}{heroPartners[0].lastname[0]}
                                 </div>
                             {/if}
@@ -113,7 +113,7 @@
 
                     <div class="grid grid-cols-2 gap-3">
                         {#if heroPartners[1]}
-                            <div class="bg-white border border-dark-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col gap-3">
+                            <div class="bg-white border border-border-input rounded-2xl p-5 shadow-mini hover:shadow-card transition-shadow duration-200 flex flex-col gap-3">
                                 {#if heroPartners[1].picture}
                                     <img
                                         src={heroPartners[1].picture}
@@ -121,20 +121,20 @@
                                         class="w-10 h-10 rounded-lg object-cover"
                                     />
                                 {:else}
-                                    <div class="w-10 h-10 rounded-lg bg-dark-100 flex items-center justify-center text-xs font-semibold text-dark-600">
+                                    <div class="w-10 h-10 rounded-lg bg-surface-hover flex items-center justify-center text-xs font-semibold text-foreground-alt">
                                         {heroPartners[1].firstname[0]}{heroPartners[1].lastname[0]}
                                     </div>
                                 {/if}
                                 <div>
-                                    <p class="text-dark-900 font-semibold text-sm leading-snug">
+                                    <p class="text-foreground font-semibold text-sm leading-snug">
                                         {heroPartners[1].firstname} {heroPartners[1].lastname}
                                     </p>
-                                    <p class="text-dark-400 text-xs mt-0.5">{heroPartners[1].occupation}</p>
+                                    <p class="text-muted-foreground text-xs mt-0.5">{heroPartners[1].occupation}</p>
                                 </div>
                             </div>
                         {/if}
                         {#if heroPartners[2]}
-                            <div class="bg-white border border-dark-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col gap-3">
+                            <div class="bg-white border border-border-input rounded-2xl p-5 shadow-mini hover:shadow-card transition-shadow duration-200 flex flex-col gap-3">
                                 {#if heroPartners[2].picture}
                                     <img
                                         src={heroPartners[2].picture}
@@ -142,22 +142,22 @@
                                         class="w-10 h-10 rounded-lg object-cover"
                                     />
                                 {:else}
-                                    <div class="w-10 h-10 rounded-lg bg-dark-100 flex items-center justify-center text-xs font-semibold text-dark-600">
+                                    <div class="w-10 h-10 rounded-lg bg-surface-hover flex items-center justify-center text-xs font-semibold text-foreground-alt">
                                         {heroPartners[2].firstname[0]}{heroPartners[2].lastname[0]}
                                     </div>
                                 {/if}
                                 <div>
-                                    <p class="text-dark-900 font-semibold text-sm leading-snug">
+                                    <p class="text-foreground font-semibold text-sm leading-snug">
                                         {heroPartners[2].firstname} {heroPartners[2].lastname}
                                     </p>
-                                    <p class="text-dark-400 text-xs mt-0.5">{heroPartners[2].occupation}</p>
+                                    <p class="text-muted-foreground text-xs mt-0.5">{heroPartners[2].occupation}</p>
                                 </div>
                             </div>
                         {/if}
                     </div>
 
                     {#if totalPartners > 3}
-                        <p class="text-xs text-dark-400 text-right">
+                        <p class="text-xs text-muted-foreground text-right">
                             +{totalPartners - 3} autres praticiens disponibles
                         </p>
                     {/if}
@@ -171,7 +171,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-10 lg:gap-16 items-start">
             <!-- Sticky Category Sidebar -->
             <div class="lg:sticky lg:top-24" use:reveal={{ preset: "fade-up", delay: 150 }}>
-                <p class="uppercase text-dark-500 text-xs font-semibold tracking-wider mb-4">
+                <p class="uppercase text-muted-foreground text-xs font-semibold tracking-wider mb-4">
                     catégories
                 </p>
                 <div
@@ -195,11 +195,11 @@
                                     use:reveal={{ preset: "fade-up", delay: 100 }}
                                 >
                                     <h2
-                                        class="text-2xl md:text-3xl font-semibold text-dark-900 tracking-tight"
+                                        class="text-2xl md:text-3xl font-semibold text-foreground tracking-tight"
                                     >
                                         {category.name}
                                     </h2>
-                                    <p class="text-sm md:text-base text-dark-500 mt-1">
+                                    <p class="text-sm md:text-base text-muted-foreground mt-1">
                                         {category.description}
                                     </p>
                                 </div>
@@ -215,11 +215,11 @@
                     {:else}
                         <div class="mb-2" use:reveal={{ preset: "fade-up", delay: 100 }}>
                             <h2
-                                class="text-2xl md:text-3xl font-semibold text-dark-900 tracking-tight"
+                                class="text-2xl md:text-3xl font-semibold text-foreground tracking-tight"
                             >
                                 {activeCategory}
                             </h2>
-                            <p class="text-sm md:text-base text-dark-500 mt-1">
+                            <p class="text-sm md:text-base text-muted-foreground mt-1">
                                 {activeDescription}
                             </p>
                         </div>
@@ -241,8 +241,8 @@
     <button
         onclick={() => (activeCategory = name)}
         class="{activeCategory === name
-            ? 'bg-dark-900 text-white border-dark-900 shadow-sm font-medium'
-            : 'bg-white text-dark-600 border-dark-200 hover:border-dark-300 hover:text-dark-900 font-normal'} border text-sm px-5 py-3 rounded-xl whitespace-nowrap transition-all duration-200 cursor-pointer lg:w-full lg:text-left"
+            ? 'bg-foreground text-white border-foreground shadow-mini font-medium'
+            : 'bg-white text-foreground-alt border-border-input-hover hover:border-border-input-hover hover:text-foreground font-normal'} border text-sm px-5 py-3 rounded-xl whitespace-nowrap transition-all duration-200 cursor-pointer lg:w-full lg:text-left"
     >
         {name}
     </button>

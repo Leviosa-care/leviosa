@@ -29,7 +29,7 @@
 </script>
 
 <div
-	class="pointer-events-auto flex items-center gap-3 p-4 rounded-lg border shadow-lg {colorClass}"
+	class="pointer-events-auto flex items-center gap-3 p-4 rounded-lg border shadow-popover {colorClass}"
 	transition:fly|fade={{ y: -20, duration: 300 }}
 >
 	<IconComponent size={20} class="flex-shrink-0" />

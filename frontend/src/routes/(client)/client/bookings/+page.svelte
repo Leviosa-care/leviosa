@@ -121,7 +121,7 @@
 		{#each tabs as [val, label]}
 			<button
 				class="px-4 py-2 rounded-md text-sm font-medium transition-colors {activeTab === val
-					? 'bg-background shadow-sm text-foreground'
+					? 'bg-background shadow-mini text-foreground'
 					: 'text-muted-foreground hover:text-foreground'}"
 				onclick={() => { activeTab = val; cancelError = ''; }}
 			>

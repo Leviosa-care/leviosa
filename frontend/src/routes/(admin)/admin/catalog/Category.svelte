@@ -156,7 +156,7 @@
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 			{#each filteredCategories as cat (cat.id)}
 				<div
-					class="bg-card border border-border-card rounded-lg p-5 hover:shadow-md transition-shadow"
+					class="bg-card border border-border-card rounded-lg p-5 hover:shadow-card transition-shadow"
 				>
 					<div class="flex items-start justify-between mb-3">
 						<div class="flex items-center gap-3">
@@ -219,7 +219,7 @@
 		onclick={closeEditDialog}
 	>
 		<div
-			class="bg-background border border-border-card rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+			class="bg-background border border-border-card rounded-lg shadow-popover w-full max-w-md mx-4 overflow-hidden"
 			onclick={(e) => e.stopPropagation()}
 		>
 			<div class="px-6 py-4 border-b border-border-card">
@@ -304,7 +304,7 @@
 		onclick={closeDeleteDialog}
 	>
 		<div
-			class="bg-background border border-border-card rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+			class="bg-background border border-border-card rounded-lg shadow-popover w-full max-w-md mx-4 overflow-hidden"
 			onclick={(e) => e.stopPropagation()}
 		>
 			<div class="p-6">

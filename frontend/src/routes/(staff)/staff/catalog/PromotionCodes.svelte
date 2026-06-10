@@ -406,7 +406,7 @@
                 <div
                     class="w-16 h-16 rounded-full bg-dark-04 flex items-center justify-center mb-4"
                 >
-                    <Tag size={32} class="text-dark-400" />
+                    <Tag size={32} class="text-muted-foreground" />
                 </div>
                 <h3 class="text-lg font-medium mb-2">
                     {promotionCodes.length === 0 || selectedStatus === ALL_STATUSES

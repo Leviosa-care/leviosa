@@ -30,27 +30,27 @@
 </script>
 
 <section
-    class="py-24 bg-gradient-to-b from-white to-dark-50/50 relative overflow-hidden"
+    class="py-24 bg-gradient-to-b from-white to-surface/50 relative overflow-hidden"
 >
     <!-- Background Decor -->
     <div
-        class="absolute inset-0 opacity-[0.4] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-dark-100 via-transparent to-transparent pointer-events-none"
+        class="absolute inset-0 opacity-[0.4] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-surface-hover via-transparent to-transparent pointer-events-none"
     ></div>
 
     <div class="relative max-w-5xl mx-auto px-4 sm:px-6">
         <!-- Section Header -->
         <div class="text-center mb-16" use:reveal={{ preset: "fade-up", delay: 100 }}>
             <span
-                class="text-sm font-semibold text-dark-400 uppercase tracking-wider"
+                class="text-sm font-semibold text-muted-foreground uppercase tracking-wider"
                 >Témoignages</span
             >
             <h2
-                class="mt-3 text-3xl md:text-4xl font-semibold tracking-tight text-dark-900"
+                class="mt-3 text-3xl md:text-4xl font-semibold tracking-tight text-foreground"
             >
                 Ce que disent nos patients
             </h2>
             <p
-                class="mt-4 text-base md:text-lg text-dark-500 leading-relaxed font-normal max-w-xl mx-auto"
+                class="mt-4 text-base md:text-lg text-muted-foreground leading-relaxed font-normal max-w-xl mx-auto"
             >
                 Des résultats concrets, des relations durables. Voici le retour
                 de celles et ceux qui nous font confiance au quotidien.
@@ -61,7 +61,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
             {#each testimonials as testimonial, i}
                 <div
-                    class="group h-full p-8 rounded-2xl bg-white border border-dark-100 hover:border-dark-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col items-start text-left"
+                    class="group h-full p-8 rounded-2xl bg-white border border-border-input hover:border-border-input-hover shadow-mini hover:shadow-card transition-all duration-200 flex flex-col items-start text-left"
                     use:reveal={{ preset: "fade-up", delay: 150 + i * 80 }}
                 >
                     <!-- Rating Stars -->
@@ -89,7 +89,7 @@
                     </div>
 
                     <!-- Quote -->
-                    <blockquote class="text-base leading-relaxed text-dark-700 mb-8 flex-1">
+                    <blockquote class="text-base leading-relaxed text-foreground-alt mb-8 flex-1">
                         "{testimonial.quote}"
                     </blockquote>
 
@@ -98,15 +98,15 @@
                         {#if testimonial.picture}
                             <img src={testimonial.picture} alt={testimonial.name} class="w-10 h-10 rounded-full object-cover flex-shrink-0" />
                         {:else}
-                            <div class="w-10 h-10 rounded-full bg-dark-100 flex items-center justify-center text-xs font-semibold text-dark-600 flex-shrink-0">
+                            <div class="w-10 h-10 rounded-full bg-surface-hover flex items-center justify-center text-xs font-semibold text-foreground-alt flex-shrink-0">
                                 {testimonial.initials}
                             </div>
                         {/if}
                         <div>
-                            <div class="text-sm font-semibold text-dark-900">
+                            <div class="text-sm font-semibold text-foreground">
                                 {testimonial.name}
                             </div>
-                            <div class="text-xs text-dark-500 flex items-center gap-1">
+                            <div class="text-xs text-muted-foreground flex items-center gap-1">
                                 <span>{testimonial.role}</span>
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -141,7 +141,7 @@
         <div class="mt-12 text-center">
             <a
                 href="/team"
-                class="group inline-flex items-center gap-2 text-sm font-medium text-dark-500 hover:text-dark-900 transition-colors px-4 py-2 rounded-full hover:bg-dark-100"
+                class="group inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-full hover:bg-surface-hover"
             >
                 Rencontrez l'équipe derrière les résultats
                 <svg
@@ -151,7 +151,7 @@
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
-                    class="iconify group-hover:translate-x-0.5 transition-transform text-dark-400 group-hover:text-dark-900 iconify--lucide"
+                    class="iconify group-hover:translate-x-0.5 transition-transform text-muted-foreground group-hover:text-foreground iconify--lucide"
                 >
                     <path
                         fill="none"

@@ -153,14 +153,14 @@
     }
 </script>
 
-<div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm">
+<div class="bg-white rounded-3xl p-6 md:p-8 shadow-mini">
     {#if phase === "credentials"}
         <div transition:fade={{ duration: 200 }}>
             <div class="text-center mb-6">
-                <h3 class="text-lg font-semibold text-dark-900 mb-2">
+                <h3 class="text-lg font-semibold text-foreground mb-2">
                     Créer votre compte en un clic
                 </h3>
-                <p class="text-dark-600 text-sm">
+                <p class="text-foreground-alt text-sm">
                     Renseignez un mot de passe pour accéder à vos réservations.
                 </p>
             </div>
@@ -175,14 +175,14 @@
                 <!-- Pre-filled name (read-only display) -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-medium text-dark-600 mb-1">Prénom</label>
-                        <div class="w-full px-4 pb-3 pt-3 border border-dark-100 rounded-xl bg-dark-50 text-dark-400 text-base">
+                        <label class="block text-sm font-medium text-foreground-alt mb-1">Prénom</label>
+                        <div class="w-full px-4 pb-3 pt-3 border border-border-input rounded-xl bg-surface text-muted-foreground text-base">
                             {guestInfo?.guest_first_name ?? ""}
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-dark-600 mb-1">Nom</label>
-                        <div class="w-full px-4 pb-3 pt-3 border border-dark-100 rounded-xl bg-dark-50 text-dark-400 text-base">
+                        <label class="block text-sm font-medium text-foreground-alt mb-1">Nom</label>
+                        <div class="w-full px-4 pb-3 pt-3 border border-border-input rounded-xl bg-surface text-muted-foreground text-base">
                             {guestInfo?.guest_last_name ?? ""}
                         </div>
                     </div>
@@ -202,8 +202,8 @@
                     </div>
                 {:else}
                     <div>
-                        <label class="block text-sm font-medium text-dark-600 mb-1">Email</label>
-                        <div class="w-full px-4 pb-3 pt-3 border border-dark-100 rounded-xl bg-dark-50 text-dark-400 text-base truncate">
+                        <label class="block text-sm font-medium text-foreground-alt mb-1">Email</label>
+                        <div class="w-full px-4 pb-3 pt-3 border border-border-input rounded-xl bg-surface text-muted-foreground text-base truncate">
                             {guestInfo.guest_email}
                         </div>
                         <input type="hidden" name="email" value={guestInfo.guest_email} />
@@ -241,8 +241,8 @@
                 <button
                     type="submit"
                     disabled={claimSubmitting}
-                    class="mt-2 justify-center items-center py-3.5 rounded-2xl bg-dark-900 text-white font-semibold text-base
-                           hover:bg-dark-800 focus-visible:ring-2 focus-visible:ring-dark-500 focus-visible:ring-offset-2
+                    class="mt-2 justify-center items-center py-3.5 rounded-2xl bg-foreground text-white font-semibold text-base
+                           hover:bg-foreground-alt focus-visible:ring-2 focus-visible:ring-muted-foreground focus-visible:ring-offset-2
                            focus-visible:outline-hidden transition-colors active:scale-[0.98] cursor-pointer
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -263,7 +263,7 @@
             <!-- Fallback link for no-JS -->
             <noscript>
                 <div class="mt-4 text-center">
-                    <a href="/auth" class="text-dark-600 hover:text-dark-900 underline text-sm">
+                    <a href="/auth" class="text-foreground-alt hover:text-foreground underline text-sm">
                         Créer un compte via le formulaire d'inscription
                     </a>
                 </div>
@@ -272,10 +272,10 @@
     {:else if phase === "otp"}
         <div transition:fade={{ duration: 200 }}>
             <div class="text-center mb-6">
-                <h3 class="text-lg font-semibold text-dark-900 mb-2">
+                <h3 class="text-lg font-semibold text-foreground mb-2">
                     Vérifiez votre email
                 </h3>
-                <p class="text-dark-600 text-sm">
+                <p class="text-foreground-alt text-sm">
                     Entrez le code à 6 chiffres envoyé à <strong>{otpEmail}</strong>.
                 </p>
             </div>
@@ -296,9 +296,9 @@
                             oninput={handleOTPInput}
                             onkeyup={handleOTPKeyup}
                             onpaste={handleOnPasteOTP}
-                            class="h-14 w-14 text-center rounded-xl border border-dark-200 bg-white hover:border-dark-300
-                                   focus:ring-2 focus:ring-dark-500 focus:ring-offset-2 focus:outline-hidden
-                                   text-xl font-mono text-dark-900 transition-colors"
+                            class="h-14 w-14 text-center rounded-xl border border-border-input-hover bg-white hover:border-border-input-hover
+                                   focus:ring-2 focus:ring-muted-foreground focus:ring-offset-2 focus:outline-hidden
+                                   text-xl font-mono text-foreground transition-colors"
                             type="text"
                             inputmode="numeric"
                             maxlength="1"
@@ -311,8 +311,8 @@
                 <button
                     type="submit"
                     disabled={verifySubmitting}
-                    class="justify-center items-center py-3.5 rounded-2xl bg-dark-900 text-white font-semibold text-base
-                           hover:bg-dark-800 focus-visible:ring-2 focus-visible:ring-dark-500 focus-visible:ring-offset-2
+                    class="justify-center items-center py-3.5 rounded-2xl bg-foreground text-white font-semibold text-base
+                           hover:bg-foreground-alt focus-visible:ring-2 focus-visible:ring-muted-foreground focus-visible:ring-offset-2
                            focus-visible:outline-hidden transition-colors active:scale-[0.98] cursor-pointer
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -333,7 +333,7 @@
             <button
                 type="button"
                 onclick={() => { phase = "credentials"; verifyError = ""; }}
-                class="mt-4 w-full text-center text-sm text-dark-500 hover:text-dark-700 cursor-pointer"
+                class="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground-alt cursor-pointer"
             >
                 ← Modifier les informations
             </button>

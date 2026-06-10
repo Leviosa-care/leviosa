@@ -121,7 +121,7 @@
 	{:else if data.summary}
 		<!-- Summary Cards -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-green-100 rounded-lg">
 						<Banknote size={22} class="text-green-600" />
@@ -140,7 +140,7 @@
 				<p class="text-sm text-muted-foreground">Revenus ce mois</p>
 			</div>
 
-			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-blue-100 rounded-lg">
 						<TrendingUp size={22} class="text-blue-600" />
@@ -153,7 +153,7 @@
 				<p class="text-sm text-muted-foreground">Revenus mois précédent</p>
 			</div>
 
-			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-yellow-100 rounded-lg">
 						<Clock size={22} class="text-yellow-600" />
@@ -166,7 +166,7 @@
 				<p class="text-sm text-muted-foreground">Paiements en attente</p>
 			</div>
 
-			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-purple-100 rounded-lg">
 						<ArrowDownToLine size={22} class="text-purple-600" />
@@ -185,7 +185,7 @@
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 			<!-- Monthly Chart (derived from transactions) -->
 			{#if monthlyEarnings.length > 0}
-				<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+				<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 					<h2 class="text-lg font-semibold text-foreground mb-6">Revenus mensuels</h2>
 					<div class="space-y-3">
 						{#each monthlyEarnings as month (month.key)}
@@ -207,7 +207,7 @@
 			{/if}
 
 			<!-- Transaction History -->
-			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<h2 class="text-lg font-semibold text-foreground mb-6">Transactions récentes</h2>
 				{#if data.summary.transactions.length === 0}
 					<p class="text-sm text-muted-foreground">Aucune transaction</p>

@@ -38,7 +38,7 @@
 <svelte:window onkeydown={(e) => { if (e.key === 'Escape') isMobileMenuOpen = false; }} />
 
 <!-- Top navigation bar -->
-<header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-dark-10">
+<header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-border-card">
 	<div class="max-w-5xl mx-auto flex items-center justify-between px-4 h-16">
 		<!-- Mobile hamburger -->
 		<button
@@ -98,7 +98,7 @@
 		<div class="absolute inset-0 bg-black/40" onclick={() => (isMobileMenuOpen = false)}></div>
 
 		<!-- Panel -->
-		<div class="absolute left-0 top-0 bottom-0 w-72 bg-background shadow-xl flex flex-col">
+		<div class="absolute left-0 top-0 bottom-0 w-72 bg-background shadow-popover flex flex-col">
 			<div class="flex items-center justify-between p-4 border-b border-border-card">
 				<p class="font-semibold text-foreground">Menu</p>
 				<button onclick={() => (isMobileMenuOpen = false)} class="w-10 h-10 flex items-center justify-center">

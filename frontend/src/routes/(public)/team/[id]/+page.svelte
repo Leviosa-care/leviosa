@@ -16,7 +16,7 @@
         <!-- Back link -->
         <a
             href="/team"
-            class="inline-flex items-center gap-1.5 text-sm text-dark-500 hover:text-dark-900 transition-colors duration-150 mb-10 group"
+            class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 mb-10 group"
             use:reveal={{ preset: "fade-down", delay: 50 }}
         >
             <ChevronLeft size={16} class="group-hover:-translate-x-0.5 transition-transform duration-150" />
@@ -39,21 +39,21 @@
                         />
                     {:else}
                         <div
-                            class="w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br from-dark-100 to-dark-50 flex items-center justify-center text-2xl font-semibold text-dark-500 flex-shrink-0"
+                            class="w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br from-surface-hover to-surface flex items-center justify-center text-2xl font-semibold text-muted-foreground flex-shrink-0"
                         >
                             {partner.firstname[0]}{partner.lastname[0]}
                         </div>
                     {/if}
                     <div>
                         {#if categories.length > 0}
-                            <p class="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">
+                            <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                                 {categories.map((c: any) => c.name).join(" · ")}
                             </p>
                         {/if}
-                        <h1 class="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-dark-900">
+                        <h1 class="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-foreground">
                             {partner.firstname} {partner.lastname}
                         </h1>
-                        <p class="text-lg text-dark-500 mt-1">{partner.occupation}</p>
+                        <p class="text-lg text-muted-foreground mt-1">{partner.occupation}</p>
                     </div>
                 </div>
 
@@ -65,9 +65,9 @@
                     >
                         {#each partner.tags as tag}
                             <div
-                                class="inline-flex items-center bg-dark-50 border border-dark-100 rounded-full px-4 py-2"
+                                class="inline-flex items-center bg-surface border border-border-input rounded-full px-4 py-2"
                             >
-                                <span class="text-xs font-medium text-dark-600">{tag}</span>
+                                <span class="text-xs font-medium text-foreground-alt">{tag}</span>
                             </div>
                         {/each}
                     </div>
@@ -76,7 +76,7 @@
                 <!-- Quote -->
                 {#if partner.quote}
                     <blockquote
-                        class="border-l-2 border-dark-200 pl-5 mb-10 italic text-dark-500 text-base md:text-lg leading-relaxed"
+                        class="border-l-2 border-border-input-hover pl-5 mb-10 italic text-muted-foreground text-base md:text-lg leading-relaxed"
                         use:reveal={{ preset: "fade-up", delay: 200 }}
                     >
                         « {partner.quote} »
@@ -86,8 +86,8 @@
                 <!-- Bio -->
                 {#if partner.bio}
                     <div use:reveal={{ preset: "fade-up", delay: 250 }}>
-                        <h2 class="text-lg font-semibold text-dark-900 mb-3">À propos</h2>
-                        <p class="text-dark-500 leading-relaxed text-base md:text-lg">
+                        <h2 class="text-lg font-semibold text-foreground mb-3">À propos</h2>
+                        <p class="text-muted-foreground leading-relaxed text-base md:text-lg">
                             {partner.bio}
                         </p>
                     </div>
@@ -95,9 +95,9 @@
 
                 <!-- Experience -->
                 {#if partner.experience}
-                    <div class="mt-10 pt-10 border-t border-dark-100" use:reveal={{ preset: "fade-up", delay: 300 }}>
-                        <h2 class="text-lg font-semibold text-dark-900 mb-3">Formation & expérience</h2>
-                        <p class="text-dark-500 leading-relaxed">
+                    <div class="mt-10 pt-10 border-t border-border-input" use:reveal={{ preset: "fade-up", delay: 300 }}>
+                        <h2 class="text-lg font-semibold text-foreground mb-3">Formation & expérience</h2>
+                        <p class="text-muted-foreground leading-relaxed">
                             {partner.experience}
                         </p>
                     </div>
@@ -105,30 +105,30 @@
 
                 <!-- Associated services -->
                 {#if products.length > 0}
-                    <div class="mt-10 pt-10 border-t border-dark-100" use:reveal={{ preset: "fade-up", delay: 350 }}>
-                        <h2 class="text-lg font-semibold text-dark-900 mb-4">Services proposés</h2>
+                    <div class="mt-10 pt-10 border-t border-border-input" use:reveal={{ preset: "fade-up", delay: 350 }}>
+                        <h2 class="text-lg font-semibold text-foreground mb-4">Services proposés</h2>
                         <div class="grid gap-3">
                             {#each products as product}
                                 <a
                                     href="/services/{product.id}"
-                                    class="group flex items-center justify-between bg-white border border-dark-100 hover:border-dark-200 hover:shadow-sm rounded-2xl px-5 py-4 transition-all duration-200"
+                                    class="group flex items-center justify-between bg-white border border-border-input hover:border-border-input-hover hover:shadow-mini rounded-2xl px-5 py-4 transition-all duration-200"
                                 >
                                     <div class="flex items-center gap-3">
-                                        <Briefcase size={16} class="text-dark-400 flex-shrink-0" />
+                                        <Briefcase size={16} class="text-muted-foreground flex-shrink-0" />
                                         <div>
-                                            <p class="text-dark-900 font-medium text-sm">{product.name}</p>
+                                            <p class="text-foreground font-medium text-sm">{product.name}</p>
                                             {#if product.description}
-                                                <p class="text-dark-400 text-xs mt-0.5 line-clamp-1">{product.description}</p>
+                                                <p class="text-muted-foreground text-xs mt-0.5 line-clamp-1">{product.description}</p>
                                             {/if}
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3 flex-shrink-0 ml-4">
-                                        <span class="inline-flex items-center gap-1 text-xs text-dark-400">
+                                        <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
                                             <Clock size={12} />
                                             {product.duration} min
                                         </span>
                                         <span
-                                            class="iconify text-dark-300 group-hover:translate-x-0.5 transition-transform"
+                                            class="iconify text-muted-foreground group-hover:translate-x-0.5 transition-transform"
                                             data-icon="lucide:chevron-right"
                                             data-width="16"
                                         ></span>
@@ -142,16 +142,16 @@
 
             <!-- Sticky sidebar: booking card -->
             <div class="lg:sticky lg:top-24" use:reveal={{ preset: "fade-up", delay: 200 }}>
-                <div class="bg-white border border-dark-100 rounded-3xl p-6 shadow-sm">
-                    <p class="text-sm font-semibold text-dark-900 mb-1">
+                <div class="bg-white border border-border-input rounded-3xl p-6 shadow-mini">
+                    <p class="text-sm font-semibold text-foreground mb-1">
                         {partner.firstname} {partner.lastname}
                     </p>
-                    <p class="text-sm text-dark-400 mb-6">{partner.occupation}</p>
+                    <p class="text-sm text-muted-foreground mb-6">{partner.occupation}</p>
 
                     <!-- Réserver CTA -->
                     <a href="/book?partner={partner.id}" class="block w-full">
                         <button
-                            class="group/btn w-full inline-flex justify-center items-center gap-2 bg-dark-900 hover:bg-dark-800 text-white text-sm font-medium px-6 py-3.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
+                            class="group/btn w-full inline-flex justify-center items-center gap-2 bg-foreground hover:bg-foreground-alt text-white text-sm font-medium px-6 py-3.5 rounded-xl transition-all duration-200 shadow-mini hover:shadow-card cursor-pointer"
                         >
                             <CalendarCheck size={16} />
                             Réserver une séance
@@ -166,14 +166,14 @@
 
                     <!-- Tags list -->
                     {#if partner.tags.length > 0}
-                        <div class="mt-6 pt-6 border-t border-dark-100">
-                            <p class="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-3">
+                        <div class="mt-6 pt-6 border-t border-border-input">
+                            <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                                 Spécialités
                             </p>
                             <ul class="space-y-2">
                                 {#each partner.tags as tag}
-                                    <li class="flex items-center gap-2 text-sm text-dark-500">
-                                        <span class="iconify text-dark-300 flex-shrink-0" data-icon="lucide:check" data-width="14"></span>
+                                    <li class="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <span class="iconify text-muted-foreground flex-shrink-0" data-icon="lucide:check" data-width="14"></span>
                                         {tag}
                                     </li>
                                 {/each}

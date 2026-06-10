@@ -39,7 +39,7 @@
         <!-- Back link -->
         <a
             href="/services"
-            class="inline-flex items-center gap-1.5 text-sm text-dark-500 hover:text-dark-900 transition-colors duration-150 mb-10 group"
+            class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 mb-10 group"
             use:reveal={{ preset: "fade-down", delay: 50 }}
         >
             <ChevronLeft size={16} class="group-hover:-translate-x-0.5 transition-transform duration-150" />
@@ -63,21 +63,21 @@
                     </div>
                 {:else}
                     <div
-                        class="w-full aspect-[16/7] rounded-3xl bg-gradient-to-br from-dark-100 to-dark-50 flex items-center justify-center mb-8"
+                        class="w-full aspect-[16/7] rounded-3xl bg-gradient-to-br from-surface-hover to-surface flex items-center justify-center mb-8"
                         use:reveal={{ preset: "fade-up", delay: 100 }}
                     >
-                        <span class="iconify text-dark-300" data-icon="lucide:image" data-width="56"></span>
+                        <span class="iconify text-muted-foreground" data-icon="lucide:image" data-width="56"></span>
                     </div>
                 {/if}
 
                 <!-- Category + title -->
                 <div use:reveal={{ preset: "fade-up", delay: 150 }}>
                     {#if product.category}
-                        <p class="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-3">
+                        <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                             {product.category.name}
                         </p>
                     {/if}
-                    <h1 class="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-dark-900 mb-6">
+                    <h1 class="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-foreground mb-6">
                         {product.name}
                     </h1>
                 </div>
@@ -87,13 +87,13 @@
                     class="flex flex-wrap gap-2 mb-8"
                     use:reveal={{ preset: "fade-up", delay: 200 }}
                 >
-                    <div class="inline-flex items-center gap-1.5 bg-dark-50 border border-dark-100 rounded-full px-4 py-2">
-                        <Clock size={13} class="text-dark-400" />
-                        <span class="text-xs font-medium text-dark-600">{product.duration} min</span>
+                    <div class="inline-flex items-center gap-1.5 bg-surface border border-border-input rounded-full px-4 py-2">
+                        <Clock size={13} class="text-muted-foreground" />
+                        <span class="text-xs font-medium text-foreground-alt">{product.duration} min</span>
                     </div>
-                    <div class="inline-flex items-center gap-1.5 bg-dark-50 border border-dark-100 rounded-full px-4 py-2">
-                        <AvailIcon size={13} class="text-dark-400" />
-                        <span class="text-xs font-medium text-dark-600">
+                    <div class="inline-flex items-center gap-1.5 bg-surface border border-border-input rounded-full px-4 py-2">
+                        <AvailIcon size={13} class="text-muted-foreground" />
+                        <span class="text-xs font-medium text-foreground-alt">
                             {availabilityLabel[product.availability] ?? product.availability}
                         </span>
                     </div>
@@ -101,17 +101,17 @@
 
                 <!-- Description -->
                 <div use:reveal={{ preset: "fade-up", delay: 250 }}>
-                    <h2 class="text-lg font-semibold text-dark-900 mb-3">À propos de ce service</h2>
-                    <p class="text-dark-500 leading-relaxed text-base md:text-lg">
+                    <h2 class="text-lg font-semibold text-foreground mb-3">À propos de ce service</h2>
+                    <p class="text-muted-foreground leading-relaxed text-base md:text-lg">
                         {product.description}
                     </p>
                 </div>
 
                 <!-- Category description -->
                 {#if product.category?.description}
-                    <div class="mt-10 pt-10 border-t border-dark-100" use:reveal={{ preset: "fade-up", delay: 300 }}>
-                        <h2 class="text-lg font-semibold text-dark-900 mb-3">{product.category.name}</h2>
-                        <p class="text-dark-500 leading-relaxed">
+                    <div class="mt-10 pt-10 border-t border-border-input" use:reveal={{ preset: "fade-up", delay: 300 }}>
+                        <h2 class="text-lg font-semibold text-foreground mb-3">{product.category.name}</h2>
+                        <p class="text-muted-foreground leading-relaxed">
                             {product.category.description}
                         </p>
                     </div>
@@ -120,21 +120,21 @@
 
             <!-- Sticky sidebar: booking card -->
             <div class="lg:sticky lg:top-24" use:reveal={{ preset: "fade-up", delay: 200 }}>
-                <div class="bg-white border border-dark-100 rounded-3xl p-6 shadow-sm">
+                <div class="bg-white border border-border-input rounded-3xl p-6 shadow-mini">
                     <!-- Price -->
                     {#if formattedPrice}
                         <div class="flex items-baseline gap-1 mb-6">
-                            <span class="text-4xl font-bold text-dark-900">{formattedPrice}</span>
-                            <span class="text-lg text-dark-400">€</span>
+                            <span class="text-4xl font-bold text-foreground">{formattedPrice}</span>
+                            <span class="text-lg text-muted-foreground">€</span>
                         </div>
                     {:else}
-                        <p class="text-sm text-dark-400 mb-6">Prix sur demande</p>
+                        <p class="text-sm text-muted-foreground mb-6">Prix sur demande</p>
                     {/if}
 
                     <!-- Réserver CTA -->
                     <a href="/book?product={product.id}" class="block w-full">
                         <button
-                            class="group/btn w-full inline-flex justify-center items-center gap-2 bg-dark-900 hover:bg-dark-800 text-white text-sm font-medium px-6 py-3.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
+                            class="group/btn w-full inline-flex justify-center items-center gap-2 bg-foreground hover:bg-foreground-alt text-white text-sm font-medium px-6 py-3.5 rounded-xl transition-all duration-200 shadow-mini hover:shadow-card cursor-pointer"
                         >
                             <CalendarCheck size={16} />
                             Réserver ce service
@@ -148,18 +148,18 @@
                     </a>
 
                     <!-- Details list -->
-                    <ul class="mt-6 space-y-3 text-sm text-dark-500">
+                    <ul class="mt-6 space-y-3 text-sm text-muted-foreground">
                         <li class="flex items-center gap-2">
-                            <Clock size={14} class="text-dark-400 flex-shrink-0" />
+                            <Clock size={14} class="text-muted-foreground flex-shrink-0" />
                             Durée : {product.duration} min
                         </li>
                         <li class="flex items-center gap-2">
-                            <AvailIcon size={14} class="text-dark-400 flex-shrink-0" />
+                            <AvailIcon size={14} class="text-muted-foreground flex-shrink-0" />
                             {availabilityLabel[product.availability] ?? product.availability}
                         </li>
                         {#if product.cancellationHours}
                             <li class="flex items-center gap-2">
-                                <span class="iconify text-dark-400 flex-shrink-0" data-icon="lucide:shield-check" data-width="14"></span>
+                                <span class="iconify text-muted-foreground flex-shrink-0" data-icon="lucide:shield-check" data-width="14"></span>
                                 Annulation gratuite sous {product.cancellationHours}h
                             </li>
                         {/if}

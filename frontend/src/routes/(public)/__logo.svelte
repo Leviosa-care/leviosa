@@ -5,4 +5,4 @@
     let { scrolled = true }: Props = $props();
 </script>
 
-<a href="/" class="text-lg sm:text-2xl font-bold transition-colors duration-300 {scrolled ? 'text-dark-900' : 'text-white'}">Leviosa</a>
+<a href="/" class="text-lg sm:text-2xl font-bold transition-colors duration-300 {scrolled ? 'text-foreground' : 'text-white'}">Leviosa</a>

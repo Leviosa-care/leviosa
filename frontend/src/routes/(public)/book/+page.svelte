@@ -261,14 +261,14 @@
     }
 </script>
 
-<div class="bg-dark-50 min-h-screen py-24 md:py-32 px-4 lg:px-8">
+<div class="bg-surface min-h-screen py-24 md:py-32 px-4 lg:px-8">
     <div class="max-w-4xl mx-auto">
         <!-- Header -->
         <div class="text-center mb-12" use:reveal={{ preset: "fade-up", delay: 100 }}>
-            <h1 class="text-4xl md:text-5xl font-bold text-dark-900 mb-4">
+            <h1 class="text-4xl md:text-5xl font-bold text-foreground mb-4">
                 Réserver une Séance
             </h1>
-            <p class="text-lg text-dark-600">
+            <p class="text-lg text-foreground-alt">
                 Choisissez votre soin, votre praticien et votre créneau en quelques clics
             </p>
         </div>
@@ -288,8 +288,8 @@
             <!-- Step 1 — Catégorie -->
             <section class="bg-white rounded-3xl p-6 md:p-8" use:reveal={{ preset: "fade-up", delay: 150 }}>
                 <div class="flex items-center gap-3 mb-6">
-                    <span class="w-8 h-8 rounded-full bg-dark-900 text-white flex items-center justify-center text-sm font-bold">1</span>
-                    <h2 class="text-xl md:text-2xl font-bold text-dark-900">Catégorie</h2>
+                    <span class="w-8 h-8 rounded-full bg-foreground text-white flex items-center justify-center text-sm font-bold">1</span>
+                    <h2 class="text-xl md:text-2xl font-bold text-foreground">Catégorie</h2>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {#each categories as category}
@@ -297,11 +297,11 @@
                             type="button"
                             onclick={() => selectCategory(category)}
                             class="text-left p-5 rounded-2xl border-2 transition-all cursor-pointer {selectedCategoryId === category.id
-                                ? 'border-dark-900 bg-dark-50'
-                                : 'border-dark-100 hover:border-dark-300 bg-white'}"
+                                ? 'border-foreground bg-surface'
+                                : 'border-border-input hover:border-border-input-hover bg-white'}"
                         >
-                            <h3 class="font-semibold text-dark-900 mb-1">{category.name}</h3>
-                            <p class="text-sm text-dark-600 line-clamp-2">{category.description}</p>
+                            <h3 class="font-semibold text-foreground mb-1">{category.name}</h3>
+                            <p class="text-sm text-foreground-alt line-clamp-2">{category.description}</p>
                         </button>
                     {/each}
                 </div>
@@ -311,16 +311,16 @@
             {#if selectedCategoryId}
                 <section class="bg-white rounded-3xl p-6 md:p-8" use:reveal={{ preset: "fade-up", delay: 100 }}>
                     <div class="flex items-center gap-3 mb-6">
-                        <span class="w-8 h-8 rounded-full bg-dark-900 text-white flex items-center justify-center text-sm font-bold">2</span>
-                        <h2 class="text-xl md:text-2xl font-bold text-dark-900">Soin</h2>
+                        <span class="w-8 h-8 rounded-full bg-foreground text-white flex items-center justify-center text-sm font-bold">2</span>
+                        <h2 class="text-xl md:text-2xl font-bold text-foreground">Soin</h2>
                         {#if selectedCategoryName}
-                            <span class="text-sm text-dark-500 ml-2">— {selectedCategoryName}</span>
+                            <span class="text-sm text-muted-foreground ml-2">— {selectedCategoryName}</span>
                         {/if}
                     </div>
                     {#if loadingProducts}
-                        <p class="text-dark-500">Chargement des soins...</p>
+                        <p class="text-muted-foreground">Chargement des soins...</p>
                     {:else if products.length === 0}
-                        <p class="text-dark-500">Aucun soin disponible dans cette catégorie</p>
+                        <p class="text-muted-foreground">Aucun soin disponible dans cette catégorie</p>
                     {:else}
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {#each products as product}
@@ -328,19 +328,19 @@
                                     type="button"
                                     onclick={() => selectProduct(product)}
                                     class="text-left p-5 rounded-2xl border-2 transition-all cursor-pointer {selectedProductId === product.id
-                                        ? 'border-dark-900 bg-dark-50'
-                                        : 'border-dark-100 hover:border-dark-300 bg-white'}"
+                                        ? 'border-foreground bg-surface'
+                                        : 'border-border-input hover:border-border-input-hover bg-white'}"
                                 >
                                     <div class="flex justify-between items-start mb-2">
-                                        <h3 class="font-semibold text-dark-900">{product.name}</h3>
+                                        <h3 class="font-semibold text-foreground">{product.name}</h3>
                                         {#if productPrices[product.id]}
-                                            <span class="font-bold text-dark-900 whitespace-nowrap ml-2">
+                                            <span class="font-bold text-foreground whitespace-nowrap ml-2">
                                                 {(productPrices[product.id] / 100).toFixed(2).replace(/\.00$/, "")}€
                                             </span>
                                         {/if}
                                     </div>
-                                    <p class="text-sm text-dark-600 line-clamp-2 mb-2">{product.description ?? ""}</p>
-                                    <span class="text-xs text-dark-500">{product.duration} min.</span>
+                                    <p class="text-sm text-foreground-alt line-clamp-2 mb-2">{product.description ?? ""}</p>
+                                    <span class="text-xs text-muted-foreground">{product.duration} min.</span>
                                 </button>
                             {/each}
                         </div>
@@ -352,13 +352,13 @@
             {#if selectedProductId}
                 <section class="bg-white rounded-3xl p-6 md:p-8" use:reveal={{ preset: "fade-up", delay: 100 }}>
                     <div class="flex items-center gap-3 mb-6">
-                        <span class="w-8 h-8 rounded-full bg-dark-900 text-white flex items-center justify-center text-sm font-bold">3</span>
-                        <h2 class="text-xl md:text-2xl font-bold text-dark-900">Praticien</h2>
+                        <span class="w-8 h-8 rounded-full bg-foreground text-white flex items-center justify-center text-sm font-bold">3</span>
+                        <h2 class="text-xl md:text-2xl font-bold text-foreground">Praticien</h2>
                     </div>
                     {#if loadingPartners}
-                        <p class="text-dark-500">Chargement des praticiens...</p>
+                        <p class="text-muted-foreground">Chargement des praticiens...</p>
                     {:else if partners.length === 0}
-                        <p class="text-dark-500">Aucun praticien disponible pour ce soin</p>
+                        <p class="text-muted-foreground">Aucun praticien disponible pour ce soin</p>
                     {:else}
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {#each partners as partner}
@@ -366,17 +366,17 @@
                                     type="button"
                                     onclick={() => selectPartner(partner)}
                                     class="text-left p-5 rounded-2xl border-2 transition-all cursor-pointer {selectedPartnerId === partner.id
-                                        ? 'border-dark-900 bg-dark-50'
-                                        : 'border-dark-100 hover:border-dark-300 bg-white'}"
+                                        ? 'border-foreground bg-surface'
+                                        : 'border-border-input hover:border-border-input-hover bg-white'}"
                                 >
                                     <div class="flex items-center gap-4 mb-3">
-                                        <div class="w-12 h-12 rounded-full bg-dark-200 flex-shrink-0"></div>
+                                        <div class="w-12 h-12 rounded-full bg-border-input-hover flex-shrink-0"></div>
                                         <div>
-                                            <h3 class="font-semibold text-dark-900">{partnerDisplayName(partner)}</h3>
+                                            <h3 class="font-semibold text-foreground">{partnerDisplayName(partner)}</h3>
                                         </div>
                                     </div>
                                     {#if partner.experience}
-                                        <p class="text-sm text-dark-600 line-clamp-3">{partner.experience}</p>
+                                        <p class="text-sm text-foreground-alt line-clamp-3">{partner.experience}</p>
                                     {/if}
                                 </button>
                             {/each}
@@ -389,26 +389,26 @@
             {#if selectedPartnerId}
                 <section class="bg-white rounded-3xl p-6 md:p-8" use:reveal={{ preset: "fade-up", delay: 100 }}>
                     <div class="flex items-center gap-3 mb-6">
-                        <span class="w-8 h-8 rounded-full bg-dark-900 text-white flex items-center justify-center text-sm font-bold">4</span>
-                        <h2 class="text-xl md:text-2xl font-bold text-dark-900">Créneau</h2>
+                        <span class="w-8 h-8 rounded-full bg-foreground text-white flex items-center justify-center text-sm font-bold">4</span>
+                        <h2 class="text-xl md:text-2xl font-bold text-foreground">Créneau</h2>
                     </div>
                     {#if loadingSlots}
-                        <p class="text-dark-500">Chargement des disponibilités...</p>
+                        <p class="text-muted-foreground">Chargement des disponibilités...</p>
                     {:else if availabilities.length === 0}
-                        <p class="text-dark-500">Aucun créneau disponible pour ce praticien</p>
+                        <p class="text-muted-foreground">Aucun créneau disponible pour ce praticien</p>
                     {:else}
                         <div class="grid gap-6">
                             {#each Object.entries(availabilitiesByDay) as [day, slots]}
                                 <div>
-                                    <h4 class="font-semibold text-dark-900 capitalize mb-3">{day}</h4>
+                                    <h4 class="font-semibold text-foreground capitalize mb-3">{day}</h4>
                                     <div class="flex flex-wrap gap-2">
                                         {#each slots as slot}
                                             <button
                                                 type="button"
                                                 onclick={() => selectSlot(slot)}
                                                 class="px-4 py-2 rounded-xl border-2 transition-all cursor-pointer text-sm {selectedAvailabilityId === slot.id
-                                                    ? 'border-dark-900 bg-dark-900 text-white'
-                                                    : 'border-dark-200 hover:border-dark-400 bg-white text-dark-700'}"
+                                                    ? 'border-foreground bg-foreground text-white'
+                                                    : 'border-border-input-hover hover:border-border-input-hover bg-white text-foreground-alt'}"
                                             >
                                                 {formatTime(slot.start_time)}
                                             </button>
@@ -425,19 +425,19 @@
             {#if selectedAvailabilityId && !data.user}
                 <section class="bg-white rounded-3xl p-6 md:p-8" use:reveal={{ preset: "fade-up", delay: 100 }}>
                     <div class="flex items-center gap-3 mb-6">
-                        <span class="w-8 h-8 rounded-full bg-dark-900 text-white flex items-center justify-center text-sm font-bold">5</span>
-                        <h2 class="text-xl md:text-2xl font-bold text-dark-900">Vos coordonnées</h2>
+                        <span class="w-8 h-8 rounded-full bg-foreground text-white flex items-center justify-center text-sm font-bold">5</span>
+                        <h2 class="text-xl md:text-2xl font-bold text-foreground">Vos coordonnées</h2>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label for="guest_first_name" class="block text-sm font-medium text-dark-700 mb-1">Prénom *</label>
+                            <label for="guest_first_name" class="block text-sm font-medium text-foreground-alt mb-1">Prénom *</label>
                             <input
                                 id="guest_first_name"
                                 name="guest_first_name"
                                 type="text"
                                 bind:value={guestFirstName}
                                 required
-                                class="w-full px-4 py-3 border border-dark-200 rounded-xl focus:ring-2 focus:ring-dark-900 focus:ring-offset-2 focus:outline-none"
+                                class="w-full px-4 py-3 border border-border-input-hover rounded-xl focus:ring-2 focus:ring-foreground focus:ring-offset-2 focus:outline-none"
                                 placeholder="Jean"
                             />
                             {#if guestFormErrors.guest_first_name}
@@ -445,14 +445,14 @@
                             {/if}
                         </div>
                         <div>
-                            <label for="guest_last_name" class="block text-sm font-medium text-dark-700 mb-1">Nom *</label>
+                            <label for="guest_last_name" class="block text-sm font-medium text-foreground-alt mb-1">Nom *</label>
                             <input
                                 id="guest_last_name"
                                 name="guest_last_name"
                                 type="text"
                                 bind:value={guestLastName}
                                 required
-                                class="w-full px-4 py-3 border border-dark-200 rounded-xl focus:ring-2 focus:ring-dark-900 focus:ring-offset-2 focus:outline-none"
+                                class="w-full px-4 py-3 border border-border-input-hover rounded-xl focus:ring-2 focus:ring-foreground focus:ring-offset-2 focus:outline-none"
                                 placeholder="Dupont"
                             />
                             {#if guestFormErrors.guest_last_name}
@@ -460,13 +460,13 @@
                             {/if}
                         </div>
                         <div>
-                            <label for="guest_email" class="block text-sm font-medium text-dark-700 mb-1">Email</label>
+                            <label for="guest_email" class="block text-sm font-medium text-foreground-alt mb-1">Email</label>
                             <input
                                 id="guest_email"
                                 name="guest_email"
                                 type="email"
                                 bind:value={guestEmail}
-                                class="w-full px-4 py-3 border border-dark-200 rounded-xl focus:ring-2 focus:ring-dark-900 focus:ring-offset-2 focus:outline-none"
+                                class="w-full px-4 py-3 border border-border-input-hover rounded-xl focus:ring-2 focus:ring-foreground focus:ring-offset-2 focus:outline-none"
                                 placeholder="jean@exemple.com"
                             />
                             {#if guestFormErrors.guest_email}
@@ -474,13 +474,13 @@
                             {/if}
                         </div>
                         <div>
-                            <label for="guest_phone" class="block text-sm font-medium text-dark-700 mb-1">Téléphone</label>
+                            <label for="guest_phone" class="block text-sm font-medium text-foreground-alt mb-1">Téléphone</label>
                             <input
                                 id="guest_phone"
                                 name="guest_phone"
                                 type="tel"
                                 bind:value={guestPhone}
-                                class="w-full px-4 py-3 border border-dark-200 rounded-xl focus:ring-2 focus:ring-dark-900 focus:ring-offset-2 focus:outline-none"
+                                class="w-full px-4 py-3 border border-border-input-hover rounded-xl focus:ring-2 focus:ring-foreground focus:ring-offset-2 focus:outline-none"
                                 placeholder="+33 6 12 34 56 78"
                             />
                             {#if guestFormErrors.guest_phone}
@@ -488,7 +488,7 @@
                             {/if}
                         </div>
                     </div>
-                    <p class="text-sm text-dark-500 mt-4">* Au moins un moyen de contact (email ou téléphone) est requis</p>
+                    <p class="text-sm text-muted-foreground mt-4">* Au moins un moyen de contact (email ou téléphone) est requis</p>
                 </section>
             {/if}
 
@@ -496,10 +496,10 @@
             {#if selectedAvailabilityId && data.user}
                 <section class="bg-white rounded-3xl p-6 md:p-8" use:reveal={{ preset: "fade-up", delay: 100 }}>
                     <div class="flex items-center gap-3 mb-4">
-                        <span class="w-8 h-8 rounded-full bg-dark-900 text-white flex items-center justify-center text-sm font-bold">5</span>
-                        <h2 class="text-xl md:text-2xl font-bold text-dark-900">Réservation</h2>
+                        <span class="w-8 h-8 rounded-full bg-foreground text-white flex items-center justify-center text-sm font-bold">5</span>
+                        <h2 class="text-xl md:text-2xl font-bold text-foreground">Réservation</h2>
                     </div>
-                    <p class="text-dark-700">
+                    <p class="text-foreground-alt">
                         Réservation au nom de <span class="font-semibold">{data.user.firstname} {data.user.lastname}</span>
                     </p>
                 </section>
@@ -509,38 +509,38 @@
             {#if step === 6}
                 <section class="bg-white rounded-3xl p-6 md:p-8" use:reveal={{ preset: "fade-up", delay: 100 }}>
                     <div class="flex items-center gap-3 mb-6">
-                        <span class="w-8 h-8 rounded-full bg-dark-900 text-white flex items-center justify-center text-sm font-bold">6</span>
-                        <h2 class="text-xl md:text-2xl font-bold text-dark-900">Récapitulatif</h2>
+                        <span class="w-8 h-8 rounded-full bg-foreground text-white flex items-center justify-center text-sm font-bold">6</span>
+                        <h2 class="text-xl md:text-2xl font-bold text-foreground">Récapitulatif</h2>
                     </div>
                     <div class="grid gap-4 mb-8">
                         {#if selectedProductName}
-                            <div class="flex justify-between py-3 border-b border-dark-100">
-                                <span class="text-dark-600">Soin</span>
-                                <span class="font-semibold text-dark-900">{selectedProductName}</span>
+                            <div class="flex justify-between py-3 border-b border-border-input">
+                                <span class="text-foreground-alt">Soin</span>
+                                <span class="font-semibold text-foreground">{selectedProductName}</span>
                             </div>
                         {/if}
                         {#if selectedProductDuration}
-                            <div class="flex justify-between py-3 border-b border-dark-100">
-                                <span class="text-dark-600">Durée</span>
-                                <span class="font-semibold text-dark-900">{selectedProductDuration} min.</span>
+                            <div class="flex justify-between py-3 border-b border-border-input">
+                                <span class="text-foreground-alt">Durée</span>
+                                <span class="font-semibold text-foreground">{selectedProductDuration} min.</span>
                             </div>
                         {/if}
                         {#if selectedProductPrice}
-                            <div class="flex justify-between py-3 border-b border-dark-100">
-                                <span class="text-dark-600">Prix</span>
-                                <span class="font-semibold text-dark-900">{selectedProductPrice}€</span>
+                            <div class="flex justify-between py-3 border-b border-border-input">
+                                <span class="text-foreground-alt">Prix</span>
+                                <span class="font-semibold text-foreground">{selectedProductPrice}€</span>
                             </div>
                         {/if}
                         {#if selectedSlotDisplay}
-                            <div class="flex justify-between py-3 border-b border-dark-100">
-                                <span class="text-dark-600">Créneau</span>
-                                <span class="font-semibold text-dark-900 capitalize">{selectedSlotDisplay}</span>
+                            <div class="flex justify-between py-3 border-b border-border-input">
+                                <span class="text-foreground-alt">Créneau</span>
+                                <span class="font-semibold text-foreground capitalize">{selectedSlotDisplay}</span>
                             </div>
                         {/if}
                         {#if !data.user && guestFirstName}
-                            <div class="flex justify-between py-3 border-b border-dark-100">
-                                <span class="text-dark-600">Nom</span>
-                                <span class="font-semibold text-dark-900">{guestFirstName} {guestLastName}</span>
+                            <div class="flex justify-between py-3 border-b border-border-input">
+                                <span class="text-foreground-alt">Nom</span>
+                                <span class="font-semibold text-foreground">{guestFirstName} {guestLastName}</span>
                             </div>
                         {/if}
                     </div>

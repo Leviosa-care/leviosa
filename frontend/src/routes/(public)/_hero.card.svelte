@@ -8,7 +8,7 @@
         <div class="flex flex-col items-start text-left z-10">
             <!-- Trust Badge -->
             <div
-                class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dark-50 border border-dark-200 mb-6"
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface border border-border-input-hover mb-6"
                 use:reveal={{ preset: "fade-down", delay: 100 }}
             >
                 <span class="relative flex h-2 w-2">
@@ -19,7 +19,7 @@
                         class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"
                     ></span>
                 </span>
-                <span class="text-xs font-medium text-dark-600"
+                <span class="text-xs font-medium text-foreground-alt"
                     >Disponible maintenant</span
                 >
             </div>
@@ -28,7 +28,7 @@
 
             <!-- -->
             <h1
-                class="text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-dark-900 leading-[1.1] mb-6"
+                class="text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-foreground leading-[1.1] mb-6"
                 use:reveal={{ preset: "fade-up", delay: 150 }}
             >
                 Un expert à vos côtés,<br class="hidden lg:block" /> à vos horaires.
@@ -36,7 +36,7 @@
 
             <!-- Supporting Text -->
             <p
-                class="text-lg text-dark-500 leading-relaxed mb-8 max-w-lg font-normal"
+                class="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg font-normal"
                 use:reveal={{ preset: "fade-up", delay: 200 }}
             >
                 Réservez instantanément une consultation vérifiée. Fini les
@@ -47,7 +47,7 @@
             <!-- Primary CTA -->
             <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-4" use:reveal={{ preset: "fade-up", delay: 250 }}>
                 <button
-                    class="group w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-dark-900 hover:bg-dark-800 text-white text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ring-offset-2 focus:ring-2 focus:ring-dark-900 cursor-pointer"
+                    class="group w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-foreground hover:bg-foreground-alt text-white text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 shadow-mini hover:shadow-card ring-offset-2 focus:ring-2 focus:ring-foreground cursor-pointer"
                 >
                     Prendre rendez-vous
                     <span
@@ -59,27 +59,27 @@
                 </button>
 
                 <button
-                    class="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white border border-dark-200 hover:border-dark-300 text-dark-600 hover:text-dark-900 text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 cursor-pointer"
+                    class="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white border border-border-input-hover hover:border-border-input-hover text-foreground-alt hover:text-foreground text-sm sm:text-base font-medium px-8 py-3.5 rounded-xl transition-all duration-200 cursor-pointer"
                 >
                     Comment ça fonctionne
                 </button>
             </div>
 
             <!-- Social Proof / Trust Indicators -->
-            <div class="mt-8 flex items-center gap-4 text-sm text-dark-500" use:reveal={{ preset: "fade-up", delay: 300 }}>
+            <div class="mt-8 flex items-center gap-4 text-sm text-muted-foreground" use:reveal={{ preset: "fade-up", delay: 300 }}>
                 <div class="flex -space-x-2">
                     <div
-                        class="w-8 h-8 rounded-full border-2 border-white bg-dark-200 flex items-center justify-center text-xs font-medium text-dark-600"
+                        class="w-8 h-8 rounded-full border-2 border-white bg-border-input-hover flex items-center justify-center text-xs font-medium text-foreground-alt"
                     >
                         A
                     </div>
                     <div
-                        class="w-8 h-8 rounded-full border-2 border-white bg-dark-200 flex items-center justify-center text-xs font-medium text-dark-600"
+                        class="w-8 h-8 rounded-full border-2 border-white bg-border-input-hover flex items-center justify-center text-xs font-medium text-foreground-alt"
                     >
                         S
                     </div>
                     <div
-                        class="w-8 h-8 rounded-full border-2 border-white bg-dark-200 flex items-center justify-center text-xs font-medium text-dark-600"
+                        class="w-8 h-8 rounded-full border-2 border-white bg-border-input-hover flex items-center justify-center text-xs font-medium text-foreground-alt"
                     >
                         M
                     </div>
@@ -95,33 +95,33 @@
         <div class="relative w-full mt-4 lg:mt-0 select-none" use:reveal={{ preset: "fade-in-scale", delay: 200 }}>
             <!-- Decorative Background Blob -->
             <div
-                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-dark-100 to-white rounded-full blur-3xl opacity-60 -z-10"
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-surface-hover to-white rounded-full blur-3xl opacity-60 -z-10"
             ></div>
 
             <!-- UI Card Component: Booking Interface Representation -->
             <div
-                class="relative bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-dark-100 p-6 max-w-md mx-auto lg:mx-0 lg:ml-auto"
+                class="relative bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border-input p-6 max-w-md mx-auto lg:mx-0 lg:ml-auto"
             >
                 <!-- Card Header -->
                 <div
-                    class="flex items-center justify-between mb-6 border-b border-dark-50 pb-4"
+                    class="flex items-center justify-between mb-6 border-b border-border-input pb-4"
                 >
                     <div class="flex items-center gap-3">
                         <div
-                            class="w-10 h-10 rounded-full bg-dark-100 flex items-center justify-center"
+                            class="w-10 h-10 rounded-full bg-surface-hover flex items-center justify-center"
                         >
                             <span
-                                class="iconify text-dark-600"
+                                class="iconify text-foreground-alt"
                                 data-icon="lucide:user"
                                 data-width="20"
                                 data-stroke-width="1.5"
                             ></span>
                         </div>
                         <div>
-                            <h3 class="text-sm font-medium text-dark-900">
+                            <h3 class="text-sm font-medium text-foreground">
                                 Dr. Sarah L.
                             </h3>
-                            <p class="text-xs text-dark-500">
+                            <p class="text-xs text-muted-foreground">
                                 Spécialiste en dermatologie
                             </p>
                         </div>
@@ -136,7 +136,7 @@
                 <!-- Date Picker Strip -->
                 <div class="flex justify-between items-center mb-6">
                     <button
-                        class="text-dark-400 hover:text-dark-600 cursor-pointer"
+                        class="text-muted-foreground hover:text-foreground-alt cursor-pointer"
                         aria-label="Mois précédent"
                     >
                         <span
@@ -145,11 +145,11 @@
                             data-width="20"
                         ></span>
                     </button>
-                    <span class="text-sm font-medium text-dark-900"
+                    <span class="text-sm font-medium text-foreground"
                         >Octobre 2023</span
                     >
                     <button
-                        class="text-dark-400 hover:text-dark-600 cursor-pointer"
+                        class="text-muted-foreground hover:text-foreground-alt cursor-pointer"
                         aria-label="Mois suivant"
                     >
                         <span
@@ -163,25 +163,25 @@
                 <!-- Calendar Grid Visual -->
                 <div class="grid grid-cols-4 gap-2 mb-6">
                     <div
-                        class="flex flex-col items-center justify-center p-2 rounded-lg border border-dark-100 text-dark-400 bg-dark-50 cursor-not-allowed"
+                        class="flex flex-col items-center justify-center p-2 rounded-lg border border-border-input text-muted-foreground bg-surface cursor-not-allowed"
                     >
                         <span class="text-xs">Lun</span>
                         <span class="text-sm font-medium">12</span>
                     </div>
                     <div
-                        class="flex flex-col items-center justify-center p-2 rounded-lg border border-dark-900 bg-dark-900 text-white shadow-md transform scale-105"
+                        class="flex flex-col items-center justify-center p-2 rounded-lg border border-foreground bg-foreground text-white shadow-card transform scale-105"
                     >
                         <span class="text-xs opacity-80">Mar</span>
                         <span class="text-sm font-medium">13</span>
                     </div>
                     <div
-                        class="flex flex-col items-center justify-center p-2 rounded-lg border border-dark-200 text-dark-600 hover:border-dark-300 cursor-pointer"
+                        class="flex flex-col items-center justify-center p-2 rounded-lg border border-border-input-hover text-foreground-alt hover:border-border-input-hover cursor-pointer"
                     >
                         <span class="text-xs">Mer</span>
                         <span class="text-sm font-medium">14</span>
                     </div>
                     <div
-                        class="flex flex-col items-center justify-center p-2 rounded-lg border border-dark-200 text-dark-600 hover:border-dark-300 cursor-pointer"
+                        class="flex flex-col items-center justify-center p-2 rounded-lg border border-border-input-hover text-foreground-alt hover:border-border-input-hover cursor-pointer"
                     >
                         <span class="text-xs">Jeu</span>
                         <span class="text-sm font-medium">15</span>
@@ -191,32 +191,32 @@
                 <!-- Time Slots -->
                 <div class="space-y-2 mb-6">
                     <div
-                        class="flex items-center justify-between p-3 rounded-lg border border-dark-100 hover:border-dark-300 transition-colors cursor-pointer group"
+                        class="flex items-center justify-between p-3 rounded-lg border border-border-input hover:border-border-input-hover transition-colors cursor-pointer group"
                     >
                         <div class="flex items-center gap-3">
                             <span
-                                class="iconify text-dark-400 group-hover:text-dark-600"
+                                class="iconify text-muted-foreground group-hover:text-foreground-alt"
                                 data-icon="lucide:clock"
                                 data-width="16"
                             ></span>
-                            <span class="text-sm text-dark-700"
+                            <span class="text-sm text-foreground-alt"
                                 >09:00 - 09:45</span
                             >
                         </div>
                         <div
-                            class="w-4 h-4 rounded-full border border-dark-300 group-hover:border-dark-500"
+                            class="w-4 h-4 rounded-full border border-border-input-hover group-hover:border-muted-foreground"
                         ></div>
                     </div>
                     <div
-                        class="flex items-center justify-between p-3 rounded-lg bg-dark-50 border border-dark-200 cursor-pointer"
+                        class="flex items-center justify-between p-3 rounded-lg bg-surface border border-border-input-hover cursor-pointer"
                     >
                         <div class="flex items-center gap-3">
                             <span
-                                class="iconify text-dark-900"
+                                class="iconify text-foreground"
                                 data-icon="lucide:check-circle-2"
                                 data-width="16"
                             ></span>
-                            <span class="text-sm font-medium text-dark-900"
+                            <span class="text-sm font-medium text-foreground"
                                 >14:00 - 14:45</span
                             >
                         </div>
@@ -225,7 +225,7 @@
 
                 <!-- Fake Confirm Button -->
                 <div
-                    class="w-full bg-dark-900 text-white py-3 rounded-lg text-sm font-medium text-center shadow-lg shadow-dark-200"
+                    class="w-full bg-foreground text-white py-3 rounded-lg text-sm font-medium text-center shadow-card shadow-border-input-hover"
                 >
                     Confirmer la réservation
                 </div>
@@ -233,7 +233,7 @@
 
             <!-- Floating Elements for visual depth -->
             <div
-                class="absolute -right-4 top-20 bg-white p-3 rounded-lg shadow-xl border border-dark-100 flex items-center gap-3 animate-[bounce_3s_infinite]"
+                class="absolute -right-4 top-20 bg-white p-3 rounded-lg shadow-popover border border-border-input flex items-center gap-3 animate-[bounce_3s_infinite]"
             >
                 <div
                     class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600"
@@ -245,8 +245,8 @@
                     ></span>
                 </div>
                 <div>
-                    <p class="text-xs font-semibold text-dark-900">Visio</p>
-                    <p class="text-[10px] text-dark-500">Prêt à rejoindre</p>
+                    <p class="text-xs font-semibold text-foreground">Visio</p>
+                    <p class="text-[10px] text-muted-foreground">Prêt à rejoindre</p>
                 </div>
             </div>
         </div>

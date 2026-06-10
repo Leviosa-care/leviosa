@@ -15,7 +15,7 @@
 </div>
 
 {#snippet card(Icon: typeof import('@lucide/svelte').TrendingUp, title: string, trend: string, value: string, iconColor: string, subtitle: string)}
-    <div class="group relative bg-background rounded-2xl border border-border p-5 lg:p-6 hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+    <div class="group relative bg-background rounded-2xl border border-border p-5 lg:p-6 hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
         <div class="flex items-start justify-between mb-5">
             <div class="w-10 h-10 rounded-xl {iconColor} flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
                 <Icon size={18} strokeWidth={2} />

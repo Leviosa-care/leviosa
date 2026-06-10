@@ -37,9 +37,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     if (env.USE_MOCK_DATA === 'true') {
         const mockRole = event.cookies.get('mock_session');
-        if (mockRole) {
-            event.locals.user = getMockUserByRole(mockRole) ?? undefined;
-        }
+        const mockUser = mockRole ? getMockUserByRole(mockRole) : null;
+        if (mockUser) event.locals.user = mockUser;
         return await resolve(event);
     }
 

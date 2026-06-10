@@ -82,7 +82,7 @@
 
 <div
     class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-4 xl:grid xl:grid-cols-[1fr_auto_1fr] xl:py-4 xl:px-12 border-b transition-all duration-300 {showScrolledState
-        ? 'bg-white/80 backdrop-blur-md border-dark-100/50'
+        ? 'bg-white/80 backdrop-blur-md border-border-input/50'
         : 'bg-transparent border-transparent'}"
 >
     <!-- Mobile/Tablet Hamburger (hidden on desktop) -->
@@ -92,7 +92,7 @@
         aria-expanded={isMobileMenuOpen}
         class="flex items-center justify-center xl:hidden w-11 h-11 cursor-pointer"
     >
-        <Menu size={24} class="transition-colors duration-300 {showScrolledState ? 'text-dark-900' : 'text-white'}" />
+        <Menu size={24} class="transition-colors duration-300 {showScrolledState ? 'text-foreground' : 'text-white'}" />
     </button>
 
     <!-- Logo -->
@@ -107,8 +107,8 @@
                 <li>
                     <a
                         class="transition-colors duration-300 {isActive(item.link)
-                            ? showScrolledState ? 'text-dark-900 font-semibold' : 'text-white font-semibold'
-                            : showScrolledState ? 'text-dark-500 hover:text-dark-900' : 'text-white/80 hover:text-white'}"
+                            ? showScrolledState ? 'text-foreground font-semibold' : 'text-white font-semibold'
+                            : showScrolledState ? 'text-muted-foreground hover:text-foreground' : 'text-white/80 hover:text-white'}"
                         href={item.link}
                     >
                         {item.title}
@@ -122,13 +122,13 @@
     <div class="hidden xl:flex xl:gap-4 xl:items-center xl:justify-end">
         <a href="/book">
             <Button class="rounded-xl py-3 transition-colors duration-300 {showScrolledState
-                ? 'bg-dark-900 text-white hover:bg-dark-800'
-                : 'bg-white text-dark-900 hover:bg-white/90'}">
+                ? 'bg-foreground text-white hover:bg-foreground-alt'
+                : 'bg-white text-foreground hover:bg-white/90'}">
                 Réserver maintenant
             </Button>
         </a>
         <Button class="rounded-xl py-3 transition-colors duration-300 {showScrolledState
-            ? 'bg-white border border-dark-900 hover:bg-dark-50 text-dark-900'
+            ? 'bg-white border border-foreground hover:bg-surface text-foreground'
             : 'bg-transparent border border-white/60 hover:bg-white/10 text-white'}">
             <a href={secondaryButtonLink}>
                 {secondaryButtonText}
@@ -162,8 +162,8 @@
                             class="block py-3 px-6 rounded-lg min-h-[44px] transition-colors {isActive(
                                 item.link,
                             )
-                                ? 'bg-dark-100 text-dark-900 font-semibold'
-                                : 'text-dark-500 hover:bg-dark-50 hover:text-dark-900'}"
+                                ? 'bg-surface-hover text-foreground font-semibold'
+                                : 'text-muted-foreground hover:bg-surface hover:text-foreground'}"
                         >
                             {item.title}
                         </a>
@@ -173,15 +173,15 @@
         </nav>
 
         <!-- Divider -->
-        <div class="h-px bg-dark-200 my-6"></div>
+        <div class="h-px bg-border-input-hover my-6"></div>
 
         <!-- Action buttons (full width, stacked) -->
         <div class="flex flex-col gap-3">
             <a href="/book"><Button
-                class="w-full inline-flex justify-center items-center px-8 py-3.5 bg-dark-900 hover:bg-dark-800 text-background text-sm sm:text-base font-medium transition-all duration-200 shadow-sm hover:shadow-md ring-offset-2 focus:ring-2 focus:ring-dark-900"
+                class="w-full inline-flex justify-center items-center px-8 py-3.5 bg-foreground hover:bg-foreground-alt text-background text-sm sm:text-base font-medium transition-all duration-200 shadow-mini hover:shadow-card ring-offset-2 focus:ring-2 focus:ring-foreground"
                 >Réserver maintenant</Button></a>
             <Button
-                class="w-full bg-background border border-dark-900 hover:bg-dark-50 px-8 py-3.5 rounded-xl"
+                class="w-full bg-background border border-foreground hover:bg-surface px-8 py-3.5 rounded-xl"
             >
                 <a href={secondaryButtonLink} class="block w-full">
                     {secondaryButtonText}

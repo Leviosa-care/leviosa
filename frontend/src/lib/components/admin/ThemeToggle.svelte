@@ -7,7 +7,7 @@
 
 <button
 	onclick={() => adminDarkMode.toggle()}
-	class="p-3 rounded-lg transition-colors text-dark-500 hover:text-dark-900 dark:text-dark-400 dark:hover:text-dark-100 hover:bg-dark-100 dark:hover:bg-dark-800"
+	class="p-3 rounded-lg transition-colors text-muted-foreground hover:text-foreground hover:bg-surface-hover"
 	aria-label={isDark ? "Passer en mode clair" : "Passer en mode sombre"}
 	type="button"
 >

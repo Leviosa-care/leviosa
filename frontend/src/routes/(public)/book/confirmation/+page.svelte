@@ -41,7 +41,7 @@
           : "";
 </script>
 
-<div class="bg-dark-50 min-h-screen py-24 md:py-32 px-4 lg:px-8">
+<div class="bg-surface min-h-screen py-24 md:py-32 px-4 lg:px-8">
     <div class="max-w-2xl mx-auto" use:reveal={{ preset: "fade-up", delay: 100 }}>
         <!-- Success icon -->
         <div class="text-center mb-8">
@@ -50,64 +50,64 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
             </div>
-            <h1 class="text-3xl md:text-4xl font-bold text-dark-900 mb-2">
+            <h1 class="text-3xl md:text-4xl font-bold text-foreground mb-2">
                 Réservation Confirmée !
             </h1>
-            <p class="text-dark-600">
+            <p class="text-foreground-alt">
                 Votre réservation a été enregistrée avec succès
             </p>
         </div>
 
         <!-- Booking details card -->
-        <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm">
-            <h2 class="text-xl font-bold text-dark-900 mb-6">Détails de la réservation</h2>
+        <div class="bg-white rounded-3xl p-6 md:p-8 shadow-mini">
+            <h2 class="text-xl font-bold text-foreground mb-6">Détails de la réservation</h2>
 
             <div class="grid gap-4">
                 {#if product}
-                    <div class="flex justify-between py-3 border-b border-dark-100">
-                        <span class="text-dark-600">Service</span>
-                        <span class="font-semibold text-dark-900">{product.name}</span>
+                    <div class="flex justify-between py-3 border-b border-border-input">
+                        <span class="text-foreground-alt">Service</span>
+                        <span class="font-semibold text-foreground">{product.name}</span>
                     </div>
                 {/if}
 
                 {#if dateDisplay}
-                    <div class="flex justify-between py-3 border-b border-dark-100">
-                        <span class="text-dark-600">Date</span>
-                        <span class="font-semibold text-dark-900 capitalize">{dateDisplay}</span>
+                    <div class="flex justify-between py-3 border-b border-border-input">
+                        <span class="text-foreground-alt">Date</span>
+                        <span class="font-semibold text-foreground capitalize">{dateDisplay}</span>
                     </div>
                 {/if}
 
                 {#if timeDisplay}
-                    <div class="flex justify-between py-3 border-b border-dark-100">
-                        <span class="text-dark-600">Horaire</span>
-                        <span class="font-semibold text-dark-900">{timeDisplay}</span>
+                    <div class="flex justify-between py-3 border-b border-border-input">
+                        <span class="text-foreground-alt">Horaire</span>
+                        <span class="font-semibold text-foreground">{timeDisplay}</span>
                     </div>
                 {/if}
 
                 {#if durationMinutes}
-                    <div class="flex justify-between py-3 border-b border-dark-100">
-                        <span class="text-dark-600">Durée</span>
-                        <span class="font-semibold text-dark-900">{durationMinutes} min.</span>
+                    <div class="flex justify-between py-3 border-b border-border-input">
+                        <span class="text-foreground-alt">Durée</span>
+                        <span class="font-semibold text-foreground">{durationMinutes} min.</span>
                     </div>
                 {/if}
 
                 {#if priceDisplay}
-                    <div class="flex justify-between py-3 border-b border-dark-100">
-                        <span class="text-dark-600">Montant</span>
-                        <span class="font-semibold text-dark-900 text-lg">{priceDisplay}€</span>
+                    <div class="flex justify-between py-3 border-b border-border-input">
+                        <span class="text-foreground-alt">Montant</span>
+                        <span class="font-semibold text-foreground text-lg">{priceDisplay}€</span>
                     </div>
                 {/if}
 
                 {#if displayName}
-                    <div class="flex justify-between py-3 border-b border-dark-100">
-                        <span class="text-dark-600">Réservé par</span>
-                        <span class="font-semibold text-dark-900">{displayName}</span>
+                    <div class="flex justify-between py-3 border-b border-border-input">
+                        <span class="text-foreground-alt">Réservé par</span>
+                        <span class="font-semibold text-foreground">{displayName}</span>
                     </div>
                 {/if}
 
                 <div class="flex justify-between py-3">
-                    <span class="text-dark-600">Référence</span>
-                    <span class="font-mono text-sm text-dark-700">{booking.id}</span>
+                    <span class="text-foreground-alt">Référence</span>
+                    <span class="font-mono text-sm text-foreground-alt">{booking.id}</span>
                 </div>
             </div>
         </div>
@@ -130,11 +130,11 @@
                 </noscript>
             {:else if !user}
                 <!-- Guest but no guest info cookie (e.g. page refreshed) — fallback link -->
-                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm text-center">
-                    <h3 class="text-lg font-semibold text-dark-900 mb-2">
+                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-mini text-center">
+                    <h3 class="text-lg font-semibold text-foreground mb-2">
                         Créer un compte pour suivre vos réservations
                     </h3>
-                    <p class="text-dark-600 mb-6">
+                    <p class="text-foreground-alt mb-6">
                         Créez un compte pour accéder à l'historique de vos réservations, les modifier et recevoir des rappels.
                     </p>
                     <a href="/auth">
@@ -155,7 +155,7 @@
             {/if}
 
             <div class="text-center">
-                <a href="/services" class="text-dark-600 hover:text-dark-900 underline">
+                <a href="/services" class="text-foreground-alt hover:text-foreground underline">
                     Retour aux services
                 </a>
             </div>

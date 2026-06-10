@@ -77,18 +77,18 @@
 	<title>Mes Réservations | Leviosa</title>
 </svelte:head>
 
-<div class="min-h-screen bg-dark-50 py-24 md:py-32 px-4 lg:px-8">
+<div class="min-h-screen bg-surface py-24 md:py-32 px-4 lg:px-8">
 	<div class="max-w-2xl mx-auto" use:reveal={{ preset: "fade-up", delay: 100 }}>
 
 		{#if effectiveBooking}
 			<!-- ═══ Booking detail view ═══ -->
 			<div class="text-center mb-8">
-				<h1 class="text-3xl md:text-4xl font-bold text-dark-900 mb-2">
+				<h1 class="text-3xl md:text-4xl font-bold text-foreground mb-2">
 					Votre Réservation
 				</h1>
 			</div>
 
-			<div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm">
+			<div class="bg-white rounded-3xl p-6 md:p-8 shadow-mini">
 				<div class="flex items-center gap-3 mb-6">
 					<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium {statusColor(effectiveBooking.status)}">
 						{#if effectiveBooking.status === 'confirmed' || effectiveBooking.status === 'completed'}
@@ -104,41 +104,41 @@
 
 				<div class="grid gap-4">
 					{#if effectiveBooking.product_name}
-						<div class="flex justify-between py-3 border-b border-dark-100">
-							<span class="text-dark-600">Service</span>
-							<span class="font-semibold text-dark-900">{effectiveBooking.product_name}</span>
+						<div class="flex justify-between py-3 border-b border-border-input">
+							<span class="text-foreground-alt">Service</span>
+							<span class="font-semibold text-foreground">{effectiveBooking.product_name}</span>
 						</div>
 					{/if}
 
 					{#if effectiveBooking.partner_name}
-						<div class="flex justify-between py-3 border-b border-dark-100">
-							<span class="text-dark-600">Praticien</span>
-							<span class="font-semibold text-dark-900">{effectiveBooking.partner_name}</span>
+						<div class="flex justify-between py-3 border-b border-border-input">
+							<span class="text-foreground-alt">Praticien</span>
+							<span class="font-semibold text-foreground">{effectiveBooking.partner_name}</span>
 						</div>
 					{/if}
 
-					<div class="flex justify-between py-3 border-b border-dark-100">
-						<span class="text-dark-600">Date</span>
-						<span class="font-semibold text-dark-900 capitalize">{formatDate(effectiveBooking.slot_start_time)}</span>
+					<div class="flex justify-between py-3 border-b border-border-input">
+						<span class="text-foreground-alt">Date</span>
+						<span class="font-semibold text-foreground capitalize">{formatDate(effectiveBooking.slot_start_time)}</span>
 					</div>
 
-					<div class="flex justify-between py-3 border-b border-dark-100">
-						<span class="text-dark-600">Horaire</span>
-						<span class="font-semibold text-dark-900">
+					<div class="flex justify-between py-3 border-b border-border-input">
+						<span class="text-foreground-alt">Horaire</span>
+						<span class="font-semibold text-foreground">
 							{formatTime(effectiveBooking.slot_start_time)} — {formatTime(effectiveBooking.slot_end_time)}
 						</span>
 					</div>
 
 					{#if effectiveBooking.total_price_cents}
-						<div class="flex justify-between py-3 border-b border-dark-100">
-							<span class="text-dark-600">Montant</span>
-							<span class="font-semibold text-dark-900 text-lg">{formatCents(effectiveBooking.total_price_cents)}</span>
+						<div class="flex justify-between py-3 border-b border-border-input">
+							<span class="text-foreground-alt">Montant</span>
+							<span class="font-semibold text-foreground text-lg">{formatCents(effectiveBooking.total_price_cents)}</span>
 						</div>
 					{/if}
 
 					<div class="flex justify-between py-3">
-						<span class="text-dark-600">Référence</span>
-						<span class="font-mono text-sm text-dark-700">{effectiveBooking.id}</span>
+						<span class="text-foreground-alt">Référence</span>
+						<span class="font-mono text-sm text-foreground-alt">{effectiveBooking.id}</span>
 					</div>
 				</div>
 			</div>
@@ -191,7 +191,7 @@
 							<button
 								type="button"
 								disabled={cancelling}
-								class="px-5 py-2.5 rounded-xl font-medium text-dark-700 bg-white border border-dark-200 hover:bg-dark-50 transition-colors disabled:opacity-50 cursor-pointer"
+								class="px-5 py-2.5 rounded-xl font-medium text-foreground-alt bg-white border border-border-input-hover hover:bg-surface transition-colors disabled:opacity-50 cursor-pointer"
 								onclick={() => { showCancelConfirm = false; }}
 							>
 								Retour
@@ -213,7 +213,7 @@
 			{/if}
 
 			<div class="mt-8 text-center">
-				<a href="/services" class="text-dark-600 hover:text-dark-900 underline">
+				<a href="/services" class="text-foreground-alt hover:text-foreground underline">
 					Retour aux services
 				</a>
 			</div>
@@ -221,10 +221,10 @@
 		{:else}
 			<!-- ═══ Manual lookup form ═══ -->
 			<div class="text-center mb-8">
-				<h1 class="text-3xl md:text-4xl font-bold text-dark-900 mb-2">
+				<h1 class="text-3xl md:text-4xl font-bold text-foreground mb-2">
 					Retrouver ma réservation
 				</h1>
-				<p class="text-dark-600">
+				<p class="text-foreground-alt">
 					Entrez votre référence et vos coordonnées pour accéder à votre réservation
 				</p>
 			</div>
@@ -239,12 +239,12 @@
 			<form
 				method="POST"
 				action="?action=lookup"
-				class="bg-white rounded-3xl p-6 md:p-8 shadow-sm space-y-5"
+				class="bg-white rounded-3xl p-6 md:p-8 shadow-mini space-y-5"
 				use:enhance
 			>
 				<!-- Booking reference -->
 				<div>
-					<label for="ref" class="block text-sm font-medium text-dark-700 mb-1.5">
+					<label for="ref" class="block text-sm font-medium text-foreground-alt mb-1.5">
 						Référence de réservation
 					</label>
 					<input
@@ -252,20 +252,20 @@
 						name="ref"
 						type="text"
 						placeholder="ex. a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-						class="w-full px-4 py-3 rounded-xl border border-dark-200 text-dark-900 placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm font-mono"
+						class="w-full px-4 py-3 rounded-xl border border-border-input-hover text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm font-mono"
 						required
 					/>
 				</div>
 
 				<!-- Contact method toggle -->
 				<div>
-					<span class="block text-sm font-medium text-dark-700 mb-2">Vérification</span>
+					<span class="block text-sm font-medium text-foreground-alt mb-2">Vérification</span>
 					<div class="flex gap-2 mb-3">
 						<button
 							type="button"
 							class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors {contactMethod === 'email'
 								? 'bg-primary/10 text-primary border border-primary/30'
-								: 'bg-dark-50 text-dark-600 border border-dark-200 hover:bg-dark-100'}"
+								: 'bg-surface text-foreground-alt border border-border-input-hover hover:bg-surface-hover'}"
 							onclick={() => { contactMethod = 'email'; }}
 						>
 							<Eye size={14} />
@@ -275,7 +275,7 @@
 							type="button"
 							class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors {contactMethod === 'phone'
 								? 'bg-primary/10 text-primary border border-primary/30'
-								: 'bg-dark-50 text-dark-600 border border-dark-200 hover:bg-dark-100'}"
+								: 'bg-surface text-foreground-alt border border-border-input-hover hover:bg-surface-hover'}"
 							onclick={() => { contactMethod = 'phone'; }}
 						>
 							<PhoneIcon size={14} />
@@ -288,14 +288,14 @@
 							name="email"
 							type="email"
 							placeholder="votre@email.com"
-							class="w-full px-4 py-3 rounded-xl border border-dark-200 text-dark-900 placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+							class="w-full px-4 py-3 rounded-xl border border-border-input-hover text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
 						/>
 					{:else}
 						<input
 							name="phone"
 							type="tel"
 							placeholder="+33 6 12 34 56 78"
-							class="w-full px-4 py-3 rounded-xl border border-dark-200 text-dark-900 placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+							class="w-full px-4 py-3 rounded-xl border border-border-input-hover text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
 						/>
 					{/if}
 				</div>
@@ -309,7 +309,7 @@
 				</button>
 			</form>
 
-			<div class="mt-6 text-center text-sm text-dark-500">
+			<div class="mt-6 text-center text-sm text-muted-foreground">
 				<p>Un lien direct vous a été envoyé par email ou SMS lors de votre réservation.</p>
 			</div>
 		{/if}

@@ -430,7 +430,7 @@ const filteredConversations = $derived(
 		onclick={() => (showNewThreadDialog = false)}
 	>
 		<div
-			class="bg-background rounded-xl border border-border shadow-lg w-full max-w-md mx-4"
+			class="bg-background rounded-xl border border-border shadow-popover w-full max-w-md mx-4"
 			onclick={(e) => e.stopPropagation()}
 		>
 			<div class="px-6 py-4 border-b border-border">

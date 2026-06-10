@@ -223,7 +223,7 @@
 								</div>
 							</div>
 							<div class="flex items-center gap-1 text-xs text-muted-foreground">
-								<span class="inline-block w-2 h-2 rounded-full bg-dark-300"></span>
+								<span class="inline-block w-2 h-2 rounded-full bg-muted-foreground"></span>
 								{booking.roomName}
 							</div>
 						</div>

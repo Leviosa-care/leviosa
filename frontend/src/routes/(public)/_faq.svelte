@@ -45,16 +45,16 @@
             use:reveal={{ preset: "fade-up", delay: 100 }}
         >
             <span
-                class="text-sm font-semibold text-dark-400 uppercase tracking-wider"
+                class="text-sm font-semibold text-muted-foreground uppercase tracking-wider"
                 >FAQ</span
             >
             <h2
-                class="mt-3 text-3xl md:text-4xl font-semibold tracking-tight text-dark-900"
+                class="mt-3 text-3xl md:text-4xl font-semibold tracking-tight text-foreground"
             >
                 Questions fréquentes
             </h2>
             <p
-                class="mt-4 text-base text-dark-500 leading-relaxed font-normal"
+                class="mt-4 text-base text-muted-foreground leading-relaxed font-normal"
             >
                 Tout ce que vous devez savoir avant de prendre rendez-vous.
             </p>
@@ -62,7 +62,7 @@
 
         <!-- Accordion -->
         <div
-            class="divide-y divide-dark-100"
+            class="divide-y divide-border-input"
             use:reveal={{ preset: "fade-up", delay: 150 }}
         >
             {#each faqs as faq, i}
@@ -72,17 +72,17 @@
                         onclick={() => toggle(i)}
                     >
                         <span
-                            class="text-base font-medium text-dark-900 group-hover:text-dark-600 transition-colors"
+                            class="text-base font-medium text-foreground group-hover:text-foreground-alt transition-colors"
                         >
                             {faq.question}
                         </span>
                         <span
-                            class="flex-shrink-0 w-6 h-6 rounded-full bg-dark-50 border border-dark-100 flex items-center justify-center transition-transform duration-200 {openIndex ===
+                            class="flex-shrink-0 w-6 h-6 rounded-full bg-surface border border-border-input flex items-center justify-center transition-transform duration-200 {openIndex ===
                             i
                                 ? 'rotate-45'
                                 : ''}"
                         >
-                            <Plus size={14} class="text-dark-500" strokeWidth={2} />
+                            <Plus size={14} class="text-muted-foreground" strokeWidth={2} />
                         </span>
                     </button>
                     {#if openIndex === i}
@@ -90,7 +90,7 @@
                             transition:slide={{ duration: 200 }}
                             class="mt-3 pr-10"
                         >
-                            <p class="text-sm text-dark-500 leading-relaxed">
+                            <p class="text-sm text-muted-foreground leading-relaxed">
                                 {faq.answer}
                             </p>
                         </div>

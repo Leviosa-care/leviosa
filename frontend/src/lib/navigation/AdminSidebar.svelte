@@ -161,7 +161,7 @@
 		<!-- Collapse Toggle Button -->
 		<button
 			onclick={toggleSidebar}
-			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-background flex items-center justify-center text-foreground-alt hover:text-foreground hover:bg-muted transition-all duration-200 border border-border-card shadow-sm"
+			class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-background flex items-center justify-center text-foreground-alt hover:text-foreground hover:bg-muted transition-all duration-200 border border-border-card shadow-mini"
 			aria-label={isCollapsed ? "Agrandir la barre laterale" : "Reduire la barre laterale"}
 			title={isCollapsed ? "Agrandir la barre laterale" : "Reduire la barre laterale"}
 		>
@@ -258,7 +258,7 @@
 						<div class="fixed inset-0 z-10" onclick={closeUserMenu}></div>
 						<!-- Dropdown (opens upward) -->
 						<div
-							class="absolute bottom-full left-0 right-0 mb-2 z-20 bg-background border border-border-card rounded-lg shadow-lg py-1 overflow-hidden"
+							class="absolute bottom-full left-0 right-0 mb-2 z-20 bg-background border border-border-card rounded-lg shadow-popover py-1 overflow-hidden"
 						>
 							<a
 								href="https://leviosa.care"
@@ -357,7 +357,7 @@
 
 	<!-- Mobile Bottom Navigation -->
 	<nav
-		class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-dark-50 backdrop-blur-sm border-t border-dark-100 dark:border-dark-300"
+		class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-surface backdrop-blur-sm border-t border-border-input-hover"
 		aria-label="Bottom navigation"
 	>
 		<ul class="flex items-center justify-around px-1 py-1">

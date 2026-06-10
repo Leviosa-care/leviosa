@@ -380,7 +380,7 @@
                 <div
                     class="w-16 h-16 rounded-full bg-dark-04 flex items-center justify-center mb-4"
                 >
-                    <Ticket size={32} class="text-dark-400" />
+                    <Ticket size={32} class="text-muted-foreground" />
                 </div>
                 <h3 class="text-lg font-medium mb-2">
                     {coupons.length === 0 || selectedStatus === ALL_STATUSES

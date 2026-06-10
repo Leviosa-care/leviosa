@@ -55,7 +55,7 @@
     <div class="relative">
         <!-- Soft gradient overlay -->
         <div
-            class="absolute inset-0 bg-gradient-to-br from-dark-50/60 via-white/50 to-transparent pointer-events-none"
+            class="absolute inset-0 bg-gradient-to-br from-surface/60 via-white/50 to-transparent pointer-events-none"
         ></div>
 
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
@@ -64,26 +64,26 @@
                 <div class="max-w-2xl">
                     <!-- Badge -->
                     <div
-                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dark-50 border border-dark-200 mb-8"
+                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface border border-border-input-hover mb-8"
                         use:reveal={{ preset: "fade-down", delay: 100 }}
                     >
-                        <span class="text-xs font-semibold text-dark-500 uppercase tracking-wider"
+                        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
                             >Nos services</span
                         >
                     </div>
 
                     <!-- Headline with weight contrast -->
                     <h1
-                        class="text-5xl sm:text-6xl lg:text-7xl font-medium tracking-tight text-dark-900 leading-[1.05] mb-6"
+                        class="text-5xl sm:text-6xl lg:text-7xl font-medium tracking-tight text-foreground leading-[1.05] mb-6"
                         use:reveal={{ preset: "fade-up", delay: 150 }}
                     >
                         Bien-être Holistique
                         <br class="hidden sm:block" />
-                        <span class="text-dark-400 font-light">Pour Corps & Esprit</span>
+                        <span class="text-muted-foreground font-light">Pour Corps & Esprit</span>
                     </h1>
 
                     <p
-                        class="text-lg md:text-xl text-dark-500 leading-relaxed font-normal mb-12"
+                        class="text-lg md:text-xl text-muted-foreground leading-relaxed font-normal mb-12"
                         use:reveal={{ preset: "fade-up", delay: 200 }}
                     >
                         Découvrez notre gamme complète de services conçus pour améliorer votre
@@ -97,18 +97,18 @@
                         use:reveal={{ preset: "fade-up", delay: 250 }}
                     >
                         <div>
-                            <p class="text-2xl md:text-3xl font-semibold text-dark-900">2 000+</p>
-                            <p class="text-sm text-dark-500 mt-0.5">clients satisfaits</p>
+                            <p class="text-2xl md:text-3xl font-semibold text-foreground">2 000+</p>
+                            <p class="text-sm text-muted-foreground mt-0.5">clients satisfaits</p>
                         </div>
-                        <div class="w-px h-10 bg-dark-200 self-stretch"></div>
+                        <div class="w-px h-10 bg-border-input-hover self-stretch"></div>
                         <div>
-                            <p class="text-2xl md:text-3xl font-semibold text-dark-900">10+</p>
-                            <p class="text-sm text-dark-500 mt-0.5">services disponibles</p>
+                            <p class="text-2xl md:text-3xl font-semibold text-foreground">10+</p>
+                            <p class="text-sm text-muted-foreground mt-0.5">services disponibles</p>
                         </div>
-                        <div class="w-px h-10 bg-dark-200 self-stretch"></div>
+                        <div class="w-px h-10 bg-border-input-hover self-stretch"></div>
                         <div>
-                            <p class="text-2xl md:text-3xl font-semibold text-dark-900">5 ★</p>
-                            <p class="text-sm text-dark-500 mt-0.5">note moyenne</p>
+                            <p class="text-2xl md:text-3xl font-semibold text-foreground">5 ★</p>
+                            <p class="text-sm text-muted-foreground mt-0.5">note moyenne</p>
                         </div>
                     </div>
                 </div>
@@ -117,7 +117,7 @@
                 <div class="hidden lg:flex flex-col gap-3" use:reveal={{ preset: "fade-up", delay: 200 }}>
                     {#if heroProducts[0]}
                         <div
-                            class="bg-dark-900 text-white rounded-2xl p-6 shadow-md"
+                            class="bg-foreground text-white rounded-2xl p-6 shadow-card"
                         >
                             <div class="flex items-center justify-between mb-4">
                                 <span class="text-xs font-semibold text-white/50 uppercase tracking-wider">
@@ -137,36 +137,36 @@
                     <div class="grid grid-cols-2 gap-3">
                         {#if heroProducts[1]}
                             <div
-                                class="bg-white border border-dark-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200"
+                                class="bg-white border border-border-input rounded-2xl p-5 shadow-mini hover:shadow-card transition-shadow duration-200"
                             >
                                 <div class="flex items-start justify-between gap-2 mb-3">
-                                    <span class="text-xs font-semibold text-dark-400 uppercase tracking-wider leading-tight">
+                                    <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider leading-tight">
                                         {heroProducts[1].category}
                                     </span>
-                                    <span class="inline-flex items-center gap-1 text-xs text-dark-500 flex-shrink-0">
+                                    <span class="inline-flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
                                         <Clock size={11} />
                                         {heroProducts[1].duration} min
                                     </span>
                                 </div>
-                                <p class="text-dark-900 font-semibold text-sm leading-snug">
+                                <p class="text-foreground font-semibold text-sm leading-snug">
                                     {heroProducts[1].name}
                                 </p>
                             </div>
                         {/if}
                         {#if heroProducts[2]}
                             <div
-                                class="bg-white border border-dark-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200"
+                                class="bg-white border border-border-input rounded-2xl p-5 shadow-mini hover:shadow-card transition-shadow duration-200"
                             >
                                 <div class="flex items-start justify-between gap-2 mb-3">
-                                    <span class="text-xs font-semibold text-dark-400 uppercase tracking-wider leading-tight">
+                                    <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider leading-tight">
                                         {heroProducts[2].category}
                                     </span>
-                                    <span class="inline-flex items-center gap-1 text-xs text-dark-500 flex-shrink-0">
+                                    <span class="inline-flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
                                         <Clock size={11} />
                                         {heroProducts[2].duration} min
                                     </span>
                                 </div>
-                                <p class="text-dark-900 font-semibold text-sm leading-snug">
+                                <p class="text-foreground font-semibold text-sm leading-snug">
                                     {heroProducts[2].name}
                                 </p>
                             </div>
@@ -174,7 +174,7 @@
                     </div>
 
                     {#if data.products.length > 3}
-                        <p class="text-xs text-dark-400 text-right">
+                        <p class="text-xs text-muted-foreground text-right">
                             +{data.products.length - 3} autres services disponibles
                         </p>
                     {/if}
@@ -188,7 +188,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-10 lg:gap-16 items-start">
             <!-- Sticky Category Sidebar -->
             <div class="lg:sticky lg:top-24" use:reveal={{ preset: "fade-up", delay: 150 }}>
-                <p class="uppercase text-dark-500 text-xs font-semibold tracking-wider mb-4">
+                <p class="uppercase text-muted-foreground text-xs font-semibold tracking-wider mb-4">
                     catégories
                 </p>
                 <div
@@ -212,11 +212,11 @@
                                     use:reveal={{ preset: "fade-up", delay: 100 }}
                                 >
                                     <h2
-                                        class="text-2xl md:text-3xl font-semibold text-dark-900 tracking-tight"
+                                        class="text-2xl md:text-3xl font-semibold text-foreground tracking-tight"
                                     >
                                         {category.name}
                                     </h2>
-                                    <p class="text-sm md:text-base text-dark-500 mt-1">
+                                    <p class="text-sm md:text-base text-muted-foreground mt-1">
                                         {category.description}
                                     </p>
                                 </div>
@@ -230,11 +230,11 @@
                     {:else}
                         <div class="mb-2" use:reveal={{ preset: "fade-up", delay: 100 }}>
                             <h2
-                                class="text-2xl md:text-3xl font-semibold text-dark-900 tracking-tight"
+                                class="text-2xl md:text-3xl font-semibold text-foreground tracking-tight"
                             >
                                 {activeCategory}
                             </h2>
-                            <p class="text-sm md:text-base text-dark-500 mt-1">
+                            <p class="text-sm md:text-base text-muted-foreground mt-1">
                                 {activeDescription}
                             </p>
                         </div>
@@ -254,8 +254,8 @@
     <button
         onclick={() => (activeCategory = name)}
         class="{activeCategory === name
-            ? 'bg-dark-900 text-white border-dark-900 shadow-sm font-medium'
-            : 'bg-white text-dark-600 border-dark-200 hover:border-dark-300 hover:text-dark-900 font-normal'} border text-sm px-5 py-3 rounded-xl whitespace-nowrap transition-all duration-200 cursor-pointer lg:w-full lg:text-left"
+            ? 'bg-foreground text-white border-foreground shadow-mini font-medium'
+            : 'bg-white text-foreground-alt border-border-input-hover hover:border-border-input-hover hover:text-foreground font-normal'} border text-sm px-5 py-3 rounded-xl whitespace-nowrap transition-all duration-200 cursor-pointer lg:w-full lg:text-left"
     >
         {name}
     </button>

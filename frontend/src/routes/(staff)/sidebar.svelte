@@ -161,8 +161,8 @@
         <!-- Collapse Toggle Button -->
         <button
             onclick={toggleSidebar}
-            class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-dark-50 flex items-center justify-center
-                   text-dark-700 hover:text-dark-900 hover:bg-dark-100 transition-all duration-200 border-foreground-alt"
+            class="absolute -right-4 bottom-24 z-10 w-8 h-8 rounded-full bg-surface flex items-center justify-center
+                   text-foreground-alt hover:text-foreground hover:bg-surface-hover transition-all duration-200 border-foreground-alt"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
@@ -181,13 +181,13 @@
         >
             {#if !isCollapsed}
                 <h1
-                    class="text-sm font-semibold tracking-tight text-dark-900 uppercase"
+                    class="text-sm font-semibold tracking-tight text-foreground uppercase"
                 >
                     Administration
                 </h1>
                 <a
                     href="/staff/settings"
-                    class="p-2 rounded-md transition-all duration-200 text-dark-900/50 hover:bg-dark-900/5 hover:text-dark-900"
+                    class="p-2 rounded-md transition-all duration-200 text-foreground/50 hover:bg-foreground/5 hover:text-foreground"
                     aria-label="Paramètres"
                     title="Paramètres"
                 >
@@ -196,7 +196,7 @@
             {:else}
                 <a
                     href="/staff/settings"
-                    class="p-2 rounded-md transition-all duration-200 text-dark-500 hover:bg-dark-900/2 hover:text-dark-900 mx-auto"
+                    class="p-2 rounded-md transition-all duration-200 text-muted-foreground hover:bg-foreground/2 hover:text-foreground mx-auto"
                     aria-label="Paramètres"
                     title="Paramètres"
                 >
@@ -218,8 +218,8 @@
                                 ? 'justify-center px-3 py-3'
                                 : 'gap-3 px-3 py-2.5'}
                                    {active
-                                ? 'text-dark-900 bg-dark-10/50 dark:bg-dark-200'
-                                : 'text-dark-900/50 hover:text-dark-900/90 hover:bg-dark-900/5'}"
+                                ? 'text-foreground bg-dark-10/50 dark:bg-surface-active'
+                                : 'text-foreground/50 hover:text-foreground/90 hover:bg-foreground/5'}"
                             aria-current={active ? "page" : undefined}
                             title={isCollapsed ? item.label : undefined}
                         >
@@ -243,18 +243,18 @@
                         class="w-9 h-9 rounded-full flex items-center justify-center bg-foreground-alt/10 border-border-card"
                     >
                         <span
-                            class="text-xs font-semibold text-dark-700 uppercase"
+                            class="text-xs font-semibold text-foreground-alt uppercase"
                         >
                             {user.firstname?.[0] ?? "A"}
                         </span>
                     </div>
                     <div class="flex-1 min-w-0">
                         <p
-                            class="text-sm font-medium text-dark-900 truncate tracking-tight"
+                            class="text-sm font-medium text-foreground truncate tracking-tight"
                         >
                             {user.firstname ?? "Admin"}
                         </p>
-                        <p class="text-xs text-dark-400 truncate">
+                        <p class="text-xs text-muted-foreground truncate">
                             {user.role === "administrator"
                                 ? "Administrateur"
                                 : "Partenaire"}
@@ -266,7 +266,7 @@
                     class="w-9 h-9 mx-auto rounded-full flex items-center justify-center bg-dark-10 border border-border-card"
                     title={user.firstname ?? "Admin"}
                 >
-                    <span class="text-xs font-semibold text-dark-700 uppercase">
+                    <span class="text-xs font-semibold text-foreground-alt uppercase">
                         {user.firstname?.[0] ?? "A"}
                     </span>
                 </div>
@@ -286,7 +286,7 @@
                     <a
                         href={item.href}
                         class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg transition-all duration-200
-                               {active ? 'text-dark-900' : 'text-dark-500'}"
+                               {active ? 'text-foreground' : 'text-muted-foreground'}"
                         aria-current={active ? "page" : undefined}
                     >
                         <item.icon size={20} strokeWidth={active ? 2 : 1.5} />

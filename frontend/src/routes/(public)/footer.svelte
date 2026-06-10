@@ -2,7 +2,7 @@
     import { Instagram } from "@lucide/svelte";
 </script>
 
-<footer class="bg-dark-900 text-white/80 pt-16 pb-8">
+<footer class="bg-foreground text-white/80 pt-16 pb-8">
     <div class="container mx-auto px-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr] gap-12 pb-12 border-b border-white/10">
             <div class="flex flex-col gap-4">

@@ -82,7 +82,7 @@
 
 <div
 	{id}
-	class="bg-card border border-border-card rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+	class="bg-card border border-border-card rounded-lg overflow-hidden hover:shadow-card transition-shadow"
 >
 	<div class="aspect-video bg-muted relative">
 		<img src={image} alt={name} class="w-full h-full object-cover" />

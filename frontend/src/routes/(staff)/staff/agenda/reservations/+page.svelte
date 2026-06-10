@@ -240,7 +240,7 @@
 		{#each tabs as [val, label]}
 			<button
 				class="px-4 py-2 rounded-md text-sm font-medium transition-colors {activeTab === val
-					? 'bg-card shadow-sm text-foreground'
+					? 'bg-card shadow-mini text-foreground'
 					: 'text-muted-foreground hover:text-foreground'}"
 				onclick={() => switchTab(val)}
 			>
@@ -260,7 +260,7 @@
 	<!-- Bookings List -->
 	<div class="space-y-3">
 		{#each filtered as booking (booking.id)}
-			<div class="bg-background rounded-xl border border-border p-4 sm:p-5 hover:shadow-sm transition-shadow">
+			<div class="bg-background rounded-xl border border-border p-4 sm:p-5 hover:shadow-mini transition-shadow">
 				<div class="flex flex-col sm:flex-row sm:items-start gap-4">
 					<!-- Client Avatar -->
 					<div

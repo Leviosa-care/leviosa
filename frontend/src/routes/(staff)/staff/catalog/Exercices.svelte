@@ -21,7 +21,7 @@
             vos produits.
         </p>
         <div
-            class="bg-dark-5 border border-border-card rounded-lg px-4 py-3 text-sm text-foreground-alt"
+            class="bg-surface border border-border-card rounded-lg px-4 py-3 text-sm text-foreground-alt"
         >
             <p class="font-medium mb-1">Statut du développement</p>
             <p class="text-xs">
