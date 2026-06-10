@@ -9,6 +9,7 @@
         ChartColumn,
         DollarSign,
         Settings,
+        User,
         ChevronLeft,
         ChevronRight,
     } from "@lucide/svelte";
@@ -91,6 +92,12 @@
             icon: DollarSign,
             roles: ["administrator", "partner"],
         },
+        {
+            href: "/staff/profile",
+            label: "Mon profil",
+            icon: User,
+            roles: ["administrator", "partner"],
+        },
     ];
 
     /**
@@ -120,6 +127,12 @@
             href: "/staff/statistics",
             label: "Statistiques",
             icon: ChartColumn,
+            roles: ["administrator", "partner"],
+        },
+        {
+            href: "/staff/profile",
+            label: "Profil",
+            icon: User,
             roles: ["administrator", "partner"],
         },
     ];
