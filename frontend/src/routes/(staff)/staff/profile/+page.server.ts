@@ -47,6 +47,27 @@ interface Product {
 }
 
 export const load: PageServerLoad = async ({ fetch, url }) => {
+	if (env.USE_MOCK_DATA === 'true') {
+		return {
+			profile: {
+				id: 'mock-partner',
+				bio: '',
+				experience: '',
+				occupation: '',
+				quote: '',
+				tags: [],
+				isVerified: true,
+				stripeAccountStatus: 'active',
+				stripeOnboardingComplete: true,
+				categories: [],
+				products: [],
+				joinedAt: new Date().toISOString(),
+			} as PartnerProfile,
+			linkedProviders: { google: false, apple: false } as LinkedProviders,
+			stripeCallback: null,
+		};
+	}
+
 	const partnerRes = await fetch(`${env.API_URL}/partners/me`, {
 		headers: {
 			'Content-Type': 'application/json',

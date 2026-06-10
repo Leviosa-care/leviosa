@@ -142,6 +142,10 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 		};
 	}
 
+	if (env.USE_MOCK_DATA === 'true') {
+		return { metrics: null, startDate: startDateParam, endDate: endDateParam };
+	}
+
 	const metricsRes = await fetch(`${env.API_URL}/partners/${partnerId}/metrics?start_date=${startDateParam}&end_date=${endDateParam}`, {
 		headers: {
 			'Content-Type': 'application/json',

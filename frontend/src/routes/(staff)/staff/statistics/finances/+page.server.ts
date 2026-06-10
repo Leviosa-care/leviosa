@@ -54,6 +54,10 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 	const monthParam = url.searchParams.get('month');
 	const selectedMonth = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : defaultMonth();
 
+	if (env.USE_MOCK_DATA === 'true') {
+		return { summary: null, selectedMonth };
+	}
+
 	const earningsRes = await fetch(`${env.API_URL}/partners/${partnerId}/earnings`, {
 		headers: {
 			'Content-Type': 'application/json',
