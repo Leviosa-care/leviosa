@@ -2,7 +2,7 @@
 	import { reveal } from '$lib/actions/reveal';
 	import { enhance } from '$app/forms';
 	import type { PageProps } from './$types';
-	import { Eye, Clock, CheckCircle, XCircle, AlertCircle, Search, Phone as PhoneIcon, Trash2, Loader2 } from '@lucide/svelte';
+	import { Mail, Clock, CheckCircle, XCircle, AlertCircle, Search, Phone as PhoneIcon, Trash2, Loader2 } from '@lucide/svelte';
 
 	let { data, form }: PageProps = $props();
 
@@ -260,22 +260,22 @@
 				<!-- Contact method toggle -->
 				<div>
 					<span class="block text-sm font-medium text-foreground-alt mb-2">Vérification</span>
-					<div class="flex gap-2 mb-3">
+					<div class="flex p-1 bg-surface rounded-xl border border-border-input-hover mb-3">
 						<button
 							type="button"
-							class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors {contactMethod === 'email'
-								? 'bg-primary/10 text-primary border border-primary/30'
-								: 'bg-surface text-foreground-alt border border-border-input-hover hover:bg-surface-hover'}"
+							class="flex flex-1 items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all {contactMethod === 'email'
+								? 'bg-white text-foreground shadow-sm'
+								: 'text-foreground-alt hover:text-foreground'}"
 							onclick={() => { contactMethod = 'email'; }}
 						>
-							<Eye size={14} />
+							<Mail size={14} />
 							Email
 						</button>
 						<button
 							type="button"
-							class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors {contactMethod === 'phone'
-								? 'bg-primary/10 text-primary border border-primary/30'
-								: 'bg-surface text-foreground-alt border border-border-input-hover hover:bg-surface-hover'}"
+							class="flex flex-1 items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all {contactMethod === 'phone'
+								? 'bg-white text-foreground shadow-sm'
+								: 'text-foreground-alt hover:text-foreground'}"
 							onclick={() => { contactMethod = 'phone'; }}
 						>
 							<PhoneIcon size={14} />
