@@ -68,6 +68,7 @@ type Transaction struct {
 	ProductName     string        `json:"product_name"`
 	AmountCents     int           `json:"amount_cents"`
 	PaymentStatus   PaymentStatus `json:"payment_status"`
+	BookingStatus   BookingStatus `json:"booking_status"`
 }
 
 type EarningsSummary struct {

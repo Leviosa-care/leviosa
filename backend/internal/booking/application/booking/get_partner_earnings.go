@@ -90,6 +90,7 @@ func (s *BookingService) GetPartnerEarnings(ctx context.Context, partnerID uuid.
 			ProductName:   productName,
 			AmountCents:   booking.TotalPriceCents,
 			PaymentStatus: booking.PaymentStatus,
+			BookingStatus: booking.Status,
 		})
 	}
 
