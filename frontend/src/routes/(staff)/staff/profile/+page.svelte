@@ -243,7 +243,7 @@
 	<title>Mon profil | Staff</title>
 </svelte:head>
 
-<div class="p-6 lg:p-10 max-w-4xl">
+<div class="p-6 lg:p-10">
 	<div class="mb-10">
 		<p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">Compte</p>
 		<h1 class="font-display text-4xl lg:text-5xl font-semibold tracking-tight text-foreground leading-[1.1]">Mon profil</h1>
