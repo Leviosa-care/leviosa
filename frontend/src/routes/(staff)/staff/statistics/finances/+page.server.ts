@@ -9,6 +9,7 @@ export interface Transaction {
 	productName: string;
 	amountCents: number;
 	paymentStatus: 'paid' | 'pending' | 'refunded';
+	bookingStatus: 'confirmed' | 'cancelled' | 'completed' | 'no_show';
 }
 
 export interface EarningsSummary {
@@ -27,6 +28,7 @@ interface BackendTransaction {
 	product_name: string;
 	amount_cents: number;
 	payment_status: 'paid' | 'pending' | 'refunded';
+	booking_status: 'confirmed' | 'cancelled' | 'completed' | 'no_show';
 }
 
 interface BackendEarningsSummary {
@@ -38,11 +40,19 @@ interface BackendEarningsSummary {
 	transactions: BackendTransaction[];
 }
 
-export const load: PageServerLoad = async ({ locals, fetch }) => {
+function defaultMonth(): string {
+	const now = new Date();
+	return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 	const partnerId = locals.user?.id;
 	if (!partnerId) {
 		throw redirect(302, '/auth');
 	}
+
+	const monthParam = url.searchParams.get('month');
+	const selectedMonth = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : defaultMonth();
 
 	const earningsRes = await fetch(`${env.API_URL}/partners/${partnerId}/earnings`, {
 		headers: {
@@ -55,13 +65,13 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 	}
 
 	if (!earningsRes.ok) {
-		if (earningsRes.status === 500) {
-			return {
-				summary: null,
-				error: 'Erreur serveur. Veuillez réessayer dans quelques instants.',
-			};
-		}
-		throw redirect(302, '/auth');
+		return {
+			summary: null,
+			selectedMonth,
+			error: earningsRes.status >= 500
+				? 'Erreur serveur. Veuillez réessayer dans quelques instants.'
+				: 'Impossible de charger vos données financières.',
+		};
 	}
 
 	const backend: BackendEarningsSummary = await earningsRes.json();
@@ -79,8 +89,9 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 			productName: t.product_name,
 			amountCents: t.amount_cents,
 			paymentStatus: t.payment_status,
+			bookingStatus: t.booking_status,
 		})),
 	};
 
-	return { summary };
+	return { summary, selectedMonth };
 };
