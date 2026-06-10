@@ -79,7 +79,7 @@
 	</div>
 
 	<!-- Date Range Selector -->
-	<div class="bg-card rounded-lg border border-border p-4 mb-8">
+	<div class="bg-card rounded-lg border border-border-card p-4 mb-8">
 		<div class="flex flex-col sm:flex-row items-start sm:items-end gap-4">
 			<div class="flex flex-col gap-1.5">
 				<label for="start_date" class="text-sm font-medium text-foreground flex items-center gap-1.5">
@@ -135,13 +135,13 @@
 	</div>
 
 	{#if data.error}
-		<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-8">
+		<div class="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-lg mb-8">
 			{data.error}
 		</div>
 	{/if}
 
 	{#if !data.error && hasNoData}
-		<div class="bg-card rounded-lg border border-border p-12 text-center">
+		<div class="bg-card rounded-lg border border-border-card p-12 text-center">
 			<Target size={48} class="text-muted-foreground mx-auto mb-4" />
 			<h2 class="text-xl font-semibold text-foreground mb-2">Aucune donnée disponible</h2>
 			<p class="text-sm text-muted-foreground">Les statistiques d'utilisation apparaîtront ici dès que vous aurez des réservations sur la période sélectionnée.</p>
@@ -149,7 +149,7 @@
 	{:else if !data.error && data.metrics}
 		<!-- KPI Cards -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+			<div class="bg-card rounded-2xl border border-border-card p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-green-100 rounded-lg">
 						<Target size={22} class="text-green-600" />
@@ -162,7 +162,7 @@
 				<p class="text-sm text-muted-foreground">Taux d'occupation moyen</p>
 			</div>
 
-			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+			<div class="bg-card rounded-2xl border border-border-card p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-blue-100 rounded-lg">
 						<Activity size={22} class="text-blue-600" />
@@ -173,7 +173,7 @@
 				<p class="text-sm text-muted-foreground">Jours analysés</p>
 			</div>
 
-			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+			<div class="bg-card rounded-2xl border border-border-card p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-yellow-100 rounded-lg">
 						<Activity size={22} class="text-yellow-600" />
@@ -184,7 +184,7 @@
 				<p class="text-sm text-muted-foreground">Score d'efficacité moyen</p>
 			</div>
 
-			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+			<div class="bg-card rounded-2xl border border-border-card p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<div class="flex items-center justify-between mb-4">
 					<div class="p-3 bg-orange-100 rounded-lg">
 						<Clock size={22} class="text-orange-600" />
@@ -200,7 +200,7 @@
 
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 			<!-- Daily Volume Chart (Last 7 days) -->
-			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+			<div class="bg-card rounded-2xl border border-border-card p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<h2 class="text-lg font-semibold text-foreground mb-6">Volume quotidien (7 jours)</h2>
 				{#if last7Days.length === 0}
 					<p class="text-sm text-muted-foreground">Aucune donnée disponible pour les 7 derniers jours</p>
@@ -225,7 +225,7 @@
 			</div>
 
 			<!-- Summary Stats -->
-			<div class="bg-background rounded-2xl border border-border p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
+			<div class="bg-card rounded-2xl border border-border-card p-6 group/card hover:shadow-card hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all duration-500">
 				<h2 class="text-lg font-semibold text-foreground mb-6">Détails</h2>
 				<div class="space-y-4">
 					<div class="flex items-center justify-between">

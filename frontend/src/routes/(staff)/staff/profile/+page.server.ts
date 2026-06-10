@@ -58,15 +58,14 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 	}
 
 	if (!partnerRes.ok) {
-		if (partnerRes.status === 500) {
-			return {
-				profile: null,
-				linkedProviders: { google: false, apple: false },
-				stripeCallback: null,
-				error: 'Erreur serveur. Veuillez réessayer dans quelques instants.',
-			};
-		}
-		throw redirect(302, '/auth');
+		return {
+			profile: null,
+			linkedProviders: { google: false, apple: false },
+			stripeCallback: null,
+			error: partnerRes.status >= 500
+				? 'Erreur serveur. Veuillez réessayer dans quelques instants.'
+				: 'Impossible de charger votre profil.',
+		};
 	}
 
 	const partner: PartnerResponse = await partnerRes.json();

@@ -252,35 +252,35 @@
 	</div>
 
 	{#if data.error}
-		<div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+		<div class="bg-destructive/10 border border-destructive/30 rounded-lg p-6 mb-6">
 			<div class="flex items-center gap-3">
-				<AlertCircle class="text-red-600" size={20} />
+				<AlertCircle class="text-destructive" size={20} />
 				<div>
-					<h2 class="font-semibold text-red-900">Erreur de chargement</h2>
-					<p class="text-sm text-red-700">{data.error}</p>
+					<h2 class="font-semibold text-destructive">Erreur de chargement</h2>
+					<p class="text-sm text-destructive">{data.error}</p>
 				</div>
 			</div>
 		</div>
 	{:else if !data.profile}
-		<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+		<div class="bg-tertiary/10 border border-tertiary/30 rounded-lg p-6 mb-6">
 			<div class="flex items-center gap-3">
-				<AlertCircle class="text-yellow-600" size={20} />
+				<AlertCircle class="text-tertiary" size={20} />
 				<div>
-					<h2 class="font-semibold text-yellow-900">Profil non disponible</h2>
-					<p class="text-sm text-yellow-700">Votre profil n'a pas pu être chargé. Veuillez réessayer.</p>
+					<h2 class="font-semibold text-tertiary">Profil non disponible</h2>
+					<p class="text-sm text-tertiary">Votre profil n'a pas pu être chargé. Veuillez réessayer.</p>
 				</div>
 			</div>
 		</div>
 	{:else}
 
 	{#if needsStripeOnboarding}
-		<div class="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-6">
+		<div class="bg-tertiary/10 border border-tertiary/30 rounded-lg p-6 mb-6">
 			<div class="flex flex-col sm:flex-row items-start gap-4">
 				<div class="flex items-center gap-3 flex-1">
-					<CreditCard class="text-amber-600 flex-shrink-0" size={22} />
+					<CreditCard class="text-tertiary flex-shrink-0" size={22} />
 					<div>
-						<h2 class="font-semibold text-amber-900">Configuration Stripe requise</h2>
-						<p class="text-sm text-amber-700 mt-1">
+						<h2 class="font-semibold text-tertiary">Configuration Stripe requise</h2>
+						<p class="text-sm text-tertiary mt-1">
 							{data.stripeCallback === 'refresh'
 								? 'Le lien précédent a expiré. Veuillez générer un nouveau lien pour poursuivre la configuration de votre compte Stripe.'
 								: 'Pour recevoir vos paiements, vous devez configurer votre compte Stripe en complétant les informations bancaires et d\'identité.'}
@@ -288,7 +288,7 @@
 					</div>
 				</div>
 				<button
-					class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors disabled:opacity-50 flex-shrink-0"
+					class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-tertiary text-contrast hover:bg-tertiary/90 transition-colors disabled:opacity-50 flex-shrink-0"
 					onclick={startStripeOnboarding}
 					disabled={stripeLoading}
 				>
@@ -299,13 +299,13 @@
 				</button>
 			</div>
 			{#if stripeError}
-				<p class="text-xs text-red-600 mt-3">{stripeError}</p>
+				<p class="text-xs text-destructive mt-3">{stripeError}</p>
 			{/if}
 		</div>
 	{/if}
 
 	<!-- Profile Header -->
-	<div class="bg-card rounded-lg border border-border p-6 mb-6">
+	<div class="bg-card rounded-lg border border-border-card p-6 mb-6">
 		<div class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
 			<div
 				class="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0 text-2xl font-bold text-foreground"
@@ -358,7 +358,7 @@
 		<!-- Left Column: Bio + Experience -->
 		<div class="lg:col-span-2 space-y-6">
 			<!-- Bio -->
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-card rounded-lg border border-border-card p-6">
 				<div class="flex items-center justify-between mb-4">
 					<h3 class="font-semibold text-foreground">Biographie</h3>
 					<button
@@ -406,7 +406,7 @@
 			</div>
 
 			<!-- Experience -->
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-card rounded-lg border border-border-card p-6">
 				<div class="flex items-center justify-between mb-4">
 					<h3 class="font-semibold text-foreground">Expérience</h3>
 					<button
@@ -454,7 +454,7 @@
 			</div>
 
 			<!-- Occupation -->
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-card rounded-lg border border-border-card p-6">
 				<div class="flex items-center justify-between mb-4">
 					<div class="flex items-center gap-2">
 						<Briefcase size={16} class="text-muted-foreground" />
@@ -506,7 +506,7 @@
 			</div>
 
 			<!-- Quote -->
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-card rounded-lg border border-border-card p-6">
 				<div class="flex items-center justify-between mb-4">
 					<div class="flex items-center gap-2">
 						<MessageSquareQuote size={16} class="text-muted-foreground" />
@@ -558,7 +558,7 @@
 			</div>
 
 			<!-- Tags -->
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-card rounded-lg border border-border-card p-6">
 				<div class="flex items-center justify-between mb-4">
 					<div class="flex items-center gap-2">
 						<Tags size={16} class="text-muted-foreground" />
@@ -623,7 +623,7 @@
 		<!-- Right Column: Categories + Products + Status + OAuth -->
 		<div class="space-y-6">
 			<!-- Categories -->
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-card rounded-lg border border-border-card p-6">
 				<div class="flex items-center gap-2 mb-4">
 					<Tag size={16} class="text-muted-foreground" />
 					<h3 class="font-semibold text-foreground">Spécialités</h3>
@@ -638,7 +638,7 @@
 			</div>
 
 			<!-- Products -->
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-card rounded-lg border border-border-card p-6">
 				<div class="flex items-center gap-2 mb-4">
 					<Package size={16} class="text-muted-foreground" />
 					<h3 class="font-semibold text-foreground">Prestations</h3>
@@ -654,7 +654,7 @@
 			</div>
 
 			<!-- Status -->
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-card rounded-lg border border-border-card p-6">
 				<h3 class="font-semibold text-foreground mb-4">Statut du compte</h3>
 				<div class="space-y-3">
 					<div class="flex items-center justify-between">
@@ -681,7 +681,7 @@
 			</div>
 
 			<!-- OAuth Account Linking -->
-			<div class="bg-card rounded-lg border border-border p-6">
+			<div class="bg-card rounded-lg border border-border-card p-6">
 				<h3 class="font-semibold text-foreground mb-4">Identifiants de connexion</h3>
 				{#if oauthError}
 					<p class="text-xs text-red-600 mb-3">{oauthError}</p>
