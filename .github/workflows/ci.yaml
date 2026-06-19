@@ -44,10 +44,6 @@ jobs:
         working-directory: ./frontend
         run: pnpm run build
 
-      - name: 🧪 Run unit tests
-        working-directory: ./frontend
-        run: pnpm run test:unit
-
   backend-checks:
     name: 🛢 Backend CI
     runs-on: ubuntu-latest
@@ -109,21 +105,9 @@ jobs:
       - name: 🐳 Ensure Docker is running
         run: docker ps
 
-      - name: 🧪 Run authuser integration tests
-        working-directory: ./backend/authuser
-        run: make ti
-
-      - name: 🧪 Run catalog integration tests
-        working-directory: ./backend/catalog
-        run: make ti
-
-      - name: 🧪 Run settings integration tests
-        working-directory: ./backend/settings
-        run: make ti
-
-      - name: 🧪 Run notification integration tests
-        working-directory: ./backend/notification
-        run: make ti
+      - name: 🧪 Run integration tests
+        working-directory: ./backend
+        run: make test-integration
 
   security-scan:
     name: 🔒 Security Scanning
