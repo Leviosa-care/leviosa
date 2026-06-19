@@ -5,41 +5,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Root Level Commands
-- `make dev` - Run both frontend and backend in development mode
-- `make up` - Start application with docker-compose (local development)
-- `make down` - Stop docker-compose services
-- `make help` - Show available commands
-- `make help-front` - Show frontend-specific commands
-- `make help-back` - Show backend-specific commands
+- `make help` - Show all available commands (local dev, Docker image builds, VPS deploy, Terraform, Ansible)
+- `make local-dev` - Run both frontend and backend in development mode
+- `make local-up` - Start application with docker-compose (local development)
+- `make local-down` - Stop docker-compose services
+
+Deployment to the VPS (image build/push, Ansible, Terraform) is also driven from this Makefile — see `make help` for the full list (`image-*`, `deploy*`, `prod-*`, `staging-*`, `infra-*`, `ansible-*`).
 
 ### Frontend Commands (from /frontend)
-- `npm run dev` - Start SvelteKit development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run check` - Type checking
-- `npm run check:watch` - Type checking in watch mode
+- `pnpm run dev` - Start SvelteKit development server
+- `pnpm run build` - Build for production
+- `pnpm run preview` - Preview production build
+- `pnpm run check` - Type checking
+- `pnpm run check:watch` - Type checking in watch mode
 
 ### Backend Commands (from /backend)
-- `make run` - Start development server with all dependencies (uses Air for hot reload)
-- `make deps` - Start required dependencies (Redis, PostgreSQL, RabbitMQ)
-- `make start-redis` - Start Redis container
-- `make start-postgres` - Start PostgreSQL container
-- `make start-rabbit` - Start RabbitMQ container
-- `make stop` - Stop all dependency containers
-- `make clean` - Remove all dependency containers
+- `docker compose up` - Start the backend plus its dependencies (PostgreSQL, Redis, RabbitMQ)
+- `go run ./cmd/app` - Run the backend binary directly against already-running dependencies
+- `go run ./cmd/seed` - Seed data (configured via `cmd/seed/seed_data.example.json`)
 
 ### Testing Commands
-Each microservice has specific test commands in their individual Makefiles:
-- **authuser**: `make test`, `make ti` (integration), `make all`
-- **catalog**: `make test`, `make ti` (integration), `make test-all`
-- **settings**: `make test`, `make ti` (integration), `make all`
+Run from `/backend` (see `make test-help` for the full list):
+- `make test-unit` / `make test-unit-<domain>` - Unit tests, all domains or one (`authuser`, `catalog`, `settings`, `booking`, `notification`)
+- `make test-integration` / `make test-integration-<domain>` - Integration tests (spin up dependencies via testcontainers)
+- `make test-coverage` - HTML coverage report across all domains
 
 ## Project Architecture
 
 ### Full-Stack Application Structure
 ```
 ├── frontend/           # SvelteKit 5 application
-├── backend/           # Go microservices monorepo
+├── backend/           # Go modular monolith
 ├── config/            # Infrastructure configuration (Caddy, Loki, Vault, etc.)
 ├── infra/             # Terraform and Ansible deployment scripts
 └── compose.yaml       # Production docker-compose configuration
@@ -55,28 +51,35 @@ Each microservice has specific test commands in their individual Makefiles:
 - **API Integration**: Automatic Bearer token injection via hooks.server.ts
 - **Key Libraries**: bits-ui, sveltekit-superforms, arktype, @internationalized/date
 
-### Backend Architecture (Go Microservices)
-Go workspace with multiple microservices following hexagonal architecture:
+### Backend Architecture (Go Modular Monolith)
+A single Go binary (`backend/cmd/app`) composed of internal domain packages, each following hexagonal architecture:
 
 ```
 backend/
-├── core/              # Shared contracts, utilities, error definitions
-├── authuser/          # Authentication and user management
-├── catalog/           # Product catalog and pricing (Stripe integration)
-├── settings/          # System configuration service
-└── cmd/leviosa/       # Main application entry point
+├── cmd/app/            # Main application entry point (single binary)
+├── cmd/seed/            # Data seeding tool
+└── internal/
+    ├── common/          # Shared contracts, utilities, error definitions
+    ├── authuser/        # Authentication and user management
+    ├── catalog/         # Product catalog and pricing (Stripe integration)
+    ├── settings/        # System configuration
+    ├── booking/         # Room scheduling, availability, utilization analytics
+    ├── notification/    # Email and SMS notifications
+    └── messaging/       # User-to-user conversations
 ```
 
-**Hexagonal Architecture Pattern** for each microservice:
-- `internal/domain/` - Business entities (no external dependencies)
-- `internal/ports/` - Repository and service interfaces
-- `internal/application/` - Use cases and workflows
-- `internal/adapters/` - Infrastructure implementations:
+**Hexagonal Architecture Pattern** within each domain package:
+- `domain/` - Business entities (no external dependencies)
+- `ports/` - Repository and service interfaces
+- `application/` - Use cases and workflows
+- `infrastructure/` (or `adapters/`) - Infrastructure implementations:
   - `http/` - REST API handlers
   - `postgres/` - Database persistence
   - `rabbitmq/` - Message queue integration
   - `redis/` - Caching layer
   - `s3/` - Object storage
+
+See `backend/CLAUDE.md` for the full breakdown, including booking-domain features (gap detection, utilization metrics, availability suggestions).
 
 ### Technology Stack
 
@@ -85,10 +88,10 @@ backend/
 - Node.js adapter for SSR
 
 **Backend**:
-- Go 1.24.2 with Air for hot reload
+- Go 1.24.2 (modular monolith, single binary)
 - PostgreSQL 17.5, Redis (alpine), RabbitMQ 3 (management)
 - AWS S3, HashiCorp Vault
-- External integrations: Stripe, Gmail SMTP
+- External integrations: Stripe, Gmail SMTP, Twilio SMS
 
 **Infrastructure**:
 - Docker with docker-compose
@@ -105,22 +108,20 @@ backend/
 - **Payments**: Stripe integration for checkout
 
 ### Database Migrations
-- Located in `core/migrations/` and `internal/migrations/`
 - Convention: `{timestamp}_{service}_{action}_{entity_or_scope}.sql`
 - Managed through Go embed system
 
 ### Error Handling
-- Centralized error definitions in `core/errs/` package
+- Centralized error definitions in `internal/common/errs` package
 - Domain-specific error constructors
 - PostgreSQL and Redis error classification utilities
 - Consistent error wrapping with context
 
 ### Development Workflow
-1. Start dependencies: `make deps` (from backend directory)
-2. Start frontend: `npm run dev` (from frontend directory)
-3. Start backend: `make run` (from backend directory)
-4. Access application: Frontend typically on http://localhost:5173
-5. Run tests per service using individual makefiles
+1. Start backend + dependencies: `docker compose up` (from backend directory)
+2. Start frontend: `pnpm run dev` (from frontend directory)
+3. Access application: Frontend typically on http://localhost:5173, backend on http://localhost:3500
+4. Run tests from the backend directory using `make test-unit` / `make test-integration`
 
 ### Environment Configuration
 - **Development**: Uses `.env` files and mock data
@@ -134,48 +135,14 @@ backend/
 - Uses real adapters for black-box integration testing
 - Test data helpers available in `test/testdata/`
 
-### CI/CD Pipeline (GitHub Actions)
+### CI/CD
 
-**Workflow Strategy:** GitHub Flow with environment promotion
+**CI** (`.github/workflows/ci.yaml`) runs on every PR to `main` and validates the change before merge:
+- Frontend: install, build (SvelteKit)
+- Backend: build, unit tests (`go test ./...`)
+- Backend integration tests: `make test-integration` (from `/backend`; dependencies are spun up per-test via testcontainers)
+- Security: Go vulnerability scanning (`govulncheck`)
 
-```
-feature/new-feature
-    ↓ Push to remote
-    ↓ Create PR to main
-    ↓ CI validation (tests, security scan)
-main branch
-    ↓ Merge triggers staging deployment
-staging.leviosa.com (password-protected testing)
-    ↓ Create git tag v*.*.*
-production.leviosa.com (public users)
-```
-
-**Key Workflows:**
-
-1. **CI Workflow** (`ci.yaml`) - Runs on all PRs to main:
-   - Frontend: Build, unit tests
-   - Backend: Build, unit tests, integration tests (with testcontainers)
-   - Security: Go vulnerability scanning (govulncheck)
-   - Blocks merge if any checks fail
-
-2. **Staging Deployment** (`staging.yaml`) - Triggers on push to main:
-   - Build and test frontend/backend
-   - Scan Docker images with Trivy
-   - Deploy to staging environment
-   - Run health checks
-
-3. **Production Deployment** (`production.yaml`) - Triggers on git tags (v*.*.*):
-   - Build and test frontend/backend
-   - Scan Docker images with Trivy
-   - Deploy to production environment
-   - Run health checks
-
-**Security Features:**
-- Docker image vulnerability scanning with Trivy (CRITICAL/HIGH threshold)
-- Go dependency scanning with govulncheck
-- Integration tests run with real dependencies (PostgreSQL, Redis, RabbitMQ, S3)
-- Deployment blocked if security vulnerabilities found
+There is no automated deployment workflow. Deployment to staging/production VPS environments is manual, driven by the root `Makefile` (Docker image build/push to Docker Hub, then Ansible playbooks or quick SSH-based `make deploy`/`make deploy-staging`) and Terraform for infrastructure provisioning. See `make help` at the repo root for the full command list.
 
 **Merge Strategy:** Rebase and merge only (preserves full commit history)
-
-See `.github/README.md` for detailed workflow documentation.

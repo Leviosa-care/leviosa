@@ -5,71 +5,70 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Build and Run
-- `make run` - Start development server with dependencies (Redis, PostgreSQL, RabbitMQ)
-- `make deps` - Start all required dependencies (Redis, PostgreSQL, RabbitMQ)
-- `make up` - Start with docker-compose
-- `make down` - Stop docker-compose services
+- `docker compose up` - Start the backend plus its dependencies (PostgreSQL, Redis, RabbitMQ); supports Compose Watch for live sync/rebuild on file changes
+- `go run ./cmd/app` - Run the backend binary directly against already-running dependencies
+- `go run ./cmd/seed` - Seed data (configured via `cmd/seed/seed_data.example.json`)
 
 ### Testing
-Individual microservices have their own test commands in makefiles:
-- **authuser/**: `make test` (specific OTP tests), `make ti` (integration tests), `make all` (all tests)
-- **catalog/**: `make test` (specific price tests), `make ti` (integration tests), `make test-all` (all internal tests)
-- **settings/**: `make test` (specific S3 tests), `make ti` (integration tests), `make all` (all integration tests)
-
-### Dependencies Management
-- `make start-redis` - Start Redis container on localhost:6379
-- `make start-postgres` - Start PostgreSQL container on localhost:5432  
-- `make start-rabbit` - Start RabbitMQ container on localhost:5672/15672
-- `make stop` - Stop all containers
-- `make clean` - Remove all containers
+Run from this directory (see `make test-help` for the full list):
+- `make test-unit` / `make test-unit-<domain>` - Unit tests, all domains or one (`authuser`, `catalog`, `settings`, `booking`, `notification`)
+- `make test-integration` / `make test-integration-<domain>` - Integration tests; dependencies are spun up per-test via testcontainers, no manual container management needed
+- `make test-coverage` - HTML coverage report across all domains
+- `make test-race` / `make test-benchmark` / `make test-smoke` - Other test modes
+- `make test-file TEST_PATH=<path>` / `make test-func TEST_NAME=<name> TEST_PATH=<path>` - Run a single file or test function
 
 ## Project Architecture
 
-### Multi-Module Monorepo Structure
-This is a Go workspace with multiple microservices following hexagonal architecture:
+### Modular Monolith Structure
+A single Go binary (`cmd/app`), with business domains organized as internal packages following hexagonal architecture:
 
 ```
-├── core/           # Shared contracts, utilities, error definitions
-├── authuser/       # Authentication and user management service
-├── catalog/        # Product catalog and pricing service
-├── settings/       # System configuration service
-├── notification/   # Email and SMS notification service
-└── cmd/leviosa/    # Main application entry point
+├── cmd/app/         # Main application entry point (single binary)
+├── cmd/seed/        # Data seeding tool
+└── internal/
+    ├── common/      # Shared contracts, utilities, error definitions
+    ├── authuser/    # Authentication and user management
+    ├── catalog/     # Product catalog and pricing service
+    ├── settings/    # System configuration service
+    ├── booking/     # Room scheduling, availability, utilization analytics
+    ├── notification/ # Email and SMS notification service
+    └── messaging/   # User-to-user conversations
 ```
 
 ### Hexagonal Architecture Pattern
-Each microservice follows ports & adapters pattern:
-- **internal/domain/** - Business entities and value objects (no external dependencies)
-- **internal/ports/** - Interfaces for repositories and services
-- **internal/application/** - Use cases and business workflows
-- **internal/adapters/** - Infrastructure implementations:
+Each domain package follows the ports & adapters pattern:
+- **domain/** - Business entities and value objects (no external dependencies)
+- **ports/** - Interfaces for repositories and services
+- **application/** - Use cases and business workflows
+- **infrastructure/** - Infrastructure implementations:
   - `http/` - REST API handlers and routes
   - `postgres/` - Database persistence
   - `rabbitmq/` - Message queue integration
   - `redis/` - Caching layer
   - `s3/` - Object storage
 
-### Core Package
-The `core/` directory contains shared components:
-- **core/errs/** - Centralized error definitions and constructors
-- **core/contracts/** - RabbitMQ message contracts and routing keys
-- **core/messaging/** - RabbitMQ utilities for exchanges, queues, and payloads
-- **core/ctxutil/** - Context utilities for logger and role validation
-- **core/httpx/** - HTTP utilities for CORS, JSON responses, error handling
-- **core/logger/** - Structured logging configuration
-- **core/middleware/** - Authentication middleware
-- **core/validation/** - Email and phone validation utilities
+### Common Package
+`internal/common/` contains shared components:
+- **errs/** - Centralized error definitions and constructors
+- **contracts/** - RabbitMQ message contracts and routing keys
+- **messaging/** - RabbitMQ utilities for exchanges, queues, and payloads
+- **ctxutil/** - Context utilities for logger and role validation
+- **httpx/** - HTTP utilities for CORS, JSON responses, error handling
+- **logger/** - Structured logging configuration
+- **middleware/** - Authentication middleware
+- **validation/** - Email and phone validation utilities
+- **testutils/** - Testcontainers helpers for Postgres, Redis, RabbitMQ, S3, Vault, Stripe
 
 ### Database Migrations
-- Located in `core/migrations/` and `internal/migrations/`
+- Located in `internal/common/migrations/` and per-domain `infrastructure/postgres/migrations/`
 - Convention: `{timestamp}_{service}_{action}_{entity_or_scope}.sql`
 - Example: `20250714103022_catalog_add_column_products_buffer_time.sql`
 
 ### Testing Structure
 - **Unit tests**: Alongside source files (`*_test.go`)
-- **Integration tests**: `test/integration/` directories per service
-- **Test data**: `test/testdata/` with helpers for database, RabbitMQ, HTTP setup
-- Uses real adapters for black-box testing
+- **Integration tests**: `test/integration/` directories per domain
+- **Test data**: `test/testdata/` and `internal/common/testutils/` with helpers for database, RabbitMQ, HTTP setup
+- Uses real adapters (via testcontainers) for black-box testing
 
 ### Technology Stack
 - **Language**: Go 1.24.2
@@ -77,7 +76,6 @@ The `core/` directory contains shared components:
 - **Cache**: Redis (alpine)
 - **Message Queue**: RabbitMQ 3 (management)
 - **Object Storage**: AWS S3
-- **Development**: Air for hot reload
 - **Configuration**: Viper + environment variables
 
 ### Environment Configuration
@@ -87,7 +85,7 @@ The `core/` directory contains shared components:
 - External integrations: Stripe, Gmail SMTP, Twilio SMS
 
 ### Error Handling
-- Sentinel errors defined in `core/errs/` package
+- Sentinel errors defined in `internal/common/errs/` package
 - Domain-specific error constructors (e.g., `NewNotFoundErr`, `NewConflictErr`)
 - PostgreSQL and Redis error classification utilities
 - Consistent error wrapping with context
@@ -162,7 +160,6 @@ All booking handlers use `httpx.RespondWithServiceError()` for automatic error c
 - Handler layer: `RespondWithServiceError()` maps to HTTP status codes (400/404/503/500)
 
 ### Development Workflow
-1. Start dependencies: `make deps`
-2. Run development server: `make run` (uses Air for hot reload)
-3. Run tests per service using individual makefiles
-4. Database migrations managed through Go embed and custom migration system
+1. Start the backend and its dependencies: `docker compose up`
+2. Run tests: `make test-unit` / `make test-integration` (or the per-domain variants)
+3. Database migrations managed through Go embed and custom migration system
