@@ -1,27 +1,47 @@
-# Leviosa Activity Manager Backend
+# Leviosa Backend
 
-This is the backend part of the Leviosa Activity Manager project, built using Go. This README will be completed later.
+Go modular monolith: a single binary (`cmd/app`) composed of internal domain packages (`internal/authuser`, `internal/booking`, `internal/catalog`, `internal/settings`, `internal/notification`, `internal/messaging`, `internal/common`), each following a hexagonal (ports & adapters) structure. See `CLAUDE.md` for the full architecture breakdown.
 
-## Installation
+## Requirements
 
-To install the project, run the following command:
+- Go 1.24.2
+- Docker (for Postgres, Redis, RabbitMQ, and integration tests via testcontainers)
 
-```bash
-# I do not have a command yet
-```
-
-## Usage
-
-To start the development server, run the following command:
+## Running locally
 
 ```bash
-# I do not have a command yet
+cp example.env development.env   # fill in required values
+docker compose up                 # starts backend + Postgres, Redis, RabbitMQ
 ```
 
-## Contributing
+The API listens on `http://localhost:3500`, with a health check at `/healthz`.
 
-Contributions are welcome! Please follow the guidelines in the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+To run the Go binary directly against already-running dependencies:
 
-## License
+```bash
+go run ./cmd/app
+```
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
+## Testing
+
+Run from this directory (see `make test-help` for the full list):
+
+```bash
+make test-unit          # unit tests, all domains
+make test-integration   # integration tests (spins up deps via testcontainers), all domains
+make test-unit-<domain>        # e.g. make test-unit-authuser
+make test-integration-<domain> # e.g. make test-integration-booking
+make test-coverage      # HTML coverage report across all domains
+```
+
+## ENCX (field-level encryption)
+
+Structs tagged for encryption are processed by [encx](https://github.com/hengadev/encx). See `make encx-help` for the full command list (`encx-validate`, `encx-generate`, `encx-clean`).
+
+## Seeding data
+
+```bash
+go run ./cmd/seed
+```
+
+Configure seed data via `cmd/seed/seed_data.example.json`.

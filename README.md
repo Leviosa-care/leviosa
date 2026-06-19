@@ -1,37 +1,37 @@
-# Leviosa: Activity Management Software
+# Leviosa
 
-_Note: This is the initial iteration of the README for the "Leviosa" project. It will be expanded and refined as the project progresses._
+Leviosa is booking and activity management software for service businesses (e.g. massage therapy practices) — room scheduling, availability, capacity tracking, payments, and client messaging.
 
-## Overview
+## Architecture
 
-"Leviosa" is an activity management software designed to streamline and optimize the tracking and management of daily tasks and operations within an organization. By recording and categorizing activities, it aims to enhance productivity and provide valuable insights into workflow efficiency.
+```
+├── frontend/           # SvelteKit 5 application
+├── backend/            # Go modular monolith
+├── config/             # Infrastructure configuration (Caddy, Loki, Vault, etc.)
+├── infra/              # Terraform and Ansible deployment scripts
+└── compose.yaml        # Production docker-compose configuration
+```
 
-## Technology Stack
+- **Frontend**: [SvelteKit 5](https://kit.svelte.dev/) + TypeScript + Tailwind CSS v4.
+- **Backend**: [Go](https://golang.org/) modular monolith — a single binary built from `backend/cmd/app`, with business domains (`authuser`, `booking`, `catalog`, `settings`, `notification`, `messaging`) organized as internal packages under `backend/internal/`, each following a hexagonal (ports & adapters) structure. See `backend/CLAUDE.md` for details.
+- **Database**: PostgreSQL.
+- **Cache**: Redis.
+- **Message queue**: RabbitMQ.
+- **File storage**: AWS S3.
+- **Secrets**: HashiCorp Vault.
+- **Payments**: Stripe.
+- **Notifications**: Gmail SMTP, Twilio SMS.
 
-The project leverages a robust and modern technology stack to ensure scalability, performance, and maintainability:
+## Local Development
 
-- **Frontend:** [SvelteKit](https://kit.svelte.dev/) is utilized for building a reactive and efficient user interface, offering a seamless user experience.
+```bash
+make local-dev   # run frontend + backend in dev mode
+make local-up    # start local docker-compose stack
+make local-down  # stop local docker-compose stack
+```
 
-- **Backend:** Developed in [Go (Golang)](https://golang.org/), the backend provides a high-performance and concurrent server environment, handling business logic and API requests efficiently.
+See `make help` at the repo root for the full list of commands (local dev, Docker image builds, VPS deploy, Terraform, Ansible). Frontend- and backend-specific commands are documented in `frontend/CLAUDE.md` and `backend/CLAUDE.md`.
 
-- **Database:** [SQLite3](https://www.sqlite.org/index.html) serves as the lightweight relational database, ensuring simplicity and reliability in data storage.
+## Deployment
 
-- **Payment Processing:** Integration with [Stripe](https://stripe.com/) enables secure and efficient handling of payment transactions within the application.
-
-- **File Storage:** [Amazon S3](https://aws.amazon.com/s3/) is employed for scalable and durable storage of user-uploaded files and assets.
-
-- **Caching:** [Redis](https://redis.io/) is used to cache frequently accessed data, improving application performance and reducing database load.
-
-## Deployment and Development
-
-To facilitate seamless development and deployment processes, the project includes:
-
-- **Dockerfiles:** Customized Dockerfiles are provided to containerize the application components, ensuring consistency across different environments.
-
-- **Makefiles:** Makefiles are available to automate build processes, streamline tasks, and manage dependencies efficiently.
-
-Detailed instructions on building, deploying, and contributing to the project will be provided in subsequent iterations of this README. As the project evolves, comprehensive documentation will be added to assist developers and users in effectively utilizing and contributing to "Leviosa."
-
----
-
-_This README is a work in progress and will be updated as the project develops._
+Deployment to the VPS is driven by the root `Makefile` (Docker image build/push, Ansible playbooks, Terraform-managed infrastructure) — run `make help` to see available targets. GitHub Actions (`.github/workflows/ci.yaml`) handles pull request validation (build, unit tests, integration tests, vulnerability scanning) but does not perform deployments.
