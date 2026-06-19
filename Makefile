@@ -115,8 +115,8 @@ help:
 
 local-dev:
 	@echo "Starting frontend and backend in dev mode..."
-	@$(MAKE) -C frontend dev --no-print-directory &
-	@$(MAKE) -C backend dev --no-print-directory
+	@cd frontend && pnpm run dev &
+	@cd backend && docker compose up
 
 local-up:
 	@echo "Starting local docker compose..."
