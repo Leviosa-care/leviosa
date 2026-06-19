@@ -2,27 +2,29 @@
 
 Automated VPS provisioning and application deployment using Ansible.
 
+The VPS is shared by two app environments — production and staging — both deployed from the same Terraform-provisioned server (see `infra/terraform/README.md`). Staging shares production's Postgres, Redis, RabbitMQ, and Caddy instance to save resources; only the app container is separate.
+
 ## What This Does
 
 ### Security Hardening
 - SSH key-only authentication (password auth disabled)
 - Root login disabled (deploy user with restricted sudo only)
-- Fail2ban for SSH brute-force protection (5 attempts = 1 hour ban)
+- Fail2ban for SSH/Caddy brute-force protection
 - UFW firewall with only essential ports open
 - Automatic security updates (unattended-upgrades)
 - Kernel hardening (sysctl, secure shared memory)
 - Modern cryptographic algorithms only (Curve25519, ChaCha20)
-- **Restricted sudo** - deploy user can only run specific commands
-- **Caddy reverse proxy** - application bound to localhost, Caddy handles TLS
-- **Docker metrics** - bound to localhost only (127.0.0.1:9323)
-- **Ansible Vault** - encrypted secrets management
+- Restricted sudo — deploy user can only run specific commands
+- Caddy reverse proxy — application bound to localhost, Caddy handles TLS
+- Docker metrics bound to localhost only (127.0.0.1:9323)
+- HashiCorp Vault deployed alongside the app for secrets (transit encryption keys, KV secrets used by `encx`)
 
 ### System Setup
 - Docker & Docker Compose installation
-- Non-root deploy user with **restricted sudo**
+- Non-root deploy user with restricted sudo
 - Caddy reverse proxy with SSL/TLS and security headers
 - Application directory structure
-- Logrotate configuration
+- GPG configuration (for `rclone`-based backup encryption)
 
 ### SSL/TLS Configuration
 - Caddy reverse proxy with automatic TLS (Let's Encrypt)
@@ -32,33 +34,26 @@ Automated VPS provisioning and application deployment using Ansible.
 ### Application Deployment
 - Docker Compose configuration
 - Environment file management
+- Vault initialization/unseal and admin-user seeding (staging deploy only — see `playbooks/deploy-staging.yml`)
 - Health check scripts
-- Service management scripts
 
 ### Database Backups
-- Automated PostgreSQL backups to S3
-- Tiered retention (daily/weekly/monthly)
-- S3 lifecycle integration
-- AWS CLI configuration
+- `rclone`-based backups to S3 with GPG encryption
+- AWS CLI/credentials configuration on the server
 
 ### Monitoring
-- cAdvisor for container metrics (127.0.0.1:9323)
+- cAdvisor for container metrics (127.0.0.1, port configurable via `monitoring_cadvisor_port`)
 - node-exporter for host metrics (127.0.0.1:9100)
-- Systemd service for automatic startup
+- Disabled by default (`monitoring_enabled: false` in `group_vars/all.yml`)
 
 ## Prerequisites
 
 ### Local Machine
 
 ```bash
-# Install Ansible
-sudo apt update
-sudo apt install ansible -y
-
-# Or with pip
+make install-deps
+# or manually:
 pip install ansible
-
-# Install required collections
 ansible-galaxy collection install community.docker community.general
 ```
 
@@ -66,182 +61,175 @@ ansible-galaxy collection install community.docker community.general
 
 You need:
 - Root SSH access to your VPS
-- Your public SSH key (`~/.ssh/leviosa.pub`)
+- Your public SSH key (`~/.ssh/leviosa.pub`, falls back to `~/.ssh/id_rsa.pub`)
 
 ### Terraform Outputs
 
-First, run Terraform to get your VPS details:
+The Makefile pulls the VPS IP and domain from Terraform automatically:
 
 ```bash
-cd infra/terraform
-terraform output server_ipv4_address
-terraform output domain_name
+cd ../terraform
+make apply-staging      # provisions the shared VPS, if not already up
 ```
+
+### Secrets
+
+Copy the example secrets files and fill in real values. These are gitignored — only the `.example` files are committed:
+
+```bash
+cd group_vars
+cp leviosa_staging.example.yml leviosa_staging.yml
+cp leviosa_production.example.yml leviosa_production.yml
+nano leviosa_staging.yml
+nano leviosa_production.yml
+```
+
+`group_vars/all.yml` holds shared, non-secret defaults (deploy user, Docker daemon options, fail2ban thresholds, etc.) and is committed to git.
 
 ## Quick Start
 
-### 1. Initial VPS Setup
+### 1. Initial VPS Setup (run once per environment)
 
 ```bash
-cd infra/ansible
-
-# Set your SSH public key
-export DEPLOY_SSH_PUBLIC_KEY="$(cat ~/.ssh/leviosa.pub)"
-
-# Set your domain
-export APP_DOMAIN="yourdomain.com"
-
-# Get VPS IP from Terraform
-export ANSIBLE_HOST=$(cd ../terraform && terraform output -raw server_ipv4_address)
-
-# Run full setup
-ansible-playbook -i inventory/hosts playbooks/site.yml \
-  -e "ansible_host=$ANSIBLE_HOST" \
-  -e "deploy_ssh_public_key=$DEPLOY_SSH_PUBLIC_KEY" \
-  -e "app_domain=$APP_DOMAIN"
+make setup-staging
+make setup-production
 ```
 
-### 2. Configure Environment Variables
+These targets pull the VPS IP/domain from Terraform, read your SSH public key, and run `playbooks/site.yml` with the right `group_vars/all.yml` + environment-specific secrets file. You'll be prompted to confirm before anything runs.
 
-After setup completes, SSH into the server and configure your `.env`:
+### 2. Deploy the Application
 
 ```bash
-# SSH as deploy user
-ssh deploy@$(cd ../terraform && terraform output -raw server_ipv4_address)
-
-# Edit environment file
-cd /opt/leviosa
-nano .env
+make deploy-staging
+make deploy-production
 ```
 
-### 3. Deploy Application
+These run `playbooks/deploy-staging.yml` / `playbooks/deploy.yml`, which deploy/update Caddy + the app container without touching system configuration. The staging deploy additionally creates the staging Postgres database/RabbitMQ vhost on the shared services, and handles Vault init/unseal and admin-user seeding.
+
+### 3. Quick Restart (pull latest image, restart only)
 
 ```bash
-# Using Ansible
-ansible-playbook playbooks/deploy.yml \
-  -e "ansible_host=$ANSIBLE_HOST"
-
-# Or manually on the server
-ssh deploy@<server-ip>
-cd /opt/leviosa
-./prod-start.sh
+make restart                    # production: all services
+make restart-frontend           # production: frontend only
+make restart-backend            # production: backend only
+make restart-staging            # staging: all services
+make restart-staging-frontend
+make restart-staging-backend
 ```
 
-### 4. Setup Database Backups
+### 4. Database Backups
 
 ```bash
-# Get backup bucket from Terraform
-BACKUP_BUCKET=$(cd ../terraform && terraform output -raw backup_bucket_name)
-
-# Run backup setup
-ansible-playbook playbooks/backup.yml \
-  -e "ansible_host=$ANSIBLE_HOST" \
-  -e "backup_s3_bucket=$BACKUP_BUCKET"
+make backup
 ```
+
+Backups are not yet wired up to a Terraform-provisioned S3 bucket — `make backup` currently exits with an error reminding you to add one first. The `rclone` and `gpg` roles and `playbooks/backup.yml` exist and are ready to use once a backup bucket is configured.
 
 ## Playbooks
 
-### `site.yml` - Complete Setup
+### `site.yml` — Complete Setup
 
-Run this on a fresh VPS to set up everything:
+Run on a fresh VPS to set up everything. Roles run in this order, each with its tags:
+
+| Role | Tags | Purpose |
+|------|------|---------|
+| `system` | `system`, `setup` | Base system hardening (sysctl, shared memory, etc.) |
+| `docker` | `docker`, `setup` | Docker & Docker Compose installation |
+| `common` | `common`, `setup` | Shared baseline config |
+| `ssh` | `ssh`, `security` | SSH hardening |
+| `fail2ban` | `fail2ban`, `security` | Brute-force protection |
+| `ufw` | `ufw`, `security` | Firewall setup |
+| `caddy` | `caddy`, `web` | Reverse proxy |
+| `gpg` | `gpg`, `security` | GPG config for backup encryption |
+| `rclone` | `rclone`, `backup` | S3 backup tooling |
+| `app` | `app`, `deploy` | Application deployment |
+| `monitoring` | `monitoring`, `setup` | Metrics collection (only if `monitoring_enabled: true`) |
 
 ```bash
-ansible-playbook playbooks/site.yml \
+ansible-playbook -i inventory/hosts.yml playbooks/site.yml \
   -e "ansible_host=<server-ip>" \
   -e "deploy_ssh_public_key=$(cat ~/.ssh/leviosa.pub)" \
   -e "app_domain=yourdomain.com"
 ```
 
-Tags:
-- `system` - Base system configuration
-- `ssh` - SSH hardening
-- `firewall` - UFW firewall setup
-- `docker` - Docker installation
-- `user` - Deploy user setup
-- `app` - Application deployment
-- `monitoring` - Metrics collection setup
+### `deploy.yml` / `deploy-staging.yml` — Application Deployment
 
-### `deploy.yml` - Application Deployment
+Deploy or update the application only (Caddy + app container), targeting `leviosa_servers` or `leviosa_staging_servers` respectively. Run after the initial `site.yml` setup.
 
-Deploy or update the application only:
+### `backup.yml` — Database Backups
 
 ```bash
-ansible-playbook playbooks/deploy.yml \
-  -e "ansible_host=<server-ip>"
-```
-
-### `deploy-staging.yml` - Staging Deployment
-
-Deploy to staging environment:
-
-```bash
-ansible-playbook playbooks/deploy-staging.yml \
-  -e "ansible_host=<server-ip>"
-```
-
-### `backup.yml` - Database Backups
-
-Configure automated database backups:
-
-```bash
-ansible-playbook playbooks/backup.yml \
-  -e "ansible_host=<server-ip>" \
+ansible-playbook -i inventory/hosts.yml playbooks/backup.yml \
   -e "backup_s3_bucket=my-backups" \
   -e "backup_s3_region=eu-central-1"
 ```
 
 ## Variables
 
-### Inventory Variables (`inventory/hosts`)
+### Inventory (`inventory/hosts.yml`)
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ansible_host` | VPS IP address | Required |
-| `app_domain` | Your domain name | `leviosa.care` |
-| `app_port` | Application port | `3000` |
-| `ssh_port` | SSH port | `22` |
+Two host groups share the same physical VPS IP:
 
-### Group Variables (`group_vars/`)
+| Group | Host | Purpose |
+|-------|------|---------|
+| `leviosa_servers` | `leviosa_vps` | Production app, owns Postgres/Redis/RabbitMQ/Caddy |
+| `leviosa_staging_servers` | `leviosa_vps_staging` | Staging app, shares production's services; `caddy_enabled: false` |
+
+Key per-group vars: `app_domain`, `app_port`, `app_docker_image`, `app_base_dir`, `ssh_port`, `caddy_enabled`.
+
+### Shared Group Variables (`group_vars/all.yml`, committed)
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `deploy_user` | Deploy user name | `leviosa` |
-| `deploy_ssh_public_key` | SSH public key | Required |
-| `auto_security_updates` | Enable auto updates | `true` |
+| `deploy_sudo_restricted` | Restrict sudo to specific commands | `true` |
+| `auto_security_updates` | Enable unattended-upgrades | `true` |
 | `fail2ban_enabled` | Enable fail2ban | `true` |
-| `backup_enabled` | Enable backups | `true` |
+| `backup_enabled` | Enable backup role behavior | `true` |
+| `monitoring_enabled` | Enable cAdvisor/node-exporter | `false` |
+| `staging_enabled` | Include staging site blocks in Caddyfile | `false` |
+
+### Per-Environment Secrets (`group_vars/leviosa_staging.yml`, `leviosa_production.yml`, gitignored)
+
+Database/Redis/session credentials, AWS keys, Stripe keys, SMTP config, Cloudflare API token for Caddy's DNS-01 challenge, and `seed_admins` (admin users upserted on every deploy). See `leviosa_production.example.yml` for the full list and structure.
 
 ## Directory Structure
 
 ```
 infra/ansible/
-├── ansible.cfg                 # Ansible configuration
-├── Makefile                     # Quick commands
-├── README.md                    # This file
-├── SETUP_GUIDE.md               # Quick start guide
-├── VAULT.md                     # Vault usage guide
+├── ansible.cfg                     # Ansible configuration
+├── Makefile                         # Workspace-aware setup/deploy/restart commands
+├── README.md                        # This file
+├── SETUP_GUIDE.md                   # Quick start guide
+├── VAULT.md                         # HashiCorp Vault operations guide (init/unseal, troubleshooting)
+├── VAULT_PRODUCTION_SETUP.md        # HashiCorp Vault production-mode reference
 ├── inventory/
-│   └── hosts                    # Inventory file
+│   └── hosts.yml                    # leviosa_servers + leviosa_staging_servers
 ├── group_vars/
-│   ├── secrets.yml              # Encrypted secrets
-│   └── secrets.vault.example.yml # Vault template
+│   ├── all.yml                      # Shared, non-secret defaults (committed)
+│   ├── leviosa_staging.yml          # Staging secrets (gitignored)
+│   ├── leviosa_staging.example.yml
+│   ├── leviosa_production.yml       # Production secrets (gitignored)
+│   └── leviosa_production.example.yml
 ├── playbooks/
-│   ├── site.yml                 # Complete setup
-│   ├── deploy.yml               # Application deployment
-│   ├── deploy-staging.yml       # Staging deployment
-│   ├── backup.yml               # Backup configuration
-│   └── templates/               # Backup templates
+│   ├── site.yml                     # Complete setup
+│   ├── deploy.yml                   # Production app deployment
+│   ├── deploy-staging.yml           # Staging app deployment (Vault init/unseal, seeding)
+│   ├── backup.yml                   # Backup configuration
+│   └── templates/                   # Backup/AWS-credentials templates
 └── roles/
-    ├── system/                  # Base system hardening
-    ├── ssh/                     # SSH configuration
-    ├── firewall/                # UFW setup (via ufw role)
-    ├── docker/                  # Docker installation
-    ├── user/                    # Deploy user setup
-    ├── app/                     # Application deployment
-    ├── caddy/                   # Reverse proxy
-    ├── fail2ban/                # Brute-force protection
-    ├── monitoring/              # Metrics collection
-    └── rclone/                  # Backup storage
+    ├── system/                      # Base system hardening
+    ├── docker/                      # Docker installation
+    ├── common/                      # Shared baseline config
+    ├── ssh/                         # SSH configuration
+    ├── fail2ban/                    # Brute-force protection
+    ├── ufw/                         # Firewall setup
+    ├── caddy/                       # Reverse proxy
+    ├── gpg/                         # Backup encryption keys
+    ├── rclone/                      # S3 backup storage
+    ├── app/                         # Application deployment
+    ├── monitoring/                  # Metrics collection
+    └── user/                        # Deploy user setup (currently unused by any playbook)
 ```
 
 ## Security Features
@@ -249,113 +237,63 @@ infra/ansible/
 ### SSH Hardening
 - Password authentication disabled (key-only)
 - Root login disabled (use deploy user with sudo)
-- SSH banner with security notice
 - Modern cryptographic algorithms (Curve25519, ChaCha20-Poly1305)
-- Diffie-Hellman key exchange
-- Secure ciphers and MACs (encrypt-then-MAC)
 - Disabled X11 forwarding, agent forwarding, TCP forwarding
-- Client alive interval (5 min) to timeout idle connections
-- Fail2ban: 5 failed attempts = 1 hour ban
+- Fail2ban: SSH brute-force protection
 
 ### Restricted Sudo
-- Deploy user can only run specific commands without password:
-  - `docker`, `docker-compose`
-  - `systemctl` (docker)
-  - Application scripts in `/opt/leviosa/scripts/`
-- Optional password-based sudo for other commands
-- See `/opt/leviosa/scripts/test-sudo.sh` to verify
+- Deploy user can only run specific commands without a password (`docker`, `docker-compose`, `systemctl` for docker, app scripts)
+- See `deploy_sudo_restricted` / `deploy_sudo_password_fallback` in `group_vars/all.yml`
 
 ### Firewall (UFW)
 - Default deny incoming
-- Allow SSH (port 22), HTTP (80), HTTPS (443) only
-- Rate limit SSH connections
+- Allow SSH, HTTP (80), HTTPS (443) only
 
 ### Caddy Reverse Proxy
 - Application bound to localhost (127.0.0.1) only
-- Caddy handles external connections with automatic TLS
+- Caddy handles external connections with automatic TLS (Let's Encrypt, DNS-01 via Cloudflare)
 - Security headers: HSTS, X-Frame-Options, CSP
-- Rate limiting per IP address
-- Large file upload support (configurable)
 
 ### Docker Security
 - Metrics endpoint bound to localhost only (127.0.0.1:9323)
-- Users in docker group have root-equivalent access
-- Only add trusted users to docker group
 
-### System Updates
-- Automatic security updates (unattended-upgrades)
-- Daily package list updates
-- Configurable reboot behavior
+### Vault
+- HashiCorp Vault runs alongside the app, initialized/unsealed automatically on staging deploy
+- Used for transit encryption keys and KV secrets (`encx` pepper material)
 
 ## Maintenance
 
-### Update Application
-
 ```bash
-# Pull latest image and restart
-ansible-playbook playbooks/deploy.yml \
-  -e "ansible_host=<server-ip>"
-```
-
-### Quick Restart
-
-```bash
-# Restart only the app container
-make restart
-
-# Restart staging
-make restart-staging
-```
-
-### Manual Backup
-
-```bash
-ssh deploy@<server-ip>
-cd /opt/leviosa
-./scripts/backup-db.sh daily
-```
-
-### View Logs
-
-```bash
-ssh deploy@<server-ip>
-docker compose logs -f
-```
-
-### Check Service Status
-
-```bash
-ssh deploy@<server-ip>
-docker compose ps
+make status              # production service status
+make staging-status      # staging service status
+make logs                # stream production logs
+make staging-logs        # stream staging logs
+make health-check         # run health check script on the server
+make ssh-info             # show SSH connection details
+make check-clean          # syntax-check all playbooks
+make lint                 # ansible-lint (requires installation)
+make vars-test            # display effective variables
 ```
 
 ## Troubleshooting
 
 ### Connection Refused
-
-Make sure you can reach the server:
 ```bash
 ping <server-ip>
 ssh root@<server-ip>
 ```
 
 ### Permission Denied
-
-Check your SSH key is configured:
 ```bash
 cat ~/.ssh/leviosa.pub
 ```
 
 ### Playbook Fails
-
-Run with verbose output:
 ```bash
 ansible-playbook playbooks/site.yml -vvv
 ```
 
 ### Service Not Starting
-
-Check logs:
 ```bash
 ssh deploy@<server-ip>
 docker compose logs
@@ -369,16 +307,7 @@ After initial setup, verify:
 - [ ] Root login disabled
 - [ ] UFW firewall enabled
 - [ ] Fail2ban running
-- [ ] Deploy user has sudo access
-- [ ] Docker containers running as non-root
+- [ ] Deploy user has restricted sudo access
 - [ ] Environment files have correct permissions (0600)
-- [ ] Backups configured
-- [ ] Monitoring endpoints accessible (localhost only)
-
-## Next Steps
-
-1. Set up monitoring dashboards (Grafana, Prometheus)
-2. Configure alerting (optional)
-3. Set up CI/CD pipeline
-4. Configure log aggregation (Loki)
-5. Set up staging environment
+- [ ] Vault initialized and unsealed
+- [ ] Monitoring endpoints accessible (localhost only, if enabled)

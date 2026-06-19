@@ -1,216 +1,101 @@
-# Ansible Vault - Secure Variable Management
+# HashiCorp Vault — Operations Guide
 
-Ansible Vault encrypts sensitive variables so they can be safely stored in git.
+This project runs a [HashiCorp Vault](https://developer.hashicorp.com/vault) container alongside the app (one per environment) to hold encryption material used by the backend's `encx` field-encryption library — a transit key for encrypt/decrypt and a KV-v2 secret (the "pepper") used in key derivation. It is **not** related to Ansible Vault (the `ansible-vault encrypt`/`--ask-vault-pass` feature) — this project does not use that; see [Secrets files](#secrets-files-not-ansible-vault-encrypted) below for how deployment secrets are actually handled.
 
-## Quick Start
+## How It's Deployed
 
-### 1. Create Your Vault File
+Vault runs in production mode (file storage backend, no dev-mode flags) via the template at `roles/app/templates/vault.hcl.j2`, rendered into `docker-compose.yml.j2`. Each environment (production, staging) runs its own Vault container:
+
+- Production: `leviosa_vault`, network alias `vault`
+- Staging: `leviosa_staging_vault`, network alias `<app_name>-vault`, reachable from the shared production network
+
+Both `playbooks/deploy.yml` and `playbooks/deploy-staging.yml` contain the full Vault lifecycle automation — there is nothing to do by hand on a normal deploy:
+
+1. Create `{{ app_data_dir }}/vault/{config,data}` with correct ownership, render `vault.hcl`
+2. Start (or recreate, if unhealthy) the Vault container
+3. If not yet initialized: `vault operator init -key-shares=3 -key-threshold=2`, save unseal keys + root token to `{{ app_data_dir }}/vault/vault-keys.txt` (mode `0600`, owned by the deploy user) on the server
+4. Unseal using 2 of the 3 saved keys
+5. Write the live root token into the app's `.env` (`VAULT_TOKEN=...`) via `lineinfile`
+6. Enable the `transit` and `secret` (KV-v2) secrets engines (idempotent, `|| true`)
+7. Create the transit keys (`encx_kek_alias`, default `leviosa-kek`) and generate/store the pepper at `secret/encx/{{ encx_pepper_alias | default('leviosa') }}/pepper` if it doesn't already exist
+8. Verify the pepper is reachable from the app's network before continuing
+
+Re-running a deploy is safe — steps that have already succeeded are skipped based on `vault-keys.txt` existing and the container's reported seal status.
+
+## Manual Operations
+
+### Check status
+```bash
+ssh deploy@<server-ip>
+docker exec leviosa_vault vault status        # or leviosa_staging_vault
+```
+
+### View the unseal keys / root token
+The only copy lives on the server itself — there is no copy in git or in group_vars:
+```bash
+ssh deploy@<server-ip>
+cat /opt/leviosa/data/vault/vault-keys.txt          # production
+cat /opt/leviosa-staging/data/vault/vault-keys.txt  # staging
+```
+
+### Manually unseal (if a deploy left it sealed)
+```bash
+docker exec leviosa_vault vault operator unseal <UNSEAL_KEY_1>
+docker exec leviosa_vault vault operator unseal <UNSEAL_KEY_2>
+```
+
+### Inspect the pepper / transit keys
+```bash
+docker exec -e VAULT_TOKEN=<root-token> leviosa_vault vault kv get secret/encx/leviosa/pepper
+docker exec -e VAULT_TOKEN=<root-token> leviosa_vault vault list transit/keys
+```
+
+### Force a fresh Vault (re-initialize, losing existing keys)
+Pass `vault_force_wipe=true` on a deploy — this wipes `{{ app_data_dir }}/vault/data` and lets the playbook re-initialize from scratch. **Only do this if you accept losing access to anything encrypted with the old transit keys/pepper** (this includes any encrypted columns in the database — there is no migration path back).
+```bash
+ansible-playbook playbooks/deploy.yml -e "ansible_host=<server-ip>" -e "vault_force_wipe=true"
+```
+
+## Secrets Files (not Ansible-Vault-encrypted)
+
+Deployment secrets (DB password, AWS keys, Stripe keys, etc.) live in `group_vars/leviosa_staging.yml` and `group_vars/leviosa_production.yml` — plain YAML, gitignored, never encrypted with `ansible-vault`. Copy from the committed `.example` files and fill in real values:
 
 ```bash
-# Copy the example file
-cp group_vars/secrets.vault.example.yml group_vars/secrets.yml
-
-# Edit with your actual values
-nano group_vars/secrets.yml
+cp group_vars/leviosa_staging.example.yml group_vars/leviosa_staging.yml
+cp group_vars/leviosa_production.example.yml group_vars/leviosa_production.yml
 ```
 
-### 2. Encrypt the Vault File
-
-```bash
-# Encrypt with a password (you'll be prompted)
-ansible-vault encrypt group_vars/secrets.yml
-
-# Or use a password file
-echo "your_vault_password" > .vault_pass
-chmod 600 .vault_pass
-ansible-vault encrypt --vault-password-file .vault_pass group_vars/secrets.yml
-```
-
-### 3. Run Playbooks with Vault
-
-```bash
-# You'll be prompted for the vault password
-ansible-playbook playbook.yml
-
-# Or use a password file
-ansible-playbook playbook.yml --vault-password-file .vault_pass
-```
-
-## Common Vault Commands
-
-```bash
-# View encrypted file (decrypts to stdout)
-ansible-vault view group_vars/secrets.yml
-
-# Edit encrypted file (decrypts, opens editor, re-encrypts on save)
-ansible-vault edit group_vars/secrets.yml
-
-# Change vault password
-ansible-vault rekey group_vars/secrets.yml
-
-# Decrypt file (removes encryption - be careful!)
-ansible-vault decrypt group_vars/secrets.yml
-
-# Encrypt file
-ansible-vault encrypt group_vars/secrets.yml
-
-# Check if file is encrypted
-ansible-vault view group_vars/secrets.yml --vault-password-file /dev/null
-```
-
-## Password Management
-
-### Option 1: Prompt (Default)
-
-```bash
-ansible-playbook playbook.yml --ask-vault-pass
-```
-
-### Option 2: Password File
-
-Create `.vault_pass` (add to `.gitignore`!):
-
-```bash
-echo "your_vault_password" > .vault_pass
-chmod 600 .vault_pass
-```
-
-Then:
-
-```bash
-ansible-playbook playbook.yml --vault-password-file .vault_pass
-```
-
-### Option 3: Environment Variable
-
-```bash
-export ANSIBLE_VAULT_PASSWORD_FILE=.vault_pass
-ansible-playbook playbook.yml
-```
-
-### Option 4: Script (Dynamic Password)
-
-Create `vault_pass.sh`:
-
-```bash
-#!/bin/bash
-# Use a password manager, TPM, or other secure source
-pass show ansible/vault_password
-```
-
-Make executable:
-
-```bash
-chmod +x vault_pass.sh
-```
-
-Then:
-
-```bash
-ansible-playbook playbook.yml --vault-password-file vault_pass.sh
-```
-
-## Security Best Practices
-
-1. **Never commit `.vault_pass` to git** (it's in `.gitignore`)
-2. **Use strong, unique passwords** (use a password manager)
-3. **Rotate vault passwords periodically** (`ansible-vault rekey`)
-4. **Limit vault access** (file permissions: `600`)
-5. **Backup vault password securely** (password manager, not plain text)
-6. **Use different passwords** for different environments
-
-## Project Setup
-
-### 1. Add to `.gitignore`
-
-The `.gitignore` already includes:
-```
-.vault_pass
-vault_pass.sh
-```
-
-### 2. Update `ansible.cfg`
-
-The `ansible.cfg` file is configured with:
-
-```ini
-[defaults]
-vault_password_file = .vault_pass  # Optional: uncomment to use
-```
-
-### 3. Store Password Securely
-
-Recommended: Use a password manager like `pass`, `1password`, or `keepassxc`:
-
-```bash
-# Using pass (Linux/Mac)
-pass insert -m ansible/leviosa/vault_password
-chmod +x vault_pass.sh  # make script executable
-```
+`make update-staging-vault` / `make update-production-vault` (run from `infra/terraform`) refresh the AWS credential fields in these files from the latest Terraform output — despite the Makefile target name, this is unrelated to HashiCorp or Ansible Vault; see `infra/scripts/update-staging-vault.sh`.
 
 ## Troubleshooting
 
-### "Decryption failed"
+### CAP_SETFCAP error / restart loop
+```
+unable to set CAP_SETFCAP effective capability: Operation not permitted
+```
+Already handled — `vault.hcl.j2` sets `disable_mlock = true`, which is why the container doesn't need `privileged: true` or `IPC_LOCK` for mlock specifically (it still requests `IPC_LOCK` defensively in the compose file).
 
-Wrong password or file corrupted. Verify:
+### Sealed after a host reboot
+Vault's file storage persists, but a fresh container always starts sealed. Either redeploy (`make deploy` / `make deploy-staging`, which unseals automatically) or unseal manually as above.
+
+### Backend can't reach Vault
 ```bash
-ansible-vault view group_vars/secrets.yml
+docker ps | grep vault
+docker exec leviosa_vault vault status
+docker exec leviosa_backend env | grep VAULT
+docker exec leviosa_backend ping leviosa_vault   # or the staging alias
 ```
 
-### "Vault password file not found"
+### Lost `vault-keys.txt`
+There is no recovery — the unseal keys and root token only ever existed in that file and in Vault's own internal state. You must wipe and re-initialize (`vault_force_wipe=true`), which destroys access to anything previously encrypted via `encx`.
 
-Check file path and permissions:
-```bash
-ls -la .vault_pass
-cat .vault_pass
-```
+## Security Notes
 
-### "Vault password mismatch"
-
-You encrypted with one password, trying to decrypt with another.
-
-## Migration Guide
-
-### Moving from `.env` to Vault
-
-1. Create `group_vars/secrets.yml` with your `.env` values
-2. Encrypt the vault file
-3. Remove sensitive values from `.env` (keep non-sensitive ones)
-4. Update playbooks to reference vault variables
-
-### Example Vault Variables
-
-```yaml
-# In group_vars/secrets.yml (encrypted)
-vault_db_password: "secure_password"
-vault_aws_secret_access_key: "AKIA..."
-
-# In playbooks, reference as:
-db_password: "{{ vault_db_password }}"
-```
-
-## Multiple Vaults (Advanced)
-
-For multiple environments:
-
-```bash
-group_vars/
-  secrets.yml              # Shared secrets
-  manager_secrets.yml      # Manager-specific secrets
-  worker_secrets.yml       # Worker-specific secrets
-```
-
-Use with inventory:
-
-```yaml
-# playbook.yml
-vars_files:
-  - group_vars/secrets.yml
-
-# Different playbooks can use different vault files
-```
+- Vault is not exposed outside the Docker network — no host port is published, only `expose:` for inter-container access
+- TLS is disabled inside Vault's listener (`tls_disable = "true"`) because traffic never leaves the host's internal Docker network; Caddy terminates TLS for everything that does
+- The root token is used directly by automation — this project does not yet use AppRole or scoped policies. Treat `vault-keys.txt` on the server with the same care as the database credentials
 
 ## Resources
 
-- [Ansible Vault Documentation](https://docs.ansible.com/ansible/latest/vault_guide/index.html)
-- [Best Practices for Secrets Management](https://docs.ansible.com/ansible/latest/user_guide/vault.html#best-practices)
+- [Vault Production Hardening Guide](https://developer.hashicorp.com/vault/docs/operator/production)
+- [Vault CLI Reference](https://developer.hashicorp.com/vault/docs/commands)

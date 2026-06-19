@@ -1,314 +1,71 @@
-# Vault Production Setup Guide
+# Vault Production Setup — Current State
 
-This document outlines the steps required to migrate HashiCorp Vault from development mode to production mode.
+This document used to be a forward-looking migration plan ("move Vault from dev mode to production mode"). That migration is **done** — both `playbooks/deploy.yml` and `playbooks/deploy-staging.yml` already deploy and manage Vault in production mode. This document now describes what's actually in place and how to operate it; for day-to-day commands see `VAULT.md`.
 
-## Current State (Development Mode)
+## Current State
 
-- Vault runs in dev mode with a single root token
-- Auto-unseals on container restart
-- Uses insecure token: `dev-only-token-insecure-change-for-production`
-- Data is ephemeral (lost on container restart unless using volumes)
+- Vault runs with the `file` storage backend (`roles/app/templates/vault.hcl.j2`), not dev mode — no `VAULT_DEV_ROOT_TOKEN_ID`, no in-memory storage
+- Each environment runs its own container: `leviosa_vault` (production), `leviosa_staging_vault` (staging)
+- TLS is disabled inside the listener (`tls_disable = "true"`) because Vault is never exposed outside the Docker network — no host port is published; Caddy terminates TLS for everything that does leave the host
+- `disable_mlock = true` is set in `vault.hcl.j2`, so the container does not need `privileged: true` (it still requests the `IPC_LOCK` capability defensively)
+- Initialization, unsealing, secrets-engine setup, and key/pepper provisioning are fully automated by the deploy playbooks — there is no manual setup step on a normal deploy
+- The root token and unseal keys are generated on first deploy and saved only on the server, at `{{ app_data_dir }}/vault/vault-keys.txt` (mode `0600`) — they are never stored in git, group_vars, or Ansible Vault
 
-## Production Requirements
+## What the Deploy Playbooks Do (Automated)
 
-### 1. Generate Secure Credentials
+On `make deploy` / `make deploy-staging`:
 
-Generate a secure root token (32+ characters):
+1. Render `vault.hcl` and start the Vault container if it isn't already healthy
+2. If not yet initialized: `vault operator init -key-shares=3 -key-threshold=2`, write the keys/token to `vault-keys.txt` on the server
+3. Unseal with 2 of the 3 saved keys
+4. Write the live root token into the app's `.env` (`VAULT_TOKEN=...`)
+5. Enable the `transit` and `secret` (KV-v2) engines if not already enabled
+6. Create the transit key (`encx_kek_alias`, default `leviosa-kek`) and the `encx` pepper at `secret/encx/{{ encx_pepper_alias | default('leviosa') }}/pepper` if missing
+7. Verify the pepper is reachable from the app's Docker network before continuing the rest of the deploy
 
-```bash
-# Generate secure token
-openssl rand -base64 32
-```
+Re-running deploys is idempotent — already-completed steps are skipped based on `vault-keys.txt` and the container's reported seal/init status.
 
-### 2. Update Group Variables
+## Operating Vault
 
-**File:** `infra/ansible/group_vars/leviosa_production.yml`
+See `VAULT.md` for: checking status, viewing the unseal keys/root token, manually unsealing, inspecting the pepper/transit keys, and forcing a fresh re-initialization with `vault_force_wipe=true`.
 
-```yaml
-# HashiCorp Vault Configuration
-vault_addr: http://vault:8200
-vault_token: <YOUR_SECURE_32_CHAR_TOKEN_HERE>
-```
+## Gaps / Not Yet Done
 
-**File:** `infra/ansible/group_vars/leviosa_staging.yml`
+These were aspirational items in the original migration plan that are **not** implemented — worth knowing if you're hardening this further:
 
-```yaml
-# HashiCorp Vault Configuration (connects to prod's vault container)
-vault_addr: http://leviosa_vault:8200
-vault_token: <YOUR_SECURE_32_CHAR_TOKEN_HERE>
-```
-
-### 3. Update Docker Compose Template
-
-**File:** `infra/ansible/roles/app/templates/docker-compose.yml.j2`
-
-Replace the dev mode Vault service with production configuration:
-
-```yaml
-  # HashiCorp Vault (secrets management)
-  vault:
-    image: hashicorp/vault:1.15
-    container_name: {{ app_name }}_vault
-    restart: unless-stopped
-    cap_add:
-      - IPC_LOCK
-    environment:
-      VAULT_ADDR: http://0.0.0.0:8200
-      VAULT_API_ADDR: http://vault:8200
-      # Remove VAULT_DEV_ROOT_TOKEN_ID for production
-    ports:
-      - "8200:8200"
-    volumes:
-      - {{ app_data_dir }}/vault:/vault/data
-      - {{ app_data_dir }}/vault/config:/vault/config
-    networks:
-      - {{ app_name }}_network
-    healthcheck:
-      test: ["CMD", "vault", "status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    command: server
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-```
-
-**Note:** Use a specific version (e.g., `1.15`) instead of `:latest` to avoid unexpected breaking changes. The `disable_mlock = true` in the config file (see below) prevents CAP_SETFCAP errors.
-
-### 4. Create Vault Configuration File
-
-Create a config template at `infra/ansible/roles/app/templates/vault.hcl.j2`:
-
-```hcl
-storage "file" {
-  path = "/vault/data"
-}
-
-listener "tcp" {
-  address = "0.0.0.0:8200"
-  tls_disable = 1
-}
-
-api_addr = "http://vault:8200"
-cluster_addr = "https://vault:8201"
-disable_mlock = true
-
-# Maximum lease duration
-default_lease_ttl = "720h"
-max_lease_ttl = "720h"
-```
-
-### 5. Deployment Steps
-
-#### Step 1: Deploy Updated Infrastructure
-
-```bash
-make ansible-deploy
-```
-
-#### Step 2: Initialize Vault
-
-SSH into the VPS and initialize Vault:
-
-```bash
-# SSH to VPS
-make prod-ssh
-
-# Exec into Vault container
-docker exec -it leviosa_vault sh
-
-# Initialize Vault (save the output carefully!)
-vault operator init -key-shares=5 -key-threshold=3
-```
-
-**IMPORTANT:** Save the unseal keys and root token securely. You cannot recover them if lost!
-
-#### Step 3: Unseal Vault
-
-Unseal Vault with 3 of the 5 unseal keys:
-
-```bash
-# Run this 3 times with different unseal keys
-vault operator unseal <UNSEAL_KEY_1>
-vault operator unseal <UNSEAL_KEY_2>
-vault operator unseal <UNSEAL_KEY_3>
-```
-
-#### Step 4: Create Secret Paths
-
-Create separate paths for production and staging:
-
-```bash
-# Login with root token
-vault login <ROOT_TOKEN>
-
-# Enable KV secrets engine
-vault secrets enable -path=leviosa_production kv-v2
-vault secrets enable -path=leviosa_staging kv-v2
-
-# Create production secrets (example)
-vault kv put leviosa_production/config \
-  encryption_key="your-production-encryption-key" \
-  database_encryption_key="your-db-encryption-key"
-
-# Create staging secrets
-vault kv put leviosa_staging/config \
-  encryption_key="your-staging-encryption-key" \
-  database_encryption_key="your-staging-db-encryption-key"
-```
-
-#### Step 5: Create Policy Files
-
-Create policies at `infra/ansible/roles/app/templates/vault-policy/`:
-
-**leviosa-production-policy.hcl:**
-```hcl
-path "leviosa_production/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
-}
-```
-
-**leviosa-staging-policy.hcl:**
-```hcl
-path "leviosa_staging/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
-}
-```
-
-Apply policies:
-
-```bash
-vault policy write leviosa-production - <<EOF
-path "leviosa_production/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
-}
-EOF
-
-vault policy write leviosa-staging - <<EOF
-path "leviosa_staging/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
-}
-EOF
-```
-
-#### Step 6: Deploy Staging
-
-```bash
-make ansible-deploy-staging
-```
-
-## Post-Deployment Tasks
-
-### 1. Verify Vault Status
-
-```bash
-# Check Vault status
-docker exec leviosa_vault vault status
-
-# Verify sealed status is false
-```
-
-### 2. Create Auto-Unseal Script (Optional)
-
-For better automation, consider using AWS KMS or HSM for auto-unseal. This removes the need to manually unseal after restarts.
-
-### 3. Set Up Vault Backup
-
-Configure periodic backups of Vault data:
-
-```bash
-# Add to crontab or systemd timer
-0 2 * * * docker exec leviosa_vault vault operator raft snapshot save /backup/vault-snapshot-$(date +\%Y\%m\%d).snap
-```
-
-### 4. Monitor Vault Logs
-
-```bash
-make prod-logs | grep vault
-```
-
-## Security Checklist
-
-- [ ] Root token is 32+ characters and securely stored
-- [ ] Unseal keys are distributed to trusted individuals
-- [ ] Vault is not accessible from public internet (only internal network)
-- [ ] TLS is enabled (remove `tls_disable = 1` and configure certificates)
-- [ ] AppRole authentication is configured instead of root tokens
-- [ ] Audit logging is enabled
-- [ ] Backup strategy is in place
-- [ ] Recovery keys are stored offline (e.g., password manager)
-- [ ] Vault version is up to date
-- [ ] Network policies restrict access to Vault port 8200
+- **AppRole authentication**: the app still authenticates to Vault with the root token (written into `.env`), not a scoped AppRole/policy. There is no `leviosa-production`/`leviosa-staging` policy file or path separation — both environments use the default `secret/` and `transit/` mounts on their own Vault instance (already separate since each environment runs its own container)
+- **Auto-unseal**: unsealing after a restart is manual (or via re-running a deploy) — no AWS KMS/HSM auto-unseal is configured
+- **Vault-specific backups**: there's no scheduled `vault operator raft snapshot` or equivalent for Vault's own data; only application-level backup (`rclone`/`gpg` roles, `playbooks/backup.yml`) exists, and that isn't wired to a bucket yet either (see `README.md`)
+- **Audit logging**: not enabled
 
 ## Troubleshooting
 
 ### CAP_SETFCAP Error (Vault Restart Loop)
-
-**Symptom:** Vault container stuck in restart loop with logs showing:
 ```
 unable to set CAP_SETFCAP effective capability: Operation not permitted
 ```
-
-**Solution:** This occurs when Vault tries to use memory locking (mlock) without proper capabilities. Fix by adding `disable_mlock = true` to Vault config:
-
-```hcl
-# In vault.hcl
-disable_mlock = true
-```
-
-**Note:** The development setup uses `privileged: true` as a workaround. For production, use `disable_mlock = true` in the config file instead (already included in the template above).
-
-**Important:** If using Vault 1.16+, always pin to a specific version instead of `:latest` to avoid breaking changes:
-
-```yaml
-# Use specific version
-image: hashicorp/vault:1.15
-# NOT: image: hashicorp/vault:latest
-```
+Already handled by `disable_mlock = true` in `vault.hcl.j2`. If you see this, check that the rendered config on the server actually has that line — a stale `vault.hcl` from before this was added would need a redeploy to pick it up.
 
 ### Vault Sealed After Restart
-
-If Vault restarts and becomes sealed:
-
 ```bash
-# SSH to VPS
-make prod-ssh
-
-# Unseal with 3 of 5 keys
-docker exec -it leviosa_vault vault operator unseal <KEY_1>
-docker exec -it leviosa_vault vault operator unseal <KEY_2>
-docker exec -it leviosa_vault vault operator unseal <KEY_3>
+ssh deploy@<server-ip>
+cat /opt/leviosa/data/vault/vault-keys.txt   # or /opt/leviosa-staging/...
+docker exec leviosa_vault vault operator unseal <UNSEAL_KEY_1>
+docker exec leviosa_vault vault operator unseal <UNSEAL_KEY_2>
 ```
+Or just re-run `make deploy` / `make deploy-staging` — the playbook unseals automatically.
 
 ### Backend Cannot Connect to Vault
-
 1. Check Vault is running: `docker ps | grep vault`
 2. Check Vault status: `docker exec leviosa_vault vault status`
-3. Check environment variables in backend container: `docker exec leviosa_backend env | grep VAULT`
-4. Verify network connectivity: `docker exec leviosa_backend ping leviosa_vault`
+3. Check environment variables in the backend container: `docker exec leviosa_backend env | grep VAULT`
+4. Verify network connectivity: `docker exec leviosa_backend ping leviosa_vault` (or the staging network alias)
 
-### Lost Unseal Keys or Root Token
-
-If unseal keys or root token are lost, the only option is to:
-1. Destroy the Vault container and data
-2. Re-initialize Vault
-3. Re-create all secrets
-
-This is why secure backup is critical!
+### Lost `vault-keys.txt`
+There is no recovery path — re-initialize with `vault_force_wipe=true` and accept that anything encrypted via `encx` under the old transit key/pepper is unrecoverable.
 
 ## Additional Resources
 
-- [Vault Production Guide](https://developer.hashicorp.com/vault/docs/operator/production)
-- [Vault Deployment Guide](https://developer.hashicorp.com/vault/docs/install/deployment-guide)
+- [Vault Production Hardening Guide](https://developer.hashicorp.com/vault/docs/operator/production)
+- [Vault AppRole Auth Method](https://developer.hashicorp.com/vault/docs/auth/approle) — relevant if closing the "Gaps" above
 - [Vault Best Practices](https://developer.hashicorp.com/vault/docs/operations/best-practices)
-
-## Timeline Estimate
-
-- Setup and configuration: 1-2 hours
-- Initial deployment and testing: 1 hour
-- Migration from dev to production: 2-3 hours (including data migration if needed)
-- Total: 4-6 hours for a complete migration
