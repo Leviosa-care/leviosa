@@ -1,6 +1,16 @@
 # Leviosa
 
-Leviosa is booking and activity management software for service businesses (e.g. massage therapy practices) — room scheduling, availability, capacity tracking, payments, and client messaging.
+Leviosa is booking and activity management software for service businesses — massage therapy practices, studios, and similar appointment-based businesses that need to manage rooms, staff schedules, and clients in one place.
+
+## Features
+
+- **Room scheduling & availability** — booking calendar, gap detection between bookings to surface unused room time, room utilization metrics (efficiency score, fragmentation, idle time), and suggested availability block durations based on the partner's product catalog
+- **Product catalog & pricing** — categories and products (treatments, classes, events) with capacity tracking and Stripe-backed pricing/checkout
+- **Payments** — Stripe integration for checkout and customer billing
+- **Client messaging** — direct conversations between businesses and their clients
+- **Notifications** — booking confirmations and reminders over email (Gmail SMTP) and SMS (Twilio)
+- **Auth & accounts** — email/OTP sign-in, sessions, and Google/Apple OAuth
+- **Settings** — per-business configuration (OTP policy, notification preferences, etc.)
 
 ## Architecture
 
@@ -31,7 +41,3 @@ make local-down  # stop local docker-compose stack
 ```
 
 See `make help` at the repo root for the full list of commands (local dev, Docker image builds, VPS deploy, Terraform, Ansible). Frontend- and backend-specific commands are documented in `frontend/CLAUDE.md` and `backend/CLAUDE.md`.
-
-## Deployment
-
-Deployment to the VPS is driven by the root `Makefile` (Docker image build/push, Ansible playbooks, Terraform-managed infrastructure) — run `make help` to see available targets. GitHub Actions (`.github/workflows/ci.yaml`) handles pull request validation (build, unit tests, integration tests, vulnerability scanning) but does not perform deployments.
