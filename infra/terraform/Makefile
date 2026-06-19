@@ -177,7 +177,11 @@ PRODUCTION_TARGETS := \
 	-target=aws_s3_bucket_cors_configuration.assets_cors \
 	-target=aws_iam_user.app_user \
 	-target=aws_iam_access_key.app_user_key \
-	-target=aws_iam_user_policy.app_s3_policy
+	-target=aws_iam_user_policy.app_s3_policy \
+	-target=aws_iam_policy.app_leviosa \
+	-target=aws_iam_user.app_leviosa \
+	-target=aws_iam_user_policy_attachment.app_leviosa \
+	-target=aws_iam_access_key.app_leviosa
 
 plan-production:
 	@echo "Switching to production workspace..."
