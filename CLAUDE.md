@@ -71,13 +71,17 @@ backend/
 **Hexagonal Architecture Pattern** within each domain package:
 - `domain/` - Business entities (no external dependencies)
 - `ports/` - Repository and service interfaces
-- `application/` - Use cases and workflows
-- `infrastructure/` (or `adapters/`) - Infrastructure implementations:
-  - `http/` - REST API handlers
+- `application/` - Use cases and workflows, often split by sub-feature (e.g. `booking/application/availability/`)
+- `interface/` - Inbound adapters (mostly REST API handlers), often split by sub-feature (e.g. `catalog/interface/product/`)
+- `infrastructure/` (or `adapters/` in `booking`) - Outbound adapters to external systems:
   - `postgres/` - Database persistence
+  - `stripe/` - Payment provider integration
   - `rabbitmq/` - Message queue integration
   - `redis/` - Caching layer
   - `s3/` - Object storage
+  - `smtp/` / `twilio/` - Email/SMS providers
+  - `sse/` - Server-sent events
+  - Cross-domain adapters that call other domains directly (e.g. `booking/infrastructure/authuser/`)
 
 See `backend/CLAUDE.md` for the full breakdown, including booking-domain features (gap detection, utilization metrics, availability suggestions).
 
