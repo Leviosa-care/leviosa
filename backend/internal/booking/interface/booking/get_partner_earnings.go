@@ -21,7 +21,7 @@ func (h *handler) GetPartnerEarnings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	partnerID, err := uuid.Parse(pathParts[1])
+	partnerID, err := uuid.Parse(pathParts[2])
 	if err != nil {
 		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid partner ID format"), http.StatusBadRequest)
 		return

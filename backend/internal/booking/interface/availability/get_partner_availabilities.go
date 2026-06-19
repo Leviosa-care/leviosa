@@ -31,7 +31,7 @@ func (h *handler) GetPartnerAvailabilities(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	partnerID, err := uuid.Parse(pathParts[1])
+	partnerID, err := uuid.Parse(pathParts[2])
 	if err != nil {
 		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid partner ID format"), http.StatusBadRequest)
 		return

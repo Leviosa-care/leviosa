@@ -51,10 +51,10 @@ export const load: PageServerLoad = async ({ locals, url, fetch }) => {
 	try {
 		// Fetch availabilities and allocations in parallel
 		const [availRes, allocRes] = await Promise.all([
-			fetch(`${env.API_URL}/partners/${partnerId}/availabilities`, {
+			fetch(`${env.API_URL}/partners/availabilities/${partnerId}`, {
 				headers: { 'Content-Type': 'application/json' }
 			}),
-			fetch(`${env.API_URL}/partners/${partnerId}/allocations`, {
+			fetch(`${env.API_URL}/partners/allocations/${partnerId}`, {
 				headers: { 'Content-Type': 'application/json' }
 			})
 		]);

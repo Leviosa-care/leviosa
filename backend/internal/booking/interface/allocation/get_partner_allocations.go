@@ -39,11 +39,11 @@ func (h *handler) GetPartnerAllocations(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	partnerID, err := uuid.Parse(pathParts[1])
+	partnerID, err := uuid.Parse(pathParts[2])
 	if err != nil {
 		logger.WarnContext(ctx, "Handler: Invalid partner ID format",
 			"error", err,
-			"raw_partner_id", pathParts[1],
+			"raw_partner_id", pathParts[2],
 			"operation", "get_partner_allocations",
 			"method", r.Method)
 		httpx.RespondWithError(w, errs.NewInvalidValueErr("invalid partner ID format"), http.StatusBadRequest)

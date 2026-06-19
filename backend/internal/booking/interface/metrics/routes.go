@@ -13,5 +13,5 @@ func (h *Handler) RegisterRoutes(router *http.ServeMux) {
 
 	// Metrics endpoints
 	router.HandleFunc("GET /rooms/{room_id}/metrics", RequirePartner(mw.EnableCORS(h.GetRoomMetrics)))
-	router.HandleFunc("GET /partners/{partner_id}/metrics", RequirePartner(mw.EnableCORS(h.GetPartnerMetrics)))
+	router.HandleFunc("GET /partners/metrics/{partner_id}", RequirePartner(mw.EnableCORS(h.GetPartnerMetrics)))
 }

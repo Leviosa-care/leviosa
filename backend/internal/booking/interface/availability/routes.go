@@ -18,7 +18,7 @@ func (h *handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /availabilities/{id}", RequireStandard(mw.EnableCORS(h.GetAvailability)))
 
 	// Public endpoint for booking flow — partner availabilities visible to guests
-	router.HandleFunc("GET /partners/{partnerId}/availabilities", mw.EnableCORS(h.GetPartnerAvailabilities))
+	router.HandleFunc("GET /partners/availabilities/{partnerId}", mw.EnableCORS(h.GetPartnerAvailabilities))
 
 	router.HandleFunc("GET /availabilities", RequireStandard(mw.EnableCORS(h.GetAvailableSlots)))
 	router.HandleFunc("POST /availabilities/{id}/cancel", RequirePartner(mw.EnableCORS(h.CancelAvailability)))

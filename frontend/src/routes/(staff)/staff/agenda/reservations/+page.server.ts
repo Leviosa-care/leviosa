@@ -28,7 +28,7 @@ export const load: PageServerLoad = async ({ locals, url, fetch }) => {
 	const statusFilter = url.searchParams.get('status') ?? '';
 
 	try {
-		const res = await fetch(`${env.API_URL}/partners/${partnerId}/bookings`);
+		const res = await fetch(`${env.API_URL}/partners/bookings/${partnerId}`);
 
 		if (res.status === 401) {
 			throw redirect(302, '/auth');

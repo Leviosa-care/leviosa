@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetPartnerMetrics handles GET /partners/{partner_id}/metrics?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+// GetPartnerMetrics handles GET /partners/metrics/{partner_id}?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
 func (h *Handler) GetPartnerMetrics(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

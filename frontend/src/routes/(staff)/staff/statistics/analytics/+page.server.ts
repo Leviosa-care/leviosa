@@ -146,7 +146,7 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 		return { metrics: null, startDate: startDateParam, endDate: endDateParam };
 	}
 
-	const metricsRes = await fetch(`${env.API_URL}/partners/${partnerId}/metrics?start_date=${startDateParam}&end_date=${endDateParam}`, {
+	const metricsRes = await fetch(`${env.API_URL}/partners/metrics/${partnerId}?start_date=${startDateParam}&end_date=${endDateParam}`, {
 		headers: {
 			'Content-Type': 'application/json',
 		},

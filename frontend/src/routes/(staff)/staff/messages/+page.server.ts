@@ -78,7 +78,7 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 			if (activeThread) {
 				try {
 					const bookingsRes = await fetch(
-						`${env.API_URL}/partners/${locals.user!.id}/bookings`,
+						`${env.API_URL}/partners/bookings/${locals.user!.id}`,
 						{ headers: { 'Content-Type': 'application/json' } }
 					);
 					if (bookingsRes.ok) {

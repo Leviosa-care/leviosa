@@ -273,7 +273,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 	let allBookings: BackendBooking[] = [];
 
 	try {
-		const res = await fetch(`${env.API_URL}/partners/${partnerId}/bookings`);
+		const res = await fetch(`${env.API_URL}/partners/bookings/${partnerId}`);
 
 		if (res.status === 401) {
 			throw redirect(302, '/auth');
@@ -343,7 +343,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 
 	try {
 		const mRes = await fetch(
-			`${env.API_URL}/partners/${partnerId}/metrics?start_date=${currentStart}&end_date=${currentEnd}`
+			`${env.API_URL}/partners/metrics/${partnerId}?start_date=${currentStart}&end_date=${currentEnd}`
 		);
 
 		if (mRes.status === 401) {

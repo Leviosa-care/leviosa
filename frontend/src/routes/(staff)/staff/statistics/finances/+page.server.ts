@@ -58,7 +58,7 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 		return { summary: null, selectedMonth };
 	}
 
-	const earningsRes = await fetch(`${env.API_URL}/partners/${partnerId}/earnings`, {
+	const earningsRes = await fetch(`${env.API_URL}/partners/earnings/${partnerId}`, {
 		headers: {
 			'Content-Type': 'application/json',
 		},
