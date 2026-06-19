@@ -14,7 +14,7 @@ cp example.env development.env   # fill in required values
 docker compose up                 # starts backend + Postgres, Redis, RabbitMQ
 ```
 
-The API listens on `http://localhost:3500`, with a health check at `/healthz`.
+The API listens on `http://localhost:3500`, with a health check at `/health`.
 
 To run the Go binary directly against already-running dependencies:
 

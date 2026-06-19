@@ -7,7 +7,7 @@ This package provides OAuth authentication using the Goth library for Google and
 To initialize OAuth providers in your application, call the `InitializeOAuthProviders()` function during application startup:
 
 ```go
-import "github.com/Leviosa-care/authuser/internal/application/oauth"
+import "github.com/Leviosa-care/leviosa/backend/internal/authuser/application/oauth"
 
 func main() {
     // Initialize OAuth providers
