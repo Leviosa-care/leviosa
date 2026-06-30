@@ -158,6 +158,10 @@ rclone_backup_dir: "{{ app_backup_dir | default(app_base_dir + '/backups') }}"
 # ============================================
 # Monitoring (Optional)
 # ============================================
-monitoring_enabled: false
+monitoring_enabled: true
 monitoring_cadvisor_port: 8081
 monitoring_node_exporter_port: 9100
+monitoring_prometheus_port: 9090
+monitoring_grafana_port: 3001
+# Set grafana_admin_password in secrets.yml (falls back to insecure default)
+grafana_admin_password: "{{ grafana_admin_password | default('changeme-set-in-secrets') }}"
