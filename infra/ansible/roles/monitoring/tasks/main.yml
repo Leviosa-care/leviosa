@@ -21,6 +21,15 @@
     mode: '0640'
   notify: restart monitoring
 
+- name: Deploy Prometheus configuration
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ app_base_dir }}/monitoring/prometheus.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0640'
+  notify: restart monitoring
+
 - name: Create monitoring systemd service
   ansible.builtin.template:
     src: monitoring.service.j2
@@ -43,9 +52,11 @@
       - "==========================================="
       - "Monitoring Stack Deployed"
       - "==========================================="
-      - "cAdvisor: 127.0.0.1:{{ monitoring_cadvisor_port | default('9323') }}"
+      - "cAdvisor:      127.0.0.1:{{ monitoring_cadvisor_port | default('8081') }}"
       - "Node Exporter: 127.0.0.1:{{ monitoring_node_exporter_port | default('9100') }}"
+      - "Prometheus:    127.0.0.1:{{ monitoring_prometheus_port | default('9090') }}"
+      - "Grafana:       127.0.0.1:{{ monitoring_grafana_port | default('3001') }}"
       - ""
-      - "These endpoints are bound to localhost only."
-      - "Use SSH tunneling or a reverse proxy to access them."
+      - "All endpoints are localhost-only. Access via SSH tunnel:"
+      - "ssh -L 3001:127.0.0.1:3001 root@{{ ansible_host }}"
       - "==========================================="
