@@ -8,6 +8,7 @@ services:
     image: {{ frontend_docker_image | default(docker_registry + '/' + app_name + ':frontend-' + app_image_tag | default('latest')) }}
     container_name: {{ app_name }}_frontend
     restart: unless-stopped
+    mem_limit: 256m
     # Caddy (on the shared network) handles external access - no host port needed
     expose:
       - "{{ frontend_port | default('3000') }}"
@@ -50,6 +51,7 @@ services:
     image: {{ backend_docker_image | default(docker_registry + '/' + app_name + ':backend-' + app_image_tag | default('latest')) }}
     container_name: {{ app_name }}_backend
     restart: unless-stopped
+    mem_limit: 512m
     # Caddy (on the shared network) handles external access - no host port needed
     expose:
       - "{{ backend_port | default('3500') }}"
@@ -93,6 +95,7 @@ services:
     image: serfriz/caddy-cloudflare:latest
     container_name: {{ app_name }}_caddy
     restart: unless-stopped
+    mem_limit: 128m
     ports:
       - "80:80"
       - "443:443"
@@ -117,6 +120,7 @@ services:
     image: postgres:17-alpine
     container_name: {{ app_name }}_postgres
     restart: unless-stopped
+    mem_limit: 512m
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -141,6 +145,7 @@ services:
     image: redis:7-alpine
     container_name: {{ app_name }}_redis
     restart: unless-stopped
+    mem_limit: 128m
     command: redis-server --appendonly yes{% if redis_password | default('') %} --requirepass ${REDIS_PASSWORD}{% endif %}
 
     volumes:
@@ -167,6 +172,7 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: {{ app_name }}_rabbitmq
     restart: unless-stopped
+    mem_limit: 512m
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
@@ -195,6 +201,7 @@ services:
     image: hashicorp/vault:1.15
     container_name: {{ app_name }}_vault
     restart: unless-stopped
+    mem_limit: 256m
     user: "100:1000"
     entrypoint: ["/bin/sh", "-c", "exec vault server -config=/vault/config/vault.hcl"]
     cap_add:
