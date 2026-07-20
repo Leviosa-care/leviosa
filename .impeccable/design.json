@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-20T00:00:00.000Z",
+  "title": "Design System: Leviosa",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "primary", "displayName": "Ink", "canonical": "hsl(240 6% 10%)", "tonalRamp": ["#0a0a0b", "#131316", "#18181b", "#2a2a2e", "#4a4a4f", "#7a7a80", "#b5b5ba", "#e8e8ea"] },
+      "sky-pale": { "role": "secondary", "displayName": "Sky Pale", "canonical": "hsl(204 94% 94%)", "tonalRamp": ["#082f49", "#0c4a6e", "#0369a1", "#38bdf8", "#7cd4fc", "#b9e6fd", "#e1f3fe", "#f5fbfe"] },
+      "sky-deep": { "role": "secondary", "displayName": "Sky Deep", "canonical": "hsl(204 80% 16%)" },
+      "amber-highlight": { "role": "tertiary", "displayName": "Amber Highlight", "canonical": "hsl(37.7 92.1% 50.2%)", "tonalRamp": ["#451a03", "#78350f", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fde68a", "#fef3c7"] },
+      "rose-alert": { "role": "error", "displayName": "Rose Alert", "canonical": "hsl(347 77% 50%)" },
+      "confirm-green": { "role": "success", "displayName": "Confirm Green", "canonical": "hsl(142 71% 45%)" },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "hsl(0 0% 100%)" },
+      "mist": { "role": "neutral", "displayName": "Mist", "canonical": "hsl(240 5% 96%)" },
+      "cloud": { "role": "neutral", "displayName": "Cloud", "canonical": "hsl(0 0% 93%)" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Cal Sans Display", "purpose": "Section-level headings in the staff dashboard and select public sections. Rare by design." },
+      "hero": { "displayName": "Hero Headline", "purpose": "The public homepage hero headline only." },
+      "body": { "displayName": "Body", "purpose": "Standard paragraph and UI text." },
+      "mono": { "displayName": "Source Code Pro", "purpose": "Loaded but not yet visibly used; reserved for code/data-dense contexts." }
+    },
+    "shadows": [
+      { "name": "shadow-mini", "value": "0px 1px 0px 1px rgba(0,0,0,0.04)", "purpose": "Subtle elevation: inputs, inline chips, small cards." },
+      { "name": "shadow-popover", "value": "0px 7px 12px 3px var(--dark-10)", "purpose": "Floating elements: dropdowns, modals, tooltips; elevated card variant." },
+      { "name": "shadow-card", "value": "0px 2px 0px 1px rgba(0,0,0,0.04)", "purpose": "Standard resting card elevation." },
+      { "name": "shadow-btn", "value": "0px 1px 0px 1px rgba(0,0,0,0.03)", "purpose": "Button press depth." },
+      { "name": "shadow-kbd", "value": "0px 2px 0px 0px rgba(0,0,0,0.07)", "purpose": "Keyboard-shortcut chip styling." }
+    ],
+    "motion": [
+      { "name": "fade-in", "value": "fade-in 0.2s ease", "purpose": "Default enter transition." },
+      { "name": "fade-out", "value": "fade-out 0.15s ease", "purpose": "Default exit transition." },
+      { "name": "scale-in", "value": "scale-in 0.2s ease", "purpose": "Popover/dialog enter." },
+      { "name": "scale-out", "value": "scale-out 0.15s ease", "purpose": "Popover/dialog exit." },
+      { "name": "accordion-down", "value": "accordion-down 0.2s ease-out", "purpose": "Accordion expand." },
+      { "name": "accordion-up", "value": "accordion-up 0.2s ease-out", "purpose": "Accordion collapse." }
+    ],
+    "breakpoints": [
+      { "name": "desktop", "value": "1440px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Default filled CTA button.",
+      "html": "<button class=\"ds-btn-primary\">Réserver maintenant</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #18181b; color: #ffffff; border-radius: 5px; padding: 8px 16px; font-size: 14px; font-weight: 500; border: none; transition: background-color 0.2s; } .ds-btn-primary:hover { background: #18181be6; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #18181b; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary bordered button, used against dark or light hero backgrounds.",
+      "html": "<button class=\"ds-btn-outline\">Comment ça fonctionne</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #ffffff; color: #18181b; border: 1px solid #18181b; border-radius: 12px; padding: 14px 32px; font-size: 15px; font-weight: 500; transition: background-color 0.2s; } .ds-btn-outline:hover { background: #ededed; }"
+    },
+    {
+      "name": "Default Card",
+      "kind": "card",
+      "refersTo": "card-default",
+      "description": "Standard resting card container.",
+      "html": "<div class=\"ds-card\">Here is the content of the card that needs to be displayed</div>",
+      "css": ".ds-card { background: #ffffff; color: #171717; border: 1px solid rgba(24,24,27,0.1); border-radius: 16px; padding: 24px; box-shadow: 0px 2px 0px 1px rgba(0,0,0,0.04); transition: box-shadow 0.2s, transform 0.2s; } .ds-card--interactive:hover { box-shadow: 0px 7px 12px 3px rgba(24,24,27,0.1); transform: scale(1.02); cursor: pointer; } .ds-card--interactive:active { transform: scale(0.98); }"
+    },
+    {
+      "name": "Floating-Label Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Text input with an animated floating label, used across auth and booking forms.",
+      "html": "<div class=\"ds-input-wrap\"><input class=\"ds-input\" id=\"email\" type=\"email\" /><label class=\"ds-input-label\" for=\"email\">Email</label></div>",
+      "css": ".ds-input-wrap { position: relative; width: 100%; } .ds-input { width: 100%; padding: 24px 44px 12px 16px; border: 1px solid rgba(24,24,27,0.17); border-radius: 9px; background: #ffffff; font-size: 16px; color: #171717; } .ds-input:hover { border-color: rgba(24,24,27,0.4); } .ds-input:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #18181b; } .ds-input-label { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-weight: 500; color: #525252; transition: all 0.2s ease-in-out; transform-origin: top left; } .ds-input:focus + .ds-input-label, .ds-input:not(:placeholder-shown) + .ds-input-label { transform: translateY(-1.6125rem) scale(0.8); color: rgba(23,23,23,0.4); }"
+    },
+    {
+      "name": "Trust Badge",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Pill-shaped live-status badge with a pulsing dot, used in the public hero.",
+      "html": "<div class=\"ds-badge\"><span class=\"ds-badge-dot-wrap\"><span class=\"ds-badge-ping\"></span><span class=\"ds-badge-dot\"></span></span><span class=\"ds-badge-text\">Disponible maintenant</span></div>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 9999px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(8px); } .ds-badge-dot-wrap { position: relative; display: flex; height: 8px; width: 8px; } .ds-badge-ping { position: absolute; inset: 0; border-radius: 9999px; background: #34d399; opacity: 0.75; animation: ds-ping 1s cubic-bezier(0,0,0.2,1) infinite; } .ds-badge-dot { position: relative; display: inline-flex; border-radius: 9999px; height: 8px; width: 8px; background: #10b981; } .ds-badge-text { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.9); } @keyframes ds-ping { 75%, 100% { transform: scale(2); opacity: 0; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Studio Drop",
+    "overview": "Leviosa runs two surfaces on one token system today, and they're headed in different directions. The staff/admin/client dashboard is a plain, traditional working tool — it stays that way; no branding ambition needed there. The public storefront is where the effort goes: booking should feel as frictionless as Doctolib, but the brand voice is shifting from \"calm wellness portal\" toward something with more edge — professional and trustworthy enough to hand over your time and payment, but confident and current rather than sedate, closer to a streetwear campaign than a spa brochure. The tokens extracted are the honest baseline as they exist in code right now: a near-grayscale neutral system (true zinc/charcoal, not a warm-tinted \"AI cream\") with a pale sky-blue accent and functional red/green/amber. The public hero already leans bolder than pure \"calm\" — full-bleed video, dark overlay, oversized type — but the rest of the storefront still reads soft and restrained. Closing that gap toward \"The Studio Drop\" energy is active brand work, not yet finished.",
+    "keyCharacteristics": [
+      "True neutral grayscale (zinc-derived), not a warm/cream-tinted 'AI default' base",
+      "One functional accent (pale sky blue) used sparingly, not as a brand color",
+      "Soft, tactile elevation: gentle shadows and rounded corners (9-20px) everywhere",
+      "Admin/staff dashboard: traditional, utilitarian, unbranded by design",
+      "Public storefront: currently restrained; directionally moving toward bolder, more energetic branding"
+    ],
+    "rules": [
+      { "name": "The Function-Only Color Rule", "body": "Outside of Ink and Paper, every color in this system maps to a state (error, success, warning, subtle highlight) — never to decoration.", "section": "colors" },
+      { "name": "The One Display Rule", "body": "Cal Sans is loaded in a single weight and appears only at section-heading scale — never body copy, never buttons.", "section": "typography" },
+      { "name": "The Escalation-On-Interaction Rule", "body": "Interactive elements start at shadow-mini or shadow-card at rest and escalate to shadow-popover plus a slight scale on hover — never the reverse.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep Ink + Paper as the load-bearing pair; let Sky/Rose/Green/Amber stay strictly functional.",
+      "Do use Cal Sans sparingly, at heading scale only.",
+      "Do escalate shadow + scale together on hover/interactive states.",
+      "Do treat the staff/admin/client dashboard as a plain, traditional tool.",
+      "Do keep the booking flow the least-decorated, fastest path in the whole product."
+    ],
+    "donts": [
+      "Don't introduce a warm cream/sand/beige base.",
+      "Don't let the public storefront settle for 'calm and welcoming' as the finished brand.",
+      "Don't carry new branding effort into the staff/admin/client dashboard.",
+      "Don't use a generic clinical/healthcare-portal look or a generic corporate-SaaS-marketing look.",
+      "Don't use border-left/right accent stripes, gradient text, or decorative glassmorphism outside the one deliberate trust-badge use."
+    ]
+  }
+}
