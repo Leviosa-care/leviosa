@@ -15,8 +15,8 @@
             <p
                 class="mt-4 text-base md:text-lg text-muted-foreground leading-relaxed font-normal"
             >
-                Nous avons éliminé le superflu des agences pour nous concentrer
-                sur ce qui fait vraiment avancer votre entreprise.
+                Le bon praticien, au bon moment, sans détour. On a retiré tout
+                ce qui vous éloigne du soin.
             </p>
         </div>
 
@@ -35,12 +35,12 @@
                 <h3
                     class="text-lg font-semibold text-foreground tracking-tight mb-3"
                 >
-                    Accès direct aux experts
+                    Accès direct aux praticiens
                 </h3>
                 <p class="text-sm leading-relaxed text-muted-foreground">
-                    Vous échangez directement avec les seniors qui réalisent le travail.
-                    Pas d'intermédiaires, pas de couches de traduction, juste une
-                    collaboration efficace.
+                    Vous parlez directement à la personne qui vous suit.
+                    Ostéopathe, psychologue, coach — choisissez, réservez,
+                    c'est entre de bonnes mains.
                 </p>
             </div>
 
@@ -57,12 +57,12 @@
                 <h3
                     class="text-lg font-semibold text-foreground tracking-tight mb-3"
                 >
-                    Exécution pragmatique
+                    Des résultats, dès la première séance
                 </h3>
                 <p class="text-sm leading-relaxed text-muted-foreground">
-                    Nous évitons les présentations de 50 pages. Notre priorité
-                    est de livrer une valeur concrète et de résoudre le vrai problème
-                    dès le premier jour.
+                    Pas de bla-bla. Chaque séance est là pour vous soulager,
+                    vous faire avancer, vous rendre service. Du concret,
+                    dès le premier rendez-vous.
                 </p>
             </div>
 
@@ -79,12 +79,11 @@
                 <h3
                     class="text-lg font-semibold text-foreground tracking-tight mb-3"
                 >
-                    Transparence totale
+                    Du clair, du net, du vérifié
                 </h3>
                 <p class="text-sm leading-relaxed text-muted-foreground">
-                    Délais clairs, tarification fixe et retours honnêtes. Si nous
-                    pensons ne pas pouvoir vous aider, nous vous le dirons
-                    immédiatement.
+                    Des créneaux réels, des prix affichés, des profils honnêtes.
+                    Et si un praticien n'est pas le bon pour vous, on vous le dit.
                 </p>
             </div>
         </div>

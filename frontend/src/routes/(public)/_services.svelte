@@ -1,6 +1,6 @@
 <script lang="ts">
     import { reveal } from "$lib/actions/reveal";
-    import { Zap, Check, Search, Lightbulb, TrendingUp } from "@lucide/svelte";
+    import { Zap, Check, Stethoscope, HandHeart, Activity } from "@lucide/svelte";
 </script>
 
 <section id="services" class="py-20 lg:py-24 bg-white">
@@ -21,8 +21,8 @@
                     Conçu sur mesure pour vos besoins
                 </h2>
                 <p class="mt-4 text-base text-muted-foreground">
-                    Nous proposons actuellement un service spécialisé conçu pour
-                    vous apporter une valeur immédiate et des actions concrètes.
+                    Un rendez-vous phare, pensé pour vous soulager dès la
+                    première séance. Et à réserver en quelques secondes.
                 </p>
             </div>
         </div>
@@ -52,15 +52,15 @@
                     <h3
                         class="text-2xl md:text-3xl font-semibold text-foreground tracking-tight mb-4"
                     >
-                        Consultation Stratégique
+                        Séance d'ostéopathie
                     </h3>
 
                     <p
                         class="text-muted-foreground text-base md:text-lg leading-relaxed mb-8"
                     >
-                        Une séance de 60 minutes pour analyser vos défis actuels
-                        et élaborer une feuille de route concrète, étape par étape.
-                        Idéal pour les fondateurs en phase de démarrage.
+                        Une séance de 60 minutes pour libérer vos tensions et
+                        retrouver de la mobilité. Idéale en cas de douleurs
+                        chroniques, de mauvaises postures ou après un effort.
                     </p>
 
                     <div class="space-y-4 mb-10">
@@ -73,11 +73,11 @@
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-foreground">
-                                    Audit Approfondi
+                                    Bilan personnalisé
                                 </p>
                                 <p class="text-xs text-muted-foreground mt-0.5">
-                                    Analyse complète de votre stack technique et
-                                    de vos indicateurs.
+                                    Une écoute attentive et un examen précis de
+                                    vos tensions et déséquilibres.
                                 </p>
                             </div>
                         </div>
@@ -90,10 +90,11 @@
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-foreground">
-                                    Feuille de Route Actionnable
+                                    Soin sur mesure
                                 </p>
                                 <p class="text-xs text-muted-foreground mt-0.5">
-                                    Repartez avec un plan clair de 30-60-90 jours.
+                                    Des techniques manuelles adaptées à votre
+                                    corps, pour un soulagement durable.
                                 </p>
                             </div>
                         </div>
@@ -106,10 +107,11 @@
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-foreground">
-                                    Enregistrement &amp; Notes
+                                    Suivi &amp; conseils
                                 </p>
                                 <p class="text-xs text-muted-foreground mt-0.5">
-                                    Transcription complète et liens vers les ressources fournis.
+                                    Des exercices simples pour prolonger les
+                                    bénéfices entre deux séances.
                                 </p>
                             </div>
                         </div>
@@ -136,7 +138,7 @@
                         style="background-image: radial-gradient(#0f172a 1px, transparent 1px); background-size: 20px 20px;"
                     ></div>
 
-                    <!-- UI Representation: Roadmap Visualization -->
+                    <!-- Déroulé d'une séance : bilan → soin → soulagement -->
                     <div class="relative w-full max-w-sm">
                         <div
                             class="absolute top-0 bottom-0 left-6 w-0.5 bg-border-input-hover"
@@ -147,7 +149,7 @@
                             <div
                                 class="w-12 h-12 rounded-full border-4 border-border-input bg-white shadow-mini flex items-center justify-center z-10"
                             >
-                                <Search size={18} class="text-muted-foreground" />
+                                <Stethoscope size={18} class="text-muted-foreground" />
                             </div>
                             <div
                                 class="flex-1 bg-white p-3 rounded-lg border border-border-input shadow-mini opacity-60"
@@ -166,7 +168,7 @@
                             <div
                                 class="w-12 h-12 rounded-full border-4 border-border-input bg-foreground shadow-card shadow-border-input-hover flex items-center justify-center z-10"
                             >
-                                <Lightbulb size={18} class="text-white" />
+                                <HandHeart size={18} class="text-white" />
                             </div>
                             <div
                                 class="flex-1 bg-white p-4 rounded-xl border border-border-input-hover shadow-card"
@@ -199,7 +201,7 @@
                             <div
                                 class="w-12 h-12 rounded-full border-4 border-border-input bg-white shadow-mini flex items-center justify-center z-10"
                             >
-                                <TrendingUp size={18} class="text-muted-foreground" />
+                                <Activity size={18} class="text-muted-foreground" />
                             </div>
                             <div
                                 class="flex-1 bg-white p-3 rounded-lg border border-border-input shadow-mini opacity-60"

@@ -188,7 +188,7 @@
             <h2
                 class="mt-6 text-3xl md:text-4xl font-semibold tracking-tight text-foreground"
             >
-                Fondé sur la clarté, pas la complexité.
+                La manière dont on vous accompagne.
             </h2>
         </div>
 
@@ -222,12 +222,11 @@
                     </svg>
                 </div>
                 <h3 class="text-lg font-semibold text-foreground tracking-tight mb-3">
-                    Accès direct aux experts
+                    Une écoute réelle
                 </h3>
                 <p class="text-sm leading-relaxed text-muted-foreground">
-                    Vous échangez directement avec les praticiens. Pas
-                    d'intermédiaires, pas de couches de traduction, juste une
-                    collaboration efficace.
+                    Chaque suivi commence par vous : votre besoin, votre rythme,
+                    vos mots. On ne vous case pas, on adapte la prise en charge.
                 </p>
             </div>
 
@@ -262,12 +261,12 @@
                     </svg>
                 </div>
                 <h3 class="text-lg font-semibold text-foreground tracking-tight mb-3">
-                    Exécution pragmatique
+                    Du concret, pas des promesses
                 </h3>
                 <p class="text-sm leading-relaxed text-muted-foreground">
-                    Notre priorité est de vous apporter une valeur concrète dès
-                    la première séance. Pas de promesses creuses, des résultats
-                    réels.
+                    Un objectif clair par séance et des progrès que vous
+                    ressentez. Si quelque chose ne fonctionne pas, on ajuste,
+                    ensemble.
                 </p>
             </div>
 
@@ -300,12 +299,11 @@
                     </svg>
                 </div>
                 <h3 class="text-lg font-semibold text-foreground tracking-tight mb-3">
-                    Transparence totale
+                    Confiance et transparence
                 </h3>
                 <p class="text-sm leading-relaxed text-muted-foreground">
-                    Délais clairs, tarification fixe et retours honnêtes. Si un
-                    expert n'est pas adapté à votre besoin, nous vous le dirons
-                    immédiatement.
+                    Des praticiens vérifiés, des tarifs affichés, des retours
+                    francs. Vous savez toujours où vous mettez les pieds.
                 </p>
             </div>
         </div>
