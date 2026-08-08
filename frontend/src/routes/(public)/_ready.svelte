@@ -26,11 +26,12 @@
 
         <!-- Primary Action -->
         <div class="flex justify-center" use:reveal={{ preset: "fade-up", delay: 200 }}>
-            <button
+            <a
+                href="/book"
                 class="bg-foreground text-white hover:bg-foreground-alt px-8 py-4 rounded-xl font-semibold text-base transition-all duration-200 shadow-mini hover:shadow-card hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
                 Prendre rendez-vous maintenant
-            </button>
+            </a>
         </div>
     </div>
 </section>
