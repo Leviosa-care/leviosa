@@ -17,7 +17,7 @@
         <h1 class="text-5xl md:text-6xl font-bold tracking-widest uppercase mb-6" style="font-family: 'Cal Sans', sans-serif;">
             Leviosa
         </h1>
-        <p class="text-sm tracking-widest uppercase" style="color: var(--muted-foreground);">
+        <p class="text-sm tracking-widest uppercase opacity-60">
             Quelque chose est en préparation &mdash; à venir
         </p>
     </div>
