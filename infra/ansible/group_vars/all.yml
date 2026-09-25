@@ -163,5 +163,6 @@ monitoring_cadvisor_port: 8081
 monitoring_node_exporter_port: 9100
 monitoring_prometheus_port: 9090
 monitoring_grafana_port: 3001
-# Set grafana_admin_password in secrets.yml (falls back to insecure default)
-grafana_admin_password: "{{ grafana_admin_password | default('changeme-set-in-secrets') }}"
+# Set grafana_admin_password in secrets.yml (the monitoring template falls back
+# to an insecure default). Do not define it here as "{{ grafana_admin_password }}":
+# a self-reference is a recursive templating loop.
